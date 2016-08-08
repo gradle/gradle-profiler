@@ -4,7 +4,7 @@ A tool for gathering profiling information from Gradle builds, using the Java fl
 
 First, build and install the `gradle-profiler` app using:
 
-    > ./gradlew installApp
+    > ./gradlew installDist
  
 This will install the application into `./build/install/gradle-profiler`.
 
