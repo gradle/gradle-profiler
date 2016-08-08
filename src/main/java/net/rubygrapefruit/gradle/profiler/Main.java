@@ -39,15 +39,22 @@ public class Main {
             jvmArgs.add("-XX:+FlightRecorder");
             System.out.println("Java args: " + jvmArgs);
 
-            runBuild("warm-up build 1", projectConnection, tasks, jvmArgs, pidInstrumentation);
-
+            startOperation("Running warm-up build #1 with tasks " + tasks);
+            runBuild(projectConnection, tasks, jvmArgs, pidInstrumentation);
             String pid = pidInstrumentation.getPidForLastBuild();
-            System.out.println("starting recording for daemon with pid " + pid);
+
+            startOperation("Running warm-up build #2 with tasks " + tasks);
+            runBuild(projectConnection, tasks, jvmArgs, pidInstrumentation);
+            checkPid(pid, pidInstrumentation.getPidForLastBuild());
+
+            startOperation("Starting recording for daemon with pid " + pid);
             jfrControl.start(pid);
 
-            runBuild("profiling build", projectConnection, tasks, jvmArgs, pidInstrumentation);
+            startOperation("Running profiling build with tasks " + tasks);
+            runBuild(projectConnection, tasks, jvmArgs, pidInstrumentation);
+            checkPid(pid, pidInstrumentation.getPidForLastBuild());
 
-            System.out.println("stopping recording for daemon with pid " + pid);
+            startOperation("Stopping recording for daemon with pid " + pid);
             jfrControl.stop(pid, new File("profile.jfr"));
         } finally {
             projectConnection.close();
@@ -55,17 +62,24 @@ public class Main {
         System.out.println();
     }
 
-    private static void runBuild(String name, ProjectConnection projectConnection, List<?> tasks, List<String> jvmArgs,
-                                 PidInstrumentation pidInstrumentation) throws IOException {
+    private static void startOperation(String name) {
         System.out.println();
-        System.out.println("Running " + name + " with tasks " + tasks);
+        System.out.println("* " + name);
+    }
+
+    private static void checkPid(String expected, String actual) {
+        if (!expected.equals(actual)) {
+            throw new RuntimeException("Multiple Gradle daemons were used. Please make sure all Gradle daemons are stopped before running the profiler.");
+        }
+    }
+
+    private static void runBuild(ProjectConnection projectConnection, List<?> tasks, List<String> jvmArgs, PidInstrumentation pidInstrumentation) throws IOException {
         BuildLauncher build = projectConnection.newBuild();
         build.forTasks(tasks.toArray(new String[0]));
         build.withArguments(pidInstrumentation.getArgs());
         build.setJvmArguments(jvmArgs);
         build.run();
         System.out.println("Used daemon with pid " + pidInstrumentation.getPidForLastBuild());
-        System.out.println("Done");
     }
 
     static class JFRControl {
@@ -89,11 +103,11 @@ public class Main {
 
         public void stop(String pid, File recordingFile) throws IOException, InterruptedException {
             run(jcmd.getAbsolutePath(), pid, "JFR.stop", "name=profile", "filename=" + recordingFile.getAbsolutePath());
+            System.out.println("Wrote profiling data to " + recordingFile.getPath());
         }
 
         private void run(String... commandLine) throws InterruptedException, IOException {
             ProcessBuilder processBuilder = new ProcessBuilder(commandLine);
-            processBuilder.inheritIO();
             Process process = processBuilder.start();
             int result = process.waitFor();
             if (result != 0) {
