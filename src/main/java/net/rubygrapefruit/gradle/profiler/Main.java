@@ -1,6 +1,7 @@
 package net.rubygrapefruit.gradle.profiler;
 
 import joptsimple.ArgumentAcceptingOptionSpec;
+import joptsimple.OptionException;
 import joptsimple.OptionParser;
 import joptsimple.OptionSet;
 import org.gradle.tooling.BuildLauncher;
@@ -15,9 +16,36 @@ import java.util.List;
 
 public class Main {
     public static void main(String[] args) throws Exception {
+        boolean ok;
+        try {
+            ok = run(args);
+        } catch (Exception e) {
+            System.out.println();
+            System.out.println("ERROR: " + e.getMessage());
+            ok = false;
+        }
+        System.out.println();
+        System.exit(ok ? 0 : 1);
+    }
+
+    private static boolean run(String[] args) throws Exception {
         OptionParser parser = new OptionParser();
-        ArgumentAcceptingOptionSpec<String> projectOption = parser.accepts("project-dir").withRequiredArg();
-        OptionSet parsedOptions = parser.parse(args);
+        ArgumentAcceptingOptionSpec<String> projectOption = parser.accepts("project-dir", "the directory to run the build from").withRequiredArg();
+        OptionSet parsedOptions;
+        try {
+            parsedOptions = parser.parse(args);
+        } catch (OptionException e) {
+            System.out.println(e.getMessage());
+            System.out.println();
+            parser.printHelpOn(System.out);
+            return false;
+        }
+        if (!parsedOptions.has(projectOption)) {
+            System.out.println("No project directory specified.");
+            System.out.println();
+            parser.printHelpOn(System.out);
+            return false;
+        }
         File projectDir = (parsedOptions.has(projectOption) ? new File(parsedOptions.valueOf(projectOption)) : new File(".")).getCanonicalFile();
         System.out.println();
         System.out.println("Project dir: " + projectDir);
@@ -33,7 +61,7 @@ public class Main {
             BuildEnvironment buildEnvironment = projectConnection.getModel(BuildEnvironment.class);
             System.out.println("Gradle version: " + buildEnvironment.getGradle().getGradleVersion());
             System.out.println("Java home: " + buildEnvironment.getJava().getJavaHome());
-            System.out.println("OS name: " + System.getProperty("os.name"));
+            System.out.println("OS name: " + System.getProperty("os.name") + " " + System.getProperty("os.version"));
             List<String> jvmArgs = new ArrayList<>(buildEnvironment.getJava().getJvmArguments());
             jvmArgs.add("-XX:+UnlockCommercialFeatures");
             jvmArgs.add("-XX:+FlightRecorder");
@@ -59,7 +87,7 @@ public class Main {
         } finally {
             projectConnection.close();
         }
-        System.out.println();
+        return true;
     }
 
     private static void startOperation(String name) {
