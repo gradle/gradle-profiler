@@ -17,7 +17,7 @@ To run the `gradle-profiler` app use:
 Where `<root-dir-of-build>` is the directory containing the build to be profiled, and `<task>` is the name of the task to run,
 exactly as you would use for the `gradle` command.
 
-The profiler will run the build several times to warm up a daemon, then enable profiling and run the build.
+The profiler will run the build several times to warm up a daemon, then enable the flight recorder and run the build.
 Once complete, the results will be written to a file called `profile.jfr`.
 
 When the profiler runs the build, it will use the tasks you specified. The profiler will use the default
