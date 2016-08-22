@@ -15,4 +15,5 @@ dependencies {
     runtime 'org.slf4j:slf4j-simple:1.7.10'
 }
 
+sourceCompatibility = 1.8
 mainClassName = "net.rubygrapefruit.gradle.profiler.Main"
