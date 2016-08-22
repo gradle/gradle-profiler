@@ -5,6 +5,7 @@ import joptsimple.OptionException;
 import joptsimple.OptionParser;
 import joptsimple.OptionSet;
 import org.gradle.tooling.BuildLauncher;
+import org.gradle.tooling.GradleConnectionException;
 import org.gradle.tooling.GradleConnector;
 import org.gradle.tooling.ProjectConnection;
 import org.gradle.tooling.model.build.BuildEnvironment;
@@ -20,8 +21,7 @@ public class Main {
         try {
             ok = run(args);
         } catch (Exception e) {
-            System.out.println();
-            System.out.println("ERROR: " + e.getMessage());
+            e.printStackTrace();
             ok = false;
         }
         System.out.println();
@@ -105,8 +105,20 @@ public class Main {
         BuildLauncher build = projectConnection.newBuild();
         build.forTasks(tasks.toArray(new String[0]));
         build.withArguments(pidInstrumentation.getArgs());
+        ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
+        build.setStandardOutput(outputStream);
+        build.setStandardError(outputStream);
         build.setJvmArguments(jvmArgs);
-        build.run();
+        try {
+            build.run();
+        } catch (GradleConnectionException e) {
+            System.out.println();
+            System.out.println("ERROR: failed to run build.");
+            System.out.println();
+            System.out.append(new String(outputStream.toByteArray()));
+            System.out.println();
+            throw e;
+        }
         System.out.println("Used daemon with pid " + pidInstrumentation.getPidForLastBuild());
     }
 
