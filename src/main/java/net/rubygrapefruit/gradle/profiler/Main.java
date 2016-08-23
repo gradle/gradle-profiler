@@ -69,6 +69,8 @@ public class Main {
             List<String> jvmArgs = new ArrayList<>(buildEnvironment.getJava().getJvmArguments());
             jvmArgs.add("-XX:+UnlockCommercialFeatures");
             jvmArgs.add("-XX:+FlightRecorder");
+            jvmArgs.add("-XX:FlightRecorderOptions=stackdepth=1024");
+
             System.out.println("Java args: " + jvmArgs);
 
             startOperation("Running warm-up build #1 with tasks " + tasks);
