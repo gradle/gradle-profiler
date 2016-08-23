@@ -70,6 +70,8 @@ public class Main {
             jvmArgs.add("-XX:+UnlockCommercialFeatures");
             jvmArgs.add("-XX:+FlightRecorder");
             jvmArgs.add("-XX:FlightRecorderOptions=stackdepth=1024");
+            jvmArgs.add("-XX:+UnlockDiagnosticVMOptions");
+            jvmArgs.add("-XX:+DebugNonSafepoints");
 
             System.out.println("Java args: " + jvmArgs);
 
