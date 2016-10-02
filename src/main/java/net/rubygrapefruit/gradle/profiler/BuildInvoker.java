@@ -4,7 +4,6 @@ import org.gradle.tooling.GradleConnectionException;
 import org.gradle.tooling.LongRunningOperation;
 import org.gradle.tooling.ProjectConnection;
 
-import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.time.Duration;
 import java.util.List;
@@ -49,16 +48,13 @@ class BuildInvoker {
     }
 
     public static <T extends LongRunningOperation, R> R run(T operation, Function<T, R> function) {
-        ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
-        operation.setStandardOutput(outputStream);
-        operation.setStandardError(outputStream);
+        operation.setStandardOutput(Logging.detailed());
+        operation.setStandardError(Logging.detailed());
         try {
             return function.apply(operation);
         } catch (GradleConnectionException e) {
             System.out.println();
-            System.out.println("ERROR: failed to run build.");
-            System.out.println();
-            System.out.append(new String(outputStream.toByteArray()));
+            System.out.println("ERROR: failed to run build. See log file for details.");
             System.out.println();
             throw e;
         }

@@ -45,8 +45,6 @@ public class Main {
         System.out.println("Versions: " + settings.getVersions());
         System.out.println("Tasks: " + settings.getTasks());
 
-        startOperation("Probing build environment");
-
         DaemonControl daemonControl = new DaemonControl();
         GradleVersionInspector gradleVersionInspector = new GradleVersionInspector(settings.getProjectDir(), daemonControl);
         List<ScenarioDefinition> scenarios = new ArrayList<>();
@@ -64,6 +62,7 @@ public class Main {
             scenarios.add(new ScenarioDefinition("default", versions, settings.getTasks()));
         }
 
+        startOperation("Scenarios");
         for (ScenarioDefinition scenario : scenarios) {
             System.out.println("Scenario: " + scenario.getName());
             System.out.println("  Gradle versions:");
@@ -86,24 +85,26 @@ public class Main {
             for (GradleVersion version : scenario.getVersions()) {
                 startOperation("Running using Gradle version " + version.getVersion());
 
+                startOperation("Stopping daemons");
                 daemonControl.stop(version);
 
                 GradleConnector connector = GradleConnector.newConnector().useInstallation(version.getGradleHome());
                 ProjectConnection projectConnection = connector.forProjectDirectory(settings.getProjectDir()).connect();
                 try {
                     BuildEnvironment buildEnvironment = projectConnection.getModel(BuildEnvironment.class);
-                    System.out.println("Gradle version: " + buildEnvironment.getGradle().getGradleVersion());
-                    System.out.println("Java home: " + buildEnvironment.getJava().getJavaHome());
-                    System.out.println("OS name: " + System.getProperty("os.name") + " " + System.getProperty("os.version"));
+                    detailed().println();
+                    detailed().println("Gradle version: " + buildEnvironment.getGradle().getGradleVersion());
+                    detailed().println("Java home: " + buildEnvironment.getJava().getJavaHome());
+                    detailed().println("OS name: " + System.getProperty("os.name") + " " + System.getProperty("os.version"));
                     List<String> jvmArgs = new ArrayList<>(buildEnvironment.getJava().getJvmArguments());
                     jvmArgsCalculator.calculateJvmArgs(jvmArgs);
-                    System.out.println("JVM args:");
+                    detailed().println("JVM args:");
                     for (String jvmArg : jvmArgs) {
-                        System.out.println("  " + jvmArg);
+                        detailed().println("  " + jvmArg);
                     }
-                    System.out.println("Gradle args:");
+                    detailed().println("Gradle args:");
                     for (String arg : pidInstrumentation.getArgs()) {
-                        System.out.println("  " + arg);
+                        detailed().println("  " + arg);
                     }
 
                     BuildInvoker invoker = new BuildInvoker(projectConnection, jvmArgs, pidInstrumentation, benchmarkResults.version(scenario, version));

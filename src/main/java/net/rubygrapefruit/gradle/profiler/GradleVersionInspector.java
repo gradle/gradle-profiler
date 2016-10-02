@@ -6,7 +6,6 @@ import org.gradle.tooling.model.build.BuildEnvironment;
 
 import java.io.*;
 import java.util.HashMap;
-import java.util.LinkedHashMap;
 import java.util.Map;
 
 class GradleVersionInspector {
@@ -43,6 +42,7 @@ class GradleVersionInspector {
     }
 
     private GradleVersion doResolveVersion(String versionString) {
+        Logging.startOperation("Locating Gradle version '" + versionString + "'");
         try {
             File dir = new File(versionString);
             if (dir.isDirectory()) {
@@ -60,6 +60,7 @@ class GradleVersionInspector {
 
     public GradleVersion defaultVersion() {
         if (defaultVersion == null) {
+            Logging.startOperation("Locating default Gradle version");
             defaultVersion = probe(GradleConnector.newConnector());
         }
         return defaultVersion;
