@@ -1,6 +1,8 @@
 package net.rubygrapefruit.gradle.profiler;
 
 import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Consumer;
@@ -8,10 +10,14 @@ import java.util.stream.Collectors;
 
 public class NoDaemonInvoker extends BuildInvoker {
     private final GradleVersion gradleVersion;
+    private final File javaHome;
+    private final File projectDir;
 
-    public NoDaemonInvoker(GradleVersion gradleVersion, List<String> jvmArgs, PidInstrumentation pidInstrumentation, Consumer<BuildInvocationResult> resultsConsumer) {
+    public NoDaemonInvoker(GradleVersion gradleVersion, File javaHome, File projectDir, List<String> jvmArgs, PidInstrumentation pidInstrumentation, Consumer<BuildInvocationResult> resultsConsumer) {
         super(jvmArgs, pidInstrumentation, resultsConsumer);
         this.gradleVersion = gradleVersion;
+        this.javaHome = javaHome;
+        this.projectDir = projectDir;
     }
 
     @Override
@@ -23,12 +29,37 @@ public class NoDaemonInvoker extends BuildInvoker {
         commandLine.addAll(tasks);
         String gradleOpts = jvmArgs.stream().collect(Collectors.joining(" "));
         System.out.println("Running " + commandLine);
+        System.out.println("JAVA_HOME=" + javaHome.getAbsolutePath());
         System.out.println("GRADLE_OPTS=" + gradleOpts);
         ProcessBuilder builder = new ProcessBuilder(commandLine);
+        builder.directory(projectDir);
         builder.environment().put("GRADLE_OPTS", gradleOpts);
-        builder.redirectErrorStream();
+        builder.environment().put("JAVA_HOME", javaHome.getAbsolutePath());
+        builder.redirectErrorStream(true);
         try {
-            int exitCode = builder.start().waitFor();
+            Process process = builder.start();
+            process.getOutputStream().close();
+            Thread drain = new Thread(){
+                @Override
+                public void run() {
+                    InputStream inputStream = process.getInputStream();
+                    byte[] buffer = new byte[1024];
+                    try {
+                        while (true) {
+                            int nread = inputStream.read(buffer);
+                            if (nread < 0) {
+                                break;
+                            }
+                            System.out.write(buffer, 0, nread);
+                        }
+                    } catch (IOException e) {
+                        throw new RuntimeException("Could not read process output.");
+                    }
+                }
+            };
+            drain.start();
+            int exitCode = process.waitFor();
+            drain.join();
             if (exitCode != 0) {
                 throw new RuntimeException("Gradle command completed with non-zero exit code.");
             }
