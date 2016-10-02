@@ -7,6 +7,7 @@ import org.gradle.tooling.ProjectConnection;
 import org.gradle.tooling.model.build.BuildEnvironment;
 
 import java.io.*;
+import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -59,19 +60,19 @@ public class Main {
             System.out.println("Java args: " + jvmArgs);
 
             startOperation("Running warm-up build #1 with tasks " + tasks);
-            runBuild(projectConnection, tasks, jvmArgs, pidInstrumentation);
-            String pid = pidInstrumentation.getPidForLastBuild();
+            BuildResults results = runBuild(projectConnection, tasks, jvmArgs, pidInstrumentation);
+            String pid = results.getDaemonPid();
 
             startOperation("Running warm-up build #2 with tasks " + tasks);
-            runBuild(projectConnection, tasks, jvmArgs, pidInstrumentation);
-            checkPid(pid, pidInstrumentation.getPidForLastBuild());
+            results = runBuild(projectConnection, tasks, jvmArgs, pidInstrumentation);
+            checkPid(pid, results.getDaemonPid());
 
             startOperation("Starting recording for daemon with pid " + pid);
             jfrControl.start(pid);
 
             startOperation("Running profiling build with tasks " + tasks);
-            runBuild(projectConnection, tasks, jvmArgs, pidInstrumentation);
-            checkPid(pid, pidInstrumentation.getPidForLastBuild());
+            results = runBuild(projectConnection, tasks, jvmArgs, pidInstrumentation);
+            checkPid(pid, results.getDaemonPid());
 
             startOperation("Stopping recording for daemon with pid " + pid);
             jfrControl.stop(pid, new File("profile.jfr"));
@@ -98,8 +99,9 @@ public class Main {
         }
     }
 
-    private static void runBuild(ProjectConnection projectConnection, List<?> tasks, List<String> jvmArgs, PidInstrumentation pidInstrumentation)
+    private static BuildResults runBuild(ProjectConnection projectConnection, List<?> tasks, List<String> jvmArgs, PidInstrumentation pidInstrumentation)
             throws IOException {
+        Timer timer = new Timer();
         BuildLauncher build = projectConnection.newBuild();
         build.forTasks(tasks.toArray(new String[0]));
         build.withArguments(pidInstrumentation.getArgs());
@@ -117,6 +119,12 @@ public class Main {
             System.out.println();
             throw e;
         }
-        System.out.println("Used daemon with pid " + pidInstrumentation.getPidForLastBuild());
+        Duration executionTime = timer.elapsed();
+
+        String pid = pidInstrumentation.getPidForLastBuild();
+        System.out.println("Used daemon with pid " + pid);
+        System.out.println("Execution time " + executionTime.toMillis() + "ms");
+
+        return new BuildResults(executionTime, pid);
     }
 }
