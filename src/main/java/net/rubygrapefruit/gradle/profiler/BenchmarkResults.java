@@ -11,18 +11,19 @@ import java.util.Map;
 import java.util.function.Consumer;
 
 public class BenchmarkResults {
-    private final Map<GradleVersion, List<BuildInvocationResult>> versions = new LinkedHashMap<>();
+    private final Map<String, List<BuildInvocationResult>> columns = new LinkedHashMap<>();
 
-    public Consumer<BuildInvocationResult> version(GradleVersion version) {
-        List<BuildInvocationResult> results = getResultsForVersion(version);
+    public Consumer<BuildInvocationResult> version(ScenarioDefinition scenario, GradleVersion version) {
+        List<BuildInvocationResult> results = getResultsForVersion(scenario, version);
         return buildInvocationResult -> results.add(buildInvocationResult);
     }
 
-    private List<BuildInvocationResult> getResultsForVersion(GradleVersion version) {
-        List<BuildInvocationResult> results = versions.get(version);
+    private List<BuildInvocationResult> getResultsForVersion(ScenarioDefinition scenario, GradleVersion version) {
+        String name = scenario.getName() + " " + version.getVersion();
+        List<BuildInvocationResult> results = columns.get(name);
         if (results == null) {
             results = new ArrayList<>();
-            versions.put(version, results);
+            columns.put(name, results);
         }
         return results;
     }
@@ -30,14 +31,14 @@ public class BenchmarkResults {
     public void writeTo(File csv) throws IOException {
         try (BufferedWriter writer = new BufferedWriter(new FileWriter(csv))) {
             writer.write("build");
-            for (GradleVersion gradleVersion : versions.keySet()) {
+            for (String name : columns.keySet()) {
                 writer.write(",");
-                writer.write(gradleVersion.getVersion());
+                writer.write(name);
             }
             writer.newLine();
             for (int row = 0; ; row++) {
                 boolean startRow = true;
-                for (List<BuildInvocationResult> results : versions.values()) {
+                for (List<BuildInvocationResult> results : columns.values()) {
                     if (row >= results.size()) {
                         return;
                     }

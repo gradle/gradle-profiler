@@ -15,6 +15,7 @@ class CommandLineParser {
         OptionParser parser = new OptionParser();
         ArgumentAcceptingOptionSpec<String> projectOption = parser.accepts("project-dir", "the directory to run the build from").withRequiredArg();
         ArgumentAcceptingOptionSpec<String> versionOption = parser.accepts("gradle-version", "Gradle version or installation to use to run build").withRequiredArg();
+        ArgumentAcceptingOptionSpec<String> configFileOption = parser.accepts("config-file", "Configuration file to use").withRequiredArg();
         OptionSpecBuilder jfrOption = parser.accepts("profile", "collect profiling information using JFR (default)");
         OptionSpecBuilder benchmarkOption = parser.accepts("benchmark", "collect benchmark metrics");
         OptionSet parsedOptions;
@@ -41,7 +42,8 @@ class CommandLineParser {
         }
         List<String> taskNames = parsedOptions.nonOptionArguments().stream().map(o -> o.toString()).collect(Collectors.toList());
         List<String> versions = parsedOptions.valuesOf(versionOption).stream().map(v -> v.toString()).collect(Collectors.toList());
-        return new InvocationSettings(projectDir, profile, benchmark, versions, taskNames);
+        File configFile = parsedOptions.has(configFileOption) ? new File(parsedOptions.valueOf(configFileOption)) : null;
+        return new InvocationSettings(projectDir, profile, benchmark, configFile, versions, taskNames);
     }
 
 }

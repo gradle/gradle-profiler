@@ -1,6 +1,7 @@
 /build
 /.gradle
 /.idea
-profile.jfr
-profile.log
-benchmark.csv
+*.jfr
+*.log
+*.csv
+*.conf
