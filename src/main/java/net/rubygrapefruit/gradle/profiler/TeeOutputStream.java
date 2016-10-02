@@ -5,7 +5,7 @@ import java.io.OutputStream;
 import java.util.Arrays;
 import java.util.List;
 
-public class TeeOutputStream extends OutputStream {
+class TeeOutputStream extends OutputStream {
     private final List<OutputStream> targets;
 
     public TeeOutputStream(OutputStream... targets) {
