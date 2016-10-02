@@ -38,13 +38,18 @@ public class Main {
         System.out.println("Tasks: " + settings.getTasks());
 
         startOperation("Probing build environment");
+        DaemonControl daemonControl = new DaemonControl();
         GradleVersionInspector gradleVersionInspector = new GradleVersionInspector(settings.getProjectDir());
         List<GradleVersion> versions = new ArrayList<>();
         for (String v : settings.getVersions()) {
-            versions.add(gradleVersionInspector.resolve(v));
+            GradleVersion version = gradleVersionInspector.resolve(v);
+            versions.add(version);
+            daemonControl.stop(version);
         }
         if (versions.isEmpty()) {
-            versions.add(gradleVersionInspector.defaultVersion());
+            GradleVersion version = gradleVersionInspector.defaultVersion();
+            versions.add(version);
+            daemonControl.stop(version);
         }
 
         System.out.println("Gradle versions:");
@@ -59,6 +64,9 @@ public class Main {
 
         for (GradleVersion version : versions) {
             startOperation("Running using Gradle version " + version.getVersion());
+
+            daemonControl.stop(version);
+
             GradleConnector connector = GradleConnector.newConnector().useInstallation(version.getGradleHome());
             ProjectConnection projectConnection = connector.forProjectDirectory(settings.getProjectDir()).connect();
             try {
@@ -103,6 +111,9 @@ public class Main {
             } finally {
                 projectConnection.close();
             }
+
+            startOperation("Stopping daemons");
+            daemonControl.stop(version);
         }
         return true;
     }
@@ -120,8 +131,7 @@ public class Main {
 
     private static void checkPid(String expected, String actual) {
         if (!expected.equals(actual)) {
-            throw new RuntimeException(
-                    "Multiple Gradle daemons were used. Please make sure all Gradle daemons are stopped before running the profiler.");
+            throw new RuntimeException("Multiple Gradle daemons were used. Please make sure all Gradle daemons are stopped before running the profiler.");
         }
     }
 }

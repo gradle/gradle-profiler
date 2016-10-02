@@ -52,7 +52,12 @@ class GradleVersionInspector {
         ProjectConnection connection = connector.forProjectDirectory(projectDir).connect();
         try {
             BuildEnvironment buildEnvironment = connection.getModel(BuildEnvironment.class);
-            connection.newBuild().withArguments("-I", initScript.getAbsolutePath()).forTasks("help").run();
+            BuildInvoker.run(connection.newBuild(), build -> {
+                build.withArguments("-I", initScript.getAbsolutePath());
+                build.forTasks("help");
+                build.run();
+                return null;
+            });
             return new GradleVersion(buildEnvironment.getGradle().getGradleVersion(), getGradleHomeForLastBuild());
         } finally {
             connection.close();
