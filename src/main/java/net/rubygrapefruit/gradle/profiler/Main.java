@@ -1,9 +1,5 @@
 package net.rubygrapefruit.gradle.profiler;
 
-import joptsimple.ArgumentAcceptingOptionSpec;
-import joptsimple.OptionException;
-import joptsimple.OptionParser;
-import joptsimple.OptionSet;
 import org.gradle.tooling.BuildLauncher;
 import org.gradle.tooling.GradleConnectionException;
 import org.gradle.tooling.GradleConnector;
@@ -12,7 +8,6 @@ import org.gradle.tooling.model.build.BuildEnvironment;
 
 import java.io.*;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 
 public class Main {
@@ -30,37 +25,25 @@ public class Main {
     }
 
     private static boolean run(String[] args) throws Exception {
-        OptionParser parser = new OptionParser();
-        ArgumentAcceptingOptionSpec<String> projectOption = parser.accepts("project-dir", "the directory to run the build from").withRequiredArg();
-        OptionSet parsedOptions;
-        try {
-            parsedOptions = parser.parse(args);
-        } catch (OptionException e) {
-            System.out.println(e.getMessage());
-            System.out.println();
-            parser.printHelpOn(System.out);
-            return false;
-        }
-        if (!parsedOptions.has(projectOption)) {
-            System.out.println("No project directory specified.");
-            System.out.println();
-            parser.printHelpOn(System.out);
+        InvocationSettings settings = new CommandLineParser().parseSettings(args);
+        if (settings == null) {
             return false;
         }
 
         setupLogging();
 
-        File projectDir = (parsedOptions.has(projectOption) ? new File(parsedOptions.valueOf(projectOption)) : new File(".")).getCanonicalFile();
         System.out.println();
-        System.out.println("Project dir: " + projectDir);
-        List<?> tasks = parsedOptions.nonOptionArguments();
-        System.out.println("Tasks: " + tasks);
+        System.out.println("Project dir: " + settings.getProjectDir());
+        System.out.println("Profile: " + settings.isProfile());
+        System.out.println("Benchmark: " + settings.isBenchmark());
+        System.out.println("Tasks: " + settings.getTasks());
 
         PidInstrumentation pidInstrumentation = new PidInstrumentation();
         JFRControl jfrControl = new JFRControl();
+        List<String> tasks = settings.getTasks();
 
         GradleConnector connector = GradleConnector.newConnector();
-        ProjectConnection projectConnection = connector.forProjectDirectory(projectDir).connect();
+        ProjectConnection projectConnection = connector.forProjectDirectory(settings.getProjectDir()).connect();
         try {
             BuildEnvironment buildEnvironment = projectConnection.getModel(BuildEnvironment.class);
             System.out.println("Gradle version: " + buildEnvironment.getGradle().getGradleVersion());
@@ -111,11 +94,12 @@ public class Main {
 
     private static void checkPid(String expected, String actual) {
         if (!expected.equals(actual)) {
-            throw new RuntimeException("Multiple Gradle daemons were used. Please make sure all Gradle daemons are stopped before running the profiler.");
+            throw new RuntimeException( "Multiple Gradle daemons were used. Please make sure all Gradle daemons are stopped before running the profiler.");
         }
     }
 
-    private static void runBuild(ProjectConnection projectConnection, List<?> tasks, List<String> jvmArgs, PidInstrumentation pidInstrumentation) throws IOException {
+    private static void runBuild(ProjectConnection projectConnection, List<?> tasks, List<String> jvmArgs, PidInstrumentation pidInstrumentation)
+            throws IOException {
         BuildLauncher build = projectConnection.newBuild();
         build.forTasks(tasks.toArray(new String[0]));
         build.withArguments(pidInstrumentation.getArgs());
@@ -134,51 +118,5 @@ public class Main {
             throw e;
         }
         System.out.println("Used daemon with pid " + pidInstrumentation.getPidForLastBuild());
-    }
-
-    static class TeeOutputStream extends OutputStream {
-        private final List<OutputStream> targets;
-
-        public TeeOutputStream(OutputStream... targets) {
-            this.targets = Arrays.asList(targets);
-        }
-
-        @Override
-        public void write(int b) throws IOException {
-            withAll(stream -> stream.write(b));
-        }
-
-        @Override
-        public void write(byte[] b, int off, int len) throws IOException {
-            withAll(stream -> stream.write(b, off, len));
-        }
-
-        @Override
-        public void flush() throws IOException {
-            withAll(stream -> stream.flush());
-        }
-
-        @Override
-        public void close() throws IOException {
-            withAll(stream -> stream.close());
-        }
-
-        private void withAll(IOAction action) throws IOException {
-            IOException failure = null;
-            for (OutputStream target : targets) {
-                try {
-                    action.withStream(target);
-                } catch (IOException e) {
-                    failure = e;
-                }
-            }
-            if (failure != null) {
-                throw failure;
-            }
-        }
-
-        private interface IOAction {
-            void withStream(OutputStream stream) throws IOException;
-        }
     }
 }
