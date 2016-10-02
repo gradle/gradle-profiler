@@ -8,10 +8,13 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 class CommandLineParser {
+    public static class SettingsNotAvailableException extends RuntimeException {
+    }
+
     /**
      * Returns null on parse failure.
      */
-    public InvocationSettings parseSettings(String[] args) throws IOException {
+    public InvocationSettings parseSettings(String[] args) throws IOException, SettingsNotAvailableException {
         OptionParser parser = new OptionParser();
         ArgumentAcceptingOptionSpec<String> projectOption = parser.accepts("project-dir", "the directory to run the build from").withRequiredArg();
         ArgumentAcceptingOptionSpec<String> versionOption = parser.accepts("gradle-version", "Gradle version or installation to use to run build").withRequiredArg();
@@ -26,13 +29,13 @@ class CommandLineParser {
             System.out.println(e.getMessage());
             System.out.println();
             parser.printHelpOn(System.out);
-            return null;
+            throw new SettingsNotAvailableException();
         }
         if (!parsedOptions.has(projectOption)) {
             System.out.println("No project directory specified.");
             System.out.println();
             parser.printHelpOn(System.out);
-            return null;
+            throw new SettingsNotAvailableException();
         }
 
         File projectDir = (parsedOptions.has(projectOption) ? new File(parsedOptions.valueOf(projectOption)) : new File(".")).getCanonicalFile();

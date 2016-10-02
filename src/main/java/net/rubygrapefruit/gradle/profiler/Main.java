@@ -15,7 +15,11 @@ public class Main {
     public static void main(String[] args) throws Exception {
         boolean ok;
         try {
-            ok = run(args);
+            new Main().run(args);
+            ok = true;
+        } catch (CommandLineParser.SettingsNotAvailableException e) {
+            // Reported already
+            ok = false;
         } catch (Exception e) {
             e.printStackTrace(System.out);
             ok = false;
@@ -25,11 +29,8 @@ public class Main {
         System.exit(ok ? 0 : 1);
     }
 
-    private static boolean run(String[] args) throws Exception {
+    public void run(String[] args) throws Exception {
         InvocationSettings settings = new CommandLineParser().parseSettings(args);
-        if (settings == null) {
-            return false;
-        }
 
         setupLogging();
 
@@ -79,8 +80,11 @@ public class Main {
                     BuildEnvironment buildEnvironment = projectConnection.getModel(BuildEnvironment.class);
                     detailed().println();
                     detailed().println("Gradle version: " + buildEnvironment.getGradle().getGradleVersion());
-                    detailed().println("Java home: " + buildEnvironment.getJava().getJavaHome());
+
+                    File javaHome = buildEnvironment.getJava().getJavaHome();
+                    detailed().println("Java home: " + javaHome);
                     detailed().println("OS name: " + System.getProperty("os.name") + " " + System.getProperty("os.version"));
+
                     List<String> jvmArgs = new ArrayList<>(buildEnvironment.getJava().getJvmArguments());
                     jvmArgsCalculator.calculateJvmArgs(jvmArgs);
                     detailed().println("JVM args:");
@@ -93,7 +97,7 @@ public class Main {
                     }
 
                     Consumer<BuildInvocationResult> resultsCollector = benchmarkResults.version(scenario, version);
-                    BuildInvoker invoker = scenario.getInvoker() == Invoker.NoDaemon ? new NoDaemonInvoker(version, jvmArgs, pidInstrumentation, resultsCollector) : new ToolingApiInvoker(projectConnection, jvmArgs, pidInstrumentation, resultsCollector);
+                    BuildInvoker invoker = scenario.getInvoker() == Invoker.NoDaemon ? new NoDaemonInvoker(version, javaHome, settings.getProjectDir(), jvmArgs, pidInstrumentation, resultsCollector) : new ToolingApiInvoker(projectConnection, jvmArgs, pidInstrumentation, resultsCollector);
 
                     if (settings.isBenchmark()) {
                         List<String> cleanTasks = new ArrayList<>();
@@ -136,8 +140,6 @@ public class Main {
         if (settings.isBenchmark()) {
             benchmarkResults.writeTo(new File("benchmark.csv"));
         }
-
-        return true;
     }
 
     private static void checkPid(String expected, String actual, Invoker invoker) {
