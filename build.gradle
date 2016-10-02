@@ -9,7 +9,7 @@ repositories {
 }
 
 dependencies {
-    compile "org.gradle:gradle-tooling-api:2.14.1"
+    compile 'org.gradle:gradle-tooling-api:3.1'
     compile 'net.sf.jopt-simple:jopt-simple:5.0.2'
 
     runtime 'org.slf4j:slf4j-simple:1.7.10'
