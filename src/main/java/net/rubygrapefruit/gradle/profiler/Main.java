@@ -25,6 +25,22 @@ public class Main {
         System.exit(ok ? 0 : 1);
     }
 
+    static class JvmArgsCalculator {
+        void calculateJvmArgs(List<String> jvmArgs) {
+        }
+    }
+
+    static class JFRJvmArgsCalculator extends JvmArgsCalculator{
+        @Override
+        void calculateJvmArgs(List<String> jvmArgs) {
+            jvmArgs.add("-XX:+UnlockCommercialFeatures");
+            jvmArgs.add("-XX:+FlightRecorder");
+            jvmArgs.add("-XX:FlightRecorderOptions=stackdepth=1024");
+            jvmArgs.add("-XX:+UnlockDiagnosticVMOptions");
+            jvmArgs.add("-XX:+DebugNonSafepoints");
+        }
+    }
+
     private static boolean run(String[] args) throws Exception {
         InvocationSettings settings = new CommandLineParser().parseSettings(args);
         if (settings == null) {
@@ -41,6 +57,7 @@ public class Main {
 
         PidInstrumentation pidInstrumentation = new PidInstrumentation();
         JFRControl jfrControl = new JFRControl();
+        JvmArgsCalculator jvmArgsCalculator = settings.isProfile() ? new JFRJvmArgsCalculator() : new JvmArgsCalculator();
         List<String> tasks = settings.getTasks();
 
         GradleConnector connector = GradleConnector.newConnector();
@@ -51,11 +68,7 @@ public class Main {
             System.out.println("Java home: " + buildEnvironment.getJava().getJavaHome());
             System.out.println("OS name: " + System.getProperty("os.name") + " " + System.getProperty("os.version"));
             List<String> jvmArgs = new ArrayList<>(buildEnvironment.getJava().getJvmArguments());
-            jvmArgs.add("-XX:+UnlockCommercialFeatures");
-            jvmArgs.add("-XX:+FlightRecorder");
-            jvmArgs.add("-XX:FlightRecorderOptions=stackdepth=1024");
-            jvmArgs.add("-XX:+UnlockDiagnosticVMOptions");
-            jvmArgs.add("-XX:+DebugNonSafepoints");
+            jvmArgsCalculator.calculateJvmArgs(jvmArgs);
 
             System.out.println("Java args: " + jvmArgs);
 
@@ -67,15 +80,19 @@ public class Main {
             results = runBuild(projectConnection, tasks, jvmArgs, pidInstrumentation);
             checkPid(pid, results.getDaemonPid());
 
-            startOperation("Starting recording for daemon with pid " + pid);
-            jfrControl.start(pid);
+            if (settings.isProfile()) {
+                startOperation("Starting recording for daemon with pid " + pid);
+                jfrControl.start(pid);
+            }
 
             startOperation("Running profiling build with tasks " + tasks);
             results = runBuild(projectConnection, tasks, jvmArgs, pidInstrumentation);
             checkPid(pid, results.getDaemonPid());
 
-            startOperation("Stopping recording for daemon with pid " + pid);
-            jfrControl.stop(pid, new File("profile.jfr"));
+            if (settings.isProfile()) {
+                startOperation("Stopping recording for daemon with pid " + pid);
+                jfrControl.stop(pid, new File("profile.jfr"));
+            }
         } finally {
             projectConnection.close();
         }
