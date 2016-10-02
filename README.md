@@ -41,7 +41,7 @@ and each of these is used to benchmark the build, allowing you to compare the be
 
 ## Configuration file
 
-A configuration file can be provided to define scenarios to benchmark. Use the `--config-file` option to provide this.
+A configuration file can be provided to define scenarios to benchmark or profile. Use the `--config-file` option to provide this.
 
     # A comment
     assemble {
