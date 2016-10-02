@@ -90,6 +90,15 @@ public class Main {
 
                 BuildInvoker invoker = new BuildInvoker(projectConnection, jvmArgs, pidInstrumentation, benchmarkResults.version(version));
 
+                if (settings.isBenchmark()) {
+                    List<String> cleanTasks = new ArrayList<>();
+                    cleanTasks.add("clean");
+                    cleanTasks.addAll(tasks);
+                    invoker.runBuild("clean build", cleanTasks);
+                    startOperation("Stopping daemons");
+                    daemonControl.stop(version);
+                }
+
                 BuildInvocationResult results = invoker.runBuild("warm-up build #1", tasks);
                 String pid = results.getDaemonPid();
 
