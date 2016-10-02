@@ -8,6 +8,7 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.time.Duration;
 import java.util.List;
+import java.util.function.Consumer;
 import java.util.function.Function;
 
 class BuildInvoker {
@@ -15,15 +16,17 @@ class BuildInvoker {
     private final List<String> jvmArgs;
     private final List<?> tasks;
     private final PidInstrumentation pidInstrumentation;
+    private final Consumer<BuildInvocationResult> resultsConsumer;
 
-    public BuildInvoker(ProjectConnection projectConnection, List<?> tasks, List<String> jvmArgs, PidInstrumentation pidInstrumentation) {
+    public BuildInvoker(ProjectConnection projectConnection, List<?> tasks, List<String> jvmArgs, PidInstrumentation pidInstrumentation, Consumer<BuildInvocationResult> resultsConsumer) {
         this.projectConnection = projectConnection;
         this.tasks = tasks;
         this.jvmArgs = jvmArgs;
         this.pidInstrumentation = pidInstrumentation;
+        this.resultsConsumer = resultsConsumer;
     }
 
-    public BuildResults runBuild() throws IOException {
+    public BuildInvocationResult runBuild() throws IOException {
         Timer timer = new Timer();
         run(projectConnection.newBuild(), build -> {
             build.forTasks(tasks.toArray(new String[0]));
@@ -38,7 +41,9 @@ class BuildInvoker {
         System.out.println("Used daemon with pid " + pid);
         System.out.println("Execution time " + executionTime.toMillis() + "ms");
 
-        return new BuildResults(executionTime, pid);
+        BuildInvocationResult results = new BuildInvocationResult(executionTime, pid);
+        resultsConsumer.accept(results);
+        return results;
     }
 
     public static <T extends LongRunningOperation, R> R run(T operation, Function<T, R> function) {

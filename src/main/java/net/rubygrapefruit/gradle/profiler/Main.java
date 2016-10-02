@@ -57,6 +57,7 @@ public class Main {
             System.out.println("  " + version.getVersion() + " (" + version.getGradleHome() + ")");
         }
 
+        BenchmarkResults benchmarkResults = new BenchmarkResults();
         PidInstrumentation pidInstrumentation = new PidInstrumentation();
         JFRControl jfrControl = new JFRControl();
         JvmArgsCalculator jvmArgsCalculator = settings.isProfile() ? new JFRJvmArgsCalculator() : new JvmArgsCalculator();
@@ -85,10 +86,10 @@ public class Main {
                     System.out.println("  " + arg);
                 }
 
-                BuildInvoker invoker = new BuildInvoker(projectConnection, tasks, jvmArgs, pidInstrumentation);
+                BuildInvoker invoker = new BuildInvoker(projectConnection, tasks, jvmArgs, pidInstrumentation, benchmarkResults.version(version));
 
                 startOperation("Running warm-up build #1 with tasks " + tasks);
-                BuildResults results = invoker.runBuild();
+                BuildInvocationResult results = invoker.runBuild();
                 String pid = results.getDaemonPid();
 
                 startOperation("Running warm-up build #2 with tasks " + tasks);
@@ -100,9 +101,11 @@ public class Main {
                     jfrControl.start(pid);
                 }
 
-                startOperation("Running profiling build with tasks " + tasks);
-                results = invoker.runBuild();
-                checkPid(pid, results.getDaemonPid());
+                for (int i = 0; i < settings.getBuildCount(); i++) {
+                    startOperation("Running build " + (i+1) + " with tasks " + tasks);
+                    results = invoker.runBuild();
+                    checkPid(pid, results.getDaemonPid());
+                }
 
                 if (settings.isProfile()) {
                     startOperation("Stopping recording for daemon with pid " + pid);
@@ -115,6 +118,11 @@ public class Main {
             startOperation("Stopping daemons");
             daemonControl.stop(version);
         }
+
+        if (settings.isBenchmark()) {
+            benchmarkResults.writeTo(new File("benchmark.csv"));
+        }
+
         return true;
     }
 

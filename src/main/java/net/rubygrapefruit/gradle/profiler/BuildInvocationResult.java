@@ -2,11 +2,11 @@ package net.rubygrapefruit.gradle.profiler;
 
 import java.time.Duration;
 
-class BuildResults {
+class BuildInvocationResult {
     private final Duration executionTime;
     private final String daemonPid;
 
-    public BuildResults(Duration executionTime, String daemonPid) {
+    public BuildInvocationResult(Duration executionTime, String daemonPid) {
         this.executionTime = executionTime;
         this.daemonPid = daemonPid;
     }

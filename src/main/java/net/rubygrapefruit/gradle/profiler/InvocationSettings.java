@@ -37,4 +37,8 @@ class InvocationSettings {
     public List<String> getTasks() {
         return tasks;
     }
+
+    public int getBuildCount() {
+        return benchmark ? 13 : 1;
+    }
 }
