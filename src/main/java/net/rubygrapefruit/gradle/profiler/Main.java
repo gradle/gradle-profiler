@@ -4,9 +4,11 @@ import org.gradle.tooling.GradleConnector;
 import org.gradle.tooling.ProjectConnection;
 import org.gradle.tooling.model.build.BuildEnvironment;
 
-import java.io.*;
+import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
+
+import static net.rubygrapefruit.gradle.profiler.Logging.*;
 
 public class Main {
     public static void main(String[] args) throws Exception {
@@ -86,14 +88,12 @@ public class Main {
                     System.out.println("  " + arg);
                 }
 
-                BuildInvoker invoker = new BuildInvoker(projectConnection, tasks, jvmArgs, pidInstrumentation, benchmarkResults.version(version));
+                BuildInvoker invoker = new BuildInvoker(projectConnection, jvmArgs, pidInstrumentation, benchmarkResults.version(version));
 
-                startOperation("Running warm-up build #1 with tasks " + tasks);
-                BuildInvocationResult results = invoker.runBuild();
+                BuildInvocationResult results = invoker.runBuild("warm-up build #1", tasks);
                 String pid = results.getDaemonPid();
 
-                startOperation("Running warm-up build #2 with tasks " + tasks);
-                results = invoker.runBuild();
+                results = invoker.runBuild("warm-up build #2", tasks);
                 checkPid(pid, results.getDaemonPid());
 
                 if (settings.isProfile()) {
@@ -102,8 +102,7 @@ public class Main {
                 }
 
                 for (int i = 0; i < settings.getBuildCount(); i++) {
-                    startOperation("Running build " + (i+1) + " with tasks " + tasks);
-                    results = invoker.runBuild();
+                    results = invoker.runBuild("build " + (i+1), tasks);
                     checkPid(pid, results.getDaemonPid());
                 }
 
@@ -124,17 +123,6 @@ public class Main {
         }
 
         return true;
-    }
-
-    private static void setupLogging() throws FileNotFoundException {
-        File logFile = new File("profile.log");
-        OutputStream log = new BufferedOutputStream(new FileOutputStream(logFile));
-        System.setOut(new PrintStream(new TeeOutputStream(System.out, log)));
-    }
-
-    private static void startOperation(String name) {
-        System.out.println();
-        System.out.println("* " + name);
     }
 
     private static void checkPid(String expected, String actual) {

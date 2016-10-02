@@ -29,18 +29,25 @@ public class BenchmarkResults {
 
     public void writeTo(File csv) throws IOException {
         try (BufferedWriter writer = new BufferedWriter(new FileWriter(csv))) {
+            writer.write("build");
             for (GradleVersion gradleVersion : versions.keySet()) {
-                writer.write(gradleVersion.getVersion());
                 writer.write(",");
+                writer.write(gradleVersion.getVersion());
             }
             writer.newLine();
             for (int row = 0; ; row++) {
+                boolean startRow = true;
                 for (List<BuildInvocationResult> results : versions.values()) {
                     if (row >= results.size()) {
                         return;
                     }
-                    writer.write(String.valueOf(results.get(row).getExecutionTime().toMillis()));
+                    BuildInvocationResult buildResult = results.get(row);
+                    if (startRow) {
+                        writer.write(buildResult.getDisplayName());
+                        startRow = false;
+                    }
                     writer.write(",");
+                    writer.write(String.valueOf(buildResult.getExecutionTime().toMillis()));
                 }
                 writer.newLine();
             }

@@ -11,22 +11,24 @@ import java.util.List;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
+import static net.rubygrapefruit.gradle.profiler.Logging.*;
+
 class BuildInvoker {
     private final ProjectConnection projectConnection;
     private final List<String> jvmArgs;
-    private final List<?> tasks;
     private final PidInstrumentation pidInstrumentation;
     private final Consumer<BuildInvocationResult> resultsConsumer;
 
-    public BuildInvoker(ProjectConnection projectConnection, List<?> tasks, List<String> jvmArgs, PidInstrumentation pidInstrumentation, Consumer<BuildInvocationResult> resultsConsumer) {
+    public BuildInvoker(ProjectConnection projectConnection, List<String> jvmArgs, PidInstrumentation pidInstrumentation, Consumer<BuildInvocationResult> resultsConsumer) {
         this.projectConnection = projectConnection;
-        this.tasks = tasks;
         this.jvmArgs = jvmArgs;
         this.pidInstrumentation = pidInstrumentation;
         this.resultsConsumer = resultsConsumer;
     }
 
-    public BuildInvocationResult runBuild() throws IOException {
+    public BuildInvocationResult runBuild(String displayName, List<String> tasks) throws IOException {
+        startOperation("Running " + displayName + " with tasks " + tasks);
+
         Timer timer = new Timer();
         run(projectConnection.newBuild(), build -> {
             build.forTasks(tasks.toArray(new String[0]));
@@ -41,7 +43,7 @@ class BuildInvoker {
         System.out.println("Used daemon with pid " + pid);
         System.out.println("Execution time " + executionTime.toMillis() + "ms");
 
-        BuildInvocationResult results = new BuildInvocationResult(executionTime, pid);
+        BuildInvocationResult results = new BuildInvocationResult(displayName, executionTime, pid);
         resultsConsumer.accept(results);
         return results;
     }
