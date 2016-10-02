@@ -51,4 +51,7 @@ A configuration file can be provided to define scenarios to benchmark or profile
     clean_build {
         versions = ["/Users/me/gradle"]
         tasks = ["clean", "build"]
+        run-using = no-daemon // value can be "no-daemon" or "tooling-api"
     }
+
+Values are optional and default to the values provided on the command-line.

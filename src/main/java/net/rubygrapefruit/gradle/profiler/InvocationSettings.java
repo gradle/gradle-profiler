@@ -8,16 +8,22 @@ class InvocationSettings {
     private final boolean profile;
     private final boolean benchmark;
     private final File configFile;
+    private final Invoker invoker;
     private final List<String> versions;
     private final List<String> tasks;
 
-    public InvocationSettings(File projectDir, boolean profile, boolean benchmark, File configFile, List<String> versions, List<String> tasks) {
+    public InvocationSettings(File projectDir, boolean profile, boolean benchmark, Invoker invoker, File configFile, List<String> versions, List<String> tasks) {
         this.benchmark = benchmark;
         this.projectDir = projectDir;
         this.profile = profile;
+        this.invoker = invoker;
         this.configFile = configFile;
         this.versions = versions;
         this.tasks = tasks;
+    }
+
+    public Invoker getInvoker() {
+        return invoker;
     }
 
     public boolean isBenchmark() {

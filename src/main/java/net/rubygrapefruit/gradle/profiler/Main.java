@@ -11,6 +11,7 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
 import static net.rubygrapefruit.gradle.profiler.Logging.*;
@@ -59,7 +60,7 @@ public class Main {
             if (versions.isEmpty()) {
                 versions.add(gradleVersionInspector.defaultVersion());
             }
-            scenarios.add(new ScenarioDefinition("default", versions, settings.getTasks()));
+            scenarios.add(new ScenarioDefinition("default", settings.getInvoker(), versions, settings.getTasks()));
         }
 
         startOperation("Scenarios");
@@ -70,6 +71,7 @@ public class Main {
                 System.out.println("    " + version.getVersion() + " (" + version.getGradleHome() + ")");
             }
             System.out.println("  Tasks: " + scenario.getTasks());
+            System.out.println("  Run using: " + scenario.getInvoker());
         }
 
         BenchmarkResults benchmarkResults = new BenchmarkResults();
@@ -107,7 +109,8 @@ public class Main {
                         detailed().println("  " + arg);
                     }
 
-                    BuildInvoker invoker = new BuildInvoker(projectConnection, jvmArgs, pidInstrumentation, benchmarkResults.version(scenario, version));
+                    Consumer<BuildInvocationResult> resultsCollector = benchmarkResults.version(scenario, version);
+                    BuildInvoker invoker = scenario.getInvoker() == Invoker.NoDaemon ? new NoDaemonInvoker(version, jvmArgs, pidInstrumentation, resultsCollector) : new ToolingApiInvoker(projectConnection, jvmArgs, pidInstrumentation, resultsCollector);
 
                     if (settings.isBenchmark()) {
                         List<String> cleanTasks = new ArrayList<>();
@@ -122,7 +125,7 @@ public class Main {
                     String pid = results.getDaemonPid();
 
                     results = invoker.runBuild("warm-up build #2", tasks);
-                    checkPid(pid, results.getDaemonPid());
+                    checkPid(pid, results.getDaemonPid(), settings.getInvoker());
 
                     if (settings.isProfile()) {
                         startOperation("Starting recording for daemon with pid " + pid);
@@ -131,7 +134,7 @@ public class Main {
 
                     for (int i = 0; i < settings.getBuildCount(); i++) {
                         results = invoker.runBuild("build " + (i + 1), tasks);
-                        checkPid(pid, results.getDaemonPid());
+                        checkPid(pid, results.getDaemonPid(), settings.getInvoker());
                     }
 
                     if (settings.isProfile()) {
@@ -159,12 +162,27 @@ public class Main {
         Config config = ConfigFactory.parseFile(configFile, ConfigParseOptions.defaults().setAllowMissing(false));
         for (String scenarioName : config.root().keySet()) {
             Config scenario = config.getConfig(scenarioName);
-            List<GradleVersion> versions = strings(scenario, "versions", settings.getVersions()).stream().map(v -> inspector.resolve(v)).collect(
-                    Collectors.toList());
+            List<GradleVersion> versions = strings(scenario, "versions", settings.getVersions()).stream().map(v -> inspector.resolve(v)).collect(Collectors.toList());
             List<String> tasks = strings(scenario, "tasks", settings.getTasks());
-            definitions.add(new ScenarioDefinition(scenarioName, versions, tasks));
+            Invoker invoker = invoker(scenario, "run-using", settings.getInvoker());
+            definitions.add(new ScenarioDefinition(scenarioName, invoker, versions, tasks));
         }
         return definitions;
+    }
+
+    private static Invoker invoker(Config config, String key, Invoker defaultValue) {
+        if (config.hasPath(key)) {
+            String value = config.getAnyRef(key).toString();
+            if (value.equals("no-daemon")) {
+                return Invoker.NoDaemon;
+            }
+            if (value.equals("tooling-api")) {
+                return Invoker.ToolingApi;
+            }
+            throw new IllegalArgumentException("Unexpected value for '" + key + "' provided: " + value);
+        } else {
+            return defaultValue;
+        }
     }
 
     private static List<String> strings(Config config, String key, List<String> defaults) {
@@ -181,10 +199,20 @@ public class Main {
         }
     }
 
-    private static void checkPid(String expected, String actual) {
-        if (!expected.equals(actual)) {
-            throw new RuntimeException(
-                    "Multiple Gradle daemons were used. Please make sure all Gradle daemons are stopped before running the profiler.");
+    private static void checkPid(String expected, String actual, Invoker invoker) {
+        switch (invoker) {
+            case ToolingApi:
+                if (!expected.equals(actual)) {
+                    throw new RuntimeException("Multiple Gradle daemons were used.");
+                }
+                break;
+            case NoDaemon:
+                if (expected.equals(actual)) {
+                    throw new RuntimeException("Gradle daemon was used.");
+                }
+                break;
+            default:
+                throw new IllegalArgumentException();
         }
     }
 }

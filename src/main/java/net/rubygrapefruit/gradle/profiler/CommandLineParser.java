@@ -18,6 +18,7 @@ class CommandLineParser {
         ArgumentAcceptingOptionSpec<String> configFileOption = parser.accepts("config-file", "Configuration file to use").withRequiredArg();
         OptionSpecBuilder jfrOption = parser.accepts("profile", "collect profiling information using JFR (default)");
         OptionSpecBuilder benchmarkOption = parser.accepts("benchmark", "collect benchmark metrics");
+        OptionSpecBuilder noDaemon = parser.accepts("no-daemon", "do not use the Gradle daemon");
         OptionSet parsedOptions;
         try {
             parsedOptions = parser.parse(args);
@@ -43,7 +44,7 @@ class CommandLineParser {
         List<String> taskNames = parsedOptions.nonOptionArguments().stream().map(o -> o.toString()).collect(Collectors.toList());
         List<String> versions = parsedOptions.valuesOf(versionOption).stream().map(v -> v.toString()).collect(Collectors.toList());
         File configFile = parsedOptions.has(configFileOption) ? new File(parsedOptions.valueOf(configFileOption)) : null;
-        return new InvocationSettings(projectDir, profile, benchmark, configFile, versions, taskNames);
+        Invoker invoker = parsedOptions.has(noDaemon) ? Invoker.NoDaemon : Invoker.ToolingApi;
+        return new InvocationSettings(projectDir, profile, benchmark, invoker, configFile, versions, taskNames);
     }
-
 }

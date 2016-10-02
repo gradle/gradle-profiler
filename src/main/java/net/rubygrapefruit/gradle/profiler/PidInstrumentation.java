@@ -32,9 +32,13 @@ class PidInstrumentation {
         return Arrays.asList("-I", initScript.getAbsolutePath());
     }
 
-    public String getPidForLastBuild() throws IOException {
-        try (BufferedReader reader = new BufferedReader(new FileReader(pidFile))) {
-            return reader.readLine();
+    public String getPidForLastBuild() {
+        try {
+            try (BufferedReader reader = new BufferedReader(new FileReader(pidFile))) {
+                return reader.readLine();
+            }
+        } catch (IOException e) {
+            throw new RuntimeException("Could not read daemon PID from file.", e);
         }
     }
 }
