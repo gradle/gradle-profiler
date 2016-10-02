@@ -37,54 +37,72 @@ public class Main {
         System.out.println("Benchmark: " + settings.isBenchmark());
         System.out.println("Tasks: " + settings.getTasks());
 
+        startOperation("Probing build environment");
+        GradleVersionInspector gradleVersionInspector = new GradleVersionInspector(settings.getProjectDir());
+        List<GradleVersion> versions = new ArrayList<>();
+        for (String v : settings.getVersions()) {
+            versions.add(gradleVersionInspector.resolve(v));
+        }
+        if (versions.isEmpty()) {
+            versions.add(gradleVersionInspector.defaultVersion());
+        }
+
+        System.out.println("Gradle versions:");
+        for (GradleVersion version : versions) {
+            System.out.println("  " + version.getVersion() + " (" + version.getGradleHome() + ")");
+        }
+
         PidInstrumentation pidInstrumentation = new PidInstrumentation();
         JFRControl jfrControl = new JFRControl();
         JvmArgsCalculator jvmArgsCalculator = settings.isProfile() ? new JFRJvmArgsCalculator() : new JvmArgsCalculator();
         List<String> tasks = settings.getTasks();
 
-        GradleConnector connector = GradleConnector.newConnector();
-        ProjectConnection projectConnection = connector.forProjectDirectory(settings.getProjectDir()).connect();
-        try {
-            BuildEnvironment buildEnvironment = projectConnection.getModel(BuildEnvironment.class);
-            System.out.println("Gradle version: " + buildEnvironment.getGradle().getGradleVersion());
-            System.out.println("Java home: " + buildEnvironment.getJava().getJavaHome());
-            System.out.println("OS name: " + System.getProperty("os.name") + " " + System.getProperty("os.version"));
-            List<String> jvmArgs = new ArrayList<>(buildEnvironment.getJava().getJvmArguments());
-            jvmArgsCalculator.calculateJvmArgs(jvmArgs);
-            System.out.println("JVM args:");
-            for (String jvmArg : jvmArgs) {
-                System.out.println("  " + jvmArg);
+        for (GradleVersion version : versions) {
+            startOperation("Running using Gradle version " + version.getVersion());
+            GradleConnector connector = GradleConnector.newConnector().useInstallation(version.getGradleHome());
+            ProjectConnection projectConnection = connector.forProjectDirectory(settings.getProjectDir()).connect();
+            try {
+                BuildEnvironment buildEnvironment = projectConnection.getModel(BuildEnvironment.class);
+                System.out.println("Gradle version: " + buildEnvironment.getGradle().getGradleVersion());
+                System.out.println("Java home: " + buildEnvironment.getJava().getJavaHome());
+                System.out.println("OS name: " + System.getProperty("os.name") + " " + System.getProperty("os.version"));
+                List<String> jvmArgs = new ArrayList<>(buildEnvironment.getJava().getJvmArguments());
+                jvmArgsCalculator.calculateJvmArgs(jvmArgs);
+                System.out.println("JVM args:");
+                for (String jvmArg : jvmArgs) {
+                    System.out.println("  " + jvmArg);
+                }
+                System.out.println("Gradle args:");
+                for (String arg : pidInstrumentation.getArgs()) {
+                    System.out.println("  " + arg);
+                }
+
+                BuildInvoker invoker = new BuildInvoker(projectConnection, tasks, jvmArgs, pidInstrumentation);
+
+                startOperation("Running warm-up build #1 with tasks " + tasks);
+                BuildResults results = invoker.runBuild();
+                String pid = results.getDaemonPid();
+
+                startOperation("Running warm-up build #2 with tasks " + tasks);
+                results = invoker.runBuild();
+                checkPid(pid, results.getDaemonPid());
+
+                if (settings.isProfile()) {
+                    startOperation("Starting recording for daemon with pid " + pid);
+                    jfrControl.start(pid);
+                }
+
+                startOperation("Running profiling build with tasks " + tasks);
+                results = invoker.runBuild();
+                checkPid(pid, results.getDaemonPid());
+
+                if (settings.isProfile()) {
+                    startOperation("Stopping recording for daemon with pid " + pid);
+                    jfrControl.stop(pid, new File("profile.jfr"));
+                }
+            } finally {
+                projectConnection.close();
             }
-            System.out.println("Gradle args:");
-            for (String arg : pidInstrumentation.getArgs()) {
-                System.out.println("  " + arg);
-            }
-
-            BuildInvoker invoker = new BuildInvoker(projectConnection, tasks, jvmArgs, pidInstrumentation);
-
-            startOperation("Running warm-up build #1 with tasks " + tasks);
-            BuildResults results = invoker.runBuild();
-            String pid = results.getDaemonPid();
-
-            startOperation("Running warm-up build #2 with tasks " + tasks);
-            results = invoker.runBuild();
-            checkPid(pid, results.getDaemonPid());
-
-            if (settings.isProfile()) {
-                startOperation("Starting recording for daemon with pid " + pid);
-                jfrControl.start(pid);
-            }
-
-            startOperation("Running profiling build with tasks " + tasks);
-            results = invoker.runBuild();
-            checkPid(pid, results.getDaemonPid());
-
-            if (settings.isProfile()) {
-                startOperation("Stopping recording for daemon with pid " + pid);
-                jfrControl.stop(pid, new File("profile.jfr"));
-            }
-        } finally {
-            projectConnection.close();
         }
         return true;
     }
@@ -102,7 +120,8 @@ public class Main {
 
     private static void checkPid(String expected, String actual) {
         if (!expected.equals(actual)) {
-            throw new RuntimeException( "Multiple Gradle daemons were used. Please make sure all Gradle daemons are stopped before running the profiler.");
+            throw new RuntimeException(
+                    "Multiple Gradle daemons were used. Please make sure all Gradle daemons are stopped before running the profiler.");
         }
     }
 }

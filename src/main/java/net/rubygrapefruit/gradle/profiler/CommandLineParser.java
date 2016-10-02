@@ -14,6 +14,7 @@ class CommandLineParser {
     public InvocationSettings parseSettings(String[] args) throws IOException {
         OptionParser parser = new OptionParser();
         ArgumentAcceptingOptionSpec<String> projectOption = parser.accepts("project-dir", "the directory to run the build from").withRequiredArg();
+        ArgumentAcceptingOptionSpec<String> versionOption = parser.accepts("gradle-version", "Gradle version or installation to use to run build").withRequiredArg();
         OptionSpecBuilder jfrOption = parser.accepts("profile", "collect profiling information using JFR (default)");
         OptionSpecBuilder benchmarkOption = parser.accepts("benchmark", "collect benchmark metrics");
         OptionSet parsedOptions;
@@ -39,7 +40,8 @@ class CommandLineParser {
             profile = true;
         }
         List<String> taskNames = parsedOptions.nonOptionArguments().stream().map(o -> o.toString()).collect(Collectors.toList());
-        return new InvocationSettings(projectDir, profile, benchmark, taskNames);
+        List<String> versions = parsedOptions.valuesOf(versionOption).stream().map(v -> v.toString()).collect(Collectors.toList());
+        return new InvocationSettings(projectDir, profile, benchmark, versions, taskNames);
     }
 
 }
