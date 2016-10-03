@@ -8,6 +8,8 @@ import java.util.List;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
+import static net.rubygrapefruit.gradle.profiler.Logging.*;
+
 public class NoDaemonInvoker extends BuildInvoker {
     private final GradleVersion gradleVersion;
     private final File javaHome;
@@ -28,9 +30,12 @@ public class NoDaemonInvoker extends BuildInvoker {
         commandLine.add("--no-daemon");
         commandLine.addAll(tasks);
         String gradleOpts = jvmArgs.stream().collect(Collectors.joining(" "));
-        System.out.println("Running " + commandLine);
-        System.out.println("JAVA_HOME=" + javaHome.getAbsolutePath());
-        System.out.println("GRADLE_OPTS=" + gradleOpts);
+        detailed().println("Running command:");
+        for (String arg : commandLine) {
+            detailed().println("  " + arg);
+        }
+        detailed().println("JAVA_HOME: " + javaHome.getAbsolutePath());
+        detailed().println("GRADLE_OPTS: " + gradleOpts);
         ProcessBuilder builder = new ProcessBuilder(commandLine);
         builder.directory(projectDir);
         builder.environment().put("GRADLE_OPTS", gradleOpts);
@@ -50,7 +55,7 @@ public class NoDaemonInvoker extends BuildInvoker {
                             if (nread < 0) {
                                 break;
                             }
-                            System.out.write(buffer, 0, nread);
+                            detailed().write(buffer, 0, nread);
                         }
                     } catch (IOException e) {
                         throw new RuntimeException("Could not read process output.");

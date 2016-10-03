@@ -127,7 +127,7 @@ println "<daemon: " + gradle.services.get(org.gradle.internal.environment.Gradle
         resultsFiles.text.readLines().size() == 17
     }
 
-    def "runs benchmarks using no daemon for specified Gradle version and tasks"() {
+    def "runs benchmarks using no-daemon for specified Gradle version and tasks"() {
         given:
         buildFile.text = """
 apply plugin: BasePlugin

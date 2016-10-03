@@ -50,7 +50,7 @@ public class Main {
                 List<String> tasks = scenario.getTasks();
 
                 for (GradleVersion version : scenario.getVersions()) {
-                    startOperation("Running using Gradle version " + version.getVersion());
+                    startOperation("Running scenario " + scenario.getName() + " using Gradle version " + version.getVersion());
 
                     startOperation("Stopping daemons");
                     daemonControl.stop(version);
@@ -78,7 +78,17 @@ public class Main {
                         }
 
                         Consumer<BuildInvocationResult> resultsCollector = benchmarkResults.version(scenario, version);
-                        BuildInvoker invoker = scenario.getInvoker() == Invoker.NoDaemon ? new NoDaemonInvoker(version, javaHome, settings.getProjectDir(), jvmArgs, pidInstrumentation, resultsCollector) : new ToolingApiInvoker(projectConnection, jvmArgs, pidInstrumentation, resultsCollector);
+                        BuildInvoker invoker;
+                        switch (scenario.getInvoker()) {
+                            case NoDaemon:
+                                invoker = new NoDaemonInvoker(version, javaHome, settings.getProjectDir(), jvmArgs, pidInstrumentation, resultsCollector);
+                                break;
+                            case ToolingApi:
+                                invoker = new ToolingApiInvoker(projectConnection, jvmArgs, pidInstrumentation, resultsCollector);
+                                break;
+                            default:
+                                throw new IllegalArgumentException();
+                        }
 
                         if (settings.isBenchmark()) {
                             List<String> cleanTasks = new ArrayList<>();
