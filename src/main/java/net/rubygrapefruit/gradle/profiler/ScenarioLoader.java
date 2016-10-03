@@ -8,6 +8,7 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.TreeSet;
 import java.util.stream.Collectors;
 
 class ScenarioLoader {
@@ -38,7 +39,7 @@ class ScenarioLoader {
     private List<ScenarioDefinition> loadConfig(File configFile, InvocationSettings settings, GradleVersionInspector inspector) {
         List<ScenarioDefinition> definitions = new ArrayList<>();
         Config config = ConfigFactory.parseFile(configFile, ConfigParseOptions.defaults().setAllowMissing(false));
-        for (String scenarioName : config.root().keySet()) {
+        for (String scenarioName : new TreeSet<>(config.root().keySet())) {
             Config scenario = config.getConfig(scenarioName);
             List<GradleVersion> versions = strings(scenario, "versions", settings.getVersions()).stream().map(v -> inspector.resolve(v)).collect(
                     Collectors.toList());

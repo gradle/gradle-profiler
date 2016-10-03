@@ -5,16 +5,20 @@ import java.io.*;
 public class Logging {
     private static PrintStream originalStdOut = System.out;
     private static PrintStream detail = System.out;
+    private static OutputStream log;
 
     /**
      * Resets logging to its original state before {@link #setupLogging()} was called.
      */
-    public static void resetLogging() {
-        if (detail != originalStdOut) {
+    public static void resetLogging() throws IOException {
+        if (System.out != originalStdOut) {
             System.out.flush();
             System.setOut(originalStdOut);
-            detail.close();
             detail = originalStdOut;
+        }
+        if (log != null) {
+            log.close();
+            log = null;
         }
     }
 
@@ -22,11 +26,10 @@ public class Logging {
      * Routes System.out to log file.
      */
     public static void setupLogging() throws IOException {
-        System.out.flush();
         File logFile = new File("profile.log");
-        OutputStream log = new BufferedOutputStream(new FileOutputStream(logFile));
+        log = new BufferedOutputStream(new FileOutputStream(logFile));
         detail = new PrintStream(log, true);
-        System.setOut(new PrintStream(new TeeOutputStream(originalStdOut, detail)));
+        System.setOut(new PrintStream(new TeeOutputStream(System.out, detail)));
     }
 
     /**
