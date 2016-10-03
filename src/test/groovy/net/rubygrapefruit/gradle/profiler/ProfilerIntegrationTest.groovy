@@ -68,13 +68,13 @@ assemble.doFirst {
         new Main().run("--project-dir", projectDir.absolutePath, "--gradle-version", gradleVersion, "assemble")
 
         then:
-        def e = thrown(BuildException)
+        def e = thrown(Main.ScenarioFailedException)
 
         and:
         logFile.contains("ERROR: failed to run build. See log file for details.")
         output.contains("ERROR: failed to run build. See log file for details.")
-        logFile.contains(e.message)
-        output.contains(e.message)
+        logFile.contains(e.cause.message)
+        output.contains(e.cause.message)
         logFile.contains("java.lang.RuntimeException: broken!")
         output.contains("java.lang.RuntimeException: broken!")
     }
@@ -191,6 +191,53 @@ println "<daemon: " + gradle.services.get(org.gradle.internal.environment.Gradle
         def resultsFiles = new File("benchmark.csv")
         resultsFiles.isFile()
         resultsFiles.text.readLines().get(0) == "build,assemble 3.0,assemble 3.1,help 3.1"
+        resultsFiles.text.readLines().size() == 17
+    }
+
+    def "recovers from failure running benchmarks"() {
+        given:
+        buildFile.text = """
+apply plugin: BasePlugin
+println "<gradle-version: " + gradle.gradleVersion + ">"
+println "<tasks: " + gradle.startParameter.taskNames + ">"
+
+class Holder {
+    static int counter
+}
+
+assemble.doFirst {
+    if (gradle.gradleVersion == "${gradleVersion}" && Holder.counter++ > 3) {
+        throw new RuntimeException("broken!")
+    }
+}
+"""
+
+        when:
+        new Main().run("--project-dir", projectDir.absolutePath, "--gradle-version", gradleVersion, "--gradle-version", "3.0", "--benchmark", "assemble")
+
+        then:
+        def e = thrown(Main.ScenarioFailedException)
+        logFile.contains(e.cause.message)
+        output.contains(e.cause.message)
+        logFile.contains("java.lang.RuntimeException: broken!")
+        output.contains("java.lang.RuntimeException: broken!")
+
+        // Probe version, initial clean build, 2 warm up, 13 builds
+        logFile.grep("<gradle-version: $gradleVersion>").size() == 7
+        logFile.grep("<gradle-version: 3.0>").size() == 17
+        logFile.grep("<tasks: [help]>").size() == 2
+        logFile.grep("<tasks: [clean, assemble]>").size() == 2
+        logFile.grep("<tasks: [assemble]>").size() == 5 + 15
+
+        def resultsFiles = new File("benchmark.csv")
+        resultsFiles.isFile()
+        resultsFiles.text.readLines().get(0) == "build,default 3.1,default 3.0"
+        resultsFiles.text.readLines().get(1).matches("initial clean build,\\d+,\\d+")
+        resultsFiles.text.readLines().get(2).matches("warm-up build 1,\\d+,\\d+")
+        resultsFiles.text.readLines().get(3).matches("warm-up build 2,\\d+,\\d+")
+        resultsFiles.text.readLines().get(4).matches("build 1,\\d+,\\d+")
+        resultsFiles.text.readLines().get(5).matches("build 2,\\d+,\\d+")
+        resultsFiles.text.readLines().get(6).matches("build 3,,\\d+")
         resultsFiles.text.readLines().size() == 17
     }
 

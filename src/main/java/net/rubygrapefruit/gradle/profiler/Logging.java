@@ -4,6 +4,7 @@ import java.io.*;
 
 public class Logging {
     private static PrintStream originalStdOut = System.out;
+    private static PrintStream originalStdErr = System.err;
     private static PrintStream detail = System.out;
     private static OutputStream log;
 
@@ -15,6 +16,10 @@ public class Logging {
             System.out.flush();
             System.setOut(originalStdOut);
             detail = originalStdOut;
+        }
+        if (System.err != originalStdErr) {
+            System.err.flush();
+            System.setErr(originalStdErr);
         }
         if (log != null) {
             log.close();
@@ -29,7 +34,9 @@ public class Logging {
         File logFile = new File("profile.log");
         log = new BufferedOutputStream(new FileOutputStream(logFile));
         detail = new PrintStream(log, true);
-        System.setOut(new PrintStream(new TeeOutputStream(System.out, detail)));
+        PrintStream output = new PrintStream(new TeeOutputStream(System.out, detail));
+        System.setOut(output);
+        System.setErr(output);
     }
 
     /**

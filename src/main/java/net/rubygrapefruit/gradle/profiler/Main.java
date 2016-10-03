@@ -45,6 +45,8 @@ public class Main {
             JFRControl jfrControl = new JFRControl();
             JvmArgsCalculator jvmArgsCalculator = settings.isProfile() ? new JFRJvmArgsCalculator() : new JvmArgsCalculator();
 
+            List<Throwable> failures = new ArrayList<>();
+
             for (ScenarioDefinition scenario : scenarios) {
                 startOperation("Running scenario " + scenario.getName());
 
@@ -53,93 +55,102 @@ public class Main {
                 for (GradleVersion version : scenario.getVersions()) {
                     startOperation("Running scenario " + scenario.getName() + " using Gradle version " + version.getVersion());
 
-                    startOperation("Stopping daemons");
-                    daemonControl.stop(version);
-
-                    GradleConnector connector = GradleConnector.newConnector().useInstallation(version.getGradleHome());
-                    ProjectConnection projectConnection = connector.forProjectDirectory(settings.getProjectDir()).connect();
                     try {
-                        BuildEnvironment buildEnvironment = projectConnection.getModel(BuildEnvironment.class);
-                        detailed().println();
-                        detailed().println("Gradle version: " + buildEnvironment.getGradle().getGradleVersion());
+                        startOperation("Stopping daemons");
+                        daemonControl.stop(version);
 
-                        File javaHome = buildEnvironment.getJava().getJavaHome();
-                        detailed().println("Java home: " + javaHome);
-                        detailed().println("OS name: " + System.getProperty("os.name") + " " + System.getProperty("os.version"));
+                        GradleConnector connector = GradleConnector.newConnector().useInstallation(version.getGradleHome());
+                        ProjectConnection projectConnection = connector.forProjectDirectory(settings.getProjectDir()).connect();
+                        try {
+                            BuildEnvironment buildEnvironment = projectConnection.getModel(BuildEnvironment.class);
+                            detailed().println();
+                            detailed().println("Gradle version: " + buildEnvironment.getGradle().getGradleVersion());
 
-                        List<String> jvmArgs = new ArrayList<>(buildEnvironment.getJava().getJvmArguments());
-                        for (Map.Entry<String, String> entry : scenario.getSystemProperties().entrySet()) {
-                            jvmArgs.add("-D" + entry.getKey() + "=" + entry.getValue());
-                        }
-                        jvmArgsCalculator.calculateJvmArgs(jvmArgs);
-                        detailed().println("JVM args:");
-                        for (String jvmArg : jvmArgs) {
-                            detailed().println("  " + jvmArg);
-                        }
-                        List<String> gradleArgs = new ArrayList<>(pidInstrumentation.getArgs());
-                        for (Map.Entry<String, String> entry : scenario.getSystemProperties().entrySet()) {
-                            gradleArgs.add("-D" + entry.getKey() + "=" + entry.getValue());
-                        }
-                        detailed().println("Gradle args:");
-                        for (String arg : gradleArgs) {
-                            detailed().println("  " + arg);
-                        }
+                            File javaHome = buildEnvironment.getJava().getJavaHome();
+                            detailed().println("Java home: " + javaHome);
+                            detailed().println("OS name: " + System.getProperty("os.name") + " " + System.getProperty("os.version"));
 
-                        Consumer<BuildInvocationResult> resultsCollector = benchmarkResults.version(scenario, version);
-                        BuildInvoker invoker;
-                        switch (scenario.getInvoker()) {
-                            case NoDaemon:
-                                invoker = new NoDaemonInvoker(version, javaHome, settings.getProjectDir(), jvmArgs, gradleArgs, pidInstrumentation, resultsCollector);
-                                break;
-                            case ToolingApi:
-                                invoker = new ToolingApiInvoker(projectConnection, jvmArgs, gradleArgs, pidInstrumentation, resultsCollector);
-                                break;
-                            default:
-                                throw new IllegalArgumentException();
-                        }
+                            List<String> jvmArgs = new ArrayList<>(buildEnvironment.getJava().getJvmArguments());
+                            for (Map.Entry<String, String> entry : scenario.getSystemProperties().entrySet()) {
+                                jvmArgs.add("-D" + entry.getKey() + "=" + entry.getValue());
+                            }
+                            jvmArgsCalculator.calculateJvmArgs(jvmArgs);
+                            detailed().println("JVM args:");
+                            for (String jvmArg : jvmArgs) {
+                                detailed().println("  " + jvmArg);
+                            }
+                            List<String> gradleArgs = new ArrayList<>(pidInstrumentation.getArgs());
+                            for (Map.Entry<String, String> entry : scenario.getSystemProperties().entrySet()) {
+                                gradleArgs.add("-D" + entry.getKey() + "=" + entry.getValue());
+                            }
+                            detailed().println("Gradle args:");
+                            for (String arg : gradleArgs) {
+                                detailed().println("  " + arg);
+                            }
 
-                        if (settings.isBenchmark()) {
-                            List<String> cleanTasks = new ArrayList<>();
-                            cleanTasks.add("clean");
-                            cleanTasks.addAll(tasks);
-                            invoker.runBuild("initial clean build", cleanTasks);
-                            startOperation("Stopping daemons");
-                            daemonControl.stop(version);
-                        }
+                            Consumer<BuildInvocationResult> resultsCollector = benchmarkResults.version(scenario, version);
+                            BuildInvoker invoker;
+                            switch (scenario.getInvoker()) {
+                                case NoDaemon:
+                                    invoker = new NoDaemonInvoker(version, javaHome, settings.getProjectDir(), jvmArgs, gradleArgs, pidInstrumentation, resultsCollector);
+                                    break;
+                                case ToolingApi:
+                                    invoker = new ToolingApiInvoker(projectConnection, jvmArgs, gradleArgs, pidInstrumentation, resultsCollector);
+                                    break;
+                                default:
+                                    throw new IllegalArgumentException();
+                            }
 
-                        BuildInvocationResult results = invoker.runBuild("warm-up build #1", tasks);
-                        String pid = results.getDaemonPid();
+                            if (settings.isBenchmark()) {
+                                List<String> cleanTasks = new ArrayList<>();
+                                cleanTasks.add("clean");
+                                cleanTasks.addAll(tasks);
+                                invoker.runBuild("initial clean build", cleanTasks);
+                                startOperation("Stopping daemons");
+                                daemonControl.stop(version);
+                            }
 
-                        results = invoker.runBuild("warm-up build #2", tasks);
-                        checkPid(pid, results.getDaemonPid(), settings.getInvoker());
+                            BuildInvocationResult results = invoker.runBuild("warm-up build 1", tasks);
+                            String pid = results.getDaemonPid();
 
-                        if (settings.isProfile()) {
-                            startOperation("Starting recording for daemon with pid " + pid);
-                            jfrControl.start(pid);
-                        }
-
-                        for (int i = 0; i < settings.getBuildCount(); i++) {
-                            results = invoker.runBuild("build " + (i + 1), tasks);
+                            results = invoker.runBuild("warm-up build 2", tasks);
                             checkPid(pid, results.getDaemonPid(), settings.getInvoker());
+
+                            if (settings.isProfile()) {
+                                startOperation("Starting recording for daemon with pid " + pid);
+                                jfrControl.start(pid);
+                            }
+
+                            for (int i = 0; i < settings.getBuildCount(); i++) {
+                                results = invoker.runBuild("build " + (i + 1), tasks);
+                                checkPid(pid, results.getDaemonPid(), settings.getInvoker());
+                            }
+
+                            if (settings.isProfile()) {
+                                startOperation("Stopping recording for daemon with pid " + pid);
+                                jfrControl.stop(pid, new File("profile.jfr"));
+                            }
+                        } finally {
+                            projectConnection.close();
                         }
 
-                        if (settings.isProfile()) {
-                            startOperation("Stopping recording for daemon with pid " + pid);
-                            jfrControl.stop(pid, new File("profile.jfr"));
-                        }
-                    } finally {
-                        projectConnection.close();
+                        startOperation("Stopping daemons");
+                        daemonControl.stop(version);
+                    } catch (Throwable t) {
+                        t.printStackTrace();
+                        failures.add(t);
                     }
-
-                    startOperation("Stopping daemons");
-                    daemonControl.stop(version);
                 }
             }
 
             if (settings.isBenchmark()) {
                 benchmarkResults.writeTo(new File("benchmark.csv"));
             }
-        } catch (CommandLineParser.SettingsNotAvailableException e) {
+
+            if (!failures.isEmpty()) {
+                throw new ScenarioFailedException(failures.get(0));
+            }
+        } catch (CommandLineParser.SettingsNotAvailableException | ScenarioFailedException e) {
             // Reported already
             throw e;
         } catch (Exception e) {
@@ -200,6 +211,12 @@ public class Main {
                 break;
             default:
                 throw new IllegalArgumentException();
+        }
+    }
+
+    static class ScenarioFailedException extends RuntimeException {
+        public ScenarioFailedException(Throwable cause) {
+            super(cause);
         }
     }
 }

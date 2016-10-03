@@ -29,6 +29,7 @@ public class BenchmarkResults {
     }
 
     public void writeTo(File csv) throws IOException {
+        int maxRows = columns.values().stream().mapToInt(v -> v.size()).max().getAsInt();
         try (BufferedWriter writer = new BufferedWriter(new FileWriter(csv))) {
             writer.write("build");
             for (String name : columns.keySet()) {
@@ -36,18 +37,21 @@ public class BenchmarkResults {
                 writer.write(name);
             }
             writer.newLine();
-            for (int row = 0; ; row++) {
-                boolean startRow = true;
+            for (int row = 0; row < maxRows; row++) {
                 for (List<BuildInvocationResult> results : columns.values()) {
                     if (row >= results.size()) {
-                        return;
+                        continue;
                     }
                     BuildInvocationResult buildResult = results.get(row);
-                    if (startRow) {
-                        writer.write(buildResult.getDisplayName());
-                        startRow = false;
-                    }
+                    writer.write(buildResult.getDisplayName());
+                    break;
+                }
+                for (List<BuildInvocationResult> results : columns.values()) {
                     writer.write(",");
+                    if (row >= results.size()) {
+                        continue;
+                    }
+                    BuildInvocationResult buildResult = results.get(row);
                     writer.write(String.valueOf(buildResult.getExecutionTime().toMillis()));
                 }
                 writer.newLine();
