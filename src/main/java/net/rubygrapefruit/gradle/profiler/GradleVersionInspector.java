@@ -49,7 +49,7 @@ class GradleVersionInspector {
                 dir = dir.getCanonicalFile();
                 return probe(GradleConnector.newConnector().useInstallation(dir));
             }
-            if (versionString.matches("\\d+(\\.\\d)+(-\\w+)*")) {
+            if (versionString.matches("\\d+(\\.\\d+)+(-\\w+)*")) {
                 return probe(GradleConnector.newConnector().useGradleVersion(versionString));
             }
         } catch (IOException e) {
