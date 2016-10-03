@@ -114,7 +114,7 @@ public class Main {
                             String pid = results.getDaemonPid();
 
                             results = invoker.runBuild("warm-up build 2", tasks);
-                            checkPid(pid, results.getDaemonPid(), settings.getInvoker());
+                            checkPid(pid, results.getDaemonPid(), scenario.getInvoker());
 
                             if (settings.isProfile()) {
                                 startOperation("Starting recording for daemon with pid " + pid);
@@ -123,7 +123,7 @@ public class Main {
 
                             for (int i = 0; i < settings.getBuildCount(); i++) {
                                 results = invoker.runBuild("build " + (i + 1), tasks);
-                                checkPid(pid, results.getDaemonPid(), settings.getInvoker());
+                                checkPid(pid, results.getDaemonPid(), scenario.getInvoker());
                             }
 
                             if (settings.isProfile()) {

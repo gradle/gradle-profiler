@@ -165,6 +165,7 @@ assemble {
 help {
     versions = "$gradleVersion"
     tasks = [help]
+    run-using = no-daemon
 }
 """
 
@@ -182,7 +183,8 @@ println "<daemon: " + gradle.services.get(org.gradle.internal.environment.Gradle
         // Probe version, initial clean build, 2 warm up, 13 builds
         logFile.grep("<gradle-version: $gradleVersion>").size() == 1 + 16 * 2
         logFile.grep("<gradle-version: 3.0").size() == 17
-        logFile.grep("<daemon: true").size() == 2 + 16 * 3
+        logFile.grep("<daemon: true").size() == 2 + 16 * 2
+        logFile.grep("<daemon: false").size() == 16
         logFile.grep("<tasks: [help]>").size() == 2 + 15
         logFile.grep("<tasks: [clean, help]>").size() == 1
         logFile.grep("<tasks: [clean, assemble]>").size() == 2
