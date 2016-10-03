@@ -39,6 +39,13 @@ Results will be written to a file called `benchmark.csv`.
 You can use the `--gradle-version` option to specify a Gradle version or installation to use to benchmark the build. You can specify multiple versions
 and each of these is used to benchmark the build, allowing you to compare the behaviour of several different Gradle versions.
 
+## Command line options
+
+- `--gradle-version` specifies a Gradle version or installation to use to run the builds.
+- `--no-daemon` Uses `gradle --no-daemon` to run the builds. The default is to use the Gradle tooling API
+- `--benchmark` Benchmark the build. Runs the builds more times and writes the results to a CSV file.
+- `--profile` Profile the build. Can be used with or without `--benchmark`.
+
 ## Configuration file
 
 A configuration file can be provided to define scenarios to benchmark or profile. Use the `--config-file` option to provide this.
