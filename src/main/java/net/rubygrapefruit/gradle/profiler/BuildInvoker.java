@@ -12,11 +12,13 @@ import static net.rubygrapefruit.gradle.profiler.Logging.*;
 
 abstract class BuildInvoker {
     private final List<String> jvmArgs;
+    private final List<String> gradleArgs;
     private final PidInstrumentation pidInstrumentation;
     private final Consumer<BuildInvocationResult> resultsConsumer;
 
-    public BuildInvoker(List<String> jvmArgs, PidInstrumentation pidInstrumentation, Consumer<BuildInvocationResult> resultsConsumer) {
+    public BuildInvoker(List<String> jvmArgs, List<String> gradleArgs, PidInstrumentation pidInstrumentation, Consumer<BuildInvocationResult> resultsConsumer) {
         this.jvmArgs = jvmArgs;
+        this.gradleArgs = gradleArgs;
         this.pidInstrumentation = pidInstrumentation;
         this.resultsConsumer = resultsConsumer;
     }
@@ -25,7 +27,7 @@ abstract class BuildInvoker {
         startOperation("Running " + displayName + " with tasks " + tasks);
 
         Timer timer = new Timer();
-        run(tasks, pidInstrumentation.getArgs(), jvmArgs);
+        run(tasks, gradleArgs, jvmArgs);
         Duration executionTime = timer.elapsed();
 
         String pid = pidInstrumentation.getPidForLastBuild();

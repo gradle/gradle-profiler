@@ -3,12 +3,10 @@ package net.rubygrapefruit.gradle.profiler;
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
 import com.typesafe.config.ConfigParseOptions;
+import com.typesafe.config.ConfigValue;
 
 import java.io.File;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.TreeSet;
+import java.util.*;
 import java.util.stream.Collectors;
 
 class ScenarioLoader {
@@ -31,7 +29,7 @@ class ScenarioLoader {
             if (versions.isEmpty()) {
                 versions.add(gradleVersionInspector.defaultVersion());
             }
-            scenarios.add(new ScenarioDefinition("default", settings.getInvoker(), versions, settings.getTasks()));
+            scenarios.add(new ScenarioDefinition("default", settings.getInvoker(), versions, settings.getTasks(), settings.getSystemProperties()));
         }
         return scenarios;
     }
@@ -45,9 +43,22 @@ class ScenarioLoader {
                     Collectors.toList());
             List<String> tasks = strings(scenario, "tasks", settings.getTasks());
             Invoker invoker = invoker(scenario, "run-using", settings.getInvoker());
-            definitions.add(new ScenarioDefinition(scenarioName, invoker, versions, tasks));
+            Map<String, String> systemProperties = map(scenario, "system-properties", settings.getSystemProperties());
+            definitions.add(new ScenarioDefinition(scenarioName, invoker, versions, tasks, systemProperties));
         }
         return definitions;
+    }
+
+    private Map<String, String> map(Config config, String key, Map<String, String> defaultValues) {
+        if (config.hasPath(key)) {
+            Map<String, String> props = new LinkedHashMap<>();
+            for (Map.Entry<String, ConfigValue> entry : config.getConfig(key).entrySet()) {
+                props.put(entry.getKey(), entry.getValue().unwrapped().toString());
+            }
+            return props;
+        } else {
+            return defaultValues;
+        }
     }
 
     private static Invoker invoker(Config config, String key, Invoker defaultValue) {

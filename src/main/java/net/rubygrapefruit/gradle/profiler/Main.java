@@ -7,6 +7,7 @@ import org.gradle.tooling.model.build.BuildEnvironment;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.function.Consumer;
 
 import static net.rubygrapefruit.gradle.profiler.Logging.*;
@@ -67,13 +68,20 @@ public class Main {
                         detailed().println("OS name: " + System.getProperty("os.name") + " " + System.getProperty("os.version"));
 
                         List<String> jvmArgs = new ArrayList<>(buildEnvironment.getJava().getJvmArguments());
+                        for (Map.Entry<String, String> entry : scenario.getSystemProperties().entrySet()) {
+                            jvmArgs.add("-D" + entry.getKey() + "=" + entry.getValue());
+                        }
                         jvmArgsCalculator.calculateJvmArgs(jvmArgs);
                         detailed().println("JVM args:");
                         for (String jvmArg : jvmArgs) {
                             detailed().println("  " + jvmArg);
                         }
+                        List<String> gradleArgs = new ArrayList<>(pidInstrumentation.getArgs());
+                        for (Map.Entry<String, String> entry : scenario.getSystemProperties().entrySet()) {
+                            gradleArgs.add("-D" + entry.getKey() + "=" + entry.getValue());
+                        }
                         detailed().println("Gradle args:");
-                        for (String arg : pidInstrumentation.getArgs()) {
+                        for (String arg : gradleArgs) {
                             detailed().println("  " + arg);
                         }
 
@@ -81,10 +89,10 @@ public class Main {
                         BuildInvoker invoker;
                         switch (scenario.getInvoker()) {
                             case NoDaemon:
-                                invoker = new NoDaemonInvoker(version, javaHome, settings.getProjectDir(), jvmArgs, pidInstrumentation, resultsCollector);
+                                invoker = new NoDaemonInvoker(version, javaHome, settings.getProjectDir(), jvmArgs, gradleArgs, pidInstrumentation, resultsCollector);
                                 break;
                             case ToolingApi:
-                                invoker = new ToolingApiInvoker(projectConnection, jvmArgs, pidInstrumentation, resultsCollector);
+                                invoker = new ToolingApiInvoker(projectConnection, jvmArgs, gradleArgs, pidInstrumentation, resultsCollector);
                                 break;
                             default:
                                 throw new IllegalArgumentException();
@@ -153,6 +161,12 @@ public class Main {
             }
             System.out.println("  Tasks: " + scenario.getTasks());
             System.out.println("  Run using: " + scenario.getInvoker());
+            if (!scenario.getSystemProperties().isEmpty()) {
+                System.out.println("  System properties:");
+                for (Map.Entry<String, String> entry : scenario.getSystemProperties().entrySet()) {
+                    System.out.println("    " + entry.getKey() + "=" + entry.getValue());
+                }
+            }
         }
     }
 
@@ -164,6 +178,12 @@ public class Main {
         System.out.println("Benchmark: " + settings.isBenchmark());
         System.out.println("Versions: " + settings.getVersions());
         System.out.println("Tasks: " + settings.getTasks());
+        if (!settings.getSystemProperties().isEmpty()) {
+            System.out.println("System properties:");
+            for (Map.Entry<String, String> entry : settings.getSystemProperties().entrySet()) {
+                System.out.println("  " + entry.getKey() + "=" + entry.getValue());
+            }
+        }
     }
 
     private static void checkPid(String expected, String actual, Invoker invoker) {

@@ -2,6 +2,7 @@ package net.rubygrapefruit.gradle.profiler;
 
 import java.io.File;
 import java.util.List;
+import java.util.Map;
 
 class InvocationSettings {
     private final File projectDir;
@@ -11,8 +12,9 @@ class InvocationSettings {
     private final Invoker invoker;
     private final List<String> versions;
     private final List<String> tasks;
+    private final Map<String, String> sysProperties;
 
-    public InvocationSettings(File projectDir, boolean profile, boolean benchmark, Invoker invoker, File configFile, List<String> versions, List<String> tasks) {
+    public InvocationSettings(File projectDir, boolean profile, boolean benchmark, Invoker invoker, File configFile, List<String> versions, List<String> tasks, Map<String, String> sysProperties) {
         this.benchmark = benchmark;
         this.projectDir = projectDir;
         this.profile = profile;
@@ -20,6 +22,7 @@ class InvocationSettings {
         this.configFile = configFile;
         this.versions = versions;
         this.tasks = tasks;
+        this.sysProperties = sysProperties;
     }
 
     public Invoker getInvoker() {
@@ -48,6 +51,10 @@ class InvocationSettings {
 
     public List<String> getTasks() {
         return tasks;
+    }
+
+    public Map<String, String> getSystemProperties() {
+        return sysProperties;
     }
 
     public int getBuildCount() {

@@ -41,16 +41,17 @@ and each of these is used to benchmark the build, allowing you to compare the be
 
 ## Command line options
 
-- `--gradle-version` specifies a Gradle version or installation to use to run the builds.
-- `--no-daemon` Uses `gradle --no-daemon` to run the builds. The default is to use the Gradle tooling API
-- `--benchmark` Benchmark the build. Runs the builds more times and writes the results to a CSV file.
-- `--profile` Profile the build. Can be used with or without `--benchmark`.
+- `--benchmark`: Benchmark the build. Runs the builds more times and writes the results to a CSV file.
+- `--profile`: Profile the build. Can be used with or without `--benchmark`.
+- `--gradle-version <version>`: specifies a Gradle version or installation to use to run the builds, overriding the default for the build.
+- `--no-daemon`: Uses `gradle --no-daemon` to run the builds. The default is to use the Gradle tooling API and Gradle daemon.
+- `-D<key>=<value>`: Defines a system property when running the build, overriding the default for the build.
 
 ## Configuration file
 
 A configuration file can be provided to define scenarios to benchmark or profile. Use the `--config-file` option to provide this.
 
-    # A comment
+    # Scenarios are run in alphabetical order
     assemble {
         versions = ["3.0", "3.1"]
         tasks = ["assemble"]
@@ -58,7 +59,10 @@ A configuration file can be provided to define scenarios to benchmark or profile
     clean_build {
         versions = ["/Users/me/gradle"]
         tasks = ["clean", "build"]
+        system-properties {
+            key = "value"
+        }
         run-using = no-daemon // value can be "no-daemon" or "tooling-api"
     }
 
-Values are optional and default to the values provided on the command-line.
+Values are optional and default to the values provided on the command-line or defined in the build.

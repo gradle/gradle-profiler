@@ -15,8 +15,8 @@ public class NoDaemonInvoker extends BuildInvoker {
     private final File javaHome;
     private final File projectDir;
 
-    public NoDaemonInvoker(GradleVersion gradleVersion, File javaHome, File projectDir, List<String> jvmArgs, PidInstrumentation pidInstrumentation, Consumer<BuildInvocationResult> resultsConsumer) {
-        super(jvmArgs, pidInstrumentation, resultsConsumer);
+    public NoDaemonInvoker(GradleVersion gradleVersion, File javaHome, File projectDir, List<String> jvmArgs, List<String> gradleArgs, PidInstrumentation pidInstrumentation, Consumer<BuildInvocationResult> resultsConsumer) {
+        super(jvmArgs, gradleArgs, pidInstrumentation, resultsConsumer);
         this.gradleVersion = gradleVersion;
         this.javaHome = javaHome;
         this.projectDir = projectDir;

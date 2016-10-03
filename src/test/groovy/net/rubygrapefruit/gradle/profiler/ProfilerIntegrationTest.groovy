@@ -194,6 +194,92 @@ println "<daemon: " + gradle.services.get(org.gradle.internal.environment.Gradle
         resultsFiles.text.readLines().size() == 17
     }
 
+    def "can define system property when benchmarking using tooling API"() {
+        given:
+        buildFile.text = """
+apply plugin: BasePlugin
+println "<sys-prop: " + System.getProperty("org.gradle.test") + ">"
+"""
+
+        when:
+        new Main().run("--project-dir", projectDir.absolutePath, "--gradle-version", gradleVersion, "--benchmark", "-Dorg.gradle.test=value", "assemble")
+
+        then:
+        // Probe version, initial clean build, 2 warm up, 13 builds
+        logFile.grep("<sys-prop: null>").size() == 1
+        logFile.grep("<sys-prop: value>").size() == 16
+    }
+
+    def "can define system property when benchmarking using no-daemon"() {
+        given:
+        buildFile.text = """
+apply plugin: BasePlugin
+println "<sys-prop: " + System.getProperty("org.gradle.test") + ">"
+"""
+
+        when:
+        new Main().run("--project-dir", projectDir.absolutePath, "--gradle-version", gradleVersion, "--benchmark", "-Dorg.gradle.test=value", "assemble")
+
+        then:
+        // Probe version, initial clean build, 2 warm up, 13 builds
+        logFile.grep("<sys-prop: null>").size() == 1
+        logFile.grep("<sys-prop: value>").size() == 16
+    }
+
+    def "can define system property using config file"() {
+        given:
+        def configFile = file("benchmark.conf")
+        configFile.text = """
+a {
+    versions = "$gradleVersion"
+    tasks = assemble
+    system-properties {
+        org.gradle.test = "value-1"
+    }
+}
+b {
+    versions = "$gradleVersion"
+    tasks = assemble
+    system-properties {
+        org.gradle.test = "value-2"
+    }
+}
+"""
+        buildFile.text = """
+apply plugin: BasePlugin
+println "<sys-prop: " + System.getProperty("org.gradle.test") + ">"
+"""
+
+        when:
+        new Main().run("--project-dir", projectDir.absolutePath, "--config-file", configFile.absolutePath, "--benchmark")
+
+        then:
+        // Probe version, initial clean build, 2 warm up, 13 builds
+        logFile.grep("<sys-prop: null>").size() == 1
+        logFile.grep("<sys-prop: value-1>").size() == 16
+        logFile.grep("<sys-prop: value-2>").size() == 16
+    }
+
+    def "can use system property to enable parallel mode"() {
+        given:
+        buildFile.text = """
+apply plugin: BasePlugin
+println "<sys-prop: " + System.getProperty("org.gradle.parallel") + ">"
+println "<parallel: " + gradle.startParameter.parallelProjectExecutionEnabled + ">"
+"""
+
+        when:
+        new Main().run("--project-dir", projectDir.absolutePath, "--gradle-version", gradleVersion, "--benchmark", "-Dorg.gradle.parallel=true", "assemble")
+
+        then:
+        // Probe version, initial clean build, 2 warm up, 13 builds
+        logFile.grep("<sys-prop: null>").size() == 1
+        logFile.grep("<sys-prop: true>").size() == 16
+        logFile.grep("<parallel: false>").size() == 1
+        logFile.grep("<parallel: true>").size() == 16
+        logFile.grep("Parallel execution is an incubating feature").size() == 16
+    }
+
     static class LogFile {
         final List<String> lines
 

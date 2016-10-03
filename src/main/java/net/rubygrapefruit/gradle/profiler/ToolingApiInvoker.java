@@ -8,9 +8,9 @@ import java.util.function.Consumer;
 public class ToolingApiInvoker extends BuildInvoker {
     private final ProjectConnection projectConnection;
 
-    public ToolingApiInvoker(ProjectConnection projectConnection, List<String> jvmArgs, PidInstrumentation pidInstrumentation,
+    public ToolingApiInvoker(ProjectConnection projectConnection, List<String> jvmArgs, List<String> gradleArgs, PidInstrumentation pidInstrumentation,
                              Consumer<BuildInvocationResult> resultsConsumer) {
-        super(jvmArgs, pidInstrumentation, resultsConsumer);
+        super(jvmArgs, gradleArgs, pidInstrumentation, resultsConsumer);
         this.projectConnection = projectConnection;
     }
 
