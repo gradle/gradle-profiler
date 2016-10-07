@@ -83,6 +83,7 @@ public class Main {
                             for (Map.Entry<String, String> entry : scenario.getSystemProperties().entrySet()) {
                                 gradleArgs.add("-D" + entry.getKey() + "=" + entry.getValue());
                             }
+                            gradleArgs.addAll(scenario.getGradleArgs());
                             detailed().println("Gradle args:");
                             for (String arg : gradleArgs) {
                                 detailed().println("  " + arg);
@@ -172,6 +173,7 @@ public class Main {
             }
             System.out.println("  Tasks: " + scenario.getTasks());
             System.out.println("  Run using: " + scenario.getInvoker());
+            System.out.println("  Gradle args: " + scenario.getGradleArgs());
             if (!scenario.getSystemProperties().isEmpty()) {
                 System.out.println("  System properties:");
                 for (Map.Entry<String, String> entry : scenario.getSystemProperties().entrySet()) {

@@ -1,6 +1,5 @@
 package net.rubygrapefruit.gradle.profiler
 
-import org.gradle.tooling.BuildException
 import org.junit.Rule
 import org.junit.rules.TemporaryFolder
 import spock.lang.Specification
@@ -309,21 +308,56 @@ println "<sys-prop: " + System.getProperty("org.gradle.test") + ">"
         logFile.grep("<sys-prop: value-2>").size() == 16
     }
 
-    def "can use system property to enable parallel mode"() {
+    def "can define Gradle args using config file"() {
         given:
+        def configFile = file("benchmark.conf")
+        configFile.text = """
+a {
+    versions = "$gradleVersion"
+    tasks = assemble
+    gradle-args = "-Dorg.gradle.test=value-1"
+}
+b {
+    versions = "$gradleVersion"
+    tasks = assemble
+    gradle-args = ["-x", "help", "-Dorg.gradle.test=value-2"]
+}
+"""
         buildFile.text = """
 apply plugin: BasePlugin
-println "<sys-prop: " + System.getProperty("org.gradle.parallel") + ">"
-println "<parallel: " + gradle.startParameter.parallelProjectExecutionEnabled + ">"
+println "<sys-prop: " + System.getProperty("org.gradle.test") + ">"
 """
 
         when:
-        new Main().run("--project-dir", projectDir.absolutePath, "--gradle-version", gradleVersion, "--benchmark", "-Dorg.gradle.parallel=true", "assemble")
+        new Main().run("--project-dir", projectDir.absolutePath, "--config-file", configFile.absolutePath, "--benchmark")
 
         then:
         // Probe version, initial clean build, 2 warm up, 13 builds
         logFile.grep("<sys-prop: null>").size() == 1
-        logFile.grep("<sys-prop: true>").size() == 16
+        logFile.grep("<sys-prop: value-1>").size() == 16
+        logFile.grep("<sys-prop: value-2>").size() == 16
+    }
+
+    def "can use Gradle args to enable parallel mode"() {
+        given:
+        def configFile = file("benchmark.conf")
+        configFile.text = """
+a {
+    versions = "$gradleVersion"
+    tasks = assemble
+    gradle-args = "--parallel"
+}
+"""
+        buildFile.text = """
+apply plugin: BasePlugin
+println "<parallel: " + gradle.startParameter.parallelProjectExecutionEnabled + ">"
+"""
+
+        when:
+        new Main().run("--project-dir", projectDir.absolutePath, "--benchmark", "--config-file", configFile.absolutePath)
+
+        then:
+        // Probe version, initial clean build, 2 warm up, 13 builds
         logFile.grep("<parallel: false>").size() == 1
         logFile.grep("<parallel: true>").size() == 16
         logFile.grep("Parallel execution is an incubating feature").size() == 16

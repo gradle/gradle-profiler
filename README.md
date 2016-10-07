@@ -59,6 +59,7 @@ A configuration file can be provided to define scenarios to benchmark or profile
     clean_build {
         versions = ["/Users/me/gradle"]
         tasks = ["clean", "build"]
+        gradle-args = ["--parallel"]
         system-properties {
             key = "value"
         }

@@ -29,7 +29,7 @@ class ScenarioLoader {
             if (versions.isEmpty()) {
                 versions.add(gradleVersionInspector.defaultVersion());
             }
-            scenarios.add(new ScenarioDefinition("default", settings.getInvoker(), versions, settings.getTasks(), settings.getSystemProperties()));
+            scenarios.add(new ScenarioDefinition("default", settings.getInvoker(), versions, settings.getTasks(), Collections.emptyList(), settings.getSystemProperties()));
         }
         return scenarios;
     }
@@ -42,9 +42,10 @@ class ScenarioLoader {
             List<GradleVersion> versions = strings(scenario, "versions", settings.getVersions()).stream().map(v -> inspector.resolve(v)).collect(
                     Collectors.toList());
             List<String> tasks = strings(scenario, "tasks", settings.getTasks());
+            List<String> gradleArgs = strings(scenario, "gradle-args", Collections.emptyList());
             Invoker invoker = invoker(scenario, "run-using", settings.getInvoker());
             Map<String, String> systemProperties = map(scenario, "system-properties", settings.getSystemProperties());
-            definitions.add(new ScenarioDefinition(scenarioName, invoker, versions, tasks, systemProperties));
+            definitions.add(new ScenarioDefinition(scenarioName, invoker, versions, tasks, gradleArgs, systemProperties));
         }
         return definitions;
     }
