@@ -125,6 +125,11 @@ public class Main {
                             for (int i = 0; i < settings.getBuildCount(); i++) {
                                 results = invoker.runBuild("build " + (i + 1), tasks);
                                 checkPid(pid, results.getDaemonPid(), scenario.getInvoker());
+
+                                // Write results
+                                if (settings.isBenchmark()) {
+                                    benchmarkResults.writeTo(new File("benchmark.csv"));
+                                }
                             }
 
                             if (settings.isProfile()) {
