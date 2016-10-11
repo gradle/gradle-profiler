@@ -9,6 +9,7 @@ class ProfilerIntegrationTest extends Specification {
     ByteArrayOutputStream outputBuffer
     String gradleVersion = "3.1"
     File projectDir
+    File outputDir
 
     String getOutput() {
         System.out.flush()
@@ -16,9 +17,13 @@ class ProfilerIntegrationTest extends Specification {
     }
 
     LogFile getLogFile() {
-        def f = new File("profile.log")
+        def f = new File(outputDir, "profile.log")
         assert f.isFile()
         return new LogFile(f)
+    }
+
+    File getResultFile() {
+        new File(outputDir, "benchmark.csv")
     }
 
     File getBuildFile() {
@@ -34,9 +39,7 @@ class ProfilerIntegrationTest extends Specification {
         outputBuffer = new ByteArrayOutputStream()
         System.out = new PrintStream(new TeeOutputStream(System.out, outputBuffer))
         projectDir = tmpDir.newFolder()
-        new File("profile.log").delete()
-        new File("profile.jfr").delete()
-        new File("benchmark.csv").delete()
+        outputDir = tmpDir.newFolder()
     }
 
     def cleanup() {
@@ -54,6 +57,17 @@ class ProfilerIntegrationTest extends Specification {
         output.contains("No project directory specified.")
     }
 
+    def "complains when neither profile or benchmark requested"() {
+        when:
+        new Main().run("--project-dir", projectDir.absolutePath)
+
+        then:
+        thrown(CommandLineParser.SettingsNotAvailableException)
+
+        and:
+        output.contains("Neither --profile or --benchmark specified.")
+    }
+
     def "reports build failures"() {
         given:
         buildFile.text = """
@@ -64,7 +78,7 @@ assemble.doFirst {
 """
 
         when:
-        new Main().run("--project-dir", projectDir.absolutePath, "--gradle-version", gradleVersion, "assemble")
+        new Main().run("--project-dir", projectDir.absolutePath, "--output-dir", outputDir.absolutePath, "--gradle-version", gradleVersion, "--profile", "assemble")
 
         then:
         def e = thrown(Main.ScenarioFailedException)
@@ -88,7 +102,7 @@ println "<daemon: " + gradle.services.get(org.gradle.internal.environment.Gradle
 """
 
         when:
-        new Main().run("--project-dir", projectDir.absolutePath, "--gradle-version", gradleVersion, "assemble")
+        new Main().run("--project-dir", projectDir.absolutePath, "--output-dir", outputDir.absolutePath, "--gradle-version", gradleVersion, "--profile", "assemble")
 
         then:
         // Probe version, 2 warm up, 1 build
@@ -96,7 +110,7 @@ println "<daemon: " + gradle.services.get(org.gradle.internal.environment.Gradle
         logFile.grep("<daemon: true").size() == 4
         logFile.grep("<tasks: [assemble]>").size() == 3
 
-        def profileFile = new File("profile.jfr")
+        def profileFile = new File(outputDir, "profile.jfr")
         profileFile.exists()
     }
 
@@ -110,7 +124,7 @@ println "<daemon: " + gradle.services.get(org.gradle.internal.environment.Gradle
 """
 
         when:
-        new Main().run("--project-dir", projectDir.absolutePath, "--gradle-version", gradleVersion, "--benchmark", "assemble")
+        new Main().run("--project-dir", projectDir.absolutePath, "--output-dir", outputDir.absolutePath, "--gradle-version", gradleVersion, "--benchmark", "assemble")
 
         then:
         // Probe version, initial clean build, 2 warm up, 13 builds
@@ -120,11 +134,10 @@ println "<daemon: " + gradle.services.get(org.gradle.internal.environment.Gradle
         logFile.grep("<tasks: [clean, assemble]>").size() == 1
         logFile.grep("<tasks: [assemble]>").size() == 15
 
-        def resultsFiles = new File("benchmark.csv")
-        resultsFiles.isFile()
-        resultsFiles.text.readLines().get(0) == "build,default 3.1"
-        resultsFiles.text.readLines().get(1) == "tasks,assemble"
-        resultsFiles.text.readLines().size() == 18
+        resultFile.isFile()
+        resultFile.text.readLines().get(0) == "build,default 3.1"
+        resultFile.text.readLines().get(1) == "tasks,assemble"
+        resultFile.text.readLines().size() == 18
     }
 
     def "runs benchmarks using no-daemon for specified Gradle version and tasks"() {
@@ -137,7 +150,7 @@ println "<daemon: " + gradle.services.get(org.gradle.internal.environment.Gradle
 """
 
         when:
-        new Main().run("--project-dir", projectDir.absolutePath, "--gradle-version", gradleVersion, "--benchmark", "--no-daemon", "assemble")
+        new Main().run("--project-dir", projectDir.absolutePath, "--output-dir", outputDir.absolutePath, "--gradle-version", gradleVersion, "--benchmark", "--no-daemon", "assemble")
 
         then:
         // Probe version, initial clean build, 2 warm up, 13 builds
@@ -148,11 +161,10 @@ println "<daemon: " + gradle.services.get(org.gradle.internal.environment.Gradle
         logFile.grep("<tasks: [clean, assemble]>").size() == 1
         logFile.grep("<tasks: [assemble]>").size() == 15
 
-        def resultsFiles = new File("benchmark.csv")
-        resultsFiles.isFile()
-        resultsFiles.text.readLines().get(0) == "build,default 3.1"
-        resultsFiles.text.readLines().get(1) == "tasks,assemble"
-        resultsFiles.text.readLines().size() == 18
+        resultFile.isFile()
+        resultFile.text.readLines().get(0) == "build,default 3.1"
+        resultFile.text.readLines().get(1) == "tasks,assemble"
+        resultFile.text.readLines().size() == 18
     }
 
     def "runs benchmarks using scenarios defined in config file"() {
@@ -178,7 +190,7 @@ println "<daemon: " + gradle.services.get(org.gradle.internal.environment.Gradle
 """
 
         when:
-        new Main().run("--project-dir", projectDir.absolutePath, "--config-file", configFile.absolutePath, "--benchmark")
+        new Main().run("--project-dir", projectDir.absolutePath, "--output-dir", outputDir.absolutePath, "--config-file", configFile.absolutePath, "--benchmark")
 
         then:
         // Probe version, initial clean build, 2 warm up, 13 builds
@@ -191,11 +203,10 @@ println "<daemon: " + gradle.services.get(org.gradle.internal.environment.Gradle
         logFile.grep("<tasks: [clean, assemble]>").size() == 2
         logFile.grep("<tasks: [assemble]>").size() == 15 * 2
 
-        def resultsFiles = new File("benchmark.csv")
-        resultsFiles.isFile()
-        resultsFiles.text.readLines().get(0) == "build,assemble 3.0,assemble 3.1,help 3.1"
-        resultsFiles.text.readLines().get(1) == "tasks,assemble,assemble,help"
-        resultsFiles.text.readLines().size() == 18
+        resultFile.isFile()
+        resultFile.text.readLines().get(0) == "build,assemble 3.0,assemble 3.1,help 3.1"
+        resultFile.text.readLines().get(1) == "tasks,assemble,assemble,help"
+        resultFile.text.readLines().size() == 18
     }
 
     def "recovers from failure running benchmarks"() {
@@ -217,7 +228,7 @@ assemble.doFirst {
 """
 
         when:
-        new Main().run("--project-dir", projectDir.absolutePath, "--gradle-version", gradleVersion, "--gradle-version", "3.0", "--benchmark", "assemble")
+        new Main().run("--project-dir", projectDir.absolutePath, "--output-dir", outputDir.absolutePath, "--gradle-version", gradleVersion, "--gradle-version", "3.0", "--benchmark", "assemble")
 
         then:
         def e = thrown(Main.ScenarioFailedException)
@@ -233,17 +244,16 @@ assemble.doFirst {
         logFile.grep("<tasks: [clean, assemble]>").size() == 2
         logFile.grep("<tasks: [assemble]>").size() == 5 + 15
 
-        def resultsFiles = new File("benchmark.csv")
-        resultsFiles.isFile()
-        resultsFiles.text.readLines().get(0) == "build,default 3.1,default 3.0"
-        resultsFiles.text.readLines().get(1) == "tasks,assemble,assemble"
-        resultsFiles.text.readLines().get(2).matches("initial clean build,\\d+,\\d+")
-        resultsFiles.text.readLines().get(3).matches("warm-up build 1,\\d+,\\d+")
-        resultsFiles.text.readLines().get(4).matches("warm-up build 2,\\d+,\\d+")
-        resultsFiles.text.readLines().get(5).matches("build 1,\\d+,\\d+")
-        resultsFiles.text.readLines().get(6).matches("build 2,\\d+,\\d+")
-        resultsFiles.text.readLines().get(7).matches("build 3,,\\d+")
-        resultsFiles.text.readLines().size() == 18
+        resultFile.isFile()
+        resultFile.text.readLines().get(0) == "build,default 3.1,default 3.0"
+        resultFile.text.readLines().get(1) == "tasks,assemble,assemble"
+        resultFile.text.readLines().get(2).matches("initial clean build,\\d+,\\d+")
+        resultFile.text.readLines().get(3).matches("warm-up build 1,\\d+,\\d+")
+        resultFile.text.readLines().get(4).matches("warm-up build 2,\\d+,\\d+")
+        resultFile.text.readLines().get(5).matches("build 1,\\d+,\\d+")
+        resultFile.text.readLines().get(6).matches("build 2,\\d+,\\d+")
+        resultFile.text.readLines().get(7).matches("build 3,,\\d+")
+        resultFile.text.readLines().size() == 18
     }
 
     def "can define system property when benchmarking using tooling API"() {
@@ -254,7 +264,7 @@ println "<sys-prop: " + System.getProperty("org.gradle.test") + ">"
 """
 
         when:
-        new Main().run("--project-dir", projectDir.absolutePath, "--gradle-version", gradleVersion, "--benchmark", "-Dorg.gradle.test=value", "assemble")
+        new Main().run("--project-dir", projectDir.absolutePath, "--output-dir", outputDir.absolutePath, "--gradle-version", gradleVersion, "--benchmark", "-Dorg.gradle.test=value", "assemble")
 
         then:
         // Probe version, initial clean build, 2 warm up, 13 builds
@@ -270,7 +280,7 @@ println "<sys-prop: " + System.getProperty("org.gradle.test") + ">"
 """
 
         when:
-        new Main().run("--project-dir", projectDir.absolutePath, "--gradle-version", gradleVersion, "--benchmark", "-Dorg.gradle.test=value", "assemble")
+        new Main().run("--project-dir", projectDir.absolutePath, "--output-dir", outputDir.absolutePath, "--gradle-version", gradleVersion, "--benchmark", "-Dorg.gradle.test=value", "assemble")
 
         then:
         // Probe version, initial clean build, 2 warm up, 13 builds
@@ -303,7 +313,7 @@ println "<sys-prop: " + System.getProperty("org.gradle.test") + ">"
 """
 
         when:
-        new Main().run("--project-dir", projectDir.absolutePath, "--config-file", configFile.absolutePath, "--benchmark")
+        new Main().run("--project-dir", projectDir.absolutePath, "--output-dir", outputDir.absolutePath, "--config-file", configFile.absolutePath, "--benchmark")
 
         then:
         // Probe version, initial clean build, 2 warm up, 13 builds
@@ -333,7 +343,7 @@ println "<sys-prop: " + System.getProperty("org.gradle.test") + ">"
 """
 
         when:
-        new Main().run("--project-dir", projectDir.absolutePath, "--config-file", configFile.absolutePath, "--benchmark")
+        new Main().run("--project-dir", projectDir.absolutePath, "--output-dir", outputDir.absolutePath, "--config-file", configFile.absolutePath, "--benchmark")
 
         then:
         // Probe version, initial clean build, 2 warm up, 13 builds
@@ -358,7 +368,7 @@ println "<parallel: " + gradle.startParameter.parallelProjectExecutionEnabled + 
 """
 
         when:
-        new Main().run("--project-dir", projectDir.absolutePath, "--benchmark", "--config-file", configFile.absolutePath)
+        new Main().run("--project-dir", projectDir.absolutePath, "--output-dir", outputDir.absolutePath, "--benchmark", "--config-file", configFile.absolutePath)
 
         then:
         // Probe version, initial clean build, 2 warm up, 13 builds

@@ -9,7 +9,7 @@ public class Logging {
     private static OutputStream log;
 
     /**
-     * Resets logging to its original state before {@link #setupLogging()} was called.
+     * Resets logging to its original state before {@link #setupLogging(File)} was called.
      */
     public static void resetLogging() throws IOException {
         if (System.out != originalStdOut) {
@@ -29,9 +29,11 @@ public class Logging {
 
     /**
      * Routes System.out to log file.
+     * @param outputDir
      */
-    public static void setupLogging() throws IOException {
-        File logFile = new File("profile.log");
+    public static void setupLogging(File outputDir) throws IOException {
+        outputDir.mkdirs();
+        File logFile = new File(outputDir, "profile.log");
         log = new BufferedOutputStream(new FileOutputStream(logFile));
         detail = new PrintStream(log, true);
         PrintStream output = new PrintStream(new TeeOutputStream(System.out, detail));

@@ -29,7 +29,9 @@ public class Main {
         try {
             InvocationSettings settings = new CommandLineParser().parseSettings(args);
 
-            setupLogging();
+            setupLogging(settings.getOutputDir());
+            System.out.println();
+            System.out.println("* Writing results to " + settings.getOutputDir());
 
             logSettings(settings);
 
@@ -44,6 +46,7 @@ public class Main {
             PidInstrumentation pidInstrumentation = new PidInstrumentation();
             JFRControl jfrControl = new JFRControl();
             JvmArgsCalculator jvmArgsCalculator = settings.isProfile() ? new JFRJvmArgsCalculator() : new JvmArgsCalculator();
+            File resultsFile = new File(settings.getOutputDir(), "benchmark.csv");
 
             List<Throwable> failures = new ArrayList<>();
 
@@ -128,13 +131,14 @@ public class Main {
 
                                 // Write results
                                 if (settings.isBenchmark()) {
-                                    benchmarkResults.writeTo(new File("benchmark.csv"));
+                                    benchmarkResults.writeTo(resultsFile);
                                 }
                             }
 
                             if (settings.isProfile()) {
                                 startOperation("Stopping recording for daemon with pid " + pid);
-                                jfrControl.stop(pid, new File("profile.jfr"));
+                                File profileSnapshotFile = new File(settings.getOutputDir(), "profile.jfr");
+                                jfrControl.stop(pid, profileSnapshotFile);
                             }
                         } finally {
                             projectConnection.close();
@@ -150,7 +154,7 @@ public class Main {
             }
 
             if (settings.isBenchmark()) {
-                benchmarkResults.writeTo(new File("benchmark.csv"));
+                benchmarkResults.writeTo(resultsFile);
             }
 
             if (!failures.isEmpty()) {
@@ -192,6 +196,7 @@ public class Main {
         System.out.println();
         System.out.println("* Settings");
         System.out.println("Project dir: " + settings.getProjectDir());
+        System.out.println("Output dir: " + settings.getOutputDir());
         System.out.println("Profile: " + settings.isProfile());
         System.out.println("Benchmark: " + settings.isBenchmark());
         System.out.println("Versions: " + settings.getVersions());

@@ -12,13 +12,13 @@ This will install the application into `./build/install/gradle-profiler`.
 
 To run the `gradle-profiler` app use:
 
-    > ./build/install/gradle-profiler/bin/gradle-profiler --project-dir <root-dir-of-build> <task>...
+    > ./build/install/gradle-profiler/bin/gradle-profiler --profile --project-dir <root-dir-of-build> <task>...
     
 Where `<root-dir-of-build>` is the directory containing the build to be profiled, and `<task>` is the name of the task to run,
 exactly as you would use for the `gradle` command.
 
 The profiler will run the build several times to warm up a daemon, then enable the flight recorder and run the build.
-Once complete, the results will be written to a file called `profile.jfr`.
+Once complete, the results will be written to a file called `profile-out/profile.jfr`.
 
 When the profiler runs the build, it will use the tasks you specified. The profiler will use the default
 Gradle version, Java installation and JVM args that have been specified for your build, if any.
@@ -34,16 +34,18 @@ Run the app using:
 
     > ./build/install/gradle-profiler/bin/gradle-profiler --benchmark --project-dir <root-dir-of-build> <task>...
 
-Results will be written to a file called `benchmark.csv`.
+Results will be written to a file called `profile-out/benchmark.csv`.
 
 You can use the `--gradle-version` option to specify a Gradle version or installation to use to benchmark the build. You can specify multiple versions
 and each of these is used to benchmark the build, allowing you to compare the behaviour of several different Gradle versions.
 
 ## Command line options
 
+- `--project-dir`: Directory containing the build to run (required).
 - `--benchmark`: Benchmark the build. Runs the builds more times and writes the results to a CSV file.
 - `--profile`: Profile the build. Can be used with or without `--benchmark`.
-- `--gradle-version <version>`: specifies a Gradle version or installation to use to run the builds, overriding the default for the build.
+- `--gradle-version <version>`: specifies a Gradle version or installation to use to run the builds, overriding the default for the build. Can specify multiple versions.
+- `--output-dir <dir>`: Directory to write results to.
 - `--no-daemon`: Uses `gradle --no-daemon` to run the builds. The default is to use the Gradle tooling API and Gradle daemon.
 - `-D<key>=<value>`: Defines a system property when running the build, overriding the default for the build.
 

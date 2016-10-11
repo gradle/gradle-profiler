@@ -9,20 +9,26 @@ class InvocationSettings {
     private final boolean profile;
     private final boolean benchmark;
     private final File configFile;
+    private final File outputDir;
     private final Invoker invoker;
     private final List<String> versions;
     private final List<String> tasks;
     private final Map<String, String> sysProperties;
 
-    public InvocationSettings(File projectDir, boolean profile, boolean benchmark, Invoker invoker, File configFile, List<String> versions, List<String> tasks, Map<String, String> sysProperties) {
+    public InvocationSettings(File projectDir, boolean profile, boolean benchmark, File outputDir, Invoker invoker, File configFile, List<String> versions, List<String> tasks, Map<String, String> sysProperties) {
         this.benchmark = benchmark;
         this.projectDir = projectDir;
         this.profile = profile;
+        this.outputDir = outputDir;
         this.invoker = invoker;
         this.configFile = configFile;
         this.versions = versions;
         this.tasks = tasks;
         this.sysProperties = sysProperties;
+    }
+
+    public File getOutputDir() {
+        return outputDir;
     }
 
     public Invoker getInvoker() {
