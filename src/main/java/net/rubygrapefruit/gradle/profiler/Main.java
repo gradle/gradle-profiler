@@ -5,6 +5,7 @@ import org.gradle.tooling.ProjectConnection;
 import org.gradle.tooling.model.build.BuildEnvironment;
 
 import java.io.File;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -27,11 +28,16 @@ public class Main {
 
     public void run(String[] args) throws Exception {
         try {
+            Instant started = Instant.now();
             InvocationSettings settings = new CommandLineParser().parseSettings(args);
 
-            setupLogging(settings.getOutputDir());
             System.out.println();
-            System.out.println("* Writing results to " + settings.getOutputDir());
+            System.out.println("* Writing results to " + settings.getOutputDir().getAbsolutePath());
+
+            setupLogging(settings.getOutputDir());
+
+            Logging.detailed().println();
+            Logging.detailed().println("* Started at " + started);
 
             logSettings(settings);
 
@@ -67,6 +73,7 @@ public class Main {
                         try {
                             BuildEnvironment buildEnvironment = projectConnection.getModel(BuildEnvironment.class);
                             detailed().println();
+                            detailed().println("* Build details");
                             detailed().println("Gradle version: " + buildEnvironment.getGradle().getGradleVersion());
 
                             File javaHome = buildEnvironment.getJava().getJavaHome();
