@@ -123,7 +123,8 @@ println "<daemon: " + gradle.services.get(org.gradle.internal.environment.Gradle
         def resultsFiles = new File("benchmark.csv")
         resultsFiles.isFile()
         resultsFiles.text.readLines().get(0) == "build,default 3.1"
-        resultsFiles.text.readLines().size() == 17
+        resultsFiles.text.readLines().get(1) == "tasks,assemble"
+        resultsFiles.text.readLines().size() == 18
     }
 
     def "runs benchmarks using no-daemon for specified Gradle version and tasks"() {
@@ -150,7 +151,8 @@ println "<daemon: " + gradle.services.get(org.gradle.internal.environment.Gradle
         def resultsFiles = new File("benchmark.csv")
         resultsFiles.isFile()
         resultsFiles.text.readLines().get(0) == "build,default 3.1"
-        resultsFiles.text.readLines().size() == 17
+        resultsFiles.text.readLines().get(1) == "tasks,assemble"
+        resultsFiles.text.readLines().size() == 18
     }
 
     def "runs benchmarks using scenarios defined in config file"() {
@@ -192,7 +194,8 @@ println "<daemon: " + gradle.services.get(org.gradle.internal.environment.Gradle
         def resultsFiles = new File("benchmark.csv")
         resultsFiles.isFile()
         resultsFiles.text.readLines().get(0) == "build,assemble 3.0,assemble 3.1,help 3.1"
-        resultsFiles.text.readLines().size() == 17
+        resultsFiles.text.readLines().get(1) == "tasks,assemble,assemble,help"
+        resultsFiles.text.readLines().size() == 18
     }
 
     def "recovers from failure running benchmarks"() {
@@ -233,13 +236,14 @@ assemble.doFirst {
         def resultsFiles = new File("benchmark.csv")
         resultsFiles.isFile()
         resultsFiles.text.readLines().get(0) == "build,default 3.1,default 3.0"
-        resultsFiles.text.readLines().get(1).matches("initial clean build,\\d+,\\d+")
-        resultsFiles.text.readLines().get(2).matches("warm-up build 1,\\d+,\\d+")
-        resultsFiles.text.readLines().get(3).matches("warm-up build 2,\\d+,\\d+")
-        resultsFiles.text.readLines().get(4).matches("build 1,\\d+,\\d+")
-        resultsFiles.text.readLines().get(5).matches("build 2,\\d+,\\d+")
-        resultsFiles.text.readLines().get(6).matches("build 3,,\\d+")
-        resultsFiles.text.readLines().size() == 17
+        resultsFiles.text.readLines().get(1) == "tasks,assemble,assemble"
+        resultsFiles.text.readLines().get(2).matches("initial clean build,\\d+,\\d+")
+        resultsFiles.text.readLines().get(3).matches("warm-up build 1,\\d+,\\d+")
+        resultsFiles.text.readLines().get(4).matches("warm-up build 2,\\d+,\\d+")
+        resultsFiles.text.readLines().get(5).matches("build 1,\\d+,\\d+")
+        resultsFiles.text.readLines().get(6).matches("build 2,\\d+,\\d+")
+        resultsFiles.text.readLines().get(7).matches("build 3,,\\d+")
+        resultsFiles.text.readLines().size() == 18
     }
 
     def "can define system property when benchmarking using tooling API"() {
