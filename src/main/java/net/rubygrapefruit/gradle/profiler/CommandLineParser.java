@@ -27,7 +27,8 @@ class CommandLineParser {
         ArgumentAcceptingOptionSpec<String> outputDirOption = parser.accepts("output-dir", "Directory to write results to").withRequiredArg();
         OptionSpecBuilder jfrOption = parser.accepts("profile", "Collect profiling information using JFR");
         OptionSpecBuilder benchmarkOption = parser.accepts("benchmark", "Collect benchmark metrics");
-        OptionSpecBuilder noDaemon = parser.accepts("no-daemon", "Do not use the Gradle daemon");
+        OptionSpecBuilder noDaemonOption = parser.accepts("no-daemon", "Do not use the Gradle daemon");
+        OptionSpecBuilder dryRunOption = parser.accepts("dry-run", "Verify configuration");
         OptionSet parsedOptions;
         try {
             parsedOptions = parser.parse(args);
@@ -56,7 +57,8 @@ class CommandLineParser {
         List<String> taskNames = parsedOptions.nonOptionArguments().stream().map(o -> o.toString()).collect(Collectors.toList());
         List<String> versions = parsedOptions.valuesOf(versionOption).stream().map(v -> v.toString()).collect(Collectors.toList());
         File configFile = parsedOptions.has(configFileOption) ? new File(parsedOptions.valueOf(configFileOption)) : null;
-        Invoker invoker = parsedOptions.has(noDaemon) ? Invoker.NoDaemon : Invoker.ToolingApi;
+        Invoker invoker = parsedOptions.has(noDaemonOption) ? Invoker.NoDaemon : Invoker.ToolingApi;
+        boolean dryRun = parsedOptions.has(dryRunOption);
         Map<String, String> sysProperties = new LinkedHashMap<>();
         for (String value : parsedOptions.valuesOf(sysPropOption)) {
             String[] parts = value.split("\\s*=\\s*");
@@ -66,7 +68,7 @@ class CommandLineParser {
                 sysProperties.put(parts[0], parts[1]);
             }
         }
-        return new InvocationSettings(projectDir, profile, benchmark, outputDir, invoker, configFile, versions, taskNames, sysProperties);
+        return new InvocationSettings(projectDir, profile, benchmark, outputDir, invoker, dryRun, configFile, versions, taskNames, sysProperties);
     }
 
     private File findOutputDir() {

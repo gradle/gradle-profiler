@@ -6,9 +6,7 @@ import org.gradle.tooling.model.build.BuildEnvironment;
 
 import java.io.File;
 import java.time.Instant;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.function.Consumer;
 
 import static net.rubygrapefruit.gradle.profiler.Logging.*;
@@ -94,6 +92,9 @@ public class Main {
                                 gradleArgs.add("-D" + entry.getKey() + "=" + entry.getValue());
                             }
                             gradleArgs.addAll(scenario.getGradleArgs());
+                            if (settings.isDryRun()) {
+                                gradleArgs.add("--dry-run");
+                            }
                             detailed().println("Gradle args:");
                             for (String arg : gradleArgs) {
                                 detailed().println("  " + arg);
@@ -113,10 +114,10 @@ public class Main {
                             }
 
                             if (settings.isBenchmark()) {
-                                List<String> cleanTasks = new ArrayList<>();
+                                Set<String> cleanTasks = new LinkedHashSet<>();
                                 cleanTasks.add("clean");
                                 cleanTasks.addAll(tasks);
-                                invoker.runBuild("initial clean build", cleanTasks);
+                                invoker.runBuild("initial clean build", new ArrayList<>(cleanTasks));
                                 startOperation("Stopping daemons");
                                 daemonControl.stop(version);
                             }
@@ -124,8 +125,10 @@ public class Main {
                             BuildInvocationResult results = invoker.runBuild("warm-up build 1", tasks);
                             String pid = results.getDaemonPid();
 
-                            results = invoker.runBuild("warm-up build 2", tasks);
-                            checkPid(pid, results.getDaemonPid(), scenario.getInvoker());
+                            for (int i = 1; i<settings.getWarmUpCount();i++) {
+                                results = invoker.runBuild("warm-up build " + (i + 1), tasks);
+                                checkPid(pid, results.getDaemonPid(), scenario.getInvoker());
+                            }
 
                             if (settings.isProfile()) {
                                 startOperation("Starting recording for daemon with pid " + pid);
