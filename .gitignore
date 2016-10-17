@@ -1,7 +1,5 @@
 /build
 /.gradle
 /.idea
-*.jfr
-*.log
-*.csv
-*.conf
+/profile-out
+/profile-out-*
