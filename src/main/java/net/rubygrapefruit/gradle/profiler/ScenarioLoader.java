@@ -1,9 +1,6 @@
 package net.rubygrapefruit.gradle.profiler;
 
-import com.typesafe.config.Config;
-import com.typesafe.config.ConfigFactory;
-import com.typesafe.config.ConfigParseOptions;
-import com.typesafe.config.ConfigValue;
+import com.typesafe.config.*;
 
 import java.io.File;
 import java.util.*;
@@ -39,6 +36,11 @@ class ScenarioLoader {
         Config config = ConfigFactory.parseFile(configFile, ConfigParseOptions.defaults().setAllowMissing(false));
         for (String scenarioName : new TreeSet<>(config.root().keySet())) {
             Config scenario = config.getConfig(scenarioName);
+            for (String key : config.getObject(scenarioName).keySet()) {
+                if (!Arrays.asList("versions", "tasks", "gradle-args", "run-using", "system-properties").contains(key)) {
+                    throw new IllegalArgumentException("Unrecognized configuration key '" + scenarioName + "." + key + "' found in configuration file.");
+                }
+            }
             List<GradleVersion> versions = strings(scenario, "versions", settings.getVersions()).stream().map(v -> inspector.resolve(v)).collect(
                     Collectors.toList());
             List<String> tasks = strings(scenario, "tasks", settings.getTasks());

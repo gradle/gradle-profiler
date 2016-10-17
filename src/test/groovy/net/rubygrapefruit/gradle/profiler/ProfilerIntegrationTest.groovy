@@ -69,6 +69,24 @@ class ProfilerIntegrationTest extends Specification {
         output.contains("Neither --profile or --benchmark specified.")
     }
 
+    def "complains when config file contains unexpected entry"() {
+        def configFile = file("benchmark.conf")
+        configFile.text = """
+assemble {
+    gradle-version = 3.2
+}
+"""
+
+        when:
+        new Main().run("--project-dir", projectDir.absolutePath, "--config-file", configFile.absolutePath, "--profile")
+
+        then:
+        thrown(IllegalArgumentException)
+
+        and:
+        output.contains("Unrecognized configuration key 'assemble.gradle-version' found in configuration file.")
+    }
+
     def "reports build failures"() {
         given:
         buildFile.text = """
