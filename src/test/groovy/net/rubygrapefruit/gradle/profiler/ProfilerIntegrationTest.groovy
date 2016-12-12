@@ -2,13 +2,17 @@ package net.rubygrapefruit.gradle.profiler
 
 import org.junit.Rule
 import org.junit.rules.TemporaryFolder
+import spock.lang.Shared
 import spock.lang.Specification
 
 class ProfilerIntegrationTest extends Specification {
     @Rule
     TemporaryFolder tmpDir = new TemporaryFolder()
     ByteArrayOutputStream outputBuffer
+    @Shared
     String gradleVersion = "3.1"
+    @Shared
+    String gradleNightlyVersion = "3.3-20161205000012+0000"
     File projectDir
     File outputDir
 
@@ -124,17 +128,22 @@ println "<daemon: " + gradle.services.get(org.gradle.internal.environment.Gradle
 
         when:
         new Main().
-                run("--project-dir", projectDir.absolutePath, "--output-dir", outputDir.absolutePath, "--gradle-version", gradleVersion, "--profile",
+                run("--project-dir", projectDir.absolutePath, "--output-dir", outputDir.absolutePath, "--gradle-version", versionUnderTest, "--profile",
                         "assemble")
 
         then:
         // Probe version, 2 warm up, 1 build
-        logFile.grep("<gradle-version: $gradleVersion>").size() == 4
+        logFile.grep("<gradle-version: $versionUnderTest>").size() == 4
         logFile.grep("<daemon: true").size() == 4
         logFile.grep("<tasks: [assemble]>").size() == 3
 
         def profileFile = new File(outputDir, "profile.jfr")
         profileFile.exists()
+
+        where:
+        versionUnderTest     | _
+        gradleVersion        | _
+        gradleNightlyVersion | _
     }
 
     def "runs benchmarks using tooling API for specified Gradle version and tasks"() {
