@@ -6,7 +6,8 @@ import java.util.Map;
 
 class InvocationSettings {
     private final File projectDir;
-    private final boolean profile;
+    private final Profiler profiler;
+    private final Object profilerOptions;
     private final boolean benchmark;
     private final boolean dryRun;
     private final File configFile;
@@ -16,10 +17,11 @@ class InvocationSettings {
     private final List<String> tasks;
     private final Map<String, String> sysProperties;
 
-    public InvocationSettings(File projectDir, boolean profile, boolean benchmark, File outputDir, Invoker invoker, boolean dryRun, File configFile, List<String> versions, List<String> tasks, Map<String, String> sysProperties) {
+    public InvocationSettings(File projectDir, Profiler profiler, final Object profilerOptions, boolean benchmark, File outputDir, Invoker invoker, boolean dryRun, File configFile, List<String> versions, List<String> tasks, Map<String, String> sysProperties) {
+        this.profilerOptions = profilerOptions;
         this.benchmark = benchmark;
         this.projectDir = projectDir;
-        this.profile = profile;
+        this.profiler = profiler;
         this.outputDir = outputDir;
         this.invoker = invoker;
         this.dryRun = dryRun;
@@ -46,7 +48,15 @@ class InvocationSettings {
     }
 
     public boolean isProfile() {
-        return profile;
+        return profiler != Profiler.none;
+    }
+
+    public Profiler getProfiler() {
+        return profiler;
+    }
+
+    public Object getProfilerOptions() {
+        return profilerOptions;
     }
 
     public File getConfigFile() {

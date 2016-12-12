@@ -2,6 +2,7 @@ package net.rubygrapefruit.gradle.profiler
 
 import org.junit.Rule
 import org.junit.rules.TemporaryFolder
+import spock.lang.Requires
 import spock.lang.Shared
 import spock.lang.Specification
 
@@ -82,7 +83,7 @@ assemble {
 """
 
         when:
-        new Main().run("--project-dir", projectDir.absolutePath, "--config-file", configFile.absolutePath, "--profile")
+        new Main().run("--project-dir", projectDir.absolutePath, "--config-file", configFile.absolutePath, "--profile", "jfr")
 
         then:
         thrown(IllegalArgumentException)
@@ -102,7 +103,7 @@ assemble.doFirst {
 
         when:
         new Main().
-                run("--project-dir", projectDir.absolutePath, "--output-dir", outputDir.absolutePath, "--gradle-version", gradleVersion, "--profile",
+                run("--project-dir", projectDir.absolutePath, "--output-dir", outputDir.absolutePath, "--gradle-version", gradleVersion, "--profile", "jfr",
                         "assemble")
 
         then:
@@ -128,7 +129,7 @@ println "<daemon: " + gradle.services.get(org.gradle.internal.environment.Gradle
 
         when:
         new Main().
-                run("--project-dir", projectDir.absolutePath, "--output-dir", outputDir.absolutePath, "--gradle-version", versionUnderTest, "--profile",
+                run("--project-dir", projectDir.absolutePath, "--output-dir", outputDir.absolutePath, "--gradle-version", versionUnderTest, "--profile", "jfr",
                         "assemble")
 
         then:
@@ -145,6 +146,34 @@ println "<daemon: " + gradle.services.get(org.gradle.internal.environment.Gradle
         gradleVersion        | _
         gradleNightlyVersion | _
     }
+
+    @Requires({
+        System.getenv('HP_HOME_DIR')
+    })
+    def "profiles build using Honest Profiler, specified Gradle version and tasks"() {
+        given:
+        buildFile.text = """
+apply plugin: BasePlugin
+println "<gradle-version: " + gradle.gradleVersion + ">"
+println "<tasks: " + gradle.startParameter.taskNames + ">"
+println "<daemon: " + gradle.services.get(org.gradle.internal.environment.GradleBuildEnvironment).longLivingProcess + ">"
+"""
+
+        when:
+        new Main().
+                run("--project-dir", projectDir.absolutePath, "--output-dir", outputDir.absolutePath, "--gradle-version", gradleVersion, "--profile", "hp",
+                        "assemble")
+
+        then:
+        // Probe version, 2 warm up, 1 build
+        logFile.grep("<gradle-version: $gradleVersion>").size() == 4
+        logFile.grep("<daemon: true").size() == 4
+        logFile.grep("<tasks: [assemble]>").size() == 3
+
+        def profileFile = new File(outputDir, "profile.hpl")
+        profileFile.exists()
+    }
+
 
     def "runs benchmarks using tooling API for specified Gradle version and tasks"() {
         given:

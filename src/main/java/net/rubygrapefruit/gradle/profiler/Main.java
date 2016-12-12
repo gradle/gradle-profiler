@@ -6,7 +6,11 @@ import org.gradle.tooling.model.build.BuildEnvironment;
 
 import java.io.File;
 import java.time.Instant;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.function.Consumer;
 
 import static net.rubygrapefruit.gradle.profiler.Logging.*;
@@ -49,8 +53,7 @@ public class Main {
             GitRepository applier = new GitRepository(settings.getProjectDir());
             BenchmarkResults benchmarkResults = new BenchmarkResults();
             PidInstrumentation pidInstrumentation = new PidInstrumentation();
-            JFRControl jfrControl = new JFRControl();
-            JvmArgsCalculator jvmArgsCalculator = settings.isProfile() ? new JFRJvmArgsCalculator() : new JvmArgsCalculator();
+            JvmArgsCalculator jvmArgsCalculator = settings.isProfile() ? settings.getProfiler().newJvmArgsCalculator(settings) : new JvmArgsCalculator();
             File resultsFile = new File(settings.getOutputDir(), "benchmark.csv");
 
             List<Throwable> failures = new ArrayList<>();
@@ -125,15 +128,15 @@ public class Main {
 
                             BuildInvocationResult results = invoker.runBuild("warm-up build 1", tasks);
                             String pid = results.getDaemonPid();
-
                             for (int i = 1; i<settings.getWarmUpCount();i++) {
                                 results = invoker.runBuild("warm-up build " + (i + 1), tasks);
                                 checkPid(pid, results.getDaemonPid(), scenario.getInvoker());
                             }
 
+                            ProfilerController control = settings.getProfiler().newController(pid, settings);
                             if (settings.isProfile()) {
                                 startOperation("Starting recording for daemon with pid " + pid);
-                                jfrControl.start(pid);
+                                control.start();
                             }
 
                             for (int i = 0; i < settings.getBuildCount(); i++) {
@@ -155,8 +158,7 @@ public class Main {
 
                             if (settings.isProfile()) {
                                 startOperation("Stopping recording for daemon with pid " + pid);
-                                File profileSnapshotFile = new File(settings.getOutputDir(), "profile.jfr");
-                                jfrControl.stop(pid, profileSnapshotFile);
+                                control.stop();
                             }
                         } finally {
                             projectConnection.close();

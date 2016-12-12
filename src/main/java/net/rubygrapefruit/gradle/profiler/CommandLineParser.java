@@ -25,7 +25,10 @@ class CommandLineParser {
         ArgumentAcceptingOptionSpec<String> configFileOption = parser.accepts("config-file", "Configuration file to use").withRequiredArg();
         ArgumentAcceptingOptionSpec<String> sysPropOption = parser.accepts("D", "Defines a system property").withRequiredArg();
         ArgumentAcceptingOptionSpec<String> outputDirOption = parser.accepts("output-dir", "Directory to write results to").withRequiredArg();
-        OptionSpecBuilder jfrOption = parser.accepts("profile", "Collect profiling information using JFR");
+        ArgumentAcceptingOptionSpec<String> profilerOption = parser.accepts("profile", "Collect profiling information using profiler (jfr, hp)")
+                .withRequiredArg()
+                .defaultsTo(Profiler.jfr.name());
+        Profiler.configureParser(parser);
         OptionSpecBuilder benchmarkOption = parser.accepts("benchmark", "Collect benchmark metrics");
         OptionSpecBuilder noDaemonOption = parser.accepts("no-daemon", "Do not use the Gradle daemon");
         OptionSpecBuilder dryRunOption = parser.accepts("dry-run", "Verify configuration");
@@ -41,9 +44,11 @@ class CommandLineParser {
         }
 
         File projectDir = (parsedOptions.has(projectOption) ? new File(parsedOptions.valueOf(projectOption)) : new File(".")).getCanonicalFile();
-        boolean profile = parsedOptions.has(jfrOption);
+        boolean hasProfiler = parsedOptions.has(profilerOption);
+        Profiler profiler = hasProfiler ? Profiler.valueOf(parsedOptions.valueOf(profilerOption).toLowerCase()) : Profiler.none;
+        Object profilerOptions = profiler.newConfigObject(parsedOptions);
         boolean benchmark = parsedOptions.has(benchmarkOption);
-        if (!benchmark && !profile) {
+        if (!benchmark && !hasProfiler) {
             return fail(parser, "Neither --profile or --benchmark specified.");
         }
 
@@ -68,7 +73,7 @@ class CommandLineParser {
                 sysProperties.put(parts[0], parts[1]);
             }
         }
-        return new InvocationSettings(projectDir, profile, benchmark, outputDir, invoker, dryRun, configFile, versions, taskNames, sysProperties);
+        return new InvocationSettings(projectDir, profiler, profilerOptions, benchmark, outputDir, invoker, dryRun, configFile, versions, taskNames, sysProperties);
     }
 
     private File findOutputDir() {
