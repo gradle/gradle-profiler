@@ -23,10 +23,12 @@ class ScenarioLoader {
             for (String v : settings.getVersions()) {
                 versions.add(gradleVersionInspector.resolve(v));
             }
-            if (versions.isEmpty()) {
-                versions.add(gradleVersionInspector.defaultVersion());
-            }
             scenarios.add(new ScenarioDefinition("default", settings.getInvoker(), versions, settings.getTasks(), Collections.emptyList(), settings.getSystemProperties()));
+        }
+        for (ScenarioDefinition scenario : scenarios) {
+            if (scenario.getVersions().isEmpty()) {
+                scenario.getVersions().add(gradleVersionInspector.defaultVersion());
+            }
         }
         return scenarios;
     }

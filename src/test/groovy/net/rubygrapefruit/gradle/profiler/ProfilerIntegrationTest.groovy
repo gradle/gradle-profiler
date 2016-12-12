@@ -395,6 +395,30 @@ println "<sys-prop: " + System.getProperty("org.gradle.test") + ">"
         logFile.grep("<sys-prop: value-2>").size() == 16
     }
 
+    def "uses default version if none are defined in config file"() {
+        given:
+        def configFile = file("benchmark.conf")
+        configFile.text = """
+a {
+    tasks = assemble
+}
+"""
+        buildFile.text = """
+apply plugin: BasePlugin
+println "Running \$gradle.gradleVersion"
+"""
+        def wrapperProperties = file("gradle/wrapper/gradle-wrapper.properties")
+        wrapperProperties.parentFile.mkdirs()
+        wrapperProperties.text = "distributionUrl=https\\://services.gradle.org/distributions/gradle-$gradleVersion-bin.zip"
+
+        when:
+        new Main().run("--project-dir", projectDir.absolutePath, "--output-dir", outputDir.absolutePath, "--config-file", configFile.absolutePath,
+                "--benchmark")
+
+        then:
+        logFile.grep("Running $gradleVersion")
+    }
+
     def "can define Gradle args using config file"() {
         given:
         def configFile = file("benchmark.conf")
