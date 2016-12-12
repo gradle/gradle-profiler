@@ -1,6 +1,9 @@
 package net.rubygrapefruit.gradle.profiler;
 
-import com.typesafe.config.*;
+import com.typesafe.config.Config;
+import com.typesafe.config.ConfigFactory;
+import com.typesafe.config.ConfigParseOptions;
+import com.typesafe.config.ConfigValue;
 
 import java.io.File;
 import java.util.*;
@@ -23,7 +26,7 @@ class ScenarioLoader {
             for (String v : settings.getVersions()) {
                 versions.add(gradleVersionInspector.resolve(v));
             }
-            scenarios.add(new ScenarioDefinition("default", settings.getInvoker(), versions, settings.getTasks(), Collections.emptyList(), settings.getSystemProperties()));
+            scenarios.add(new ScenarioDefinition("default", settings.getInvoker(), versions, settings.getTasks(), Collections.emptyList(), settings.getSystemProperties(), null));
         }
         for (ScenarioDefinition scenario : scenarios) {
             if (scenario.getVersions().isEmpty()) {
@@ -39,7 +42,7 @@ class ScenarioLoader {
         for (String scenarioName : new TreeSet<>(config.root().keySet())) {
             Config scenario = config.getConfig(scenarioName);
             for (String key : config.getObject(scenarioName).keySet()) {
-                if (!Arrays.asList("versions", "tasks", "gradle-args", "run-using", "system-properties").contains(key)) {
+                if (!Arrays.asList("versions", "tasks", "gradle-args", "run-using", "system-properties", "patch-file").contains(key)) {
                     throw new IllegalArgumentException("Unrecognized configuration key '" + scenarioName + "." + key + "' found in configuration file.");
                 }
             }
@@ -49,7 +52,12 @@ class ScenarioLoader {
             List<String> gradleArgs = strings(scenario, "gradle-args", Collections.emptyList());
             Invoker invoker = invoker(scenario, "run-using", settings.getInvoker());
             Map<String, String> systemProperties = map(scenario, "system-properties", settings.getSystemProperties());
-            definitions.add(new ScenarioDefinition(scenarioName, invoker, versions, tasks, gradleArgs, systemProperties));
+            String patchFileName = string(scenario, "patch-file", null);
+            File patchFile = patchFileName == null ? null : new File(configFile.getParentFile(), patchFileName);
+            if (patchFile != null && !patchFile.isFile()) {
+                throw new IllegalArgumentException("Patch file " + patchFile + " specified for scenario " + scenarioName + " does not exist.");
+            }
+            definitions.add(new ScenarioDefinition(scenarioName, invoker, versions, tasks, gradleArgs, systemProperties, patchFile));
         }
         return definitions;
     }
@@ -76,6 +84,14 @@ class ScenarioLoader {
                 return Invoker.ToolingApi;
             }
             throw new IllegalArgumentException("Unexpected value for '" + key + "' provided: " + value);
+        } else {
+            return defaultValue;
+        }
+    }
+
+    private static String string(Config config, String key, String defaultValue) {
+        if (config.hasPath(key)) {
+            return config.getString(key);
         } else {
             return defaultValue;
         }

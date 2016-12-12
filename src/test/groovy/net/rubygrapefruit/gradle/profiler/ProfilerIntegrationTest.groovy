@@ -485,6 +485,41 @@ println "<parallel: " + gradle.startParameter.parallelProjectExecutionEnabled + 
         logFile.grep("Parallel execution is an incubating feature").size() == 16
     }
 
+    def "applies and reverts changes while running benchmark"() {
+        given:
+        buildFile.text = """
+apply plugin: BasePlugin
+println "<unmodified-build-file>"
+"""
+
+        def gitRepository = new GitRepository(projectDir)
+        gitRepository.add("build.gradle")
+        gitRepository.commit()
+
+        buildFile.text = buildFile.text.replace("unmodified", "modified")
+
+        def patchFile = new File(projectDir, "add-build-logging.patch")
+        gitRepository.diff(patchFile)
+        gitRepository.reset()
+
+        def configFile = file("scenarios.conf")
+        configFile << """
+help {
+    tasks = "help"    
+    patch-file = "add-build-logging.patch"
+}
+"""
+
+        when:
+        new Main().run("--project-dir", projectDir.absolutePath, "--output-dir", outputDir.absolutePath, "--gradle-version", gradleVersion,
+                "--benchmark", "--config-file", configFile.absolutePath)
+
+        then:
+        // Probe version, initial clean build, 2 warm up, 13 builds
+        logFile.grep("<unmodified-build-file>").size() == 10
+        logFile.grep("<modified-build-file>").size() == 7
+    }
+
     static class LogFile {
         final List<String> lines
 

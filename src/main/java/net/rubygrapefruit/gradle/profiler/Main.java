@@ -46,6 +46,7 @@ public class Main {
 
             logScenarios(scenarios);
 
+            GitRepository applier = new GitRepository(settings.getProjectDir());
             BenchmarkResults benchmarkResults = new BenchmarkResults();
             PidInstrumentation pidInstrumentation = new PidInstrumentation();
             JFRControl jfrControl = new JFRControl();
@@ -136,6 +137,13 @@ public class Main {
                             }
 
                             for (int i = 0; i < settings.getBuildCount(); i++) {
+                                if (scenario.getPatchFile() != null) {
+                                    if (i % 2 == 0) {
+                                        applier.apply(scenario.getPatchFile());
+                                    } else {
+                                        applier.reset();
+                                    }
+                                }
                                 results = invoker.runBuild("build " + (i + 1), tasks);
                                 checkPid(pid, results.getDaemonPid(), scenario.getInvoker());
 
@@ -156,6 +164,10 @@ public class Main {
 
                         startOperation("Stopping daemons");
                         daemonControl.stop(version);
+
+                        if (scenario.getPatchFile() != null) {
+                            applier.reset();
+                        }
                     } catch (Throwable t) {
                         t.printStackTrace();
                         failures.add(t);
@@ -193,6 +205,7 @@ public class Main {
             System.out.println("  Tasks: " + scenario.getTasks());
             System.out.println("  Run using: " + scenario.getInvoker());
             System.out.println("  Gradle args: " + scenario.getGradleArgs());
+            System.out.println("  Patch file: " + scenario.getPatchFile());
             if (!scenario.getSystemProperties().isEmpty()) {
                 System.out.println("  System properties:");
                 for (Map.Entry<String, String> entry : scenario.getSystemProperties().entrySet()) {
