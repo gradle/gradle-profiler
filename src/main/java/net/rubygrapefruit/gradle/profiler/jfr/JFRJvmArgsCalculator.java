@@ -1,10 +1,12 @@
-package net.rubygrapefruit.gradle.profiler;
+package net.rubygrapefruit.gradle.profiler.jfr;
+
+import net.rubygrapefruit.gradle.profiler.JvmArgsCalculator;
 
 import java.util.List;
 
-class JFRJvmArgsCalculator extends JvmArgsCalculator{
+public class JFRJvmArgsCalculator extends JvmArgsCalculator {
     @Override
-    void calculateJvmArgs(List<String> jvmArgs) {
+    public void calculateJvmArgs(List<String> jvmArgs) {
         jvmArgs.add("-XX:+UnlockCommercialFeatures");
         jvmArgs.add("-XX:+FlightRecorder");
         jvmArgs.add("-XX:FlightRecorderOptions=stackdepth=1024");

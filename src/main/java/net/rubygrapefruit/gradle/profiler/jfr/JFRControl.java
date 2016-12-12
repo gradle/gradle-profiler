@@ -1,12 +1,15 @@
-package net.rubygrapefruit.gradle.profiler;
+package net.rubygrapefruit.gradle.profiler.jfr;
+
+import net.rubygrapefruit.gradle.profiler.ProfilerController;
 
 import java.io.File;
 import java.io.IOException;
 
-class JFRControl {
+public class JFRControl implements ProfilerController {
     private final File jcmd;
+    private final JFRArgs jfrArgs;
 
-    public JFRControl() {
+    public JFRControl(final JFRArgs args) {
         File javaHome = new File(System.getProperty("java.home"));
         File jcmd = new File(javaHome, "bin/jcmd");
         if (!jcmd.isFile() && javaHome.getName().equals("jre")) {
@@ -16,13 +19,18 @@ class JFRControl {
             throw new RuntimeException("Could not find 'jcmd' executable for Java home directory " + javaHome);
         }
         this.jcmd = jcmd;
+        this.jfrArgs = args;
     }
 
-    public void start(String pid) throws IOException, InterruptedException {
-        run(jcmd.getAbsolutePath(), pid, "JFR.start", "name=profile", "settings=profile", "duration=0");
+    @Override
+    public void start() throws IOException, InterruptedException {
+        run(jcmd.getAbsolutePath(), jfrArgs.getPid(), "JFR.start", "name=profile", "settings=profile", "duration=0");
     }
 
-    public void stop(String pid, File recordingFile) throws IOException, InterruptedException {
+    @Override
+    public void stop() throws IOException, InterruptedException {
+        String pid = jfrArgs.getPid();
+        File recordingFile = jfrArgs.getRecordingFile();
         run(jcmd.getAbsolutePath(), pid, "JFR.stop", "name=profile", "filename=" + recordingFile.getAbsolutePath());
         System.out.println("Wrote profiling data to " + recordingFile.getPath());
     }
