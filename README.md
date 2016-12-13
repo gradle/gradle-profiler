@@ -1,6 +1,10 @@
 A tool for gathering profiling and benchmarking information for Gradle builds. 
 
-Profiling information can be captured using either the Java flight recorder built into the Oracle JVM, or using [Honest Profiler](https://github.com/RichardWarburton/honest-profiler)
+Profiling information can be captured using one of several different tools:
+
+- Java flight recorder built into the Oracle JVM
+- Using [Honest Profiler](https://github.com/RichardWarburton/honest-profiler)
+- Using a [Gradle build scan](https://gradle.com)
 
 ## Installing
 
