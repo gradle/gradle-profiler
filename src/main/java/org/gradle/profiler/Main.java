@@ -193,7 +193,9 @@ public class Main {
             System.out.println("  Tasks: " + scenario.getTasks());
             System.out.println("  Run using: " + scenario.getInvoker());
             System.out.println("  Gradle args: " + scenario.getGradleArgs());
-            System.out.println("  Source file to change: " + scenario.getSourceFileToChange());
+            if (scenario.getSourceFileToChange() != null) {
+                System.out.println("  Source file to change: " + scenario.getSourceFileToChange());
+            }
             if (!scenario.getSystemProperties().isEmpty()) {
                 System.out.println("  System properties:");
                 for (Map.Entry<String, String> entry : scenario.getSystemProperties().entrySet()) {
