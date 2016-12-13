@@ -18,6 +18,7 @@ package org.gradle.profiler;
 import joptsimple.OptionParser;
 import joptsimple.OptionSet;
 import org.gradle.profiler.bs.BuildScanController;
+import org.gradle.profiler.ct.ChromeTraceController;
 import org.gradle.profiler.hp.HonestProfilerArgs;
 import org.gradle.profiler.hp.HonestProfilerControl;
 import org.gradle.profiler.hp.HonestProfilerJvmArgsCalculator;
@@ -117,11 +118,23 @@ public class Profiler {
         }
     };
 
+    public static final Profiler CHROME_TRACE = new Profiler() {
+        @Override
+        public ProfilerController newController(final String pid, final InvocationSettings settings, final BuildInvoker invoker) {
+            try {
+                return new ChromeTraceController(invoker);
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
+        }
+    };
+
     private final static Map<String, Profiler> AVAILABLE_PROFILERS = Collections.unmodifiableMap(
             new LinkedHashMap<String, Profiler>() {{
                 put("jfr", JFR);
                 put("hp", HP);
                 put("buildscan", BUILDSCAN);
+                put("chrome-trace", CHROME_TRACE);
             }}
     );
 
