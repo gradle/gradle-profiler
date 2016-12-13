@@ -53,9 +53,9 @@ and each of these is used to benchmark the build, allowing you to compare the be
 - `--no-daemon`: Uses `gradle --no-daemon` to run the builds. The default is to use the Gradle tooling API and Gradle daemon.
 - `-D<key>=<value>`: Defines a system property when running the build, overriding the default for the build.
 
-## Patch files
+## Applying changes between build executions
 
-A scenario can define a patch file to be applied and reverted in alternating builds. You can use this to benchmark or profile an incremental build.
+A scenario can define a Java source file that should be changes and reverted in alternating builds. You can use this to benchmark or profile an incremental build.
 
 ## Scenario file
 
@@ -74,7 +74,7 @@ A scenario file can be provided to define scenarios to benchmark or profile. Use
             key = "value"
         }
         run-using = no-daemon // value can be "no-daemon" or "tooling-api"
-        patch-file = "some-file.patch"
+        apply-abi-change-to = "src/main/java/MyThing.java"
     }
 
 Values are optional and default to the values provided on the command-line or defined in the build.
