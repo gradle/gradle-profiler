@@ -131,7 +131,7 @@ public class Main {
                                 checkPid(pid, results.getDaemonPid(), scenario.getInvoker());
                             }
 
-                            ProfilerController control = settings.getProfiler().newController(pid, settings);
+                            ProfilerController control = settings.getProfiler().newController(pid, settings, invoker);
                             if (settings.isProfile()) {
                                 Logging.startOperation("Starting recording for daemon with pid " + pid);
                                 control.start();

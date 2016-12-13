@@ -4,30 +4,38 @@ import org.gradle.tooling.GradleConnectionException;
 import org.gradle.tooling.LongRunningOperation;
 
 import java.time.Duration;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
 import static org.gradle.profiler.Logging.*;
 
-abstract class BuildInvoker {
+public abstract class BuildInvoker {
     private final List<String> jvmArgs;
     private final List<String> gradleArgs;
     private final PidInstrumentation pidInstrumentation;
     private final Consumer<BuildInvocationResult> resultsConsumer;
+    private final List<GeneratedInitScript> initScripts;
 
     public BuildInvoker(List<String> jvmArgs, List<String> gradleArgs, PidInstrumentation pidInstrumentation, Consumer<BuildInvocationResult> resultsConsumer) {
         this.jvmArgs = jvmArgs;
         this.gradleArgs = gradleArgs;
         this.pidInstrumentation = pidInstrumentation;
         this.resultsConsumer = resultsConsumer;
+        this.initScripts = new ArrayList<>();
     }
 
     public BuildInvocationResult runBuild(String displayName, List<String> tasks) {
         startOperation("Running " + displayName + " with tasks " + tasks);
 
         Timer timer = new Timer();
-        run(tasks, gradleArgs, jvmArgs);
+        List<String> allGradleArgs = new ArrayList<>(gradleArgs.size() + initScripts.size());
+        allGradleArgs.addAll(gradleArgs);
+        for (GeneratedInitScript initScript : initScripts) {
+            allGradleArgs.addAll(initScript.getArgs());
+        }
+        run(tasks, allGradleArgs, jvmArgs);
         Duration executionTime = timer.elapsed();
 
         String pid = pidInstrumentation.getPidForLastBuild();
@@ -40,6 +48,10 @@ abstract class BuildInvoker {
     }
 
     protected abstract void run(List<String> tasks, List<String> gradleArgs, List<String> jvmArgs);
+
+    public void addInitScript(GeneratedInitScript initScript) {
+        initScripts.add(initScript);
+    }
 
     public static <T extends LongRunningOperation, R> R run(T operation, Function<T, R> function) {
         operation.setStandardOutput(Logging.detailed());

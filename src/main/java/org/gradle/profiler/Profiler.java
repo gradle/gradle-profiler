@@ -17,6 +17,7 @@ package org.gradle.profiler;
 
 import joptsimple.OptionParser;
 import joptsimple.OptionSet;
+import org.gradle.profiler.bs.BuildScanController;
 import org.gradle.profiler.hp.HonestProfilerArgs;
 import org.gradle.profiler.hp.HonestProfilerControl;
 import org.gradle.profiler.hp.HonestProfilerJvmArgsCalculator;
@@ -25,12 +26,13 @@ import org.gradle.profiler.jfr.JFRControl;
 import org.gradle.profiler.jfr.JFRJvmArgsCalculator;
 
 import java.io.File;
+import java.io.IOException;
 
 public enum Profiler {
     none,
     jfr {
         @Override
-        public ProfilerController newController(final String pid, final InvocationSettings settings) {
+        public ProfilerController newController(final String pid, final InvocationSettings settings, final BuildInvoker invoker) {
             JFRArgs jfrArgs = new JFRArgs(pid, new File(settings.getOutputDir(), "profile.jfr"));
             return new JFRControl(jfrArgs);
         }
@@ -58,7 +60,7 @@ public enum Profiler {
         }
 
         @Override
-        public ProfilerController newController(final String pid, final InvocationSettings settings) {
+        public ProfilerController newController(final String pid, final InvocationSettings settings, final BuildInvoker invoker) {
             HonestProfilerArgs args = (HonestProfilerArgs) settings.getProfilerOptions();
             return new HonestProfilerControl(args, settings.getOutputDir());
         }
@@ -83,9 +85,31 @@ public enum Profiler {
                     .withOptionalArg()
                     .defaultsTo("7");
         }
+    },
+    buildscan {
+        @Override
+        public ProfilerController newController(final String pid, final InvocationSettings settings, final BuildInvoker invoker) {
+            try {
+                return new BuildScanController(invoker, (String) settings.getProfilerOptions());
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
+        }
+
+        @Override
+        public Object newConfigObject(final OptionSet parsedOptions) {
+            return parsedOptions.valueOf("buildscan-version");
+        }
+
+        @Override
+        void addOptions(final OptionParser parser) {
+            parser.accepts("buildscan-version", "Version of the Build Scan plugin")
+                    .availableIf("profile")
+                    .withOptionalArg();
+        }
     };
 
-    public ProfilerController newController(final String pid, final InvocationSettings settings) {
+    public ProfilerController newController(final String pid, final InvocationSettings settings, final BuildInvoker invoker) {
         return ProfilerController.EMPTY;
     }
 

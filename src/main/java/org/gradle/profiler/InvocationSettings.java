@@ -4,7 +4,7 @@ import java.io.File;
 import java.util.List;
 import java.util.Map;
 
-class InvocationSettings {
+public class InvocationSettings {
     private final File projectDir;
     private final Profiler profiler;
     private final Object profilerOptions;
