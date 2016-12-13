@@ -61,6 +61,7 @@ public class Profiler {
             }
             HonestProfilerArgs args = new HonestProfilerArgs(
                     new File((String) parsedOptions.valueOf("hp-home")),
+                    new File((String) parsedOptions.valueOf("fg-home")),
                     tmpLog,
                     Integer.valueOf((String) parsedOptions.valueOf("hp-port")),
                     Integer.valueOf((String) parsedOptions.valueOf("hp-interval"))
@@ -89,6 +90,10 @@ public class Profiler {
                     .availableIf("profile")
                     .withOptionalArg()
                     .defaultsTo(System.getenv().getOrDefault("HP_HOME_DIR", ""));
+            parser.accepts("fg-home", "FlameGraph home directory")
+                    .availableIf("profile")
+                    .withOptionalArg()
+                    .defaultsTo(System.getenv().getOrDefault("FG_HOME_DIR", ""));
             parser.accepts("hp-interval", "Honest Profiler sampling interval")
                     .availableIf("profile")
                     .withOptionalArg()

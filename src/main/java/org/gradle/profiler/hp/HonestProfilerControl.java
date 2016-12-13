@@ -32,6 +32,7 @@ public class HonestProfilerControl implements ProfilerController {
     private static final String PROFILE_HPL = "profile.hpl";
     private static final String PROFILE_TXT = "profile.txt";
     private static final String PROFILE_SANITIZED_TXT = "profile-sanitized.txt";
+    private static final String FLAMES_SVG = "flames.svg";
 
     private static final Map<Pattern, String> DEFAULT_REPLACEMENTS = Collections.unmodifiableMap(
             new LinkedHashMap<Pattern, String>() { {
@@ -63,9 +64,11 @@ public class HonestProfilerControl implements ProfilerController {
         File hplFile = new File(outputDir, PROFILE_HPL);
         File txtFile = new File(outputDir, PROFILE_TXT);
         File sanitizedTxtFile = new File(outputDir, PROFILE_SANITIZED_TXT);
+        File fgFile = new File(outputDir, FLAMES_SVG);
         Files.copy(args.getLogPath().toPath(), hplFile.toPath());
         convertToFlameGraphTxtFile(hplFile, txtFile);
         sanitizeFlameGraphTxtFile(txtFile, sanitizedTxtFile);
+        generateFlameGraph(sanitizedTxtFile, fgFile);
     }
 
     private void convertToFlameGraphTxtFile(final File hplFile, final File txtFile) throws IOException, InterruptedException {
@@ -92,6 +95,19 @@ public class HonestProfilerControl implements ProfilerController {
         FlameGraphSanitizer sanitizer = new FlameGraphSanitizer(new FlameGraphSanitizer.RegexBasedSanitizerFunction(DEFAULT_REPLACEMENTS));
         // todo: add a way to provide custom patterns
         sanitizer.sanitize(txtFile, sanitizedTxtFile);
+    }
+
+    private void generateFlameGraph(final File sanitizedTxtFile, final File fgFile) throws IOException, InterruptedException {
+        ProcessBuilder processBuilder = new ProcessBuilder(
+                args.getFgHomeDir().getAbsolutePath() + File.separatorChar + "flamegraph.pl",
+                sanitizedTxtFile.getAbsolutePath()
+        );
+        processBuilder.redirectOutput(fgFile);
+        Process process = processBuilder.start();
+        int result = process.waitFor();
+        if (result != 0) {
+            throw new RuntimeException("Unable to generate flame graph. Make sure your FlameGraph installation at " + args.getFgHomeDir() + " is correct.");
+        }
     }
 
     private void sendCommand(String command) throws IOException {

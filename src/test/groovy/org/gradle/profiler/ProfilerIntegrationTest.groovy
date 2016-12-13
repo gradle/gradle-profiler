@@ -178,6 +178,10 @@ println "<daemon: " + gradle.services.get(org.gradle.internal.environment.Gradle
         def sanitizedProfileTxtFile = new File(outputDir, "profile-sanitized.txt")
         sanitizedProfileTxtFile.exists()  && sanitizedProfileTxtFile.size()>0
 
+        if (System.getenv('FG_HOME_DIR')) {
+            def fgFile = new File(outputDir, "flames.svg")
+            assert fgFile.exists() && fgFile.size()>0
+        }
     }
 
     def "profiles build using Build Scans, specified Gradle version and tasks"() {
