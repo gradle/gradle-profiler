@@ -106,11 +106,10 @@ class ScenarioLoader {
             if (value instanceof List) {
                 List<?> list = (List) value;
                 return list.stream().map(v -> v.toString()).collect(Collectors.toList());
-            } else {
+            } else if (value.toString().length() > 0) {
                 return Collections.singletonList(value.toString());
             }
-        } else {
-            return defaults;
         }
+        return defaults;
     }
 }

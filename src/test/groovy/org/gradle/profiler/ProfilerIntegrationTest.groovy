@@ -6,6 +6,7 @@ import org.junit.rules.TemporaryFolder
 import spock.lang.Requires
 import spock.lang.Shared
 import spock.lang.Specification
+import spock.lang.Unroll
 
 class ProfilerIntegrationTest extends Specification {
     @Rule
@@ -203,8 +204,7 @@ println "<daemon: " + gradle.services.get(org.gradle.internal.environment.Gradle
         logFile.grep("<gradle-version: $gradleVersion>").size() == 4
         logFile.grep("<daemon: true").size() == 4
         logFile.grep("<tasks: [assemble]>").size() == 3
-        logFile.grep("Using build scan profiler version " + BuildScanInitScript.VERSION).size() == 1
-        logFile.grep("Publishing build information...").size() == 1
+        assertBuildScanPublished(BuildScanInitScript.VERSION)
     }
 
     def "profiles build using Build Scans overridden version specified Gradle version and tasks"() {
@@ -227,8 +227,13 @@ println "<daemon: " + gradle.services.get(org.gradle.internal.environment.Gradle
         logFile.grep("<gradle-version: $gradleVersion>").size() == 4
         logFile.grep("<daemon: true").size() == 4
         logFile.grep("<tasks: [assemble]>").size() == 3
-        logFile.grep("Using build scan profiler version 1.2").size() == 1
-        logFile.grep("Publishing build information...").size() == 1
+        assertBuildScanPublished("1.2")
+    }
+
+    private void assertBuildScanPublished(String buildScanPluginVersion) {
+        logFile.grep("Using build scan profiler version " + buildScanPluginVersion).size() == 1
+        // Must be 1, may be 2 if user applies build scan in home dir
+        assert logFile.grep("Publishing build information...").size() >= 1 : ("LOG FILE:" + logFile.text)
     }
 
     def "profiles build using JFR, Build Scans, specified Gradle version and tasks"() {
@@ -252,8 +257,7 @@ println "<daemon: " + gradle.services.get(org.gradle.internal.environment.Gradle
         logFile.grep("<gradle-version: $gradleVersion>").size() == 4
         logFile.grep("<daemon: true").size() == 4
         logFile.grep("<tasks: [assemble]>").size() == 3
-        logFile.grep("Using build scan profiler version 1.2").size() == 1
-        logFile.grep("Publishing build information...").size() == 1
+        assertBuildScanPublished("1.2")
 
         def profileFile = new File(outputDir, "profile.jfr")
         profileFile.exists()
@@ -601,14 +605,15 @@ println "<sys-prop: " + System.getProperty("org.gradle.test") + ">"
         logFile.grep("<sys-prop: value-2>").size() == 16
     }
 
-    def "can use Gradle args to enable parallel mode"() {
+    @Unroll
+    def "can use Gradle args to #name parallel mode"() {
         given:
         def scenarioFile = file("benchmark.conf")
         scenarioFile.text = """
 a {
     versions = "$gradleVersion"
     tasks = assemble
-    gradle-args = "--parallel"
+    gradle-args = "$arg"
 }
 """
         buildFile.text = """
@@ -621,9 +626,18 @@ println "<parallel: " + gradle.startParameter.parallelProjectExecutionEnabled + 
 
         then:
         // Probe version, initial clean build, 2 warm up, 13 builds
-        logFile.grep("<parallel: false>").size() == 1
-        logFile.grep("<parallel: true>").size() == 16
-        logFile.grep("Parallel execution is an incubating feature").size() == 16
+        if (isParallel) {
+            logFile.grep("<parallel: ${isParallel}>").size() >= 16
+            logFile.grep("Parallel execution is an incubating feature").size() >= 16
+        } else {
+            logFile.grep("<parallel: ${isParallel}>").size() <= 1
+            logFile.grep("Parallel execution is an incubating feature").size() <= 1
+        }
+
+        where:
+        isParallel | arg          | name
+        false      | ""           | "disable"
+        true       | "--parallel" | "enable"
     }
 
     def "applies and reverts changes while running benchmark"() {
@@ -723,6 +737,10 @@ println gradle.gradleUserHomeDir
          */
         List<String> grep(String str) {
             lines.findAll { it.contains(str) }
+        }
+
+        String getText() {
+            lines.join("\n")
         }
     }
 }
