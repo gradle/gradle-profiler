@@ -198,7 +198,7 @@ println "<daemon: " + gradle.services.get(org.gradle.internal.environment.Gradle
         logFile.grep("Publishing build information...").size() == 1
     }
 
-    def "profiles build using Build Scans overriden version specified Gradle version and tasks"() {
+    def "profiles build using Build Scans overridden version specified Gradle version and tasks"() {
         given:
         buildFile.text = """
 apply plugin: BasePlugin
@@ -632,8 +632,15 @@ classes {
             return grep(str).size() > 0
         }
 
+        /**
+         * Locates the lines containing the given string, asserting that it is present
+         */
         List<String> grep(String str) {
-            return lines.findAll { it.contains(str) }
+            def result = lines.findAll { it.contains(str) }
+            if (result.empty) {
+                throw new AssertionError("Could not find string '$str' in log file:\n${lines.join("\n")}")
+            }
+            return result
         }
     }
 }
