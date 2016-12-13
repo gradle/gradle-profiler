@@ -211,7 +211,7 @@ public class Profiler {
         public ProfilerController newController(final String pid, final InvocationSettings settings, final BuildInvoker invoker) {
             List<ProfilerController> controllers = delegates.stream()
                     .map((Profiler prof) -> prof.newController(pid,
-                            new InvocationSettings(settings.getProjectDir(), prof, profilerOptions.get(prof), settings.isBenchmark(), settings.getOutputDir(), settings.getInvoker(), settings.isDryRun(), settings.getScenarioFile(), settings.getVersions(), settings.getTasks(), settings.getSystemProperties()), invoker))
+                            settingsFor(prof, settings), invoker))
                     .collect(Collectors.toList());
             return new ProfilerController() {
                 @Override
@@ -230,12 +230,16 @@ public class Profiler {
             };
         }
 
+        private InvocationSettings settingsFor(final Profiler prof, final InvocationSettings settings) {
+            return new InvocationSettings(settings.getProjectDir(), prof, profilerOptions.get(prof), settings.isBenchmark(), settings.getOutputDir(), settings.getInvoker(), settings.isDryRun(), settings.getScenarioFile(), settings.getVersions(), settings.getTasks(), settings.getSystemProperties());
+        }
+
         @Override
         public JvmArgsCalculator newJvmArgsCalculator(final InvocationSettings settings) {
             return new JvmArgsCalculator() {
                 @Override
                 public void calculateJvmArgs(final List<String> jvmArgs) {
-                    delegates.forEach(prof -> prof.newJvmArgsCalculator(settings).calculateJvmArgs(jvmArgs));
+                    delegates.forEach(prof -> prof.newJvmArgsCalculator(settingsFor(prof, settings)).calculateJvmArgs(jvmArgs));
                 }
             };
         }
