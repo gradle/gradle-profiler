@@ -5,6 +5,8 @@ import org.gradle.tooling.ProjectConnection;
 import org.gradle.tooling.model.build.BuildEnvironment;
 
 import java.io.File;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.time.Instant;
 import java.util.*;
 import java.util.function.Consumer;
@@ -55,6 +57,7 @@ public class Main {
                 Logging.startOperation("Running scenario " + scenario.getName());
 
                 List<String> tasks = scenario.getTasks();
+                Path userHome = Files.createTempDirectory("gradleUserHome");
 
                 for (GradleVersion version : scenario.getVersions()) {
                     Logging.startOperation("Running scenario " + scenario.getName() + " using Gradle version " + version.getVersion());
@@ -86,6 +89,8 @@ public class Main {
                                 Logging.detailed().println("  " + jvmArg);
                             }
                             List<String> gradleArgs = new ArrayList<>(pidInstrumentation.getArgs());
+                            gradleArgs.add("--gradle-user-home");
+                            gradleArgs.add(userHome.toString());
                             for (Map.Entry<String, String> entry : scenario.getSystemProperties().entrySet()) {
                                 gradleArgs.add("-D" + entry.getKey() + "=" + entry.getValue());
                             }

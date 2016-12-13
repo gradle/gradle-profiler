@@ -664,6 +664,21 @@ classes {
         srcFile.text == originalText
     }
 
+    def "uses isolated user home"() {
+        given:
+        buildFile.text = """
+apply plugin: 'base'
+println gradle.gradleUserHomeDir
+"""
+
+        when:
+        new Main().run("--project-dir", projectDir.absolutePath, "--output-dir", outputDir.absolutePath, "--gradle-version", gradleVersion,
+                "--benchmark", "help")
+
+        then:
+        logFile.grep(System.getProperty("java.io.tmpdir"))
+    }
+
     static class LogFile {
         final List<String> lines
 
