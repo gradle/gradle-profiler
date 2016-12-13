@@ -17,6 +17,7 @@ import org.gradle.internal.progress.OperationStartEvent;
 
 import javax.inject.Inject;
 import java.io.*;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -38,15 +39,24 @@ public class GradleTracingPlugin implements Plugin<Gradle> {
         this.buildRequestMetaData = buildRequestMetaData;
     }
 
-    private void start(String name, String category) {
-        events.put(name, TraceEvent.started(name, category));
+    private void start(String name, String category, Map<String, String> info) {
+        events.put(name, TraceEvent.started(name, category, info));
     }
 
-    private void finish(String name) {
+    private void start(String name, String category) {
+        events.put(name, TraceEvent.started(name, category, new HashMap<>()));
+    }
+
+    private TraceEvent finish(String name) {
         TraceEvent event = events.get(name);
         if (event != null) {
             event.finished();
         }
+        return event;
+    }
+
+    private void finish(String name, Map<String, String> info) {
+        finish(name).getInfo().putAll(info);
     }
 
     @Override
@@ -54,7 +64,9 @@ public class GradleTracingPlugin implements Plugin<Gradle> {
         gradle.addListener(new TaskExecutionListener() {
             @Override
             public void beforeExecute(Task task) {
-                start(task.getPath(), CATEGORY_TASK);
+                Map<String, String> info = new HashMap<>();
+                info.put("type", task.getClass().getSimpleName());
+                start(task.getPath(), CATEGORY_TASK, info);
             }
 
             @Override
@@ -119,7 +131,7 @@ public class GradleTracingPlugin implements Plugin<Gradle> {
 
         @Override
         public void buildFinished(BuildResult result) {
-            TraceEvent overallBuild = TraceEvent.started(PHASE_BUILD, CATEGORY_PHASE, toNanoTime(buildRequestMetaData.getBuildTimeClock().getStartTime()));
+            TraceEvent overallBuild = TraceEvent.started(PHASE_BUILD, CATEGORY_PHASE, toNanoTime(buildRequestMetaData.getBuildTimeClock().getStartTime()), new HashMap<>());
             overallBuild.finished();
             events.put(PHASE_BUILD, overallBuild);
 
