@@ -16,15 +16,31 @@
 package org.gradle.profiler.hp;
 
 import org.gradle.profiler.ProfilerController;
+import org.gradle.profiler.fg.FlameGraphSanitizer;
 
 import java.io.File;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.net.Socket;
 import java.nio.file.Files;
+import java.util.Collections;
+import java.util.LinkedHashMap;
+import java.util.Map;
+import java.util.regex.Pattern;
 
 public class HonestProfilerControl implements ProfilerController {
     private static final String PROFILE_HPL = "profile.hpl";
+    private static final String PROFILE_TXT = "profile.txt";
+    private static final String PROFILE_SANITIZED_TXT = "profile-sanitized.txt";
+
+    private static final Map<Pattern, String> DEFAULT_REPLACEMENTS = Collections.unmodifiableMap(
+            new LinkedHashMap<Pattern, String>() { {
+                put(Pattern.compile("build_([a-z0-9]+)"), "build_");
+                put(Pattern.compile("settings_([a-z0-9]+)"), "settings_");
+                put(Pattern.compile("org[.]gradle[.]"), "");
+                put(Pattern.compile("sun[.]reflect[.]GeneratedMethodAccessor[0-9]+"), "GeneratedMethodAccessor");
+            }}
+    );
 
     private final HonestProfilerArgs args;
     private final File outputDir;
@@ -44,7 +60,38 @@ public class HonestProfilerControl implements ProfilerController {
     public void stop() throws IOException, InterruptedException {
         System.out.println("Stopping profiling with Honest Profiler on port " + args.getPort());
         sendCommand("stop");
-        Files.copy(args.getLogPath().toPath(), new File(outputDir, PROFILE_HPL).toPath());
+        File hplFile = new File(outputDir, PROFILE_HPL);
+        File txtFile = new File(outputDir, PROFILE_TXT);
+        File sanitizedTxtFile = new File(outputDir, PROFILE_SANITIZED_TXT);
+        Files.copy(args.getLogPath().toPath(), hplFile.toPath());
+        convertToFlameGraphTxtFile(hplFile, txtFile);
+        sanitizeFlameGraphTxtFile(txtFile, sanitizedTxtFile);
+    }
+
+    private void convertToFlameGraphTxtFile(final File hplFile, final File txtFile) throws IOException, InterruptedException {
+        String javaHome = System.getenv("JAVA_HOME");
+        if (javaHome == null) {
+            throw new IllegalArgumentException("Please set the JAVA_HOME environment variable to your Java installation");
+        }
+        ProcessBuilder processBuilder = new ProcessBuilder(
+                javaHome + File.separatorChar + "bin" + File.separatorChar + "java",
+                "-cp",
+                javaHome + File.separatorChar + "lib" + File.separatorChar + "tools.jar" + ":" + args.getHpHomeDir() + File.separatorChar + "honest-profiler.jar",
+                "com.insightfullogic.honest_profiler.ports.console.FlameGraphDumperApplication",
+                hplFile.getAbsolutePath(),
+                txtFile.getAbsolutePath()
+        );
+        Process process = processBuilder.start();
+        int result = process.waitFor();
+        if (result != 0) {
+            throw new RuntimeException("Unable to generate stack traces txt file");
+        }
+    }
+
+    private void sanitizeFlameGraphTxtFile(final File txtFile, final File sanitizedTxtFile) {
+        FlameGraphSanitizer sanitizer = new FlameGraphSanitizer(new FlameGraphSanitizer.RegexBasedSanitizerFunction(DEFAULT_REPLACEMENTS));
+        // todo: add a way to provide custom patterns
+        sanitizer.sanitize(txtFile, sanitizedTxtFile);
     }
 
     private void sendCommand(String command) throws IOException {

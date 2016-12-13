@@ -172,7 +172,12 @@ println "<daemon: " + gradle.services.get(org.gradle.internal.environment.Gradle
         logFile.grep("<tasks: [assemble]>").size() == 3
 
         def profileFile = new File(outputDir, "profile.hpl")
-        profileFile.exists()
+        profileFile.exists() && profileFile.size()>0
+        def profileTxtFile = new File(outputDir, "profile.txt")
+        profileTxtFile.exists() && profileTxtFile.size()>0
+        def sanitizedProfileTxtFile = new File(outputDir, "profile-sanitized.txt")
+        sanitizedProfileTxtFile.exists()  && sanitizedProfileTxtFile.size()>0
+
     }
 
     def "profiles build using Build Scans, specified Gradle version and tasks"() {
