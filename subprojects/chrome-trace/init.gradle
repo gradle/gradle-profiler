@@ -1,0 +1,10 @@
+initscript {
+    repositories {
+        mavenLocal()
+    }
+    dependencies {
+        classpath files(new File(sourceFile.parent, "build/libs/chrome-trace.jar"))
+    }
+}
+
+apply plugin: org.gradle.trace.GradleTracingPlugin
