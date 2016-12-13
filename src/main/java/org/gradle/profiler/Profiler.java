@@ -25,15 +25,12 @@ import org.gradle.profiler.hp.HonestProfilerJvmArgsCalculator;
 import org.gradle.profiler.jfr.JFRArgs;
 import org.gradle.profiler.jfr.JFRControl;
 import org.gradle.profiler.jfr.JFRJvmArgsCalculator;
+import org.gradle.profiler.yjp.YourKitJvmArgsCalculator;
+import org.gradle.profiler.yjp.YourKitProfilerController;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 
 public class Profiler {
@@ -126,6 +123,18 @@ public class Profiler {
                     .withOptionalArg();
         }
     };
+    public static final Profiler YOUR_KIT = new Profiler() {
+        @Override
+        public ProfilerController newController(String pid, InvocationSettings settings, BuildInvoker invoker) {
+            return new YourKitProfilerController();
+        }
+
+        @Override
+        public JvmArgsCalculator newJvmArgsCalculator(InvocationSettings settings) {
+            return new YourKitJvmArgsCalculator(settings);
+        }
+
+    };
 
     public static final Profiler CHROME_TRACE = new Profiler() {
         @Override
@@ -144,6 +153,7 @@ public class Profiler {
                 put("hp", HP);
                 put("buildscan", BUILDSCAN);
                 put("chrome-trace", CHROME_TRACE);
+                put("yourkit", YOUR_KIT);
             }}
     );
 
