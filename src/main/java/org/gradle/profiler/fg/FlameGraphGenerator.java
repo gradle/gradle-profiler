@@ -13,7 +13,7 @@ public class FlameGraphGenerator
 
     public void generateFlameGraph( final File txtFile, final File fgFile ) throws IOException, InterruptedException {
         ProcessBuilder processBuilder = new ProcessBuilder(
-            fgFile.getAbsolutePath() + File.separatorChar + "flamegraph.pl",
+            fgHomeDir.getAbsolutePath() + File.separatorChar + "flamegraph.pl",
             txtFile.getAbsolutePath()
         );
         processBuilder.redirectOutput(fgFile);
