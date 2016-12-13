@@ -22,3 +22,9 @@ dependencies {
 
 sourceCompatibility = 1.8
 mainClassName = "org.gradle.profiler.Main"
+
+jar {
+    into('META-INF/jars') {
+        from project(':chrome-trace').tasks.withType(Jar)
+    }
+}
