@@ -74,22 +74,22 @@ class ProfilerIntegrationTest extends Specification {
         output.contains("Neither --profile or --benchmark specified.")
     }
 
-    def "complains when config file contains unexpected entry"() {
-        def configFile = file("benchmark.conf")
-        configFile.text = """
+    def "complains when scenario file contains unexpected entry"() {
+        def scenarioFile = file("benchmark.conf")
+        scenarioFile.text = """
 assemble {
     gradle-version = 3.2
 }
 """
 
         when:
-        new Main().run("--project-dir", projectDir.absolutePath, "--config-file", configFile.absolutePath, "--profile", "jfr")
+        new Main().run("--project-dir", projectDir.absolutePath, "--scenario-file", scenarioFile.absolutePath, "--profile", "jfr")
 
         then:
         thrown(IllegalArgumentException)
 
         and:
-        output.contains("Unrecognized configuration key 'assemble.gradle-version' found in configuration file.")
+        output.contains("Unrecognized key 'assemble.gradle-version' found in scenario file " + scenarioFile)
     }
 
     def "reports build failures"() {
@@ -230,10 +230,10 @@ println "<daemon: " + gradle.services.get(org.gradle.internal.environment.Gradle
         resultFile.text.readLines().size() == 18
     }
 
-    def "runs benchmarks using scenarios defined in config file"() {
+    def "runs benchmarks using scenarios defined in scenario file"() {
         given:
-        def configFile = file("benchmark.conf")
-        configFile.text = """
+        def scenarioFile = file("benchmark.conf")
+        scenarioFile.text = """
 assemble {
     versions = ["3.0", "$gradleVersion"]
     tasks = assemble
@@ -253,7 +253,7 @@ println "<daemon: " + gradle.services.get(org.gradle.internal.environment.Gradle
 """
 
         when:
-        new Main().run("--project-dir", projectDir.absolutePath, "--output-dir", outputDir.absolutePath, "--config-file", configFile.absolutePath,
+        new Main().run("--project-dir", projectDir.absolutePath, "--output-dir", outputDir.absolutePath, "--scenario-file", scenarioFile.absolutePath,
                 "--benchmark")
 
         then:
@@ -275,8 +275,8 @@ println "<daemon: " + gradle.services.get(org.gradle.internal.environment.Gradle
 
     def "dry run runs test builds to verify configuration"() {
         given:
-        def configFile = file("benchmark.conf")
-        configFile.text = """
+        def scenarioFile = file("benchmark.conf")
+        scenarioFile.text = """
 s1 {
     versions = ["3.0", "$gradleVersion"]
     tasks = assemble
@@ -295,7 +295,7 @@ println "<dry-run: " + gradle.startParameter.dryRun + ">"
 """
 
         when:
-        new Main().run("--project-dir", projectDir.absolutePath, "--output-dir", outputDir.absolutePath, "--config-file", configFile.absolutePath, "--benchmark", "--dry-run")
+        new Main().run("--project-dir", projectDir.absolutePath, "--output-dir", outputDir.absolutePath, "--scenario-file", scenarioFile.absolutePath, "--benchmark", "--dry-run")
 
         then:
         // Probe version, initial clean build, 1 warm up, 1 build
@@ -398,10 +398,10 @@ println "<sys-prop: " + System.getProperty("org.gradle.test") + ">"
         logFile.grep("<sys-prop: value>").size() == 16
     }
 
-    def "can define system property using config file"() {
+    def "can define system property using scenario file"() {
         given:
-        def configFile = file("benchmark.conf")
-        configFile.text = """
+        def scenarioFile = file("benchmark.conf")
+        scenarioFile.text = """
 a {
     versions = "$gradleVersion"
     tasks = assemble
@@ -423,7 +423,7 @@ println "<sys-prop: " + System.getProperty("org.gradle.test") + ">"
 """
 
         when:
-        new Main().run("--project-dir", projectDir.absolutePath, "--output-dir", outputDir.absolutePath, "--config-file", configFile.absolutePath,
+        new Main().run("--project-dir", projectDir.absolutePath, "--output-dir", outputDir.absolutePath, "--scenario-file", scenarioFile.absolutePath,
                 "--benchmark")
 
         then:
@@ -433,10 +433,10 @@ println "<sys-prop: " + System.getProperty("org.gradle.test") + ">"
         logFile.grep("<sys-prop: value-2>").size() == 16
     }
 
-    def "uses default version if none are defined in config file"() {
+    def "uses default version if none are defined in scenario file"() {
         given:
-        def configFile = file("benchmark.conf")
-        configFile.text = """
+        def scenarioFile = file("benchmark.conf")
+        scenarioFile.text = """
 a {
     tasks = assemble
 }
@@ -450,17 +450,17 @@ println "Running \$gradle.gradleVersion"
         wrapperProperties.text = "distributionUrl=https\\://services.gradle.org/distributions/gradle-$gradleVersion-bin.zip"
 
         when:
-        new Main().run("--project-dir", projectDir.absolutePath, "--output-dir", outputDir.absolutePath, "--config-file", configFile.absolutePath,
+        new Main().run("--project-dir", projectDir.absolutePath, "--output-dir", outputDir.absolutePath, "--scenario-file", scenarioFile.absolutePath,
                 "--benchmark")
 
         then:
         logFile.grep("Running $gradleVersion")
     }
 
-    def "can define Gradle args using config file"() {
+    def "can define Gradle args using scenario file"() {
         given:
-        def configFile = file("benchmark.conf")
-        configFile.text = """
+        def scenarioFile = file("benchmark.conf")
+        scenarioFile.text = """
 a {
     versions = "$gradleVersion"
     tasks = assemble
@@ -478,7 +478,7 @@ println "<sys-prop: " + System.getProperty("org.gradle.test") + ">"
 """
 
         when:
-        new Main().run("--project-dir", projectDir.absolutePath, "--output-dir", outputDir.absolutePath, "--config-file", configFile.absolutePath,
+        new Main().run("--project-dir", projectDir.absolutePath, "--output-dir", outputDir.absolutePath, "--scenario-file", scenarioFile.absolutePath,
                 "--benchmark")
 
         then:
@@ -490,8 +490,8 @@ println "<sys-prop: " + System.getProperty("org.gradle.test") + ">"
 
     def "can use Gradle args to enable parallel mode"() {
         given:
-        def configFile = file("benchmark.conf")
-        configFile.text = """
+        def scenarioFile = file("benchmark.conf")
+        scenarioFile.text = """
 a {
     versions = "$gradleVersion"
     tasks = assemble
@@ -504,8 +504,7 @@ println "<parallel: " + gradle.startParameter.parallelProjectExecutionEnabled + 
 """
 
         when:
-        new Main().run("--project-dir", projectDir.absolutePath, "--output-dir", outputDir.absolutePath, "--benchmark", "--config-file",
-                configFile.absolutePath)
+        new Main().run("--project-dir", projectDir.absolutePath, "--output-dir", outputDir.absolutePath, "--benchmark", "--scenario-file", scenarioFile.absolutePath)
 
         then:
         // Probe version, initial clean build, 2 warm up, 13 builds
@@ -531,8 +530,8 @@ println "<unmodified-build-file>"
         gitRepository.diff(patchFile)
         gitRepository.reset()
 
-        def configFile = file("scenarios.conf")
-        configFile << """
+        def scenarioFile = file("scenarios.conf")
+        scenarioFile << """
 help {
     tasks = "help"    
     patch-file = "add-build-logging.patch"
@@ -541,7 +540,7 @@ help {
 
         when:
         new Main().run("--project-dir", projectDir.absolutePath, "--output-dir", outputDir.absolutePath, "--gradle-version", gradleVersion,
-                "--benchmark", "--config-file", configFile.absolutePath)
+                "--benchmark", "--scenario-file", scenarioFile.absolutePath)
 
         then:
         // Probe version, initial clean build, 2 warm up, 13 builds

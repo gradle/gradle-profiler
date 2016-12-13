@@ -18,8 +18,8 @@ class ScenarioLoader {
 
     public List<ScenarioDefinition> loadScenarios(InvocationSettings settings) {
         List<ScenarioDefinition> scenarios = new ArrayList<>();
-        if (settings.getConfigFile() != null) {
-            scenarios = loadConfig(settings.getConfigFile(), settings, gradleVersionInspector);
+        if (settings.getScenarioFile() != null) {
+            scenarios = loadScenarios(settings.getScenarioFile(), settings, gradleVersionInspector);
         }
         if (scenarios.isEmpty()) {
             List<GradleVersion> versions = new ArrayList<>();
@@ -36,14 +36,14 @@ class ScenarioLoader {
         return scenarios;
     }
 
-    private List<ScenarioDefinition> loadConfig(File configFile, InvocationSettings settings, GradleVersionInspector inspector) {
+    private List<ScenarioDefinition> loadScenarios(File scenarioFile, InvocationSettings settings, GradleVersionInspector inspector) {
         List<ScenarioDefinition> definitions = new ArrayList<>();
-        Config config = ConfigFactory.parseFile(configFile, ConfigParseOptions.defaults().setAllowMissing(false));
+        Config config = ConfigFactory.parseFile(scenarioFile, ConfigParseOptions.defaults().setAllowMissing(false));
         for (String scenarioName : new TreeSet<>(config.root().keySet())) {
             Config scenario = config.getConfig(scenarioName);
             for (String key : config.getObject(scenarioName).keySet()) {
                 if (!Arrays.asList("versions", "tasks", "gradle-args", "run-using", "system-properties", "patch-file").contains(key)) {
-                    throw new IllegalArgumentException("Unrecognized configuration key '" + scenarioName + "." + key + "' found in configuration file.");
+                    throw new IllegalArgumentException("Unrecognized key '" + scenarioName + "." + key + "' found in scenario file " + scenarioFile);
                 }
             }
             List<GradleVersion> versions = strings(scenario, "versions", settings.getVersions()).stream().map(v -> inspector.resolve(v)).collect(
@@ -53,7 +53,7 @@ class ScenarioLoader {
             Invoker invoker = invoker(scenario, "run-using", settings.getInvoker());
             Map<String, String> systemProperties = map(scenario, "system-properties", settings.getSystemProperties());
             String patchFileName = string(scenario, "patch-file", null);
-            File patchFile = patchFileName == null ? null : new File(configFile.getParentFile(), patchFileName);
+            File patchFile = patchFileName == null ? null : new File(scenarioFile.getParentFile(), patchFileName);
             if (patchFile != null && !patchFile.isFile()) {
                 throw new IllegalArgumentException("Patch file " + patchFile + " specified for scenario " + scenarioName + " does not exist.");
             }

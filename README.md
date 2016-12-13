@@ -57,9 +57,9 @@ and each of these is used to benchmark the build, allowing you to compare the be
 
 A scenario can define a patch file to be applied and reverted in alternating builds. You can use this to benchmark or profile an incremental build.
 
-## Configuration file
+## Scenario file
 
-A configuration file can be provided to define scenarios to benchmark or profile. Use the `--config-file` option to provide this.
+A scenario file can be provided to define scenarios to benchmark or profile. Use the `--scenario-file` option to provide this.
 
     # Scenarios are run in alphabetical order
     assemble {

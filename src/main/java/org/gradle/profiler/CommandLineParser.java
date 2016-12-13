@@ -22,7 +22,7 @@ class CommandLineParser {
                 .withRequiredArg();
         ArgumentAcceptingOptionSpec<String> versionOption = parser.accepts("gradle-version", "Gradle version or installation to use to run build")
                 .withRequiredArg();
-        ArgumentAcceptingOptionSpec<String> configFileOption = parser.accepts("config-file", "Configuration file to use").withRequiredArg();
+        ArgumentAcceptingOptionSpec<String> scenarioFileOption = parser.accepts("scenario-file", "Scenario definition file to use").withRequiredArg();
         ArgumentAcceptingOptionSpec<String> sysPropOption = parser.accepts("D", "Defines a system property").withRequiredArg();
         ArgumentAcceptingOptionSpec<String> outputDirOption = parser.accepts("output-dir", "Directory to write results to").withRequiredArg();
         ArgumentAcceptingOptionSpec<String> profilerOption = parser.accepts("profile", "Collect profiling information using profiler (jfr, hp)")
@@ -61,7 +61,7 @@ class CommandLineParser {
 
         List<String> taskNames = parsedOptions.nonOptionArguments().stream().map(o -> o.toString()).collect(Collectors.toList());
         List<String> versions = parsedOptions.valuesOf(versionOption).stream().map(v -> v.toString()).collect(Collectors.toList());
-        File configFile = parsedOptions.has(configFileOption) ? new File(parsedOptions.valueOf(configFileOption)) : null;
+        File scenarioFile = parsedOptions.has(scenarioFileOption) ? new File(parsedOptions.valueOf(scenarioFileOption)) : null;
         Invoker invoker = parsedOptions.has(noDaemonOption) ? Invoker.NoDaemon : Invoker.ToolingApi;
         boolean dryRun = parsedOptions.has(dryRunOption);
         Map<String, String> sysProperties = new LinkedHashMap<>();
@@ -73,7 +73,7 @@ class CommandLineParser {
                 sysProperties.put(parts[0], parts[1]);
             }
         }
-        return new InvocationSettings(projectDir, profiler, profilerOptions, benchmark, outputDir, invoker, dryRun, configFile, versions, taskNames, sysProperties);
+        return new InvocationSettings(projectDir, profiler, profilerOptions, benchmark, outputDir, invoker, dryRun, scenarioFile, versions, taskNames, sysProperties);
     }
 
     private File findOutputDir() {
