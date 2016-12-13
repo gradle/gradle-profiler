@@ -29,7 +29,7 @@ public class BuildScanInitScript extends GeneratedInitScript {
         super();
         this.version = version == null ? VERSION : version;
         generateInitScript();
-        System.out.println("Using build scan profiler version " + version);
+        System.out.println("Using build scan profiler version " + this.version);
     }
 
     @Override
