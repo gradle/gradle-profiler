@@ -1,1 +1,4 @@
 rootProject.name = 'gradle-profiler'
+
+include 'chrome-trace'
+project(':chrome-trace').projectDir = new File(rootDir, 'subprojects/chrome-trace')
