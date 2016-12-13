@@ -42,7 +42,7 @@ class GradleVersionInspector {
     }
 
     private GradleVersion doResolveVersion(String versionString) {
-        Logging.startOperation("Locating Gradle version '" + versionString + "'");
+        Logging.startOperation("Inspecting Gradle version '" + versionString + "'");
         try {
             File dir = new File(versionString);
             if (dir.isDirectory()) {
