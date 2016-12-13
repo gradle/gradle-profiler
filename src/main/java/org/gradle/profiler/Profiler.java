@@ -28,10 +28,12 @@ import org.gradle.profiler.jfr.JFRJvmArgsCalculator;
 import java.io.File;
 import java.io.IOException;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 public class Profiler {
 
@@ -162,6 +164,57 @@ public class Profiler {
             String first = profilersList.get(0);
             return of(first);
         }
-        throw new UnsupportedOperationException("Multiple profilers are not supported");
+        return new CompositeProfiler(profilersList.stream().map(Profiler::of).collect(Collectors.toList()));
+    }
+
+    private static class CompositeProfiler extends Profiler {
+        private final List<Profiler> delegates;
+        private final Map<Profiler, Object> profilerOptions = new HashMap<>();
+
+        private CompositeProfiler(final List<Profiler> delegates) {
+            this.delegates = delegates;
+        }
+
+        @Override
+        public ProfilerController newController(final String pid, final InvocationSettings settings, final BuildInvoker invoker) {
+            List<ProfilerController> controllers = delegates.stream()
+                    .map((Profiler prof) -> prof.newController(pid,
+                            new InvocationSettings(settings.getProjectDir(), prof, profilerOptions.get(prof), settings.isBenchmark(), settings.getOutputDir(), settings.getInvoker(), settings.isDryRun(), settings.getScenarioFile(), settings.getVersions(), settings.getTasks(), settings.getSystemProperties()), invoker))
+                    .collect(Collectors.toList());
+            return new ProfilerController() {
+                @Override
+                public void start() throws IOException, InterruptedException {
+                    for (ProfilerController controller : controllers) {
+                        controller.start();
+                    }
+                }
+
+                @Override
+                public void stop() throws IOException, InterruptedException {
+                    for (ProfilerController controller : controllers) {
+                        controller.stop();
+                    }
+                }
+            };
+        }
+
+        @Override
+        public JvmArgsCalculator newJvmArgsCalculator(final InvocationSettings settings) {
+            return new JvmArgsCalculator() {
+                @Override
+                public void calculateJvmArgs(final List<String> jvmArgs) {
+                    delegates.forEach(prof -> prof.newJvmArgsCalculator(settings).calculateJvmArgs(jvmArgs));
+                }
+            };
+        }
+
+        @Override
+        public Object newConfigObject(final OptionSet parsedOptions) {
+            for (Profiler delegate : delegates) {
+                profilerOptions.put(delegate, delegate.newConfigObject(parsedOptions));
+            }
+            return Collections.unmodifiableMap(profilerOptions);
+        }
+
     }
 }

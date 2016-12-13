@@ -222,6 +222,34 @@ println "<daemon: " + gradle.services.get(org.gradle.internal.environment.Gradle
         logFile.grep("Publishing build information...").size() == 1
     }
 
+    def "profiles build using JFR, Build Scans, specified Gradle version and tasks"() {
+        given:
+        buildFile.text = """
+apply plugin: BasePlugin
+println "<gradle-version: " + gradle.gradleVersion + ">"
+println "<tasks: " + gradle.startParameter.taskNames + ">"
+println "<daemon: " + gradle.services.get(org.gradle.internal.environment.GradleBuildEnvironment).longLivingProcess + ">"
+"""
+
+        when:
+        new Main().
+                run("--project-dir", projectDir.absolutePath, "--output-dir", outputDir.absolutePath, "--gradle-version", gradleVersion,
+                        "--profile", "buildscan",  "--buildscan-version", "1.2",
+                        "--profile", "jfr",
+                        "assemble")
+
+        then:
+        // Probe version, 2 warm up, 1 build
+        logFile.grep("<gradle-version: $gradleVersion>").size() == 4
+        logFile.grep("<daemon: true").size() == 4
+        logFile.grep("<tasks: [assemble]>").size() == 3
+        logFile.grep("Using build scan profiler version 1.2").size() == 1
+        logFile.grep("Publishing build information...").size() == 1
+
+        def profileFile = new File(outputDir, "profile.jfr")
+        profileFile.exists()
+    }
+
 
     def "runs benchmarks using tooling API for specified Gradle version and tasks"() {
         given:
