@@ -231,7 +231,7 @@ public class Profiler {
         }
 
         private InvocationSettings settingsFor(final Profiler prof, final InvocationSettings settings) {
-            return new InvocationSettings(settings.getProjectDir(), prof, profilerOptions.get(prof), settings.isBenchmark(), settings.getOutputDir(), settings.getInvoker(), settings.isDryRun(), settings.getScenarioFile(), settings.getVersions(), settings.getTasks(), settings.getSystemProperties());
+            return new InvocationSettings(settings.getProjectDir(), prof, profilerOptions.get(prof), settings.isBenchmark(), settings.getOutputDir(), settings.getInvoker(), settings.isDryRun(), settings.getScenarioFile(), settings.getVersions(), settings.getTargets(), settings.getSystemProperties());
         }
 
         @Override

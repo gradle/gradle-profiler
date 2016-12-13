@@ -20,6 +20,7 @@ class CommandLineParser {
      */
     public InvocationSettings parseSettings(String[] args) throws IOException, SettingsNotAvailableException {
         OptionParser parser = new OptionParser();
+        parser.nonOptions("The scenarios or task names to run");
         ArgumentAcceptingOptionSpec<String> projectOption = parser.accepts("project-dir", "The directory containing the build to run")
                 .withRequiredArg();
         ArgumentAcceptingOptionSpec<String> versionOption = parser.accepts("gradle-version", "Gradle version or installation to use to run build")
@@ -66,7 +67,7 @@ class CommandLineParser {
             outputDir = findOutputDir();
         }
 
-        List<String> taskNames = parsedOptions.nonOptionArguments().stream().map(o -> o.toString()).collect(Collectors.toList());
+        List<String> targetNames = parsedOptions.nonOptionArguments().stream().map(o -> o.toString()).collect(Collectors.toList());
         List<String> versions = parsedOptions.valuesOf(versionOption).stream().map(v -> v.toString()).collect(Collectors.toList());
         File scenarioFile = parsedOptions.has(scenarioFileOption) ? new File(parsedOptions.valueOf(scenarioFileOption)) : null;
         Invoker invoker = parsedOptions.has(noDaemonOption) ? Invoker.NoDaemon : Invoker.ToolingApi;
@@ -80,7 +81,7 @@ class CommandLineParser {
                 sysProperties.put(parts[0], parts[1]);
             }
         }
-        return new InvocationSettings(projectDir, profiler, profilerOptions, benchmark, outputDir, invoker, dryRun, scenarioFile, versions, taskNames, sysProperties);
+        return new InvocationSettings(projectDir, profiler, profilerOptions, benchmark, outputDir, invoker, dryRun, scenarioFile, versions, targetNames, sysProperties);
     }
 
     private File findOutputDir() {

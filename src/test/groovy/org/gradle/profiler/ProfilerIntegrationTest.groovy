@@ -358,6 +358,34 @@ println "<daemon: " + gradle.services.get(org.gradle.internal.environment.Gradle
         resultFile.text.readLines().size() == 18
     }
 
+    def "runs benchmarks using single scenario defined in scenario file"() {
+        given:
+        def scenarioFile = file("benchmark.conf")
+        scenarioFile.text = """
+assemble {
+    versions = ["3.0", "$gradleVersion"]
+    tasks = assemble
+}
+help {
+    versions = "$gradleVersion"
+    tasks = [help]
+    run-using = no-daemon
+}
+"""
+
+        buildFile.text = """
+apply plugin: BasePlugin
+"""
+
+        when:
+        new Main().run("--project-dir", projectDir.absolutePath, "--output-dir", outputDir.absolutePath, "--scenario-file", scenarioFile.absolutePath,
+                "--benchmark", "assemble")
+
+        then:
+        !logFile.grep("Tasks: [help]")
+    }
+
+
     def "dry run runs test builds to verify configuration"() {
         given:
         def scenarioFile = file("benchmark.conf")
@@ -691,14 +719,10 @@ println gradle.gradleUserHomeDir
         }
 
         /**
-         * Locates the lines containing the given string, asserting that it is present
+         * Locates the lines containing the given string
          */
         List<String> grep(String str) {
-            def result = lines.findAll { it.contains(str) }
-            if (result.empty) {
-                throw new AssertionError("Could not find string '$str' in log file:\n${lines.join("\n")}")
-            }
-            return result
+            lines.findAll { it.contains(str) }
         }
     }
 }

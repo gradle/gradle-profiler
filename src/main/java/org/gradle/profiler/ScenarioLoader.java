@@ -20,13 +20,12 @@ class ScenarioLoader {
         List<ScenarioDefinition> scenarios = new ArrayList<>();
         if (settings.getScenarioFile() != null) {
             scenarios = loadScenarios(settings.getScenarioFile(), settings, gradleVersionInspector);
-        }
-        if (scenarios.isEmpty()) {
+        } else {
             List<GradleVersion> versions = new ArrayList<>();
             for (String v : settings.getVersions()) {
                 versions.add(gradleVersionInspector.resolve(v));
             }
-            scenarios.add(new ScenarioDefinition("default", settings.getInvoker(), versions, settings.getTasks(), Collections.emptyList(), settings.getSystemProperties(), null));
+            scenarios.add(new ScenarioDefinition("default", settings.getInvoker(), versions, settings.getTargets(), Collections.emptyList(), settings.getSystemProperties(), null));
         }
         for (ScenarioDefinition scenario : scenarios) {
             if (scenario.getVersions().isEmpty()) {
@@ -39,7 +38,11 @@ class ScenarioLoader {
     private List<ScenarioDefinition> loadScenarios(File scenarioFile, InvocationSettings settings, GradleVersionInspector inspector) {
         List<ScenarioDefinition> definitions = new ArrayList<>();
         Config config = ConfigFactory.parseFile(scenarioFile, ConfigParseOptions.defaults().setAllowMissing(false));
-        for (String scenarioName : new TreeSet<>(config.root().keySet())) {
+        TreeSet<String> selectedScenarios = new TreeSet<>(config.root().keySet());
+        if (!settings.getTargets().isEmpty()) {
+            selectedScenarios.retainAll(settings.getTargets());
+        }
+        for (String scenarioName : selectedScenarios) {
             Config scenario = config.getConfig(scenarioName);
             for (String key : config.getObject(scenarioName).keySet()) {
                 if (!Arrays.asList("versions", "tasks", "gradle-args", "run-using", "system-properties", "apply-abi-change-to").contains(key)) {
@@ -48,7 +51,7 @@ class ScenarioLoader {
             }
             List<GradleVersion> versions = strings(scenario, "versions", settings.getVersions()).stream().map(v -> inspector.resolve(v)).collect(
                     Collectors.toList());
-            List<String> tasks = strings(scenario, "tasks", settings.getTasks());
+            List<String> tasks = strings(scenario, "tasks", settings.getTargets());
             List<String> gradleArgs = strings(scenario, "gradle-args", Collections.emptyList());
             Invoker invoker = invoker(scenario, "run-using", settings.getInvoker());
             Map<String, String> systemProperties = map(scenario, "system-properties", settings.getSystemProperties());

@@ -219,7 +219,7 @@ public class Main {
         System.out.println("Profile: " + settings.isProfile());
         System.out.println("Benchmark: " + settings.isBenchmark());
         System.out.println("Versions: " + settings.getVersions());
-        System.out.println("Tasks: " + settings.getTasks());
+        System.out.println("Targets: " + settings.getTargets());
         if (!settings.getSystemProperties().isEmpty()) {
             System.out.println("System properties:");
             for (Map.Entry<String, String> entry : settings.getSystemProperties().entrySet()) {

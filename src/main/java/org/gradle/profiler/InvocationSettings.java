@@ -14,10 +14,10 @@ public class InvocationSettings {
     private final File outputDir;
     private final Invoker invoker;
     private final List<String> versions;
-    private final List<String> tasks;
+    private final List<String> targets;
     private final Map<String, String> sysProperties;
 
-    public InvocationSettings(File projectDir, Profiler profiler, final Object profilerOptions, boolean benchmark, File outputDir, Invoker invoker, boolean dryRun, File scenarioFile, List<String> versions, List<String> tasks, Map<String, String> sysProperties) {
+    public InvocationSettings(File projectDir, Profiler profiler, final Object profilerOptions, boolean benchmark, File outputDir, Invoker invoker, boolean dryRun, File scenarioFile, List<String> versions, List<String> getTargets, Map<String, String> sysProperties) {
         this.profilerOptions = profilerOptions;
         this.benchmark = benchmark;
         this.projectDir = projectDir;
@@ -27,7 +27,7 @@ public class InvocationSettings {
         this.dryRun = dryRun;
         this.scenarioFile = scenarioFile;
         this.versions = versions;
-        this.tasks = tasks;
+        this.targets = getTargets;
         this.sysProperties = sysProperties;
     }
 
@@ -71,8 +71,8 @@ public class InvocationSettings {
         return versions;
     }
 
-    public List<String> getTasks() {
-        return tasks;
+    public List<String> getTargets() {
+        return targets;
     }
 
     public Map<String, String> getSystemProperties() {
