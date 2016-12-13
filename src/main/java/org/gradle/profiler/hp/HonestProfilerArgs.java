@@ -8,13 +8,15 @@ public class HonestProfilerArgs {
     private final File logPath;
     private final int port;
     private final int interval;
+    private final int maxFrames;
 
-    public HonestProfilerArgs(final File hpHomeDir, final File fgHomeDir, final File logPath, final int port, final int interval) {
+    public HonestProfilerArgs(final File hpHomeDir, final File fgHomeDir, final File logPath, final int port, final int interval, final int maxFrames) {
         this.hpHomeDir = hpHomeDir;
         this.fgHomeDir = fgHomeDir;
         this.logPath = logPath;
         this.port = port;
         this.interval = interval;
+        this.maxFrames = maxFrames;
     }
 
     public File getHpHomeDir() {
@@ -35,5 +37,9 @@ public class HonestProfilerArgs {
 
     public int getInterval() {
         return interval;
+    }
+
+    public int getMaxFrames() {
+        return maxFrames;
     }
 }

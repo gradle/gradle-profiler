@@ -64,8 +64,8 @@ public class Profiler {
                     new File((String) parsedOptions.valueOf("fg-home")),
                     tmpLog,
                     Integer.valueOf((String) parsedOptions.valueOf("hp-port")),
-                    Integer.valueOf((String) parsedOptions.valueOf("hp-interval"))
-            );
+                    Integer.valueOf((String) parsedOptions.valueOf("hp-interval")),
+                    Integer.valueOf((String) parsedOptions.valueOf("hp-max-frames")));
             return args;
         }
 
@@ -98,6 +98,10 @@ public class Profiler {
                     .availableIf("profile")
                     .withOptionalArg()
                     .defaultsTo("7");
+            parser.accepts("hp-max-frames", "Honest Profiler max stack frame height")
+                    .availableIf("profile")
+                    .withOptionalArg()
+                    .defaultsTo("1024");
         }
     };
     public static final Profiler BUILDSCAN = new Profiler() {

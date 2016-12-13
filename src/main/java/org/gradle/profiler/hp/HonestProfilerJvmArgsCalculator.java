@@ -31,6 +31,9 @@ public class HonestProfilerJvmArgsCalculator extends JvmArgsCalculator {
     public void calculateJvmArgs(final List<String> jvmArgs) {
         jvmArgs.add("-XX:+UnlockDiagnosticVMOptions");
         jvmArgs.add("-XX:+DebugNonSafepoints");
-        jvmArgs.add("-agentpath:" + args.getHpHomeDir().getAbsolutePath() + "/liblagent.so=interval=" + args.getInterval() + ",logPath=" + args.getLogPath().getAbsolutePath() + ",port=" + args.getPort() + ",host=localhost,start=0'");
+        jvmArgs.add("-agentpath:" + args.getHpHomeDir().getAbsolutePath() + "/liblagent.so=interval=" + args.getInterval()
+                + ",logPath=" + args.getLogPath().getAbsolutePath()
+                + ",port=" + args.getPort() + ",host=localhost,start=0'"
+                + ",maxFrames=" + args.getMaxFrames());
     }
 }
