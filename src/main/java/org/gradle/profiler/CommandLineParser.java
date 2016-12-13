@@ -28,7 +28,7 @@ class CommandLineParser {
         ArgumentAcceptingOptionSpec<String> sysPropOption = parser.accepts("D", "Defines a system property").withRequiredArg();
         ArgumentAcceptingOptionSpec<String> outputDirOption = parser.accepts("output-dir", "Directory to write results to").withRequiredArg();
         ArgumentAcceptingOptionSpec<String> profilerOption = parser.accepts("profile",
-                "Collect profiling information using profiler (" + Profiler.getAvailableProfilers().stream().reduce("", (s, s2) -> s + ", " + s2) + ")")
+                "Collect profiling information using profiler (" + Profiler.getAvailableProfilers().stream().collect(Collectors.joining(", ")) + ")")
                 .withRequiredArg()
                 .defaultsTo("jfr");
         Profiler.configureParser(parser);
