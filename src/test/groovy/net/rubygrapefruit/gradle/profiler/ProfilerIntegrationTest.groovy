@@ -11,7 +11,7 @@ class ProfilerIntegrationTest extends Specification {
     TemporaryFolder tmpDir = new TemporaryFolder()
     ByteArrayOutputStream outputBuffer
     @Shared
-    String gradleVersion = "3.1"
+    String gradleVersion = "3.2.1"
     @Shared
     String gradleNightlyVersion = "3.3-20161205000012+0000"
     File projectDir
@@ -197,7 +197,7 @@ println "<daemon: " + gradle.services.get(org.gradle.internal.environment.Gradle
         logFile.grep("<tasks: [assemble]>").size() == 15
 
         resultFile.isFile()
-        resultFile.text.readLines().get(0) == "build,default 3.1"
+        resultFile.text.readLines().get(0) == "build,default ${gradleVersion}"
         resultFile.text.readLines().get(1) == "tasks,assemble"
         resultFile.text.readLines().size() == 18
     }
@@ -225,7 +225,7 @@ println "<daemon: " + gradle.services.get(org.gradle.internal.environment.Gradle
         logFile.grep("<tasks: [assemble]>").size() == 15
 
         resultFile.isFile()
-        resultFile.text.readLines().get(0) == "build,default 3.1"
+        resultFile.text.readLines().get(0) == "build,default ${gradleVersion}"
         resultFile.text.readLines().get(1) == "tasks,assemble"
         resultFile.text.readLines().size() == 18
     }
@@ -268,7 +268,7 @@ println "<daemon: " + gradle.services.get(org.gradle.internal.environment.Gradle
         logFile.grep("<tasks: [assemble]>").size() == 15 * 2
 
         resultFile.isFile()
-        resultFile.text.readLines().get(0) == "build,assemble 3.0,assemble 3.1,help 3.1"
+        resultFile.text.readLines().get(0) == "build,assemble 3.0,assemble ${gradleVersion},help ${gradleVersion}"
         resultFile.text.readLines().get(1) == "tasks,assemble,assemble,help"
         resultFile.text.readLines().size() == 18
     }
@@ -308,7 +308,7 @@ println "<dry-run: " + gradle.startParameter.dryRun + ">"
         logFile.grep("<tasks: [clean, assemble]>").size() == 5
 
         resultFile.isFile()
-        resultFile.text.readLines().get(0) == "build,s1 3.0,s1 3.1,s2 3.1"
+        resultFile.text.readLines().get(0) == "build,s1 3.0,s1 ${gradleVersion},s2 ${gradleVersion}"
         resultFile.text.readLines().get(1) == "tasks,assemble,assemble,clean assemble"
         resultFile.text.readLines().get(2).matches("initial clean build,\\d+,\\d+,\\d+")
         resultFile.text.readLines().get(3).matches("warm-up build 1,\\d+,\\d+,\\d+")
@@ -353,7 +353,7 @@ assemble.doFirst {
         logFile.grep("<tasks: [assemble]>").size() == 5 + 15
 
         resultFile.isFile()
-        resultFile.text.readLines().get(0) == "build,default 3.1,default 3.0"
+        resultFile.text.readLines().get(0) == "build,default ${gradleVersion},default 3.0"
         resultFile.text.readLines().get(1) == "tasks,assemble,assemble"
         resultFile.text.readLines().get(2).matches("initial clean build,\\d+,\\d+")
         resultFile.text.readLines().get(3).matches("warm-up build 1,\\d+,\\d+")
