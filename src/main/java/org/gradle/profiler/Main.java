@@ -65,6 +65,7 @@ public class Main {
 
                         GradleConnector connector = GradleConnector.newConnector().useInstallation(version.getGradleHome());
                         ProjectConnection projectConnection = connector.forProjectDirectory(settings.getProjectDir()).connect();
+                        BuildMutator mutator = scenario.getSourceFileToChange() == null ? new NoOpBuildMutator() : new SourceFileMutator(scenario.getSourceFileToChange());
                         try {
                             BuildEnvironment buildEnvironment = projectConnection.getModel(BuildEnvironment.class);
                             Logging.detailed().println();
@@ -132,7 +133,7 @@ public class Main {
                                 control.start();
                             }
 
-                            BuildMutator mutator = scenario.getSourceFileToChange() == null ? new NoOpBuildMutator() : new SourceFileMutator(scenario.getSourceFileToChange());
+
                             for (int i = 0; i < settings.getBuildCount(); i++) {
                                 mutator.beforeBuild();
                                 results = invoker.runBuild("build " + (i + 1), tasks);
@@ -149,8 +150,8 @@ public class Main {
                                 control.stop();
                             }
 
-                            mutator.cleanup();
                         } finally {
+                            mutator.cleanup();
                             projectConnection.close();
                         }
 

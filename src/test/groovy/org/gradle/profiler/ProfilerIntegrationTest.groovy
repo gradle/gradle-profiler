@@ -621,6 +621,40 @@ classes {
         logFile.grep("<src-length: ${srcFile.length() + 32}>").size() == 7
     }
 
+    def "reverts changes on benchmark failures"() {
+        given:
+        buildFile.text = """
+apply plugin: 'java'
+if (file('src/main/java/Library.java').text.contains('method')) {
+    throw new Exception("Boom")
+} 
+"""
+        def srcFile = file("src/main/java/Library.java")
+        srcFile.parentFile.mkdirs()
+        def originalText = """
+class Library {
+    void thing() { }
+}
+"""
+        srcFile.text = originalText
+
+        def scenarioFile = file("scenarios.conf")
+        scenarioFile << """
+classes {
+    tasks = "classes"
+    apply-abi-change-to = "src/main/java/Library.java"
+}
+"""
+
+        when:
+        new Main().run("--project-dir", projectDir.absolutePath, "--output-dir", outputDir.absolutePath, "--gradle-version", gradleVersion,
+                "--benchmark", "--scenario-file", scenarioFile.absolutePath)
+
+        then:
+        thrown Exception
+        srcFile.text == originalText
+    }
+
     static class LogFile {
         final List<String> lines
 
