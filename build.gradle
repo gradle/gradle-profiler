@@ -22,4 +22,4 @@ dependencies {
 }
 
 sourceCompatibility = 1.8
-mainClassName = "net.rubygrapefruit.gradle.profiler.Main"
+mainClassName = "org.gradle.profiler.Main"
