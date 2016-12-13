@@ -12,17 +12,17 @@ class ScenarioDefinition {
     private final List<String> tasks;
     private final List<String> gradleArgs;
     private final Map<String, String> systemProperties;
-    private final File patchFile;
+    private final File sourceFileToChange;
 
     public ScenarioDefinition(String name, Invoker invoker, List<GradleVersion> versions, List<String> tasks, List<String> gradleArgs,
-                              Map<String, String> systemProperties, File patchFile) {
+                              Map<String, String> systemProperties, File sourceFileToChange) {
         this.name = name;
         this.invoker = invoker;
         this.tasks = tasks;
         this.versions = versions;
         this.gradleArgs = gradleArgs;
         this.systemProperties = systemProperties;
-        this.patchFile = patchFile;
+        this.sourceFileToChange = sourceFileToChange;
     }
 
     public String getName() {
@@ -49,7 +49,7 @@ class ScenarioDefinition {
         return systemProperties;
     }
 
-    public File getPatchFile() {
-        return patchFile;
+    public File getSourceFileToChange() {
+        return sourceFileToChange;
     }
 }

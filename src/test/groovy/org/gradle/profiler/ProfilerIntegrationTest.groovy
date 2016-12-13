@@ -564,25 +564,22 @@ println "<parallel: " + gradle.startParameter.parallelProjectExecutionEnabled + 
     def "applies and reverts changes while running benchmark"() {
         given:
         buildFile.text = """
-apply plugin: BasePlugin
-println "<unmodified-build-file>"
+apply plugin: 'java'
+println "<src-length: \${file('src/main/java/Library.java').length()}>" 
 """
-
-        def gitRepository = new GitRepository(projectDir)
-        gitRepository.add("build.gradle")
-        gitRepository.commit()
-
-        buildFile.text = buildFile.text.replace("unmodified", "modified")
-
-        def patchFile = new File(projectDir, "add-build-logging.patch")
-        gitRepository.diff(patchFile)
-        gitRepository.reset()
+        def srcFile = file("src/main/java/Library.java")
+        srcFile.parentFile.mkdirs()
+        srcFile.text = """
+class Library {
+    void thing() { }
+}
+"""
 
         def scenarioFile = file("scenarios.conf")
         scenarioFile << """
-help {
-    tasks = "help"    
-    patch-file = "add-build-logging.patch"
+classes {
+    tasks = "classes"
+    apply-abi-change-to = "src/main/java/Library.java"
 }
 """
 
@@ -592,8 +589,8 @@ help {
 
         then:
         // Probe version, initial clean build, 2 warm up, 13 builds
-        logFile.grep("<unmodified-build-file>").size() == 10
-        logFile.grep("<modified-build-file>").size() == 7
+        logFile.grep("<src-length: ${srcFile.length()}>").size() == 10
+        logFile.grep("<src-length: ${srcFile.length() + 32}>").size() == 7
     }
 
     static class LogFile {

@@ -6,11 +6,7 @@ import org.gradle.tooling.model.build.BuildEnvironment;
 
 import java.io.File;
 import java.time.Instant;
-import java.util.ArrayList;
-import java.util.LinkedHashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.function.Consumer;
 
 public class Main {
@@ -48,7 +44,6 @@ public class Main {
 
             logScenarios(scenarios);
 
-            GitRepository applier = new GitRepository(settings.getProjectDir());
             BenchmarkResults benchmarkResults = new BenchmarkResults();
             PidInstrumentation pidInstrumentation = new PidInstrumentation();
             JvmArgsCalculator jvmArgsCalculator = settings.isProfile() ? settings.getProfiler().newJvmArgsCalculator(settings) : new JvmArgsCalculator();
@@ -137,14 +132,9 @@ public class Main {
                                 control.start();
                             }
 
+                            BuildMutator mutator = scenario.getSourceFileToChange() == null ? new NoOpBuildMutator() : new SourceFileMutator(scenario.getSourceFileToChange());
                             for (int i = 0; i < settings.getBuildCount(); i++) {
-                                if (scenario.getPatchFile() != null) {
-                                    if (i % 2 == 0) {
-                                        applier.apply(scenario.getPatchFile());
-                                    } else {
-                                        applier.reset();
-                                    }
-                                }
+                                mutator.beforeBuild();
                                 results = invoker.runBuild("build " + (i + 1), tasks);
                                 checkPid(pid, results.getDaemonPid(), scenario.getInvoker());
 
@@ -158,16 +148,14 @@ public class Main {
                                 Logging.startOperation("Stopping recording for daemon with pid " + pid);
                                 control.stop();
                             }
+
+                            mutator.cleanup();
                         } finally {
                             projectConnection.close();
                         }
 
                         Logging.startOperation("Stopping daemons");
                         daemonControl.stop(version);
-
-                        if (scenario.getPatchFile() != null) {
-                            applier.reset();
-                        }
                     } catch (Throwable t) {
                         t.printStackTrace();
                         failures.add(t);
@@ -205,7 +193,7 @@ public class Main {
             System.out.println("  Tasks: " + scenario.getTasks());
             System.out.println("  Run using: " + scenario.getInvoker());
             System.out.println("  Gradle args: " + scenario.getGradleArgs());
-            System.out.println("  Patch file: " + scenario.getPatchFile());
+            System.out.println("  Source file to change: " + scenario.getSourceFileToChange());
             if (!scenario.getSystemProperties().isEmpty()) {
                 System.out.println("  System properties:");
                 for (Map.Entry<String, String> entry : scenario.getSystemProperties().entrySet()) {

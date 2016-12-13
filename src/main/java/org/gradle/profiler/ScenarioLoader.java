@@ -42,7 +42,7 @@ class ScenarioLoader {
         for (String scenarioName : new TreeSet<>(config.root().keySet())) {
             Config scenario = config.getConfig(scenarioName);
             for (String key : config.getObject(scenarioName).keySet()) {
-                if (!Arrays.asList("versions", "tasks", "gradle-args", "run-using", "system-properties", "patch-file").contains(key)) {
+                if (!Arrays.asList("versions", "tasks", "gradle-args", "run-using", "system-properties", "apply-abi-change-to").contains(key)) {
                     throw new IllegalArgumentException("Unrecognized key '" + scenarioName + "." + key + "' found in scenario file " + scenarioFile);
                 }
             }
@@ -52,12 +52,12 @@ class ScenarioLoader {
             List<String> gradleArgs = strings(scenario, "gradle-args", Collections.emptyList());
             Invoker invoker = invoker(scenario, "run-using", settings.getInvoker());
             Map<String, String> systemProperties = map(scenario, "system-properties", settings.getSystemProperties());
-            String patchFileName = string(scenario, "patch-file", null);
-            File patchFile = patchFileName == null ? null : new File(scenarioFile.getParentFile(), patchFileName);
-            if (patchFile != null && !patchFile.isFile()) {
-                throw new IllegalArgumentException("Patch file " + patchFile + " specified for scenario " + scenarioName + " does not exist.");
+            String sourceFileToChangeName = string(scenario, "apply-abi-change-to", null);
+            File sourceFileToChange = sourceFileToChangeName == null ? null : new File(settings.getProjectDir(), sourceFileToChangeName);
+            if (sourceFileToChange != null && !sourceFileToChange.isFile()) {
+                throw new IllegalArgumentException("Source file " + sourceFileToChange + " specified for scenario " + scenarioName + " does not exist.");
             }
-            definitions.add(new ScenarioDefinition(scenarioName, invoker, versions, tasks, gradleArgs, systemProperties, patchFile));
+            definitions.add(new ScenarioDefinition(scenarioName, invoker, versions, tasks, gradleArgs, systemProperties, sourceFileToChange));
         }
         return definitions;
     }
