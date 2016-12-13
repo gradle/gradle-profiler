@@ -38,14 +38,35 @@ public class Profiler {
     public static final Profiler NONE = new Profiler();
     public static final Profiler JFR = new Profiler() {
         @Override
+        public Object newConfigObject( OptionSet parsedOptions ) {
+            return new JFRArgs(
+                new File((String) parsedOptions.valueOf( "jfr-fg-home" )),
+                new File((String) parsedOptions.valueOf( "fg-home" ))
+            );
+        }
+
+        @Override
         public ProfilerController newController(final String pid, final InvocationSettings settings, final BuildInvoker invoker) {
-            JFRArgs jfrArgs = new JFRArgs(pid, new File(settings.getOutputDir(), "profile.jfr"));
-            return new JFRControl(jfrArgs);
+            JFRArgs jfrArgs = (JFRArgs) settings.getProfilerOptions();
+            return new JFRControl(jfrArgs, pid, settings.getOutputDir());
         }
 
         @Override
         public JvmArgsCalculator newJvmArgsCalculator(InvocationSettings settings) {
             return new JFRJvmArgsCalculator();
+        }
+
+        @Override
+        void addOptions( final OptionParser parser )
+        {
+            parser.accepts("jfr-fg-home", "JFR FlameGraph home directory - https://github.com/chrishantha/jfr-flame-graph")
+                  .availableIf("profile")
+                  .withOptionalArg()
+                  .defaultsTo(System.getenv().getOrDefault("JFR_FG_HOME_DIR", ""));
+            parser.accepts("fg-home", "FlameGraph home directory")
+                  .availableIf("profile")
+                  .withOptionalArg()
+                  .defaultsTo(System.getenv().getOrDefault("FG_HOME_DIR", ""));
         }
     };
     public static final Profiler HP = new Profiler() {

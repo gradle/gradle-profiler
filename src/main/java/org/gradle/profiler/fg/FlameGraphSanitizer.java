@@ -23,6 +23,8 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.StringJoiner;
@@ -45,7 +47,7 @@ public class FlameGraphSanitizer {
                     if (sanitizeFunction.skipLine(line)) {
                         continue;
                     }
-                    String[] data = line.split(" ");
+                    String[] data = line.replaceAll(", ", ",").split(" ");
                     if (data.length == 2) {
                         String stackTraces = data[0];
                         String suffix = data[1];
@@ -82,6 +84,17 @@ public class FlameGraphSanitizer {
 
         String map(String entry);
     }
+
+    public static final Map<Pattern, String> DEFAULT_REPLACEMENTS = Collections.unmodifiableMap(
+        new LinkedHashMap<Pattern, String>() { {
+            put(Pattern.compile("build_([a-z0-9]+)"), "build_");
+            put(Pattern.compile("settings_([a-z0-9]+)"), "settings_");
+            put(Pattern.compile("org[.]gradle[.]"), "");
+            put(Pattern.compile("sun[.]reflect[.]GeneratedMethodAccessor[0-9]+"), "GeneratedMethodAccessor");
+        }}
+    );
+
+    public static final SanitizeFunction DEFAULT_SANITIZE_FUNCTION = new RegexBasedSanitizerFunction( DEFAULT_REPLACEMENTS );
 
     public static class RegexBasedSanitizerFunction implements SanitizeFunction {
         private final Map<Pattern, String> replacements;

@@ -18,19 +18,19 @@ package org.gradle.profiler.jfr;
 import java.io.File;
 
 public class JFRArgs {
-    private final String pid;
-    private final File recordingFile;
+    private final File jfrFgHomeDir;
+    private final File fgHomeDir;
 
-    public JFRArgs(final String pid, final File recordingFile) {
-        this.pid = pid;
-        this.recordingFile = recordingFile;
+    public JFRArgs( File jfrFgHomeDir, final File fgHomeDir ) {
+        this.jfrFgHomeDir = jfrFgHomeDir;
+        this.fgHomeDir = fgHomeDir;
     }
 
-    public String getPid() {
-        return pid;
+    public File getJfrFgHomeDir() {
+        return jfrFgHomeDir;
     }
 
-    public File getRecordingFile() {
-        return recordingFile;
+    public File getFgHomeDir() {
+        return fgHomeDir;
     }
 }

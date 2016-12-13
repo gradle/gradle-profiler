@@ -16,6 +16,7 @@
 package org.gradle.profiler.hp;
 
 import org.gradle.profiler.ProfilerController;
+import org.gradle.profiler.fg.FlameGraphGenerator;
 import org.gradle.profiler.fg.FlameGraphSanitizer;
 
 import java.io.File;
@@ -23,25 +24,12 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.net.Socket;
 import java.nio.file.Files;
-import java.util.Collections;
-import java.util.LinkedHashMap;
-import java.util.Map;
-import java.util.regex.Pattern;
 
 public class HonestProfilerControl implements ProfilerController {
     private static final String PROFILE_HPL = "profile.hpl";
     private static final String PROFILE_TXT = "profile.txt";
     private static final String PROFILE_SANITIZED_TXT = "profile-sanitized.txt";
     private static final String FLAMES_SVG = "flames.svg";
-
-    private static final Map<Pattern, String> DEFAULT_REPLACEMENTS = Collections.unmodifiableMap(
-            new LinkedHashMap<Pattern, String>() { {
-                put(Pattern.compile("build_([a-z0-9]+)"), "build_");
-                put(Pattern.compile("settings_([a-z0-9]+)"), "settings_");
-                put(Pattern.compile("org[.]gradle[.]"), "");
-                put(Pattern.compile("sun[.]reflect[.]GeneratedMethodAccessor[0-9]+"), "GeneratedMethodAccessor");
-            }}
-    );
 
     private final HonestProfilerArgs args;
     private final File outputDir;
@@ -92,22 +80,11 @@ public class HonestProfilerControl implements ProfilerController {
     }
 
     private void sanitizeFlameGraphTxtFile(final File txtFile, final File sanitizedTxtFile) {
-        FlameGraphSanitizer sanitizer = new FlameGraphSanitizer(new FlameGraphSanitizer.RegexBasedSanitizerFunction(DEFAULT_REPLACEMENTS));
-        // todo: add a way to provide custom patterns
-        sanitizer.sanitize(txtFile, sanitizedTxtFile);
+        new FlameGraphSanitizer(FlameGraphSanitizer.DEFAULT_SANITIZE_FUNCTION).sanitize(txtFile, sanitizedTxtFile);
     }
 
     private void generateFlameGraph(final File sanitizedTxtFile, final File fgFile) throws IOException, InterruptedException {
-        ProcessBuilder processBuilder = new ProcessBuilder(
-                args.getFgHomeDir().getAbsolutePath() + File.separatorChar + "flamegraph.pl",
-                sanitizedTxtFile.getAbsolutePath()
-        );
-        processBuilder.redirectOutput(fgFile);
-        Process process = processBuilder.start();
-        int result = process.waitFor();
-        if (result != 0) {
-            throw new RuntimeException("Unable to generate flame graph. Make sure your FlameGraph installation at " + args.getFgHomeDir() + " is correct.");
-        }
+        new FlameGraphGenerator( args.getFgHomeDir() ).generateFlameGraph( sanitizedTxtFile, fgFile );
     }
 
     private void sendCommand(String command) throws IOException {
