@@ -1,4 +1,6 @@
-A tool for gathering profiling and benchmarking information for Gradle builds. Profiling information is captured using the Java flight recorder built into the Oracle JVM.
+A tool for gathering profiling and benchmarking information for Gradle builds. 
+
+Profiling information can be captured using either the Java flight recorder built into the Oracle JVM, or using [Honest Profiler](https://github.com/RichardWarburton/honest-profiler)
 
 ## Installing
 
@@ -8,11 +10,11 @@ First, build and install the `gradle-profiler` app using:
  
 This will install the application into `./build/install/gradle-profiler`.
 
-## Profiling a build
+## Profiling a build using JFR
 
 To run the `gradle-profiler` app use:
 
-    > ./build/install/gradle-profiler/bin/gradle-profiler --profile --project-dir <root-dir-of-build> <task>...
+    > ./build/install/gradle-profiler/bin/gradle-profiler --profile jfr --project-dir <root-dir-of-build> <task>...
     
 Where `<root-dir-of-build>` is the directory containing the build to be profiled, and `<task>` is the name of the task to run,
 exactly as you would use for the `gradle` command.
@@ -43,7 +45,9 @@ and each of these is used to benchmark the build, allowing you to compare the be
 
 - `--project-dir`: Directory containing the build to run (required).
 - `--benchmark`: Benchmark the build. Runs the builds more times and writes the results to a CSV file.
-- `--profile`: Profile the build. Can be used with or without `--benchmark`.
+- `--profile <profiler>`: Profile the build using the specified profiler. Can be used with or without `--benchmark`.
+    - `--profile jfr`: Profile using JFR
+    - `--profile hp`: Profile using [Honest Profiler](https://github.com/RichardWarburton/honest-profiler)
 - `--gradle-version <version>`: specifies a Gradle version or installation to use to run the builds, overriding the default for the build. Can specify multiple versions.
 - `--output-dir <dir>`: Directory to write results to.
 - `--no-daemon`: Uses `gradle --no-daemon` to run the builds. The default is to use the Gradle tooling API and Gradle daemon.
