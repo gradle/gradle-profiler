@@ -27,10 +27,16 @@ import org.gradle.profiler.jfr.JFRJvmArgsCalculator;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.Collections;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
-public enum Profiler {
-    none,
-    jfr {
+public class Profiler {
+
+    public static final Profiler NONE = new Profiler();
+    public static final Profiler JFR = new Profiler() {
         @Override
         public ProfilerController newController(final String pid, final InvocationSettings settings, final BuildInvoker invoker) {
             JFRArgs jfrArgs = new JFRArgs(pid, new File(settings.getOutputDir(), "profile.jfr"));
@@ -41,8 +47,8 @@ public enum Profiler {
         public JvmArgsCalculator newJvmArgsCalculator(InvocationSettings settings) {
             return new JFRJvmArgsCalculator();
         }
-    },
-    hp {
+    };
+    public static final Profiler HP = new Profiler() {
         @Override
         public Object newConfigObject(final OptionSet parsedOptions) {
             File tmpLog = new File(System.getProperty("java.io.tmpdir"), "hp.log");
@@ -85,8 +91,8 @@ public enum Profiler {
                     .withOptionalArg()
                     .defaultsTo("7");
         }
-    },
-    buildscan {
+    };
+    public static final Profiler BUILDSCAN = new Profiler() {
         @Override
         public ProfilerController newController(final String pid, final InvocationSettings settings, final BuildInvoker invoker) {
             try {
@@ -109,6 +115,14 @@ public enum Profiler {
         }
     };
 
+    private final static Map<String, Profiler> AVAILABLE_PROFILERS = Collections.unmodifiableMap(
+            new LinkedHashMap<String, Profiler>() {{
+                put("jfr", JFR);
+                put("hp", HP);
+                put("buildscan", BUILDSCAN);
+            }}
+    );
+
     public ProfilerController newController(final String pid, final InvocationSettings settings, final BuildInvoker invoker) {
         return ProfilerController.EMPTY;
     }
@@ -125,9 +139,29 @@ public enum Profiler {
 
     }
 
+    public static Set<String> getAvailableProfilers() {
+        return AVAILABLE_PROFILERS.keySet();
+    }
+
     static void configureParser(OptionParser parser) {
-        for (Profiler profiler : values()) {
+        for (Profiler profiler : AVAILABLE_PROFILERS.values()) {
             profiler.addOptions(parser);
         }
+    }
+
+    private static Profiler of(String name) {
+        Profiler profiler = AVAILABLE_PROFILERS.get(name.toLowerCase());
+        if (profiler == null) {
+            throw new IllegalArgumentException("Unknown profiler : " + name);
+        }
+        return profiler;
+    }
+
+    public static Profiler of(final List<String> profilersList) {
+        if (profilersList.size() == 1) {
+            String first = profilersList.get(0);
+            return of(first);
+        }
+        throw new UnsupportedOperationException("Multiple profilers are not supported");
     }
 }

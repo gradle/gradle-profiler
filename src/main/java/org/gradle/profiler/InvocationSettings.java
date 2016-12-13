@@ -48,7 +48,7 @@ public class InvocationSettings {
     }
 
     public boolean isProfile() {
-        return profiler != Profiler.none;
+        return profiler != Profiler.NONE;
     }
 
     public Profiler getProfiler() {

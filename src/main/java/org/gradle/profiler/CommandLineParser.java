@@ -7,6 +7,8 @@ import java.io.IOException;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.StringJoiner;
+import java.util.function.BinaryOperator;
 import java.util.stream.Collectors;
 
 class CommandLineParser {
@@ -25,9 +27,10 @@ class CommandLineParser {
         ArgumentAcceptingOptionSpec<String> scenarioFileOption = parser.accepts("scenario-file", "Scenario definition file to use").withRequiredArg();
         ArgumentAcceptingOptionSpec<String> sysPropOption = parser.accepts("D", "Defines a system property").withRequiredArg();
         ArgumentAcceptingOptionSpec<String> outputDirOption = parser.accepts("output-dir", "Directory to write results to").withRequiredArg();
-        ArgumentAcceptingOptionSpec<String> profilerOption = parser.accepts("profile", "Collect profiling information using profiler (jfr, hp)")
+        ArgumentAcceptingOptionSpec<String> profilerOption = parser.accepts("profile",
+                "Collect profiling information using profiler (" + Profiler.getAvailableProfilers().stream().reduce("", (s, s2) -> s + ", " + s2) + ")")
                 .withRequiredArg()
-                .defaultsTo(Profiler.jfr.name());
+                .defaultsTo("jfr");
         Profiler.configureParser(parser);
         OptionSpecBuilder benchmarkOption = parser.accepts("benchmark", "Collect benchmark metrics");
         OptionSpecBuilder noDaemonOption = parser.accepts("no-daemon", "Do not use the Gradle daemon");
@@ -45,7 +48,11 @@ class CommandLineParser {
 
         File projectDir = (parsedOptions.has(projectOption) ? new File(parsedOptions.valueOf(projectOption)) : new File(".")).getCanonicalFile();
         boolean hasProfiler = parsedOptions.has(profilerOption);
-        Profiler profiler = hasProfiler ? Profiler.valueOf(parsedOptions.valueOf(profilerOption).toLowerCase()) : Profiler.none;
+        Profiler profiler = Profiler.NONE;
+        if (hasProfiler) {
+            List<String> profilersList = parsedOptions.valuesOf(profilerOption);
+            profiler = Profiler.of(profilersList);
+        }
         Object profilerOptions = profiler.newConfigObject(parsedOptions);
         boolean benchmark = parsedOptions.has(benchmarkOption);
         if (!benchmark && !hasProfiler) {
