@@ -18,11 +18,12 @@ package org.gradle.profiler.ct;
 import org.gradle.profiler.BuildInvoker;
 import org.gradle.profiler.ProfilerController;
 
+import java.io.File;
 import java.io.IOException;
 
 public class ChromeTraceController implements ProfilerController {
-    public ChromeTraceController(final BuildInvoker invoker) throws IOException {
-        invoker.addInitScript(new ChromeTraceInitScript());
+    public ChromeTraceController(final BuildInvoker invoker, File outputDir) throws IOException {
+        invoker.addInitScript(new ChromeTraceInitScript(outputDir));
     }
 
     @Override

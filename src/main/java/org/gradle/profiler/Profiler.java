@@ -131,7 +131,7 @@ public class Profiler {
         @Override
         public ProfilerController newController(final String pid, final InvocationSettings settings, final BuildInvoker invoker) {
             try {
-                return new ChromeTraceController(invoker);
+                return new ChromeTraceController(invoker, settings.getOutputDir());
             } catch (IOException e) {
                 throw new RuntimeException(e);
             }

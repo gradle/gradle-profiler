@@ -27,10 +27,12 @@ import java.nio.file.StandardCopyOption;
 
 public class ChromeTraceInitScript extends GeneratedInitScript {
     private final File chromeTracePlugin;
+    private final File traceFile;
 
-    public ChromeTraceInitScript() throws IOException {
+    public ChromeTraceInitScript(File outputDir) throws IOException {
         super();
         chromeTracePlugin = File.createTempFile("chrome-trace", ".jar");
+        traceFile = new File(outputDir, "chrome-trace.html");
         unpackChromeTracePlugin();
         generateInitScript();
     }
@@ -52,6 +54,7 @@ public class ChromeTraceInitScript extends GeneratedInitScript {
         writer.write("    }\n");
         writer.write("}\n");
         writer.write("\n");
+        writer.write("rootProject { ext.chromeTraceFile = new File(\"" + traceFile.getAbsolutePath() + "\") }\n");
         writer.write("apply plugin: org.gradle.trace.GradleTracingPlugin\n");
     }
 

@@ -5,7 +5,6 @@ import org.gradle.BuildResult;
 import org.gradle.api.*;
 import org.gradle.api.artifacts.DependencyResolutionListener;
 import org.gradle.api.artifacts.ResolvableDependencies;
-import org.gradle.api.execution.TaskExecutionGraph;
 import org.gradle.api.execution.TaskExecutionListener;
 import org.gradle.api.invocation.Gradle;
 import org.gradle.api.tasks.TaskState;
@@ -18,7 +17,9 @@ import org.gradle.internal.progress.OperationStartEvent;
 
 import javax.inject.Inject;
 import java.io.*;
-import java.util.*;
+import java.util.Iterator;
+import java.util.LinkedHashMap;
+import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
 public class GradleTracingPlugin implements Plugin<Gradle> {
@@ -98,12 +99,7 @@ public class GradleTracingPlugin implements Plugin<Gradle> {
             }
         });
 
-        gradle.getTaskGraph().whenReady(new Action<TaskExecutionGraph>() {
-            @Override
-            public void execute(TaskExecutionGraph taskExecutionGraph) {
-                finish(PHASE_BUILD_TASK_GRAPH);
-            }
-        });
+        gradle.getTaskGraph().whenReady(taskExecutionGraph -> finish(PHASE_BUILD_TASK_GRAPH));
 
         gradle.getGradle().addListener(new JsonAdapter(gradle));
     }
@@ -127,7 +123,7 @@ public class GradleTracingPlugin implements Plugin<Gradle> {
             overallBuild.finished();
             events.put(PHASE_BUILD, overallBuild);
 
-            File traceFile = getTraceFile(getBuildDir());
+            File traceFile = getTraceFile();
 
             copyResourceToFile("/trace-header.html", traceFile, false);
             writeEvents(traceFile);
@@ -149,8 +145,20 @@ public class GradleTracingPlugin implements Plugin<Gradle> {
             }
         }
 
-        private File getBuildDir() {
-            return gradle.getRootProject().getBuildDir();
+        private File getTraceFile() {
+            File traceFile = (File) gradle.getRootProject().findProperty("chromeTraceFile");
+            if (traceFile == null) {
+                traceFile = defaultTraceFile();
+            }
+            traceFile.getParentFile().mkdirs();
+            return traceFile;
+        }
+
+        private File defaultTraceFile() {
+            File traceFile;
+            File buildDir = gradle.getRootProject().getBuildDir();
+            traceFile = new File(buildDir, "trace/task-trace.html");
+            return traceFile;
         }
     }
 
@@ -172,12 +180,6 @@ public class GradleTracingPlugin implements Plugin<Gradle> {
                 "    \"version\": \"My Application v1.0\"\n" +
                 "  }\n" +
                 "}\n");
-    }
-
-    private File getTraceFile(File buildDir) {
-        File traceFile = new File(buildDir, "trace/task-trace.html");
-        traceFile.getParentFile().mkdirs();
-        return traceFile;
     }
 
     private PrintWriter getPrintWriter(File jsonFile) {
