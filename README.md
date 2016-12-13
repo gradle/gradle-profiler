@@ -5,6 +5,8 @@ Profiling information can be captured using one of several different tools:
 - Java flight recorder built into the Oracle JVM
 - Using [Honest Profiler](https://github.com/RichardWarburton/honest-profiler)
 - Using a [Gradle build scan](https://gradle.com)
+- Using YourKit profiler
+- Produce chrome trace output
 
 ## Installing
 
@@ -52,6 +54,9 @@ and each of these is used to benchmark the build, allowing you to compare the be
 - `--profile <profiler>`: Profile the build using the specified profiler. Can be used with or without `--benchmark`.
     - `--profile jfr`: Profile using JFR
     - `--profile hp`: Profile using [Honest Profiler](https://github.com/RichardWarburton/honest-profiler)
+    - `--profile buildscan`: Profile by collecting a build scan
+    - `--profile chrome-trace`: Profile by generating chrome trace output
+    - `--profile yourkit`: Profile using YourKit. Uses CPU tracing and captures a snapshot into the result directory 
 - `--gradle-version <version>`: specifies a Gradle version or installation to use to run the builds, overriding the default for the build. Can specify multiple versions.
 - `--output-dir <dir>`: Directory to write results to.
 - `--no-daemon`: Uses `gradle --no-daemon` to run the builds. The default is to use the Gradle tooling API and Gradle daemon.
