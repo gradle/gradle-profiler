@@ -1,4 +1,6 @@
-A tool for gathering profiling and benchmarking information for Gradle builds. 
+# Gradle Profiler
+
+A tool to automate the gathering of profiling and benchmarking information for Gradle builds. 
 
 Profiling information can be captured using one of several different tools:
 
@@ -68,7 +70,7 @@ A scenario can define a Java source file that should be changes and reverted in 
 
 ## Scenario file
 
-A scenario file can be provided to define scenarios to benchmark or profile. Use the `--scenario-file` option to provide this.
+A scenario file can be provided to define scenarios to benchmark or profile. Use the `--scenario-file` option to provide this. The scenario file is defined in [Typesafe config](https://github.com/typesafehub/config) format. Below is an example:
 
     # Scenarios are run in alphabetical order
     assemble {
