@@ -5,6 +5,7 @@ import com.typesafe.config.ConfigFactory;
 import com.typesafe.config.ConfigParseOptions;
 import com.typesafe.config.ConfigValue;
 import org.gradle.profiler.mutations.ApplyAbiChangeToJavaSourceFileMutator;
+import org.gradle.profiler.mutations.ApplyChangetoAndroidManifestFileMutator;
 import org.gradle.profiler.mutations.ApplyChangeToAndroidResourceFileMutator;
 
 import java.io.File;
@@ -13,6 +14,20 @@ import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
 class ScenarioLoader {
+    private static final String VERSIONS = "versions";
+    private static final String TASKS = "tasks";
+    private static final String GRADLE_ARGS = "gradle-args";
+    private static final String RUN_USING = "run-using";
+    private static final String SYSTEM_PROPERTIES = "system-properties";
+    private static final String APPLY_API_CHANGE_TO = "apply-abi-change-to";
+    private static final String APPLY_ANDROID_RESOURCE_CHANGE_TO = "apply-android-resource-change-to";
+    private static final String APPLY_ANDROID_MANIFEST_CHANGE_TO = "apply-android-manifest-change-to";
+
+    private static final List<String> ALL_SCENARIO_KEYS = Arrays.asList(
+        VERSIONS, TASKS, GRADLE_ARGS, RUN_USING, SYSTEM_PROPERTIES,
+        APPLY_API_CHANGE_TO, APPLY_ANDROID_RESOURCE_CHANGE_TO, APPLY_ANDROID_MANIFEST_CHANGE_TO
+    );
+
     private final GradleVersionInspector gradleVersionInspector;
 
     public ScenarioLoader(GradleVersionInspector gradleVersionInspector) {
@@ -48,26 +63,31 @@ class ScenarioLoader {
         for (String scenarioName : selectedScenarios) {
             Config scenario = config.getConfig(scenarioName);
             for (String key : config.getObject(scenarioName).keySet()) {
-                if (!Arrays.asList("versions", "tasks", "gradle-args", "run-using", "system-properties", "apply-abi-change-to", "apply-android-resource-change-to").contains(key)) {
+                if (!ALL_SCENARIO_KEYS.contains(key)) {
                     throw new IllegalArgumentException("Unrecognized key '" + scenarioName + "." + key + "' found in scenario file " + scenarioFile);
                 }
             }
-            List<GradleVersion> versions = strings(scenario, "versions", settings.getVersions()).stream().map(v -> inspector.resolve(v)).collect(
+            List<GradleVersion> versions = strings(scenario, VERSIONS, settings.getVersions()).stream().map(v -> inspector.resolve(v)).collect(
                     Collectors.toList());
-            List<String> tasks = strings(scenario, "tasks", settings.getTargets());
-            List<String> gradleArgs = strings(scenario, "gradle-args", Collections.emptyList());
-            Invoker invoker = invoker(scenario, "run-using", settings.getInvoker());
-            Map<String, String> systemProperties = map(scenario, "system-properties", settings.getSystemProperties());
+            List<String> tasks = strings(scenario, TASKS, settings.getTargets());
+            List<String> gradleArgs = strings(scenario, GRADLE_ARGS, Collections.emptyList());
+            Invoker invoker = invoker(scenario, RUN_USING, settings.getInvoker());
+            Map<String, String> systemProperties = map(scenario, SYSTEM_PROPERTIES, settings.getSystemProperties());
 
             List<Supplier<BuildMutator>> mutators = new ArrayList<>();
-            File sourceFileToChange = sourceFile(scenario, "apply-abi-change-to", scenarioName, settings.getProjectDir());
+            File sourceFileToChange = sourceFile(scenario, APPLY_API_CHANGE_TO, scenarioName, settings.getProjectDir());
             if (sourceFileToChange != null) {
                 mutators.add(() -> new ApplyAbiChangeToJavaSourceFileMutator(sourceFileToChange));
             }
 
-            File resourceFileToChange = sourceFile(scenario, "apply-android-resource-change-to", scenarioName, settings.getProjectDir());
+            File resourceFileToChange = sourceFile(scenario, APPLY_ANDROID_RESOURCE_CHANGE_TO, scenarioName, settings.getProjectDir());
             if (resourceFileToChange != null) {
                 mutators.add(() -> new ApplyChangeToAndroidResourceFileMutator(resourceFileToChange));
+            }
+
+            File androidManifestToChange = sourceFile(scenario, APPLY_ANDROID_MANIFEST_CHANGE_TO, scenarioName, settings.getProjectDir());
+            if(androidManifestToChange != null) {
+                mutators.add(() -> new ApplyChangetoAndroidManifestFileMutator(androidManifestToChange));
             }
 
             definitions.add(new ScenarioDefinition(scenarioName, invoker, versions, tasks, gradleArgs, systemProperties, new BuildMutatorFactory(mutators)));
