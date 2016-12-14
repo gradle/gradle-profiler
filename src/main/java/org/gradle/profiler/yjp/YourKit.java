@@ -9,7 +9,7 @@ public class YourKit {
             return null;
         }
         for (File file : applicationsDir.listFiles()) {
-            if (file.getName().matches("YourKit-.+\\.app")) {
+            if (file.getName().matches("YourKit.*\\.app")) {
                 return file;
             }
         }
