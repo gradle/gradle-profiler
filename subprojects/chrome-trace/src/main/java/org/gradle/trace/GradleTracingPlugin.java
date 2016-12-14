@@ -64,14 +64,15 @@ public class GradleTracingPlugin implements Plugin<Gradle> {
         gradle.addListener(new TaskExecutionListener() {
             @Override
             public void beforeExecute(Task task) {
-                Map<String, String> info = new HashMap<>();
-                info.put("type", task.getClass().getSimpleName());
-                start(task.getPath(), CATEGORY_TASK, info);
+                start(task.getPath(), CATEGORY_TASK);
             }
 
             @Override
             public void afterExecute(Task task, TaskState taskState) {
-                finish(task.getPath());
+                Map<String, String> info = new HashMap<>();
+                info.put("type", task.getClass().getSimpleName());
+                info.put("didWork", String.valueOf(task.getDidWork()));
+                finish(task.getPath(), info);
             }
         });
 
