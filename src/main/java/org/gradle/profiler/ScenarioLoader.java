@@ -95,7 +95,7 @@ class ScenarioLoader {
 
             File classpathResourceFileToChange = sourceFile(scenario, APPLY_PROPERTY_RESOURCE_CHANGE_TO, scenarioName, settings.getProjectDir());
             if (classpathResourceFileToChange != null) {
-                mutators.add(() -> new ApplyChangeToPropertyResourceFileMutator(resourceFileToChange));
+                mutators.add(() -> new ApplyChangeToPropertyResourceFileMutator(classpathResourceFileToChange));
             }
 
             definitions.add(new ScenarioDefinition(scenarioName, invoker, versions, tasks, gradleArgs, systemProperties, new BuildMutatorFactory(mutators)));
