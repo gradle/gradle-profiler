@@ -49,4 +49,9 @@ public abstract class AbstractFileChangeMutator implements BuildMutator {
         }
     }
 
+    @Override
+    public String toString()
+    {
+        return getClass().getSimpleName() + '(' + sourceFile + ')';
+    }
 }

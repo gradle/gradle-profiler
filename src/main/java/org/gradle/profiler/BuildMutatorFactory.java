@@ -24,6 +24,12 @@ public class BuildMutatorFactory implements Supplier<BuildMutator> {
         return new CompositeBuildMutator(mutators);
     }
 
+    @Override
+    public String toString()
+    {
+        return get().toString();
+    }
+
     private static class NoOpMutator implements BuildMutator {
         @Override
         public void beforeBuild() throws IOException {
@@ -31,6 +37,12 @@ public class BuildMutatorFactory implements Supplier<BuildMutator> {
 
         @Override
         public void cleanup() throws IOException {
+        }
+
+        @Override
+        public String toString()
+        {
+            return "NONE";
         }
     }
 
@@ -53,6 +65,12 @@ public class BuildMutatorFactory implements Supplier<BuildMutator> {
             for (BuildMutator mutator : mutators) {
                 mutator.cleanup();
             }
+        }
+
+        @Override
+        public String toString()
+        {
+            return mutators.toString();
         }
     }
 }

@@ -1,7 +1,6 @@
 package org.gradle.profiler.mutations;
 
 import java.io.File;
-import java.io.IOException;
 
 public class ApplyAbiChangeToJavaSourceFileMutator extends AbstractFileChangeMutator {
     public ApplyAbiChangeToJavaSourceFileMutator(File sourceFile) {
