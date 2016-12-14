@@ -2,14 +2,15 @@ package org.gradle.profiler.yjp;
 
 import org.gradle.profiler.InvocationSettings;
 import org.gradle.profiler.JvmArgsCalculator;
+import org.gradle.profiler.ScenarioSettings;
 
 import java.io.File;
 import java.util.List;
 
 public class YourKitJvmArgsCalculator extends JvmArgsCalculator {
-    private final InvocationSettings settings;
+    private final ScenarioSettings settings;
 
-    public YourKitJvmArgsCalculator(InvocationSettings settings) {
+    public YourKitJvmArgsCalculator(ScenarioSettings settings) {
         this.settings = settings;
     }
 
@@ -27,6 +28,6 @@ public class YourKitJvmArgsCalculator extends JvmArgsCalculator {
             throw new IllegalArgumentException("Could not locate YourKit library in YourKit home directory " + yourKitHome);
         }
         // Args for CPU tracing
-        jvmArgs.add("-agentpath:" + jnilib.getAbsolutePath() + "=disablealloc,dir=" + settings.getOutputDir().getAbsolutePath());
+        jvmArgs.add("-agentpath:" + jnilib.getAbsolutePath() + "=disablealloc,dir=" + settings.getScenarioOutputDir().getAbsolutePath());
     }
 }

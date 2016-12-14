@@ -46,12 +46,14 @@ public class Main {
 
             BenchmarkResults benchmarkResults = new BenchmarkResults();
             PidInstrumentation pidInstrumentation = new PidInstrumentation();
-            JvmArgsCalculator jvmArgsCalculator = settings.isProfile() ? settings.getProfiler().newJvmArgsCalculator(settings) : new JvmArgsCalculator();
             File resultsFile = new File(settings.getOutputDir(), "benchmark.csv");
 
             List<Throwable> failures = new ArrayList<>();
 
             for (ScenarioDefinition scenario : scenarios) {
+                ScenarioSettings scenarioSettings = new ScenarioSettings(settings, scenario);
+                scenarioSettings.getScenarioOutputDir().mkdirs();
+                JvmArgsCalculator jvmArgsCalculator = settings.isProfile() ? settings.getProfiler().newJvmArgsCalculator(scenarioSettings) : new JvmArgsCalculator();
                 Logging.startOperation("Running scenario " + scenario.getName());
 
                 List<String> tasks = scenario.getTasks();
@@ -129,7 +131,7 @@ public class Main {
                                 checkPid(pid, results.getDaemonPid(), scenario.getInvoker());
                             }
 
-                            ProfilerController control = settings.getProfiler().newController(pid, settings, invoker);
+                            ProfilerController control = settings.getProfiler().newController(pid, scenarioSettings, invoker);
                             if (settings.isProfile()) {
                                 Logging.startOperation("Starting recording for daemon with pid " + pid);
                                 control.start();

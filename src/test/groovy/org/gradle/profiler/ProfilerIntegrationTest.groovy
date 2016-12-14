@@ -140,7 +140,7 @@ println "<daemon: " + gradle.services.get(org.gradle.internal.environment.Gradle
         logFile.grep("<daemon: true").size() == 4
         logFile.grep("<tasks: [assemble]>").size() == 3
 
-        def profileFile = new File(outputDir, "profile.jfr")
+        def profileFile = new File(outputDir, "default/profile.jfr")
         profileFile.exists()
 
         where:
@@ -180,7 +180,7 @@ println "<daemon: " + gradle.services.get(org.gradle.internal.environment.Gradle
         sanitizedProfileTxtFile.exists()  && sanitizedProfileTxtFile.size()>0
 
         if (System.getenv('FG_HOME_DIR')) {
-            def fgFile = new File(outputDir, "flames.svg")
+            def fgFile = new File(outputDir, "default/flames.svg")
             assert fgFile.exists() && fgFile.size()>0
         }
     }
@@ -259,7 +259,7 @@ println "<daemon: " + gradle.services.get(org.gradle.internal.environment.Gradle
         logFile.grep("<tasks: [assemble]>").size() == 3
         assertBuildScanPublished("1.2")
 
-        def profileFile = new File(outputDir, "profile.jfr")
+        def profileFile = new File(outputDir, "default/profile.jfr")
         profileFile.exists()
     }
 

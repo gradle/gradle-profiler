@@ -46,13 +46,13 @@ public class Profiler {
         }
 
         @Override
-        public ProfilerController newController(final String pid, final InvocationSettings settings, final BuildInvoker invoker) {
-            JFRArgs jfrArgs = (JFRArgs) settings.getProfilerOptions();
-            return new JFRControl(jfrArgs, pid, settings.getOutputDir());
+        public ProfilerController newController(final String pid, final ScenarioSettings settings, final BuildInvoker invoker) {
+            JFRArgs jfrArgs = (JFRArgs) settings.getInvocationSettings().getProfilerOptions();
+            return new JFRControl(jfrArgs, pid, settings.getScenarioOutputDir());
         }
 
         @Override
-        public JvmArgsCalculator newJvmArgsCalculator(InvocationSettings settings) {
+        public JvmArgsCalculator newJvmArgsCalculator(ScenarioSettings settings) {
             return new JFRJvmArgsCalculator();
         }
 
@@ -88,14 +88,14 @@ public class Profiler {
         }
 
         @Override
-        public ProfilerController newController(final String pid, final InvocationSettings settings, final BuildInvoker invoker) {
-            HonestProfilerArgs args = (HonestProfilerArgs) settings.getProfilerOptions();
-            return new HonestProfilerControl(args, settings.getOutputDir());
+        public ProfilerController newController(final String pid, final ScenarioSettings settings, final BuildInvoker invoker) {
+            HonestProfilerArgs args = (HonestProfilerArgs) settings.getInvocationSettings().getProfilerOptions();
+            return new HonestProfilerControl(args, settings.getScenarioOutputDir());
         }
 
         @Override
-        public JvmArgsCalculator newJvmArgsCalculator(InvocationSettings settings) {
-            return new HonestProfilerJvmArgsCalculator((HonestProfilerArgs) settings.getProfilerOptions());
+        public JvmArgsCalculator newJvmArgsCalculator(ScenarioSettings settings) {
+            return new HonestProfilerJvmArgsCalculator((HonestProfilerArgs) settings.getInvocationSettings().getProfilerOptions());
         }
 
         @Override
@@ -124,9 +124,9 @@ public class Profiler {
     };
     public static final Profiler BUILDSCAN = new Profiler() {
         @Override
-        public ProfilerController newController(final String pid, final InvocationSettings settings, final BuildInvoker invoker) {
+        public ProfilerController newController(final String pid, final ScenarioSettings settings, final BuildInvoker invoker) {
             try {
-                return new BuildScanController(invoker, (String) settings.getProfilerOptions());
+                return new BuildScanController(invoker, (String) settings.getInvocationSettings().getProfilerOptions());
             } catch (IOException e) {
                 throw new RuntimeException(e);
             }
@@ -146,12 +146,12 @@ public class Profiler {
     };
     public static final Profiler YOUR_KIT = new Profiler() {
         @Override
-        public ProfilerController newController(String pid, InvocationSettings settings, BuildInvoker invoker) {
+        public ProfilerController newController(String pid, ScenarioSettings settings, BuildInvoker invoker) {
             return new YourKitProfilerController();
         }
 
         @Override
-        public JvmArgsCalculator newJvmArgsCalculator(InvocationSettings settings) {
+        public JvmArgsCalculator newJvmArgsCalculator(ScenarioSettings settings) {
             return new YourKitJvmArgsCalculator(settings);
         }
 
@@ -159,9 +159,9 @@ public class Profiler {
 
     public static final Profiler CHROME_TRACE = new Profiler() {
         @Override
-        public ProfilerController newController(final String pid, final InvocationSettings settings, final BuildInvoker invoker) {
+        public ProfilerController newController(final String pid, final ScenarioSettings settings, final BuildInvoker invoker) {
             try {
-                return new ChromeTraceController(invoker, settings.getOutputDir());
+                return new ChromeTraceController(invoker, settings.getScenarioOutputDir());
             } catch (IOException e) {
                 throw new RuntimeException(e);
             }
@@ -178,11 +178,11 @@ public class Profiler {
             }}
     );
 
-    public ProfilerController newController(final String pid, final InvocationSettings settings, final BuildInvoker invoker) {
+    public ProfilerController newController(final String pid, final ScenarioSettings settings, final BuildInvoker invoker) {
         return ProfilerController.EMPTY;
     }
 
-    public JvmArgsCalculator newJvmArgsCalculator(final InvocationSettings settings) {
+    public JvmArgsCalculator newJvmArgsCalculator(final ScenarioSettings settings) {
         return JvmArgsCalculator.DEFAULT;
     }
 
@@ -229,7 +229,7 @@ public class Profiler {
         }
 
         @Override
-        public ProfilerController newController(final String pid, final InvocationSettings settings, final BuildInvoker invoker) {
+        public ProfilerController newController(final String pid, final ScenarioSettings settings, final BuildInvoker invoker) {
             List<ProfilerController> controllers = delegates.stream()
                     .map((Profiler prof) -> prof.newController(pid,
                             settingsFor(prof, settings), invoker))
@@ -251,12 +251,14 @@ public class Profiler {
             };
         }
 
-        private InvocationSettings settingsFor(final Profiler prof, final InvocationSettings settings) {
-            return new InvocationSettings(settings.getProjectDir(), prof, profilerOptions.get(prof), settings.isBenchmark(), settings.getOutputDir(), settings.getInvoker(), settings.isDryRun(), settings.getScenarioFile(), settings.getVersions(), settings.getTargets(), settings.getSystemProperties(), settings.getGradleUserHome());
+        private ScenarioSettings settingsFor(final Profiler prof, final ScenarioSettings scenarioSettings) {
+            InvocationSettings settings = scenarioSettings.getInvocationSettings();
+            InvocationSettings newSettings = new InvocationSettings(settings.getProjectDir(), prof, profilerOptions.get(prof), settings.isBenchmark(), settings.getOutputDir(), settings.getInvoker(), settings.isDryRun(), settings.getScenarioFile(), settings.getVersions(), settings.getTargets(), settings.getSystemProperties(), settings.getGradleUserHome());
+            return new ScenarioSettings(newSettings, scenarioSettings.getScenario());
         }
 
         @Override
-        public JvmArgsCalculator newJvmArgsCalculator(final InvocationSettings settings) {
+        public JvmArgsCalculator newJvmArgsCalculator(final ScenarioSettings settings) {
             return new JvmArgsCalculator() {
                 @Override
                 public void calculateJvmArgs(final List<String> jvmArgs) {
