@@ -5,8 +5,6 @@ import org.gradle.tooling.ProjectConnection;
 import org.gradle.tooling.model.build.BuildEnvironment;
 
 import java.io.File;
-import java.nio.file.Files;
-import java.nio.file.Path;
 import java.time.Instant;
 import java.util.*;
 import java.util.function.Consumer;
@@ -57,7 +55,6 @@ public class Main {
                 Logging.startOperation("Running scenario " + scenario.getName());
 
                 List<String> tasks = scenario.getTasks();
-                Path userHome = Files.createTempDirectory("gradleUserHome");
 
                 for (GradleVersion version : scenario.getVersions()) {
                     Logging.startOperation("Running scenario " + scenario.getName() + " using Gradle version " + version.getVersion());
@@ -90,7 +87,7 @@ public class Main {
                             }
                             List<String> gradleArgs = new ArrayList<>(pidInstrumentation.getArgs());
                             gradleArgs.add("--gradle-user-home");
-                            gradleArgs.add(userHome.toString());
+                            gradleArgs.add(settings.getGradleUserHome().getAbsolutePath());
                             for (Map.Entry<String, String> entry : scenario.getSystemProperties().entrySet()) {
                                 gradleArgs.add("-D" + entry.getKey() + "=" + entry.getValue());
                             }
@@ -212,20 +209,7 @@ public class Main {
     }
 
     private void logSettings(InvocationSettings settings) {
-        System.out.println();
-        System.out.println("* Settings");
-        System.out.println("Project dir: " + settings.getProjectDir());
-        System.out.println("Output dir: " + settings.getOutputDir());
-        System.out.println("Profile: " + settings.isProfile());
-        System.out.println("Benchmark: " + settings.isBenchmark());
-        System.out.println("Versions: " + settings.getVersions());
-        System.out.println("Targets: " + settings.getTargets());
-        if (!settings.getSystemProperties().isEmpty()) {
-            System.out.println("System properties:");
-            for (Map.Entry<String, String> entry : settings.getSystemProperties().entrySet()) {
-                System.out.println("  " + entry.getKey() + "=" + entry.getValue());
-            }
-        }
+        settings.printTo(System.out);
     }
 
     private static void checkPid(String expected, String actual, Invoker invoker) {

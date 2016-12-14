@@ -1,6 +1,7 @@
 package org.gradle.profiler;
 
 import java.io.File;
+import java.io.PrintStream;
 import java.util.List;
 import java.util.Map;
 
@@ -16,8 +17,9 @@ public class InvocationSettings {
     private final List<String> versions;
     private final List<String> targets;
     private final Map<String, String> sysProperties;
+    private final File gradleUserHome;
 
-    public InvocationSettings(File projectDir, Profiler profiler, final Object profilerOptions, boolean benchmark, File outputDir, Invoker invoker, boolean dryRun, File scenarioFile, List<String> versions, List<String> getTargets, Map<String, String> sysProperties) {
+    public InvocationSettings(File projectDir, Profiler profiler, final Object profilerOptions, boolean benchmark, File outputDir, Invoker invoker, boolean dryRun, File scenarioFile, List<String> versions, List<String> getTargets, Map<String, String> sysProperties, File gradleUserHome) {
         this.profilerOptions = profilerOptions;
         this.benchmark = benchmark;
         this.projectDir = projectDir;
@@ -29,6 +31,7 @@ public class InvocationSettings {
         this.versions = versions;
         this.targets = getTargets;
         this.sysProperties = sysProperties;
+        this.gradleUserHome = gradleUserHome;
     }
 
     public File getOutputDir() {
@@ -85,5 +88,27 @@ public class InvocationSettings {
 
     public int getBuildCount() {
         return (benchmark && !dryRun) ? 13 : 1;
+    }
+
+    public File getGradleUserHome() {
+        return gradleUserHome;
+    }
+    
+    public void printTo(PrintStream out) {
+        out.println();
+        out.println("* Settings");
+        out.println("Project dir: " + getProjectDir());
+        out.println("Output dir: " + getOutputDir());
+        out.println("Profile: " + isProfile());
+        out.println("Benchmark: " + isBenchmark());
+        out.println("Versions: " + getVersions());
+        out.println("Gradle User Home: " + getGradleUserHome());
+        out.println("Targets: " + getTargets());
+        if (!getSystemProperties().isEmpty()) {
+            out.println("System properties:");
+            for (Map.Entry<String, String> entry : getSystemProperties().entrySet()) {
+                out.println("  " + entry.getKey() + "=" + entry.getValue());
+            }
+        }
     }
 }

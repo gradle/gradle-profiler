@@ -710,7 +710,7 @@ classes {
         given:
         buildFile.text = """
 apply plugin: 'base'
-println gradle.gradleUserHomeDir
+println "User home: \$gradle.gradleUserHomeDir"
 """
 
         when:
@@ -718,7 +718,22 @@ println gradle.gradleUserHomeDir
                 "--benchmark", "help")
 
         then:
-        logFile.grep(System.getProperty("java.io.tmpdir"))
+        logFile.grep("User home: " + new File("gradle-user-home").absolutePath)
+    }
+
+    def "Can specify user home"() {
+        given:
+        buildFile.text = """
+apply plugin: 'base'
+println "User home: \$gradle.gradleUserHomeDir"
+"""
+
+        when:
+        new Main().run("--project-dir", projectDir.absolutePath, "--output-dir", outputDir.absolutePath, "--gradle-version", gradleVersion,
+                "--benchmark", "--gradle-user-home", "foobar", "help")
+
+        then:
+        logFile.grep("User home: " + new File("foobar").absolutePath)
     }
 
     static class LogFile {

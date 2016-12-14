@@ -7,8 +7,6 @@ import java.io.IOException;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.StringJoiner;
-import java.util.function.BinaryOperator;
 import java.util.stream.Collectors;
 
 class CommandLineParser {
@@ -24,6 +22,8 @@ class CommandLineParser {
         ArgumentAcceptingOptionSpec<String> projectOption = parser.accepts("project-dir", "The directory containing the build to run")
                 .withRequiredArg();
         ArgumentAcceptingOptionSpec<String> versionOption = parser.accepts("gradle-version", "Gradle version or installation to use to run build")
+                .withRequiredArg();
+        ArgumentAcceptingOptionSpec<String> gradleUserHomeOption = parser.accepts("gradle-user-home", "The Gradle user home to use")
                 .withRequiredArg();
         ArgumentAcceptingOptionSpec<String> scenarioFileOption = parser.accepts("scenario-file", "Scenario definition file to use").withRequiredArg();
         ArgumentAcceptingOptionSpec<String> sysPropOption = parser.accepts("D", "Defines a system property").withRequiredArg();
@@ -66,6 +66,12 @@ class CommandLineParser {
         } else {
             outputDir = findOutputDir();
         }
+        File gradleUserHome;
+        if (parsedOptions.has(gradleUserHomeOption)) {
+            gradleUserHome = new File(parsedOptions.valueOf(gradleUserHomeOption));
+        } else {
+            gradleUserHome = new File("gradle-user-home");
+        }
 
         List<String> targetNames = parsedOptions.nonOptionArguments().stream().map(o -> o.toString()).collect(Collectors.toList());
         List<String> versions = parsedOptions.valuesOf(versionOption).stream().map(v -> v.toString()).collect(Collectors.toList());
@@ -81,7 +87,7 @@ class CommandLineParser {
                 sysProperties.put(parts[0], parts[1]);
             }
         }
-        return new InvocationSettings(projectDir, profiler, profilerOptions, benchmark, outputDir, invoker, dryRun, scenarioFile, versions, targetNames, sysProperties);
+        return new InvocationSettings(projectDir, profiler, profilerOptions, benchmark, outputDir, invoker, dryRun, scenarioFile, versions, targetNames, sysProperties, gradleUserHome);
     }
 
     private File findOutputDir() {
