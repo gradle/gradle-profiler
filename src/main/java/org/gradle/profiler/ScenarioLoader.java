@@ -4,9 +4,12 @@ import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
 import com.typesafe.config.ConfigParseOptions;
 import com.typesafe.config.ConfigValue;
+import org.gradle.profiler.mutations.ApplyAbiChangeToJavaSourceFileMutator;
+import org.gradle.profiler.mutations.ApplyChangeToAndroidResourceFileMutator;
 
 import java.io.File;
 import java.util.*;
+import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
 class ScenarioLoader {
@@ -45,7 +48,7 @@ class ScenarioLoader {
         for (String scenarioName : selectedScenarios) {
             Config scenario = config.getConfig(scenarioName);
             for (String key : config.getObject(scenarioName).keySet()) {
-                if (!Arrays.asList("versions", "tasks", "gradle-args", "run-using", "system-properties", "apply-abi-change-to").contains(key)) {
+                if (!Arrays.asList("versions", "tasks", "gradle-args", "run-using", "system-properties", "apply-abi-change-to", "apply-resource-change-to").contains(key)) {
                     throw new IllegalArgumentException("Unrecognized key '" + scenarioName + "." + key + "' found in scenario file " + scenarioFile);
                 }
             }
@@ -55,14 +58,33 @@ class ScenarioLoader {
             List<String> gradleArgs = strings(scenario, "gradle-args", Collections.emptyList());
             Invoker invoker = invoker(scenario, "run-using", settings.getInvoker());
             Map<String, String> systemProperties = map(scenario, "system-properties", settings.getSystemProperties());
-            String sourceFileToChangeName = string(scenario, "apply-abi-change-to", null);
-            File sourceFileToChange = sourceFileToChangeName == null ? null : new File(settings.getProjectDir(), sourceFileToChangeName);
-            if (sourceFileToChange != null && !sourceFileToChange.isFile()) {
-                throw new IllegalArgumentException("Source file " + sourceFileToChange + " specified for scenario " + scenarioName + " does not exist.");
+
+            List<Supplier<BuildMutator>> mutators = new ArrayList<>();
+            File sourceFileToChange = sourceFile(scenario, "apply-abi-change-to", scenarioName, settings.getProjectDir());
+            if (sourceFileToChange != null) {
+                mutators.add(() -> new ApplyAbiChangeToJavaSourceFileMutator(sourceFileToChange));
             }
-            definitions.add(new ScenarioDefinition(scenarioName, invoker, versions, tasks, gradleArgs, systemProperties, sourceFileToChange));
+
+            File resourceFileToChange = sourceFile(scenario, "apply-resource-change-to", scenarioName, settings.getProjectDir());
+            if (resourceFileToChange != null) {
+                mutators.add(() -> new ApplyChangeToAndroidResourceFileMutator(resourceFileToChange));
+            }
+
+            definitions.add(new ScenarioDefinition(scenarioName, invoker, versions, tasks, gradleArgs, systemProperties, new BuildMutatorFactory(mutators)));
         }
         return definitions;
+    }
+
+    File sourceFile(Config config, String key, String scenarioName, File projectDir) {
+        String sourceFileName = string(config, key, null);
+        if (sourceFileName == null) {
+            return null;
+        }
+        File sourceFile = new File(projectDir, sourceFileName);
+        if (!sourceFile.isFile()) {
+            throw new IllegalArgumentException("Source file " + sourceFile + " specified for scenario " + scenarioName + " does not exist.");
+        }
+        return sourceFile;
     }
 
     private Map<String, String> map(Config config, String key, Map<String, String> defaultValues) {

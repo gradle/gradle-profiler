@@ -3,6 +3,7 @@ package org.gradle.profiler;
 import java.io.File;
 import java.util.List;
 import java.util.Map;
+import java.util.function.Supplier;
 
 class ScenarioDefinition {
 
@@ -12,17 +13,15 @@ class ScenarioDefinition {
     private final List<String> tasks;
     private final List<String> gradleArgs;
     private final Map<String, String> systemProperties;
-    private final File sourceFileToChange;
+    private final Supplier<BuildMutator> buildMutator;
 
-    public ScenarioDefinition(String name, Invoker invoker, List<GradleVersion> versions, List<String> tasks, List<String> gradleArgs,
-                              Map<String, String> systemProperties, File sourceFileToChange) {
-        this.name = name;
+    public ScenarioDefinition(String name, Invoker invoker, List<GradleVersion> versions, List<String> tasks, List<String> gradleArgs, Map<String, String> systemProperties, Supplier<BuildMutator> buildMutator) { this.name = name;
         this.invoker = invoker;
         this.tasks = tasks;
         this.versions = versions;
         this.gradleArgs = gradleArgs;
         this.systemProperties = systemProperties;
-        this.sourceFileToChange = sourceFileToChange;
+        this.buildMutator = buildMutator;
     }
 
     public String getName() {
@@ -49,7 +48,7 @@ class ScenarioDefinition {
         return systemProperties;
     }
 
-    public File getSourceFileToChange() {
-        return sourceFileToChange;
+    public Supplier<BuildMutator> getBuildMutator() {
+        return buildMutator;
     }
 }

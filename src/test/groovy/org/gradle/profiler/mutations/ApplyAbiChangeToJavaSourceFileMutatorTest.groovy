@@ -1,16 +1,16 @@
-package org.gradle.profiler
+package org.gradle.profiler.mutations
 
 import org.junit.Rule
 import org.junit.rules.TemporaryFolder
 import spock.lang.Specification
 
-class SourceFileMutatorTest extends Specification {
+class ApplyAbiChangeToJavaSourceFileMutatorTest extends Specification {
     @Rule TemporaryFolder tmpDir = new TemporaryFolder()
 
     def "adds and removes public method to end of source file"() {
         def sourceFile = tmpDir.newFile("Thing.java")
         sourceFile.text = "class Thing { }"
-        def mutator = new SourceFileMutator(sourceFile)
+        def mutator = new ApplyAbiChangeToJavaSourceFileMutator(sourceFile)
 
         when:
         mutator.beforeBuild()
@@ -34,7 +34,7 @@ class SourceFileMutatorTest extends Specification {
     def "reverts changes when nothing has been applied"() {
         def sourceFile = tmpDir.newFile("Thing.java")
         sourceFile.text = "class Thing { }"
-        def mutator = new SourceFileMutator(sourceFile)
+        def mutator = new ApplyAbiChangeToJavaSourceFileMutator(sourceFile)
 
         when:
         mutator.cleanup()
@@ -46,7 +46,7 @@ class SourceFileMutatorTest extends Specification {
     def "reverts changes when changes has been applied"() {
         def sourceFile = tmpDir.newFile("Thing.java")
         sourceFile.text = "class Thing { }"
-        def mutator = new SourceFileMutator(sourceFile)
+        def mutator = new ApplyAbiChangeToJavaSourceFileMutator(sourceFile)
 
         when:
         mutator.beforeBuild()

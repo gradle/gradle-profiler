@@ -67,7 +67,7 @@ public class Main {
 
                         GradleConnector connector = GradleConnector.newConnector().useInstallation(version.getGradleHome());
                         ProjectConnection projectConnection = connector.forProjectDirectory(settings.getProjectDir()).connect();
-                        BuildMutator mutator = scenario.getSourceFileToChange() == null ? new NoOpBuildMutator() : new SourceFileMutator(scenario.getSourceFileToChange());
+                        BuildMutator mutator = scenario.getBuildMutator().get();
                         try {
                             BuildEnvironment buildEnvironment = projectConnection.getModel(BuildEnvironment.class);
                             Logging.detailed().println();
@@ -198,9 +198,7 @@ public class Main {
             System.out.println("  Tasks: " + scenario.getTasks());
             System.out.println("  Run using: " + scenario.getInvoker());
             System.out.println("  Gradle args: " + scenario.getGradleArgs());
-            if (scenario.getSourceFileToChange() != null) {
-                System.out.println("  Source file to change: " + scenario.getSourceFileToChange());
-            }
+            System.out.println("  Build changes: " + scenario.getBuildMutator());
             if (!scenario.getSystemProperties().isEmpty()) {
                 System.out.println("  System properties:");
                 for (Map.Entry<String, String> entry : scenario.getSystemProperties().entrySet()) {

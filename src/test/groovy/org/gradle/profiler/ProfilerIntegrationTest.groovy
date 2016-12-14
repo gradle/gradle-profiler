@@ -231,7 +231,7 @@ println "<daemon: " + gradle.services.get(org.gradle.internal.environment.Gradle
     }
 
     private void assertBuildScanPublished(String buildScanPluginVersion) {
-        logFile.grep("Using build scan profiler version " + buildScanPluginVersion).size() == 1
+        assert logFile.grep("Using build scan profiler version " + buildScanPluginVersion).size() == 1
         // Must be 1, may be 2 if user applies build scan in home dir
         assert logFile.grep("Publishing build information...").size() >= 1 : ("LOG FILE:" + logFile.text)
     }
@@ -640,10 +640,10 @@ println "<parallel: " + gradle.startParameter.parallelProjectExecutionEnabled + 
         true       | "--parallel" | "enable"
     }
 
-    def "applies and reverts changes while running benchmark"() {
+    def "applies and reverts changes to Java source file while running benchmark"() {
         given:
         buildFile.text = """
-apply plugin: 'java'
+apply plugin: BasePlugin
 println "<src-length: \${file('src/main/java/Library.java').length()}>" 
 """
         def srcFile = file("src/main/java/Library.java")
@@ -657,7 +657,7 @@ class Library {
         def scenarioFile = file("scenarios.conf")
         scenarioFile << """
 classes {
-    tasks = "classes"
+    tasks = "help"
     apply-abi-change-to = "src/main/java/Library.java"
 }
 """
@@ -670,6 +670,38 @@ classes {
         // Probe version, initial clean build, 2 warm up, 13 builds
         logFile.grep("<src-length: ${srcFile.length()}>").size() == 10
         logFile.grep("<src-length: ${srcFile.length() + 32}>").size() == 7
+    }
+
+    def "applies and reverts changes to Android resource file while running benchmark"() {
+        given:
+        buildFile.text = """
+apply plugin: BasePlugin
+println "<src-length: \${file('src/main/res/values/strings.xml').length()}>" 
+"""
+        def srcFile = file("src/main/res/values/strings.xml")
+        srcFile.parentFile.mkdirs()
+        srcFile.text = """
+<resources>
+    <string name="app_name">Example</string>
+</resources>
+"""
+
+        def scenarioFile = file("scenarios.conf")
+        scenarioFile << """
+classes {
+    tasks = "help"
+    apply-resource-change-to = "src/main/res/values/strings.xml"
+}
+"""
+
+        when:
+        new Main().run("--project-dir", projectDir.absolutePath, "--output-dir", outputDir.absolutePath, "--gradle-version", gradleVersion,
+                "--benchmark", "--scenario-file", scenarioFile.absolutePath)
+
+        then:
+        // Probe version, initial clean build, 2 warm up, 13 builds
+        logFile.grep("<src-length: ${srcFile.length()}>").size() == 10
+        logFile.grep("<src-length: ${srcFile.length() + 47}>").size() == 7
     }
 
     def "reverts changes on benchmark failures"() {
