@@ -48,7 +48,7 @@ class ScenarioLoader {
         for (String scenarioName : selectedScenarios) {
             Config scenario = config.getConfig(scenarioName);
             for (String key : config.getObject(scenarioName).keySet()) {
-                if (!Arrays.asList("versions", "tasks", "gradle-args", "run-using", "system-properties", "apply-abi-change-to", "apply-resource-change-to").contains(key)) {
+                if (!Arrays.asList("versions", "tasks", "gradle-args", "run-using", "system-properties", "apply-abi-change-to", "apply-android-resource-change-to").contains(key)) {
                     throw new IllegalArgumentException("Unrecognized key '" + scenarioName + "." + key + "' found in scenario file " + scenarioFile);
                 }
             }
@@ -65,7 +65,7 @@ class ScenarioLoader {
                 mutators.add(() -> new ApplyAbiChangeToJavaSourceFileMutator(sourceFileToChange));
             }
 
-            File resourceFileToChange = sourceFile(scenario, "apply-resource-change-to", scenarioName, settings.getProjectDir());
+            File resourceFileToChange = sourceFile(scenario, "apply-android-resource-change-to", scenarioName, settings.getProjectDir());
             if (resourceFileToChange != null) {
                 mutators.add(() -> new ApplyChangeToAndroidResourceFileMutator(resourceFileToChange));
             }

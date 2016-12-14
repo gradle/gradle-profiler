@@ -86,7 +86,7 @@ A scenario file can be provided to define scenarios to benchmark or profile. Use
         }
         run-using = no-daemon // value can be "no-daemon" or "tooling-api"
         apply-abi-change-to = "src/main/java/MyThing.java"
-        apply-resource-change-to = "src/main/res/value/strings.xml"
+        apply-android-resource-change-to = "src/main/res/value/strings.xml"
     }
 
 Values are optional and default to the values provided on the command-line or defined in the build.

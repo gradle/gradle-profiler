@@ -690,7 +690,7 @@ println "<src-length: \${file('src/main/res/values/strings.xml').length()}>"
         scenarioFile << """
 classes {
     tasks = "help"
-    apply-resource-change-to = "src/main/res/values/strings.xml"
+    apply-android-resource-change-to = "src/main/res/values/strings.xml"
 }
 """
 
