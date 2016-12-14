@@ -7,6 +7,7 @@ import com.typesafe.config.ConfigValue;
 import org.gradle.profiler.mutations.ApplyAbiChangeToJavaSourceFileMutator;
 import org.gradle.profiler.mutations.ApplyChangetoAndroidManifestFileMutator;
 import org.gradle.profiler.mutations.ApplyChangeToAndroidResourceFileMutator;
+import org.gradle.profiler.mutations.ApplyChangeToPropertyResourceFileMutator;
 
 import java.io.File;
 import java.util.*;
@@ -21,11 +22,13 @@ class ScenarioLoader {
     private static final String SYSTEM_PROPERTIES = "system-properties";
     private static final String APPLY_API_CHANGE_TO = "apply-abi-change-to";
     private static final String APPLY_ANDROID_RESOURCE_CHANGE_TO = "apply-android-resource-change-to";
+    private static final String APPLY_PROPERTY_RESOURCE_CHANGE_TO = "apply-property-resource-change-to";
     private static final String APPLY_ANDROID_MANIFEST_CHANGE_TO = "apply-android-manifest-change-to";
 
     private static final List<String> ALL_SCENARIO_KEYS = Arrays.asList(
         VERSIONS, TASKS, GRADLE_ARGS, RUN_USING, SYSTEM_PROPERTIES,
-        APPLY_API_CHANGE_TO, APPLY_ANDROID_RESOURCE_CHANGE_TO, APPLY_ANDROID_MANIFEST_CHANGE_TO
+        APPLY_API_CHANGE_TO, APPLY_ANDROID_RESOURCE_CHANGE_TO, APPLY_ANDROID_MANIFEST_CHANGE_TO,
+        APPLY_PROPERTY_RESOURCE_CHANGE_TO
     );
 
     private final GradleVersionInspector gradleVersionInspector;
@@ -88,6 +91,11 @@ class ScenarioLoader {
             File androidManifestToChange = sourceFile(scenario, APPLY_ANDROID_MANIFEST_CHANGE_TO, scenarioName, settings.getProjectDir());
             if(androidManifestToChange != null) {
                 mutators.add(() -> new ApplyChangetoAndroidManifestFileMutator(androidManifestToChange));
+            }
+
+            File classpathResourceFileToChange = sourceFile(scenario, APPLY_PROPERTY_RESOURCE_CHANGE_TO, scenarioName, settings.getProjectDir());
+            if (classpathResourceFileToChange != null) {
+                mutators.add(() -> new ApplyChangeToPropertyResourceFileMutator(resourceFileToChange));
             }
 
             definitions.add(new ScenarioDefinition(scenarioName, invoker, versions, tasks, gradleArgs, systemProperties, new BuildMutatorFactory(mutators)));
