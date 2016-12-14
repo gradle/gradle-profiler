@@ -28,7 +28,7 @@ class ScenarioLoader {
             for (String v : settings.getVersions()) {
                 versions.add(gradleVersionInspector.resolve(v));
             }
-            scenarios.add(new ScenarioDefinition("default", settings.getInvoker(), versions, settings.getTargets(), Collections.emptyList(), settings.getSystemProperties(), null));
+            scenarios.add(new ScenarioDefinition("default", settings.getInvoker(), versions, settings.getTargets(), Collections.emptyList(), settings.getSystemProperties(), new BuildMutatorFactory(Collections.emptyList())));
         }
         for (ScenarioDefinition scenario : scenarios) {
             if (scenario.getVersions().isEmpty()) {
