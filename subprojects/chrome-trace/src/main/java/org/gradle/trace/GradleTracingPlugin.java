@@ -7,13 +7,14 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.PrintWriter;
+import java.lang.management.GarbageCollectorMXBean;
+import java.lang.management.MemoryUsage;
 import java.lang.reflect.Field;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.LinkedHashMap;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.TimeUnit;
 import javax.inject.Inject;
+
+import com.sun.management.OperatingSystemMXBean;
 import org.gradle.BuildAdapter;
 import org.gradle.BuildResult;
 import org.gradle.api.Plugin;
@@ -32,52 +33,85 @@ import org.gradle.internal.progress.OperationResult;
 import org.gradle.internal.progress.OperationStartEvent;
 import org.gradle.internal.service.ServiceRegistry;
 
+import java.lang.management.ManagementFactory;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+
 public class GradleTracingPlugin implements Plugin<Gradle> {
     private static final String CATEGORY_PHASE = "BUILD_PHASE";
     private static final String CATEGORY_OPERATION = "BUILD_OPERATION";
     private static final String PHASE_BUILD = "build duration";
     private final BuildRequestMetaData buildRequestMetaData;
     private final Map<String, TraceEvent> events = new LinkedHashMap<>();
+    private final OperatingSystemMXBean operatingSystemMXBean;
+    private final List<GarbageCollectorMXBean> garbageCollectorMXBeans;
+    private int sysPollCount = 0;
+
+    private ScheduledExecutorService scheduledExecutorService = Executors.newSingleThreadScheduledExecutor();
 
     @Inject
     public GradleTracingPlugin(BuildRequestMetaData buildRequestMetaData) {
         this.buildRequestMetaData = buildRequestMetaData;
+        this.operatingSystemMXBean = (OperatingSystemMXBean) ManagementFactory.getOperatingSystemMXBean();
+        this.garbageCollectorMXBeans = ManagementFactory.getGarbageCollectorMXBeans();
     }
 
     private void start(String name, String category, long timestampNanos) {
-        events.put(name, TraceEvent.started(name, category, timestampNanos, new HashMap<>()));
+        events.put(name, DurationEvent.started(name, category, timestampNanos, new HashMap<>()));
     }
 
-    private TraceEvent finish(String name, long timestampNanos, Map<String, String> info) {
-        TraceEvent event = events.get(name);
+    private void finish(String name, long timestampNanos, Map<String, String> info) {
+        DurationEvent event = (DurationEvent) events.get(name);
         if (event != null) {
             event.finished(timestampNanos);
-            event.getInfo().putAll( info );
+            event.getInfo().putAll(info);
         }
-        return event;
+    }
+
+    private void count(String name, String metric, Map<String, Double> info) {
+        events.put(name, new CountEvent(metric, info));
     }
 
     @Override
     public void apply(Gradle gradle) {
         ListenerManager globalListenerManager = getGlobalListenerManager(gradle);
-        globalListenerManager.addListener( new InternalBuildListener() {
-            @Override
-            public void started(BuildOperationInternal operation, OperationStartEvent startEvent) {
-                start(operation.getDisplayName(), CATEGORY_OPERATION, toNanoTime(startEvent.getStartTime()));
-            }
 
-            @Override
-            public void finished(BuildOperationInternal operation, OperationResult result) {
-                Map<String, String> info = new HashMap<>();
-                if (operation.getOperationDescriptor() instanceof TaskOperationDescriptor) {
-                    TaskOperationDescriptor taskDescriptor = (TaskOperationDescriptor) operation.getOperationDescriptor();
-                    TaskInternal task = taskDescriptor.getTask();
-                    info.put("type", task.getClass().getSimpleName());
-                    info.put("didWork", String.valueOf(task.getDidWork()));
+        scheduledExecutorService.scheduleAtFixedRate(() -> {
+            HashMap<String, Double> cpuStats = new HashMap<>();
+            cpuStats.put("cpu", operatingSystemMXBean.getProcessCpuLoad()*100);
+            count("cpu" + sysPollCount, "cpu", cpuStats);
+
+            for (GarbageCollectorMXBean garbageCollectorMXBean : garbageCollectorMXBeans) {
+                com.sun.management.GarbageCollectorMXBean gcBean = (com.sun.management.GarbageCollectorMXBean) garbageCollectorMXBean;
+                Map<String, MemoryUsage> pools = gcBean.getLastGcInfo().getMemoryUsageAfterGc();
+                HashMap<String, Double> gcInfo = new HashMap<>();
+                for (String pool : pools.keySet()) {
+                    MemoryUsage usage = pools.get(pool);
+                    gcInfo.put(pool, (double) usage.getUsed());
                 }
-                finish(operation.getDisplayName(), toNanoTime(result.getEndTime()), info);
+                count("heap" + sysPollCount, "heap", gcInfo);
             }
-        });
+            sysPollCount++;
+        }, 0, 1, TimeUnit.SECONDS);
+
+        globalListenerManager.addListener( new InternalBuildListener() {
+                @Override
+                public void started(BuildOperationInternal operation, OperationStartEvent startEvent) {
+                    start(operation.getDisplayName(), CATEGORY_OPERATION, toNanoTime(startEvent.getStartTime()));
+                }
+
+                @Override
+                public void finished(BuildOperationInternal operation, OperationResult result) {
+                    Map<String, String> info = new HashMap<>();
+                    if (operation.getOperationDescriptor() instanceof TaskOperationDescriptor) {
+                        TaskOperationDescriptor taskDescriptor = (TaskOperationDescriptor) operation.getOperationDescriptor();
+                        TaskInternal task = taskDescriptor.getTask();
+                        info.put("type", task.getClass().getSimpleName());
+                        info.put("didWork", String.valueOf(task.getDidWork()));
+                    }
+                    finish(operation.getDisplayName(), toNanoTime(result.getEndTime()), info);
+                }
+            });
         gradle.getGradle().addListener(new JsonAdapter(gradle));
     }
 
@@ -90,8 +124,10 @@ public class GradleTracingPlugin implements Plugin<Gradle> {
 
         @Override
         public void buildFinished(BuildResult result) {
-            TraceEvent overallBuild = TraceEvent.started(PHASE_BUILD, CATEGORY_PHASE, toNanoTime(buildRequestMetaData.getBuildTimeClock().getStartTime()), new HashMap<>());
+            scheduledExecutorService.shutdown();
+            DurationEvent overallBuild = DurationEvent.started(PHASE_BUILD, CATEGORY_PHASE, toNanoTime(buildRequestMetaData.getBuildTimeClock().getStartTime()), new HashMap<>());
             overallBuild.finished(System.nanoTime());
+
             events.put(PHASE_BUILD, overallBuild);
 
             File traceFile = getTraceFile();
