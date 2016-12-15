@@ -1,11 +1,10 @@
 package org.gradle.profiler;
 
-import java.io.File;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Supplier;
 
-class ScenarioDefinition {
+public class ScenarioDefinition {
 
     private final String name;
     private final Invoker invoker;

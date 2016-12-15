@@ -27,7 +27,13 @@ public class YourKitJvmArgsCalculator extends JvmArgsCalculator {
         if (!jnilib.isFile()) {
             throw new IllegalArgumentException("Could not locate YourKit library in YourKit home directory " + yourKitHome);
         }
-        // Args for CPU tracing
-        jvmArgs.add("-agentpath:" + jnilib.getAbsolutePath() + "=disablealloc,dir=" + settings.getScenarioOutputDir().getAbsolutePath());
+        String agentOptions = "-agentpath:" + jnilib.getAbsolutePath() + "=dir=" + settings.getScenarioOutputDir().getAbsolutePath() + ",sessionname=" + settings.getScenario().getName();
+        YourKitConfig yourKitConfig = (YourKitConfig) settings.getInvocationSettings().getProfilerOptions();
+        if (yourKitConfig.isMemorySnapshot()) {
+            agentOptions += ",disabletracing";
+        } else {
+            agentOptions += ",disablealloc";
+        }
+        jvmArgs.add(agentOptions);
     }
 }

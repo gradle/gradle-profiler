@@ -25,6 +25,7 @@ import org.gradle.profiler.hp.HonestProfilerJvmArgsCalculator;
 import org.gradle.profiler.jfr.JFRArgs;
 import org.gradle.profiler.jfr.JFRControl;
 import org.gradle.profiler.jfr.JFRJvmArgsCalculator;
+import org.gradle.profiler.yjp.YourKitConfig;
 import org.gradle.profiler.yjp.YourKitJvmArgsCalculator;
 import org.gradle.profiler.yjp.YourKitProfilerController;
 
@@ -147,7 +148,7 @@ public class Profiler {
     public static final Profiler YOUR_KIT = new Profiler() {
         @Override
         public ProfilerController newController(String pid, ScenarioSettings settings, BuildInvoker invoker) {
-            return new YourKitProfilerController();
+            return new YourKitProfilerController((YourKitConfig) settings.getInvocationSettings().getProfilerOptions());
         }
 
         @Override
@@ -155,6 +156,15 @@ public class Profiler {
             return new YourKitJvmArgsCalculator(settings);
         }
 
+        @Override
+        void addOptions(OptionParser parser) {
+            parser.accepts("yourkit-memory", "Capture memory snapshot").availableIf("yourkit");
+        }
+
+        @Override
+        public Object newConfigObject(OptionSet parsedOptions) {
+            return new YourKitConfig(parsedOptions.has("yourkit-memory"));
+        }
     };
 
     public static final Profiler CHROME_TRACE = new Profiler() {
