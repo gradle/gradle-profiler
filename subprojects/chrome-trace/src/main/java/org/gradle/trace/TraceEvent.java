@@ -11,7 +11,7 @@ public class TraceEvent {
     private long endTimestamp;
     private final Map<String, String> info;
 
-    public TraceEvent(String name, String category, long timestampNanos, Map<String, String> info) {
+    private TraceEvent(String name, String category, long timestampNanos, Map<String, String> info) {
         this.name = name;
         this.category = category;
         this.threadId = Thread.currentThread().getId();
@@ -19,12 +19,8 @@ public class TraceEvent {
         this.info = info;
     }
 
-    static TraceEvent started(String name, String category, Map<String, String> info) {
-        return started(name, category, getTimestamp(), info);
-    }
-
-    static TraceEvent started(String name, String category, long timestamp, Map<String, String> info) {
-        return new TraceEvent(name, category, timestamp, info);
+    static TraceEvent started(String name, String category, long timestampNanos, Map<String, String> info) {
+        return new TraceEvent(name, category, timestampNanos, info);
     }
 
     public Map<String, String> getInfo() {
@@ -49,11 +45,8 @@ public class TraceEvent {
         return String.format("{\"name\": \"%s\", \"cat\": \"%s\", \"ph\": \"X\", \"pid\": 0, \"tid\": %d, \"ts\": %d, \"dur\": %d, \"args\": %s}", name, category, threadId, startTimestamp, elapsed, args);
     }
 
-    private static long getTimestamp() {
-        return (System.nanoTime());
+    public void finished(long timestampNanos) {
+        this.endTimestamp = timestampNanos / 1000;
     }
 
-    public void finished() {
-        this.endTimestamp = getTimestamp() / 1000;
-    }
 }

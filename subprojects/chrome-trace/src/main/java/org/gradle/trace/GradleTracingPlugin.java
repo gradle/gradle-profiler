@@ -1,36 +1,41 @@
 package org.gradle.trace;
 
-import org.gradle.BuildAdapter;
-import org.gradle.BuildResult;
-import org.gradle.api.*;
-import org.gradle.api.artifacts.DependencyResolutionListener;
-import org.gradle.api.artifacts.ResolvableDependencies;
-import org.gradle.api.execution.TaskExecutionListener;
-import org.gradle.api.invocation.Gradle;
-import org.gradle.api.tasks.TaskState;
-import org.gradle.initialization.BuildRequestMetaData;
-import org.gradle.internal.UncheckedException;
-import org.gradle.internal.progress.BuildOperationInternal;
-import org.gradle.internal.progress.InternalBuildListener;
-import org.gradle.internal.progress.OperationResult;
-import org.gradle.internal.progress.OperationStartEvent;
-
-import javax.inject.Inject;
-import java.io.*;
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.io.PrintWriter;
+import java.lang.reflect.Field;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
+import javax.inject.Inject;
+import org.gradle.BuildAdapter;
+import org.gradle.BuildResult;
+import org.gradle.api.Plugin;
+import org.gradle.api.execution.internal.TaskOperationDescriptor;
+import org.gradle.api.internal.GradleInternal;
+import org.gradle.api.internal.TaskInternal;
+import org.gradle.api.invocation.Gradle;
+import org.gradle.initialization.BuildRequestMetaData;
+import org.gradle.initialization.DefaultGradleLauncherFactory;
+import org.gradle.initialization.GradleLauncherFactory;
+import org.gradle.internal.UncheckedException;
+import org.gradle.internal.event.ListenerManager;
+import org.gradle.internal.progress.BuildOperationInternal;
+import org.gradle.internal.progress.InternalBuildListener;
+import org.gradle.internal.progress.OperationResult;
+import org.gradle.internal.progress.OperationStartEvent;
+import org.gradle.internal.service.ServiceRegistry;
 
 public class GradleTracingPlugin implements Plugin<Gradle> {
     private static final String CATEGORY_PHASE = "BUILD_PHASE";
-    private static final String CATEGORY_EVALUATE = "PROJECT_EVALUATE";
-    private static final String CATEGORY_RESOLVE = "CONFIGURATION_RESOLVE";
-    private static final String CATEGORY_TASK = "TASK_EXECUTE";
     private static final String CATEGORY_OPERATION = "BUILD_OPERATION";
     private static final String PHASE_BUILD = "build duration";
-    private static final String PHASE_BUILD_TASK_GRAPH = "build task graph";
     private final BuildRequestMetaData buildRequestMetaData;
     private final Map<String, TraceEvent> events = new LinkedHashMap<>();
 
@@ -39,81 +44,40 @@ public class GradleTracingPlugin implements Plugin<Gradle> {
         this.buildRequestMetaData = buildRequestMetaData;
     }
 
-    private void start(String name, String category, Map<String, String> info) {
-        events.put(name, TraceEvent.started(name, category, info));
+    private void start(String name, String category, long timestampNanos) {
+        events.put(name, TraceEvent.started(name, category, timestampNanos, new HashMap<>()));
     }
 
-    private void start(String name, String category) {
-        events.put(name, TraceEvent.started(name, category, new HashMap<>()));
-    }
-
-    private TraceEvent finish(String name) {
+    private TraceEvent finish(String name, long timestampNanos, Map<String, String> info) {
         TraceEvent event = events.get(name);
         if (event != null) {
-            event.finished();
+            event.finished(timestampNanos);
+            event.getInfo().putAll( info );
         }
         return event;
     }
 
-    private void finish(String name, Map<String, String> info) {
-        finish(name).getInfo().putAll(info);
-    }
-
     @Override
     public void apply(Gradle gradle) {
-        gradle.addListener(new TaskExecutionListener() {
+        ListenerManager globalListenerManager = getGlobalListenerManager(gradle);
+        globalListenerManager.addListener( new InternalBuildListener() {
             @Override
-            public void beforeExecute(Task task) {
-                start(task.getPath(), CATEGORY_TASK);
+            public void started(BuildOperationInternal operation, OperationStartEvent startEvent) {
+                start(operation.getDisplayName(), CATEGORY_OPERATION, toNanoTime(startEvent.getStartTime()));
             }
 
             @Override
-            public void afterExecute(Task task, TaskState taskState) {
+            public void finished(BuildOperationInternal operation, OperationResult result) {
                 Map<String, String> info = new HashMap<>();
-                info.put("type", task.getClass().getSimpleName());
-                info.put("didWork", String.valueOf(task.getDidWork()));
-                finish(task.getPath(), info);
+                if (operation.getOperationDescriptor() instanceof TaskOperationDescriptor) {
+                    TaskOperationDescriptor taskDescriptor = (TaskOperationDescriptor) operation.getOperationDescriptor();
+                    TaskInternal task = taskDescriptor.getTask();
+                    info.put("type", task.getClass().getSimpleName());
+                    info.put("didWork", String.valueOf(task.getDidWork()));
+                }
+                finish(operation.getDisplayName(), toNanoTime(result.getEndTime()), info);
             }
         });
-
-        gradle.addListener(new DependencyResolutionListener() {
-            @Override
-            public void beforeResolve(ResolvableDependencies resolvableDependencies) {
-                start(resolvableDependencies.getPath(), CATEGORY_RESOLVE);
-            }
-
-            @Override
-            public void afterResolve(ResolvableDependencies resolvableDependencies) {
-                finish(resolvableDependencies.getPath());
-            }
-        });
-
-        gradle.addListener(new ProjectEvaluationListener() {
-            @Override
-            public void beforeEvaluate(Project project) {
-                start(project.getPath(), CATEGORY_EVALUATE);
-            }
-
-            @Override
-            public void afterEvaluate(Project project, ProjectState projectState) {
-                finish(project.getPath());
-            }
-        });
-
-        gradle.addListener(new InternalBuildListener() {
-            @Override
-            public void started(BuildOperationInternal buildOperationInternal, OperationStartEvent operationStartEvent) {
-                start(buildOperationInternal.getDisplayName(), CATEGORY_OPERATION);
-            }
-
-            @Override
-            public void finished(BuildOperationInternal buildOperationInternal, OperationResult operationResult) {
-                finish(buildOperationInternal.getDisplayName());
-            }
-        });
-
-        gradle.getTaskGraph().whenReady(taskExecutionGraph -> finish(PHASE_BUILD_TASK_GRAPH));
-
         gradle.getGradle().addListener(new JsonAdapter(gradle));
     }
 
@@ -125,15 +89,9 @@ public class GradleTracingPlugin implements Plugin<Gradle> {
         }
 
         @Override
-        public void projectsEvaluated(Gradle gradle) {
-            start(PHASE_BUILD_TASK_GRAPH, CATEGORY_PHASE);
-            System.out.println("START TASK GRAPH");
-        }
-
-        @Override
         public void buildFinished(BuildResult result) {
             TraceEvent overallBuild = TraceEvent.started(PHASE_BUILD, CATEGORY_PHASE, toNanoTime(buildRequestMetaData.getBuildTimeClock().getStartTime()), new HashMap<>());
-            overallBuild.finished();
+            overallBuild.finished(System.nanoTime());
             events.put(PHASE_BUILD, overallBuild);
 
             File traceFile = getTraceFile();
@@ -207,5 +165,19 @@ public class GradleTracingPlugin implements Plugin<Gradle> {
         long elapsedMillis = System.currentTimeMillis() - timeInMillis;
         long elapsedNanos = TimeUnit.MILLISECONDS.toNanos(elapsedMillis);
         return System.nanoTime() - elapsedNanos;
+    }
+
+
+    private ListenerManager getGlobalListenerManager( final Gradle gradle ) {
+        try {
+            GradleInternal gradleInternal = (GradleInternal) gradle;
+            ServiceRegistry services = gradleInternal.getServices();
+            GradleLauncherFactory gradleLauncherFactory = services.get(GradleLauncherFactory.class);
+            Field field = DefaultGradleLauncherFactory.class.getDeclaredField("globalListenerManager");
+            field.setAccessible(true);
+            return (ListenerManager) field.get(gradleLauncherFactory);
+        } catch(Exception ex) {
+            throw new RuntimeException(ex);
+        }
     }
 }
