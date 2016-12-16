@@ -88,9 +88,13 @@ public class GradleTracingPlugin implements Plugin<Gradle> {
 
         scheduledExecutorService.scheduleAtFixedRate(() -> {
             HashMap<String, Double> cpuStats = new HashMap<>();
-            cpuStats.put("process_cpu", operatingSystemMXBean.getProcessCpuLoad()*100);
-            cpuStats.put("system_cpu", operatingSystemMXBean.getSystemCpuLoad()*100);
-            if (!Double.isNaN(cpuStats.get("process_cpu")) && !Double.isNaN(cpuStats.get("system_cpu"))) {
+            double pcpu = operatingSystemMXBean.getProcessCpuLoad()*100;
+            double scpu = operatingSystemMXBean.getSystemCpuLoad()*100;
+
+            if (!Double.isNaN(pcpu) && !Double.isNaN(scpu)) {
+                cpuStats.put("process_cpu_used", pcpu);
+                cpuStats.put("non_process_cpu_used", scpu - pcpu);
+
                 count("cpu" + sysPollCount, "cpu", cpuStats);
             }
 
