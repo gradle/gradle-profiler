@@ -67,7 +67,13 @@ and each of these is used to benchmark the build, allowing you to compare the be
 
 ## Applying changes between build executions
 
-A scenario can define a Java source file or Android resource file that should be changes and reverted in alternating builds. You can use this to benchmark or profile an incremental build.
+A scenario can define changes that should be applied to the source and reverted in alternating builds. You can use this to benchmark or profile an incremental build.
+Mutations that are available:
+
+- Add a public method to a Java source class
+- Add an entry to a properties file.
+- Add a string resource to an Android resource file.
+- Change an Android manifest file.
 
 ## Scenario file
 
@@ -85,8 +91,10 @@ A scenario file can be provided to define scenarios to benchmark or profile. Use
         system-properties {
             key = "value"
         }
+        warm-ups = 10
         run-using = no-daemon // value can be "no-daemon" or "tooling-api"
         apply-abi-change-to = "src/main/java/MyThing.java"
+        apply-property-resource-change-to = "src/main/resources/thing.properties"
         apply-android-resource-change-to = "src/main/res/value/strings.xml"
         apply-android-manifest-change-to = "src/main/AndroidManifest.xml"
     }
