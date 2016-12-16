@@ -15,6 +15,7 @@
  */
 package org.gradle.profiler.hp;
 
+import org.gradle.profiler.CommandExec;
 import org.gradle.profiler.ProfilerController;
 import org.gradle.profiler.fg.FlameGraphGenerator;
 import org.gradle.profiler.fg.FlameGraphSanitizer;
@@ -64,7 +65,7 @@ public class HonestProfilerControl implements ProfilerController {
         if (javaHome == null) {
             throw new IllegalArgumentException("Please set the JAVA_HOME environment variable to your Java installation");
         }
-        ProcessBuilder processBuilder = new ProcessBuilder(
+        new CommandExec().run(
                 javaHome + File.separatorChar + "bin" + File.separatorChar + "java",
                 "-cp",
                 javaHome + File.separatorChar + "lib" + File.separatorChar + "tools.jar" + ":" + args.getHpHomeDir() + File.separatorChar + "honest-profiler.jar",
@@ -72,11 +73,6 @@ public class HonestProfilerControl implements ProfilerController {
                 hplFile.getAbsolutePath(),
                 txtFile.getAbsolutePath()
         );
-        Process process = processBuilder.start();
-        int result = process.waitFor();
-        if (result != 0) {
-            throw new RuntimeException("Unable to generate stack traces txt file");
-        }
     }
 
     private void sanitizeFlameGraphTxtFile(final File txtFile, final File sanitizedTxtFile) {

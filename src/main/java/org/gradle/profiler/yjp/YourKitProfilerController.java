@@ -1,5 +1,6 @@
 package org.gradle.profiler.yjp;
 
+import org.gradle.profiler.CommandExec;
 import org.gradle.profiler.ProfilerController;
 
 import java.io.File;
@@ -36,14 +37,9 @@ public class YourKitProfilerController implements ProfilerController {
         }
     }
 
-    private void runYourKitCommand(String command) throws IOException, InterruptedException {
+    private void runYourKitCommand(String command) {
         File controllerJar = findControllerJar();
-        Process process = new ProcessBuilder(System.getProperty("java.home") + "/bin/java", "-jar", controllerJar.getAbsolutePath(), "localhost", "10001",
-                command).inheritIO().start();
-        int result = process.waitFor();
-        if (result != 0) {
-            throw new RuntimeException("Command 'java' failed.");
-        }
+        new CommandExec().run(System.getProperty("java.home") + "/bin/java", "-jar", controllerJar.getAbsolutePath(), "localhost", "10001", command);
     }
 
     private File findControllerJar() {

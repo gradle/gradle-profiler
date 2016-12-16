@@ -1,10 +1,12 @@
 package org.gradle.profiler.jfr;
 
-import java.io.File;
-import java.io.IOException;
+import org.gradle.profiler.CommandExec;
 import org.gradle.profiler.ProfilerController;
 import org.gradle.profiler.fg.FlameGraphGenerator;
 import org.gradle.profiler.fg.FlameGraphSanitizer;
+
+import java.io.File;
+import java.io.IOException;
 
 public class JFRControl implements ProfilerController {
     private static final String PROFILE_JFR = "profile.jfr";
@@ -91,12 +93,7 @@ public class JFRControl implements ProfilerController {
         return new File(jfrArgs.getFgHomeDir(), "flamegraph.pl");
     }
 
-    private void run(String... commandLine) throws InterruptedException, IOException {
-        ProcessBuilder processBuilder = new ProcessBuilder(commandLine);
-        Process process = processBuilder.start();
-        int result = process.waitFor();
-        if (result != 0) {
-            throw new RuntimeException("Command " + commandLine[0] + " failed.");
-        }
+    private void run(String... commandLine) {
+        new CommandExec().run(commandLine);
     }
 }

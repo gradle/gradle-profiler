@@ -3,6 +3,9 @@ package org.gradle.profiler.yjp;
 import java.io.File;
 
 public class YourKit {
+    /**
+     * Locates the user's YourKit installation. Returns null when not found.
+     */
     public static File findYourKitHome() {
         File applicationsDir = new File("/Applications");
         if (!applicationsDir.isDirectory()) {

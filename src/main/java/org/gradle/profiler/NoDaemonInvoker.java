@@ -1,8 +1,6 @@
 package org.gradle.profiler;
 
 import java.io.File;
-import java.io.IOException;
-import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Consumer;
@@ -40,32 +38,7 @@ public class NoDaemonInvoker extends BuildInvoker {
         builder.environment().put("JAVA_HOME", javaHome.getAbsolutePath());
         builder.redirectErrorStream(true);
         try {
-            Process process = builder.start();
-            process.getOutputStream().close();
-            Thread drain = new Thread(){
-                @Override
-                public void run() {
-                    InputStream inputStream = process.getInputStream();
-                    byte[] buffer = new byte[1024];
-                    try {
-                        while (true) {
-                            int nread = inputStream.read(buffer);
-                            if (nread < 0) {
-                                break;
-                            }
-                            Logging.detailed().write(buffer, 0, nread);
-                        }
-                    } catch (IOException e) {
-                        throw new RuntimeException("Could not read process output.");
-                    }
-                }
-            };
-            drain.start();
-            int exitCode = process.waitFor();
-            drain.join();
-            if (exitCode != 0) {
-                throw new RuntimeException("Gradle command completed with non-zero exit code.");
-            }
+            new CommandExec().run(builder);
         } catch (Exception e) {
             System.out.println();
             System.out.println("ERROR: failed to run build. See log file for details.");
