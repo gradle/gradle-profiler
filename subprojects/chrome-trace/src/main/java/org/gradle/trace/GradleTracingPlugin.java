@@ -122,7 +122,7 @@ public class GradleTracingPlugin implements Plugin<Gradle> {
         globalListenerManager.addListener( new InternalBuildListener() {
                 @Override
                 public void started(BuildOperationInternal operation, OperationStartEvent startEvent) {
-                    start(operation.getDisplayName(), CATEGORY_OPERATION, toNanoTime(startEvent.getStartTime()));
+                    start(getName(operation), CATEGORY_OPERATION, toNanoTime(startEvent.getStartTime()));
                 }
 
                 @Override
@@ -134,7 +134,14 @@ public class GradleTracingPlugin implements Plugin<Gradle> {
                         info.put("type", task.getClass().getSimpleName());
                         info.put("didWork", String.valueOf(task.getDidWork()));
                     }
-                    finish(operation.getDisplayName(), toNanoTime(result.getEndTime()), info);
+                    finish(getName(operation), toNanoTime(result.getEndTime()), info);
+                }
+
+                private String getName(BuildOperationInternal operation) {
+                    if (operation.getOperationDescriptor() instanceof  TaskOperationDescriptor) {
+                        return ((TaskOperationDescriptor)operation.getOperationDescriptor()).getTask().getPath();
+                    }
+                    return operation.getDisplayName();
                 }
             });
         gradle.getGradle().addListener(new JsonAdapter(gradle));
