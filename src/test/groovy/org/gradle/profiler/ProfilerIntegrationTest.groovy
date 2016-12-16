@@ -1,6 +1,7 @@
 package org.gradle.profiler
 
 import org.gradle.profiler.bs.BuildScanInitScript
+import org.gradle.profiler.yjp.YourKit
 import org.junit.Rule
 import org.junit.rules.TemporaryFolder
 import spock.lang.Requires
@@ -183,6 +184,40 @@ println "<daemon: " + gradle.services.get(org.gradle.internal.environment.Gradle
             def fgFile = new File(outputDir, "default/flames.svg")
             assert fgFile.exists() && fgFile.size()>0
         }
+    }
+
+    @Requires({ YourKit.findYourKitHome() })
+    def "profiles build using YourKit to produce CPU tracing snapshot"() {
+        given:
+        buildFile.text = """
+apply plugin: BasePlugin
+"""
+
+        when:
+        new Main().
+                run("--project-dir", projectDir.absolutePath, "--output-dir", outputDir.absolutePath, "--gradle-version", gradleVersion, "--profile", "yourkit",
+                        "assemble")
+
+        then:
+        def sessionDir = new File(outputDir, "default")
+        sessionDir.listFiles().find { it.name.matches("default-.+\\.snapshot") }
+    }
+
+    @Requires({ YourKit.findYourKitHome() })
+    def "profiles build using YourKit to produce memory snapshot"() {
+        given:
+        buildFile.text = """
+apply plugin: BasePlugin
+"""
+
+        when:
+        new Main().
+                run("--project-dir", projectDir.absolutePath, "--output-dir", outputDir.absolutePath, "--gradle-version", gradleVersion, "--profile", "yourkit",
+                        "--yourkit-memory", "assemble")
+
+        then:
+        def sessionDir = new File(outputDir, "default")
+        sessionDir.listFiles().find { it.name.matches("default-.+\\.snapshot") }
     }
 
     def "profiles build using Build Scans, specified Gradle version and tasks"() {
