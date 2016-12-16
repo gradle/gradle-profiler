@@ -7,8 +7,8 @@ Profiling information can be captured using one of several different tools:
 - Java flight recorder built into the Oracle JVM
 - Using [Honest Profiler](https://github.com/RichardWarburton/honest-profiler)
 - Using a [Gradle build scan](https://gradle.com)
-- Using YourKit profiler
-- Produce chrome trace output
+- Using YourKit profiler.
+- Produce chrome trace output showing build operations such as project configuration and task execution, along with CPU and heap metrics.
 
 ## Installing
 
@@ -20,7 +20,7 @@ This will install the application into `./build/install/gradle-profiler`.
 
 ## Profiling a build using JFR
 
-To run the `gradle-profiler` app use:
+To run the `gradle-profiler` app to profile a build use:
 
     > ./build/install/gradle-profiler/bin/gradle-profiler --profile jfr --project-dir <root-dir-of-build> <task>...
     
@@ -28,7 +28,7 @@ Where `<root-dir-of-build>` is the directory containing the build to be profiled
 exactly as you would use for the `gradle` command.
 
 The profiler will run the build several times to warm up a daemon, then enable the flight recorder and run the build.
-Once complete, the results will be written to a file called `profile-out/profile.jfr`.
+Once complete, the results will be written to a file called `profile-out/default/profile.jfr`.
 
 When the profiler runs the build, it will use the tasks you specified. The profiler will use the default
 Gradle version, Java installation and JVM args that have been specified for your build, if any.
@@ -37,6 +37,12 @@ from your Gradle wrapper properties file, if present, to determine which Gradle 
 
 You can use the `--gradle-version` option to specify a Gradle version or installation to use to run the build, overriding the version specified in 
 the Gradle wrapper properties file.
+
+## Profiling a build using YourKit
+
+To run the `gradle-profiler` app to capture CPU usage for a build using YourKit:
+
+    > ./build/install/gradle-profiler/bin/gradle-profiler --profile yourkit --project-dir <root-dir-of-build> <task>...
 
 ## Benchmarking a build
 
