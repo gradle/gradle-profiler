@@ -58,7 +58,8 @@ and each of these is used to benchmark the build, allowing you to compare the be
     - `--profile hp`: Profile using [Honest Profiler](https://github.com/RichardWarburton/honest-profiler)
     - `--profile buildscan`: Profile by collecting a build scan
     - `--profile chrome-trace`: Profile by generating chrome trace output
-    - `--profile yourkit`: Profile using YourKit. Uses CPU tracing and captures a snapshot into the result directory 
+    - `--profile yourkit`: Profile using YourKit. By default, uses CPU tracing and writes a snapshot into the result directory. 
+        `--yourkit-memory`: Produce a memory allocation snapshot instead of CPU tracing snapshot.
 - `--gradle-version <version>`: specifies a Gradle version or installation to use to run the builds, overriding the default for the build. Can specify multiple versions.
 - `--output-dir <dir>`: Directory to write results to.
 - `--no-daemon`: Uses `gradle --no-daemon` to run the builds. The default is to use the Gradle tooling API and Gradle daemon.
