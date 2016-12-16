@@ -13,6 +13,7 @@ import java.lang.reflect.Field;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
 import javax.inject.Inject;
+import javax.management.ListenerNotFoundException;
 import javax.management.Notification;
 import javax.management.NotificationEmitter;
 import javax.management.NotificationListener;
@@ -53,6 +54,7 @@ public class GradleTracingPlugin implements Plugin<Gradle> {
     private final List<GarbageCollectorMXBean> garbageCollectorMXBeans;
     private int sysPollCount = 0;
     private final long jvmStartTime;
+    private Map<GarbageCollectorMXBean, NotificationListener> gcNotificationListeners = new HashMap<>();
 
     private ScheduledExecutorService scheduledExecutorService = Executors.newSingleThreadScheduledExecutor();
 
@@ -94,7 +96,7 @@ public class GradleTracingPlugin implements Plugin<Gradle> {
 
         for (GarbageCollectorMXBean garbageCollectorMXBean : garbageCollectorMXBeans) {
             NotificationEmitter emitter = (NotificationEmitter) garbageCollectorMXBean;
-            emitter.addNotificationListener((notification, handback) -> {
+            NotificationListener gcNotificationListener = (notification, handback) -> {
                 if (notification.getType().equals(GarbageCollectionNotificationInfo.GARBAGE_COLLECTION_NOTIFICATION)) {
                     GarbageCollectionNotificationInfo info = GarbageCollectionNotificationInfo.from((CompositeData) notification.getUserData());
                     //get all the info and pretty print it
@@ -112,7 +114,9 @@ public class GradleTracingPlugin implements Plugin<Gradle> {
                     }
                     count("heap" + info.getGcInfo().getId(), "heap", gcInfo);
                 }
-            }, null, null);
+            };
+            emitter.addNotificationListener(gcNotificationListener, null, null);
+            gcNotificationListeners.put(garbageCollectorMXBean, gcNotificationListener);
         }
 
         globalListenerManager.addListener( new InternalBuildListener() {
@@ -146,6 +150,15 @@ public class GradleTracingPlugin implements Plugin<Gradle> {
         @Override
         public void buildFinished(BuildResult result) {
             scheduledExecutorService.shutdown();
+
+            for (GarbageCollectorMXBean garbageCollectorMXBean : gcNotificationListeners.keySet()) {
+                NotificationEmitter emitter = (NotificationEmitter) garbageCollectorMXBean;
+                try {
+                    emitter.removeNotificationListener(gcNotificationListeners.get(garbageCollectorMXBean));
+                } catch (ListenerNotFoundException e) {
+                }
+            }
+
             DurationEvent overallBuild = DurationEvent.started(PHASE_BUILD, CATEGORY_PHASE, toNanoTime(buildRequestMetaData.getBuildTimeClock().getStartTime()), new HashMap<>());
             overallBuild.finished(System.nanoTime());
 
