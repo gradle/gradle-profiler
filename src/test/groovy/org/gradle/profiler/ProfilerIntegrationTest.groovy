@@ -321,9 +321,12 @@ println "<daemon: " + gradle.services.get(org.gradle.internal.environment.Gradle
         logFile.grep("<tasks: [assemble]>").size() == 15
 
         resultFile.isFile()
+        resultFile.text.readLines().size() == 21 // 2 headers, 16 executions, 3 stats
         resultFile.text.readLines().get(0) == "build,default ${gradleVersion}"
         resultFile.text.readLines().get(1) == "tasks,assemble"
-        resultFile.text.readLines().size() == 18
+        resultFile.text.readLines().get(18).matches("mean,\\d+\\.\\d+")
+        resultFile.text.readLines().get(19).matches("median,\\d+\\.\\d+")
+        resultFile.text.readLines().get(20).matches("stddev,\\d+\\.\\d+")
     }
 
     def "runs benchmarks using no-daemon for specified Gradle version and tasks"() {
@@ -351,7 +354,7 @@ println "<daemon: " + gradle.services.get(org.gradle.internal.environment.Gradle
         resultFile.isFile()
         resultFile.text.readLines().get(0) == "build,default ${gradleVersion}"
         resultFile.text.readLines().get(1) == "tasks,assemble"
-        resultFile.text.readLines().size() == 18
+        resultFile.text.readLines().size() == 21 // 2 headers, 16 executions, 3 stats
     }
 
     def "runs benchmarks using scenarios defined in scenario file"() {
@@ -394,7 +397,7 @@ println "<daemon: " + gradle.services.get(org.gradle.internal.environment.Gradle
         resultFile.isFile()
         resultFile.text.readLines().get(0) == "build,assemble 3.0,assemble ${gradleVersion},help ${gradleVersion}"
         resultFile.text.readLines().get(1) == "tasks,assemble,assemble,help"
-        resultFile.text.readLines().size() == 18
+        resultFile.text.readLines().size() == 21 // 2 headers, 16 executions, 3 stats
     }
 
     def "runs benchmarks using single scenario defined in scenario file"() {
@@ -423,7 +426,6 @@ apply plugin: BasePlugin
         then:
         !logFile.grep("Tasks: [help]")
     }
-
 
     def "dry run runs test builds to verify configuration"() {
         given:
@@ -465,7 +467,10 @@ println "<dry-run: " + gradle.startParameter.dryRun + ">"
         resultFile.text.readLines().get(2).matches("initial clean build,\\d+,\\d+,\\d+")
         resultFile.text.readLines().get(3).matches("warm-up build 1,\\d+,\\d+,\\d+")
         resultFile.text.readLines().get(4).matches("build 1,\\d+,\\d+,\\d+")
-        resultFile.text.readLines().size() == 5
+        resultFile.text.readLines().get(5).matches("mean,\\d+\\.\\d+,\\d+\\.\\d+,\\d+\\.\\d+")
+        resultFile.text.readLines().get(6).matches("median,\\d+\\.\\d+,\\d+\\.\\d+,\\d+\\.\\d+")
+        resultFile.text.readLines().get(7).matches("stddev,\\d+\\.\\d+,\\d+\\.\\d+,\\d+\\.\\d+")
+        resultFile.text.readLines().size() == 8
     }
 
     def "recovers from failure running benchmarks"() {
@@ -513,7 +518,7 @@ assemble.doFirst {
         resultFile.text.readLines().get(5).matches("build 1,\\d+,\\d+")
         resultFile.text.readLines().get(6).matches("build 2,\\d+,\\d+")
         resultFile.text.readLines().get(7).matches("build 3,,\\d+")
-        resultFile.text.readLines().size() == 18
+        resultFile.text.readLines().size() == 21 // 2 headers, 16 executions, 3 stats
     }
 
     def "can define system property when benchmarking using tooling API"() {

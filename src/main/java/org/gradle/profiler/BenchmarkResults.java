@@ -1,5 +1,7 @@
 package org.gradle.profiler;
 
+import org.apache.commons.math3.stat.descriptive.DescriptiveStatistics;
+
 import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileWriter;
@@ -60,6 +62,26 @@ public class BenchmarkResults {
                 }
                 writer.newLine();
             }
+
+            List<DescriptiveStatistics> statistics = allBuilds.stream().map(BuildScenario::getStatistics).collect(Collectors.toList());
+            writer.write("mean");
+            for (DescriptiveStatistics statistic : statistics) {
+                writer.write(",");
+                writer.write(String.valueOf(statistic.getMean()));
+            }
+            writer.newLine();
+            writer.write("median");
+            for (DescriptiveStatistics statistic : statistics) {
+                writer.write(",");
+                writer.write(String.valueOf(statistic.getPercentile(50)));
+            }
+            writer.newLine();
+            writer.write("stddev");
+            for (DescriptiveStatistics statistic : statistics) {
+                writer.write(",");
+                writer.write(String.valueOf(statistic.getStandardDeviation()));
+            }
+            writer.newLine();
         }
     }
 
@@ -68,9 +90,17 @@ public class BenchmarkResults {
         private final GradleVersion gradleVersion;
         private final List<BuildInvocationResult> results = new ArrayList<>();
 
-        public BuildScenario(ScenarioDefinition scenario, GradleVersion gradleVersion) {
+        BuildScenario(ScenarioDefinition scenario, GradleVersion gradleVersion) {
             this.scenario = scenario;
             this.gradleVersion = gradleVersion;
+        }
+
+        public DescriptiveStatistics getStatistics() {
+            DescriptiveStatistics statistics = new DescriptiveStatistics();
+            for (BuildInvocationResult result : results.subList(1 + scenario.getWarmUpCount(), results.size())) {
+                statistics.addValue(result.getExecutionTime().toMillis());
+            }
+            return statistics;
         }
 
         @Override
