@@ -20,13 +20,14 @@ class ScenarioLoader {
     private static final String GRADLE_ARGS = "gradle-args";
     private static final String RUN_USING = "run-using";
     private static final String SYSTEM_PROPERTIES = "system-properties";
+    private static final String WARM_UP_COUNT = "warm-ups";
     private static final String APPLY_API_CHANGE_TO = "apply-abi-change-to";
     private static final String APPLY_ANDROID_RESOURCE_CHANGE_TO = "apply-android-resource-change-to";
     private static final String APPLY_PROPERTY_RESOURCE_CHANGE_TO = "apply-property-resource-change-to";
     private static final String APPLY_ANDROID_MANIFEST_CHANGE_TO = "apply-android-manifest-change-to";
 
     private static final List<String> ALL_SCENARIO_KEYS = Arrays.asList(
-        VERSIONS, TASKS, GRADLE_ARGS, RUN_USING, SYSTEM_PROPERTIES,
+        VERSIONS, TASKS, GRADLE_ARGS, RUN_USING, SYSTEM_PROPERTIES, WARM_UP_COUNT,
         APPLY_API_CHANGE_TO, APPLY_ANDROID_RESOURCE_CHANGE_TO, APPLY_ANDROID_MANIFEST_CHANGE_TO,
         APPLY_PROPERTY_RESOURCE_CHANGE_TO
     );
@@ -46,7 +47,7 @@ class ScenarioLoader {
             for (String v : settings.getVersions()) {
                 versions.add(gradleVersionInspector.resolve(v));
             }
-            scenarios.add(new ScenarioDefinition("default", settings.getInvoker(), versions, settings.getTargets(), Collections.emptyList(), settings.getSystemProperties(), new BuildMutatorFactory(Collections.emptyList())));
+            scenarios.add(new ScenarioDefinition("default", settings.getInvoker(), versions, settings.getTargets(), Collections.emptyList(), settings.getSystemProperties(), new BuildMutatorFactory(Collections.emptyList()), settings.getWarmUpCount()));
         }
         for (ScenarioDefinition scenario : scenarios) {
             if (scenario.getVersions().isEmpty()) {
@@ -76,6 +77,7 @@ class ScenarioLoader {
             List<String> gradleArgs = strings(scenario, GRADLE_ARGS, Collections.emptyList());
             Invoker invoker = invoker(scenario, RUN_USING, settings.getInvoker());
             Map<String, String> systemProperties = map(scenario, SYSTEM_PROPERTIES, settings.getSystemProperties());
+            int warmUpCount = integer(scenario, WARM_UP_COUNT, settings.getWarmUpCount());
 
             List<Supplier<BuildMutator>> mutators = new ArrayList<>();
             File sourceFileToChange = sourceFile(scenario, APPLY_API_CHANGE_TO, scenarioName, settings.getProjectDir());
@@ -98,7 +100,7 @@ class ScenarioLoader {
                 mutators.add(() -> new ApplyChangeToPropertyResourceFileMutator(classpathResourceFileToChange));
             }
 
-            definitions.add(new ScenarioDefinition(scenarioName, invoker, versions, tasks, gradleArgs, systemProperties, new BuildMutatorFactory(mutators)));
+            definitions.add(new ScenarioDefinition(scenarioName, invoker, versions, tasks, gradleArgs, systemProperties, new BuildMutatorFactory(mutators), warmUpCount));
         }
         return definitions;
     }
@@ -145,6 +147,14 @@ class ScenarioLoader {
     private static String string(Config config, String key, String defaultValue) {
         if (config.hasPath(key)) {
             return config.getString(key);
+        } else {
+            return defaultValue;
+        }
+    }
+
+    private static int integer(Config config, String key, int defaultValue) {
+        if (config.hasPath(key)) {
+            return Integer.valueOf(config.getString(key));
         } else {
             return defaultValue;
         }

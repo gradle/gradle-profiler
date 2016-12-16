@@ -126,7 +126,7 @@ public class Main {
 
                             BuildInvocationResult results = invoker.runBuild("warm-up build 1", tasks);
                             String pid = results.getDaemonPid();
-                            for (int i = 1; i<settings.getWarmUpCount();i++) {
+                            for (int i = 1; i<scenario.getWarmUpCount();i++) {
                                 results = invoker.runBuild("warm-up build " + (i + 1), tasks);
                                 checkPid(pid, results.getDaemonPid(), scenario.getInvoker());
                             }
