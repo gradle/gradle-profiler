@@ -13,7 +13,12 @@ import java.lang.reflect.Field;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
 import javax.inject.Inject;
+import javax.management.Notification;
+import javax.management.NotificationEmitter;
+import javax.management.NotificationListener;
+import javax.management.openmbean.CompositeData;
 
+import com.sun.management.GarbageCollectionNotificationInfo;
 import com.sun.management.OperatingSystemMXBean;
 import org.gradle.BuildAdapter;
 import org.gradle.BuildResult;
@@ -41,11 +46,13 @@ public class GradleTracingPlugin implements Plugin<Gradle> {
     private static final String CATEGORY_PHASE = "BUILD_PHASE";
     private static final String CATEGORY_OPERATION = "BUILD_OPERATION";
     private static final String PHASE_BUILD = "build duration";
+    public static final String GARBAGE_COLLECTION = "GARBAGE_COLLECTION";
     private final BuildRequestMetaData buildRequestMetaData;
     private final Map<String, TraceEvent> events = new LinkedHashMap<>();
     private final OperatingSystemMXBean operatingSystemMXBean;
     private final List<GarbageCollectorMXBean> garbageCollectorMXBeans;
     private int sysPollCount = 0;
+    private final long jvmStartTime;
 
     private ScheduledExecutorService scheduledExecutorService = Executors.newSingleThreadScheduledExecutor();
 
@@ -54,6 +61,7 @@ public class GradleTracingPlugin implements Plugin<Gradle> {
         this.buildRequestMetaData = buildRequestMetaData;
         this.operatingSystemMXBean = (OperatingSystemMXBean) ManagementFactory.getOperatingSystemMXBean();
         this.garbageCollectorMXBeans = ManagementFactory.getGarbageCollectorMXBeans();
+        this.jvmStartTime = ManagementFactory.getRuntimeMXBean().getStartTime();
     }
 
     private void start(String name, String category, long timestampNanos) {
@@ -81,18 +89,31 @@ public class GradleTracingPlugin implements Plugin<Gradle> {
             cpuStats.put("cpu", operatingSystemMXBean.getProcessCpuLoad()*100);
             count("cpu" + sysPollCount, "cpu", cpuStats);
 
-            for (GarbageCollectorMXBean garbageCollectorMXBean : garbageCollectorMXBeans) {
-                com.sun.management.GarbageCollectorMXBean gcBean = (com.sun.management.GarbageCollectorMXBean) garbageCollectorMXBean;
-                Map<String, MemoryUsage> pools = gcBean.getLastGcInfo().getMemoryUsageAfterGc();
-                HashMap<String, Double> gcInfo = new HashMap<>();
-                for (String pool : pools.keySet()) {
-                    MemoryUsage usage = pools.get(pool);
-                    gcInfo.put(pool, (double) usage.getUsed());
-                }
-                count("heap" + sysPollCount, "heap", gcInfo);
-            }
             sysPollCount++;
-        }, 0, 1, TimeUnit.SECONDS);
+        }, 0, 500, TimeUnit.MILLISECONDS);
+
+        for (GarbageCollectorMXBean garbageCollectorMXBean : garbageCollectorMXBeans) {
+            NotificationEmitter emitter = (NotificationEmitter) garbageCollectorMXBean;
+            emitter.addNotificationListener((notification, handback) -> {
+                if (notification.getType().equals(GarbageCollectionNotificationInfo.GARBAGE_COLLECTION_NOTIFICATION)) {
+                    GarbageCollectionNotificationInfo info = GarbageCollectionNotificationInfo.from((CompositeData) notification.getUserData());
+                    //get all the info and pretty print it
+                    long duration = info.getGcInfo().getDuration();
+                    String gctype = info.getGcAction();
+                    Map<String, String> args = new HashMap<>();
+                    args.put("type", gctype);
+                    start("GC" + info.getGcInfo().getId(), GARBAGE_COLLECTION, toNanoTime(jvmStartTime + info.getGcInfo().getStartTime()));
+                    finish("GC" + info.getGcInfo().getId(), toNanoTime(jvmStartTime + info.getGcInfo().getEndTime()), args);
+                    Map<String, MemoryUsage> pools = info.getGcInfo().getMemoryUsageAfterGc();
+                    HashMap<String, Double> gcInfo = new HashMap<>();
+                    for (String pool : pools.keySet()) {
+                        MemoryUsage usage = pools.get(pool);
+                        gcInfo.put(pool, (double) usage.getUsed());
+                    }
+                    count("heap" + info.getGcInfo().getId(), "heap", gcInfo);
+                }
+            }, null, null);
+        }
 
         globalListenerManager.addListener( new InternalBuildListener() {
                 @Override
