@@ -27,6 +27,7 @@ import org.gradle.api.execution.internal.TaskOperationDescriptor;
 import org.gradle.api.internal.GradleInternal;
 import org.gradle.api.internal.TaskInternal;
 import org.gradle.api.invocation.Gradle;
+import org.gradle.api.tasks.ParallelizableTask;
 import org.gradle.initialization.BuildRequestMetaData;
 import org.gradle.initialization.DefaultGradleLauncherFactory;
 import org.gradle.initialization.GradleLauncherFactory;
@@ -150,11 +151,11 @@ public class GradleTracingPlugin implements Plugin<Gradle> {
 
                 private void withTaskInfo(Map<String, String> info, TaskOperationDescriptor taskDescriptor) {
                     TaskInternal task = taskDescriptor.getTask();
-                    info.put("type", task.getClass().getSimpleName());
+                    info.put("type", task.getClass().getSimpleName().replace("_Decorated", ""));
                     info.put("enabled", String.valueOf(task.getEnabled()));
-                    info.put("outcome", task.getState().getOutcome().name());
                     info.put("cacheable", String.valueOf(task.getState().isCacheable()));
-                    info.put("hasCustomActions", String.valueOf(task.isHasCustomActions()));
+                    info.put("parallelizeable", String.valueOf(task.getClass().isAnnotationPresent(ParallelizableTask.class) && !task.isHasCustomActions()));
+                    info.put("outcome", task.getState().getOutcome().name());
                 }
             });
         gradle.getGradle().addListener(new JsonAdapter(gradle));
