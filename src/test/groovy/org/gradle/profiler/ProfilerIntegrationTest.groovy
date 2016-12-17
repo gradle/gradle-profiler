@@ -424,14 +424,14 @@ println "<daemon: " + gradle.services.get(org.gradle.internal.environment.Gradle
 
         then:
         // Probe version, initial clean build, 2 warm up, 13 cleans, 13 builds
-        logFile.grep("<gradle-version: $gradleVersion>").size() == 30
+        logFile.grep("<gradle-version: $gradleVersion>").size() == 32
         logFile.grep("<tasks: [clean, help]>").size() == 1
         logFile.grep("<tasks: [help]>").size() == 16
 
         resultFile.isFile()
         resultFile.text.readLines().get(0) == "build,help ${gradleVersion}"
         resultFile.text.readLines().get(1) == "tasks,help"
-        resultFile.text.readLines().size() == 34
+        resultFile.text.readLines().size() == 36
     }
 
     def "runs benchmarks using single scenario defined in scenario file"() {
@@ -742,8 +742,8 @@ classes {
 
         then:
         // Probe version, initial clean build, 2 warm up, 13 builds
-        logFile.grep("<src-length: ${srcFile.length()}>").size() == 10
-        logFile.grep("<src-length: ${srcFile.length() + 32}>").size() == 7
+        logFile.grep("<src-length: ${srcFile.length()}>").size() == 9
+        logFile.grep("<src-length: ${srcFile.length() + 32}>").size() == 8
     }
 
     def "applies and reverts changes to Android resource file while running benchmark"() {
@@ -774,8 +774,8 @@ classes {
 
         then:
         // Probe version, initial clean build, 2 warm up, 13 builds
-        logFile.grep("<src-length: ${srcFile.length()}>").size() == 10
-        logFile.grep("<src-length: ${srcFile.length() + 47}>").size() == 7
+        logFile.grep("<src-length: ${srcFile.length()}>").size() == 9
+        logFile.grep("<src-length: ${srcFile.length() + 47}>").size() == 8
     }
 
     def "reverts changes on benchmark failures"() {

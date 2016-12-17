@@ -5,6 +5,7 @@ import org.gradle.tooling.ProjectConnection;
 import org.gradle.tooling.model.build.BuildEnvironment;
 
 import java.io.File;
+import java.io.IOException;
 import java.time.Instant;
 import java.util.*;
 import java.util.function.Consumer;
@@ -125,25 +126,34 @@ public class Main {
                                 daemonControl.stop(version);
                             }
 
+                            beforeBuild(invoker, cleanupTasks, mutator);
                             BuildInvocationResult results = invoker.runBuild("warm-up build 1", tasks);
                             String pid = results.getDaemonPid();
                             for (int i = 1; i<scenario.getWarmUpCount();i++) {
+                                beforeBuild(invoker, cleanupTasks, mutator);
                                 results = invoker.runBuild("warm-up build " + (i + 1), tasks);
                                 checkPid(pid, results.getDaemonPid(), scenario.getInvoker());
                             }
 
-                            ProfilerController control = settings.getProfiler().newController(pid, scenarioSettings, invoker);
-                            if (settings.isProfile()) {
-                                Logging.startOperation("Starting recording for daemon with pid " + pid);
-                                control.start();
-                            }
+                            mutator.cleanup();
 
                             for (int i = 0; i < settings.getBuildCount(); i++) {
-                                if (!cleanupTasks.isEmpty()) {
-                                    invoker.runBuild("cleanup ", new ArrayList<>(cleanupTasks));
+                                beforeBuild(invoker, cleanupTasks, mutator);
+
+                                ProfilerController control = settings.getProfiler().newController(pid, scenarioSettings, invoker);
+
+                                if (settings.isProfile()) {
+                                    Logging.startOperation("Starting recording for daemon with pid " + pid);
+                                    control.start();
                                 }
-                                mutator.beforeBuild();
+
                                 results = invoker.runBuild("build " + (i + 1), tasks);
+
+                                if (settings.isProfile()) {
+                                    Logging.startOperation("Stopping recording for daemon with pid " + pid);
+                                    control.stop();
+                                }
+
                                 checkPid(pid, results.getDaemonPid(), scenario.getInvoker());
 
                                 // Write results
@@ -152,10 +162,6 @@ public class Main {
                                 }
                             }
 
-                            if (settings.isProfile()) {
-                                Logging.startOperation("Stopping recording for daemon with pid " + pid);
-                                control.stop();
-                            }
 
                         } finally {
                             mutator.cleanup();
@@ -188,6 +194,13 @@ public class Main {
             System.out.println();
             System.out.flush();
         }
+    }
+
+    private void beforeBuild(BuildInvoker invoker, List<String> cleanupTasks, BuildMutator mutator) throws IOException {
+        if (!cleanupTasks.isEmpty()) {
+            invoker.runBuild("cleanup ", new ArrayList<>(cleanupTasks));
+        }
+        mutator.beforeBuild();
     }
 
     private void logScenarios(List<ScenarioDefinition> scenarios) {
