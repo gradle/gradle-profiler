@@ -14,7 +14,6 @@ import java.util.*;
 import java.util.concurrent.TimeUnit;
 import javax.inject.Inject;
 import javax.management.ListenerNotFoundException;
-import javax.management.Notification;
 import javax.management.NotificationEmitter;
 import javax.management.NotificationListener;
 import javax.management.openmbean.CompositeData;
@@ -137,9 +136,7 @@ public class GradleTracingPlugin implements Plugin<Gradle> {
                     Map<String, String> info = new HashMap<>();
                     if (operation.getOperationDescriptor() instanceof TaskOperationDescriptor) {
                         TaskOperationDescriptor taskDescriptor = (TaskOperationDescriptor) operation.getOperationDescriptor();
-                        TaskInternal task = taskDescriptor.getTask();
-                        info.put("type", task.getClass().getSimpleName());
-                        info.put("didWork", String.valueOf(task.getDidWork()));
+                        withTaskInfo(info, taskDescriptor);
                     }
                     finish(getName(operation), toNanoTime(result.getEndTime()), info);
                 }
@@ -149,6 +146,15 @@ public class GradleTracingPlugin implements Plugin<Gradle> {
                         return ((TaskOperationDescriptor)operation.getOperationDescriptor()).getTask().getPath();
                     }
                     return operation.getDisplayName();
+                }
+
+                private void withTaskInfo(Map<String, String> info, TaskOperationDescriptor taskDescriptor) {
+                    TaskInternal task = taskDescriptor.getTask();
+                    info.put("type", task.getClass().getSimpleName());
+                    info.put("enabled", String.valueOf(task.getEnabled()));
+                    info.put("outcome", task.getState().getOutcome().name());
+                    info.put("cacheable", String.valueOf(task.getState().isCacheable()));
+                    info.put("hasCustomActions", String.valueOf(task.isHasCustomActions()));
                 }
             });
         gradle.getGradle().addListener(new JsonAdapter(gradle));
