@@ -431,7 +431,7 @@ println "<daemon: " + gradle.services.get(org.gradle.internal.environment.Gradle
         resultFile.isFile()
         resultFile.text.readLines().get(0) == "build,help ${gradleVersion}"
         resultFile.text.readLines().get(1) == "tasks,help"
-        resultFile.text.readLines().size() == 31
+        resultFile.text.readLines().size() == 34
     }
 
     def "runs benchmarks using single scenario defined in scenario file"() {
