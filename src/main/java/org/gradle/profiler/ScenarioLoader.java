@@ -17,6 +17,7 @@ import java.util.stream.Collectors;
 class ScenarioLoader {
     private static final String VERSIONS = "versions";
     private static final String TASKS = "tasks";
+    private static final String CLEANUP_TASKS = "cleanup-tasks";
     private static final String GRADLE_ARGS = "gradle-args";
     private static final String RUN_USING = "run-using";
     private static final String SYSTEM_PROPERTIES = "system-properties";
@@ -27,7 +28,7 @@ class ScenarioLoader {
     private static final String APPLY_ANDROID_MANIFEST_CHANGE_TO = "apply-android-manifest-change-to";
 
     private static final List<String> ALL_SCENARIO_KEYS = Arrays.asList(
-        VERSIONS, TASKS, GRADLE_ARGS, RUN_USING, SYSTEM_PROPERTIES, WARM_UP_COUNT,
+        VERSIONS, TASKS, CLEANUP_TASKS, GRADLE_ARGS, RUN_USING, SYSTEM_PROPERTIES, WARM_UP_COUNT,
         APPLY_API_CHANGE_TO, APPLY_ANDROID_RESOURCE_CHANGE_TO, APPLY_ANDROID_MANIFEST_CHANGE_TO,
         APPLY_PROPERTY_RESOURCE_CHANGE_TO
     );
@@ -47,7 +48,7 @@ class ScenarioLoader {
             for (String v : settings.getVersions()) {
                 versions.add(gradleVersionInspector.resolve(v));
             }
-            scenarios.add(new ScenarioDefinition("default", settings.getInvoker(), versions, settings.getTargets(), Collections.emptyList(), settings.getSystemProperties(), new BuildMutatorFactory(Collections.emptyList()), settings.getWarmUpCount()));
+            scenarios.add(new ScenarioDefinition("default", settings.getInvoker(), versions, settings.getTargets(), Collections.emptyList(), Collections.emptyList(), settings.getSystemProperties(), new BuildMutatorFactory(Collections.emptyList()), settings.getWarmUpCount()));
         }
         for (ScenarioDefinition scenario : scenarios) {
             if (scenario.getVersions().isEmpty()) {
@@ -74,6 +75,7 @@ class ScenarioLoader {
             List<GradleVersion> versions = strings(scenario, VERSIONS, settings.getVersions()).stream().map(v -> inspector.resolve(v)).collect(
                     Collectors.toList());
             List<String> tasks = strings(scenario, TASKS, settings.getTargets());
+            List<String> cleanupTasks = strings(scenario, CLEANUP_TASKS, Collections.emptyList());
             List<String> gradleArgs = strings(scenario, GRADLE_ARGS, Collections.emptyList());
             Invoker invoker = invoker(scenario, RUN_USING, settings.getInvoker());
             Map<String, String> systemProperties = map(scenario, SYSTEM_PROPERTIES, settings.getSystemProperties());
@@ -100,7 +102,7 @@ class ScenarioLoader {
                 mutators.add(() -> new ApplyChangeToPropertyResourceFileMutator(classpathResourceFileToChange));
             }
 
-            definitions.add(new ScenarioDefinition(scenarioName, invoker, versions, tasks, gradleArgs, systemProperties, new BuildMutatorFactory(mutators), warmUpCount));
+            definitions.add(new ScenarioDefinition(scenarioName, invoker, versions, tasks, cleanupTasks, gradleArgs, systemProperties, new BuildMutatorFactory(mutators), warmUpCount));
         }
         return definitions;
     }

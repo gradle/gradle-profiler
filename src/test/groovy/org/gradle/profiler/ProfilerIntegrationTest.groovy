@@ -400,6 +400,40 @@ println "<daemon: " + gradle.services.get(org.gradle.internal.environment.Gradle
         resultFile.text.readLines().size() == 21 // 2 headers, 16 executions, 3 stats
     }
 
+    def "runs cleanup tasks defined in scenario file"() {
+        given:
+        def scenarioFile = file("benchmark.conf")
+        scenarioFile.text = """
+help {
+    versions = "$gradleVersion"
+    cleanup-tasks = clean
+    tasks = help
+}
+"""
+
+        buildFile.text = """
+apply plugin: BasePlugin
+println "<gradle-version: " + gradle.gradleVersion + ">"
+println "<tasks: " + gradle.startParameter.taskNames + ">"
+println "<daemon: " + gradle.services.get(org.gradle.internal.environment.GradleBuildEnvironment).longLivingProcess + ">"
+"""
+
+        when:
+        new Main().run("--project-dir", projectDir.absolutePath, "--output-dir", outputDir.absolutePath, "--scenario-file", scenarioFile.absolutePath,
+                "--benchmark")
+
+        then:
+        // Probe version, initial clean build, 2 warm up, 13 cleans, 13 builds
+        logFile.grep("<gradle-version: $gradleVersion>").size() == 30
+        logFile.grep("<tasks: [clean, help]>").size() == 1
+        logFile.grep("<tasks: [help]>").size() == 16
+
+        resultFile.isFile()
+        resultFile.text.readLines().get(0) == "build,help ${gradleVersion}"
+        resultFile.text.readLines().get(1) == "tasks,help"
+        resultFile.text.readLines().size() == 31
+    }
+
     def "runs benchmarks using single scenario defined in scenario file"() {
         given:
         def scenarioFile = file("benchmark.conf")

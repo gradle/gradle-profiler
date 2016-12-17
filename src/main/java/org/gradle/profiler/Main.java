@@ -56,6 +56,7 @@ public class Main {
                 JvmArgsCalculator jvmArgsCalculator = settings.isProfile() ? settings.getProfiler().newJvmArgsCalculator(scenarioSettings) : new JvmArgsCalculator();
                 Logging.startOperation("Running scenario " + scenario.getName());
 
+                List<String> cleanupTasks = scenario.getCleanupTasks();
                 List<String> tasks = scenario.getTasks();
 
                 for (GradleVersion version : scenario.getVersions()) {
@@ -137,8 +138,10 @@ public class Main {
                                 control.start();
                             }
 
-
                             for (int i = 0; i < settings.getBuildCount(); i++) {
+                                if (!cleanupTasks.isEmpty()) {
+                                    invoker.runBuild("cleanup ", new ArrayList<>(cleanupTasks));
+                                }
                                 mutator.beforeBuild();
                                 results = invoker.runBuild("build " + (i + 1), tasks);
                                 checkPid(pid, results.getDaemonPid(), scenario.getInvoker());
@@ -195,6 +198,7 @@ public class Main {
             for (GradleVersion version : scenario.getVersions()) {
                 System.out.println("    " + version.getVersion() + " (" + version.getGradleHome() + ")");
             }
+            System.out.println("  Cleanup Tasks: " + scenario.getCleanupTasks());
             System.out.println("  Tasks: " + scenario.getTasks());
             System.out.println("  Run using: " + scenario.getInvoker());
             System.out.println("  Gradle args: " + scenario.getGradleArgs());
