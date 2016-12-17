@@ -55,8 +55,8 @@ public class GradleTracingPlugin implements Plugin<Gradle> {
     private int sysPollCount = 0;
     private final long jvmStartTime;
     private Map<GarbageCollectorMXBean, NotificationListener> gcNotificationListeners = new HashMap<>();
-
     private ScheduledExecutorService scheduledExecutorService = Executors.newSingleThreadScheduledExecutor();
+    private final long maxHeap;
 
     @Inject
     public GradleTracingPlugin(BuildRequestMetaData buildRequestMetaData) {
@@ -64,10 +64,15 @@ public class GradleTracingPlugin implements Plugin<Gradle> {
         this.operatingSystemMXBean = (OperatingSystemMXBean) ManagementFactory.getOperatingSystemMXBean();
         this.garbageCollectorMXBeans = ManagementFactory.getGarbageCollectorMXBeans();
         this.jvmStartTime = ManagementFactory.getRuntimeMXBean().getStartTime();
+        this.maxHeap = Runtime.getRuntime().maxMemory();
     }
 
     private void start(String name, String category, long timestampNanos) {
-        events.put(name, DurationEvent.started(name, category, timestampNanos, new HashMap<>()));
+        start(name, category, timestampNanos, null);
+    }
+
+    private void start(String name, String category, long timestampNanos, String colorName) {
+        events.put(name, new DurationEvent(name, category, timestampNanos, new HashMap<>(), colorName));
     }
 
     private void finish(String name, long timestampNanos, Map<String, String> info) {
@@ -79,7 +84,11 @@ public class GradleTracingPlugin implements Plugin<Gradle> {
     }
 
     private void count(String name, String metric, Map<String, Double> info) {
-        events.put(name, new CountEvent(metric, info));
+        count(name, metric, info, null);
+    }
+
+    private void count(String name, String metric, Map<String, Double> info, String colorName) {
+        events.put(name, new CountEvent(metric, info, colorName));
     }
 
     @Override
@@ -111,14 +120,24 @@ public class GradleTracingPlugin implements Plugin<Gradle> {
                     String gctype = info.getGcAction();
                     Map<String, String> args = new HashMap<>();
                     args.put("type", gctype);
-                    start("GC" + info.getGcInfo().getId(), GARBAGE_COLLECTION, toNanoTime(jvmStartTime + info.getGcInfo().getStartTime()));
+
+                    String colorName = "good";
+                    if (gctype.equals("end of major GC")) {
+                        colorName = "terrible";
+                    }
+
+                    start("GC" + info.getGcInfo().getId(), GARBAGE_COLLECTION, toNanoTime(jvmStartTime + info.getGcInfo().getStartTime()), colorName);
                     finish("GC" + info.getGcInfo().getId(), toNanoTime(jvmStartTime + info.getGcInfo().getEndTime()), args);
                     Map<String, MemoryUsage> pools = info.getGcInfo().getMemoryUsageAfterGc();
-                    HashMap<String, Double> gcInfo = new HashMap<>();
+                    long unallocatedHeap = maxHeap;
+                    HashMap<String, Double> gcInfo = new LinkedHashMap<>();
                     for (String pool : pools.keySet()) {
                         MemoryUsage usage = pools.get(pool);
                         gcInfo.put(pool, (double) usage.getUsed());
+                        unallocatedHeap -= usage.getUsed();
                     }
+                    gcInfo.put("unallocated", (double) unallocatedHeap);
+
                     count("heap" + info.getGcInfo().getId(), "heap", gcInfo);
                 }
             };
@@ -180,10 +199,8 @@ public class GradleTracingPlugin implements Plugin<Gradle> {
                 }
             }
 
-            DurationEvent overallBuild = DurationEvent.started(PHASE_BUILD, CATEGORY_PHASE, toNanoTime(buildRequestMetaData.getBuildTimeClock().getStartTime()), new HashMap<>());
-            overallBuild.finished(System.nanoTime());
-
-            events.put(PHASE_BUILD, overallBuild);
+            start(PHASE_BUILD, CATEGORY_PHASE, toNanoTime(buildRequestMetaData.getBuildTimeClock().getStartTime()));
+            finish(PHASE_BUILD, System.nanoTime(), new HashMap<>());
 
             File traceFile = getTraceFile();
 

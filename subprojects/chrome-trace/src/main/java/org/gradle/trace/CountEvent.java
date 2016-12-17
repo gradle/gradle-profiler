@@ -7,11 +7,13 @@ public class CountEvent implements TraceEvent {
     private final String name;
     private final long timestampNanos;
     private final Map<String, Double> info;
+    private final String colorName;
 
-    public CountEvent(String name, Map<String, Double> info) {
+    public CountEvent(String name, Map<String, Double> info, String colorName) {
         this.name = name;
         this.timestampNanos = System.nanoTime();
         this.info = info;
+        this.colorName = colorName;
     }
 
     @Override
@@ -29,6 +31,11 @@ public class CountEvent implements TraceEvent {
         s.append("}");
         String args = s.toString();
 
-        return String.format("{\"name\": \"%s\", \"ph\": \"C\", \"pid\": 0, \"tid\": %d, \"ts\": %d, \"args\": %s}", name, Thread.currentThread().getId(), timestamp, args);
+        String cname = "";
+        if (colorName != null) {
+            cname = String.format(", \"cname\": \"%s\"", colorName);
+        }
+
+        return String.format("{\"name\": \"%s\", \"ph\": \"C\", \"pid\": 0, \"tid\": %d, \"ts\": %d, \"args\": %s %s}", name, Thread.currentThread().getId(), timestamp, args, cname);
     }
 }

@@ -10,17 +10,15 @@ public class DurationEvent implements TraceEvent {
     private final long startTimestamp;
     private long endTimestamp;
     private final Map<String, String> info;
+    private final String colorName;
 
-    public DurationEvent(String name, String category, long timestampNanos, Map<String, String> info) {
+    public DurationEvent(String name, String category, long timestampNanos, Map<String, String> info, String colorName) {
         this.name = name;
         this.category = category;
         this.threadId = Thread.currentThread().getId();
         this.startTimestamp = timestampNanos / 1000;
         this.info = info;
-    }
-
-    static DurationEvent started(String name, String category, long timestampNanos, Map<String, String> info) {
-        return new DurationEvent(name, category, timestampNanos, info);
+        this.colorName = colorName;
     }
 
     public Map<String, String> getInfo() {
@@ -42,7 +40,12 @@ public class DurationEvent implements TraceEvent {
         s.append("}");
         String args = s.toString();
 
-        return String.format("{\"name\": \"%s\", \"cat\": \"%s\", \"ph\": \"X\", \"pid\": 0, \"tid\": %d, \"ts\": %d, \"dur\": %d, \"args\": %s}", name, category, threadId, startTimestamp, elapsed, args);
+        String cname = "";
+        if (colorName != null) {
+            cname = String.format(", \"cname\": \"%s\"", colorName);
+        }
+
+        return String.format("{\"name\": \"%s\", \"cat\": \"%s\", \"ph\": \"X\", \"pid\": 0, \"tid\": %d, \"ts\": %d, \"dur\": %d, \"args\": %s %s}", name, category, threadId, startTimestamp, elapsed, args, cname);
     }
 
     public void finished(long timestampNanos) {
