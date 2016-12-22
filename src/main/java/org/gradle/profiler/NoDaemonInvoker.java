@@ -21,7 +21,7 @@ public class NoDaemonInvoker extends BuildInvoker {
     @Override
     protected void run(List<String> tasks, List<String> gradleArgs, List<String> jvmArgs) {
         List<String> commandLine = new ArrayList<>();
-        commandLine.add(new File(gradleVersion.getGradleHome(), "bin/gradle").getAbsolutePath());
+        gradleVersion.addGradleCommand(commandLine);
         commandLine.addAll(gradleArgs);
         commandLine.add("--no-daemon");
         commandLine.addAll(tasks);

@@ -2,12 +2,17 @@ package org.gradle.profiler;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.Collection;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 public class CommandExec {
+    public void run(Collection<String> commandLine) {
+        run(commandLine.toArray(new String[commandLine.size()]));
+    }
+
     public void run(String... commandLine) {
         ProcessBuilder processBuilder = new ProcessBuilder(commandLine);
         run(processBuilder);
