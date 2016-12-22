@@ -129,7 +129,7 @@ public class Main {
                             beforeBuild(invoker, cleanupTasks, mutator);
                             BuildInvocationResult results = invoker.runBuild("warm-up build 1", tasks);
                             String pid = results.getDaemonPid();
-                            for (int i = 1; i<scenario.getWarmUpCount();i++) {
+                            for (int i = 1; i < scenario.getWarmUpCount(); i++) {
                                 beforeBuild(invoker, cleanupTasks, mutator);
                                 results = invoker.runBuild("warm-up build " + (i + 1), tasks);
                                 checkPid(pid, results.getDaemonPid(), scenario.getInvoker());
@@ -137,7 +137,7 @@ public class Main {
 
                             mutator.cleanup();
 
-                            for (int i = 0; i < settings.getBuildCount(); i++) {
+                            for (int i = 0; i < scenario.getBuildCount(); i++) {
                                 beforeBuild(invoker, cleanupTasks, mutator);
 
                                 ProfilerController control = settings.getProfiler().newController(pid, scenarioSettings, invoker);

@@ -97,8 +97,10 @@ public class BenchmarkResults {
 
         public DescriptiveStatistics getStatistics() {
             DescriptiveStatistics statistics = new DescriptiveStatistics();
-            for (BuildInvocationResult result : results.subList(1 + scenario.getWarmUpCount(), results.size())) {
-                statistics.addValue(result.getExecutionTime().toMillis());
+            if (results.size() > scenario.getWarmUpCount() + 1) {
+                for (BuildInvocationResult result : results.subList(1 + scenario.getWarmUpCount(), results.size())) {
+                    statistics.addValue(result.getExecutionTime().toMillis());
+                }
             }
             return statistics;
         }

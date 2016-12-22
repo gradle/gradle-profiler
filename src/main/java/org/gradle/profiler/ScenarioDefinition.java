@@ -15,8 +15,9 @@ public class ScenarioDefinition {
     private final Map<String, String> systemProperties;
     private final Supplier<BuildMutator> buildMutator;
     private final int warmUpCount;
+    private final int buildCount;
 
-    public ScenarioDefinition(String name, Invoker invoker, List<GradleVersion> versions, List<String> tasks, List<String> cleanupTasks, List<String> gradleArgs, Map<String, String> systemProperties, Supplier<BuildMutator> buildMutator, int warmUpCount) {
+    public ScenarioDefinition(String name, Invoker invoker, List<GradleVersion> versions, List<String> tasks, List<String> cleanupTasks, List<String> gradleArgs, Map<String, String> systemProperties, Supplier<BuildMutator> buildMutator, int warmUpCount, int buildCount) {
         this.name = name;
         this.invoker = invoker;
         this.tasks = tasks;
@@ -26,6 +27,7 @@ public class ScenarioDefinition {
         this.systemProperties = systemProperties;
         this.buildMutator = buildMutator;
         this.warmUpCount = warmUpCount;
+        this.buildCount = buildCount;
     }
 
     public String getName() {
@@ -62,5 +64,9 @@ public class ScenarioDefinition {
 
     public int getWarmUpCount() {
         return warmUpCount;
+    }
+
+    public int getBuildCount() {
+        return buildCount;
     }
 }

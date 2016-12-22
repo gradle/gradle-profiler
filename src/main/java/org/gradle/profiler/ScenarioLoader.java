@@ -5,9 +5,9 @@ import com.typesafe.config.ConfigFactory;
 import com.typesafe.config.ConfigParseOptions;
 import com.typesafe.config.ConfigValue;
 import org.gradle.profiler.mutations.ApplyAbiChangeToJavaSourceFileMutator;
-import org.gradle.profiler.mutations.ApplyChangetoAndroidManifestFileMutator;
 import org.gradle.profiler.mutations.ApplyChangeToAndroidResourceFileMutator;
 import org.gradle.profiler.mutations.ApplyChangeToPropertyResourceFileMutator;
+import org.gradle.profiler.mutations.ApplyChangetoAndroidManifestFileMutator;
 
 import java.io.File;
 import java.util.*;
@@ -48,7 +48,7 @@ class ScenarioLoader {
             for (String v : settings.getVersions()) {
                 versions.add(gradleVersionInspector.resolve(v));
             }
-            scenarios.add(new ScenarioDefinition("default", settings.getInvoker(), versions, settings.getTargets(), Collections.emptyList(), Collections.emptyList(), settings.getSystemProperties(), new BuildMutatorFactory(Collections.emptyList()), settings.getWarmUpCount()));
+            scenarios.add(new ScenarioDefinition("default", settings.getInvoker(), versions, settings.getTargets(), Collections.emptyList(), Collections.emptyList(), settings.getSystemProperties(), new BuildMutatorFactory(Collections.emptyList()), settings.getWarmUpCount(), settings.getBuildCount()));
         }
         for (ScenarioDefinition scenario : scenarios) {
             if (scenario.getVersions().isEmpty()) {
@@ -102,7 +102,7 @@ class ScenarioLoader {
                 mutators.add(() -> new ApplyChangeToPropertyResourceFileMutator(classpathResourceFileToChange));
             }
 
-            definitions.add(new ScenarioDefinition(scenarioName, invoker, versions, tasks, cleanupTasks, gradleArgs, systemProperties, new BuildMutatorFactory(mutators), warmUpCount));
+            definitions.add(new ScenarioDefinition(scenarioName, invoker, versions, tasks, cleanupTasks, gradleArgs, systemProperties, new BuildMutatorFactory(mutators), warmUpCount, settings.getBuildCount()));
         }
         return definitions;
     }

@@ -83,11 +83,23 @@ public class InvocationSettings {
     }
 
     public int getWarmUpCount() {
-        return dryRun ? 1 : 2;
+        if (isDryRun()) {
+            return 1;
+        }
+        if (benchmark) {
+            return 5;
+        }
+        return 2;
     }
 
     public int getBuildCount() {
-        return (benchmark && !dryRun) ? 13 : 1;
+        if (isDryRun()) {
+            return 1;
+        }
+        if (benchmark) {
+            return 10;
+        }
+        return 1;
     }
 
     public File getGradleUserHome() {
