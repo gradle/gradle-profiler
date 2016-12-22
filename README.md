@@ -99,6 +99,8 @@ A scenario file can be provided to define scenarios to benchmark or profile. Use
         }
         warm-ups = 10
         run-using = no-daemon // value can be "no-daemon" or "tooling-api"
+        
+        cleanup-tasks = ["clean"]
         apply-abi-change-to = "src/main/java/MyThing.java"
         apply-property-resource-change-to = "src/main/resources/thing.properties"
         apply-android-resource-change-to = "src/main/res/value/strings.xml"
