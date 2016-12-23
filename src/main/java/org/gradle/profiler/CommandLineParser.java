@@ -95,7 +95,7 @@ class CommandLineParser {
         if (!outputDir.exists()) {
             return outputDir;
         }
-        for (int i = 1; ; i++) {
+        for (int i = 2; ; i++) {
             outputDir = new File("profile-out-" + i);
             if (!outputDir.exists()) {
                 return outputDir;
