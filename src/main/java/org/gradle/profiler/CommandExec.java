@@ -37,7 +37,7 @@ public class CommandExec {
                     if (nread < 0) {
                         break;
                     }
-                    System.out.write(buffer, 0, nread);
+                    Logging.detailed().write(buffer, 0, nread);
                 }
             });
             process.getOutputStream().close();

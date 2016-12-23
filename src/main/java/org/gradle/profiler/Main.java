@@ -38,8 +38,8 @@ public class Main {
 
             logSettings(settings);
 
-            DaemonControl daemonControl = new DaemonControl();
-            GradleVersionInspector gradleVersionInspector = new GradleVersionInspector(settings.getProjectDir(), daemonControl);
+            DaemonControl daemonControl = new DaemonControl(settings.getGradleUserHome());
+            GradleVersionInspector gradleVersionInspector = new GradleVersionInspector(settings.getProjectDir(), settings.getGradleUserHome(), daemonControl);
             ScenarioLoader scenarioLoader = new ScenarioLoader(gradleVersionInspector);
             List<ScenarioDefinition> scenarios = scenarioLoader.loadScenarios(settings);
 
@@ -64,10 +64,11 @@ public class Main {
                     Logging.startOperation("Running scenario " + scenario.getName() + " using Gradle version " + version.getVersion());
 
                     try {
-                        Logging.startOperation("Stopping daemons");
                         daemonControl.stop(version);
 
-                        GradleConnector connector = GradleConnector.newConnector().useInstallation(version.getGradleHome());
+                        GradleConnector connector = GradleConnector.newConnector()
+                                .useInstallation(version.getGradleHome())
+                                .useGradleUserHomeDir(settings.getGradleUserHome().getAbsoluteFile());
                         ProjectConnection projectConnection = connector.forProjectDirectory(settings.getProjectDir()).connect();
                         BuildMutator mutator = scenario.getBuildMutator().get();
                         try {
@@ -122,7 +123,6 @@ public class Main {
                                 cleanTasks.add("clean");
                                 cleanTasks.addAll(tasks);
                                 invoker.runBuild("initial clean build", new ArrayList<>(cleanTasks));
-                                Logging.startOperation("Stopping daemons");
                                 daemonControl.stop(version);
                             }
 
@@ -168,7 +168,6 @@ public class Main {
                             projectConnection.close();
                         }
 
-                        Logging.startOperation("Stopping daemons");
                         daemonControl.stop(version);
                     } catch (Throwable t) {
                         t.printStackTrace();
@@ -180,6 +179,9 @@ public class Main {
             if (settings.isBenchmark()) {
                 benchmarkResults.writeTo(resultsFile);
             }
+
+            System.out.println();
+            System.out.println("* Results written to " + settings.getOutputDir().getAbsolutePath());
 
             if (!failures.isEmpty()) {
                 throw new ScenarioFailedException(failures.get(0));

@@ -10,14 +10,16 @@ import java.util.Map;
 
 class GradleVersionInspector {
     private final File projectDir;
+    private final File gradleUserHome;
     private final DaemonControl daemonControl;
     private final File initScript;
     private final File gradleHomeFile;
     private final Map<String, GradleVersion> versions = new HashMap<>();
     private GradleVersion defaultVersion;
 
-    public GradleVersionInspector(File projectDir, DaemonControl daemonControl) throws IOException {
+    public GradleVersionInspector(File projectDir, File gradleUserHome, DaemonControl daemonControl) throws IOException {
         this.projectDir = projectDir;
+        this.gradleUserHome = gradleUserHome;
         this.daemonControl = daemonControl;
         initScript = File.createTempFile("gradle-profiler", ".gradle");
         initScript.deleteOnExit();
@@ -47,10 +49,10 @@ class GradleVersionInspector {
             File dir = new File(versionString);
             if (dir.isDirectory()) {
                 dir = dir.getCanonicalFile();
-                return probe(GradleConnector.newConnector().useInstallation(dir));
+                return probe(connector().useInstallation(dir));
             }
             if (versionString.matches("\\d+(\\.\\d+)+(-.+)?")) {
-                return probe(GradleConnector.newConnector().useGradleVersion(versionString));
+                return probe(connector().useGradleVersion(versionString));
             }
         } catch (IOException e) {
             throw new RuntimeException("Could not locate Gradle distribution for requested version '" + versionString + "'.", e);
@@ -61,9 +63,13 @@ class GradleVersionInspector {
     public GradleVersion defaultVersion() {
         if (defaultVersion == null) {
             Logging.startOperation("Locating default Gradle version");
-            defaultVersion = probe(GradleConnector.newConnector());
+            defaultVersion = probe(connector());
         }
         return defaultVersion;
+    }
+
+    private GradleConnector connector() {
+        return GradleConnector.newConnector().useGradleUserHomeDir(gradleUserHome.getAbsoluteFile());
     }
 
     private File getGradleHomeForLastBuild() {

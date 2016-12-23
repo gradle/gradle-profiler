@@ -2,6 +2,7 @@ package org.gradle.profiler;
 
 import java.io.File;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 class GradleVersion {
@@ -27,6 +28,7 @@ class GradleVersion {
     public void runGradle(String... arguments) {
         List<String> commandLine = new ArrayList<>();
         addGradleCommand(commandLine);
+        commandLine.addAll(Arrays.asList(arguments));
         new CommandExec().run(commandLine);
     }
 

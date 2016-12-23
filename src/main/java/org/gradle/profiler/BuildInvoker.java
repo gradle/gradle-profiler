@@ -39,7 +39,7 @@ public abstract class BuildInvoker {
         Duration executionTime = timer.elapsed();
 
         String pid = pidInstrumentation.getPidForLastBuild();
-        System.out.println("Used daemon with pid " + pid);
+        Logging.detailed().println("Used daemon with pid " + pid);
         System.out.println("Execution time " + executionTime.toMillis() + "ms");
 
         BuildInvocationResult results = new BuildInvocationResult(displayName, executionTime, pid);
