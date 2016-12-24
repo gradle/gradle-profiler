@@ -42,6 +42,7 @@ public class Main {
             GradleVersionInspector gradleVersionInspector = new GradleVersionInspector(settings.getProjectDir(), settings.getGradleUserHome(), daemonControl);
             ScenarioLoader scenarioLoader = new ScenarioLoader(gradleVersionInspector);
             List<ScenarioDefinition> scenarios = scenarioLoader.loadScenarios(settings);
+            int totalExperiments = countExperiments(scenarios);
 
             logScenarios(scenarios);
 
@@ -50,6 +51,7 @@ public class Main {
             File resultsFile = new File(settings.getOutputDir(), "benchmark.csv");
 
             List<Throwable> failures = new ArrayList<>();
+            int experiment = 0;
 
             for (ScenarioDefinition scenario : scenarios) {
                 ScenarioSettings scenarioSettings = new ScenarioSettings(settings, scenario);
@@ -61,7 +63,8 @@ public class Main {
                 List<String> tasks = scenario.getTasks();
 
                 for (GradleVersion version : scenario.getVersions()) {
-                    Logging.startOperation("Running scenario " + scenario.getName() + " using Gradle version " + version.getVersion());
+                    experiment++;
+                    Logging.startOperation("Running scenario " + scenario.getName() + " using Gradle version " + version.getVersion() + " (" + experiment + "/" + totalExperiments + ")");
 
                     try {
                         daemonControl.stop(version);
@@ -129,6 +132,7 @@ public class Main {
                             beforeBuild(invoker, cleanupTasks, mutator);
                             BuildInvocationResult results = invoker.runBuild("warm-up build 1", tasks);
                             String pid = results.getDaemonPid();
+
                             for (int i = 1; i < scenario.getWarmUpCount(); i++) {
                                 beforeBuild(invoker, cleanupTasks, mutator);
                                 results = invoker.runBuild("warm-up build " + (i + 1), tasks);
@@ -196,6 +200,14 @@ public class Main {
             System.out.println();
             System.out.flush();
         }
+    }
+
+    private int countExperiments(List<ScenarioDefinition> scenarios) {
+        int count = 0;
+        for (ScenarioDefinition scenario : scenarios) {
+            count += scenario.getVersions().size();
+        }
+        return count;
     }
 
     private void beforeBuild(BuildInvoker invoker, List<String> cleanupTasks, BuildMutator mutator) throws IOException {

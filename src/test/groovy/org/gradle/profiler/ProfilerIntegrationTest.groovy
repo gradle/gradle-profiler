@@ -399,6 +399,10 @@ println "<daemon: " + gradle.services.get(org.gradle.internal.environment.Gradle
         logFile.grep("<tasks: [clean, assemble]>").size() == 2
         logFile.grep("<tasks: [assemble]>").size() == 15 * 2
 
+        logFile.grep("* Running scenario assemble using Gradle version 3.0 (1/3)")
+        logFile.grep("* Running scenario assemble using Gradle version $gradleVersion (2/3)")
+        logFile.grep("* Running scenario help using Gradle version $gradleVersion (3/3)")
+
         resultFile.isFile()
         resultFile.text.readLines().get(0) == "build,assemble 3.0,assemble ${gradleVersion},help ${gradleVersion}"
         resultFile.text.readLines().get(1) == "tasks,assemble,assemble,help"
@@ -463,6 +467,9 @@ apply plugin: BasePlugin
                 "--benchmark", "assemble")
 
         then:
+        logFile.grep("* Running scenario assemble using Gradle version 3.0 (1/2)")
+        logFile.grep("* Running scenario assemble using Gradle version $gradleVersion (2/2)")
+
         !logFile.grep("Tasks: [help]")
     }
 
