@@ -36,6 +36,7 @@ class CommandLineParser {
         OptionSpecBuilder benchmarkOption = parser.accepts("benchmark", "Collect benchmark metrics");
         OptionSpecBuilder noDaemonOption = parser.accepts("no-daemon", "Do not use the Gradle daemon");
         OptionSpecBuilder dryRunOption = parser.accepts("dry-run", "Verify configuration");
+        OptionSpecBuilder buckOption = parser.accepts("buck", "Benchmark scenarios using buck");
         OptionSet parsedOptions;
         try {
             parsedOptions = parser.parse(args);
@@ -78,6 +79,7 @@ class CommandLineParser {
         File scenarioFile = parsedOptions.has(scenarioFileOption) ? new File(parsedOptions.valueOf(scenarioFileOption)) : null;
         Invoker invoker = parsedOptions.has(noDaemonOption) ? Invoker.NoDaemon : Invoker.ToolingApi;
         boolean dryRun = parsedOptions.has(dryRunOption);
+        boolean buck = parsedOptions.has(buckOption);
         Map<String, String> sysProperties = new LinkedHashMap<>();
         for (String value : parsedOptions.valuesOf(sysPropOption)) {
             String[] parts = value.split("\\s*=\\s*");
@@ -87,7 +89,7 @@ class CommandLineParser {
                 sysProperties.put(parts[0], parts[1]);
             }
         }
-        return new InvocationSettings(projectDir, profiler, profilerOptions, benchmark, outputDir, invoker, dryRun, scenarioFile, versions, targetNames, sysProperties, gradleUserHome);
+        return new InvocationSettings(projectDir, profiler, profilerOptions, benchmark, outputDir, invoker, dryRun, scenarioFile, versions, targetNames, sysProperties, gradleUserHome, buck);
     }
 
     private File findOutputDir() {

@@ -92,7 +92,7 @@ assemble {
         thrown(IllegalArgumentException)
 
         and:
-        output.contains("Unrecognized key 'assemble.gradle-version' found in scenario file " + scenarioFile)
+        output.contains("Unrecognized key 'assemble.gradle-version' defined for scenario 'assemble' in scenario file " + scenarioFile)
     }
 
     def "reports build failures"() {
@@ -910,6 +910,88 @@ println "User home: \$gradle.gradleUserHomeDir"
 
         then:
         logFile.grep("User home: " + new File("foobar").absolutePath)
+    }
+
+    def "can benchmark scenario using buck wrapper script"() {
+        given:
+        writeBuckw()
+        def scenarios = file("performance.scenario")
+        scenarios.text = """
+buildTarget {
+    tasks = ["some:assemble"]
+    buck {
+        target = "//some/target"
+    }
+}
+buildAll {
+    tasks = ["assemble"]
+    buck {
+        type = "android_binary"
+    }
+}
+help {
+    tasks = ["help"]
+}
+"""
+
+        when:
+        new Main().run("--project-dir", projectDir.absolutePath, "--output-dir", outputDir.absolutePath, "--benchmark", "--scenario-file", scenarios.absolutePath, "--buck")
+
+        then:
+        noExceptionThrown()
+    }
+
+    def "cannot profile a buck build"() {
+        given:
+        writeBuckw()
+        def scenarios = file("performance.scenario")
+        scenarios.text = """
+buildTarget {
+    buck {
+        target = "//some/target"
+    }
+}
+help {
+    tasks = ["help"]
+}
+"""
+
+        when:
+        new Main().run("--project-dir", projectDir.absolutePath, "--output-dir", outputDir.absolutePath, "--buck", "--profile", "jfr", "--scenario-file", scenarios.absolutePath, "--gradle-version", gradleVersion, "buildTarget")
+
+        then:
+        thrown(IllegalArgumentException)
+
+        and:
+        output.contains("Can only profile scenario 'buildTarget' when building using Gradle.")
+    }
+
+    def "can profile a scenario that contains buck build instructions when building with Gradle"() {
+        given:
+        writeBuckw()
+        def scenarios = file("performance.scenario")
+        scenarios.text = """
+buildTarget {
+    tasks = ["help"]
+    buck {
+        target = "//some/target"
+    }
+}
+"""
+
+        when:
+        new Main().run("--project-dir", projectDir.absolutePath, "--output-dir", outputDir.absolutePath, "--profile", "jfr", "--scenario-file", scenarios.absolutePath, "--gradle-version", gradleVersion, "buildTarget")
+
+        then:
+        logFile.grep("* Running scenario buildTarget using Gradle version 3.2.1 (1/1)")
+    }
+
+    def writeBuckw() {
+        def buckw = file("buckw")
+        buckw.text = """
+echo "buck \$@"
+"""
+        buckw.executable = true
     }
 
     static class LogFile {

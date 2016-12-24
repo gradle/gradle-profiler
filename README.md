@@ -70,6 +70,7 @@ and each of these is used to benchmark the build, allowing you to compare the be
 - `--output-dir <dir>`: Directory to write results to.
 - `--no-daemon`: Uses `gradle --no-daemon` to run the builds. The default is to use the Gradle tooling API and Gradle daemon.
 - `-D<key>=<value>`: Defines a system property when running the build, overriding the default for the build.
+- `--buck`: Benchmark scenarios using Buck instead of Gradle. By default, only Gradle scenarios are run. You cannot profile a Buck build using this tool.
 
 ## Applying changes between build executions
 
@@ -83,24 +84,34 @@ Mutations that are available:
 
 ## Scenario file
 
-A scenario file can be provided to define scenarios to benchmark or profile. Use the `--scenario-file` option to provide this. The scenario file is defined in [Typesafe config](https://github.com/typesafehub/config) format. Below is an example:
+A scenario file can be provided to define scenarios to benchmark or profile. Use the `--scenario-file` option to provide this. The scenario file is defined in [Typesafe config](https://github.com/typesafehub/config) format.
+
+The scenario file defines one or more scenarios. You can select which scenarios to run by specifying its name on the command-line when running `gradle-profiler`.
+
+Here is an example:
 
     # Scenarios are run in alphabetical order
     assemble {
-        versions = ["3.0", "3.1"]
         tasks = ["assemble"]
     }
     clean_build {
-        versions = ["/Users/me/gradle"]
+        versions = ["3.1", "/Users/me/gradle"]
         tasks = ["clean", "build"]
         gradle-args = ["--parallel"]
         system-properties {
             key = "value"
         }
-        warm-ups = 10
-        run-using = no-daemon // value can be "no-daemon" or "tooling-api"
-        
         cleanup-tasks = ["clean"]
+        // value can be "no-daemon" or "tooling-api"
+        run-using = no-daemon
+
+        buck {
+            target = "//thing/res_debug"
+            type = "android_binary"
+        }
+
+        warm-ups = 10
+        
         apply-abi-change-to = "src/main/java/MyThing.java"
         apply-property-resource-change-to = "src/main/resources/thing.properties"
         apply-android-resource-change-to = "src/main/res/value/strings.xml"

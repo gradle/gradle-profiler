@@ -21,6 +21,7 @@ class ScenarioLoader {
     private static final String GRADLE_ARGS = "gradle-args";
     private static final String RUN_USING = "run-using";
     private static final String SYSTEM_PROPERTIES = "system-properties";
+    private static final String BUCK = "buck";
     private static final String WARM_UP_COUNT = "warm-ups";
     private static final String APPLY_API_CHANGE_TO = "apply-abi-change-to";
     private static final String APPLY_ANDROID_RESOURCE_CHANGE_TO = "apply-android-resource-change-to";
@@ -30,7 +31,7 @@ class ScenarioLoader {
     private static final List<String> ALL_SCENARIO_KEYS = Arrays.asList(
         VERSIONS, TASKS, CLEANUP_TASKS, GRADLE_ARGS, RUN_USING, SYSTEM_PROPERTIES, WARM_UP_COUNT,
         APPLY_API_CHANGE_TO, APPLY_ANDROID_RESOURCE_CHANGE_TO, APPLY_ANDROID_MANIFEST_CHANGE_TO,
-        APPLY_PROPERTY_RESOURCE_CHANGE_TO
+        APPLY_PROPERTY_RESOURCE_CHANGE_TO, BUCK
     );
 
     private final GradleVersionInspector gradleVersionInspector;
@@ -40,20 +41,24 @@ class ScenarioLoader {
     }
 
     public List<ScenarioDefinition> loadScenarios(InvocationSettings settings) {
-        List<ScenarioDefinition> scenarios = new ArrayList<>();
         if (settings.getScenarioFile() != null) {
-            scenarios = loadScenarios(settings.getScenarioFile(), settings, gradleVersionInspector);
+            return loadScenarios(settings.getScenarioFile(), settings, gradleVersionInspector);
         } else {
-            List<GradleVersion> versions = new ArrayList<>();
-            for (String v : settings.getVersions()) {
-                versions.add(gradleVersionInspector.resolve(v));
-            }
-            scenarios.add(new ScenarioDefinition("default", settings.getInvoker(), versions, settings.getTargets(), Collections.emptyList(), Collections.emptyList(), settings.getSystemProperties(), new BuildMutatorFactory(Collections.emptyList()), settings.getWarmUpCount(), settings.getBuildCount()));
+            return adhocScenarios(settings);
         }
-        for (ScenarioDefinition scenario : scenarios) {
-            if (scenario.getVersions().isEmpty()) {
-                scenario.getVersions().add(gradleVersionInspector.defaultVersion());
-            }
+    }
+
+    private List<ScenarioDefinition> adhocScenarios(InvocationSettings settings) {
+        List<ScenarioDefinition> scenarios = new ArrayList<>();
+        List<GradleVersion> versions = new ArrayList<>();
+        for (String v : settings.getVersions()) {
+            versions.add(gradleVersionInspector.resolve(v));
+        }
+        if (versions.isEmpty()) {
+            versions.add(gradleVersionInspector.defaultVersion());
+        }
+        for (GradleVersion version : versions) {
+            scenarios.add(new ScenarioDefinition("default", settings.getInvoker(), version, settings.getTargets(), Collections.emptyList(), Collections.emptyList(), settings.getSystemProperties(), new BuildMutatorFactory(Collections.emptyList()), settings.getWarmUpCount(), settings.getBuildCount()));
         }
         return scenarios;
     }
@@ -69,16 +74,10 @@ class ScenarioLoader {
             Config scenario = config.getConfig(scenarioName);
             for (String key : config.getObject(scenarioName).keySet()) {
                 if (!ALL_SCENARIO_KEYS.contains(key)) {
-                    throw new IllegalArgumentException("Unrecognized key '" + scenarioName + "." + key + "' found in scenario file " + scenarioFile);
+                    throw new IllegalArgumentException("Unrecognized key '" + scenarioName + "." + key + "' defined for scenario '" + scenarioName + "' in scenario file " + scenarioFile);
                 }
             }
-            List<GradleVersion> versions = strings(scenario, VERSIONS, settings.getVersions()).stream().map(v -> inspector.resolve(v)).collect(
-                    Collectors.toList());
-            List<String> tasks = strings(scenario, TASKS, settings.getTargets());
-            List<String> cleanupTasks = strings(scenario, CLEANUP_TASKS, Collections.emptyList());
-            List<String> gradleArgs = strings(scenario, GRADLE_ARGS, Collections.emptyList());
-            Invoker invoker = invoker(scenario, RUN_USING, settings.getInvoker());
-            Map<String, String> systemProperties = map(scenario, SYSTEM_PROPERTIES, settings.getSystemProperties());
+
             int warmUpCount = integer(scenario, WARM_UP_COUNT, settings.getWarmUpCount());
 
             List<Supplier<BuildMutator>> mutators = new ArrayList<>();
@@ -102,8 +101,29 @@ class ScenarioLoader {
                 mutators.add(() -> new ApplyChangeToPropertyResourceFileMutator(classpathResourceFileToChange));
             }
 
-            definitions.add(new ScenarioDefinition(scenarioName, invoker, versions, tasks, cleanupTasks, gradleArgs, systemProperties, new BuildMutatorFactory(mutators), warmUpCount, settings.getBuildCount()));
+            if (scenario.hasPath(BUCK) && settings.isBuck()) {
+                if (settings.isProfile()) {
+                    throw new IllegalArgumentException("Can only profile scenario '" + scenarioName + "' when building using Gradle.");
+                }
+                definitions.add(new ScenarioDefinition(scenarioName, Invoker.Buck, null, Collections.emptyList(), Collections.emptyList(), Collections.emptyList(), Collections.emptyMap(), new BuildMutatorFactory(mutators), warmUpCount, settings.getBuildCount()));
+            } else if (!settings.isBuck()) {
+                List<GradleVersion> versions = strings(scenario, VERSIONS, settings.getVersions()).stream().map(v -> inspector.resolve(v)).collect(
+                        Collectors.toList());
+                if (versions.isEmpty()) {
+                    versions.add(gradleVersionInspector.defaultVersion());
+                }
+
+                List<String> tasks = strings(scenario, TASKS, settings.getTargets());
+                List<String> cleanupTasks = strings(scenario, CLEANUP_TASKS, Collections.emptyList());
+                List<String> gradleArgs = strings(scenario, GRADLE_ARGS, Collections.emptyList());
+                Invoker invoker = invoker(scenario, RUN_USING, settings.getInvoker());
+                Map<String, String> systemProperties = map(scenario, SYSTEM_PROPERTIES, settings.getSystemProperties());
+                for (GradleVersion version : versions) {
+                    definitions.add(new ScenarioDefinition(scenarioName, invoker, version, tasks, cleanupTasks, gradleArgs, systemProperties, new BuildMutatorFactory(mutators), warmUpCount, settings.getBuildCount()));
+                }
+            }
         }
+
         return definitions;
     }
 

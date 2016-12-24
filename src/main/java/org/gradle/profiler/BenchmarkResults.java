@@ -14,23 +14,23 @@ import java.util.stream.Collectors;
 public class BenchmarkResults {
     private final List<BuildScenario> allBuilds = new ArrayList<>();
 
-    public Consumer<BuildInvocationResult> version(ScenarioDefinition scenario, GradleVersion version) {
-        List<BuildInvocationResult> results = getResultsForVersion(scenario, version);
+    public Consumer<BuildInvocationResult> version(ScenarioDefinition scenario) {
+        List<BuildInvocationResult> results = getResultsForVersion(scenario);
         return buildInvocationResult -> results.add(buildInvocationResult);
     }
 
-    private List<BuildInvocationResult> getResultsForVersion(ScenarioDefinition scenario, GradleVersion version) {
-        BuildScenario buildScenario = new BuildScenario(scenario, version);
+    private List<BuildInvocationResult> getResultsForVersion(ScenarioDefinition scenario) {
+        BuildScenario buildScenario = new BuildScenario(scenario);
         allBuilds.add(buildScenario);
         return buildScenario.results;
     }
 
     public void writeTo(File csv) throws IOException {
-        int maxRows = allBuilds.stream().mapToInt(v -> v.results.size()).max().getAsInt();
+        int maxRows = allBuilds.stream().mapToInt(v -> v.results.size()).max().orElse(0);
         try (BufferedWriter writer = new BufferedWriter(new FileWriter(csv))) {
             writer.write("build");
             for (BuildScenario result : allBuilds) {
-                String name = result.scenario.getName() + " " + result.gradleVersion.getVersion();
+                String name = result.scenario.getName() + " " + result.scenario.getVersion().getVersion();
                 writer.write(",");
                 writer.write(name);
             }
@@ -87,12 +87,10 @@ public class BenchmarkResults {
 
     private static class BuildScenario {
         private final ScenarioDefinition scenario;
-        private final GradleVersion gradleVersion;
         private final List<BuildInvocationResult> results = new ArrayList<>();
 
-        BuildScenario(ScenarioDefinition scenario, GradleVersion gradleVersion) {
+        BuildScenario(ScenarioDefinition scenario) {
             this.scenario = scenario;
-            this.gradleVersion = gradleVersion;
         }
 
         public DescriptiveStatistics getStatistics() {

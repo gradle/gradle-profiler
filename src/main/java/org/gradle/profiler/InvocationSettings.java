@@ -18,8 +18,11 @@ public class InvocationSettings {
     private final List<String> targets;
     private final Map<String, String> sysProperties;
     private final File gradleUserHome;
+    private final boolean buck;
 
-    public InvocationSettings(File projectDir, Profiler profiler, final Object profilerOptions, boolean benchmark, File outputDir, Invoker invoker, boolean dryRun, File scenarioFile, List<String> versions, List<String> getTargets, Map<String, String> sysProperties, File gradleUserHome) {
+    public InvocationSettings(File projectDir, Profiler profiler, final Object profilerOptions, boolean benchmark, File outputDir, Invoker invoker,
+                              boolean dryRun, File scenarioFile, List<String> versions, List<String> getTargets, Map<String, String> sysProperties,
+                              File gradleUserHome, boolean buck) {
         this.profilerOptions = profilerOptions;
         this.benchmark = benchmark;
         this.projectDir = projectDir;
@@ -32,6 +35,7 @@ public class InvocationSettings {
         this.targets = getTargets;
         this.sysProperties = sysProperties;
         this.gradleUserHome = gradleUserHome;
+        this.buck = buck;
     }
 
     public File getOutputDir() {
@@ -52,6 +56,10 @@ public class InvocationSettings {
 
     public boolean isProfile() {
         return profiler != Profiler.NONE;
+    }
+
+    public boolean isBuck() {
+        return buck;
     }
 
     public Profiler getProfiler() {

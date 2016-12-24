@@ -263,7 +263,7 @@ public class Profiler {
 
         private ScenarioSettings settingsFor(final Profiler prof, final ScenarioSettings scenarioSettings) {
             InvocationSettings settings = scenarioSettings.getInvocationSettings();
-            InvocationSettings newSettings = new InvocationSettings(settings.getProjectDir(), prof, profilerOptions.get(prof), settings.isBenchmark(), settings.getOutputDir(), settings.getInvoker(), settings.isDryRun(), settings.getScenarioFile(), settings.getVersions(), settings.getTargets(), settings.getSystemProperties(), settings.getGradleUserHome());
+            InvocationSettings newSettings = new InvocationSettings(settings.getProjectDir(), prof, profilerOptions.get(prof), settings.isBenchmark(), settings.getOutputDir(), settings.getInvoker(), settings.isDryRun(), settings.getScenarioFile(), settings.getVersions(), settings.getTargets(), settings.getSystemProperties(), settings.getGradleUserHome(), settings.isBuck());
             return new ScenarioSettings(newSettings, scenarioSettings.getScenario());
         }
 
