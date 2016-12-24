@@ -139,8 +139,6 @@ public class Main {
                                 checkPid(pid, results.getDaemonPid(), scenario.getInvoker());
                             }
 
-                            mutator.cleanup();
-
                             for (int i = 0; i < scenario.getBuildCount(); i++) {
                                 beforeBuild(invoker, cleanupTasks, mutator);
 
