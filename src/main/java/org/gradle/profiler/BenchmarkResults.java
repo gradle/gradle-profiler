@@ -14,12 +14,12 @@ import java.util.stream.Collectors;
 public class BenchmarkResults {
     private final List<BuildScenario> allBuilds = new ArrayList<>();
 
-    public Consumer<BuildInvocationResult> version(ScenarioDefinition scenario) {
+    public Consumer<BuildInvocationResult> version(GradleScenarioDefinition scenario) {
         List<BuildInvocationResult> results = getResultsForVersion(scenario);
         return buildInvocationResult -> results.add(buildInvocationResult);
     }
 
-    private List<BuildInvocationResult> getResultsForVersion(ScenarioDefinition scenario) {
+    private List<BuildInvocationResult> getResultsForVersion(GradleScenarioDefinition scenario) {
         BuildScenario buildScenario = new BuildScenario(scenario);
         allBuilds.add(buildScenario);
         return buildScenario.results;
@@ -30,9 +30,8 @@ public class BenchmarkResults {
         try (BufferedWriter writer = new BufferedWriter(new FileWriter(csv))) {
             writer.write("build");
             for (BuildScenario result : allBuilds) {
-                String name = result.scenario.getName() + " " + result.scenario.getVersion().getVersion();
                 writer.write(",");
-                writer.write(name);
+                writer.write(result.scenario.getShortDisplayName());
             }
             writer.newLine();
             writer.write("tasks");
@@ -86,10 +85,10 @@ public class BenchmarkResults {
     }
 
     private static class BuildScenario {
-        private final ScenarioDefinition scenario;
+        private final GradleScenarioDefinition scenario;
         private final List<BuildInvocationResult> results = new ArrayList<>();
 
-        BuildScenario(ScenarioDefinition scenario) {
+        BuildScenario(GradleScenarioDefinition scenario) {
             this.scenario = scenario;
         }
 

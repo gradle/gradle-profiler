@@ -54,20 +54,22 @@ public class Main {
             int scenarioCount = 0;
 
             for (ScenarioDefinition scenario : scenarios) {
-                ScenarioSettings scenarioSettings = new ScenarioSettings(settings, scenario);
-                scenarioSettings.getScenarioOutputDir().mkdirs();
-                JvmArgsCalculator jvmArgsCalculator = settings.isProfile() ? settings.getProfiler().newJvmArgsCalculator(scenarioSettings) : new JvmArgsCalculator();
+                scenarioCount++;
+                Logging.startOperation("Running scenario " + scenario.getDisplayName() + " (scenario " + scenarioCount + "/" + totalScenarios + ")");
 
-                if (scenario.getInvoker() == Invoker.Buck) {
+                if (scenario instanceof BuckScenarioDefinition) {
                     // Not implemented yet
                     continue;
                 }
 
-                List<String> cleanupTasks = scenario.getCleanupTasks();
-                List<String> tasks = scenario.getTasks();
-                GradleVersion version = scenario.getVersion();
-                scenarioCount++;
-                Logging.startOperation("Running scenario " + scenario.getName() + " using Gradle version " + version.getVersion() + " (" + scenarioCount + "/" + totalScenarios + ")");
+                GradleScenarioDefinition gradleScenario = (GradleScenarioDefinition) scenario;
+                ScenarioSettings scenarioSettings = new ScenarioSettings(settings, scenario);
+                scenarioSettings.getScenarioOutputDir().mkdirs();
+                JvmArgsCalculator jvmArgsCalculator = settings.isProfile() ? settings.getProfiler().newJvmArgsCalculator(scenarioSettings) : new JvmArgsCalculator();
+
+                List<String> cleanupTasks = gradleScenario.getCleanupTasks();
+                List<String> tasks = gradleScenario.getTasks();
+                GradleVersion version = gradleScenario.getVersion();
 
                 try {
                     daemonControl.stop(version);
@@ -88,7 +90,7 @@ public class Main {
                         Logging.detailed().println("OS name: " + System.getProperty("os.name") + " " + System.getProperty("os.version"));
 
                         List<String> jvmArgs = new ArrayList<>(buildEnvironment.getJava().getJvmArguments());
-                        for (Map.Entry<String, String> entry : scenario.getSystemProperties().entrySet()) {
+                        for (Map.Entry<String, String> entry : gradleScenario.getSystemProperties().entrySet()) {
                             jvmArgs.add("-D" + entry.getKey() + "=" + entry.getValue());
                         }
                         jvmArgsCalculator.calculateJvmArgs(jvmArgs);
@@ -99,10 +101,10 @@ public class Main {
                         List<String> gradleArgs = new ArrayList<>(pidInstrumentation.getArgs());
                         gradleArgs.add("--gradle-user-home");
                         gradleArgs.add(settings.getGradleUserHome().getAbsolutePath());
-                        for (Map.Entry<String, String> entry : scenario.getSystemProperties().entrySet()) {
+                        for (Map.Entry<String, String> entry : gradleScenario.getSystemProperties().entrySet()) {
                             gradleArgs.add("-D" + entry.getKey() + "=" + entry.getValue());
                         }
-                        gradleArgs.addAll(scenario.getGradleArgs());
+                        gradleArgs.addAll(gradleScenario.getGradleArgs());
                         if (settings.isDryRun()) {
                             gradleArgs.add("--dry-run");
                         }
@@ -111,9 +113,9 @@ public class Main {
                             Logging.detailed().println("  " + arg);
                         }
 
-                        Consumer<BuildInvocationResult> resultsCollector = benchmarkResults.version(scenario);
+                        Consumer<BuildInvocationResult> resultsCollector = benchmarkResults.version(gradleScenario);
                         BuildInvoker invoker;
-                        switch (scenario.getInvoker()) {
+                        switch (gradleScenario.getInvoker()) {
                             case NoDaemon:
                                 invoker = new NoDaemonInvoker(version, javaHome, settings.getProjectDir(), jvmArgs, gradleArgs, pidInstrumentation, resultsCollector);
                                 break;
@@ -139,7 +141,7 @@ public class Main {
                         for (int i = 1; i < scenario.getWarmUpCount(); i++) {
                             beforeBuild(invoker, cleanupTasks, mutator);
                             results = invoker.runBuild("warm-up build " + (i + 1), tasks);
-                            checkPid(pid, results.getDaemonPid(), scenario.getInvoker());
+                            checkPid(pid, results.getDaemonPid(), gradleScenario.getInvoker());
                         }
 
                         for (int i = 0; i < scenario.getBuildCount(); i++) {
@@ -159,7 +161,7 @@ public class Main {
                                 control.stop();
                             }
 
-                            checkPid(pid, results.getDaemonPid(), scenario.getInvoker());
+                            checkPid(pid, results.getDaemonPid(), gradleScenario.getInvoker());
 
                             // Write results
                             if (settings.isBenchmark()) {
@@ -213,20 +215,25 @@ public class Main {
         Logging.startOperation("Scenarios");
         for (ScenarioDefinition scenario : scenarios) {
             System.out.println("Scenario: " + scenario.getName());
-            if (scenario.getVersion() != null) {
-                System.out.println("  Gradle version: " + scenario.getVersion() + " (" + scenario.getVersion().getGradleHome() + ")");
-            }
-            System.out.println("  Cleanup Tasks: " + scenario.getCleanupTasks());
-            System.out.println("  Tasks: " + scenario.getTasks());
-            System.out.println("  Run using: " + scenario.getInvoker());
-            System.out.println("  Gradle args: " + scenario.getGradleArgs());
-            System.out.println("  Build changes: " + scenario.getBuildMutator());
-            if (!scenario.getSystemProperties().isEmpty()) {
-                System.out.println("  System properties:");
-                for (Map.Entry<String, String> entry : scenario.getSystemProperties().entrySet()) {
-                    System.out.println("    " + entry.getKey() + "=" + entry.getValue());
+            if (scenario instanceof GradleScenarioDefinition) {
+                GradleScenarioDefinition gradleScenario = (GradleScenarioDefinition) scenario;
+                System.out.println("  Gradle version: " + gradleScenario.getVersion() + " (" + gradleScenario.getVersion().getGradleHome() + ")");
+                System.out.println("  Run using: " + gradleScenario.getInvoker());
+                System.out.println("  Cleanup Tasks: " + gradleScenario.getCleanupTasks());
+                System.out.println("  Tasks: " + gradleScenario.getTasks());
+                System.out.println("  Gradle args: " + gradleScenario.getGradleArgs());
+                if (!gradleScenario.getSystemProperties().isEmpty()) {
+                    System.out.println("  System properties:");
+                    for (Map.Entry<String, String> entry : gradleScenario.getSystemProperties().entrySet()) {
+                        System.out.println("    " + entry.getKey() + "=" + entry.getValue());
+                    }
                 }
+            } else if (scenario instanceof BuckScenarioDefinition) {
+                System.out.println("  Run using: buck");
             }
+            System.out.println("  Build changes: " + scenario.getBuildMutator());
+            System.out.println("  Warm-ups: " + scenario.getWarmUpCount());
+            System.out.println("  Builds: " + scenario.getBuildCount());
         }
     }
 

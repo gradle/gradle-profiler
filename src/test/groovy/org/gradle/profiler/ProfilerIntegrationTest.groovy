@@ -399,9 +399,9 @@ println "<daemon: " + gradle.services.get(org.gradle.internal.environment.Gradle
         logFile.grep("<tasks: [clean, assemble]>").size() == 2
         logFile.grep("<tasks: [assemble]>").size() == 15 * 2
 
-        logFile.grep("* Running scenario assemble using Gradle version 3.0 (1/3)")
-        logFile.grep("* Running scenario assemble using Gradle version $gradleVersion (2/3)")
-        logFile.grep("* Running scenario help using Gradle version $gradleVersion (3/3)")
+        logFile.grep("* Running scenario assemble using Gradle 3.0 (scenario 1/3)")
+        logFile.grep("* Running scenario assemble using Gradle $gradleVersion (scenario 2/3)")
+        logFile.grep("* Running scenario help using Gradle $gradleVersion (scenario 3/3)")
 
         resultFile.isFile()
         resultFile.text.readLines().get(0) == "build,assemble 3.0,assemble ${gradleVersion},help ${gradleVersion}"
@@ -467,8 +467,8 @@ apply plugin: BasePlugin
                 "--benchmark", "assemble")
 
         then:
-        logFile.grep("* Running scenario assemble using Gradle version 3.0 (1/2)")
-        logFile.grep("* Running scenario assemble using Gradle version $gradleVersion (2/2)")
+        logFile.grep("* Running scenario assemble using Gradle 3.0 (scenario 1/2)")
+        logFile.grep("* Running scenario assemble using Gradle $gradleVersion (scenario 2/2)")
 
         !logFile.grep("Tasks: [help]")
     }
@@ -938,7 +938,8 @@ help {
         new Main().run("--project-dir", projectDir.absolutePath, "--output-dir", outputDir.absolutePath, "--benchmark", "--scenario-file", scenarios.absolutePath, "--buck")
 
         then:
-        noExceptionThrown()
+        logFile.contains("* Running scenario buildAll using buck (scenario 1/2)")
+        logFile.contains("* Running scenario buildTarget using buck (scenario 2/2)")
     }
 
     def "cannot profile a buck build"() {
@@ -983,7 +984,28 @@ buildTarget {
         new Main().run("--project-dir", projectDir.absolutePath, "--output-dir", outputDir.absolutePath, "--profile", "jfr", "--scenario-file", scenarios.absolutePath, "--gradle-version", gradleVersion, "buildTarget")
 
         then:
-        logFile.grep("* Running scenario buildTarget using Gradle version 3.2.1 (1/1)")
+        logFile.grep("* Running scenario buildTarget using Gradle 3.2.1 (scenario 1/1)")
+    }
+
+    def "ignores buck build instructions when benchmarking using GRadle"() {
+        given:
+        writeBuckw()
+        buildFile << "apply plugin: 'base'"
+        def scenarios = file("performance.scenario")
+        scenarios.text = """
+buildTarget {
+    tasks = ["help"]
+    buck {
+        target = "//some/target"
+    }
+}
+"""
+
+        when:
+        new Main().run("--project-dir", projectDir.absolutePath, "--output-dir", outputDir.absolutePath, "--benchmark", "--scenario-file", scenarios.absolutePath, "--gradle-version", gradleVersion, "buildTarget")
+
+        then:
+        logFile.grep("* Running scenario buildTarget using Gradle 3.2.1 (scenario 1/1)")
     }
 
     def writeBuckw() {
