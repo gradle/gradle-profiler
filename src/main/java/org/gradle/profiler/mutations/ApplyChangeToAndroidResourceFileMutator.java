@@ -13,6 +13,6 @@ public class ApplyChangeToAndroidResourceFileMutator extends AbstractFileChangeM
         if (insertPos < 0) {
             throw new IllegalArgumentException("Cannot parse source file " + sourceFile + " to apply changes");
         }
-        text.insert(insertPos, "<string name=\"new_resource\">some value</string>");
+        text.insert(insertPos, "<string name=\"new_resource\">" + getUniqueText() + "</string>");
     }
 }

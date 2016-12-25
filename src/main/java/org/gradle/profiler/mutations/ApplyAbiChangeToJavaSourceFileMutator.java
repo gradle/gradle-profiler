@@ -16,6 +16,6 @@ public class ApplyAbiChangeToJavaSourceFileMutator extends AbstractFileChangeMut
         if (insertPos < 0) {
             throw new IllegalArgumentException("Cannot parse source file " + sourceFile + " to apply changes");
         }
-        text.insert(insertPos, "public void __new_method__() { }");
+        text.insert(insertPos, "public void _m" + getUniqueText() + "() { }");
     }
 }

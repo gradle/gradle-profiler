@@ -4,33 +4,33 @@ import org.junit.Rule
 import org.junit.rules.TemporaryFolder
 import spock.lang.Specification
 
-class ApplyChangeToPropertyFileMutatorTest extends Specification {
+class ApplyChangeToPropertyResourceFileMutatorTest extends Specification {
     public static final String ORIGINAL_CONTENTS = "org.foo=bar"
-    public static final String MODIFIED_CONTENTS = 'org.foo=bar\norg.acme.some=thing\n'
     @Rule TemporaryFolder tmpDir = new TemporaryFolder()
 
     def "adds and removes property to end of source file"() {
         def sourceFile = tmpDir.newFile("test.properties")
         sourceFile.text = ORIGINAL_CONTENTS
         def mutator = new ApplyChangeToPropertyResourceFileMutator(sourceFile)
+        mutator.timestamp = 1234
 
         when:
         mutator.beforeBuild()
 
         then:
-        sourceFile.text == MODIFIED_CONTENTS
+        sourceFile.text == 'org.foo=bar\norg.acme.some=_1234_1\n'
 
         when:
         mutator.beforeBuild()
 
         then:
-        sourceFile.text == ORIGINAL_CONTENTS
+        sourceFile.text == 'org.foo=bar\norg.acme.some=_1234_2\n'
 
         when:
         mutator.beforeBuild()
 
         then:
-        sourceFile.text == MODIFIED_CONTENTS
+        sourceFile.text == 'org.foo=bar\norg.acme.some=_1234_3\n'
     }
 
     def "reverts changes when nothing has been applied"() {

@@ -399,9 +399,9 @@ println "<daemon: " + gradle.services.get(org.gradle.internal.environment.Gradle
         logFile.grep("<tasks: [clean, assemble]>").size() == 2
         logFile.grep("<tasks: [assemble]>").size() == 15 * 2
 
-        logFile.grep("* Running scenario assemble using Gradle 3.0 (scenario 1/3)")
-        logFile.grep("* Running scenario assemble using Gradle $gradleVersion (scenario 2/3)")
-        logFile.grep("* Running scenario help using Gradle $gradleVersion (scenario 3/3)")
+        logFile.contains("* Running scenario assemble using Gradle 3.0 (scenario 1/3)")
+        logFile.contains("* Running scenario assemble using Gradle $gradleVersion (scenario 2/3)")
+        logFile.contains("* Running scenario help using Gradle $gradleVersion (scenario 3/3)")
 
         resultFile.isFile()
         resultFile.text.readLines().get(0) == "build,assemble 3.0,assemble ${gradleVersion},help ${gradleVersion}"
@@ -467,8 +467,8 @@ apply plugin: BasePlugin
                 "--benchmark", "assemble")
 
         then:
-        logFile.grep("* Running scenario assemble using Gradle 3.0 (scenario 1/2)")
-        logFile.grep("* Running scenario assemble using Gradle $gradleVersion (scenario 2/2)")
+        logFile.contains("* Running scenario assemble using Gradle 3.0 (scenario 1/2)")
+        logFile.contains("* Running scenario assemble using Gradle $gradleVersion (scenario 2/2)")
 
         !logFile.grep("Tasks: [help]")
     }
@@ -797,6 +797,7 @@ class Library {
     void thing() { }
 }
 """
+        def originalText = srcFile.text
 
         def scenarioFile = file("scenarios.conf")
         scenarioFile << """
@@ -812,8 +813,10 @@ classes {
 
         then:
         // Probe version, initial clean build, 5 warm up, 10 builds
-        logFile.grep("<src-length: ${srcFile.length()}>").size() == 9
-        logFile.grep("<src-length: ${srcFile.length() + 32}>").size() == 8
+        logFile.grep("<src-length: ${srcFile.length()}>").size() == 2
+        logFile.grep("<src-length: ${srcFile.length() + 36}>").size() == 9
+        logFile.grep("<src-length: ${srcFile.length() + 37}>").size() == 6
+        srcFile.text == originalText
     }
 
     def "applies and reverts changes to Android resource file while running benchmark"() {
@@ -829,6 +832,7 @@ println "<src-length: \${file('src/main/res/values/strings.xml').length()}>"
     <string name="app_name">Example</string>
 </resources>
 """
+        def originalText = srcFile.text
 
         def scenarioFile = file("scenarios.conf")
         scenarioFile << """
@@ -844,15 +848,17 @@ classes {
 
         then:
         // Probe version, initial clean build, 5 warm up, 10 builds
-        logFile.grep("<src-length: ${srcFile.length()}>").size() == 9
-        logFile.grep("<src-length: ${srcFile.length() + 47}>").size() == 8
+        logFile.grep("<src-length: ${srcFile.length()}>").size() == 2
+        logFile.grep("<src-length: ${srcFile.length() + 53}>").size() == 9
+        logFile.grep("<src-length: ${srcFile.length() + 54}>").size() == 6
+        srcFile.text == originalText
     }
 
     def "reverts changes on benchmark failures"() {
         given:
         buildFile.text = """
 apply plugin: 'java'
-if (file('src/main/java/Library.java').text.contains('method')) {
+if (file('src/main/java/Library.java').text.contains('_m')) {
     throw new Exception("Boom")
 } 
 """
@@ -1047,8 +1053,13 @@ fi
             lines = logFile.readLines()
         }
 
+        @Override
+        String toString() {
+            return lines.join("\n")
+        }
+
         boolean contains(String str) {
-            return grep(str).size() > 0
+            return grep(str).size() == 1
         }
 
         /**

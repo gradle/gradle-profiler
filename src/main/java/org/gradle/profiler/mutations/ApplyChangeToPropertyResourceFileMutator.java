@@ -9,6 +9,6 @@ public class ApplyChangeToPropertyResourceFileMutator extends AbstractFileChange
 
     @Override
     protected void applyChangeTo(StringBuilder text) {
-        text.append("\norg.acme.some=thing\n");
+        text.append("\norg.acme.some=").append(getUniqueText()).append("\n");
     }
 }

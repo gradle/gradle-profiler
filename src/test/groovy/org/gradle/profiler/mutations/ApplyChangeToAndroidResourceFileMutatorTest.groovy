@@ -7,28 +7,29 @@ import spock.lang.Specification
 class ApplyChangeToAndroidResourceFileMutatorTest extends Specification {
     @Rule TemporaryFolder tmpDir = new TemporaryFolder()
 
-    def "adds and removes string resource to end of source file"() {
+    def "adds string resource to end of source file"() {
         def sourceFile = tmpDir.newFile("strings.xml")
         sourceFile.text = "<resources></resources>"
         def mutator = new ApplyChangeToAndroidResourceFileMutator(sourceFile)
+        mutator.timestamp = 1234
 
         when:
         mutator.beforeBuild()
 
         then:
-        sourceFile.text == '<resources><string name="new_resource">some value</string></resources>'
+        sourceFile.text == '<resources><string name="new_resource">_1234_1</string></resources>'
 
         when:
         mutator.beforeBuild()
 
         then:
-        sourceFile.text == "<resources></resources>"
+        sourceFile.text == '<resources><string name="new_resource">_1234_2</string></resources>'
 
         when:
         mutator.beforeBuild()
 
         then:
-        sourceFile.text == '<resources><string name="new_resource">some value</string></resources>'
+        sourceFile.text == '<resources><string name="new_resource">_1234_3</string></resources>'
     }
 
     def "reverts changes when nothing has been applied"() {

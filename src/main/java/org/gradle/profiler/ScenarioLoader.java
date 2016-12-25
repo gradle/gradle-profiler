@@ -7,7 +7,7 @@ import com.typesafe.config.ConfigValue;
 import org.gradle.profiler.mutations.ApplyAbiChangeToJavaSourceFileMutator;
 import org.gradle.profiler.mutations.ApplyChangeToAndroidResourceFileMutator;
 import org.gradle.profiler.mutations.ApplyChangeToPropertyResourceFileMutator;
-import org.gradle.profiler.mutations.ApplyChangetoAndroidManifestFileMutator;
+import org.gradle.profiler.mutations.ApplyChangeToAndroidManifestFileMutator;
 
 import java.io.File;
 import java.util.*;
@@ -94,7 +94,7 @@ class ScenarioLoader {
 
             File androidManifestToChange = sourceFile(scenario, APPLY_ANDROID_MANIFEST_CHANGE_TO, scenarioName, settings.getProjectDir());
             if(androidManifestToChange != null) {
-                mutators.add(() -> new ApplyChangetoAndroidManifestFileMutator(androidManifestToChange));
+                mutators.add(() -> new ApplyChangeToAndroidManifestFileMutator(androidManifestToChange));
             }
 
             File classpathResourceFileToChange = sourceFile(scenario, APPLY_PROPERTY_RESOURCE_CHANGE_TO, scenarioName, settings.getProjectDir());

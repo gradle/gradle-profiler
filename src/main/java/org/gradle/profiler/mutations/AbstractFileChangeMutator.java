@@ -9,11 +9,12 @@ import java.nio.file.Files;
 public abstract class AbstractFileChangeMutator implements BuildMutator {
     protected final File sourceFile;
     private final String originalText;
-    private StringBuilder modifiedText;
-    private boolean modified;
+    private long timestamp;
+    private int counter;
 
     protected AbstractFileChangeMutator(File sourceFile) {
         this.sourceFile = sourceFile;
+        this.timestamp = System.currentTimeMillis();
         try {
             originalText = new String(Files.readAllBytes(sourceFile.toPath()));
         } catch (IOException e) {
@@ -21,18 +22,24 @@ public abstract class AbstractFileChangeMutator implements BuildMutator {
         }
     }
 
+    void setTimestamp(long timestamp) {
+        this.timestamp = timestamp;
+    }
+
+    /**
+     * Returns some text that is unlikely to have been included in the target source file before.
+     * The string can be used as a Java identifier.
+     */
+    protected String getUniqueText() {
+        return "_" + String.valueOf(timestamp) + "_" + counter;
+    }
+
     @Override
     public void beforeBuild() throws IOException {
-        if (modified) {
-            revert();
-        } else {
-            if (modifiedText == null) {
-                modifiedText = new StringBuilder(originalText);
-                applyChangeTo(modifiedText);
-            }
-            Files.write(sourceFile.toPath(), modifiedText.toString().getBytes());
-        }
-        modified = !modified;
+        counter++;
+        StringBuilder modifiedText = new StringBuilder(originalText);
+        applyChangeTo(modifiedText);
+        Files.write(sourceFile.toPath(), modifiedText.toString().getBytes());
     }
 
     protected abstract void applyChangeTo(StringBuilder text);
@@ -43,9 +50,9 @@ public abstract class AbstractFileChangeMutator implements BuildMutator {
 
     @Override
     public void cleanup() throws IOException {
-        if (modified) {
+        if (counter > 0) {
             revert();
-            modified = false;
+            counter = 0;
         }
     }
 
