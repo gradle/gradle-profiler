@@ -1,5 +1,6 @@
 package org.gradle.profiler;
 
+import java.io.PrintStream;
 import java.util.List;
 import java.util.function.Supplier;
 
@@ -29,5 +30,13 @@ public class BuckScenarioDefinition extends ScenarioDefinition {
 
     public String getType() {
         return type;
+    }
+
+    @Override
+    protected void printDetail(PrintStream out) {
+        out.println("  Targets: " + getTargets());
+        if (getType() != null) {
+            out.println("  Type: " + getType());
+        }
     }
 }

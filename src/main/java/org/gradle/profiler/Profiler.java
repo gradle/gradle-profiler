@@ -36,8 +36,18 @@ import java.util.stream.Collectors;
 
 public class Profiler {
 
-    public static final Profiler NONE = new Profiler();
+    public static final Profiler NONE = new Profiler() {
+        @Override
+        public String toString() {
+            return "none";
+        }
+    };
     public static final Profiler JFR = new Profiler() {
+        @Override
+        public String toString() {
+            return "JFR";
+        }
+
         @Override
         public Object newConfigObject( OptionSet parsedOptions ) {
             return new JFRArgs(
@@ -71,6 +81,11 @@ public class Profiler {
         }
     };
     public static final Profiler HP = new Profiler() {
+        @Override
+        public String toString() {
+            return "Honest profiler";
+        }
+
         @Override
         public Object newConfigObject(final OptionSet parsedOptions) {
             File tmpLog = new File(System.getProperty("java.io.tmpdir"), "hp.log");
@@ -125,6 +140,11 @@ public class Profiler {
     };
     public static final Profiler BUILDSCAN = new Profiler() {
         @Override
+        public String toString() {
+            return "buildscan";
+        }
+
+        @Override
         public ProfilerController newController(final String pid, final ScenarioSettings settings, final BuildInvoker invoker) {
             try {
                 return new BuildScanController(invoker, (String) settings.getInvocationSettings().getProfilerOptions());
@@ -147,6 +167,11 @@ public class Profiler {
     };
     public static final Profiler YOUR_KIT = new Profiler() {
         @Override
+        public String toString() {
+            return "YourKit";
+        }
+
+        @Override
         public ProfilerController newController(String pid, ScenarioSettings settings, BuildInvoker invoker) {
             return new YourKitProfilerController((YourKitConfig) settings.getInvocationSettings().getProfilerOptions());
         }
@@ -168,6 +193,11 @@ public class Profiler {
     };
 
     public static final Profiler CHROME_TRACE = new Profiler() {
+        @Override
+        public String toString() {
+            return "chrome-trace";
+        }
+
         @Override
         public ProfilerController newController(final String pid, final ScenarioSettings settings, final BuildInvoker invoker) {
             try {
@@ -236,6 +266,11 @@ public class Profiler {
 
         private CompositeProfiler(final List<Profiler> delegates) {
             this.delegates = delegates;
+        }
+
+        @Override
+        public String toString() {
+            return delegates.stream().map(Object::toString).collect(Collectors.joining(", "));
         }
 
         @Override

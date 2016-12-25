@@ -39,7 +39,8 @@ public class Main {
             Logging.detailed().println();
             Logging.detailed().println("* Started at " + started);
 
-            logSettings(settings);
+            Logging.startOperation("Settings");
+            settings.printTo(System.out);
 
             DaemonControl daemonControl = new DaemonControl(settings.getGradleUserHome());
             GradleVersionInspector gradleVersionInspector = new GradleVersionInspector(settings.getProjectDir(), settings.getGradleUserHome(), daemonControl);
@@ -266,31 +267,8 @@ public class Main {
     private void logScenarios(List<ScenarioDefinition> scenarios) {
         Logging.startOperation("Scenarios");
         for (ScenarioDefinition scenario : scenarios) {
-            System.out.println("Scenario: " + scenario.getName());
-            if (scenario instanceof GradleScenarioDefinition) {
-                GradleScenarioDefinition gradleScenario = (GradleScenarioDefinition) scenario;
-                System.out.println("  Gradle version: " + gradleScenario.getVersion().getVersion() + " (" + gradleScenario.getVersion().getGradleHome() + ")");
-                System.out.println("  Run using: " + gradleScenario.getInvoker());
-                System.out.println("  Cleanup Tasks: " + gradleScenario.getCleanupTasks());
-                System.out.println("  Tasks: " + gradleScenario.getTasks());
-                System.out.println("  Gradle args: " + gradleScenario.getGradleArgs());
-                if (!gradleScenario.getSystemProperties().isEmpty()) {
-                    System.out.println("  System properties:");
-                    for (Map.Entry<String, String> entry : gradleScenario.getSystemProperties().entrySet()) {
-                        System.out.println("    " + entry.getKey() + "=" + entry.getValue());
-                    }
-                }
-            } else if (scenario instanceof BuckScenarioDefinition) {
-                System.out.println("  Run using: buck");
-            }
-            System.out.println("  Build changes: " + scenario.getBuildMutator());
-            System.out.println("  Warm-ups: " + scenario.getWarmUpCount());
-            System.out.println("  Builds: " + scenario.getBuildCount());
+            scenario.printTo(System.out);
         }
-    }
-
-    private void logSettings(InvocationSettings settings) {
-        settings.printTo(System.out);
     }
 
     private static void checkPid(String expected, String actual, Invoker invoker) {

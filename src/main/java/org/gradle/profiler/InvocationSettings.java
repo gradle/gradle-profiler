@@ -115,11 +115,9 @@ public class InvocationSettings {
     }
     
     public void printTo(PrintStream out) {
-        out.println();
-        out.println("* Settings");
         out.println("Project dir: " + getProjectDir());
         out.println("Output dir: " + getOutputDir());
-        out.println("Profile: " + isProfile());
+        out.println("Profiler: " + getProfiler());
         out.println("Benchmark: " + isBenchmark());
         out.println("Versions: " + getVersions());
         out.println("Gradle User Home: " + getGradleUserHome());

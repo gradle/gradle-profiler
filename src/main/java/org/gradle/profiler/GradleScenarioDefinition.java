@@ -1,5 +1,6 @@
 package org.gradle.profiler;
 
+import java.io.PrintStream;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Supplier;
@@ -55,5 +56,20 @@ public class GradleScenarioDefinition extends ScenarioDefinition {
 
     public Map<String, String> getSystemProperties() {
         return systemProperties;
+    }
+
+    @Override
+    protected void printDetail(PrintStream out) {
+        out.println("  Gradle version: " + getVersion().getVersion() + " (" + getVersion().getGradleHome() + ")");
+        out.println("  Run using: " + getInvoker());
+        out.println("  Cleanup Tasks: " + getCleanupTasks());
+        out.println("  Tasks: " + getTasks());
+        out.println("  Gradle args: " + getGradleArgs());
+        if (!getSystemProperties().isEmpty()) {
+            out.println("  System properties:");
+            for (Map.Entry<String, String> entry : getSystemProperties().entrySet()) {
+                out.println("    " + entry.getKey() + "=" + entry.getValue());
+            }
+        }
     }
 }

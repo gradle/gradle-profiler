@@ -1,5 +1,6 @@
 package org.gradle.profiler;
 
+import java.io.PrintStream;
 import java.util.function.Supplier;
 
 public abstract class ScenarioDefinition {
@@ -33,5 +34,16 @@ public abstract class ScenarioDefinition {
 
     public int getBuildCount() {
         return buildCount;
+    }
+
+    public void printTo(PrintStream out) {
+        out.println("Scenario: " + getDisplayName());
+        printDetail(out);
+        out.println("  Build changes: " + getBuildMutator());
+        out.println("  Warm-ups: " + getWarmUpCount());
+        out.println("  Builds: " + getBuildCount());
+    }
+
+    protected void printDetail(PrintStream out) {
     }
 }

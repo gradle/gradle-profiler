@@ -42,7 +42,7 @@ public class BuildMutatorFactory implements Supplier<BuildMutator> {
         @Override
         public String toString()
         {
-            return "NONE";
+            return "none";
         }
     }
 
@@ -70,7 +70,7 @@ public class BuildMutatorFactory implements Supplier<BuildMutator> {
         @Override
         public String toString()
         {
-            return mutators.toString();
+            return mutators.stream().map(Object::toString).collect(Collectors.joining(", "));
         }
     }
 }
