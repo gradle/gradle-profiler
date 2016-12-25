@@ -940,6 +940,19 @@ help {
         then:
         logFile.contains("* Running scenario buildAll using buck (scenario 1/2)")
         logFile.contains("* Running scenario buildTarget using buck (scenario 2/2)")
+
+        resultFile.isFile()
+        resultFile.text.readLines().size() == 20 // 2 headers, 15 executions, 3 stats
+        resultFile.text.readLines().get(0) == "build,buildAll buck,buildTarget buck"
+        resultFile.text.readLines().get(1) == "tasks,,"
+        resultFile.text.readLines().get(2).matches("warm-up build 1,\\d+,\\d+")
+        resultFile.text.readLines().get(6).matches("warm-up build 5,\\d+,\\d+")
+        resultFile.text.readLines().get(7).matches("build 1,\\d+,\\d+")
+        resultFile.text.readLines().get(8).matches("build 2,\\d+,\\d+")
+        resultFile.text.readLines().get(16).matches("build 10,\\d+,\\d+")
+        resultFile.text.readLines().get(17).matches("mean,\\d+\\.\\d+,\\d+\\.\\d+")
+        resultFile.text.readLines().get(18).matches("median,\\d+\\.\\d+,\\d+\\.\\d+")
+        resultFile.text.readLines().get(19).matches("stddev,\\d+\\.\\d+,\\d+\\.\\d+")
     }
 
     def "cannot profile a buck build"() {
