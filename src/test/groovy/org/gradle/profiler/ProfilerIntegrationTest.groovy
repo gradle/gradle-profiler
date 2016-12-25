@@ -939,7 +939,7 @@ help {
 
         then:
         logFile.contains("* Running scenario buildAll using buck (scenario 1/2)")
-        logFile.contains("* Buck targets: [//target/android_binary_1, //target/android_binary_2, //target/android_binary_3]")
+        logFile.contains("* Buck targets: [//target:android_binary_1, //target:android_binary_2, //target/child:android_binary_3, //target/child:android_binary_4]")
         logFile.contains("* Running scenario buildTarget using buck (scenario 2/2)")
         logFile.contains("* Buck targets: [//some/target]")
 
@@ -1026,11 +1026,13 @@ buildTarget {
     def writeBuckw() {
         def buckw = file("buckw")
         buckw.text = '''
+echo "[-] PARSING BUCK FILES...FINISHED 0.3s [100%]"
 if [ $1 == "targets" ]
 then
-    echo "//target/$3_1"
-    echo "//target/$3_2"
-    echo "//target/$3_3"
+    echo "//target:$3_1"
+    echo "//target:$3_2"
+    echo "//target/child:$3_3"
+    echo "//target/child:$3_4"
 else 
     echo "building $@"
 fi

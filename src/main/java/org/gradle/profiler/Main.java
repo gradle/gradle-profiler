@@ -10,6 +10,7 @@ import java.time.Duration;
 import java.time.Instant;
 import java.util.*;
 import java.util.function.Consumer;
+import java.util.stream.Collectors;
 
 import static org.gradle.profiler.Logging.*;
 
@@ -216,7 +217,7 @@ public class Main {
         if (scenario.getType() != null) {
             Logging.startOperation("Query targets with type " + scenario.getType());
             String output = new CommandExec().inDir(settings.getProjectDir()).runAndCollectOutput(buckwExe, "targets", "--type", scenario.getType());
-            targets.addAll(Arrays.asList(output.split("\\n")));
+            targets.addAll(Arrays.stream(output.split("\\n")).filter(s -> s.matches("//\\w+.*")).collect(Collectors.toList()));
         }
 
         System.out.println();
