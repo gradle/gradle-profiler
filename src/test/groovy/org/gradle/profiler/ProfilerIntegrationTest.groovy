@@ -92,7 +92,7 @@ assemble {
         thrown(IllegalArgumentException)
 
         and:
-        output.contains("Unrecognized key 'assemble.gradle-version' defined for scenario 'assemble' in scenario file " + scenarioFile)
+        output.contains("Unrecognized key 'assemble.gradle-version' defined in scenario file " + scenarioFile)
     }
 
     def "reports build failures"() {
@@ -920,7 +920,7 @@ println "User home: \$gradle.gradleUserHomeDir"
 buildTarget {
     tasks = ["some:assemble"]
     buck {
-        target = "//some/target"
+        targets = "//some/target"
     }
 }
 buildAll {
@@ -939,7 +939,9 @@ help {
 
         then:
         logFile.contains("* Running scenario buildAll using buck (scenario 1/2)")
+        logFile.contains("* Buck targets: [//target/android_binary_1, //target/android_binary_2, //target/android_binary_3]")
         logFile.contains("* Running scenario buildTarget using buck (scenario 2/2)")
+        logFile.contains("* Buck targets: [//some/target]")
 
         resultFile.isFile()
         resultFile.text.readLines().size() == 20 // 2 headers, 15 executions, 3 stats
@@ -962,7 +964,7 @@ help {
         scenarios.text = """
 buildTarget {
     buck {
-        target = "//some/target"
+        targets = "//some/target"
     }
 }
 help {
@@ -988,7 +990,7 @@ help {
 buildTarget {
     tasks = ["help"]
     buck {
-        target = "//some/target"
+        targets = "//some/target"
     }
 }
 """
@@ -1009,7 +1011,7 @@ buildTarget {
 buildTarget {
     tasks = ["help"]
     buck {
-        target = "//some/target"
+        targets = "//some/target"
     }
 }
 """
@@ -1023,9 +1025,16 @@ buildTarget {
 
     def writeBuckw() {
         def buckw = file("buckw")
-        buckw.text = """
-echo "buck \$@"
-"""
+        buckw.text = '''
+if [ $1 == "targets" ]
+then
+    echo "//target/$3_1"
+    echo "//target/$3_2"
+    echo "//target/$3_3"
+else 
+    echo "building $@"
+fi
+'''
         buckw.executable = true
     }
 

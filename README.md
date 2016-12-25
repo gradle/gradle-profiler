@@ -106,7 +106,7 @@ Here is an example:
         run-using = no-daemon
 
         buck {
-            target = "//thing/res_debug"
+            targets = ["//thing/res_debug"]
             type = "android_binary"
         }
 

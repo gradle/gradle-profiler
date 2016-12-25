@@ -33,6 +33,7 @@ class ScenarioLoader {
         APPLY_API_CHANGE_TO, APPLY_ANDROID_RESOURCE_CHANGE_TO, APPLY_ANDROID_MANIFEST_CHANGE_TO,
         APPLY_PROPERTY_RESOURCE_CHANGE_TO, BUCK
     );
+    private static final List<String> BUCK_KEYS = Arrays.asList("targets", "type");
 
     private final GradleVersionInspector gradleVersionInspector;
 
@@ -74,7 +75,7 @@ class ScenarioLoader {
             Config scenario = config.getConfig(scenarioName);
             for (String key : config.getObject(scenarioName).keySet()) {
                 if (!ALL_SCENARIO_KEYS.contains(key)) {
-                    throw new IllegalArgumentException("Unrecognized key '" + scenarioName + "." + key + "' defined for scenario '" + scenarioName + "' in scenario file " + scenarioFile);
+                    throw new IllegalArgumentException("Unrecognized key '" + scenarioName + "." + key + "' defined in scenario file " + scenarioFile);
                 }
             }
 
@@ -107,7 +108,15 @@ class ScenarioLoader {
                 if (settings.isProfile()) {
                     throw new IllegalArgumentException("Can only profile scenario '" + scenarioName + "' when building using Gradle.");
                 }
-                definitions.add(new BuckScenarioDefinition(scenarioName, buildMutatorFactory, warmUpCount, settings.getBuildCount()));
+                Config executionInstructions = scenario.getConfig(BUCK);
+                for (String key : scenario.getObject(BUCK).keySet()) {
+                    if (!BUCK_KEYS.contains(key)) {
+                        throw new IllegalArgumentException("Unrecognized key '" + scenarioName + ".buck." + key + "' defined in scenario file " + scenarioFile);
+                    }
+                }
+                List<String> targets = strings(executionInstructions, "targets", Collections.emptyList());
+                String type = string(executionInstructions, "type", null);
+                definitions.add(new BuckScenarioDefinition(scenarioName, targets, type, buildMutatorFactory, warmUpCount, settings.getBuildCount()));
             } else if (!settings.isBuck()) {
                 List<GradleVersion> versions = strings(scenario, VERSIONS, settings.getVersions()).stream().map(v -> inspector.resolve(v)).collect(
                         Collectors.toList());

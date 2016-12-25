@@ -29,12 +29,13 @@ public abstract class BuildInvoker {
     public BuildInvocationResult runBuild(String displayName, List<String> tasks) {
         startOperation("Running " + displayName + " with tasks " + tasks);
 
-        Timer timer = new Timer();
         List<String> allGradleArgs = new ArrayList<>(gradleArgs.size() + initScripts.size());
         allGradleArgs.addAll(gradleArgs);
         for (GeneratedInitScript initScript : initScripts) {
             allGradleArgs.addAll(initScript.getArgs());
         }
+
+        Timer timer = new Timer();
         run(tasks, allGradleArgs, jvmArgs);
         Duration executionTime = timer.elapsed();
 

@@ -1,7 +1,6 @@
 package org.gradle.profiler;
 
-import java.io.IOException;
-import java.io.InputStream;
+import java.io.*;
 import java.util.Collection;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -9,6 +8,20 @@ import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 public class CommandExec {
+    private final File directory;
+
+    public CommandExec() {
+        this.directory = null;
+    }
+
+    private CommandExec(File directory) {
+        this.directory = directory;
+    }
+
+    public CommandExec inDir(File directory) {
+        return new CommandExec(directory);
+    }
+
     public void run(Collection<String> commandLine) {
         run(commandLine.toArray(new String[commandLine.size()]));
     }
@@ -18,7 +31,26 @@ public class CommandExec {
         run(processBuilder);
     }
 
+    public String runAndCollectOutput(String... commandLine) {
+        ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
+        try {
+            run(new ProcessBuilder(commandLine), outputStream);
+        } catch (RuntimeException e) {
+            System.out.print(new String(outputStream.toByteArray()));
+            throw e;
+        }
+        return new String(outputStream.toByteArray());
+    }
+
     public void run(ProcessBuilder processBuilder) {
+        OutputStream outputStream = Logging.detailed();
+        run(processBuilder, outputStream);
+    }
+
+    private void run(ProcessBuilder processBuilder, OutputStream outputStream) {
+        if (directory != null) {
+            processBuilder.directory(directory);
+        }
         String command = processBuilder.command().get(0);
         int result;
         try {
@@ -37,7 +69,11 @@ public class CommandExec {
                     if (nread < 0) {
                         break;
                     }
-                    Logging.detailed().write(buffer, 0, nread);
+                    try {
+                        outputStream.write(buffer, 0, nread);
+                    } catch (IOException e) {
+                        throw new RuntimeException("Could not write output from child process for command '" + command + "'", e);
+                    }
                 }
             });
             process.getOutputStream().close();

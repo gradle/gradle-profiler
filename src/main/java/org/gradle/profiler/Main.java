@@ -11,6 +11,8 @@ import java.time.Instant;
 import java.util.*;
 import java.util.function.Consumer;
 
+import static org.gradle.profiler.Logging.*;
+
 public class Main {
     public static void main(String[] args) throws Exception {
         boolean ok;
@@ -60,7 +62,7 @@ public class Main {
 
                 try {
                     if (scenario instanceof BuckScenarioDefinition) {
-                        runBuckScenario((BuckScenarioDefinition) scenario, benchmarkResults);
+                        runBuckScenario((BuckScenarioDefinition) scenario, settings, benchmarkResults);
                     } else {
                         runGradleScenario((GradleScenarioDefinition)scenario, settings, daemonControl, benchmarkResults, pidInstrumentation, resultsFile);
                     }
@@ -206,17 +208,48 @@ public class Main {
         }
     }
 
-    private void runBuckScenario(BuckScenarioDefinition scenario, BenchmarkResults benchmarkResults) throws IOException {
+    private void runBuckScenario(BuckScenarioDefinition scenario, InvocationSettings settings, BenchmarkResults benchmarkResults) throws IOException {
+        String buckwExe = settings.getProjectDir() + "/buckw";
+        List<String> targets = new ArrayList<>();
+        targets.addAll(scenario.getTargets());
+        if (scenario.getType() != null) {
+            Logging.startOperation("Query targets with type " + scenario.getType());
+            String output = new CommandExec().inDir(settings.getProjectDir()).runAndCollectOutput(buckwExe, "targets", "--type", scenario.getType());
+            targets.addAll(Arrays.asList(output.split("\\n")));
+        }
+
+        System.out.println();
+        System.out.println("* Buck targets: " + targets);
+
+        List<String> commandLine = new ArrayList<>();
+        commandLine.add(buckwExe);
+        commandLine.add("build");
+        commandLine.addAll(targets);
+
         BuildMutator mutator = scenario.getBuildMutator().get();
         try {
             Consumer<BuildInvocationResult> resultConsumer = benchmarkResults.version(scenario);
             for (int i = 0; i < scenario.getWarmUpCount(); i++) {
+                String displayName = "warm-up build " + (i + 1);
                 mutator.beforeBuild();
-                resultConsumer.accept(new BuildInvocationResult("warm-up build " + (i + 1), Duration.ZERO, null));
+
+                startOperation("Running " + displayName);
+                Timer timer = new Timer();
+                new CommandExec().run(commandLine);
+                Duration executionTime = timer.elapsed();
+                System.out.println("Execution time " + executionTime.toMillis() + "ms");
+                resultConsumer.accept(new BuildInvocationResult(displayName, executionTime, null));
             }
             for (int i = 0; i < scenario.getBuildCount(); i++) {
+                String displayName = "build " + (i + 1);
                 mutator.beforeBuild();
-                resultConsumer.accept(new BuildInvocationResult("build " + (i + 1), Duration.ZERO, null));
+
+                startOperation("Running " + displayName);
+                Timer timer = new Timer();
+                new CommandExec().run(commandLine);
+                Duration executionTime = timer.elapsed();
+                System.out.println("Execution time " + executionTime.toMillis() + "ms");
+                resultConsumer.accept(new BuildInvocationResult(displayName, executionTime, null));
             }
         } finally {
             mutator.cleanup();
@@ -236,7 +269,7 @@ public class Main {
             System.out.println("Scenario: " + scenario.getName());
             if (scenario instanceof GradleScenarioDefinition) {
                 GradleScenarioDefinition gradleScenario = (GradleScenarioDefinition) scenario;
-                System.out.println("  Gradle version: " + gradleScenario.getVersion() + " (" + gradleScenario.getVersion().getGradleHome() + ")");
+                System.out.println("  Gradle version: " + gradleScenario.getVersion().getVersion() + " (" + gradleScenario.getVersion().getGradleHome() + ")");
                 System.out.println("  Run using: " + gradleScenario.getInvoker());
                 System.out.println("  Cleanup Tasks: " + gradleScenario.getCleanupTasks());
                 System.out.println("  Tasks: " + gradleScenario.getTasks());
