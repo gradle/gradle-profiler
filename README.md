@@ -107,7 +107,7 @@ Here is an example:
 
         buck {
             targets = ["//thing/res_debug"]
-            type = "android_binary"
+            type = "android_binary" // can be a Buck build rule type or "all"
         }
 
         warm-ups = 10

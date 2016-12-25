@@ -935,10 +935,16 @@ buildTarget {
         targets = "//some/target"
     }
 }
-buildAll {
+buildType {
     tasks = ["assemble"]
     buck {
         type = "android_binary"
+    }
+}
+buildAll {
+    tasks = ["assemble"]
+    buck {
+        type = "all"
     }
 }
 help {
@@ -950,23 +956,26 @@ help {
         new Main().run("--project-dir", projectDir.absolutePath, "--output-dir", outputDir.absolutePath, "--benchmark", "--scenario-file", scenarios.absolutePath, "--buck")
 
         then:
-        logFile.contains("* Running scenario buildAll using buck (scenario 1/2)")
-        logFile.contains("* Buck targets: [//target:android_binary_1, //target:android_binary_2, //target/child:android_binary_3, //target/child:android_binary_4]")
-        logFile.contains("* Running scenario buildTarget using buck (scenario 2/2)")
+        logFile.contains("* Running scenario buildAll using buck (scenario 1/3)")
+        logFile.contains("* Buck targets: [//target:android_binary, //target:java_library, //target:cpp_library, //target/child:android_library, //target/child:cpp_library]")
+        logFile.contains("* Running scenario buildTarget using buck (scenario 2/3)")
         logFile.contains("* Buck targets: [//some/target]")
+        logFile.contains("* Running scenario buildType using buck (scenario 3/3)")
+        logFile.contains("* Buck targets: [//target:android_binary_1, //target:android_binary_2, //target/child:android_binary_3, //target/child:android_binary_4]")
 
         resultFile.isFile()
         resultFile.text.readLines().size() == 20 // 2 headers, 15 executions, 3 stats
-        resultFile.text.readLines().get(0) == "build,buildAll buck,buildTarget buck"
-        resultFile.text.readLines().get(1) == "tasks,,"
-        resultFile.text.readLines().get(2).matches("warm-up build 1,\\d+,\\d+")
-        resultFile.text.readLines().get(6).matches("warm-up build 5,\\d+,\\d+")
-        resultFile.text.readLines().get(7).matches("build 1,\\d+,\\d+")
-        resultFile.text.readLines().get(8).matches("build 2,\\d+,\\d+")
-        resultFile.text.readLines().get(16).matches("build 10,\\d+,\\d+")
-        resultFile.text.readLines().get(17).matches("mean,\\d+\\.\\d+,\\d+\\.\\d+")
-        resultFile.text.readLines().get(18).matches("median,\\d+\\.\\d+,\\d+\\.\\d+")
-        resultFile.text.readLines().get(19).matches("stddev,\\d+\\.\\d+,\\d+\\.\\d+")
+        resultFile.text.readLines().get(0) == "build,buildAll buck,buildTarget buck,buildType buck"
+        resultFile.text.readLines().get(1) == "tasks,,,"
+        resultFile.text.readLines().get(2).matches("warm-up build 1,\\d+,\\d+,\\d+")
+        resultFile.text.readLines().get(6).matches("warm-up build 5,\\d+,\\d+,\\d+")
+        resultFile.text.readLines().get(7).matches("build 1,\\d+,\\d+,\\d+")
+        resultFile.text.readLines().get(8).matches("build 2,\\d+,\\d+,\\d+")
+        resultFile.text.readLines().get(16).matches("build 10,\\d+,\\d+,\\d+")
+
+        resultFile.text.readLines().get(17).matches("mean,\\d+\\.\\d+,\\d+\\.\\d+,\\d+\\.\\d+")
+        resultFile.text.readLines().get(18).matches("median,\\d+\\.\\d+,\\d+\\.\\d+,\\d+\\.\\d+")
+        resultFile.text.readLines().get(19).matches("stddev,\\d+\\.\\d+,\\d+\\.\\d+,\\d+\\.\\d+")
     }
 
     def "cannot profile a buck build"() {
@@ -1041,10 +1050,19 @@ buildTarget {
 echo "[-] PARSING BUCK FILES...FINISHED 0.3s [100%]"
 if [ $1 == "targets" ]
 then
-    echo "//target:$3_1"
-    echo "//target:$3_2"
-    echo "//target/child:$3_3"
-    echo "//target/child:$3_4"
+    if [ "$2" == "--type" ]
+    then
+        echo "//target:$3_1"
+        echo "//target:$3_2"
+        echo "//target/child:$3_3"
+        echo "//target/child:$3_4"
+    else 
+        echo "//target:android_binary"
+        echo "//target:java_library"
+        echo "//target:cpp_library"
+        echo "//target/child:android_library"
+        echo "//target/child:cpp_library"
+    fi
 else 
     echo "building $@"
 fi

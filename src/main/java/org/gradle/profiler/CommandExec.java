@@ -2,6 +2,7 @@ package org.gradle.profiler;
 
 import java.io.*;
 import java.util.Collection;
+import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
@@ -29,6 +30,10 @@ public class CommandExec {
     public void run(String... commandLine) {
         ProcessBuilder processBuilder = new ProcessBuilder(commandLine);
         run(processBuilder);
+    }
+
+    public String runAndCollectOutput(List<String> commandLine) {
+        return runAndCollectOutput(commandLine.toArray(new String[commandLine.size()]));
     }
 
     public String runAndCollectOutput(String... commandLine) {

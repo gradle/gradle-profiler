@@ -216,7 +216,14 @@ public class Main {
         targets.addAll(scenario.getTargets());
         if (scenario.getType() != null) {
             Logging.startOperation("Query targets with type " + scenario.getType());
-            String output = new CommandExec().inDir(settings.getProjectDir()).runAndCollectOutput(buckwExe, "targets", "--type", scenario.getType());
+            List<String> commandLine = new ArrayList<>();
+            commandLine.add(buckwExe);
+            commandLine.add("targets");
+            if (!scenario.getType().equals("all")) {
+                commandLine.add("--type");
+                commandLine.add(scenario.getType());
+            }
+            String output = new CommandExec().inDir(settings.getProjectDir()).runAndCollectOutput(commandLine);
             targets.addAll(Arrays.stream(output.split("\\n")).filter(s -> s.matches("//\\w+.*")).collect(Collectors.toList()));
         }
 
