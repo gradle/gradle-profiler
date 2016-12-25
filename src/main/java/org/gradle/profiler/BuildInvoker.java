@@ -66,4 +66,10 @@ public abstract class BuildInvoker {
             throw e;
         }
     }
+
+    public BuildInvoker notInstrumented() {
+        return copy(jvmArgs, gradleArgs, pidInstrumentation, buildInvocationResult -> { });
+    }
+
+    protected abstract BuildInvoker copy(List<String> jvmArgs, List<String> gradleArgs, PidInstrumentation pidInstrumentation, Consumer<BuildInvocationResult> resultsConsumer);
 }

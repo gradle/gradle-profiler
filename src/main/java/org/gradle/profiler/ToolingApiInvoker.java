@@ -15,6 +15,11 @@ public class ToolingApiInvoker extends BuildInvoker {
     }
 
     @Override
+    protected BuildInvoker copy(List<String> jvmArgs, List<String> gradleArgs, PidInstrumentation pidInstrumentation, Consumer<BuildInvocationResult> resultsConsumer) {
+        return new ToolingApiInvoker(projectConnection, jvmArgs, gradleArgs, pidInstrumentation, resultsConsumer);
+    }
+
+    @Override
     protected void run(List<String> tasks, List<String> gradleArgs, List<String> jvmArgs) {
         run(projectConnection.newBuild(), build -> {
             build.forTasks(tasks.toArray(new String[0]));

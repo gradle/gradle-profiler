@@ -440,7 +440,13 @@ println "<daemon: " + gradle.services.get(org.gradle.internal.environment.Gradle
         resultFile.isFile()
         resultFile.text.readLines().get(0) == "build,help ${gradleVersion}"
         resultFile.text.readLines().get(1) == "tasks,help"
-        resultFile.text.readLines().size() == 36
+        resultFile.text.readLines().get(2).matches("initial clean build,\\d+")
+        resultFile.text.readLines().get(3).matches("warm-up build 1,\\d+")
+        resultFile.text.readLines().get(7).matches("warm-up build 5,\\d+")
+        resultFile.text.readLines().get(8).matches("build 1,\\d+")
+        resultFile.text.readLines().get(9).matches("build 2,\\d+")
+        resultFile.text.readLines().get(17).matches("build 10,\\d+")
+        resultFile.text.readLines().size() == 21 // 2 headers, 16 executions, 3 stats
     }
 
     def "runs benchmarks using single scenario defined in scenario file"() {

@@ -260,7 +260,7 @@ public class Main {
 
     private void beforeBuild(BuildInvoker invoker, List<String> cleanupTasks, BuildMutator mutator) throws IOException {
         if (!cleanupTasks.isEmpty()) {
-            invoker.runBuild("cleanup ", cleanupTasks);
+            invoker.notInstrumented().runBuild("cleanup ", cleanupTasks);
         }
         mutator.beforeBuild();
     }

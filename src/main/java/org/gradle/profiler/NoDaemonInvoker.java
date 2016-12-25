@@ -19,6 +19,11 @@ public class NoDaemonInvoker extends BuildInvoker {
     }
 
     @Override
+    protected BuildInvoker copy(List<String> jvmArgs, List<String> gradleArgs, PidInstrumentation pidInstrumentation, Consumer<BuildInvocationResult> resultsConsumer) {
+        return new NoDaemonInvoker(gradleVersion, javaHome, projectDir, jvmArgs, gradleArgs, pidInstrumentation, resultsConsumer);
+    }
+
+    @Override
     protected void run(List<String> tasks, List<String> gradleArgs, List<String> jvmArgs) {
         List<String> commandLine = new ArrayList<>();
         gradleVersion.addGradleCommand(commandLine);
