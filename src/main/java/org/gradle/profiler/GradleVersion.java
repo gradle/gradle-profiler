@@ -27,6 +27,7 @@ class GradleVersion {
     public void runGradle(String... arguments) {
         List<String> commandLine = new ArrayList<>();
         addGradleCommand(commandLine);
+        commandLine.addAll(Arrays.asList(arguments));
         new CommandExec().run(commandLine);
     }
 
