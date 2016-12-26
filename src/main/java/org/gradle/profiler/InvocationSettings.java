@@ -95,7 +95,7 @@ public class InvocationSettings {
             return 1;
         }
         if (benchmark) {
-            return 5;
+            return 6;
         }
         return 2;
     }
