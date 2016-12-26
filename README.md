@@ -77,10 +77,11 @@ and each of these is used to benchmark the build, allowing you to compare the be
 A scenario can define changes that should be applied to the source and reverted in alternating builds. You can use this to benchmark or profile an incremental build.
 Mutations that are available:
 
-- Add a public method to a Java source class
+- Add a public method to a Java source class.
+- Change the body of a public method in a Java source class.
 - Add an entry to a properties file.
 - Add a string resource to an Android resource file.
-- Change an Android manifest file.
+- Add a permission to an Android manifest file.
 
 ## Scenario file
 
@@ -102,8 +103,7 @@ Here is an example:
             key = "value"
         }
         cleanup-tasks = ["clean"]
-        // value can be "no-daemon" or "tooling-api"
-        run-using = no-daemon
+        run-using = no-daemon // value can be "no-daemon" or "tooling-api"
 
         buck {
             targets = ["//thing/res_debug"]
@@ -113,6 +113,7 @@ Here is an example:
         warm-ups = 10
         
         apply-abi-change-to = "src/main/java/MyThing.java"
+        apply-non-abi-change-to = "src/main/java/MyThing.java"
         apply-property-resource-change-to = "src/main/resources/thing.properties"
         apply-android-resource-change-to = "src/main/res/value/strings.xml"
         apply-android-manifest-change-to = "src/main/AndroidManifest.xml"

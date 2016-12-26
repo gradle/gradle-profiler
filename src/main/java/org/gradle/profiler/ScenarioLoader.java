@@ -4,10 +4,7 @@ import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
 import com.typesafe.config.ConfigParseOptions;
 import com.typesafe.config.ConfigValue;
-import org.gradle.profiler.mutations.ApplyAbiChangeToJavaSourceFileMutator;
-import org.gradle.profiler.mutations.ApplyChangeToAndroidResourceFileMutator;
-import org.gradle.profiler.mutations.ApplyChangeToPropertyResourceFileMutator;
-import org.gradle.profiler.mutations.ApplyChangeToAndroidManifestFileMutator;
+import org.gradle.profiler.mutations.*;
 
 import java.io.File;
 import java.util.*;
@@ -23,17 +20,18 @@ class ScenarioLoader {
     private static final String SYSTEM_PROPERTIES = "system-properties";
     private static final String BUCK = "buck";
     private static final String WARM_UP_COUNT = "warm-ups";
-    private static final String APPLY_API_CHANGE_TO = "apply-abi-change-to";
+    private static final String APPLY_ABI_CHANGE_TO = "apply-abi-change-to";
+    private static final String APPLY_NON_ABI_CHANGE_TO = "apply-non-abi-change-to";
     private static final String APPLY_ANDROID_RESOURCE_CHANGE_TO = "apply-android-resource-change-to";
     private static final String APPLY_PROPERTY_RESOURCE_CHANGE_TO = "apply-property-resource-change-to";
     private static final String APPLY_ANDROID_MANIFEST_CHANGE_TO = "apply-android-manifest-change-to";
+    private static final String TARGETS = "targets";
+    private static final String TYPE = "type";
 
     private static final List<String> ALL_SCENARIO_KEYS = Arrays.asList(
-        VERSIONS, TASKS, CLEANUP_TASKS, GRADLE_ARGS, RUN_USING, SYSTEM_PROPERTIES, WARM_UP_COUNT,
-        APPLY_API_CHANGE_TO, APPLY_ANDROID_RESOURCE_CHANGE_TO, APPLY_ANDROID_MANIFEST_CHANGE_TO,
-        APPLY_PROPERTY_RESOURCE_CHANGE_TO, BUCK
+        VERSIONS, TASKS, CLEANUP_TASKS, GRADLE_ARGS, RUN_USING, SYSTEM_PROPERTIES, WARM_UP_COUNT, APPLY_ABI_CHANGE_TO, APPLY_NON_ABI_CHANGE_TO, APPLY_ANDROID_RESOURCE_CHANGE_TO, APPLY_ANDROID_MANIFEST_CHANGE_TO, APPLY_PROPERTY_RESOURCE_CHANGE_TO, BUCK
     );
-    private static final List<String> BUCK_KEYS = Arrays.asList("targets", "type");
+    private static final List<String> BUCK_KEYS = Arrays.asList(TARGETS, TYPE);
 
     private final GradleVersionInspector gradleVersionInspector;
 
@@ -82,25 +80,11 @@ class ScenarioLoader {
             int warmUpCount = integer(scenario, WARM_UP_COUNT, settings.getWarmUpCount());
 
             List<Supplier<BuildMutator>> mutators = new ArrayList<>();
-            File sourceFileToChange = sourceFile(scenario, APPLY_API_CHANGE_TO, scenarioName, settings.getProjectDir());
-            if (sourceFileToChange != null) {
-                mutators.add(() -> new ApplyAbiChangeToJavaSourceFileMutator(sourceFileToChange));
-            }
-
-            File resourceFileToChange = sourceFile(scenario, APPLY_ANDROID_RESOURCE_CHANGE_TO, scenarioName, settings.getProjectDir());
-            if (resourceFileToChange != null) {
-                mutators.add(() -> new ApplyChangeToAndroidResourceFileMutator(resourceFileToChange));
-            }
-
-            File androidManifestToChange = sourceFile(scenario, APPLY_ANDROID_MANIFEST_CHANGE_TO, scenarioName, settings.getProjectDir());
-            if(androidManifestToChange != null) {
-                mutators.add(() -> new ApplyChangeToAndroidManifestFileMutator(androidManifestToChange));
-            }
-
-            File classpathResourceFileToChange = sourceFile(scenario, APPLY_PROPERTY_RESOURCE_CHANGE_TO, scenarioName, settings.getProjectDir());
-            if (classpathResourceFileToChange != null) {
-                mutators.add(() -> new ApplyChangeToPropertyResourceFileMutator(classpathResourceFileToChange));
-            }
+            maybeAddMutator(scenario, scenarioName, settings.getProjectDir(), APPLY_ABI_CHANGE_TO, ApplyAbiChangeToJavaSourceFileMutator.class, mutators);
+            maybeAddMutator(scenario, scenarioName, settings.getProjectDir(), APPLY_NON_ABI_CHANGE_TO, ApplyNonAbiChangeToJavaSourceFileMutator.class, mutators);
+            maybeAddMutator(scenario, scenarioName, settings.getProjectDir(), APPLY_ANDROID_RESOURCE_CHANGE_TO, ApplyChangeToAndroidResourceFileMutator.class, mutators);
+            maybeAddMutator(scenario, scenarioName, settings.getProjectDir(), APPLY_ANDROID_MANIFEST_CHANGE_TO, ApplyChangeToAndroidManifestFileMutator.class, mutators);
+            maybeAddMutator(scenario, scenarioName, settings.getProjectDir(), APPLY_PROPERTY_RESOURCE_CHANGE_TO, ApplyChangeToPropertyResourceFileMutator.class, mutators);
 
             BuildMutatorFactory buildMutatorFactory = new BuildMutatorFactory(mutators);
 
@@ -114,8 +98,8 @@ class ScenarioLoader {
                         throw new IllegalArgumentException("Unrecognized key '" + scenarioName + ".buck." + key + "' defined in scenario file " + scenarioFile);
                     }
                 }
-                List<String> targets = strings(executionInstructions, "targets", Collections.emptyList());
-                String type = string(executionInstructions, "type", null);
+                List<String> targets = strings(executionInstructions, TARGETS, Collections.emptyList());
+                String type = string(executionInstructions, TYPE, null);
                 definitions.add(new BuckScenarioDefinition(scenarioName, targets, type, buildMutatorFactory, warmUpCount, settings.getBuildCount()));
             } else if (!settings.isBuck()) {
                 List<GradleVersion> versions = strings(scenario, VERSIONS, settings.getVersions()).stream().map(v -> inspector.resolve(v)).collect(
@@ -137,6 +121,19 @@ class ScenarioLoader {
         }
 
         return definitions;
+    }
+
+    private void maybeAddMutator(Config scenario, String scenarioName, File projectDir, String key, Class<? extends AbstractFileChangeMutator> mutatorClass, List<Supplier<BuildMutator>> mutators) {
+        File sourceFileToChange = sourceFile(scenario, key, scenarioName, projectDir);
+        if (sourceFileToChange != null) {
+            mutators.add(() -> {
+                try {
+                    return mutatorClass.getConstructor(File.class).newInstance(sourceFileToChange);
+                } catch (Exception e) {
+                    throw new RuntimeException("Could not create instance of mutator " + mutatorClass.getSimpleName(), e);
+                }
+            });
+        }
     }
 
     File sourceFile(Config config, String key, String scenarioName, File projectDir) {

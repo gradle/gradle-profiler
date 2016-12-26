@@ -792,7 +792,7 @@ println "<parallel: " + gradle.startParameter.parallelProjectExecutionEnabled + 
         true       | "--parallel" | "enable"
     }
 
-    def "applies and reverts changes to Java source file while running benchmark"() {
+    def "applies changes to Java source file while running benchmark"() {
         given:
         buildFile.text = """
 apply plugin: BasePlugin
@@ -827,7 +827,7 @@ classes {
         srcFile.text == originalText
     }
 
-    def "applies and reverts changes to Android resource file while running benchmark"() {
+    def "applies changes to Android resource file while running benchmark"() {
         given:
         buildFile.text = """
 apply plugin: BasePlugin
