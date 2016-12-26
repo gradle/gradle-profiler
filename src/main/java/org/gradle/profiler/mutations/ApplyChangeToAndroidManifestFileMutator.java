@@ -13,6 +13,6 @@ public class ApplyChangeToAndroidManifestFileMutator extends AbstractFileChangeM
         if (insertPos < 0) {
             throw new IllegalArgumentException("Cannot parse android manifest file " + sourceFile + " to apply changes");
         }
-        text.insert(insertPos, "<!-- " + getUniqueText() + " --!><permission android:name=\"com.acme.SOME_PERMISSION\"/>");
+        text.insert(insertPos, "<!-- " + getUniqueText() + " --><permission android:name=\"com.acme.SOME_PERMISSION\"/>");
     }
 }

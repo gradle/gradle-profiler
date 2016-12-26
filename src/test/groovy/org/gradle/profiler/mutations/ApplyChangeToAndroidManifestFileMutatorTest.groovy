@@ -18,19 +18,19 @@ class ApplyChangeToAndroidManifestFileMutatorTest extends Specification {
         mutator.beforeBuild()
 
         then:
-        sourceFile.text == '<manifest><!-- _1234_1 --!><permission android:name="com.acme.SOME_PERMISSION"/></manifest>'
+        sourceFile.text == '<manifest><!-- _1234_1 --><permission android:name="com.acme.SOME_PERMISSION"/></manifest>'
 
         when:
         mutator.beforeBuild()
 
         then:
-        sourceFile.text == '<manifest><!-- _1234_2 --!><permission android:name="com.acme.SOME_PERMISSION"/></manifest>'
+        sourceFile.text == '<manifest><!-- _1234_2 --><permission android:name="com.acme.SOME_PERMISSION"/></manifest>'
 
         when:
         mutator.beforeBuild()
 
         then:
-        sourceFile.text == '<manifest><!-- _1234_3 --!><permission android:name="com.acme.SOME_PERMISSION"/></manifest>'
+        sourceFile.text == '<manifest><!-- _1234_3 --><permission android:name="com.acme.SOME_PERMISSION"/></manifest>'
     }
 
     def "reverts changes when nothing has been applied"() {
