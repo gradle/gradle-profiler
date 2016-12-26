@@ -1,7 +1,7 @@
 package org.gradle.profiler.yjp;
 
-import org.gradle.profiler.InvocationSettings;
 import org.gradle.profiler.JvmArgsCalculator;
+import org.gradle.profiler.OperatingSystem;
 import org.gradle.profiler.ScenarioSettings;
 
 import java.io.File;
@@ -16,7 +16,7 @@ public class YourKitJvmArgsCalculator extends JvmArgsCalculator {
 
     @Override
     public void calculateJvmArgs(List<String> jvmArgs) {
-        if (!System.getProperty("os.name").toLowerCase().contains("os x")) {
+        if (!OperatingSystem.isMacOS()) {
             throw new IllegalArgumentException("YourKit is currently supported on OS X only.");
         }
         File yourKitHome = YourKit.findYourKitHome();

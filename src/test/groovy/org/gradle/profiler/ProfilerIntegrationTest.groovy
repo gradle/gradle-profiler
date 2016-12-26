@@ -1,6 +1,7 @@
 package org.gradle.profiler
 
 import org.gradle.profiler.bs.BuildScanInitScript
+import org.gradle.profiler.jprofiler.JProfiler
 import org.gradle.profiler.yjp.YourKit
 import org.junit.Rule
 import org.junit.rules.TemporaryFolder
@@ -240,6 +241,42 @@ println "<daemon: " + gradle.services.get(org.gradle.internal.environment.Gradle
         logFile.grep("<daemon: true").size() == 4
         logFile.grep("<tasks: [assemble]>").size() == 3
         assertBuildScanPublished(BuildScanInitScript.VERSION)
+    }
+
+    @Requires({ new File(JProfiler.getDefaultHomeDir()).exists() })
+    def "profiles build using JProfiler"() {
+        given:
+        buildFile.text = """
+apply plugin: BasePlugin
+"""
+
+        when:
+        new Main().
+                run("--project-dir", projectDir.absolutePath, "--output-dir", outputDir.absolutePath, "--gradle-version", gradleVersion, "--profile", "jprofiler",
+                        "assemble")
+
+        then:
+        def sessionDir = new File(outputDir, "default")
+        sessionDir.listFiles().find { it.name.matches("default.jps") }
+    }
+
+    @Requires({ new File(JProfiler.getDefaultHomeDir()).exists() })
+    def "profiles build using JProfiler with all supported options"() {
+        given:
+        buildFile.text = """
+apply plugin: BasePlugin
+"""
+
+        when:
+        new Main().
+                run("--project-dir", projectDir.absolutePath, "--output-dir", outputDir.absolutePath, "--gradle-version", gradleVersion, "--profile", "jprofiler",
+                        "--jprofiler-config", "instrumentation", "--jprofiler-alloc", "--jprofiler-monitors", "--jprofiler-heapdump",
+                        "--jprofiler-probes", "builtin.FileProbe,builtin.ClassLoaderProbe:+events",
+                        "assemble")
+
+        then:
+        def sessionDir = new File(outputDir, "default")
+        sessionDir.listFiles().find { it.name.matches("default.jps") }
     }
 
     def "profiles build using Build Scans overridden version specified Gradle version and tasks"() {

@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<config version="9.2">
+  <sessions>
+    <session id="1" name="Gradle Sampling" instrumentationType="3">
+      <filters>
+        <filter type="inclusive" name="org.gradle."/>
+      </filters>
+      <triggers/>
+      <probes/>
+    </session>
+  </sessions>
+</config>

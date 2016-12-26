@@ -15,8 +15,10 @@
  */
 package org.gradle.profiler;
 
+import joptsimple.ArgumentAcceptingOptionSpec;
 import joptsimple.OptionParser;
 import joptsimple.OptionSet;
+import joptsimple.OptionSpecBuilder;
 import org.gradle.profiler.bs.BuildScanController;
 import org.gradle.profiler.ct.ChromeTraceController;
 import org.gradle.profiler.hp.HonestProfilerArgs;
@@ -25,6 +27,10 @@ import org.gradle.profiler.hp.HonestProfilerJvmArgsCalculator;
 import org.gradle.profiler.jfr.JFRArgs;
 import org.gradle.profiler.jfr.JFRControl;
 import org.gradle.profiler.jfr.JFRJvmArgsCalculator;
+import org.gradle.profiler.jprofiler.JProfiler;
+import org.gradle.profiler.jprofiler.JProfilerConfig;
+import org.gradle.profiler.jprofiler.JProfilerController;
+import org.gradle.profiler.jprofiler.JProfilerJvmArgsCalculator;
 import org.gradle.profiler.yjp.YourKitConfig;
 import org.gradle.profiler.yjp.YourKitJvmArgsCalculator;
 import org.gradle.profiler.yjp.YourKitProfilerController;
@@ -167,6 +173,58 @@ public class Profiler {
         }
     };
 
+    public static final Profiler JPROFILER = new Profiler() {
+
+        private ArgumentAcceptingOptionSpec<String> homeDir;
+        private ArgumentAcceptingOptionSpec<String> configOption;
+        private ArgumentAcceptingOptionSpec<String> sessionIdOption;
+        private OptionSpecBuilder allocOption;
+        private OptionSpecBuilder monitorsOption;
+        private OptionSpecBuilder heapDumpOption;
+        private ArgumentAcceptingOptionSpec<String> probesOption;
+
+        @Override
+        public ProfilerController newController(String pid, ScenarioSettings settings, BuildInvoker invoker) {
+            return new JProfilerController(settings);
+        }
+
+        @Override
+        public JvmArgsCalculator newJvmArgsCalculator(ScenarioSettings settings) {
+            return new JProfilerJvmArgsCalculator(settings);
+        }
+
+        @Override
+        void addOptions(OptionParser parser) {
+            homeDir = parser.accepts("jprofiler-home", "JProfiler installation directory").availableIf("profile")
+                    .withOptionalArg().ofType(String.class).defaultsTo(JProfiler.getDefaultHomeDir());
+            configOption = parser.accepts("jprofiler-config", "JProfiler built-in configuration name (sampling|instrumentation)")
+                    .availableIf("profile").withOptionalArg().ofType(String.class).defaultsTo("sampling");
+            sessionIdOption = parser.accepts("jprofiler-session-id", "Use session with this id from the JProfiler installation instead of using the built-in config")
+                    .availableUnless("jprofiler-config").withOptionalArg().ofType(String.class);
+            allocOption = parser.accepts("jprofiler-alloc", "Record allocations")
+                    .availableIf("profile");
+            monitorsOption = parser.accepts("jprofiler-monitors", "Record monitor usage")
+                    .availableIf("profile");
+            heapDumpOption = parser.accepts("jprofiler-heapdump", "Trigger heap dump after a build")
+                    .availableIf("profile");
+            probesOption = parser.accepts("jprofiler-probes", "Record probes (builtin.FileProbe|builtin.SocketProbe|builtin.ProcessProbe|builtin.ClassLoaderProbe|builtin.ExceptionProbe, see Controller javadoc for the full list) separated by commas, add :+events to probe name to enable event recording")
+                    .availableIf("profile").withRequiredArg().ofType(String.class).withValuesSeparatedBy(',').defaultsTo(new String[0]);
+        }
+
+        @Override
+        public Object newConfigObject(OptionSet parsedOptions) {
+            return new JProfilerConfig(
+                    parsedOptions.valueOf(homeDir),
+                    parsedOptions.valueOf(configOption),
+                    parsedOptions.valueOf(sessionIdOption),
+                    parsedOptions.has(allocOption),
+                    parsedOptions.has(monitorsOption),
+                    parsedOptions.has(heapDumpOption),
+                    parsedOptions.valuesOf(probesOption));
+        }
+
+    };
+
     public static final Profiler CHROME_TRACE = new Profiler() {
         @Override
         public ProfilerController newController(final String pid, final ScenarioSettings settings, final BuildInvoker invoker) {
@@ -185,6 +243,7 @@ public class Profiler {
                 put("buildscan", BUILDSCAN);
                 put("chrome-trace", CHROME_TRACE);
                 put("yourkit", YOUR_KIT);
+                put("jprofiler", JPROFILER);
             }}
     );
 
