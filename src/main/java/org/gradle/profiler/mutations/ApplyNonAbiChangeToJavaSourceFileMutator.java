@@ -3,7 +3,7 @@ package org.gradle.profiler.mutations;
 import java.io.File;
 
 public class ApplyNonAbiChangeToJavaSourceFileMutator extends AbstractJavaSourceFileMutator {
-    protected ApplyNonAbiChangeToJavaSourceFileMutator(File sourceFile) {
+    public ApplyNonAbiChangeToJavaSourceFileMutator(File sourceFile) {
         super(sourceFile);
     }
 
