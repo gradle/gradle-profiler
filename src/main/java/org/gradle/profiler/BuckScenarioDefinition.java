@@ -1,5 +1,6 @@
 package org.gradle.profiler;
 
+import java.io.File;
 import java.io.PrintStream;
 import java.util.List;
 import java.util.function.Supplier;
@@ -8,8 +9,8 @@ public class BuckScenarioDefinition extends ScenarioDefinition {
     private final List<String> targets;
     private final String type;
 
-    public BuckScenarioDefinition(String scenarioName, List<String> targets, String type, Supplier<BuildMutator> buildMutator, int warmUpCount, int buildCount) {
-        super(scenarioName, buildMutator, warmUpCount, buildCount);
+    public BuckScenarioDefinition(String scenarioName, List<String> targets, String type, Supplier<BuildMutator> buildMutator, int warmUpCount, int buildCount, File outputDir) {
+        super(scenarioName, buildMutator, warmUpCount, buildCount, outputDir);
         this.targets = targets;
         this.type = type;
     }

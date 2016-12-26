@@ -95,6 +95,27 @@ assemble {
         output.contains("Unrecognized key 'assemble.gradle-version' defined in scenario file " + scenarioFile)
     }
 
+    def "complains when unknown scenario requested"() {
+        def scenarioFile = file("benchmark.conf")
+        scenarioFile.text = """
+assemble {
+    tasks = "assemble"
+}
+help {
+    tasks = "help"
+}
+"""
+
+        when:
+        new Main().run("--project-dir", projectDir.absolutePath, "--scenario-file", scenarioFile.absolutePath, "--profile", "jfr", "asmbl")
+
+        then:
+        thrown(IllegalArgumentException)
+
+        and:
+        output.contains("Unknown scenario 'asmbl' requested. Available scenarios are: assemble, help")
+    }
+
     def "reports build failures"() {
         given:
         buildFile.text = """
@@ -121,7 +142,7 @@ assemble.doFirst {
         output.contains("java.lang.RuntimeException: broken!")
     }
 
-    def "profiles build using specified Gradle version and tasks"() {
+    def "profiles build using JFR, specified Gradle version and tasks"() {
         given:
         buildFile.text = """
 apply plugin: BasePlugin
@@ -137,17 +158,42 @@ println "<daemon: " + gradle.services.get(org.gradle.internal.environment.Gradle
 
         then:
         // Probe version, 2 warm up, 1 build
+        logFile.contains("* Running scenario using Gradle $versionUnderTest (scenario 1/1)")
         logFile.grep("<gradle-version: $versionUnderTest>").size() == 4
         logFile.grep("<daemon: true").size() == 4
         logFile.grep("<tasks: [assemble]>").size() == 3
 
-        def profileFile = new File(outputDir, "default/profile.jfr")
+        def profileFile = new File(outputDir, "profile.jfr")
         profileFile.exists()
 
         where:
         versionUnderTest     | _
         gradleVersion        | _
         gradleNightlyVersion | _
+    }
+
+    def "profiles build using JFR, specified Gradle versions and tasks"() {
+        given:
+        buildFile.text = """
+apply plugin: BasePlugin
+println "<gradle-version: " + gradle.gradleVersion + ">"
+println "<tasks: " + gradle.startParameter.taskNames + ">"
+println "<daemon: " + gradle.services.get(org.gradle.internal.environment.GradleBuildEnvironment).longLivingProcess + ">"
+"""
+
+        when:
+        new Main().
+                run("--project-dir", projectDir.absolutePath, "--output-dir", outputDir.absolutePath, "--gradle-version", gradleVersion, "--gradle-version", "3.0", "--profile", "jfr", "assemble")
+
+        then:
+        // Probe version, 2 warm up, 1 build
+        logFile.contains("* Running scenario using Gradle $gradleVersion (scenario 1/2)")
+        logFile.contains("* Running scenario using Gradle 3.0 (scenario 2/2)")
+        logFile.grep("<gradle-version: $gradleVersion").size() == 4
+        logFile.grep("<gradle-version: 3.0").size() == 4
+
+        new File(outputDir, "$gradleVersion/profile.jfr").file
+        new File(outputDir, "3.0/profile.jfr").file
     }
 
     @Requires({
@@ -199,8 +245,7 @@ apply plugin: BasePlugin
                         "assemble")
 
         then:
-        def sessionDir = new File(outputDir, "default")
-        sessionDir.listFiles().find { it.name.matches("default-.+\\.snapshot") }
+        outputDir.listFiles().find { it.name.matches("default-.+\\.snapshot") }
     }
 
     @Requires({ YourKit.findYourKitHome() })
@@ -216,8 +261,7 @@ apply plugin: BasePlugin
                         "--yourkit-memory", "assemble")
 
         then:
-        def sessionDir = new File(outputDir, "default")
-        sessionDir.listFiles().find { it.name.matches("default-.+\\.snapshot") }
+        outputDir.listFiles().find { it.name.matches("default-.+\\.snapshot") }
     }
 
     def "profiles build using Build Scans, specified Gradle version and tasks"() {
@@ -294,7 +338,7 @@ println "<daemon: " + gradle.services.get(org.gradle.internal.environment.Gradle
         logFile.grep("<tasks: [assemble]>").size() == 3
         assertBuildScanPublished("1.2")
 
-        def profileFile = new File(outputDir, "default/profile.jfr")
+        def profileFile = new File(outputDir, "profile.jfr")
         profileFile.exists()
     }
 
@@ -321,7 +365,7 @@ println "<daemon: " + gradle.services.get(org.gradle.internal.environment.Gradle
 
         resultFile.isFile()
         resultFile.text.readLines().size() == 22 // 2 headers, 17 executions, 3 stats
-        resultFile.text.readLines().get(0) == "build,default ${gradleVersion}"
+        resultFile.text.readLines().get(0) == "build,${gradleVersion}"
         resultFile.text.readLines().get(1) == "tasks,assemble"
         resultFile.text.readLines().get(2).matches("initial clean build,\\d+")
         resultFile.text.readLines().get(3).matches("warm-up build 1,\\d+")
@@ -357,7 +401,7 @@ println "<daemon: " + gradle.services.get(org.gradle.internal.environment.Gradle
         logFile.grep("<tasks: [assemble]>").size() == 16
 
         resultFile.isFile()
-        resultFile.text.readLines().get(0) == "build,default ${gradleVersion}"
+        resultFile.text.readLines().get(0) == "build,${gradleVersion}"
         resultFile.text.readLines().get(1) == "tasks,assemble"
         resultFile.text.readLines().size() == 22 // 2 headers, 17 executions, 3 stats
     }
@@ -407,6 +451,79 @@ println "<daemon: " + gradle.services.get(org.gradle.internal.environment.Gradle
         resultFile.text.readLines().get(0) == "build,assemble 3.0,assemble ${gradleVersion},help ${gradleVersion}"
         resultFile.text.readLines().get(1) == "tasks,assemble,assemble,help"
         resultFile.text.readLines().size() == 22 // 2 headers, 17 executions, 3 stats
+    }
+
+    def "profiles scenarios defined in scenario file"() {
+        given:
+        def scenarioFile = file("benchmark.conf")
+        scenarioFile.text = """
+assemble {
+    tasks = assemble
+}
+help {
+    tasks = help
+}
+"""
+
+        buildFile.text = """
+apply plugin: BasePlugin
+println "<gradle-version: " + gradle.gradleVersion + ">"
+println "<tasks: " + gradle.startParameter.taskNames + ">"
+"""
+
+        when:
+        new Main().run("--project-dir", projectDir.absolutePath, "--output-dir", outputDir.absolutePath, "--scenario-file", scenarioFile.absolutePath,
+                "--profile", "jfr", "--gradle-version", gradleVersion)
+
+        then:
+        logFile.grep("<gradle-version: $gradleVersion>").size() == 7
+        logFile.grep("<tasks: [help]>").size() == 4
+        logFile.grep("<tasks: [assemble]>").size() == 3
+
+        logFile.contains("* Running scenario assemble using Gradle $gradleVersion (scenario 1/2)")
+        logFile.contains("* Running scenario help using Gradle $gradleVersion (scenario 2/2)")
+
+        new File(outputDir, "assemble/profile.jfr").file
+        new File(outputDir, "help/profile.jfr").file
+    }
+
+    def "profiles scenarios defined in scenario file using multiple Gradle versions"() {
+        given:
+        def scenarioFile = file("benchmark.conf")
+        scenarioFile.text = """
+assemble {
+    tasks = assemble
+}
+help {
+    tasks = help
+}
+"""
+
+        buildFile.text = """
+apply plugin: BasePlugin
+println "<gradle-version: " + gradle.gradleVersion + ">"
+println "<tasks: " + gradle.startParameter.taskNames + ">"
+"""
+
+        when:
+        new Main().run("--project-dir", projectDir.absolutePath, "--output-dir", outputDir.absolutePath, "--scenario-file", scenarioFile.absolutePath,
+                "--profile", "jfr", "--gradle-version", gradleVersion, "--gradle-version", "3.0")
+
+        then:
+        logFile.grep("<gradle-version: $gradleVersion>").size() == 7
+        logFile.grep("<gradle-version: 3.0>").size() == 7
+        logFile.grep("<tasks: [help]>").size() == 8
+        logFile.grep("<tasks: [assemble]>").size() == 6
+
+        logFile.contains("* Running scenario assemble using Gradle $gradleVersion (scenario 1/4)")
+        logFile.contains("* Running scenario assemble using Gradle 3.0 (scenario 2/4)")
+        logFile.contains("* Running scenario help using Gradle $gradleVersion (scenario 3/4)")
+        logFile.contains("* Running scenario help using Gradle 3.0 (scenario 4/4)")
+
+        new File(outputDir, "assemble/$gradleVersion/profile.jfr").file
+        new File(outputDir, "assemble/3.0/profile.jfr").file
+        new File(outputDir, "help/$gradleVersion/profile.jfr").file
+        new File(outputDir, "help/3.0/profile.jfr").file
     }
 
     def "runs cleanup tasks defined in scenario file"() {
@@ -563,7 +680,7 @@ assemble.doFirst {
 
         resultFile.isFile()
         resultFile.text.readLines().size() == 22 // 2 headers, 17 executions, 3 stats
-        resultFile.text.readLines().get(0) == "build,default ${gradleVersion},default 3.0"
+        resultFile.text.readLines().get(0) == "build,${gradleVersion},3.0"
         resultFile.text.readLines().get(1) == "tasks,assemble,assemble"
         resultFile.text.readLines().get(2).matches("initial clean build,\\d+,\\d+")
         resultFile.text.readLines().get(3).matches("warm-up build 1,\\d+,\\d+")
@@ -618,7 +735,7 @@ assemble.doFirst {
 
         resultFile.isFile()
         resultFile.text.readLines().size() == 22 // 2 headers, 17 executions, 3 stats
-        resultFile.text.readLines().get(0) == "build,default ${gradleVersion},default 3.0"
+        resultFile.text.readLines().get(0) == "build,${gradleVersion},3.0"
         resultFile.text.readLines().get(1) == "tasks,assemble,assemble"
         resultFile.text.readLines().get(2).matches("initial clean build,\\d+,\\d+")
         resultFile.text.readLines().get(3).matches("warm-up build 1,\\d+,\\d+")

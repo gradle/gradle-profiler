@@ -1,6 +1,5 @@
 package org.gradle.profiler.yjp;
 
-import org.gradle.profiler.InvocationSettings;
 import org.gradle.profiler.JvmArgsCalculator;
 import org.gradle.profiler.ScenarioSettings;
 
@@ -27,7 +26,7 @@ public class YourKitJvmArgsCalculator extends JvmArgsCalculator {
         if (!jnilib.isFile()) {
             throw new IllegalArgumentException("Could not locate YourKit library in YourKit home directory " + yourKitHome);
         }
-        String agentOptions = "-agentpath:" + jnilib.getAbsolutePath() + "=dir=" + settings.getScenarioOutputDir().getAbsolutePath() + ",sessionname=" + settings.getScenario().getName();
+        String agentOptions = "-agentpath:" + jnilib.getAbsolutePath() + "=dir=" + settings.getScenario().getOutputDir().getAbsolutePath() + ",sessionname=" + settings.getScenario().getName();
         YourKitConfig yourKitConfig = (YourKitConfig) settings.getInvocationSettings().getProfilerOptions();
         if (yourKitConfig.isMemorySnapshot()) {
             agentOptions += ",disabletracing";

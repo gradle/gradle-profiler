@@ -1,5 +1,6 @@
 package org.gradle.profiler;
 
+import java.io.File;
 import java.io.PrintStream;
 import java.util.List;
 import java.util.Map;
@@ -14,8 +15,8 @@ public class GradleScenarioDefinition extends ScenarioDefinition {
     private final List<String> gradleArgs;
     private final Map<String, String> systemProperties;
 
-    public GradleScenarioDefinition(String name, Invoker invoker, GradleVersion version, List<String> tasks, List<String> cleanupTasks, List<String> gradleArgs, Map<String, String> systemProperties, Supplier<BuildMutator> buildMutator, int warmUpCount, int buildCount) {
-        super(name, buildMutator, warmUpCount, buildCount);
+    public GradleScenarioDefinition(String name, Invoker invoker, GradleVersion version, List<String> tasks, List<String> cleanupTasks, List<String> gradleArgs, Map<String, String> systemProperties, Supplier<BuildMutator> buildMutator, int warmUpCount, int buildCount, File outputDir) {
+        super(name, buildMutator, warmUpCount, buildCount, outputDir);
         this.invoker = invoker;
         this.tasks = tasks;
         this.version = version;

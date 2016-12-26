@@ -59,7 +59,7 @@ public class Profiler {
         @Override
         public ProfilerController newController(final String pid, final ScenarioSettings settings, final BuildInvoker invoker) {
             JFRArgs jfrArgs = (JFRArgs) settings.getInvocationSettings().getProfilerOptions();
-            return new JFRControl(jfrArgs, pid, settings.getScenarioOutputDir());
+            return new JFRControl(jfrArgs, pid, settings.getScenario().getOutputDir());
         }
 
         @Override
@@ -106,7 +106,7 @@ public class Profiler {
         @Override
         public ProfilerController newController(final String pid, final ScenarioSettings settings, final BuildInvoker invoker) {
             HonestProfilerArgs args = (HonestProfilerArgs) settings.getInvocationSettings().getProfilerOptions();
-            return new HonestProfilerControl(args, settings.getScenarioOutputDir());
+            return new HonestProfilerControl(args, settings.getScenario().getOutputDir());
         }
 
         @Override
@@ -201,7 +201,7 @@ public class Profiler {
         @Override
         public ProfilerController newController(final String pid, final ScenarioSettings settings, final BuildInvoker invoker) {
             try {
-                return new ChromeTraceController(invoker, settings.getScenarioOutputDir());
+                return new ChromeTraceController(invoker, settings.getScenario().getOutputDir());
             } catch (IOException e) {
                 throw new RuntimeException(e);
             }

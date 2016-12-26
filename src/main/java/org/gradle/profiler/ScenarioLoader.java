@@ -57,7 +57,8 @@ class ScenarioLoader {
             versions.add(gradleVersionInspector.defaultVersion());
         }
         for (GradleVersion version : versions) {
-            scenarios.add(new GradleScenarioDefinition("default", settings.getInvoker(), version, settings.getTargets(), Collections.emptyList(), Collections.emptyList(), settings.getSystemProperties(), new BuildMutatorFactory(Collections.emptyList()), settings.getWarmUpCount(), settings.getBuildCount()));
+            File outputDir = versions.size() == 1 ? settings.getOutputDir() : new File(settings.getOutputDir(), version.getVersion());
+            scenarios.add(new AdhocGradleScenarioDefinition(version, settings.getInvoker(), settings.getTargets(), settings.getSystemProperties(), new BuildMutatorFactory(Collections.emptyList()), settings.getWarmUpCount(), settings.getBuildCount(), outputDir));
         }
         return scenarios;
     }
@@ -65,9 +66,13 @@ class ScenarioLoader {
     private List<ScenarioDefinition> loadScenarios(File scenarioFile, InvocationSettings settings, GradleVersionInspector inspector) {
         List<ScenarioDefinition> definitions = new ArrayList<>();
         Config config = ConfigFactory.parseFile(scenarioFile, ConfigParseOptions.defaults().setAllowMissing(false));
-        TreeSet<String> selectedScenarios = new TreeSet<>(config.root().keySet());
+        Set<String> selectedScenarios = new TreeSet<>(config.root().keySet());
         if (!settings.getTargets().isEmpty()) {
-            selectedScenarios.retainAll(settings.getTargets());
+            for (String target : settings.getTargets()) {
+                if (!selectedScenarios.contains(target)) {
+                    throw new IllegalArgumentException("Unknown scenario '" + target + "' requested. Available scenarios are: " + selectedScenarios.stream() .collect(Collectors.joining(", "))); }
+            }
+            selectedScenarios = new TreeSet<>(settings.getTargets());
         }
         for (String scenarioName : selectedScenarios) {
             Config scenario = config.getConfig(scenarioName);
@@ -100,7 +105,8 @@ class ScenarioLoader {
                 }
                 List<String> targets = strings(executionInstructions, TARGETS, Collections.emptyList());
                 String type = string(executionInstructions, TYPE, null);
-                definitions.add(new BuckScenarioDefinition(scenarioName, targets, type, buildMutatorFactory, warmUpCount, settings.getBuildCount()));
+                File outputDir = new File(settings.getOutputDir(), scenarioName + "-buck");
+                definitions.add(new BuckScenarioDefinition(scenarioName, targets, type, buildMutatorFactory, warmUpCount, settings.getBuildCount(), outputDir));
             } else if (!settings.isBuck()) {
                 List<GradleVersion> versions = strings(scenario, VERSIONS, settings.getVersions()).stream().map(v -> inspector.resolve(v)).collect(
                         Collectors.toList());
@@ -114,8 +120,9 @@ class ScenarioLoader {
                 Invoker invoker = invoker(scenario, RUN_USING, settings.getInvoker());
                 Map<String, String> systemProperties = map(scenario, SYSTEM_PROPERTIES, settings.getSystemProperties());
                 for (GradleVersion version : versions) {
+                    File outputDir = versions.size() == 1 ? new File(settings.getOutputDir(), scenarioName) : new File(settings.getOutputDir(), scenarioName + "/" + version.getVersion());
                     definitions.add(new GradleScenarioDefinition(scenarioName, invoker, version, tasks, cleanupTasks, gradleArgs, systemProperties,
-                            buildMutatorFactory, warmUpCount, settings.getBuildCount()));
+                            buildMutatorFactory, warmUpCount, settings.getBuildCount(), outputDir));
                 }
             }
         }

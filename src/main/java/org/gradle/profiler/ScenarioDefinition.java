@@ -1,5 +1,6 @@
 package org.gradle.profiler;
 
+import java.io.File;
 import java.io.PrintStream;
 import java.util.function.Supplier;
 
@@ -8,12 +9,14 @@ public abstract class ScenarioDefinition {
     private final Supplier<BuildMutator> buildMutator;
     private final int warmUpCount;
     private final int buildCount;
+    private final File outpuDir;
 
-    public ScenarioDefinition(String name, Supplier<BuildMutator> buildMutator, int warmUpCount, int buildCount) {
+    public ScenarioDefinition(String name, Supplier<BuildMutator> buildMutator, int warmUpCount, int buildCount, File outpuDir) {
         this.name = name;
         this.buildMutator = buildMutator;
         this.warmUpCount = warmUpCount;
         this.buildCount = buildCount;
+        this.outpuDir = outpuDir;
     }
 
     public abstract String getDisplayName();
@@ -22,6 +25,10 @@ public abstract class ScenarioDefinition {
 
     public String getName() {
         return name;
+    }
+
+    public File getOutputDir() {
+        return outpuDir;
     }
 
     public Supplier<BuildMutator> getBuildMutator() {

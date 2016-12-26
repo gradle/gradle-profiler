@@ -100,7 +100,7 @@ public class Main {
     private void runGradleScenario(GradleScenarioDefinition scenario,  InvocationSettings settings, DaemonControl daemonControl, BenchmarkResults benchmarkResults,
                                    PidInstrumentation pidInstrumentation, File resultsFile) throws IOException, InterruptedException {
         ScenarioSettings scenarioSettings = new ScenarioSettings(settings, scenario);
-        scenarioSettings.getScenarioOutputDir().mkdirs();
+        scenario.getOutputDir().mkdirs();
         JvmArgsCalculator jvmArgsCalculator = settings.isProfile() ? settings.getProfiler().newJvmArgsCalculator(scenarioSettings) : new JvmArgsCalculator();
 
         List<String> cleanupTasks = scenario.getCleanupTasks();
@@ -267,7 +267,7 @@ public class Main {
 
     private void beforeBuild(BuildInvoker invoker, List<String> cleanupTasks, BuildMutator mutator) throws IOException {
         if (!cleanupTasks.isEmpty()) {
-            invoker.notInstrumented().runBuild("cleanup ", cleanupTasks);
+            invoker.notInstrumented().runBuild("cleanup", cleanupTasks);
         }
         mutator.beforeBuild();
     }
