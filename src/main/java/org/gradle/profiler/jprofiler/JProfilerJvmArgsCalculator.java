@@ -6,8 +6,14 @@ import org.gradle.profiler.ScenarioSettings;
 
 import java.io.File;
 import java.io.IOException;
-import java.net.*;
-import java.nio.file.Paths;
+import java.io.InputStream;
+import java.net.InetSocketAddress;
+import java.net.ServerSocket;
+import java.net.SocketAddress;
+import java.net.URL;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.StandardCopyOption;
 import java.util.List;
 
 public class JProfilerJvmArgsCalculator extends JvmArgsCalculator {
@@ -94,10 +100,14 @@ public class JProfilerJvmArgsCalculator extends JvmArgsCalculator {
             if (resource == null) {
                 throw new RuntimeException("Classpath resource \"" + resourceName + "\" not found");
             } else {
-                return Paths.get(resource.toURI()).toFile();
+                Path tmpFile = Files.createTempFile("jprofiler", ".xml");
+                try (InputStream inputStream = resource.openStream()) {
+                    Files.copy(inputStream, tmpFile, StandardCopyOption.REPLACE_EXISTING);
+                }
+                return tmpFile.toFile();
             }
-        } catch (URISyntaxException e) {
-            throw new RuntimeException(e);
+        } catch (IOException e) {
+            throw new RuntimeException("Could not create JProfiler config file.", e);
         }
     }
 
