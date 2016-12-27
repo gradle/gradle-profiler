@@ -300,8 +300,7 @@ apply plugin: BasePlugin
                         "assemble")
 
         then:
-        def sessionDir = new File(outputDir, "default")
-        sessionDir.listFiles().find { it.name.matches("default.jps") }
+        outputDir.listFiles().find { it.name.matches("default.jps") }
     }
 
     @Requires({ new File(JProfiler.getDefaultHomeDir()).exists() })
@@ -319,8 +318,7 @@ apply plugin: BasePlugin
                         "assemble")
 
         then:
-        def sessionDir = new File(outputDir, "default")
-        sessionDir.listFiles().find { it.name.matches("default.jps") }
+        outputDir.listFiles().find { it.name.matches("default.jps") }
     }
 
     def "profiles build using Build Scans overridden version specified Gradle version and tasks"() {
