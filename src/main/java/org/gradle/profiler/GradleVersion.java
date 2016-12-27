@@ -7,8 +7,6 @@ import java.util.List;
 
 class GradleVersion {
 
-    private static final String OS = System.getProperty("os.name");
-
     private final String version;
     private final File gradleHome;
 
@@ -33,14 +31,10 @@ class GradleVersion {
     }
 
     public void addGradleCommand(List<String> commandLine) {
-        if (isWindows()) {
+        if (OperatingSystem.isWindows()) {
             commandLine.add("cmd.exe");
             commandLine.add("/C");
         }
         commandLine.add(new File(gradleHome, "bin/gradle").getAbsolutePath());
-    }
-
-    private static boolean isWindows() {
-        return OS.toLowerCase().startsWith("windows");
     }
 }
