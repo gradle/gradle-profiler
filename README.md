@@ -4,11 +4,12 @@ A tool to automate the gathering of profiling and benchmarking information for G
 
 Profiling information can be captured using one of several different tools:
 
-- Java flight recorder built into the Oracle JVM
-- Using [Honest Profiler](https://github.com/RichardWarburton/honest-profiler)
-- Using a [Gradle build scan](https://gradle.com)
-- Using YourKit profiler.
 - Produce chrome trace output showing build operations such as project configuration and task execution, along with CPU and heap metrics.
+- Using a [Gradle build scan](https://gradle.com)
+- Java flight recorder built into the Oracle JVM
+- Using [JProfiler](https://www.ej-technologies.com/products/jprofiler/overview.html). 
+- Using [YourKit](https://www.yourkit.com) profiler.
+- Using [Honest Profiler](https://github.com/RichardWarburton/honest-profiler)
 
 ## Installing
 
@@ -60,10 +61,11 @@ and each of these is used to benchmark the build, allowing you to compare the be
 - `--project-dir`: Directory containing the build to run (required).
 - `--benchmark`: Benchmark the build. Runs the builds more times and writes the results to a CSV file.
 - `--profile <profiler>`: Profile the build using the specified profiler. Can be used with or without `--benchmark`.
-    - `--profile jfr`: Profile using JFR
-    - `--profile hp`: Profile using [Honest Profiler](https://github.com/RichardWarburton/honest-profiler)
     - `--profile buildscan`: Profile by collecting a build scan
     - `--profile chrome-trace`: Profile by generating chrome trace output
+    - `--profile jfr`: Profile using JFR
+    - `--profile jprofiler`: Profile using JProfiler
+    - `--profile hp`: Profile using Honest Profiler
     - `--profile yourkit`: Profile using YourKit. By default, uses CPU tracing and writes a snapshot into the result directory. 
         `--yourkit-memory`: Produce a memory allocation snapshot instead of CPU tracing snapshot.
 - `--gradle-version <version>`: specifies a Gradle version or installation to use to run the builds, overriding the default for the build. Can specify multiple versions.
