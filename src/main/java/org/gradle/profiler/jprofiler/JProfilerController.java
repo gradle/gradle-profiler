@@ -38,6 +38,9 @@ public class JProfilerController implements ProfilerController {
             boolean specialRecording = config.getProbesWithSpecialRecording().contains(probeName);
             invoke("startProbeRecording", probeName, eventRecording, specialRecording);
         }
+        if (config.isHeapDump() && hasOperation("markHeap")) { // available in JProfiler 10
+            invoke("markHeap");
+        }
     }
 
     @Override
@@ -115,6 +118,16 @@ public class JProfilerController implements ProfilerController {
             return Integer.TYPE;
         } else {
             return c;
+        }
+    }
+
+    private boolean hasOperation(String operationName) throws IOException {
+        try {
+            ensureConnected();
+            return Arrays.stream(connection.getMBeanInfo(objectName).getOperations())
+                    .anyMatch(operationInfo -> operationInfo.getName().equals(operationName));
+        } catch (InstanceNotFoundException | ReflectionException | MalformedObjectNameException | IntrospectionException e) {
+            throw new RuntimeException(e);
         }
     }
 
