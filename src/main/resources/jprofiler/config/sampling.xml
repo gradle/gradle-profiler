@@ -3,7 +3,8 @@
   <sessions>
     <session id="1" name="Gradle Sampling" instrumentationType="3">
       <filters>
-        <filter type="inclusive" name="org.gradle."/>
+        <filter type="inclusive" name="*gradle*"/>
+        <filter type="inclusive" name="com.android."/>
       </filters>
       <triggers/>
       <probes/>
