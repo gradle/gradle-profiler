@@ -7,6 +7,7 @@ public class JProfilerConfig {
     private final String homeDir;
     private final String config;
     private final String sessionId;
+    private String configFile;
     private final boolean recordAlloc;
     private final boolean recordMonitors;
     private final List<String> recordedProbes;
@@ -16,9 +17,10 @@ public class JProfilerConfig {
 
     private int port;
 
-    public JProfilerConfig(String homeDir, String config, String sessionId, boolean recordAlloc, boolean recordMonitors, boolean heapDump, List<String> recordedProbeSpecs) {
+    public JProfilerConfig(String homeDir, String config, String sessionId, String configFile, boolean recordAlloc, boolean recordMonitors, boolean heapDump, List<String> recordedProbeSpecs) {
         this.homeDir = homeDir;
         this.sessionId = sessionId;
+        this.configFile = configFile;
         this.recordAlloc = recordAlloc;
         this.config = config;
         this.recordMonitors = recordMonitors;
@@ -58,6 +60,10 @@ public class JProfilerConfig {
 
     public String getSessionId() {
         return sessionId;
+    }
+
+    public String getConfigFile() {
+        return configFile;
     }
 
     public boolean isRecordAlloc() {

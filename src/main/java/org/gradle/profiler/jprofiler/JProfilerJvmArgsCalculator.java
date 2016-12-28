@@ -71,6 +71,10 @@ public class JProfilerJvmArgsCalculator extends JvmArgsCalculator {
         String sessionId = getJProfilerConfig().getSessionId();
         if (sessionId != null) {
             builder.append("id=").append(sessionId);
+            String configFile = getJProfilerConfig().getConfigFile();
+            if (configFile != null) {
+                builder.append(",config=").append(configFile);
+            }
         } else {
             builder.append("id=1,config=").append(getConfigFile());
         }
