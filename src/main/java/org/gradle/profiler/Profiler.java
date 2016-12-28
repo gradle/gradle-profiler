@@ -203,6 +203,7 @@ public class Profiler {
         private ArgumentAcceptingOptionSpec<String> homeDir;
         private ArgumentAcceptingOptionSpec<String> configOption;
         private ArgumentAcceptingOptionSpec<String> sessionIdOption;
+        private ArgumentAcceptingOptionSpec<String> configFileOption;
         private OptionSpecBuilder allocOption;
         private OptionSpecBuilder monitorsOption;
         private OptionSpecBuilder heapDumpOption;
@@ -222,10 +223,12 @@ public class Profiler {
         void addOptions(OptionParser parser) {
             homeDir = parser.accepts("jprofiler-home", "JProfiler installation directory").availableIf("profile")
                     .withOptionalArg().ofType(String.class).defaultsTo(JProfiler.getDefaultHomeDir());
-            configOption = parser.accepts("jprofiler-config", "JProfiler built-in configuration name (sampling|instrumentation)")
+            configOption = parser.accepts("jprofiler-config", "JProfiler built-in configuration name (sampling|sampling-all|instrumentation)")
                     .availableIf("profile").withOptionalArg().ofType(String.class).defaultsTo("sampling");
             sessionIdOption = parser.accepts("jprofiler-session-id", "Use session with this id from the JProfiler installation instead of using the built-in config")
-                    .availableUnless("jprofiler-config").withOptionalArg().ofType(String.class);
+                    .availableUnless("jprofiler-config").withRequiredArg().ofType(String.class);
+            configFileOption = parser.accepts("jprofiler-config-file", "Use another config file for --jprofiler-session-id instead of the global config file")
+                    .availableIf("jprofiler-session-id").withRequiredArg().ofType(String.class);
             allocOption = parser.accepts("jprofiler-alloc", "Record allocations")
                     .availableIf("profile");
             monitorsOption = parser.accepts("jprofiler-monitors", "Record monitor usage")
@@ -242,6 +245,7 @@ public class Profiler {
                     parsedOptions.valueOf(homeDir),
                     parsedOptions.valueOf(configOption),
                     parsedOptions.valueOf(sessionIdOption),
+                    parsedOptions.valueOf(configFileOption),
                     parsedOptions.has(allocOption),
                     parsedOptions.has(monitorsOption),
                     parsedOptions.has(heapDumpOption),
