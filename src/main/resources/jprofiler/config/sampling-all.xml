@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<config version="9.2">
+  <sessions>
+    <session id="1" name="Gradle Sampling No Filters" instrumentationType="3" samplingNoFilters="true">
+      <filters/>
+      <triggers/>
+      <probes/>
+    </session>
+  </sessions>
+</config>
