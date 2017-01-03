@@ -62,7 +62,7 @@ and each of these is used to benchmark the build, allowing you to compare the be
 - `--benchmark`: Benchmark the build. Runs the builds more times and writes the results to a CSV file.
 - `--profile <profiler>`: Profile the build using the specified profiler. Can be used with or without `--benchmark`.
     - `--profile buildscan`: Profile by collecting a build scan
-    - `--profile chrome-trace`: Profile by generating chrome trace output
+    - `--profile chrome-trace`: Profile by generating chrome trace output. Note that using chrome-trace requires Gradle 3.3+.
     - `--profile jfr`: Profile using JFR
     - `--profile jprofiler`: Profile using JProfiler
     - `--profile hp`: Profile using Honest Profiler
