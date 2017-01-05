@@ -2,7 +2,7 @@
 
 A tool to automate the gathering of profiling and benchmarking information for Gradle builds. 
 
-Profiling information can be captured using one of several different tools:
+Profiling information can be captured using several different tools:
 
 - Produce chrome trace output showing build operations such as project configuration and task execution, along with CPU and heap metrics.
 - Using a [Gradle build scan](https://gradle.com)
@@ -76,13 +76,14 @@ and each of these is used to benchmark the build, allowing you to compare the be
 
 ## Applying changes between build executions
 
-A scenario can define changes that should be applied to the source and reverted in alternating builds. You can use this to benchmark or profile an incremental build.
+A scenario can define changes that should be applied to the source before each build. You can use this to benchmark or profile an incremental build.
 Mutations that are available:
 
-- Add a public method to a Java source class.
+- Add a public method to a Java source class. Each iteration adds a new method and removes the method added by the previous iteration.
 - Change the body of a public method in a Java source class.
-- Add an entry to a properties file.
-- Add a string resource to an Android resource file.
+- Add an entry to a properties file. Each iteration adds a new entry and removes the entry added by the previous iteration.
+- Add a string resource to an Android resource file. Each iteration adds a new resource and removes the resource added by the previous iteration.
+- Change a string resource in an Android resource file.
 - Add a permission to an Android manifest file.
 
 ## Scenario file
@@ -118,6 +119,7 @@ Here is an example:
         apply-non-abi-change-to = "src/main/java/MyThing.java"
         apply-property-resource-change-to = "src/main/resources/thing.properties"
         apply-android-resource-change-to = "src/main/res/value/strings.xml"
+        apply-android-resource-value-change-to = "src/main/res/value/strings.xml"
         apply-android-manifest-change-to = "src/main/AndroidManifest.xml"
     }
 
