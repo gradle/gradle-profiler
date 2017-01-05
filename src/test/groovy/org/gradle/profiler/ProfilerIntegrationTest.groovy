@@ -1014,6 +1014,41 @@ classes {
         srcFile.text == originalText
     }
 
+    def "applies change to Android resource value while running benchmark"() {
+        given:
+        buildFile.text = """
+apply plugin: BasePlugin
+println "<src-length: \${file('src/main/res/values/strings.xml').length()}>" 
+"""
+        def srcFile = file("src/main/res/values/strings.xml")
+        srcFile.parentFile.mkdirs()
+        srcFile.text = """
+<resources>
+    <string name="app_name">Example</string>
+</resources>
+"""
+        def originalText = srcFile.text
+
+        def scenarioFile = file("scenarios.conf")
+        scenarioFile << """
+classes {
+    tasks = "help"
+    apply-android-resource-value-change-to = "src/main/res/values/strings.xml"
+}
+"""
+
+        when:
+        new Main().run("--project-dir", projectDir.absolutePath, "--output-dir", outputDir.absolutePath, "--gradle-version", gradleVersion,
+                "--benchmark", "--scenario-file", scenarioFile.absolutePath)
+
+        then:
+        // Probe version, initial clean build, 6 warm up, 10 builds
+        logFile.grep("<src-length: ${srcFile.length()}>").size() == 2
+        logFile.grep("<src-length: ${srcFile.length() + 16}>").size() == 9
+        logFile.grep("<src-length: ${srcFile.length() + 17}>").size() == 7
+        srcFile.text == originalText
+    }
+
     def "reverts changes on benchmark failures"() {
         given:
         buildFile.text = """
