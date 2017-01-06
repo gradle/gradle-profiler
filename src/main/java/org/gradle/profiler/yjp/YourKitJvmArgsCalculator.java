@@ -16,14 +16,14 @@ public class YourKitJvmArgsCalculator extends JvmArgsCalculator {
 
     @Override
     public void calculateJvmArgs(List<String> jvmArgs) {
-        if (!OperatingSystem.isMacOS()) {
-            throw new IllegalArgumentException("YourKit is currently supported on OS X only.");
+        if (!OperatingSystem.isMacOS() || !OperatingSystem.isLinuxX86()) {
+            throw new IllegalArgumentException("YourKit is currently supported on OS X and Linux x64 only.");
         }
         File yourKitHome = YourKit.findYourKitHome();
         if (yourKitHome == null) {
             throw new IllegalArgumentException("Could not locate YourKit installation.");
         }
-        File jnilib = new File(yourKitHome, "Contents/Resources/bin/mac/libyjpagent.jnilib");
+        File jnilib = YourKit.findJniLib();
         if (!jnilib.isFile()) {
             throw new IllegalArgumentException("Could not locate YourKit library in YourKit home directory " + yourKitHome);
         }

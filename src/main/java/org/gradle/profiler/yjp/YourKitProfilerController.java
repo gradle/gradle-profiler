@@ -44,7 +44,7 @@ public class YourKitProfilerController implements ProfilerController {
 
     private File findControllerJar() {
         File yourKitHome = YourKit.findYourKitHome();
-        File controllerJar = new File(yourKitHome, "Contents/Resources/lib/yjp-controller-api-redist.jar");
+        File controllerJar = YourKit.findControllerJar();
         if (!controllerJar.isFile()) {
             throw new IllegalArgumentException("Could not locate YourKit library in YourKit home directory " + yourKitHome);
         }
