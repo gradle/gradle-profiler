@@ -160,6 +160,9 @@ println "<daemon: " + gradle.services.get(org.gradle.internal.environment.Gradle
         then:
         // Probe version, 2 warm up, 1 build
         logFile.contains("* Running scenario using Gradle $versionUnderTest (scenario 1/1)")
+        logFile.grep("* Running warm-up build").size() == 2
+        logFile.grep("* Running build").size() == 1
+        logFile.grep("* Starting recording for daemon with pid").size() == 1
         logFile.grep("<gradle-version: $versionUnderTest>").size() == 4
         logFile.grep("<daemon: true").size() == 4
         logFile.grep("<tasks: [assemble]>").size() == 3
@@ -195,6 +198,32 @@ println "<daemon: " + gradle.services.get(org.gradle.internal.environment.Gradle
 
         new File(outputDir, "$gradleVersion/profile.jfr").file
         new File(outputDir, "3.0/profile.jfr").file
+    }
+
+    def "can specify the number of warm-up builds and iterations when profiling"() {
+        given:
+        buildFile.text = """
+apply plugin: BasePlugin
+println "<gradle-version: " + gradle.gradleVersion + ">"
+println "<tasks: " + gradle.startParameter.taskNames + ">"
+"""
+
+        when:
+        new Main().
+                run("--project-dir", projectDir.absolutePath, "--output-dir", outputDir.absolutePath, "--gradle-version", gradleVersion, "--profile", "jfr",
+                        "--warmups", "3", "--iterations", "2", "assemble")
+
+        then:
+        // Probe version, 3 warm up, 2 builds
+        logFile.contains("* Running scenario using Gradle $gradleVersion (scenario 1/1)")
+        logFile.grep("* Running warm-up build").size() == 3
+        logFile.grep("* Running build").size() == 2
+        logFile.grep("* Starting recording for daemon with pid").size() == 2
+        logFile.grep("<gradle-version: $gradleVersion>").size() == 6
+        logFile.grep("<tasks: [assemble]>").size() == 5
+
+        def profileFile = new File(outputDir, "profile.jfr")
+        profileFile.exists()
     }
 
     @Requires({
@@ -392,6 +421,9 @@ println "<daemon: " + gradle.services.get(org.gradle.internal.environment.Gradle
 
         then:
         // Probe version, initial clean build, 6 warm up, 10 builds
+        logFile.contains("* Running scenario using Gradle $gradleVersion (scenario 1/1)")
+        logFile.grep("* Running warm-up build").size() == 6
+        logFile.grep("* Running build").size() == 10
         logFile.grep("<gradle-version: $gradleVersion>").size() == 18
         logFile.grep("<daemon: true").size() == 18
         logFile.grep("<tasks: [help]>").size() == 1
