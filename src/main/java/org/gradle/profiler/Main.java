@@ -3,7 +3,6 @@ package org.gradle.profiler;
 import org.gradle.tooling.GradleConnector;
 import org.gradle.tooling.ProjectConnection;
 import org.gradle.tooling.model.build.BuildEnvironment;
-import org.slf4j.Logger;
 
 import java.io.File;
 import java.io.IOException;
@@ -186,8 +185,12 @@ public class Main {
 
             Logging.detailed().println();
             Logging.detailed().println("* Using args for instrumented builds:");
-            logJvmArgs(instrumentedBuildJvmArgs);
-            logGradleArgs(instrumentedBuildGradleArgs);
+            if (!instrumentedBuildJvmArgs.equals(allBuildsJvmArgs)) {
+                logJvmArgs(instrumentedBuildJvmArgs);
+            }
+            if (!instrumentedBuildGradleArgs.equals(allBuildsGradleArgs)) {
+                logGradleArgs(instrumentedBuildGradleArgs);
+            }
 
             BuildInvoker instrumentedBuildInvoker = invoker.withJvmArgs(instrumentedBuildJvmArgs).withGradleArgs(instrumentedBuildGradleArgs);
 

@@ -19,8 +19,8 @@ import joptsimple.ArgumentAcceptingOptionSpec;
 import joptsimple.OptionParser;
 import joptsimple.OptionSet;
 import joptsimple.OptionSpecBuilder;
-import org.gradle.profiler.bs.BuildScanController;
-import org.gradle.profiler.ct.ChromeTraceController;
+import org.gradle.profiler.bs.BuildScanGradleArgsCalculator;
+import org.gradle.profiler.ct.ChromeTraceGradleArgsCalculator;
 import org.gradle.profiler.hp.HonestProfilerArgs;
 import org.gradle.profiler.hp.HonestProfilerControl;
 import org.gradle.profiler.hp.HonestProfilerJvmArgsCalculator;
@@ -151,12 +151,8 @@ public class Profiler {
         }
 
         @Override
-        public ProfilerController newController(final String pid, final ScenarioSettings settings, final BuildInvoker invoker) {
-            try {
-                return new BuildScanController(invoker, (String) settings.getInvocationSettings().getProfilerOptions());
-            } catch (IOException e) {
-                throw new RuntimeException(e);
-            }
+        public GradleArgsCalculator newInstrumentedBuildsGradleArgsCalculator(ScenarioSettings settings) {
+            return new BuildScanGradleArgsCalculator(settings);
         }
 
         @Override
@@ -275,12 +271,8 @@ public class Profiler {
         }
 
         @Override
-        public ProfilerController newController(final String pid, final ScenarioSettings settings, final BuildInvoker invoker) {
-            try {
-                return new ChromeTraceController(invoker, settings.getScenario().getOutputDir());
-            } catch (IOException e) {
-                throw new RuntimeException(e);
-            }
+        public GradleArgsCalculator newInstrumentedBuildsGradleArgsCalculator(ScenarioSettings settings) {
+            return new ChromeTraceGradleArgsCalculator(settings);
         }
     };
 
@@ -452,6 +444,5 @@ public class Profiler {
             }
             return Collections.unmodifiableMap(profilerOptions);
         }
-
     }
 }

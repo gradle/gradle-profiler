@@ -26,7 +26,7 @@ public abstract class GeneratedInitScript {
     private final File initScript;
 
     public GeneratedInitScript() throws IOException {
-        initScript = File.createTempFile("gradle-profiler", ".gradle");
+        initScript = File.createTempFile("gradleProfiler" + getClass().getSimpleName(), ".gradle");
         initScript.deleteOnExit();
     }
 

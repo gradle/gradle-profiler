@@ -419,7 +419,36 @@ println "<daemon: " + gradle.services.get(org.gradle.internal.environment.Gradle
         assertBuildScanPublished("1.2")
 
         def profileFile = new File(outputDir, "profile.jfr")
-        profileFile.exists()
+        profileFile.isFile()
+    }
+
+    def "profiles build to produce chrome trace output"() {
+        given:
+        buildFile.text = """
+apply plugin: BasePlugin
+"""
+
+        when:
+        new Main().
+                run("--project-dir", projectDir.absolutePath, "--output-dir", outputDir.absolutePath, "--gradle-version", gradleNightlyVersion, "--profile", "chrome-trace", "assemble")
+
+        then:
+        new File(outputDir, "chrome-trace.html").isFile()
+    }
+
+    def "profiles build to produce chrome trace output when running with no daemon"() {
+        given:
+        buildFile.text = """
+apply plugin: BasePlugin
+"""
+
+        when:
+        new Main().
+                run("--project-dir", projectDir.absolutePath, "--output-dir", outputDir.absolutePath, "--gradle-version", gradleNightlyVersion, "--profile", "chrome-trace",
+                        "--no-daemon", "assemble")
+
+        then:
+        new File(outputDir, "chrome-trace.html").isFile()
     }
 
     def "runs benchmarks using tooling API for specified Gradle version and tasks"() {
