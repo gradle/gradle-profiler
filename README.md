@@ -68,6 +68,7 @@ and each of these is used to benchmark the build, allowing you to compare the be
     - `--profile hp`: Profile using Honest Profiler
     - `--profile yourkit`: Profile using YourKit. By default, uses CPU tracing and writes a snapshot into the result directory. 
         `--yourkit-memory`: Produce a memory allocation snapshot instead of CPU tracing snapshot.
+        `--yourkit-sampling`: Produce a CPU sampling snapshot instead of CPU tracing snapshot.
 - `--gradle-version <version>`: Specifies a Gradle version or installation to use to run the builds, overriding the default for the build. You can specify multiple versions.
 - `--output-dir <dir>`: Directory to write results to.
 - `--no-daemon`: Uses `gradle --no-daemon` to run the builds. The default is to use the Gradle tooling API and Gradle daemon.
