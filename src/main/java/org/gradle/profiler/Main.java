@@ -175,7 +175,7 @@ public class Main {
                 checkPid(pid, results.getDaemonPid(), scenario.getInvoker());
             }
 
-            ProfilerController control = settings.getProfiler().newController(pid, scenarioSettings, invoker);
+            ProfilerController control = settings.getProfiler().newController(pid, scenarioSettings);
 
             List<String> instrumentedBuildJvmArgs = new ArrayList<>(allBuildsJvmArgs);
             settings.getProfiler().newInstrumentedBuildsJvmArgsCalculator(scenarioSettings).calculateJvmArgs(instrumentedBuildJvmArgs);

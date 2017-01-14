@@ -63,7 +63,7 @@ public class Profiler {
         }
 
         @Override
-        public ProfilerController newController(final String pid, final ScenarioSettings settings, final BuildInvoker invoker) {
+        public ProfilerController newController(final String pid, final ScenarioSettings settings) {
             JFRArgs jfrArgs = (JFRArgs) settings.getInvocationSettings().getProfilerOptions();
             return new JFRControl(jfrArgs, pid, settings.getScenario().getOutputDir());
         }
@@ -110,7 +110,7 @@ public class Profiler {
         }
 
         @Override
-        public ProfilerController newController(final String pid, final ScenarioSettings settings, final BuildInvoker invoker) {
+        public ProfilerController newController(final String pid, final ScenarioSettings settings) {
             HonestProfilerArgs args = (HonestProfilerArgs) settings.getInvocationSettings().getProfilerOptions();
             return new HonestProfilerControl(args, settings.getScenario().getOutputDir());
         }
@@ -174,7 +174,7 @@ public class Profiler {
         }
 
         @Override
-        public ProfilerController newController(String pid, ScenarioSettings settings, BuildInvoker invoker) {
+        public ProfilerController newController(String pid, ScenarioSettings settings) {
             if (settings.getScenario().getInvoker() == Invoker.NoDaemon) {
                 return ProfilerController.EMPTY;
             }
@@ -220,7 +220,7 @@ public class Profiler {
         private ArgumentAcceptingOptionSpec<String> probesOption;
 
         @Override
-        public ProfilerController newController(String pid, ScenarioSettings settings, BuildInvoker invoker) {
+        public ProfilerController newController(String pid, ScenarioSettings settings) {
             return new JProfilerController(settings);
         }
 
@@ -287,7 +287,7 @@ public class Profiler {
             }}
     );
 
-    public ProfilerController newController(String pid, ScenarioSettings settings, BuildInvoker invoker) {
+    public ProfilerController newController(String pid, ScenarioSettings settings) {
         return ProfilerController.EMPTY;
     }
 
@@ -366,10 +366,10 @@ public class Profiler {
         }
 
         @Override
-        public ProfilerController newController(final String pid, final ScenarioSettings settings, final BuildInvoker invoker) {
+        public ProfilerController newController(final String pid, final ScenarioSettings settings) {
             List<ProfilerController> controllers = delegates.stream()
                     .map((Profiler prof) -> prof.newController(pid,
-                            settingsFor(prof, settings), invoker))
+                            settingsFor(prof, settings)))
                     .collect(Collectors.toList());
             return new ProfilerController() {
                 @Override
