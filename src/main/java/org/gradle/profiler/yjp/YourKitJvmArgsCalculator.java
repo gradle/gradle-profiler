@@ -32,7 +32,7 @@ public class YourKitJvmArgsCalculator extends JvmArgsCalculator {
             throw new IllegalArgumentException("Could not locate YourKit library in YourKit home directory " + yourKitHome);
         }
         String agentOptions = "-agentpath:" + jnilib.getAbsolutePath() + "=dir=" + settings.getScenario().getOutputDir().getAbsolutePath() + ",sessionname=" + settings.getScenario().getName();
-        if (yourKitConfig.isMemorySnapshot()) {
+        if (yourKitConfig.isMemorySnapshot() || yourKitConfig.isUseSampling()) {
             agentOptions += ",disabletracing";
         } else {
             agentOptions += ",disablealloc";
@@ -40,6 +40,8 @@ public class YourKitJvmArgsCalculator extends JvmArgsCalculator {
         if (instrumentWholeProcess) {
             if (yourKitConfig.isMemorySnapshot()) {
                 agentOptions += ",alloceach=10,onexit=memory";
+            } else if (yourKitConfig.isUseSampling()) {
+                agentOptions += ",sampling,onexit=snapshot";
             } else {
                 agentOptions += ",tracing,onexit=snapshot";
             }

@@ -2,10 +2,13 @@ package org.gradle.profiler.yjp;
 
 import joptsimple.OptionParser;
 import joptsimple.OptionSet;
+import joptsimple.OptionSpecBuilder;
 import org.gradle.profiler.*;
 
 public class YourKitProfiler extends Profiler {
     private final YourKitConfig yourKitConfig;
+    private OptionSpecBuilder memory;
+    private OptionSpecBuilder sampling;
 
     public YourKitProfiler() {
         this(null);
@@ -46,7 +49,8 @@ public class YourKitProfiler extends Profiler {
 
     @Override
     public void addOptions(OptionParser parser) {
-        parser.accepts("yourkit-memory", "Capture memory snapshot").availableIf("yourkit");
+        memory = parser.accepts("yourkit-memory", "Perform memory profiling instead of CPU profiling");
+        sampling = parser.accepts("yourkit-sampling", "Use sampling instead of tracing for CPU profiling");
     }
 
     @Override
@@ -55,6 +59,10 @@ public class YourKitProfiler extends Profiler {
     }
 
     private YourKitConfig newConfigObject(OptionSet parsedOptions) {
-        return new YourKitConfig(parsedOptions.has("yourkit-memory"));
+        YourKitConfig yourKitConfig = new YourKitConfig(parsedOptions.has(memory), parsedOptions.has(sampling));
+        if (yourKitConfig.isMemorySnapshot() && yourKitConfig.isUseSampling()) {
+            throw new IllegalArgumentException("Cannot use memory profiling and CPU sampling at the same time.");
+        }
+        return yourKitConfig;
     }
 }

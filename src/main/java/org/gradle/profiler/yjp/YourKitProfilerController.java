@@ -16,11 +16,11 @@ public class YourKitProfilerController implements ProfilerController {
     @Override
     public void start() throws IOException, InterruptedException {
         if (options.isMemorySnapshot()) {
-            String command = "start-alloc-recording-adaptive";
-            runYourKitCommand(command);
+            runYourKitCommand("start-alloc-recording-adaptive");
+        } else if (options.isUseSampling()) {
+            runYourKitCommand("start-cpu-sampling");
         } else {
-            String command = "start-cpu-tracing";
-            runYourKitCommand(command);
+            runYourKitCommand("start-cpu-tracing");
         }
     }
 

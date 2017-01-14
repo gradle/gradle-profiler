@@ -295,6 +295,38 @@ apply plugin: BasePlugin
     }
 
     @Requires({ YourKit.findYourKitHome() })
+    def "profiles build using YourKit to produce CPU sampling snapshot"() {
+        given:
+        buildFile.text = """
+apply plugin: BasePlugin
+"""
+
+        when:
+        new Main().
+                run("--project-dir", projectDir.absolutePath, "--output-dir", outputDir.absolutePath, "--gradle-version", gradleVersion, "--profile", "yourkit",
+                        "--yourkit-sampling", "assemble")
+
+        then:
+        outputDir.listFiles().find { it.name.matches("default-.+\\.snapshot") }
+    }
+
+    @Requires({ YourKit.findYourKitHome() })
+    def "profiles build using YourKit to produce CPU sampling snapshot when using no-daemon"() {
+        given:
+        buildFile.text = """
+apply plugin: BasePlugin
+"""
+
+        when:
+        new Main().
+                run("--project-dir", projectDir.absolutePath, "--output-dir", outputDir.absolutePath, "--gradle-version", gradleVersion, "--profile", "yourkit",
+                        "--yourkit-sampling", "--no-daemon", "assemble")
+
+        then:
+        outputDir.listFiles().find { it.name.matches("default-.+\\.snapshot") }
+    }
+
+    @Requires({ YourKit.findYourKitHome() })
     def "profiles build using YourKit to produce memory snapshot"() {
         given:
         buildFile.text = """
@@ -305,6 +337,22 @@ apply plugin: BasePlugin
         new Main().
                 run("--project-dir", projectDir.absolutePath, "--output-dir", outputDir.absolutePath, "--gradle-version", gradleVersion, "--profile", "yourkit",
                         "--yourkit-memory", "assemble")
+
+        then:
+        outputDir.listFiles().find { it.name.matches("default-.+\\.snapshot") }
+    }
+
+    @Requires({ YourKit.findYourKitHome() })
+    def "profiles build using YourKit to produce memory snapshot when using no-daemon"() {
+        given:
+        buildFile.text = """
+apply plugin: BasePlugin
+"""
+
+        when:
+        new Main().
+                run("--project-dir", projectDir.absolutePath, "--output-dir", outputDir.absolutePath, "--gradle-version", gradleVersion, "--profile", "yourkit",
+                        "--yourkit-memory", "--no-daemon", "assemble")
 
         then:
         outputDir.listFiles().find { it.name.matches("default-.+\\.snapshot") }
