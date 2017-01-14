@@ -1,10 +1,10 @@
 package org.gradle.profiler;
 
 public class ScenarioSettings {
-    private InvocationSettings invocationSettings;
-    private final ScenarioDefinition scenario;
+    private final InvocationSettings invocationSettings;
+    private final GradleScenarioDefinition scenario;
 
-    public ScenarioSettings(InvocationSettings invocationSettings, ScenarioDefinition scenario) {
+    public ScenarioSettings(InvocationSettings invocationSettings, GradleScenarioDefinition scenario) {
         this.invocationSettings = invocationSettings;
         this.scenario = scenario;
     }
@@ -13,7 +13,7 @@ public class ScenarioSettings {
         return invocationSettings;
     }
 
-    public ScenarioDefinition getScenario() {
+    public GradleScenarioDefinition getScenario() {
         return scenario;
     }
 }

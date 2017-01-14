@@ -3,6 +3,7 @@ package org.gradle.profiler;
 import org.gradle.tooling.GradleConnector;
 import org.gradle.tooling.ProjectConnection;
 import org.gradle.tooling.model.build.BuildEnvironment;
+import org.slf4j.Logger;
 
 import java.io.File;
 import java.io.IOException;
@@ -101,7 +102,8 @@ public class Main {
                                    PidInstrumentation pidInstrumentation, File resultsFile) throws IOException, InterruptedException {
         ScenarioSettings scenarioSettings = new ScenarioSettings(settings, scenario);
         scenario.getOutputDir().mkdirs();
-        JvmArgsCalculator jvmArgsCalculator = settings.getProfiler().newJvmArgsCalculator(scenarioSettings);
+        JvmArgsCalculator allBuildsJvmArgsCalculator = settings.getProfiler().newJvmArgsCalculator(scenarioSettings);
+        GradleArgsCalculator allBuildsGradleArgsCalculator = settings.getProfiler().newGradleArgsCalculator(scenarioSettings);
 
         List<String> cleanupTasks = scenario.getCleanupTasks();
         List<String> tasks = scenario.getTasks();
@@ -124,38 +126,33 @@ public class Main {
             Logging.detailed().println("Java home: " + javaHome);
             Logging.detailed().println("OS name: " + System.getProperty("os.name") + " " + System.getProperty("os.version"));
 
-            List<String> jvmArgs = new ArrayList<>(buildEnvironment.getJava().getJvmArguments());
+            List<String> allBuildsJvmArgs = new ArrayList<>(buildEnvironment.getJava().getJvmArguments());
             for (Map.Entry<String, String> entry : scenario.getSystemProperties().entrySet()) {
-                jvmArgs.add("-D" + entry.getKey() + "=" + entry.getValue());
+                allBuildsJvmArgs.add("-D" + entry.getKey() + "=" + entry.getValue());
             }
-            jvmArgsCalculator.calculateJvmArgs(jvmArgs);
-            Logging.detailed().println("JVM args:");
-            for (String jvmArg : jvmArgs) {
-                Logging.detailed().println("  " + jvmArg);
-            }
-            List<String> gradleArgs = new ArrayList<>(pidInstrumentation.getArgs());
-            gradleArgs.add("--gradle-user-home");
-            gradleArgs.add(settings.getGradleUserHome().getAbsolutePath());
+            allBuildsJvmArgsCalculator.calculateJvmArgs(allBuildsJvmArgs);
+            logJvmArgs(allBuildsJvmArgs);
+            List<String> allBuildsGradleArgs = new ArrayList<>(pidInstrumentation.getArgs());
+            allBuildsGradleArgs.add("--gradle-user-home");
+            allBuildsGradleArgs.add(settings.getGradleUserHome().getAbsolutePath());
             for (Map.Entry<String, String> entry : scenario.getSystemProperties().entrySet()) {
-                gradleArgs.add("-D" + entry.getKey() + "=" + entry.getValue());
+                allBuildsGradleArgs.add("-D" + entry.getKey() + "=" + entry.getValue());
             }
-            gradleArgs.addAll(scenario.getGradleArgs());
+            allBuildsGradleArgs.addAll(scenario.getGradleArgs());
             if (settings.isDryRun()) {
-                gradleArgs.add("--dry-run");
+                allBuildsGradleArgs.add("--dry-run");
             }
-            Logging.detailed().println("Gradle args:");
-            for (String arg : gradleArgs) {
-                Logging.detailed().println("  " + arg);
-            }
+            allBuildsGradleArgsCalculator.calculateGradleArgs(allBuildsGradleArgs);
+            logGradleArgs(allBuildsGradleArgs);
 
             Consumer<BuildInvocationResult> resultsCollector = benchmarkResults.version(scenario);
             BuildInvoker invoker;
             switch (scenario.getInvoker()) {
                 case NoDaemon:
-                    invoker = new NoDaemonInvoker(version, javaHome, settings.getProjectDir(), jvmArgs, gradleArgs, pidInstrumentation, resultsCollector);
+                    invoker = new NoDaemonInvoker(version, javaHome, settings.getProjectDir(), allBuildsJvmArgs, allBuildsGradleArgs, pidInstrumentation, resultsCollector);
                     break;
                 case ToolingApi:
-                    invoker = new ToolingApiInvoker(projectConnection, jvmArgs, gradleArgs, pidInstrumentation, resultsCollector);
+                    invoker = new ToolingApiInvoker(projectConnection, allBuildsJvmArgs, allBuildsGradleArgs, pidInstrumentation, resultsCollector);
                     break;
                 default:
                     throw new IllegalArgumentException();
@@ -179,17 +176,30 @@ public class Main {
                 checkPid(pid, results.getDaemonPid(), scenario.getInvoker());
             }
 
+            ProfilerController control = settings.getProfiler().newController(pid, scenarioSettings, invoker);
+
+            List<String> instrumentedBuildJvmArgs = new ArrayList<>(allBuildsJvmArgs);
+            settings.getProfiler().newInstrumentedBuildsJvmArgsCalculator(scenarioSettings).calculateJvmArgs(instrumentedBuildJvmArgs);
+
+            List<String> instrumentedBuildGradleArgs = new ArrayList<>(allBuildsGradleArgs);
+            settings.getProfiler().newInstrumentedBuildsGradleArgsCalculator(scenarioSettings).calculateGradleArgs(instrumentedBuildGradleArgs);
+
+            Logging.detailed().println();
+            Logging.detailed().println("* Using args for instrumented builds:");
+            logJvmArgs(instrumentedBuildJvmArgs);
+            logGradleArgs(instrumentedBuildGradleArgs);
+
+            BuildInvoker instrumentedBuildInvoker = invoker.withJvmArgs(instrumentedBuildJvmArgs).withGradleArgs(instrumentedBuildGradleArgs);
+
             for (int i = 0; i < scenario.getBuildCount(); i++) {
                 beforeBuild(invoker, cleanupTasks, mutator);
-
-                ProfilerController control = settings.getProfiler().newController(pid, scenarioSettings, invoker);
 
                 if (settings.isProfile()) {
                     Logging.startOperation("Starting recording for daemon with pid " + pid);
                     control.start();
                 }
 
-                results = invoker.runBuild("build " + (i + 1), tasks);
+                results = instrumentedBuildInvoker.runBuild("build " + (i + 1), tasks);
 
                 if (settings.isProfile()) {
                     Logging.startOperation("Stopping recording for daemon with pid " + pid);
@@ -207,6 +217,20 @@ public class Main {
             mutator.cleanup();
             projectConnection.close();
             daemonControl.stop(version);
+        }
+    }
+
+    private void logGradleArgs(List<String> allBuildsGradleArgs) {
+        Logging.detailed().println("Gradle args:");
+        for (String arg : allBuildsGradleArgs) {
+            Logging.detailed().println("  " + arg);
+        }
+    }
+
+    private void logJvmArgs(List<String> allBuildsJvmArgs) {
+        Logging.detailed().println("JVM args:");
+        for (String jvmArg : allBuildsJvmArgs) {
+            Logging.detailed().println("  " + jvmArg);
         }
     }
 

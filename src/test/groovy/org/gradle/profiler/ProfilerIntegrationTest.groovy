@@ -279,6 +279,22 @@ apply plugin: BasePlugin
     }
 
     @Requires({ YourKit.findYourKitHome() })
+    def "profiles build using YourKit to produce CPU tracing snapshot when using no-daemon"() {
+        given:
+        buildFile.text = """
+apply plugin: BasePlugin
+"""
+
+        when:
+        new Main().
+                run("--project-dir", projectDir.absolutePath, "--output-dir", outputDir.absolutePath, "--gradle-version", gradleVersion, "--profile", "yourkit",
+                        "--no-daemon", "assemble")
+
+        then:
+        outputDir.listFiles().find { it.name.matches("default-.+\\.snapshot") }
+    }
+
+    @Requires({ YourKit.findYourKitHome() })
     def "profiles build using YourKit to produce memory snapshot"() {
         given:
         buildFile.text = """

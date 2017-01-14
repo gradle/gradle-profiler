@@ -9,9 +9,11 @@ import java.util.List;
 
 public class YourKitJvmArgsCalculator extends JvmArgsCalculator {
     private final ScenarioSettings settings;
+    private final boolean instrumentWholeProcess;
 
-    public YourKitJvmArgsCalculator(ScenarioSettings settings) {
+    public YourKitJvmArgsCalculator(ScenarioSettings settings, boolean instrumentWholeProcess) {
         this.settings = settings;
+        this.instrumentWholeProcess = instrumentWholeProcess;
     }
 
     @Override
@@ -33,6 +35,13 @@ public class YourKitJvmArgsCalculator extends JvmArgsCalculator {
             agentOptions += ",disabletracing";
         } else {
             agentOptions += ",disablealloc";
+        }
+        if (instrumentWholeProcess) {
+            if (yourKitConfig.isMemorySnapshot()) {
+                agentOptions += ",alloceach=10,onexit=memory";
+            } else {
+                agentOptions += ",tracing,onexit=snapshot";
+            }
         }
         jvmArgs.add(agentOptions);
     }

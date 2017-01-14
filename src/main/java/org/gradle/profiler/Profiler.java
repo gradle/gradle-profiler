@@ -179,12 +179,26 @@ public class Profiler {
 
         @Override
         public ProfilerController newController(String pid, ScenarioSettings settings, BuildInvoker invoker) {
+            if (settings.getScenario().getInvoker() == Invoker.NoDaemon) {
+                return ProfilerController.EMPTY;
+            }
             return new YourKitProfilerController((YourKitConfig) settings.getInvocationSettings().getProfilerOptions());
         }
 
         @Override
         public JvmArgsCalculator newJvmArgsCalculator(ScenarioSettings settings) {
-            return new YourKitJvmArgsCalculator(settings);
+            if (settings.getScenario().getInvoker() == Invoker.NoDaemon) {
+                return JvmArgsCalculator.DEFAULT;
+            }
+            return new YourKitJvmArgsCalculator(settings, false);
+        }
+
+        @Override
+        public JvmArgsCalculator newInstrumentedBuildsJvmArgsCalculator(ScenarioSettings settings) {
+            if (settings.getScenario().getInvoker() == Invoker.NoDaemon) {
+                return new YourKitJvmArgsCalculator(settings, true);
+            }
+            return JvmArgsCalculator.DEFAULT;
         }
 
         @Override
@@ -281,12 +295,36 @@ public class Profiler {
             }}
     );
 
-    public ProfilerController newController(final String pid, final ScenarioSettings settings, final BuildInvoker invoker) {
+    public ProfilerController newController(String pid, ScenarioSettings settings, BuildInvoker invoker) {
         return ProfilerController.EMPTY;
     }
 
-    public JvmArgsCalculator newJvmArgsCalculator(final ScenarioSettings settings) {
+    /**
+     * Returns a calculator that provides JVM args that should be applied to all builds, including warm-up builds.
+     */
+    public JvmArgsCalculator newJvmArgsCalculator(ScenarioSettings settings) {
         return JvmArgsCalculator.DEFAULT;
+    }
+
+    /**
+     * Returns a calculator that provides JVM args that should be applied to instrumented builds, but not warm-up builds.
+     */
+    public JvmArgsCalculator newInstrumentedBuildsJvmArgsCalculator(ScenarioSettings settings) {
+        return JvmArgsCalculator.DEFAULT;
+    }
+
+    /**
+     * Returns a calculator that provides Gradle args that should be applied to all builds, including warm-up builds.
+     */
+    public GradleArgsCalculator newGradleArgsCalculator(ScenarioSettings settings) {
+        return GradleArgsCalculator.DEFAULT;
+    }
+
+    /**
+     * Returns a calculator that provides Gradle args that should be applied to instrumented builds, but not warm-up builds.
+     */
+    public GradleArgsCalculator newInstrumentedBuildsGradleArgsCalculator(ScenarioSettings settings) {
+        return GradleArgsCalculator.DEFAULT;
     }
 
     public Object newConfigObject(OptionSet parsedOptions) {
@@ -294,7 +332,6 @@ public class Profiler {
     }
 
     void addOptions(OptionParser parser) {
-
     }
 
     public static Set<String> getAvailableProfilers() {
@@ -374,6 +411,36 @@ public class Profiler {
                 @Override
                 public void calculateJvmArgs(final List<String> jvmArgs) {
                     delegates.forEach(prof -> prof.newJvmArgsCalculator(settingsFor(prof, settings)).calculateJvmArgs(jvmArgs));
+                }
+            };
+        }
+
+        @Override
+        public JvmArgsCalculator newInstrumentedBuildsJvmArgsCalculator(ScenarioSettings settings) {
+            return new JvmArgsCalculator() {
+                @Override
+                public void calculateJvmArgs(final List<String> jvmArgs) {
+                    delegates.forEach(prof -> prof.newInstrumentedBuildsJvmArgsCalculator(settingsFor(prof, settings)).calculateJvmArgs(jvmArgs));
+                }
+            };
+        }
+
+        @Override
+        public GradleArgsCalculator newGradleArgsCalculator(ScenarioSettings settings) {
+            return new GradleArgsCalculator(){
+                @Override
+                public void calculateGradleArgs(List<String> gradleArgs) {
+                    delegates.forEach(prof -> prof.newGradleArgsCalculator(settingsFor(prof, settings)).calculateGradleArgs(gradleArgs));
+                }
+            };
+        }
+
+        @Override
+        public GradleArgsCalculator newInstrumentedBuildsGradleArgsCalculator(ScenarioSettings settings) {
+            return new GradleArgsCalculator(){
+                @Override
+                public void calculateGradleArgs(List<String> gradleArgs) {
+                    delegates.forEach(prof -> prof.newInstrumentedBuildsGradleArgsCalculator(settingsFor(prof, settings)).calculateGradleArgs(gradleArgs));
                 }
             };
         }

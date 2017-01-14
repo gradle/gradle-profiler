@@ -71,5 +71,19 @@ public abstract class BuildInvoker {
         return copy(jvmArgs, gradleArgs, pidInstrumentation, buildInvocationResult -> { });
     }
 
+    public BuildInvoker withJvmArgs(List<String> jvmArgs) {
+        if (jvmArgs.equals(this.jvmArgs)) {
+            return this;
+        }
+        return copy(jvmArgs, gradleArgs, pidInstrumentation, resultsConsumer);
+    }
+
+    public BuildInvoker withGradleArgs(List<String> gradleArgs) {
+        if (gradleArgs.equals(this.gradleArgs)) {
+            return this;
+        }
+        return copy(jvmArgs, gradleArgs, pidInstrumentation, resultsConsumer);
+    }
+
     protected abstract BuildInvoker copy(List<String> jvmArgs, List<String> gradleArgs, PidInstrumentation pidInstrumentation, Consumer<BuildInvocationResult> resultsConsumer);
 }
