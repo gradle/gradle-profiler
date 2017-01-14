@@ -87,9 +87,14 @@ class CommandLineParser {
         List<String> targetNames = parsedOptions.nonOptionArguments().stream().map(o -> o.toString()).collect(Collectors.toList());
         List<String> versions = parsedOptions.valuesOf(versionOption).stream().map(v -> v.toString()).collect(Collectors.toList());
         File scenarioFile = parsedOptions.has(scenarioFileOption) ? new File(parsedOptions.valueOf(scenarioFileOption)) : null;
-        Invoker invoker = parsedOptions.has(noDaemonOption) ? Invoker.NoDaemon : Invoker.ToolingApi;
+        Invoker invoker = Invoker.ToolingApi;
+        if (parsedOptions.has(noDaemonOption)) {
+            invoker = Invoker.NoDaemon;
+        }
+        if (parsedOptions.has(buckOption)) {
+            invoker = Invoker.Buck;
+        }
         boolean dryRun = parsedOptions.has(dryRunOption);
-        boolean buck = parsedOptions.has(buckOption);
         Map<String, String> sysProperties = new LinkedHashMap<>();
         for (String value : parsedOptions.valuesOf(sysPropOption)) {
             String[] parts = value.split("\\s*=\\s*");
@@ -99,7 +104,7 @@ class CommandLineParser {
                 sysProperties.put(parts[0], parts[1]);
             }
         }
-        return new InvocationSettings(projectDir, profiler, profilerOptions, benchmark, outputDir, invoker, dryRun, scenarioFile, versions, targetNames, sysProperties, gradleUserHome, buck, warmups, iterations);
+        return new InvocationSettings(projectDir, profiler, profilerOptions, benchmark, outputDir, invoker, dryRun, scenarioFile, versions, targetNames, sysProperties, gradleUserHome, warmups, iterations);
     }
 
     private File findOutputDir() {

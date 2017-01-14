@@ -18,13 +18,12 @@ public class InvocationSettings {
     private final List<String> targets;
     private final Map<String, String> sysProperties;
     private final File gradleUserHome;
-    private final boolean buck;
     private final Integer warmupCount;
     private final Integer iterations;
 
     public InvocationSettings(File projectDir, Profiler profiler, final Object profilerOptions, boolean benchmark, File outputDir, Invoker invoker,
                               boolean dryRun, File scenarioFile, List<String> versions, List<String> getTargets, Map<String, String> sysProperties,
-                              File gradleUserHome, boolean buck, Integer warmupCount, Integer iterations) {
+                              File gradleUserHome, Integer warmupCount, Integer iterations) {
         this.profilerOptions = profilerOptions;
         this.benchmark = benchmark;
         this.projectDir = projectDir;
@@ -37,7 +36,6 @@ public class InvocationSettings {
         this.targets = getTargets;
         this.sysProperties = sysProperties;
         this.gradleUserHome = gradleUserHome;
-        this.buck = buck;
         this.warmupCount = warmupCount;
         this.iterations = iterations;
     }
@@ -63,7 +61,7 @@ public class InvocationSettings {
     }
 
     public boolean isBuck() {
-        return buck;
+        return invoker == Invoker.Buck;
     }
 
     public Profiler getProfiler() {
@@ -100,6 +98,9 @@ public class InvocationSettings {
         }
         if (warmupCount != null) {
             return warmupCount;
+        }
+        if (invoker == Invoker.NoDaemon) {
+            return 1;
         }
         if (benchmark) {
             return 6;

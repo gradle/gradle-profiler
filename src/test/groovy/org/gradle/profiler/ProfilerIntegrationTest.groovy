@@ -459,18 +459,21 @@ println "<daemon: " + gradle.services.get(org.gradle.internal.environment.Gradle
                 "--benchmark", "--no-daemon", "assemble")
 
         then:
-        // Probe version, initial clean build, 6 warm up, 10 builds
-        logFile.grep("<gradle-version: $gradleVersion>").size() == 18
+        // Probe version, initial clean build, 1 warm up, 10 builds
+        logFile.contains("* Running scenario using Gradle $gradleVersion (scenario 1/1)")
+        logFile.grep("* Running warm-up build").size() == 1
+        logFile.grep("* Running build").size() == 10
+        logFile.grep("<gradle-version: $gradleVersion>").size() == 13
         logFile.grep("<daemon: true").size() == 1
-        logFile.grep("<daemon: false").size() == 17
+        logFile.grep("<daemon: false").size() == 12
         logFile.grep("<tasks: [help]>").size() == 1
         logFile.grep("<tasks: [clean, assemble]>").size() == 1
-        logFile.grep("<tasks: [assemble]>").size() == 16
+        logFile.grep("<tasks: [assemble]>").size() == 11
 
         resultFile.isFile()
         resultFile.text.readLines().get(0) == "build,${gradleVersion}"
         resultFile.text.readLines().get(1) == "tasks,assemble"
-        resultFile.text.readLines().size() == 22 // 2 headers, 17 executions, 3 stats
+        resultFile.text.readLines().size() == 17 // 2 headers, 12 executions, 3 stats
     }
 
     def "runs benchmarks using scenarios defined in scenario file"() {

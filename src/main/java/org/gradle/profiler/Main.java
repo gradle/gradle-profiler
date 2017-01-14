@@ -101,7 +101,7 @@ public class Main {
                                    PidInstrumentation pidInstrumentation, File resultsFile) throws IOException, InterruptedException {
         ScenarioSettings scenarioSettings = new ScenarioSettings(settings, scenario);
         scenario.getOutputDir().mkdirs();
-        JvmArgsCalculator jvmArgsCalculator = settings.isProfile() ? settings.getProfiler().newJvmArgsCalculator(scenarioSettings) : new JvmArgsCalculator();
+        JvmArgsCalculator jvmArgsCalculator = settings.getProfiler().newJvmArgsCalculator(scenarioSettings);
 
         List<String> cleanupTasks = scenario.getCleanupTasks();
         List<String> tasks = scenario.getTasks();
