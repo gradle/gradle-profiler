@@ -2,7 +2,6 @@ package org.gradle.profiler.jprofiler;
 
 import org.gradle.profiler.JvmArgsCalculator;
 import org.gradle.profiler.OperatingSystem;
-import org.gradle.profiler.ScenarioSettings;
 
 import java.io.File;
 import java.io.IOException;
@@ -17,17 +16,16 @@ import java.nio.file.StandardCopyOption;
 import java.util.List;
 
 public class JProfilerJvmArgsCalculator extends JvmArgsCalculator {
+    private final JProfilerConfig jProfilerConfig;
 
-    private final ScenarioSettings settings;
-
-    public JProfilerJvmArgsCalculator(ScenarioSettings settings) {
-        this.settings = settings;
+    public JProfilerJvmArgsCalculator(JProfilerConfig jProfilerConfig) {
+        this.jProfilerConfig = jProfilerConfig;
     }
 
     @Override
     public void calculateJvmArgs(List<String> jvmArgs) {
         int port = findUnusedPort();
-        getJProfilerConfig().setPort(port);
+        jProfilerConfig.setPort(port);
         jvmArgs.add(getAgentPathParameter(port));
     }
 
@@ -68,10 +66,10 @@ public class JProfilerJvmArgsCalculator extends JvmArgsCalculator {
         }
 
         builder.append("=offline,");
-        String sessionId = getJProfilerConfig().getSessionId();
+        String sessionId = jProfilerConfig.getSessionId();
         if (sessionId != null) {
             builder.append("id=").append(sessionId);
-            String configFile = getJProfilerConfig().getConfigFile();
+            String configFile = jProfilerConfig.getConfigFile();
             if (configFile != null) {
                 builder.append(",config=").append(configFile);
             }
@@ -83,8 +81,7 @@ public class JProfilerJvmArgsCalculator extends JvmArgsCalculator {
     }
 
     private File getJProfilerDir() {
-        JProfilerConfig profilerOptions = getJProfilerConfig();
-        String homeDir = profilerOptions.getHomeDir();
+        String homeDir = jProfilerConfig.getHomeDir();
         if (OperatingSystem.isMacOS() && !new File(homeDir, "bin").exists()) {
             return new File(homeDir, "Contents/Resources/app");
         } else {
@@ -92,14 +89,9 @@ public class JProfilerJvmArgsCalculator extends JvmArgsCalculator {
         }
     }
 
-    private JProfilerConfig getJProfilerConfig() {
-        return (JProfilerConfig)settings.getInvocationSettings().getProfilerOptions();
-    }
-
     private File getConfigFile() {
         try {
-            String config = getJProfilerConfig().getConfig();
-            String resourceName = "/jprofiler/config/" + config + ".xml";
+            String resourceName = "/jprofiler/config/" + jProfilerConfig.getConfig() + ".xml";
             URL resource = getClass().getResource(resourceName);
             if (resource == null) {
                 throw new RuntimeException("Classpath resource \"" + resourceName + "\" not found");

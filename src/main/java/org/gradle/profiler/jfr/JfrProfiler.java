@@ -10,13 +10,27 @@ import org.gradle.profiler.ScenarioSettings;
 import java.io.File;
 
 public class JfrProfiler extends Profiler {
+    private final JFRArgs jfrArgs;
+
+    public JfrProfiler() {
+        this(null);
+    }
+
+    private JfrProfiler(JFRArgs jfrArgs) {
+        this.jfrArgs = jfrArgs;
+    }
+
     @Override
     public String toString() {
         return "JFR";
     }
 
     @Override
-    public Object newConfigObject( OptionSet parsedOptions ) {
+    public Profiler withConfig(OptionSet parsedOptions) {
+        return new JfrProfiler(newConfigObject(parsedOptions));
+    }
+
+    private JFRArgs newConfigObject(OptionSet parsedOptions ) {
         return new JFRArgs(
             new File((String) parsedOptions.valueOf( "jfr-fg-home" )),
             new File((String) parsedOptions.valueOf( "fg-home" ))
@@ -25,7 +39,6 @@ public class JfrProfiler extends Profiler {
 
     @Override
     public ProfilerController newController(final String pid, final ScenarioSettings settings) {
-        JFRArgs jfrArgs = (JFRArgs) settings.getInvocationSettings().getProfilerOptions();
         return new JFRControl(jfrArgs, pid, settings.getScenario().getOutputDir());
     }
 

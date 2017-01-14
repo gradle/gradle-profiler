@@ -9,10 +9,12 @@ import java.util.List;
 
 public class YourKitJvmArgsCalculator extends JvmArgsCalculator {
     private final ScenarioSettings settings;
+    private final YourKitConfig yourKitConfig;
     private final boolean instrumentWholeProcess;
 
-    public YourKitJvmArgsCalculator(ScenarioSettings settings, boolean instrumentWholeProcess) {
+    public YourKitJvmArgsCalculator(ScenarioSettings settings, YourKitConfig yourKitConfig, boolean instrumentWholeProcess) {
         this.settings = settings;
+        this.yourKitConfig = yourKitConfig;
         this.instrumentWholeProcess = instrumentWholeProcess;
     }
 
@@ -30,7 +32,6 @@ public class YourKitJvmArgsCalculator extends JvmArgsCalculator {
             throw new IllegalArgumentException("Could not locate YourKit library in YourKit home directory " + yourKitHome);
         }
         String agentOptions = "-agentpath:" + jnilib.getAbsolutePath() + "=dir=" + settings.getScenario().getOutputDir().getAbsolutePath() + ",sessionname=" + settings.getScenario().getName();
-        YourKitConfig yourKitConfig = (YourKitConfig) settings.getInvocationSettings().getProfilerOptions();
         if (yourKitConfig.isMemorySnapshot()) {
             agentOptions += ",disabletracing";
         } else {

@@ -57,7 +57,7 @@ class CommandLineParser {
             List<String> profilersList = parsedOptions.valuesOf(profilerOption);
             profiler = Profiler.of(profilersList);
         }
-        Object profilerOptions = profiler.newConfigObject(parsedOptions);
+        profiler = profiler.withConfig(parsedOptions);
         boolean benchmark = parsedOptions.has(benchmarkOption);
         if (!benchmark && !hasProfiler) {
             return fail(parser, "Neither --profile or --benchmark specified.");
@@ -104,7 +104,7 @@ class CommandLineParser {
                 sysProperties.put(parts[0], parts[1]);
             }
         }
-        return new InvocationSettings(projectDir, profiler, profilerOptions, benchmark, outputDir, invoker, dryRun, scenarioFile, versions, targetNames, sysProperties, gradleUserHome, warmups, iterations);
+        return new InvocationSettings(projectDir, profiler, benchmark, outputDir, invoker, dryRun, scenarioFile, versions, targetNames, sysProperties, gradleUserHome, warmups, iterations);
     }
 
     private File findOutputDir() {

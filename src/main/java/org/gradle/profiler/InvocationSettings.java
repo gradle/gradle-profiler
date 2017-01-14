@@ -8,7 +8,6 @@ import java.util.Map;
 public class InvocationSettings {
     private final File projectDir;
     private final Profiler profiler;
-    private final Object profilerOptions;
     private final boolean benchmark;
     private final boolean dryRun;
     private final File scenarioFile;
@@ -21,10 +20,9 @@ public class InvocationSettings {
     private final Integer warmupCount;
     private final Integer iterations;
 
-    public InvocationSettings(File projectDir, Profiler profiler, final Object profilerOptions, boolean benchmark, File outputDir, Invoker invoker,
+    public InvocationSettings(File projectDir, Profiler profiler, boolean benchmark, File outputDir, Invoker invoker,
                               boolean dryRun, File scenarioFile, List<String> versions, List<String> getTargets, Map<String, String> sysProperties,
                               File gradleUserHome, Integer warmupCount, Integer iterations) {
-        this.profilerOptions = profilerOptions;
         this.benchmark = benchmark;
         this.projectDir = projectDir;
         this.profiler = profiler;
@@ -66,10 +64,6 @@ public class InvocationSettings {
 
     public Profiler getProfiler() {
         return profiler;
-    }
-
-    public Object getProfilerOptions() {
-        return profilerOptions;
     }
 
     public File getScenarioFile() {

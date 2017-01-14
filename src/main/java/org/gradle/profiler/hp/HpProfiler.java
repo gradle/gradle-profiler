@@ -10,13 +10,27 @@ import org.gradle.profiler.ScenarioSettings;
 import java.io.File;
 
 public class HpProfiler extends Profiler {
+    private final HonestProfilerArgs honestProfilerArgs;
+
+    public HpProfiler() {
+        this(null);
+    }
+
+    private HpProfiler(HonestProfilerArgs honestProfilerArgs) {
+        this.honestProfilerArgs = honestProfilerArgs;
+    }
+
     @Override
     public String toString() {
         return "Honest profiler";
     }
 
     @Override
-    public Object newConfigObject(final OptionSet parsedOptions) {
+    public Profiler withConfig(OptionSet parsedOptions) {
+        return new HpProfiler(newConfigObject(parsedOptions));
+    }
+
+    private HonestProfilerArgs newConfigObject(final OptionSet parsedOptions) {
         File tmpLog = new File(System.getProperty("java.io.tmpdir"), "hp.log");
         int i = 0;
         while (tmpLog.exists()) {
@@ -34,13 +48,12 @@ public class HpProfiler extends Profiler {
 
     @Override
     public ProfilerController newController(final String pid, final ScenarioSettings settings) {
-        HonestProfilerArgs args = (HonestProfilerArgs) settings.getInvocationSettings().getProfilerOptions();
-        return new HonestProfilerControl(args, settings.getScenario().getOutputDir());
+        return new HonestProfilerControl(honestProfilerArgs, settings.getScenario().getOutputDir());
     }
 
     @Override
     public JvmArgsCalculator newJvmArgsCalculator(ScenarioSettings settings) {
-        return new HonestProfilerJvmArgsCalculator((HonestProfilerArgs) settings.getInvocationSettings().getProfilerOptions());
+        return new HonestProfilerJvmArgsCalculator(honestProfilerArgs);
     }
 
     @Override

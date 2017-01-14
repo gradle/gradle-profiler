@@ -18,45 +18,45 @@ public class JProfilerController implements ProfilerController {
     private JMXConnector connector;
     private ObjectName objectName;
     private ScenarioSettings settings;
+    private final JProfilerConfig jProfilerConfig;
 
-    public JProfilerController(ScenarioSettings settings) {
+    public JProfilerController(ScenarioSettings settings, JProfilerConfig jProfilerConfig) {
         this.settings = settings;
+        this.jProfilerConfig = jProfilerConfig;
     }
 
     @Override
     public void start() throws IOException, InterruptedException {
-        JProfilerConfig config = getJProfilerConfig();
         invoke("startCPURecording", true);
-        if (config.isRecordAlloc()) {
+        if (jProfilerConfig.isRecordAlloc()) {
             invoke("startAllocRecording", true);
         }
-        if (config.isRecordMonitors()) {
+        if (jProfilerConfig.isRecordMonitors()) {
             invoke("startMonitorRecording");
         }
-        for (String probeName : config.getRecordedProbes()) {
-            boolean eventRecording = config.getProbesWithEventRecording().contains(probeName);
-            boolean specialRecording = config.getProbesWithSpecialRecording().contains(probeName);
+        for (String probeName : jProfilerConfig.getRecordedProbes()) {
+            boolean eventRecording = jProfilerConfig.getProbesWithEventRecording().contains(probeName);
+            boolean specialRecording = jProfilerConfig.getProbesWithSpecialRecording().contains(probeName);
             invoke("startProbeRecording", probeName, eventRecording, specialRecording);
         }
-        if (config.isHeapDump() && hasOperation("markHeap")) { // available in JProfiler 10
+        if (jProfilerConfig.isHeapDump() && hasOperation("markHeap")) { // available in JProfiler 10
             invoke("markHeap");
         }
     }
 
     @Override
     public void stop() throws IOException, InterruptedException {
-        JProfilerConfig config = getJProfilerConfig();
         invoke("stopCPURecording");
-        if (config.isRecordAlloc()) {
+        if (jProfilerConfig.isRecordAlloc()) {
             invoke("stopAllocRecording");
         }
-        if (config.isRecordMonitors()) {
+        if (jProfilerConfig.isRecordMonitors()) {
             invoke("stopMonitorRecording");
         }
-        for (String probeName : config.getRecordedProbes()) {
+        for (String probeName : jProfilerConfig.getRecordedProbes()) {
             invoke("stopProbeRecording", probeName);
         }
-        if (config.isHeapDump()) {
+        if (jProfilerConfig.isHeapDump()) {
             invoke("triggerHeapDump");
         }
         invoke("saveSnapshot", getSnapshotPath());
@@ -78,7 +78,7 @@ public class JProfilerController implements ProfilerController {
 
     private void ensureConnected() throws IOException, MalformedObjectNameException {
         if (connector == null) {
-            JMXServiceURL jmxUrl = new JMXServiceURL("service:jmx:rmi:///jndi/rmi://localhost:" + getJProfilerConfig().getPort() + "/jmxrmi");
+            JMXServiceURL jmxUrl = new JMXServiceURL("service:jmx:rmi:///jndi/rmi://localhost:" + jProfilerConfig.getPort() + "/jmxrmi");
             connector = JMXConnectorFactory.newJMXConnector(jmxUrl, Collections.emptyMap());
             connector.connect();
             connection = connector.getMBeanServerConnection();
@@ -129,9 +129,5 @@ public class JProfilerController implements ProfilerController {
         } catch (InstanceNotFoundException | ReflectionException | MalformedObjectNameException | IntrospectionException e) {
             throw new RuntimeException(e);
         }
-    }
-
-    private JProfilerConfig getJProfilerConfig() {
-        return (JProfilerConfig)settings.getInvocationSettings().getProfilerOptions();
     }
 }

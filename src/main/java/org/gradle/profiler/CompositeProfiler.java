@@ -3,15 +3,11 @@ package org.gradle.profiler;
 import joptsimple.OptionSet;
 
 import java.io.IOException;
-import java.util.Collections;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.stream.Collectors;
 
 class CompositeProfiler extends Profiler {
     private final List<Profiler> delegates;
-    private final Map<Profiler, Object> profilerOptions = new HashMap<>();
 
     CompositeProfiler(final List<Profiler> delegates) {
         this.delegates = delegates;
@@ -47,7 +43,7 @@ class CompositeProfiler extends Profiler {
 
     private ScenarioSettings settingsFor(final Profiler prof, final ScenarioSettings scenarioSettings) {
         InvocationSettings settings = scenarioSettings.getInvocationSettings();
-        InvocationSettings newSettings = new InvocationSettings(settings.getProjectDir(), prof, profilerOptions.get(prof), settings.isBenchmark(),
+        InvocationSettings newSettings = new InvocationSettings(settings.getProjectDir(), prof, settings.isBenchmark(),
                 settings.getOutputDir(), settings.getInvoker(), settings.isDryRun(), settings.getScenarioFile(), settings.getVersions(),
                 settings.getTargets(), settings.getSystemProperties(), settings.getGradleUserHome(), settings.getWarmUpCount(),
                 settings.getBuildCount());
@@ -95,10 +91,7 @@ class CompositeProfiler extends Profiler {
     }
 
     @Override
-    public Object newConfigObject(final OptionSet parsedOptions) {
-        for (Profiler delegate : delegates) {
-            profilerOptions.put(delegate, delegate.newConfigObject(parsedOptions));
-        }
-        return Collections.unmodifiableMap(profilerOptions);
+    public Profiler withConfig(OptionSet parsedOptions) {
+        return new CompositeProfiler(delegates.stream().map(profiler -> profiler.withConfig(parsedOptions)).collect(Collectors.toList()));
     }
 }

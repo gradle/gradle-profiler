@@ -79,8 +79,8 @@ public class Profiler {
         return GradleArgsCalculator.DEFAULT;
     }
 
-    public Object newConfigObject(OptionSet parsedOptions) {
-        return null;
+    public Profiler withConfig(OptionSet parsedOptions) {
+        return this;
     }
 
     public void addOptions(OptionParser parser) {

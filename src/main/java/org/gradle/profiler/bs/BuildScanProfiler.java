@@ -7,6 +7,16 @@ import org.gradle.profiler.Profiler;
 import org.gradle.profiler.ScenarioSettings;
 
 public class BuildScanProfiler extends Profiler {
+    private final String buildScanVersion;
+
+    public BuildScanProfiler() {
+        this(null);
+    }
+
+    private BuildScanProfiler(String buildScanVersion) {
+        this.buildScanVersion = buildScanVersion;
+    }
+
     @Override
     public String toString() {
         return "buildscan";
@@ -14,12 +24,12 @@ public class BuildScanProfiler extends Profiler {
 
     @Override
     public GradleArgsCalculator newInstrumentedBuildsGradleArgsCalculator(ScenarioSettings settings) {
-        return new BuildScanGradleArgsCalculator(settings);
+        return new BuildScanGradleArgsCalculator(buildScanVersion);
     }
 
     @Override
-    public Object newConfigObject(final OptionSet parsedOptions) {
-        return parsedOptions.valueOf("buildscan-version");
+    public Profiler withConfig(OptionSet parsedOptions) {
+        return new BuildScanProfiler((String) parsedOptions.valueOf("buildscan-version"));
     }
 
     @Override

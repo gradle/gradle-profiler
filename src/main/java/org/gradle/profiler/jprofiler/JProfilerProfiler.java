@@ -10,7 +10,7 @@ import org.gradle.profiler.ProfilerController;
 import org.gradle.profiler.ScenarioSettings;
 
 public class JProfilerProfiler extends Profiler {
-
+    private final JProfilerConfig jProfilerConfig;
     private ArgumentAcceptingOptionSpec<String> homeDir;
     private ArgumentAcceptingOptionSpec<String> configOption;
     private ArgumentAcceptingOptionSpec<String> sessionIdOption;
@@ -20,14 +20,22 @@ public class JProfilerProfiler extends Profiler {
     private OptionSpecBuilder heapDumpOption;
     private ArgumentAcceptingOptionSpec<String> probesOption;
 
+    public JProfilerProfiler() {
+        this(null);
+    }
+
+    private JProfilerProfiler(JProfilerConfig jProfilerConfig) {
+        this.jProfilerConfig = jProfilerConfig;
+    }
+
     @Override
     public ProfilerController newController(String pid, ScenarioSettings settings) {
-        return new JProfilerController(settings);
+        return new JProfilerController(settings, jProfilerConfig);
     }
 
     @Override
     public JvmArgsCalculator newJvmArgsCalculator(ScenarioSettings settings) {
-        return new JProfilerJvmArgsCalculator(settings);
+        return new JProfilerJvmArgsCalculator(jProfilerConfig);
     }
 
     @Override
@@ -51,7 +59,11 @@ public class JProfilerProfiler extends Profiler {
     }
 
     @Override
-    public Object newConfigObject(OptionSet parsedOptions) {
+    public Profiler withConfig(OptionSet parsedOptions) {
+        return new JProfilerProfiler(newConfigObject(parsedOptions));
+    }
+
+    private JProfilerConfig newConfigObject(OptionSet parsedOptions) {
         return new JProfilerConfig(
                 parsedOptions.valueOf(homeDir),
                 parsedOptions.valueOf(configOption),
