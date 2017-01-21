@@ -271,7 +271,7 @@ public class Main {
 
                 startOperation("Running " + displayName);
                 Timer timer = new Timer();
-                new CommandExec().run(commandLine);
+                new CommandExec().inDir(settings.getProjectDir()).run(commandLine);
                 Duration executionTime = timer.elapsed();
                 System.out.println("Execution time " + executionTime.toMillis() + "ms");
                 resultConsumer.accept(new BuildInvocationResult(displayName, executionTime, null));
@@ -282,7 +282,7 @@ public class Main {
 
                 startOperation("Running " + displayName);
                 Timer timer = new Timer();
-                new CommandExec().run(commandLine);
+                new CommandExec().inDir(settings.getProjectDir()).run(commandLine);
                 Duration executionTime = timer.elapsed();
                 System.out.println("Execution time " + executionTime.toMillis() + "ms");
                 resultConsumer.accept(new BuildInvocationResult(displayName, executionTime, null));
