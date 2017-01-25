@@ -10,7 +10,7 @@ public abstract class AbstractFileChangeMutator implements BuildMutator {
     protected final File sourceFile;
     private final String originalText;
     private long timestamp;
-    private int counter;
+    protected int counter;
 
     protected AbstractFileChangeMutator(File sourceFile) {
         this.sourceFile = sourceFile;
