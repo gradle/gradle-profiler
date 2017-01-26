@@ -12,12 +12,14 @@ public abstract class AbstractJavaSourceFileMutator extends AbstractFileChangeMu
 
     @Override
     protected void applyChangeTo(StringBuilder text) {
-        int insertPos = text.lastIndexOf("}");
-        if (insertPos < 0) {
+        int lastOpeningPos = text.lastIndexOf("{");
+        int insertPos = text.indexOf("}", lastOpeningPos);
+        boolean isClassClosing = insertPos == text.lastIndexOf("}");
+        if (insertPos < 0 || isClassClosing) {
             throw new IllegalArgumentException("Cannot parse source file " + sourceFile + " to apply changes");
         }
         applyChangeAt(text, insertPos);
     }
 
-    protected abstract void applyChangeAt(StringBuilder text, int insertPos);
+    protected abstract void applyChangeAt(StringBuilder text, int lastMethodEndPos);
 }

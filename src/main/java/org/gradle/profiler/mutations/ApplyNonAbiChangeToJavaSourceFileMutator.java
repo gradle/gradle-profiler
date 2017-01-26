@@ -8,7 +8,7 @@ public class ApplyNonAbiChangeToJavaSourceFileMutator extends AbstractJavaSource
     }
 
     @Override
-    protected void applyChangeAt(StringBuilder text, int insertPos) {
-        text.insert(insertPos, "public void _m" + getInvocationText() + "() { System.out.println(\"" + getUniqueText() + "\"); }");
+    protected void applyChangeAt(StringBuilder text, int lastMethodEndPos) {
+        text.insert(lastMethodEndPos, "System.out.println(\"" + getUniqueText() + "\");");
     }
 }
