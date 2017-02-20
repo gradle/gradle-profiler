@@ -19,6 +19,7 @@ class ScenarioLoader {
     private static final String RUN_USING = "run-using";
     private static final String SYSTEM_PROPERTIES = "system-properties";
     private static final String BUCK = "buck";
+    private static final String MAVEN = "maven";
     private static final String WARM_UP_COUNT = "warm-ups";
     private static final String APPLY_ABI_CHANGE_TO = "apply-abi-change-to";
     private static final String APPLY_NON_ABI_CHANGE_TO = "apply-non-abi-change-to";
@@ -32,9 +33,10 @@ class ScenarioLoader {
     private static final String TYPE = "type";
 
     private static final List<String> ALL_SCENARIO_KEYS = Arrays.asList(
-        VERSIONS, TASKS, CLEANUP_TASKS, GRADLE_ARGS, RUN_USING, SYSTEM_PROPERTIES, WARM_UP_COUNT, APPLY_ABI_CHANGE_TO, APPLY_NON_ABI_CHANGE_TO, APPLY_ANDROID_RESOURCE_CHANGE_TO, APPLY_ANDROID_RESOURCE_VALUE_CHANGE_TO, APPLY_ANDROID_MANIFEST_CHANGE_TO, APPLY_PROPERTY_RESOURCE_CHANGE_TO, APPLY_CPP_SOURCE_CHANGE_TO, APPLY_H_SOURCE_CHANGE_TO, BUCK
+        VERSIONS, TASKS, CLEANUP_TASKS, GRADLE_ARGS, RUN_USING, SYSTEM_PROPERTIES, WARM_UP_COUNT, APPLY_ABI_CHANGE_TO, APPLY_NON_ABI_CHANGE_TO, APPLY_ANDROID_RESOURCE_CHANGE_TO, APPLY_ANDROID_RESOURCE_VALUE_CHANGE_TO, APPLY_ANDROID_MANIFEST_CHANGE_TO, APPLY_PROPERTY_RESOURCE_CHANGE_TO, APPLY_CPP_SOURCE_CHANGE_TO, APPLY_H_SOURCE_CHANGE_TO, BUCK, MAVEN
     );
     private static final List<String> BUCK_KEYS = Arrays.asList(TARGETS, TYPE);
+    private static final List<String> MAVEN_KEYS = Collections.singletonList(TARGETS);
 
     private final GradleVersionInspector gradleVersionInspector;
 
@@ -113,7 +115,20 @@ class ScenarioLoader {
                 String type = string(executionInstructions, TYPE, null);
                 File outputDir = new File(settings.getOutputDir(), scenarioName + "-buck");
                 definitions.add(new BuckScenarioDefinition(scenarioName, targets, type, buildMutatorFactory, warmUpCount, settings.getBuildCount(), outputDir));
-            } else if (!settings.isBuck()) {
+            } else if (scenario.hasPath(MAVEN) && settings.isMaven()) {
+                if (settings.isProfile()) {
+                    throw new IllegalArgumentException("Can only profile scenario '" + scenarioName + "' when building using Gradle.");
+                }
+                Config executionInstructions = scenario.getConfig(MAVEN);
+                for (String key : scenario.getObject(MAVEN).keySet()) {
+                    if (!MAVEN_KEYS.contains(key)) {
+                        throw new IllegalArgumentException("Unrecognized key '" + scenarioName + ".maven." + key + "' defined in scenario file " + scenarioFile);
+                    }
+                }
+                List<String> targets = strings(executionInstructions, TARGETS, Collections.emptyList());
+                File outputDir = new File(settings.getOutputDir(), scenarioName + "-maven");
+                definitions.add(new MavenScenarioDefinition(scenarioName, targets, buildMutatorFactory, warmUpCount, settings.getBuildCount(), outputDir));
+            } else if (!settings.isBuck() && !settings.isMaven()) {
                 List<GradleVersion> versions = strings(scenario, VERSIONS, settings.getVersions()).stream().map(v -> inspector.resolve(v)).collect(
                         Collectors.toList());
                 if (versions.isEmpty()) {

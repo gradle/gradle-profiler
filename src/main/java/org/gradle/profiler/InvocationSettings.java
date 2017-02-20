@@ -62,6 +62,10 @@ public class InvocationSettings {
         return invoker == Invoker.Buck;
     }
 
+    public boolean isMaven() {
+        return invoker == Invoker.Maven;
+    }
+
     public Profiler getProfiler() {
         return profiler;
     }

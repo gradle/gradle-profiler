@@ -1360,6 +1360,39 @@ buildTarget {
         logFile.grep("* Running scenario buildTarget using Gradle 3.2.1 (scenario 1/1)")
     }
 
+    @Requires({System.getenv("MAVEN_HOME")})
+    def "can benchmark scenario using Maven"() {
+        given:
+        def scenarios = file("performance.scenario")
+        scenarios.text = """
+buildGoal {
+    maven {
+        targets = ["-v"]
+    }
+}
+"""
+
+        when:
+        new Main().run("--project-dir", projectDir.absolutePath, "--output-dir", outputDir.absolutePath, "--benchmark", "--scenario-file", scenarios.absolutePath, "--maven")
+
+        then:
+        logFile.contains("* Running scenario buildGoal using maven (scenario 1/1)")
+        logFile.contains("* Maven targets: [-v]")
+
+        resultFile.isFile()
+        resultFile.text.readLines().size() == 21 // 2 headers, 16 executions, 3 stats
+        resultFile.text.readLines().get(0) == "build,buildGoal maven"
+        resultFile.text.readLines().get(1) == "tasks,"
+        resultFile.text.readLines().get(2).matches("warm-up build 1,\\d+")
+        resultFile.text.readLines().get(7).matches("warm-up build 6,\\d+")
+        resultFile.text.readLines().get(8).matches("build 1,\\d+")
+        resultFile.text.readLines().get(9).matches("build 2,\\d+")
+        resultFile.text.readLines().get(17).matches("build 10,\\d+")
+        resultFile.text.readLines().get(18).matches("mean,\\d+\\.\\d+")
+        resultFile.text.readLines().get(19).matches("median,\\d+\\.\\d+")
+        resultFile.text.readLines().get(20).matches("stddev,\\d+\\.\\d+")
+    }
+
     def writeBuckw() {
         def buckw = file("buckw")
         buckw.text = '''

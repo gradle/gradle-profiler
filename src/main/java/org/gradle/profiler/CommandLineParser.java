@@ -39,6 +39,7 @@ class CommandLineParser {
         OptionSpecBuilder noDaemonOption = parser.accepts("no-daemon", "Do not use the Gradle daemon");
         OptionSpecBuilder dryRunOption = parser.accepts("dry-run", "Verify configuration");
         OptionSpecBuilder buckOption = parser.accepts("buck", "Benchmark scenarios using buck");
+        OptionSpecBuilder mavenOption = parser.accepts("maven", "Benchmark scenarios using Maven");
         OptionSet parsedOptions;
         try {
             parsedOptions = parser.parse(args);
@@ -93,6 +94,9 @@ class CommandLineParser {
         }
         if (parsedOptions.has(buckOption)) {
             invoker = Invoker.Buck;
+        }
+        if (parsedOptions.has(mavenOption)) {
+            invoker = Invoker.Maven;
         }
         boolean dryRun = parsedOptions.has(dryRunOption);
         Map<String, String> sysProperties = new LinkedHashMap<>();

@@ -12,7 +12,7 @@ import java.util.*;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
-import static org.gradle.profiler.Logging.*;
+import static org.gradle.profiler.Logging.startOperation;
 
 public class Main {
     public static void main(String[] args) throws Exception {
@@ -65,6 +65,8 @@ public class Main {
                 try {
                     if (scenario instanceof BuckScenarioDefinition) {
                         runBuckScenario((BuckScenarioDefinition) scenario, settings, benchmarkResults);
+                    } else if (scenario instanceof MavenScenarioDefinition){
+                        runMavenScenario((MavenScenarioDefinition) scenario, settings, benchmarkResults);
                     } else {
                         runGradleScenario((GradleScenarioDefinition)scenario, settings, daemonControl, benchmarkResults, pidInstrumentation, resultsFile);
                     }
@@ -261,6 +263,47 @@ public class Main {
         commandLine.add(buckwExe);
         commandLine.add("build");
         commandLine.addAll(targets);
+
+        BuildMutator mutator = scenario.getBuildMutator().get();
+        try {
+            Consumer<BuildInvocationResult> resultConsumer = benchmarkResults.version(scenario);
+            for (int i = 0; i < scenario.getWarmUpCount(); i++) {
+                String displayName = "warm-up build " + (i + 1);
+                mutator.beforeBuild();
+
+                startOperation("Running " + displayName);
+                Timer timer = new Timer();
+                new CommandExec().inDir(settings.getProjectDir()).run(commandLine);
+                Duration executionTime = timer.elapsed();
+                System.out.println("Execution time " + executionTime.toMillis() + "ms");
+                resultConsumer.accept(new BuildInvocationResult(displayName, executionTime, null));
+            }
+            for (int i = 0; i < scenario.getBuildCount(); i++) {
+                String displayName = "build " + (i + 1);
+                mutator.beforeBuild();
+
+                startOperation("Running " + displayName);
+                Timer timer = new Timer();
+                new CommandExec().inDir(settings.getProjectDir()).run(commandLine);
+                Duration executionTime = timer.elapsed();
+                System.out.println("Execution time " + executionTime.toMillis() + "ms");
+                resultConsumer.accept(new BuildInvocationResult(displayName, executionTime, null));
+            }
+        } finally {
+            mutator.cleanup();
+        }
+    }
+
+    private void runMavenScenario(MavenScenarioDefinition scenario, InvocationSettings settings, BenchmarkResults benchmarkResults) throws IOException {
+        String mavenHome = System.getenv("MAVEN_HOME");
+        String mvn = mavenHome == null ? "mvn" : mavenHome + "/bin/mvn";
+
+        System.out.println();
+        System.out.println("* Maven targets: " + scenario.getTargets());
+
+        List<String> commandLine = new ArrayList<>();
+        commandLine.add(mvn);
+        commandLine.addAll(scenario.getTargets());
 
         BuildMutator mutator = scenario.getBuildMutator().get();
         try {
