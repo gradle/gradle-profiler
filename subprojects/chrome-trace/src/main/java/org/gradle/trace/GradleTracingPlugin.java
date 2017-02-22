@@ -1,23 +1,5 @@
 package org.gradle.trace;
 
-import java.io.File;
-import java.io.FileOutputStream;
-import java.io.FileWriter;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
-import java.io.PrintWriter;
-import java.lang.management.GarbageCollectorMXBean;
-import java.lang.management.MemoryUsage;
-import java.lang.reflect.Field;
-import java.util.*;
-import java.util.concurrent.TimeUnit;
-import javax.inject.Inject;
-import javax.management.ListenerNotFoundException;
-import javax.management.NotificationEmitter;
-import javax.management.NotificationListener;
-import javax.management.openmbean.CompositeData;
-
 import com.sun.management.GarbageCollectionNotificationInfo;
 import com.sun.management.OperatingSystemMXBean;
 import org.gradle.BuildAdapter;
@@ -33,15 +15,26 @@ import org.gradle.initialization.DefaultGradleLauncherFactory;
 import org.gradle.initialization.GradleLauncherFactory;
 import org.gradle.internal.UncheckedException;
 import org.gradle.internal.event.ListenerManager;
-import org.gradle.internal.progress.BuildOperationInternal;
-import org.gradle.internal.progress.InternalBuildListener;
-import org.gradle.internal.progress.OperationResult;
-import org.gradle.internal.progress.OperationStartEvent;
+import org.gradle.internal.progress.*;
 import org.gradle.internal.service.ServiceRegistry;
 
+import javax.inject.Inject;
+import javax.management.ListenerNotFoundException;
+import javax.management.NotificationEmitter;
+import javax.management.NotificationListener;
+import javax.management.openmbean.CompositeData;
+import java.io.*;
+import java.lang.management.GarbageCollectorMXBean;
 import java.lang.management.ManagementFactory;
+import java.lang.management.MemoryUsage;
+import java.lang.reflect.Field;
+import java.lang.reflect.InvocationHandler;
+import java.lang.reflect.Method;
+import java.lang.reflect.Proxy;
+import java.util.*;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 
 public class GradleTracingPlugin implements Plugin<Gradle> {
     private static final String CATEGORY_PHASE = "BUILD_PHASE";
@@ -93,12 +86,10 @@ public class GradleTracingPlugin implements Plugin<Gradle> {
 
     @Override
     public void apply(Gradle gradle) {
-        ListenerManager globalListenerManager = getGlobalListenerManager(gradle);
-
         scheduledExecutorService.scheduleAtFixedRate(() -> {
             HashMap<String, Double> cpuStats = new HashMap<>();
-            double pcpu = operatingSystemMXBean.getProcessCpuLoad()*100;
-            double scpu = operatingSystemMXBean.getSystemCpuLoad()*100;
+            double pcpu = operatingSystemMXBean.getProcessCpuLoad() * 100;
+            double scpu = operatingSystemMXBean.getSystemCpuLoad() * 100;
 
             if (!Double.isNaN(pcpu) && !Double.isNaN(scpu)) {
                 cpuStats.put("process_cpu_used", pcpu);
@@ -145,39 +136,27 @@ public class GradleTracingPlugin implements Plugin<Gradle> {
             gcNotificationListeners.put(garbageCollectorMXBean, gcNotificationListener);
         }
 
-        globalListenerManager.addListener( new InternalBuildListener() {
-                @Override
-                public void started(BuildOperationInternal operation, OperationStartEvent startEvent) {
-                    start(getName(operation), CATEGORY_OPERATION, toNanoTime(startEvent.getStartTime()));
-                }
 
-                @Override
-                public void finished(BuildOperationInternal operation, OperationResult result) {
-                    Map<String, String> info = new HashMap<>();
-                    if (operation.getOperationDescriptor() instanceof TaskOperationDescriptor) {
-                        TaskOperationDescriptor taskDescriptor = (TaskOperationDescriptor) operation.getOperationDescriptor();
-                        withTaskInfo(info, taskDescriptor);
-                    }
-                    finish(getName(operation), toNanoTime(result.getEndTime()), info);
-                }
 
-                private String getName(BuildOperationInternal operation) {
-                    if (operation.getOperationDescriptor() instanceof  TaskOperationDescriptor) {
-                        return ((TaskOperationDescriptor)operation.getOperationDescriptor()).getTask().getPath();
-                    }
-                    return operation.getDisplayName();
-                }
+        registerBuildOperationListener(gradle);
 
-                private void withTaskInfo(Map<String, String> info, TaskOperationDescriptor taskDescriptor) {
-                    TaskInternal task = taskDescriptor.getTask();
-                    info.put("type", task.getClass().getSimpleName().replace("_Decorated", ""));
-                    info.put("enabled", String.valueOf(task.getEnabled()));
-                    info.put("cacheable", String.valueOf(task.getState().isCacheable()));
-                    info.put("parallelizeable", String.valueOf(task.getClass().isAnnotationPresent(ParallelizableTask.class) && !task.isHasCustomActions()));
-                    info.put("outcome", task.getState().getOutcome().name());
-                }
-            });
         gradle.getGradle().addListener(new JsonAdapter(gradle));
+    }
+
+    private void registerBuildOperationListener(Gradle gradle) {
+        InvocationHandler invocationHandler = new BackwardsCompatibleBuildOperationListener();
+        try {
+            BuildOperationListener listener = (BuildOperationListener) Proxy.newProxyInstance(getClass().getClassLoader(), new Class[]{BuildOperationListener.class}, invocationHandler);
+            BuildOperationService buildOperationService = ((GradleInternal) gradle).getServices().get(BuildOperationService.class);
+            buildOperationService.addListener(listener);
+        } catch (NoClassDefFoundError notOnGradle35) {
+            try {
+                Object listener = Proxy.newProxyInstance(getClass().getClassLoader(), new Class[]{Class.forName("org.gradle.internal.progress.InternalBuildListener")}, invocationHandler);
+                getGlobalListenerManager(gradle).addListener(listener);
+            } catch (ClassNotFoundException e) {
+                throw new IllegalStateException(e);
+            }
+        }
     }
 
     private class JsonAdapter extends BuildAdapter {
@@ -212,14 +191,14 @@ public class GradleTracingPlugin implements Plugin<Gradle> {
         }
 
         private void copyResourceToFile(String resourcePath, File traceFile, boolean append) {
-            try(OutputStream out = new FileOutputStream(traceFile, append);
-                InputStream in = getClass().getResourceAsStream(resourcePath)) {
+            try (OutputStream out = new FileOutputStream(traceFile, append);
+                 InputStream in = getClass().getResourceAsStream(resourcePath)) {
                 byte[] buffer = new byte[1024];
                 int len;
                 while ((len = in.read(buffer)) != -1) {
                     out.write(buffer, 0, len);
                 }
-                } catch (IOException e) {
+            } catch (IOException e) {
                 throw UncheckedException.throwAsUncheckedException(e);
             }
         }
@@ -276,7 +255,7 @@ public class GradleTracingPlugin implements Plugin<Gradle> {
     }
 
 
-    private ListenerManager getGlobalListenerManager( final Gradle gradle ) {
+    private ListenerManager getGlobalListenerManager(final Gradle gradle) {
         try {
             GradleInternal gradleInternal = (GradleInternal) gradle;
             ServiceRegistry services = gradleInternal.getServices();
@@ -284,8 +263,49 @@ public class GradleTracingPlugin implements Plugin<Gradle> {
             Field field = DefaultGradleLauncherFactory.class.getDeclaredField("globalListenerManager");
             field.setAccessible(true);
             return (ListenerManager) field.get(gradleLauncherFactory);
-        } catch(Exception ex) {
+        } catch (Exception ex) {
             throw new RuntimeException(ex);
+        }
+    }
+
+    private class BackwardsCompatibleBuildOperationListener implements InvocationHandler {
+        @Override
+        public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
+            if (method.getName().equals("started")) {
+                BuildOperationInternal operation = (BuildOperationInternal) args[0];
+                OperationStartEvent startEvent = (OperationStartEvent) args[1];
+                start(getName(operation), CATEGORY_OPERATION, toNanoTime(startEvent.getStartTime()));
+            } else if (method.getName().equals("finished")) {
+                BuildOperationInternal operation = (BuildOperationInternal) args[0];
+                OperationResult result = (OperationResult) args[1];
+                Map<String, String> info = new HashMap<>();
+                if (operation.getOperationDescriptor() instanceof TaskOperationDescriptor) {
+                    TaskOperationDescriptor taskDescriptor = (TaskOperationDescriptor) operation.getOperationDescriptor();
+                    withTaskInfo(info, taskDescriptor);
+                }
+                finish(getName(operation), toNanoTime(result.getEndTime()), info);
+            } else if (method.getName().equals("hashCode")) {
+                return hashCode();
+            } else if (method.getName().equals("equals")) {
+                return equals(args[0]);
+            }
+            return null;
+        }
+
+        private String getName(BuildOperationInternal operation) {
+            if (operation.getOperationDescriptor() instanceof TaskOperationDescriptor) {
+                return ((TaskOperationDescriptor) operation.getOperationDescriptor()).getTask().getPath();
+            }
+            return operation.getDisplayName();
+        }
+
+        private void withTaskInfo(Map<String, String> info, TaskOperationDescriptor taskDescriptor) {
+            TaskInternal task = taskDescriptor.getTask();
+            info.put("type", task.getClass().getSimpleName().replace("_Decorated", ""));
+            info.put("enabled", String.valueOf(task.getEnabled()));
+            info.put("cacheable", String.valueOf(task.getState().isCacheable()));
+            info.put("parallelizeable", String.valueOf(task.getClass().isAnnotationPresent(ParallelizableTask.class) && !task.isHasCustomActions()));
+            info.put("outcome", task.getState().getOutcome().name());
         }
     }
 }
