@@ -21,7 +21,7 @@ import java.io.IOException;
 import java.io.PrintWriter;
 
 public class BuildScanInitScript extends GeneratedInitScript {
-    public final static String VERSION = "1.5";
+    public final static String VERSION = "1.6";
 
     private final String version;
 
