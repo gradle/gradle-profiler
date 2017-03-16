@@ -296,7 +296,7 @@ public class GradleTracingPlugin implements Plugin<Gradle> {
             if (operation.getOperationDescriptor() instanceof TaskOperationDescriptor) {
                 return ((TaskOperationDescriptor) operation.getOperationDescriptor()).getTask().getPath();
             }
-            return operation.getDisplayName();
+            return operation.getDisplayName() + " (" + operation.getId() + ")";
         }
 
         private void withTaskInfo(Map<String, String> info, TaskOperationDescriptor taskDescriptor) {
