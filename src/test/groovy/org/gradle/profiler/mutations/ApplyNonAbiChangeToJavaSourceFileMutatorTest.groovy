@@ -4,10 +4,12 @@ import org.junit.Rule
 import org.junit.rules.TemporaryFolder
 import spock.lang.Specification
 
+import static com.github.javaparser.JavaParser.parse
+
 class ApplyNonAbiChangeToJavaSourceFileMutatorTest extends Specification {
     @Rule TemporaryFolder tmpDir = new TemporaryFolder()
 
-    def "changes the last method in the source file"() {
+    def "changes the first method in the source file"() {
         def sourceFile = tmpDir.newFile("Thing.java")
         sourceFile.text = "class Thing { public void existingMethod() { }}"
         def mutator = new ApplyNonAbiChangeToJavaSourceFileMutator(sourceFile)
@@ -17,19 +19,19 @@ class ApplyNonAbiChangeToJavaSourceFileMutatorTest extends Specification {
         mutator.beforeBuild()
 
         then:
-        sourceFile.text == 'class Thing { public void existingMethod() { System.out.println("_1234_1");}}'
+        parse(sourceFile) == parse('class Thing { public void existingMethod() { System.out.println("_1234_1");}}')
 
         when:
         mutator.beforeBuild()
 
         then:
-        sourceFile.text == 'class Thing { public void existingMethod() { System.out.println("_1234_2");}}'
+        parse(sourceFile) == parse('class Thing { public void existingMethod() { System.out.println("_1234_2");}}')
 
         when:
         mutator.beforeBuild()
 
         then:
-        sourceFile.text == 'class Thing { public void existingMethod() { System.out.println("_1234_3");}}'
+        parse(sourceFile) == parse('class Thing { public void existingMethod() { System.out.println("_1234_3");}}')
     }
 
     def "does not work with Java files that do not contain a method"() {
@@ -43,6 +45,6 @@ class ApplyNonAbiChangeToJavaSourceFileMutatorTest extends Specification {
 
         then:
         IllegalArgumentException t = thrown()
-        t.message == "Cannot parse source file " + sourceFile + " to apply changes"
+        t.message == "No methods to change in " + sourceFile
     }
 }

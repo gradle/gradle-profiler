@@ -4,10 +4,12 @@ import org.junit.Rule
 import org.junit.rules.TemporaryFolder
 import spock.lang.Specification
 
+import static com.github.javaparser.JavaParser.parse
+
 class ApplyAbiChangeToJavaSourceFileMutatorTest extends Specification {
     @Rule TemporaryFolder tmpDir = new TemporaryFolder()
 
-    def "adds and replaces public method to end of source file"() {
+    def "adds and replaces public method at end of source file"() {
         def sourceFile = tmpDir.newFile("Thing.java")
         sourceFile.text = "class Thing { public void existingMethod() { }}"
         def mutator = new ApplyAbiChangeToJavaSourceFileMutator(sourceFile)
@@ -17,19 +19,19 @@ class ApplyAbiChangeToJavaSourceFileMutatorTest extends Specification {
         mutator.beforeBuild()
 
         then:
-        sourceFile.text == "class Thing { public void existingMethod() { _m_1234_1();}public void _m_1234_1() { }}"
+        parse(sourceFile) == parse("class Thing { public void existingMethod() { _m_1234_1();}public void _m_1234_1() { }}")
 
         when:
         mutator.beforeBuild()
 
         then:
-        sourceFile.text == "class Thing { public void existingMethod() { _m_1234_2();}public void _m_1234_2() { }}"
+        parse(sourceFile) == parse("class Thing { public void existingMethod() { _m_1234_2();}public void _m_1234_2() { }}")
 
         when:
         mutator.beforeBuild()
 
         then:
-        sourceFile.text == "class Thing { public void existingMethod() { _m_1234_3();}public void _m_1234_3() { }}"
+        parse(sourceFile) == parse("class Thing { public void existingMethod() { _m_1234_3();}public void _m_1234_3() { }}")
     }
 
     def "reverts changes when nothing has been applied"() {

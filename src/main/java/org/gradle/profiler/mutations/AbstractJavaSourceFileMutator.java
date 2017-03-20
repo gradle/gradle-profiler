@@ -1,5 +1,8 @@
 package org.gradle.profiler.mutations;
 
+import com.github.javaparser.JavaParser;
+import com.github.javaparser.ast.CompilationUnit;
+
 import java.io.File;
 
 public abstract class AbstractJavaSourceFileMutator extends AbstractFileChangeMutator {
@@ -12,14 +15,10 @@ public abstract class AbstractJavaSourceFileMutator extends AbstractFileChangeMu
 
     @Override
     protected void applyChangeTo(StringBuilder text) {
-        int lastOpeningPos = text.lastIndexOf("{");
-        int insertPos = text.indexOf("}", lastOpeningPos);
-        boolean isClassClosing = insertPos == text.lastIndexOf("}");
-        if (insertPos < 0 || isClassClosing) {
-            throw new IllegalArgumentException("Cannot parse source file " + sourceFile + " to apply changes");
-        }
-        applyChangeAt(text, insertPos);
+        CompilationUnit compilationUnit = JavaParser.parse(text.toString());
+        applyChangeTo(compilationUnit);
+        text.replace(0, text.length(), compilationUnit.toString());
     }
 
-    protected abstract void applyChangeAt(StringBuilder text, int lastMethodEndPos);
+    protected abstract void applyChangeTo(CompilationUnit compilationUnit);
 }

@@ -1091,8 +1091,8 @@ classes {
         then:
         // Probe version, initial clean build, 6 warm up, 10 builds
         logFile.grep("<src-length: ${srcFile.length()}>").size() == 2
-        logFile.grep("<src-length: ${srcFile.length() + 57}>").size() == 9
-        logFile.grep("<src-length: ${srcFile.length() + 59}>").size() == 7
+        logFile.grep("<src-length: ${srcFile.length() + 80}>").size() == 9
+        logFile.grep("<src-length: ${srcFile.length() + 82}>").size() == 7
         srcFile.text == originalText
     }
 
