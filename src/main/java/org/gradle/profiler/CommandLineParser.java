@@ -19,17 +19,20 @@ class CommandLineParser {
     public InvocationSettings parseSettings(String[] args) throws IOException, SettingsNotAvailableException {
         OptionParser parser = new OptionParser();
         parser.nonOptions("The scenarios or task names to run");
-        ArgumentAcceptingOptionSpec<String> projectOption = parser.accepts("project-dir", "The directory containing the build to run")
-                .withRequiredArg();
+        ArgumentAcceptingOptionSpec<File> projectOption = parser.accepts("project-dir", "The directory containing the build to run")
+                .withRequiredArg().ofType(File.class).defaultsTo(new File("."));
         ArgumentAcceptingOptionSpec<String> versionOption = parser.accepts("gradle-version", "Gradle version or installation to use to run build")
                 .withRequiredArg();
-        ArgumentAcceptingOptionSpec<String> gradleUserHomeOption = parser.accepts("gradle-user-home", "The Gradle user home to use")
-                .withRequiredArg();
-        ArgumentAcceptingOptionSpec<String> scenarioFileOption = parser.accepts("scenario-file", "Scenario definition file to use").withRequiredArg();
+        ArgumentAcceptingOptionSpec<File> gradleUserHomeOption = parser.accepts("gradle-user-home", "The Gradle user home to use")
+                .withRequiredArg()
+                .ofType(File.class)
+                .defaultsTo(new File("gradle-user-home"));
+        ArgumentAcceptingOptionSpec<File> scenarioFileOption = parser.accepts("scenario-file", "Scenario definition file to use").withRequiredArg().ofType(File.class);
         ArgumentAcceptingOptionSpec<String> sysPropOption = parser.accepts("D", "Defines a system property").withRequiredArg();
-        ArgumentAcceptingOptionSpec<String> outputDirOption = parser.accepts("output-dir", "Directory to write results to").withRequiredArg();
-        ArgumentAcceptingOptionSpec<String> warmupsOption = parser.accepts("warmups", "Number of warm-up build to run for each scenario").withRequiredArg();
-        ArgumentAcceptingOptionSpec<String> iterationsOption = parser.accepts("iterations", "Number of builds to run for each scenario").withRequiredArg();
+        ArgumentAcceptingOptionSpec<File> outputDirOption = parser.accepts("output-dir", "Directory to write results to").withRequiredArg()
+                .ofType(File.class).defaultsTo(findOutputDir());
+        ArgumentAcceptingOptionSpec<Integer> warmupsOption = parser.accepts("warmups", "Number of warm-up build to run for each scenario").withRequiredArg().ofType(Integer.class);
+        ArgumentAcceptingOptionSpec<Integer> iterationsOption = parser.accepts("iterations", "Number of builds to run for each scenario").withRequiredArg().ofType(Integer.class);
         ArgumentAcceptingOptionSpec<String> profilerOption = parser.accepts("profile",
                 "Collect profiling information using profiler (" + Profiler.getAvailableProfilers().stream().collect(Collectors.joining(", ")) + ")")
                 .withRequiredArg()
@@ -40,6 +43,7 @@ class CommandLineParser {
         OptionSpecBuilder dryRunOption = parser.accepts("dry-run", "Verify configuration");
         OptionSpecBuilder buckOption = parser.accepts("buck", "Benchmark scenarios using buck");
         OptionSpecBuilder mavenOption = parser.accepts("maven", "Benchmark scenarios using Maven");
+
         OptionSet parsedOptions;
         try {
             parsedOptions = parser.parse(args);
@@ -47,11 +51,7 @@ class CommandLineParser {
             return fail(parser, e.getMessage());
         }
 
-        if (!parsedOptions.has(projectOption)) {
-            return fail(parser, "No project directory specified.");
-        }
-
-        File projectDir = (parsedOptions.has(projectOption) ? new File(parsedOptions.valueOf(projectOption)) : new File(".")).getCanonicalFile();
+        File projectDir = parsedOptions.valueOf(projectOption);
         boolean hasProfiler = parsedOptions.has(profilerOption);
         Profiler profiler = Profiler.NONE;
         if (hasProfiler) {
@@ -64,30 +64,14 @@ class CommandLineParser {
             return fail(parser, "Neither --profile or --benchmark specified.");
         }
 
-        File outputDir;
-        if (parsedOptions.has(outputDirOption)) {
-            outputDir = new File(parsedOptions.valueOf(outputDirOption));
-        } else {
-            outputDir = findOutputDir();
-        }
-        File gradleUserHome;
-        if (parsedOptions.has(gradleUserHomeOption)) {
-            gradleUserHome = new File(parsedOptions.valueOf(gradleUserHomeOption));
-        } else {
-            gradleUserHome = new File("gradle-user-home");
-        }
-        Integer warmups = null;
-        if (parsedOptions.has(warmupsOption)) {
-            warmups = Integer.valueOf(parsedOptions.valueOf(warmupsOption));
-        }
-        Integer iterations = null;
-        if (parsedOptions.has(iterationsOption)) {
-            iterations = Integer.valueOf(parsedOptions.valueOf(iterationsOption));
-        }
+        File outputDir = parsedOptions.valueOf(outputDirOption);
+        File gradleUserHome = parsedOptions.valueOf(gradleUserHomeOption);
+        Integer warmups = parsedOptions.valueOf(warmupsOption);
+        Integer iterations = parsedOptions.valueOf(iterationsOption);
 
-        List<String> targetNames = parsedOptions.nonOptionArguments().stream().map(o -> o.toString()).collect(Collectors.toList());
-        List<String> versions = parsedOptions.valuesOf(versionOption).stream().map(v -> v.toString()).collect(Collectors.toList());
-        File scenarioFile = parsedOptions.has(scenarioFileOption) ? new File(parsedOptions.valueOf(scenarioFileOption)) : null;
+        List<String> targetNames = parsedOptions.nonOptionArguments().stream().map(Object::toString).collect(Collectors.toList());
+        List<String> versions = parsedOptions.valuesOf(versionOption);
+        File scenarioFile = parsedOptions.valueOf(scenarioFileOption);
         Invoker invoker = Invoker.ToolingApi;
         if (parsedOptions.has(noDaemonOption)) {
             invoker = Invoker.NoDaemon;

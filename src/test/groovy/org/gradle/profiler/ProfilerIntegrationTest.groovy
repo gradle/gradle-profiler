@@ -56,17 +56,6 @@ class ProfilerIntegrationTest extends Specification {
         Logging.resetLogging()
     }
 
-    def "complains when no project directory provided"() {
-        when:
-        new Main().run()
-
-        then:
-        thrown(CommandLineParser.SettingsNotAvailableException)
-
-        and:
-        output.contains("No project directory specified.")
-    }
-
     def "complains when neither profile or benchmark requested"() {
         when:
         new Main().run("--project-dir", projectDir.absolutePath)
