@@ -24,6 +24,7 @@ import org.gradle.profiler.jfr.JfrProfiler;
 import org.gradle.profiler.jprofiler.JProfilerProfiler;
 import org.gradle.profiler.yjp.YourKitProfiler;
 
+import java.io.File;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -84,6 +85,10 @@ public class Profiler {
     }
 
     public void addOptions(OptionParser parser) {
+    }
+
+    public List<String> summarizeResultFile(File resultFile) {
+        return null;
     }
 
     public static Set<String> getAvailableProfilers() {

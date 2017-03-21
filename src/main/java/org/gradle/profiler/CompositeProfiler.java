@@ -2,6 +2,7 @@ package org.gradle.profiler;
 
 import joptsimple.OptionSet;
 
+import java.io.File;
 import java.io.IOException;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -16,6 +17,17 @@ class CompositeProfiler extends Profiler {
     @Override
     public String toString() {
         return delegates.stream().map(Object::toString).collect(Collectors.joining(", "));
+    }
+
+    @Override
+    public List<String> summarizeResultFile(File resultFile) {
+        for (Profiler delegate : delegates) {
+            List<String> summary = delegate.summarizeResultFile(resultFile);
+            if (summary != null && !summary.isEmpty()) {
+                return summary;
+            }
+        }
+        return null;
     }
 
     @Override

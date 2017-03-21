@@ -8,6 +8,8 @@ import org.gradle.profiler.ProfilerController;
 import org.gradle.profiler.ScenarioSettings;
 
 import java.io.File;
+import java.util.Collections;
+import java.util.List;
 
 public class JfrProfiler extends Profiler {
     private final JFRArgs jfrArgs;
@@ -23,6 +25,14 @@ public class JfrProfiler extends Profiler {
     @Override
     public String toString() {
         return "JFR";
+    }
+
+    @Override
+    public List<String> summarizeResultFile(File resultFile) {
+        if (resultFile.getName().endsWith(".jfr")) {
+            return Collections.singletonList(resultFile.getAbsolutePath());
+        }
+        return null;
     }
 
     @Override

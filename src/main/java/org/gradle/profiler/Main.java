@@ -83,6 +83,7 @@ public class Main {
 
             System.out.println();
             System.out.println("* Results written to " + settings.getOutputDir().getAbsolutePath());
+            printResultFileSummaries(settings.getOutputDir(), settings.getProfiler());
 
             if (!failures.isEmpty()) {
                 throw new ScenarioFailedException(failures.get(0));
@@ -363,6 +364,25 @@ public class Main {
                 break;
             default:
                 throw new IllegalArgumentException();
+        }
+    }
+
+    private static void printResultFileSummaries(File outputDir, Profiler profiler) {
+        if (outputDir == null) {
+            return;
+        }
+        for (File file : outputDir.listFiles()) {
+            if (file.isFile()) {
+                List<String> summary = profiler.summarizeResultFile(file);
+                if (summary != null) {
+                    summary.forEach(line -> System.out.println("  " + line));
+                }
+            }
+        }
+        for (File file : outputDir.listFiles()) {
+            if (file.isDirectory()) {
+                printResultFileSummaries(file, profiler);
+            }
         }
     }
 

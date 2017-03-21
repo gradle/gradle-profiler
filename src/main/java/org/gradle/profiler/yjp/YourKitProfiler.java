@@ -5,6 +5,10 @@ import joptsimple.OptionSet;
 import joptsimple.OptionSpecBuilder;
 import org.gradle.profiler.*;
 
+import java.io.File;
+import java.util.Collections;
+import java.util.List;
+
 public class YourKitProfiler extends Profiler {
     private final YourKitConfig yourKitConfig;
     private OptionSpecBuilder memory;
@@ -21,6 +25,14 @@ public class YourKitProfiler extends Profiler {
     @Override
     public String toString() {
         return "YourKit";
+    }
+
+    @Override
+    public List<String> summarizeResultFile(File resultFile) {
+        if (resultFile.getName().endsWith(".snapshot")) {
+            return Collections.singletonList(resultFile.getAbsolutePath());
+        }
+        return null;
     }
 
     @Override

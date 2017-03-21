@@ -9,6 +9,10 @@ import org.gradle.profiler.Profiler;
 import org.gradle.profiler.ProfilerController;
 import org.gradle.profiler.ScenarioSettings;
 
+import java.io.File;
+import java.util.Collections;
+import java.util.List;
+
 public class JProfilerProfiler extends Profiler {
     private final JProfilerConfig jProfilerConfig;
     private ArgumentAcceptingOptionSpec<String> homeDir;
@@ -26,6 +30,19 @@ public class JProfilerProfiler extends Profiler {
 
     private JProfilerProfiler(JProfilerConfig jProfilerConfig) {
         this.jProfilerConfig = jProfilerConfig;
+    }
+
+    @Override
+    public String toString() {
+        return "JProfiler";
+    }
+
+    @Override
+    public List<String> summarizeResultFile(File resultFile) {
+        if (resultFile.getName().endsWith(".jps")) {
+            return Collections.singletonList(resultFile.getAbsolutePath());
+        }
+        return null;
     }
 
     @Override

@@ -8,6 +8,8 @@ import org.gradle.profiler.ProfilerController;
 import org.gradle.profiler.ScenarioSettings;
 
 import java.io.File;
+import java.util.Collections;
+import java.util.List;
 
 public class HpProfiler extends Profiler {
     private final HonestProfilerArgs honestProfilerArgs;
@@ -23,6 +25,14 @@ public class HpProfiler extends Profiler {
     @Override
     public String toString() {
         return "Honest profiler";
+    }
+
+    @Override
+    public List<String> summarizeResultFile(File resultFile) {
+        if (resultFile.getName().endsWith(".svg")) {
+            return Collections.singletonList(resultFile.getAbsolutePath());
+        }
+        return null;
     }
 
     @Override
