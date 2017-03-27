@@ -55,7 +55,7 @@ Once complete, the results are available under `profile-out`
 
 ### Gradle build scans
 
-In order to create a [build scan](https://gradle.com) of your build, use `--profile build-scans`. The build scan URL is available in `profile-out/profile.log`. You can then use the powerful timeline view
+In order to create a [build scan](https://gradle.com) of your build, use `--profile buildscan`. The build scan URL is available in `profile-out/profile.log`. You can then use the powerful timeline view
 in the build scan to analyze which tasks ran, how long they took, how well your build parallelized etc. Also make sure to look at the performance tab to see where time was spent and for hints on how to optimize your build.
 
 ### JProfiler
