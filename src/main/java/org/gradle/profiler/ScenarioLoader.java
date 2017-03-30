@@ -29,6 +29,7 @@ class ScenarioLoader {
     private static final String APPLY_ANDROID_MANIFEST_CHANGE_TO = "apply-android-manifest-change-to";
     private static final String APPLY_CPP_SOURCE_CHANGE_TO = "apply-cpp-change-to";
     private static final String APPLY_H_SOURCE_CHANGE_TO = "apply-h-change-to";
+    private static final String APPLY_PATCH = "apply-patch";
     private static final String TARGETS = "targets";
     private static final String TYPE = "type";
 
@@ -90,14 +91,15 @@ class ScenarioLoader {
             int warmUpCount = integer(scenario, WARM_UP_COUNT, settings.getWarmUpCount());
 
             List<Supplier<BuildMutator>> mutators = new ArrayList<>();
-            maybeAddMutator(scenario, scenarioName, settings.getProjectDir(), APPLY_ABI_CHANGE_TO, ApplyAbiChangeToJavaSourceFileMutator.class, mutators);
-            maybeAddMutator(scenario, scenarioName, settings.getProjectDir(), APPLY_NON_ABI_CHANGE_TO, ApplyNonAbiChangeToJavaSourceFileMutator.class, mutators);
-            maybeAddMutator(scenario, scenarioName, settings.getProjectDir(), APPLY_ANDROID_RESOURCE_CHANGE_TO, ApplyChangeToAndroidResourceFileMutator.class, mutators);
-            maybeAddMutator(scenario, scenarioName, settings.getProjectDir(), APPLY_ANDROID_RESOURCE_VALUE_CHANGE_TO, ApplyValueChangeToAndroidResourceFileMutator.class, mutators);
-            maybeAddMutator(scenario, scenarioName, settings.getProjectDir(), APPLY_ANDROID_MANIFEST_CHANGE_TO, ApplyChangeToAndroidManifestFileMutator.class, mutators);
-            maybeAddMutator(scenario, scenarioName, settings.getProjectDir(), APPLY_PROPERTY_RESOURCE_CHANGE_TO, ApplyChangeToPropertyResourceFileMutator.class, mutators);
-            maybeAddMutator(scenario, scenarioName, settings.getProjectDir(), APPLY_CPP_SOURCE_CHANGE_TO, ApplyChangeToNativeSourceFileMutator.class, mutators);
-            maybeAddMutator(scenario, scenarioName, settings.getProjectDir(), APPLY_H_SOURCE_CHANGE_TO, ApplyChangeToNativeSourceFileMutator.class, mutators);
+            maybeAddFileMutator(scenario, scenarioName, settings.getProjectDir(), APPLY_ABI_CHANGE_TO, ApplyAbiChangeToJavaSourceFileMutator.class, mutators);
+            maybeAddFileMutator(scenario, scenarioName, settings.getProjectDir(), APPLY_NON_ABI_CHANGE_TO, ApplyNonAbiChangeToJavaSourceFileMutator.class, mutators);
+            maybeAddFileMutator(scenario, scenarioName, settings.getProjectDir(), APPLY_ANDROID_RESOURCE_CHANGE_TO, ApplyChangeToAndroidResourceFileMutator.class, mutators);
+            maybeAddFileMutator(scenario, scenarioName, settings.getProjectDir(), APPLY_ANDROID_RESOURCE_VALUE_CHANGE_TO, ApplyValueChangeToAndroidResourceFileMutator.class, mutators);
+            maybeAddFileMutator(scenario, scenarioName, settings.getProjectDir(), APPLY_ANDROID_MANIFEST_CHANGE_TO, ApplyChangeToAndroidManifestFileMutator.class, mutators);
+            maybeAddFileMutator(scenario, scenarioName, settings.getProjectDir(), APPLY_PROPERTY_RESOURCE_CHANGE_TO, ApplyChangeToPropertyResourceFileMutator.class, mutators);
+            maybeAddFileMutator(scenario, scenarioName, settings.getProjectDir(), APPLY_CPP_SOURCE_CHANGE_TO, ApplyChangeToNativeSourceFileMutator.class, mutators);
+            maybeAddFileMutator(scenario, scenarioName, settings.getProjectDir(), APPLY_H_SOURCE_CHANGE_TO, ApplyChangeToNativeSourceFileMutator.class, mutators);
+            maybeAddProjectMutator(scenario, scenarioName, settings.getProjectDir(), APPLY_PATCH, ApplyPatchProjectMutator.class, mutators);
 
             BuildMutatorFactory buildMutatorFactory = new BuildMutatorFactory(mutators);
 
@@ -151,12 +153,25 @@ class ScenarioLoader {
         return definitions;
     }
 
-    private void maybeAddMutator(Config scenario, String scenarioName, File projectDir, String key, Class<? extends AbstractFileChangeMutator> mutatorClass, List<Supplier<BuildMutator>> mutators) {
+    private void maybeAddFileMutator(Config scenario, String scenarioName, File projectDir, String key, Class<? extends AbstractFileChangeMutator> mutatorClass, List<Supplier<BuildMutator>> mutators) {
         File sourceFileToChange = sourceFile(scenario, key, scenarioName, projectDir);
         if (sourceFileToChange != null) {
             mutators.add(() -> {
                 try {
                     return mutatorClass.getConstructor(File.class).newInstance(sourceFileToChange);
+                } catch (Exception e) {
+                    throw new RuntimeException("Could not create instance of mutator " + mutatorClass.getSimpleName(), e);
+                }
+            });
+        }
+    }
+
+    private void maybeAddProjectMutator(Config scenario, String scenarioName, File projectDir, String key, Class<? extends BuildMutator> mutatorClass, List<Supplier<BuildMutator>> mutators) {
+        File inputFile = sourceFile(scenario, key, scenarioName, projectDir);
+        if (inputFile != null) {
+            mutators.add(() -> {
+                try {
+                    return mutatorClass.getConstructor(File.class, File.class).newInstance(projectDir, inputFile);
                 } catch (Exception e) {
                     throw new RuntimeException("Could not create instance of mutator " + mutatorClass.getSimpleName(), e);
                 }
