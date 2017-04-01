@@ -506,25 +506,23 @@ println "<daemon: " + gradle.services.get(org.gradle.internal.environment.Gradle
         logFile.contains("* Running scenario using Gradle $gradleVersion (scenario 1/1)")
         logFile.grep("* Running warm-up build").size() == 6
         logFile.grep("* Running build").size() == 10
-        logFile.grep("<gradle-version: $gradleVersion>").size() == 18
-        logFile.grep("<daemon: true").size() == 18
+        logFile.grep("<gradle-version: $gradleVersion>").size() == 17
+        logFile.grep("<daemon: true").size() == 17
         logFile.grep("<tasks: [help]>").size() == 1
-        logFile.grep("<tasks: [clean, assemble]>").size() == 1
         logFile.grep("<tasks: [assemble]>").size() == 16
 
         resultFile.isFile()
-        resultFile.text.readLines().size() == 22 // 2 headers, 17 executions, 3 stats
+        resultFile.text.readLines().size() == 21 // 2 headers, 16 executions, 3 stats
         resultFile.text.readLines().get(0) == "build,${gradleVersion}"
         resultFile.text.readLines().get(1) == "tasks,assemble"
-        resultFile.text.readLines().get(2).matches("initial clean build,\\d+")
-        resultFile.text.readLines().get(3).matches("warm-up build 1,\\d+")
-        resultFile.text.readLines().get(8).matches("warm-up build 6,\\d+")
-        resultFile.text.readLines().get(9).matches("build 1,\\d+")
-        resultFile.text.readLines().get(10).matches("build 2,\\d+")
-        resultFile.text.readLines().get(18).matches("build 10,\\d+")
-        resultFile.text.readLines().get(19).matches("mean,\\d+\\.\\d+")
-        resultFile.text.readLines().get(20).matches("median,\\d+\\.\\d+")
-        resultFile.text.readLines().get(21).matches("stddev,\\d+\\.\\d+")
+        resultFile.text.readLines().get(2).matches("warm-up build 1,\\d+")
+        resultFile.text.readLines().get(7).matches("warm-up build 6,\\d+")
+        resultFile.text.readLines().get(8).matches("build 1,\\d+")
+        resultFile.text.readLines().get(9).matches("build 2,\\d+")
+        resultFile.text.readLines().get(17).matches("build 10,\\d+")
+        resultFile.text.readLines().get(18).matches("mean,\\d+\\.\\d+")
+        resultFile.text.readLines().get(19).matches("median,\\d+\\.\\d+")
+        resultFile.text.readLines().get(20).matches("stddev,\\d+\\.\\d+")
     }
 
     def "runs benchmarks using no-daemon for specified Gradle version and tasks"() {
@@ -541,21 +539,20 @@ println "<daemon: " + gradle.services.get(org.gradle.internal.environment.Gradle
                 "--benchmark", "--no-daemon", "assemble")
 
         then:
-        // Probe version, initial clean build, 1 warm up, 10 builds
+        // Probe version, 1 warm up, 10 builds
         logFile.contains("* Running scenario using Gradle $gradleVersion (scenario 1/1)")
         logFile.grep("* Running warm-up build").size() == 1
         logFile.grep("* Running build").size() == 10
-        logFile.grep("<gradle-version: $gradleVersion>").size() == 13
+        logFile.grep("<gradle-version: $gradleVersion>").size() == 12
         logFile.grep("<daemon: true").size() == 1
-        logFile.grep("<daemon: false").size() == 12
+        logFile.grep("<daemon: false").size() == 11
         logFile.grep("<tasks: [help]>").size() == 1
-        logFile.grep("<tasks: [clean, assemble]>").size() == 1
         logFile.grep("<tasks: [assemble]>").size() == 11
 
         resultFile.isFile()
         resultFile.text.readLines().get(0) == "build,${gradleVersion}"
         resultFile.text.readLines().get(1) == "tasks,assemble"
-        resultFile.text.readLines().size() == 17 // 2 headers, 12 executions, 3 stats
+        resultFile.text.readLines().size() == 16 // 2 headers, 11 executions, 3 stats
     }
 
     def "runs benchmarks using scenarios defined in scenario file"() {
@@ -585,14 +582,12 @@ println "<daemon: " + gradle.services.get(org.gradle.internal.environment.Gradle
                 "--benchmark")
 
         then:
-        // Probe version, initial clean build, 6 warm up, 10 builds
-        logFile.grep("<gradle-version: $gradleVersion>").size() == 1 + 17 * 2
-        logFile.grep("<gradle-version: 3.0").size() == 18
-        logFile.grep("<daemon: true").size() == 2 + 17 * 2
-        logFile.grep("<daemon: false").size() == 17
+        // Probe version, 6 warm up, 10 builds
+        logFile.grep("<gradle-version: $gradleVersion>").size() == 1 + 16 * 2
+        logFile.grep("<gradle-version: 3.0").size() == 17
+        logFile.grep("<daemon: true").size() == 2 + 16 * 2
+        logFile.grep("<daemon: false").size() == 16
         logFile.grep("<tasks: [help]>").size() == 2 + 16
-        logFile.grep("<tasks: [clean, help]>").size() == 1
-        logFile.grep("<tasks: [clean, assemble]>").size() == 2
         logFile.grep("<tasks: [assemble]>").size() == 16 * 2
 
         logFile.contains("* Running scenario assemble using Gradle 3.0 (scenario 1/3)")
@@ -602,7 +597,7 @@ println "<daemon: " + gradle.services.get(org.gradle.internal.environment.Gradle
         resultFile.isFile()
         resultFile.text.readLines().get(0) == "build,assemble 3.0,assemble ${gradleVersion},help ${gradleVersion}"
         resultFile.text.readLines().get(1) == "tasks,assemble,assemble,help"
-        resultFile.text.readLines().size() == 22 // 2 headers, 17 executions, 3 stats
+        resultFile.text.readLines().size() == 21 // 2 headers, 16 executions, 3 stats
     }
 
     def "profiles scenarios defined in scenario file"() {
@@ -701,21 +696,19 @@ println "<daemon: " + gradle.services.get(org.gradle.internal.environment.Gradle
                 "--benchmark")
 
         then:
-        // Probe version, initial clean build, 6 warm up, 10 builds
-        logFile.grep("<gradle-version: $gradleVersion>").size() == 34
-        logFile.grep("<tasks: [clean, help]>").size() == 1
+        // Probe version, 6 warm up, 10 builds
+        logFile.grep("<gradle-version: $gradleVersion>").size() == 33
         logFile.grep("<tasks: [help]>").size() == 17
 
         resultFile.isFile()
         resultFile.text.readLines().get(0) == "build,help ${gradleVersion}"
         resultFile.text.readLines().get(1) == "tasks,help"
-        resultFile.text.readLines().get(2).matches("initial clean build,\\d+")
-        resultFile.text.readLines().get(3).matches("warm-up build 1,\\d+")
-        resultFile.text.readLines().get(8).matches("warm-up build 6,\\d+")
-        resultFile.text.readLines().get(9).matches("build 1,\\d+")
-        resultFile.text.readLines().get(10).matches("build 2,\\d+")
-        resultFile.text.readLines().get(18).matches("build 10,\\d+")
-        resultFile.text.readLines().size() == 22 // 2 headers, 17 executions, 3 stats
+        resultFile.text.readLines().get(2).matches("warm-up build 1,\\d+")
+        resultFile.text.readLines().get(7).matches("warm-up build 6,\\d+")
+        resultFile.text.readLines().get(8).matches("build 1,\\d+")
+        resultFile.text.readLines().get(9).matches("build 2,\\d+")
+        resultFile.text.readLines().get(17).matches("build 10,\\d+")
+        resultFile.text.readLines().size() == 21 // 2 headers, 16 executions, 3 stats
     }
 
     def "runs benchmarks using single scenario defined in scenario file"() {
@@ -773,25 +766,21 @@ println "<dry-run: " + gradle.startParameter.dryRun + ">"
         new Main().run("--project-dir", projectDir.absolutePath, "--output-dir", outputDir.absolutePath, "--scenario-file", scenarioFile.absolutePath, "--benchmark", "--dry-run")
 
         then:
-        // Probe version, initial clean build, 1 warm up, 1 build
-        logFile.grep("<gradle-version: $gradleVersion>").size() == 7
-        logFile.grep("<gradle-version: 3.0").size() == 4
+        // Probe version, 1 warm up, 1 build
+        logFile.grep("<gradle-version: $gradleVersion>").size() == 5
+        logFile.grep("<gradle-version: 3.0").size() == 3
         logFile.grep("<dry-run: false>").size() == 2
-        logFile.grep("<dry-run: true>").size() == 9
+        logFile.grep("<dry-run: true>").size() == 6
         logFile.grep("<tasks: [help]>").size() == 2
         logFile.grep("<tasks: [assemble]>").size() == 4
-        logFile.grep("<tasks: [clean, assemble]>").size() == 5
+        logFile.grep("<tasks: [clean, assemble]>").size() == 2
 
         resultFile.isFile()
         resultFile.text.readLines().get(0) == "build,s1 3.0,s1 ${gradleVersion},s2 ${gradleVersion}"
         resultFile.text.readLines().get(1) == "tasks,assemble,assemble,clean assemble"
-        resultFile.text.readLines().get(2).matches("initial clean build,\\d+,\\d+,\\d+")
-        resultFile.text.readLines().get(3).matches("warm-up build 1,\\d+,\\d+,\\d+")
-        resultFile.text.readLines().get(4).matches("build 1,\\d+,\\d+,\\d+")
-        resultFile.text.readLines().get(5).matches("mean,\\d+\\.\\d+,\\d+\\.\\d+,\\d+\\.\\d+")
-        resultFile.text.readLines().get(6).matches("median,\\d+\\.\\d+,\\d+\\.\\d+,\\d+\\.\\d+")
-        resultFile.text.readLines().get(7).matches("stddev,\\d+\\.\\d+,\\d+\\.\\d+,\\d+\\.\\d+")
-        resultFile.text.readLines().size() == 8
+        resultFile.text.readLines().get(2).matches("warm-up build 1,\\d+,\\d+,\\d+")
+        resultFile.text.readLines().get(3).matches("build 1,\\d+,\\d+,\\d+")
+        resultFile.text.readLines().size() == 7
     }
 
     def "recovers from failure in warmup while running benchmarks"() {
@@ -823,30 +812,28 @@ assemble.doFirst {
         logFile.contains("java.lang.RuntimeException: broken!")
         output.contains("java.lang.RuntimeException: broken!")
 
-        // Probe version, initial clean build, 5 warm up, 10 builds
-        logFile.grep("<gradle-version: $gradleVersion>").size() == 6
-        logFile.grep("<gradle-version: 3.0>").size() == 18
+        // Probe version, 5 warm up, 10 builds
+        logFile.grep("<gradle-version: $gradleVersion>").size() == 5
+        logFile.grep("<gradle-version: 3.0>").size() == 17
         logFile.grep("<tasks: [help]>").size() == 2
-        logFile.grep("<tasks: [clean, assemble]>").size() == 2
         logFile.grep("<tasks: [assemble]>").size() == 4 + 16
 
         resultFile.isFile()
-        resultFile.text.readLines().size() == 22 // 2 headers, 17 executions, 3 stats
+        resultFile.text.readLines().size() == 21 // 2 headers, 16 executions, 3 stats
         resultFile.text.readLines().get(0) == "build,${gradleVersion},3.0"
         resultFile.text.readLines().get(1) == "tasks,assemble,assemble"
-        resultFile.text.readLines().get(2).matches("initial clean build,\\d+,\\d+")
-        resultFile.text.readLines().get(3).matches("warm-up build 1,\\d+,\\d+")
-        resultFile.text.readLines().get(4).matches("warm-up build 2,\\d+,\\d+")
-        resultFile.text.readLines().get(5).matches("warm-up build 3,\\d+,\\d+")
-        resultFile.text.readLines().get(6).matches("warm-up build 4,,\\d+")
-        resultFile.text.readLines().get(7).matches("warm-up build 5,,\\d+")
-        resultFile.text.readLines().get(8).matches("warm-up build 6,,\\d+")
-        resultFile.text.readLines().get(9).matches("build 1,,\\d+")
-        resultFile.text.readLines().get(10).matches("build 2,,\\d+")
-        resultFile.text.readLines().get(18).matches("build 10,,\\d+")
-        resultFile.text.readLines().get(19).matches("mean,NaN,\\d+\\.\\d+")
-        resultFile.text.readLines().get(20).matches("median,NaN,\\d+\\.\\d+")
-        resultFile.text.readLines().get(21).matches("stddev,NaN,\\d+\\.\\d+")
+        resultFile.text.readLines().get(2).matches("warm-up build 1,\\d+,\\d+")
+        resultFile.text.readLines().get(3).matches("warm-up build 2,\\d+,\\d+")
+        resultFile.text.readLines().get(4).matches("warm-up build 3,\\d+,\\d+")
+        resultFile.text.readLines().get(5).matches("warm-up build 4,,\\d+")
+        resultFile.text.readLines().get(6).matches("warm-up build 5,,\\d+")
+        resultFile.text.readLines().get(7).matches("warm-up build 6,,\\d+")
+        resultFile.text.readLines().get(8).matches("build 1,,\\d+")
+        resultFile.text.readLines().get(9).matches("build 2,,\\d+")
+        resultFile.text.readLines().get(17).matches("build 10,,\\d+")
+        resultFile.text.readLines().get(18).matches("mean,NaN,\\d+\\.\\d+")
+        resultFile.text.readLines().get(19).matches("median,NaN,\\d+\\.\\d+")
+        resultFile.text.readLines().get(20).matches("stddev,NaN,\\d+\\.\\d+")
     }
 
     def "recovers from failure running benchmarks"() {
@@ -878,27 +865,25 @@ assemble.doFirst {
         logFile.contains("java.lang.RuntimeException: broken!")
         output.contains("java.lang.RuntimeException: broken!")
 
-        // Probe version, initial clean build, 6 warm up, 10 builds
-        logFile.grep("<gradle-version: $gradleVersion>").size() == 11
-        logFile.grep("<gradle-version: 3.0>").size() == 18
+        // Probe version, 6 warm up, 10 builds
+        logFile.grep("<gradle-version: $gradleVersion>").size() == 10
+        logFile.grep("<gradle-version: 3.0>").size() == 17
         logFile.grep("<tasks: [help]>").size() == 2
-        logFile.grep("<tasks: [clean, assemble]>").size() == 2
         logFile.grep("<tasks: [assemble]>").size() == 9 + 16
 
         resultFile.isFile()
-        resultFile.text.readLines().size() == 22 // 2 headers, 17 executions, 3 stats
+        resultFile.text.readLines().size() == 21 // 2 headers, 16 executions, 3 stats
         resultFile.text.readLines().get(0) == "build,${gradleVersion},3.0"
         resultFile.text.readLines().get(1) == "tasks,assemble,assemble"
-        resultFile.text.readLines().get(2).matches("initial clean build,\\d+,\\d+")
-        resultFile.text.readLines().get(3).matches("warm-up build 1,\\d+,\\d+")
-        resultFile.text.readLines().get(8).matches("warm-up build 6,\\d+,\\d+")
-        resultFile.text.readLines().get(9).matches("build 1,\\d+,\\d+")
-        resultFile.text.readLines().get(10).matches("build 2,\\d+,\\d+")
-        resultFile.text.readLines().get(11).matches("build 3,,\\d+")
-        resultFile.text.readLines().get(18).matches("build 10,,\\d+")
-        resultFile.text.readLines().get(19).matches("mean,\\d+\\.\\d+,\\d+\\.\\d+")
-        resultFile.text.readLines().get(20).matches("median,\\d+\\.\\d+,\\d+\\.\\d+")
-        resultFile.text.readLines().get(21).matches("stddev,\\d+\\.\\d+,\\d+\\.\\d+")
+        resultFile.text.readLines().get(2).matches("warm-up build 1,\\d+,\\d+")
+        resultFile.text.readLines().get(7).matches("warm-up build 6,\\d+,\\d+")
+        resultFile.text.readLines().get(8).matches("build 1,\\d+,\\d+")
+        resultFile.text.readLines().get(9).matches("build 2,\\d+,\\d+")
+        resultFile.text.readLines().get(10).matches("build 3,,\\d+")
+        resultFile.text.readLines().get(17).matches("build 10,,\\d+")
+        resultFile.text.readLines().get(18).matches("mean,\\d+\\.\\d+,\\d+\\.\\d+")
+        resultFile.text.readLines().get(19).matches("median,\\d+\\.\\d+,\\d+\\.\\d+")
+        resultFile.text.readLines().get(20).matches("stddev,\\d+\\.\\d+,\\d+\\.\\d+")
     }
 
     def "can define system property when benchmarking using tooling API"() {
@@ -913,9 +898,9 @@ println "<sys-prop: " + System.getProperty("org.gradle.test") + ">"
                 "--benchmark", "-Dorg.gradle.test=value", "assemble")
 
         then:
-        // Probe version, initial clean build, 6 warm up, 10 builds
+        // Probe version, 6 warm up, 10 builds
         logFile.grep("<sys-prop: null>").size() == 1
-        logFile.grep("<sys-prop: value>").size() == 17
+        logFile.grep("<sys-prop: value>").size() == 16
     }
 
     def "can define system property when benchmarking using no-daemon"() {
@@ -930,9 +915,9 @@ println "<sys-prop: " + System.getProperty("org.gradle.test") + ">"
                 "--benchmark", "-Dorg.gradle.test=value", "assemble")
 
         then:
-        // Probe version, initial clean build, 6 warm up, 10 builds
+        // Probe version, 6 warm up, 10 builds
         logFile.grep("<sys-prop: null>").size() == 1
-        logFile.grep("<sys-prop: value>").size() == 17
+        logFile.grep("<sys-prop: value>").size() == 16
     }
 
     def "can define system property using scenario file"() {
@@ -964,10 +949,10 @@ println "<sys-prop: " + System.getProperty("org.gradle.test") + ">"
                 "--benchmark")
 
         then:
-        // Probe version, initial clean build, 6 warm up, 10 builds
+        // Probe version, 6 warm up, 10 builds
         logFile.grep("<sys-prop: null>").size() == 1
-        logFile.grep("<sys-prop: value-1>").size() == 17
-        logFile.grep("<sys-prop: value-2>").size() == 17
+        logFile.grep("<sys-prop: value-1>").size() == 16
+        logFile.grep("<sys-prop: value-2>").size() == 16
     }
 
     def "uses default version if none are defined in scenario file"() {
@@ -1020,10 +1005,10 @@ println "<sys-prop: " + System.getProperty("org.gradle.test") + ">"
                 "--benchmark")
 
         then:
-        // Probe version, initial clean build, 6 warm up, 10 builds
+        // Probe version, 6 warm up, 10 builds
         logFile.grep("<sys-prop: null>").size() == 1
-        logFile.grep("<sys-prop: value-1>").size() == 17
-        logFile.grep("<sys-prop: value-2>").size() == 17
+        logFile.grep("<sys-prop: value-1>").size() == 16
+        logFile.grep("<sys-prop: value-2>").size() == 16
     }
 
     @Unroll
@@ -1046,10 +1031,10 @@ println "<parallel: " + gradle.startParameter.parallelProjectExecutionEnabled + 
         new Main().run("--project-dir", projectDir.absolutePath, "--output-dir", outputDir.absolutePath, "--benchmark", "--scenario-file", scenarioFile.absolutePath)
 
         then:
-        // Probe version, initial clean build, 6 warm up, 10 builds
+        // Probe version, 6 warm up, 10 builds
         if (isParallel) {
-            logFile.grep("<parallel: ${isParallel}>").size() >= 17
-            logFile.grep("Parallel execution is an incubating feature").size() >= 17
+            logFile.grep("<parallel: ${isParallel}>").size() >= 16
+            logFile.grep("Parallel execution is an incubating feature").size() >= 16
         } else {
             logFile.grep("<parallel: ${isParallel}>").size() <= 1
             logFile.grep("Parallel execution is an incubating feature").size() <= 1
@@ -1089,8 +1074,8 @@ classes {
                 "--benchmark", "--scenario-file", scenarioFile.absolutePath)
 
         then:
-        // Probe version, initial clean build, 6 warm up, 10 builds
-        logFile.grep("<src-length: ${srcFile.length()}>").size() == 2
+        // Probe version, 6 warm up, 10 builds
+        logFile.grep("<src-length: ${srcFile.length()}>").size() == 1
         logFile.grep("<src-length: ${srcFile.length() + 80}>").size() == 9
         logFile.grep("<src-length: ${srcFile.length() + 82}>").size() == 7
         srcFile.text == originalText
@@ -1124,8 +1109,8 @@ classes {
                 "--benchmark", "--scenario-file", scenarioFile.absolutePath)
 
         then:
-        // Probe version, initial clean build, 6 warm up, 10 builds
-        logFile.grep("<src-length: ${srcFile.length()}>").size() == 2
+        // Probe version, 6 warm up, 10 builds
+        logFile.grep("<src-length: ${srcFile.length()}>").size() == 1
         logFile.grep("<src-length: ${srcFile.length() + 53}>").size() == 9
         logFile.grep("<src-length: ${srcFile.length() + 54}>").size() == 7
         srcFile.text == originalText
@@ -1159,8 +1144,8 @@ classes {
                 "--benchmark", "--scenario-file", scenarioFile.absolutePath)
 
         then:
-        // Probe version, initial clean build, 6 warm up, 10 builds
-        logFile.grep("<src-length: ${srcFile.length()}>").size() == 2
+        // Probe version, 6 warm up, 10 builds
+        logFile.grep("<src-length: ${srcFile.length()}>").size() == 1
         logFile.grep("<src-length: ${srcFile.length() + 16}>").size() == 9
         logFile.grep("<src-length: ${srcFile.length() + 17}>").size() == 7
         srcFile.text == originalText

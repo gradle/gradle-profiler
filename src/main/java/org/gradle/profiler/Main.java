@@ -160,14 +160,6 @@ public class Main {
                     throw new IllegalArgumentException();
             }
 
-            if (settings.isBenchmark()) {
-                Set<String> cleanTasks = new LinkedHashSet<>();
-                cleanTasks.add("clean");
-                cleanTasks.addAll(tasks);
-                invoker.runBuild("initial clean build", new ArrayList<>(cleanTasks));
-                daemonControl.stop(version);
-            }
-
             beforeBuild(invoker, cleanupTasks, mutator);
             BuildInvocationResult results = invoker.runBuild("warm-up build 1", tasks);
             String pid = results.getDaemonPid();
