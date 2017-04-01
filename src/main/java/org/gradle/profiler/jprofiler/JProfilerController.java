@@ -1,5 +1,6 @@
 package org.gradle.profiler.jprofiler;
 
+import org.gradle.profiler.Invoker;
 import org.gradle.profiler.ProfilerController;
 import org.gradle.profiler.ScenarioSettings;
 
@@ -14,11 +15,14 @@ import java.util.Collections;
 
 public class JProfilerController implements ProfilerController {
 
+    public static final int CONNECT_TIMEOUT = 5000;
+
+    private final JProfilerConfig jProfilerConfig;
+    private final ScenarioSettings settings;
+
     private MBeanServerConnection connection;
     private JMXConnector connector;
     private ObjectName objectName;
-    private ScenarioSettings settings;
-    private final JProfilerConfig jProfilerConfig;
 
     public JProfilerController(ScenarioSettings settings, JProfilerConfig jProfilerConfig) {
         this.settings = settings;
@@ -27,6 +31,43 @@ public class JProfilerController implements ProfilerController {
 
     @Override
     public void start() throws IOException, InterruptedException {
+        if (profileWholeLifeTime()) {
+            startOnceGradleStarts();
+        } else {
+            startNow();
+        }
+    }
+
+    private void startOnceGradleStarts() {
+        Thread thread = new Thread(this::tryStartNow);
+        thread.setName("JProfiler connector");
+        thread.start();
+    }
+
+    private void tryStartNow() {
+        long start = System.currentTimeMillis();
+        Exception lastProblem = null;
+        boolean started = false;
+
+        while (!started && System.currentTimeMillis() - start < CONNECT_TIMEOUT) {
+            try {
+                startNow();
+                started = true;
+            } catch (Exception e) {
+                lastProblem = e;
+                try {
+                    Thread.sleep(10);
+                } catch (InterruptedException interrupt) {
+                    throw new RuntimeException(interrupt);
+                }
+            }
+        }
+        if (!started) {
+            throw new IllegalStateException("Failed to connect to build VM after " + CONNECT_TIMEOUT + "ms", lastProblem);
+        }
+    }
+
+    private void startNow() throws IOException {
         invoke("startCPURecording", true);
         if (jProfilerConfig.isRecordAlloc()) {
             invoke("startAllocRecording", true);
@@ -42,10 +83,16 @@ public class JProfilerController implements ProfilerController {
         if (jProfilerConfig.isHeapDump() && hasOperation("markHeap")) { // available in JProfiler 10
             invoke("markHeap");
         }
+        if (profileWholeLifeTime()) {
+            invoke("saveSnapshotOnExit", getSnapshotPath());
+        }
     }
 
     @Override
     public void stop() throws IOException, InterruptedException {
+        if (profileWholeLifeTime()) {
+            return;
+        }
         invoke("stopCPURecording");
         if (jProfilerConfig.isRecordAlloc()) {
             invoke("stopAllocRecording");
@@ -79,13 +126,14 @@ public class JProfilerController implements ProfilerController {
     private void ensureConnected() throws IOException, MalformedObjectNameException {
         if (connector == null) {
             JMXServiceURL jmxUrl = new JMXServiceURL("service:jmx:rmi:///jndi/rmi://localhost:" + jProfilerConfig.getPort() + "/jmxrmi");
-            connector = JMXConnectorFactory.newJMXConnector(jmxUrl, Collections.emptyMap());
-            connector.connect();
-            connection = connector.getMBeanServerConnection();
+            JMXConnector newConnector = JMXConnectorFactory.newJMXConnector(jmxUrl, Collections.emptyMap());
+            newConnector.connect();
+            connection = newConnector.getMBeanServerConnection();
             objectName = new ObjectName("com.jprofiler.api.agent.mbean:type=RemoteController");
             if (!connection.isRegistered(objectName)) {
                 throw new RuntimeException("JProfiler MBean not found");
             }
+            connector = newConnector;
         }
     }
 
@@ -129,5 +177,9 @@ public class JProfilerController implements ProfilerController {
         } catch (InstanceNotFoundException | ReflectionException | MalformedObjectNameException | IntrospectionException e) {
             throw new RuntimeException(e);
         }
+    }
+
+    private boolean profileWholeLifeTime() {
+        return settings.getInvocationSettings().getInvoker().equals(Invoker.NoDaemon);
     }
 }
