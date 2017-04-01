@@ -100,7 +100,8 @@ Add the `--profile chrome-trace` option and open the result in Google Chrome. It
 - `--profile <profiler>`: Profile the build using the specified profiler. See above for details on each profiler.
 - `--gradle-version <version>`: Specifies a Gradle version or installation to use to run the builds, overriding the default for the build. You can specify multiple versions.
 - `--output-dir <dir>`: Directory to write results to.
-- `--no-daemon`: Uses `gradle --no-daemon` to run the builds. The default is to use the Gradle tooling API and Gradle daemon.
+- `--no-daemon`: Uses the gradle command-line client with the `--no-daemon` option to run the builds. The default is to use the Gradle tooling API and Gradle daemon.
+- `--cli`: Uses the gradle command-line client to run the builds. The default is to use the Gradle tooling API.
 - `-D<key>=<value>`: Defines a system property when running the build, overriding the default for the build.
 - `--warmups`: Specifies the number of warm-up builds to run for each scenario. Defaults to 2 for profiling, 6 for benchmarking.
 - `--iterations`: Specifies the number of builds to run for each scenario. Defaults to 1 for profiling, 10 for benchmarking.
@@ -129,7 +130,7 @@ Here is an example:
             key = "value"
         }
         cleanup-tasks = ["clean"]
-        run-using = tooling-api // value can be "no-daemon" or "tooling-api"
+        run-using = tooling-api // value can be "cli", "no-daemon" or "tooling-api"
 
         buck {
             targets = ["//thing/res_debug"]

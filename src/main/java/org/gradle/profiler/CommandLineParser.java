@@ -40,6 +40,7 @@ class CommandLineParser {
         Profiler.configureParser(parser);
         OptionSpecBuilder benchmarkOption = parser.accepts("benchmark", "Collect benchmark metrics");
         OptionSpecBuilder noDaemonOption = parser.accepts("no-daemon", "Do not use the Gradle daemon");
+        OptionSpecBuilder cliOption = parser.accepts("cli", "Uses the command-line client to connect to the daemon");
         OptionSpecBuilder dryRunOption = parser.accepts("dry-run", "Verify configuration");
         OptionSpecBuilder buckOption = parser.accepts("buck", "Benchmark scenarios using buck");
         OptionSpecBuilder mavenOption = parser.accepts("maven", "Benchmark scenarios using Maven");
@@ -73,6 +74,9 @@ class CommandLineParser {
         List<String> versions = parsedOptions.valuesOf(versionOption);
         File scenarioFile = parsedOptions.valueOf(scenarioFileOption);
         Invoker invoker = Invoker.ToolingApi;
+        if (parsedOptions.has(cliOption)) {
+            invoker = Invoker.Cli;
+        }
         if (parsedOptions.has(noDaemonOption)) {
             invoker = Invoker.NoDaemon;
         }

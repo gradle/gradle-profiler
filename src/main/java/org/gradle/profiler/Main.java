@@ -156,6 +156,9 @@ public class Main {
                 case ToolingApi:
                     invoker = new ToolingApiInvoker(projectConnection, allBuildsJvmArgs, allBuildsGradleArgs, pidInstrumentation, resultsCollector);
                     break;
+                case Cli:
+                    invoker = new CliInvoker(version, javaHome, settings.getProjectDir(), allBuildsJvmArgs, allBuildsGradleArgs, pidInstrumentation, resultsCollector);
+                    break;
                 default:
                     throw new IllegalArgumentException();
             }
@@ -344,6 +347,7 @@ public class Main {
 
     private static void checkPid(String expected, String actual, Invoker invoker) {
         switch (invoker) {
+            case Cli:
             case ToolingApi:
                 if (!expected.equals(actual)) {
                     throw new RuntimeException("Multiple Gradle daemons were used.");

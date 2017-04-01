@@ -525,6 +525,43 @@ println "<daemon: " + gradle.services.get(org.gradle.internal.environment.Gradle
         resultFile.text.readLines().get(20).matches("stddev,\\d+\\.\\d+")
     }
 
+    def "runs benchmarks using CLI for specified Gradle version and tasks"() {
+        given:
+        buildFile.text = """
+apply plugin: BasePlugin
+println "<gradle-version: " + gradle.gradleVersion + ">"
+println "<tasks: " + gradle.startParameter.taskNames + ">"
+println "<daemon: " + gradle.services.get(org.gradle.internal.environment.GradleBuildEnvironment).longLivingProcess + ">"
+"""
+
+        when:
+        new Main().run("--project-dir", projectDir.absolutePath, "--output-dir", outputDir.absolutePath, "--gradle-version", gradleVersion,
+                "--benchmark", "--cli", "assemble")
+
+        then:
+        // Probe version, initial clean build, 6 warm up, 10 builds
+        logFile.contains("* Running scenario using Gradle $gradleVersion (scenario 1/1)")
+        logFile.grep("* Running warm-up build").size() == 6
+        logFile.grep("* Running build").size() == 10
+        logFile.grep("<gradle-version: $gradleVersion>").size() == 17
+        logFile.grep("<daemon: true").size() == 17
+        logFile.grep("<tasks: [help]>").size() == 1
+        logFile.grep("<tasks: [assemble]>").size() == 16
+
+        resultFile.isFile()
+        resultFile.text.readLines().size() == 21 // 2 headers, 16 executions, 3 stats
+        resultFile.text.readLines().get(0) == "build,${gradleVersion}"
+        resultFile.text.readLines().get(1) == "tasks,assemble"
+        resultFile.text.readLines().get(2).matches("warm-up build 1,\\d+")
+        resultFile.text.readLines().get(7).matches("warm-up build 6,\\d+")
+        resultFile.text.readLines().get(8).matches("build 1,\\d+")
+        resultFile.text.readLines().get(9).matches("build 2,\\d+")
+        resultFile.text.readLines().get(17).matches("build 10,\\d+")
+        resultFile.text.readLines().get(18).matches("mean,\\d+\\.\\d+")
+        resultFile.text.readLines().get(19).matches("median,\\d+\\.\\d+")
+        resultFile.text.readLines().get(20).matches("stddev,\\d+\\.\\d+")
+    }
+
     def "runs benchmarks using no-daemon for specified Gradle version and tasks"() {
         given:
         buildFile.text = """
