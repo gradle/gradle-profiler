@@ -14,6 +14,9 @@ import java.util.List;
 import java.util.stream.Stream;
 
 public class BuildScanProfiler extends Profiler {
+
+    private final static String VERSION = "1.6";
+
     private final String buildScanVersion;
 
     public BuildScanProfiler() {
@@ -21,7 +24,8 @@ public class BuildScanProfiler extends Profiler {
     }
 
     private BuildScanProfiler(String buildScanVersion) {
-        this.buildScanVersion = buildScanVersion;
+        this.buildScanVersion = buildScanVersion == null ? VERSION : buildScanVersion;
+        ;
     }
 
     @Override
@@ -58,8 +62,24 @@ public class BuildScanProfiler extends Profiler {
     }
 
     @Override
+    public GradleArgsCalculator newGradleArgsCalculator(ScenarioSettings settings) {
+        return new GradleArgsCalculator() {
+            @Override
+            public void calculateGradleArgs(List<String> gradleArgs) {
+                gradleArgs.addAll(new BuildScanInitScript(buildScanVersion).getArgs());
+            }
+        };
+    }
+
+    @Override
     public GradleArgsCalculator newInstrumentedBuildsGradleArgsCalculator(ScenarioSettings settings) {
-        return new BuildScanGradleArgsCalculator(buildScanVersion);
+        return new GradleArgsCalculator() {
+            @Override
+            public void calculateGradleArgs(List<String> gradleArgs) {
+                System.out.println("Using build scan profiler version " + buildScanVersion);
+                gradleArgs.add("-Dscan");
+            }
+        };
     }
 
     @Override

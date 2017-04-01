@@ -181,13 +181,15 @@ public class GradleTracingPlugin implements Plugin<Gradle> {
             start(PHASE_BUILD, CATEGORY_PHASE, toNanoTime(buildRequestMetaData.getBuildTimeClock().getStartTime()));
             finish(PHASE_BUILD, System.nanoTime(), new HashMap<>());
 
-            File traceFile = getTraceFile();
+            if (System.getProperty("trace") != null) {
+                File traceFile = getTraceFile();
 
-            copyResourceToFile("/trace-header.html", traceFile, false);
-            writeEvents(traceFile);
-            copyResourceToFile("/trace-footer.html", traceFile, true);
+                copyResourceToFile("/trace-header.html", traceFile, false);
+                writeEvents(traceFile);
+                copyResourceToFile("/trace-footer.html", traceFile, true);
 
-            result.getGradle().getRootProject().getLogger().lifecycle("Trace written to file://" + traceFile.getAbsolutePath());
+                result.getGradle().getRootProject().getLogger().lifecycle("Trace written to file://" + traceFile.getAbsolutePath());
+            }
         }
 
         private void copyResourceToFile(String resourcePath, File traceFile, boolean append) {

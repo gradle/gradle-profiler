@@ -17,19 +17,14 @@ package org.gradle.profiler.bs;
 
 import org.gradle.profiler.GeneratedInitScript;
 
-import java.io.IOException;
 import java.io.PrintWriter;
 
 public class BuildScanInitScript extends GeneratedInitScript {
-    public final static String VERSION = "1.6";
 
     private final String version;
 
-    public BuildScanInitScript(String version) throws IOException {
-        super();
-        this.version = version == null ? VERSION : version;
-        generateInitScript();
-        System.out.println("Using build scan profiler version " + this.version);
+    public BuildScanInitScript(String version) {
+        this.version = version;
     }
 
     @Override
@@ -50,7 +45,6 @@ public class BuildScanInitScript extends GeneratedInitScript {
         writer.write("    buildScan {\n");
         writer.write("        licenseAgreementUrl = 'https://gradle.com/terms-of-service'\n");
         writer.write("        licenseAgree = 'yes'\n");
-        writer.write("        publishAlways()\n");
         writer.write("    }\n");
         writer.write("}\n");
     }

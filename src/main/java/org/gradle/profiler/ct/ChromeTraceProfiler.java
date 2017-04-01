@@ -23,7 +23,23 @@ public class ChromeTraceProfiler extends Profiler {
     }
 
     @Override
-    public GradleArgsCalculator newInstrumentedBuildsGradleArgsCalculator(ScenarioSettings settings) {
-        return new ChromeTraceGradleArgsCalculator(settings);
+    public GradleArgsCalculator newGradleArgsCalculator(ScenarioSettings settings) {
+        return new GradleArgsCalculator() {
+            @Override
+            public void calculateGradleArgs(List<String> gradleArgs) {
+                gradleArgs.addAll(new ChromeTraceInitScript(settings.getScenario().getOutputDir()).getArgs());
+            }
+        };
     }
+
+    @Override
+    public GradleArgsCalculator newInstrumentedBuildsGradleArgsCalculator(ScenarioSettings settings) {
+        return new GradleArgsCalculator() {
+            @Override
+            public void calculateGradleArgs(List<String> gradleArgs) {
+                gradleArgs.add("-Dtrace");
+            }
+        };
+    }
+
 }

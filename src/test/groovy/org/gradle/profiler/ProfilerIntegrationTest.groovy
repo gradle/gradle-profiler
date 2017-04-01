@@ -1,6 +1,7 @@
 package org.gradle.profiler
 
 import org.gradle.profiler.bs.BuildScanInitScript
+import org.gradle.profiler.bs.BuildScanProfiler
 import org.gradle.profiler.jprofiler.JProfiler
 import org.gradle.profiler.yjp.YourKit
 import org.junit.Rule
@@ -366,7 +367,7 @@ println "<daemon: " + gradle.services.get(org.gradle.internal.environment.Gradle
         logFile.grep("<gradle-version: $gradleVersion>").size() == 4
         logFile.grep("<daemon: true").size() == 4
         logFile.grep("<tasks: [assemble]>").size() == 3
-        assertBuildScanPublished(BuildScanInitScript.VERSION)
+        assertBuildScanPublished(BuildScanProfiler.VERSION)
     }
 
     @Requires({ new File(JProfiler.getDefaultHomeDir()).exists() })
@@ -380,6 +381,22 @@ apply plugin: BasePlugin
         new Main().
                 run("--project-dir", projectDir.absolutePath, "--output-dir", outputDir.absolutePath, "--gradle-version", gradleVersion, "--profile", "jprofiler",
                         "assemble")
+
+        then:
+        outputDir.listFiles().find { it.name.matches("default.jps") }
+    }
+
+    @Requires({ new File(JProfiler.getDefaultHomeDir()).exists() })
+    def "profiles --no-daemon build using JProfiler"() {
+        given:
+        buildFile.text = """
+apply plugin: BasePlugin
+"""
+
+        when:
+        new Main().
+                run("--project-dir", projectDir.absolutePath, "--output-dir", outputDir.absolutePath, "--gradle-version", gradleVersion, "--profile", "jprofiler",
+                        "--no-daemon", "assemble")
 
         then:
         outputDir.listFiles().find { it.name.matches("default.jps") }

@@ -25,20 +25,27 @@ import java.util.List;
 public abstract class GeneratedInitScript {
     private final File initScript;
 
-    public GeneratedInitScript() throws IOException {
-        initScript = File.createTempFile("gradleProfiler" + getClass().getSimpleName(), ".gradle");
+    public GeneratedInitScript() {
+        try {
+            initScript = File.createTempFile("gradleProfiler" + getClass().getSimpleName(), ".gradle");
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
         initScript.deleteOnExit();
     }
 
-    public abstract void writeContents(PrintWriter writer);
+    protected abstract void writeContents(PrintWriter writer);
 
-    protected void generateInitScript() throws IOException {
+    private void generateInitScript(){
         try (PrintWriter writer = new PrintWriter(new FileWriter(initScript))) {
             writeContents(writer);
+        } catch (IOException e) {
+            throw new RuntimeException(e);
         }
     }
 
-    public List<String> getArgs() {
+    public final List<String> getArgs() {
+        generateInitScript();
         return Arrays.asList("-I", initScript.getAbsolutePath());
     }
 }

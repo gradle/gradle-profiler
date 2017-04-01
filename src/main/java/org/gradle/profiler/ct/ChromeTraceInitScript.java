@@ -29,12 +29,14 @@ public class ChromeTraceInitScript extends GeneratedInitScript {
     private final File chromeTracePlugin;
     private final File traceFile;
 
-    public ChromeTraceInitScript(File outputDir) throws IOException {
-        super();
-        chromeTracePlugin = File.createTempFile("chrome-trace", ".jar");
+    public ChromeTraceInitScript(File outputDir) {
+        try {
+            chromeTracePlugin = File.createTempFile("chrome-trace", "jar");
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+        chromeTracePlugin.deleteOnExit();
         traceFile = new File(outputDir, "chrome-trace.html");
-        unpackChromeTracePlugin();
-        generateInitScript();
     }
 
     private void unpackChromeTracePlugin() {
@@ -48,6 +50,7 @@ public class ChromeTraceInitScript extends GeneratedInitScript {
 
     @Override
     public void writeContents(final PrintWriter writer) {
+        unpackChromeTracePlugin();
         writer.write("initscript {\n");
         writer.write("    dependencies {\n");
         writer.write("        classpath files(\"" + chromeTracePlugin.getAbsolutePath() + "\")\n");
@@ -57,6 +60,4 @@ public class ChromeTraceInitScript extends GeneratedInitScript {
         writer.write("rootProject { ext.chromeTraceFile = new File(\"" + traceFile.getAbsolutePath() + "\") }\n");
         writer.write("apply plugin: org.gradle.trace.GradleTracingPlugin\n");
     }
-
-
 }

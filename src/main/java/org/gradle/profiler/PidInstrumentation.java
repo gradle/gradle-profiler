@@ -1,19 +1,13 @@
 package org.gradle.profiler;
 
-import java.io.BufferedReader;
-import java.io.File;
-import java.io.FileReader;
-import java.io.IOException;
-import java.io.PrintWriter;
+import java.io.*;
 
 class PidInstrumentation extends GeneratedInitScript {
     private final File pidFile;
 
     PidInstrumentation() throws IOException {
-        super();
         pidFile = File.createTempFile("gradle-profiler", "pid");
         pidFile.deleteOnExit();
-        generateInitScript();
     }
 
     @Override
