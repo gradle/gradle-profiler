@@ -194,6 +194,9 @@ class ScenarioLoader {
             if (value.equals("no-daemon")) {
                 return Invoker.NoDaemon;
             }
+            if (value.equals("cli")) {
+                return Invoker.Cli;
+            }
             if (value.equals("tooling-api")) {
                 return Invoker.ToolingApi;
             }
