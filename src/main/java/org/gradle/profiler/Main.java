@@ -8,7 +8,10 @@ import java.io.File;
 import java.io.IOException;
 import java.time.Duration;
 import java.time.Instant;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Map;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
@@ -151,13 +154,13 @@ public class Main {
             BuildInvoker invoker;
             switch (scenario.getInvoker()) {
                 case NoDaemon:
-                    invoker = new NoDaemonInvoker(version, javaHome, settings.getProjectDir(), allBuildsJvmArgs, allBuildsGradleArgs, pidInstrumentation, resultsCollector);
+                    invoker = new CliInvoker(version, javaHome, settings.getProjectDir(), allBuildsJvmArgs, allBuildsGradleArgs, pidInstrumentation, resultsCollector, false);
                     break;
                 case ToolingApi:
                     invoker = new ToolingApiInvoker(projectConnection, allBuildsJvmArgs, allBuildsGradleArgs, pidInstrumentation, resultsCollector);
                     break;
                 case Cli:
-                    invoker = new CliInvoker(version, javaHome, settings.getProjectDir(), allBuildsJvmArgs, allBuildsGradleArgs, pidInstrumentation, resultsCollector);
+                    invoker = new CliInvoker(version, javaHome, settings.getProjectDir(), allBuildsJvmArgs, allBuildsGradleArgs, pidInstrumentation, resultsCollector, true);
                     break;
                 default:
                     throw new IllegalArgumentException();
