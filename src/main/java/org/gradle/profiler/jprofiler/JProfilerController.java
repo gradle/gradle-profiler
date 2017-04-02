@@ -1,6 +1,7 @@
 package org.gradle.profiler.jprofiler;
 
 import org.gradle.profiler.Invoker;
+import org.gradle.profiler.Logging;
 import org.gradle.profiler.ProfilerController;
 import org.gradle.profiler.ScenarioSettings;
 
@@ -12,6 +13,7 @@ import java.io.File;
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.logging.Logger;
 
 public class JProfilerController implements ProfilerController {
 
@@ -90,23 +92,22 @@ public class JProfilerController implements ProfilerController {
 
     @Override
     public void stop() throws IOException, InterruptedException {
-        if (profileWholeLifeTime()) {
-            return;
+        if (!profileWholeLifeTime()) {
+            invoke("stopCPURecording");
+            if (jProfilerConfig.isRecordAlloc()) {
+                invoke("stopAllocRecording");
+            }
+            if (jProfilerConfig.isRecordMonitors()) {
+                invoke("stopMonitorRecording");
+            }
+            for (String probeName : jProfilerConfig.getRecordedProbes()) {
+                invoke("stopProbeRecording", probeName);
+            }
+            if (jProfilerConfig.isHeapDump()) {
+                invoke("triggerHeapDump");
+            }
+            invoke("saveSnapshot", getSnapshotPath());
         }
-        invoke("stopCPURecording");
-        if (jProfilerConfig.isRecordAlloc()) {
-            invoke("stopAllocRecording");
-        }
-        if (jProfilerConfig.isRecordMonitors()) {
-            invoke("stopMonitorRecording");
-        }
-        for (String probeName : jProfilerConfig.getRecordedProbes()) {
-            invoke("stopProbeRecording", probeName);
-        }
-        if (jProfilerConfig.isHeapDump()) {
-            invoke("triggerHeapDump");
-        }
-        invoke("saveSnapshot", getSnapshotPath());
         closeConnection();
     }
 
@@ -137,9 +138,11 @@ public class JProfilerController implements ProfilerController {
         }
     }
 
-    private void closeConnection() throws IOException {
+    private void closeConnection() {
         try {
             connector.close();
+        } catch (IOException e) {
+            Logging.detailed().println("Could not close connection to profiled VM. This is normal when running in no-daemon mode");
         } finally {
             connector = null;
         }
