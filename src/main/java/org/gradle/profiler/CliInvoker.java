@@ -37,6 +37,8 @@ public class CliInvoker extends BuildInvoker {
         commandLine.add("-Dorg.gradle.daemon=" + daemon);
         if (daemon) {
             commandLine.add("-Dorg.gradle.jvmargs=" + gradleOpts);
+        } else {
+          commandLine.add("-Dorg.gradle.jvmargs");
         }
 
         Logging.detailed().println("Running command:");
