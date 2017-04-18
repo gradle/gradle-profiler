@@ -53,11 +53,20 @@ public class ChromeTraceInitScript extends GeneratedInitScript {
         unpackChromeTracePlugin();
         writer.write("initscript {\n");
         writer.write("    dependencies {\n");
-        writer.write("        classpath files(\"" + chromeTracePlugin.getAbsolutePath() + "\")\n");
+        writer.write("        classpath files(" + stringify(chromeTracePlugin) + ")\n");
         writer.write("    }\n");
         writer.write("}\n");
         writer.write("\n");
-        writer.write("rootProject { ext.chromeTraceFile = new File(\"" + traceFile.getAbsolutePath() + "\") }\n");
+        writer.write("rootProject { ext.chromeTraceFile = new File(" + stringify(traceFile) + ") }\n");
         writer.write("apply plugin: org.gradle.trace.GradleTracingPlugin\n");
+    }
+    
+    /**
+     * Make a string literal of the given File path, by adding surronding
+     * qoutes and escaping backslashes.
+     */
+    private static String stringify(File file) {
+        String escaped = file.getAbsolutePath().replace("\\", "\\\\");
+        return "\"" + escaped + "\"";
     }
 }
