@@ -1426,9 +1426,9 @@ buildGoal {
 #!/usr/bin/env bash
 
 echo "[-] PARSING BUCK FILES...FINISHED 0.3s [100%]"
-if [ $1 == "targets" ]
+if [ $1 = "targets" ]
 then
-    if [ "$2" == "--type" ]
+    if [ "$2" = "--type" ]
     then
         echo "//target:$3_1"
         echo "//target:$3_2"
