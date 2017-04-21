@@ -17,7 +17,9 @@
     <vcs-settings>
       <vcs-entry-ref root-id="GradleProfiler_Master" />
     </vcs-settings>
-    <requirements />
+    <requirements>
+      <contains id="RQ_19" name="teamcity.agent.jvm.os.name" value="Linux" />
+    </requirements>
     <build-triggers />
     <cleanup />
   </settings>
