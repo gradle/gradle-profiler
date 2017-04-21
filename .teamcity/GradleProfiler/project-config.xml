@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" uuid="bf8ef6c5-989d-4fdb-98d1-a67c8d1a7f9a" xsi:noNamespaceSchemaLocation="http://www.jetbrains.com/teamcity/schemas/10.0/project-config.xsd">
+  <name>Gradle Profiler</name>
+  <description>Runs tests and integration tests of the Gradle Profiler (https://github.com/gradle/gradle-profiler)</description>
+  <parameters />
+  <project-extensions>
+    <extension id="PROJECT_EXT_78" type="versionedSettings">
+      <parameters>
+        <param name="buildSettings" value="ALWAYS_USE_CURRENT" />
+        <param name="enabled" value="true" />
+        <param name="rootId" value="GradleProfiler_VersionedSettings" />
+        <param name="showChanges" value="false" />
+      </parameters>
+    </extension>
+  </project-extensions>
+  <cleanup />
+</project>
+
