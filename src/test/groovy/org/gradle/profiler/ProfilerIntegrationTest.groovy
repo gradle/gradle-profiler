@@ -1,6 +1,5 @@
 package org.gradle.profiler
 
-import org.gradle.profiler.bs.BuildScanInitScript
 import org.gradle.profiler.bs.BuildScanProfiler
 import org.gradle.profiler.jprofiler.JProfiler
 import org.gradle.profiler.yjp.YourKit
@@ -1424,6 +1423,8 @@ buildGoal {
     def writeBuckw() {
         def buckw = file("buckw")
         buckw.text = '''
+#!/usr/bin/env bash
+
 echo "[-] PARSING BUCK FILES...FINISHED 0.3s [100%]"
 if [ $1 == "targets" ]
 then
