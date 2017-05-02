@@ -7,6 +7,7 @@
     <extension id="PROJECT_EXT_78" type="versionedSettings">
       <parameters>
         <param name="buildSettings" value="ALWAYS_USE_CURRENT" />
+        <param name="credentialsStorageType" value="credentialsJSON" />
         <param name="enabled" value="true" />
         <param name="rootId" value="GradleProfiler_VersionedSettings" />
         <param name="showChanges" value="false" />
