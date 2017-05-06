@@ -49,6 +49,8 @@ public class GradleTracingPlugin implements Plugin<Gradle> {
     private Map<GarbageCollectorMXBean, NotificationListener> gcNotificationListeners = new HashMap<>();
     private ScheduledExecutorService scheduledExecutorService = Executors.newSingleThreadScheduledExecutor();
     private final long maxHeap;
+    Object buildOperationListener35;
+    Object legacyBuildOperationListener;
 
     @Inject
     public GradleTracingPlugin(BuildRequestMetaData buildRequestMetaData) {
@@ -135,8 +137,6 @@ public class GradleTracingPlugin implements Plugin<Gradle> {
             gcNotificationListeners.put(garbageCollectorMXBean, gcNotificationListener);
         }
 
-
-
         registerBuildOperationListener(gradle);
 
         gradle.getGradle().addListener(new JsonAdapter(gradle));
@@ -145,16 +145,28 @@ public class GradleTracingPlugin implements Plugin<Gradle> {
     private void registerBuildOperationListener(Gradle gradle) {
         InvocationHandler invocationHandler = new BackwardsCompatibleBuildOperationListener();
         try {
-            BuildOperationListener listener = (BuildOperationListener) Proxy.newProxyInstance(getClass().getClassLoader(), new Class[]{BuildOperationListener.class}, invocationHandler);
+            buildOperationListener35 = Proxy.newProxyInstance(getClass().getClassLoader(), new Class[]{BuildOperationListener.class}, invocationHandler);
             BuildOperationService buildOperationService = ((GradleInternal) gradle).getServices().get(BuildOperationService.class);
-            buildOperationService.addListener(listener);
+            buildOperationService.addListener((BuildOperationListener)buildOperationListener35);
         } catch (NoClassDefFoundError notOnGradle35) {
             try {
-                Object listener = Proxy.newProxyInstance(getClass().getClassLoader(), new Class[]{Class.forName("org.gradle.internal.progress.InternalBuildListener")}, invocationHandler);
-                getGlobalListenerManager(gradle).addListener(listener);
+                legacyBuildOperationListener = Proxy.newProxyInstance(getClass().getClassLoader(), new Class[]{Class.forName("org.gradle.internal.progress.InternalBuildListener")}, invocationHandler);
+                getGlobalListenerManager(gradle).addListener(legacyBuildOperationListener);
             } catch (ClassNotFoundException e) {
                 throw new IllegalStateException(e);
             }
+        }
+    }
+
+    private void unregisterBuildOperationListener(Gradle gradle) {
+        InvocationHandler invocationHandler = new BackwardsCompatibleBuildOperationListener();
+        if (buildOperationListener35 != null) {
+            BuildOperationService buildOperationService = ((GradleInternal) gradle).getServices().get(BuildOperationService.class);
+            buildOperationService.removeListener((BuildOperationListener)buildOperationListener35);
+        }
+
+        if (legacyBuildOperationListener != null) {
+            getGlobalListenerManager(gradle).removeListener(legacyBuildOperationListener);
         }
     }
 
@@ -177,6 +189,8 @@ public class GradleTracingPlugin implements Plugin<Gradle> {
                 }
             }
 
+            unregisterBuildOperationListener(gradle);
+
             start(PHASE_BUILD, CATEGORY_PHASE, toNanoTime(buildRequestMetaData.getBuildTimeClock().getStartTime()));
             finish(PHASE_BUILD, System.nanoTime(), new HashMap<>());
 
@@ -189,6 +203,8 @@ public class GradleTracingPlugin implements Plugin<Gradle> {
 
                 result.getGradle().getRootProject().getLogger().lifecycle("Trace written to file://" + traceFile.getAbsolutePath());
             }
+
+            gradle.removeListener(this);
         }
 
         private void copyResourceToFile(String resourcePath, File traceFile, boolean append) {
