@@ -5,7 +5,7 @@ import com.sun.management.OperatingSystemMXBean;
 import org.gradle.BuildAdapter;
 import org.gradle.BuildResult;
 import org.gradle.api.Plugin;
-import org.gradle.api.execution.internal.TaskOperationDescriptor;
+import org.gradle.api.execution.internal.TaskOperationDetails;
 import org.gradle.api.internal.GradleInternal;
 import org.gradle.api.internal.TaskInternal;
 import org.gradle.api.invocation.Gradle;
@@ -159,7 +159,6 @@ public class GradleTracingPlugin implements Plugin<Gradle> {
     }
 
     private void unregisterBuildOperationListener(Gradle gradle) {
-        InvocationHandler invocationHandler = new BackwardsCompatibleBuildOperationListener();
         if (buildOperationListener35 != null) {
             BuildOperationService buildOperationService = ((GradleInternal) gradle).getServices().get(BuildOperationService.class);
             buildOperationService.removeListener((BuildOperationListener)buildOperationListener35);
@@ -289,15 +288,15 @@ public class GradleTracingPlugin implements Plugin<Gradle> {
         @Override
         public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
             if (method.getName().equals("started")) {
-                BuildOperationInternal operation = (BuildOperationInternal) args[0];
+                BuildOperationDescriptor operation = (BuildOperationDescriptor) args[0];
                 OperationStartEvent startEvent = (OperationStartEvent) args[1];
                 start(getName(operation), CATEGORY_OPERATION, toNanoTime(startEvent.getStartTime()));
             } else if (method.getName().equals("finished")) {
-                BuildOperationInternal operation = (BuildOperationInternal) args[0];
-                OperationResult result = (OperationResult) args[1];
+                BuildOperationDescriptor operation = (BuildOperationDescriptor) args[0];
+                OperationFinishEvent result = (OperationFinishEvent) args[1];
                 Map<String, String> info = new HashMap<>();
-                if (operation.getOperationDescriptor() instanceof TaskOperationDescriptor) {
-                    TaskOperationDescriptor taskDescriptor = (TaskOperationDescriptor) operation.getOperationDescriptor();
+                if (operation.getDetails() instanceof TaskOperationDetails) {
+                    TaskOperationDetails taskDescriptor = (TaskOperationDetails) operation.getDetails();
                     withTaskInfo(info, taskDescriptor);
                 }
                 finish(getName(operation), toNanoTime(result.getEndTime()), info);
@@ -309,14 +308,14 @@ public class GradleTracingPlugin implements Plugin<Gradle> {
             return null;
         }
 
-        private String getName(BuildOperationInternal operation) {
-            if (operation.getOperationDescriptor() instanceof TaskOperationDescriptor) {
-                return ((TaskOperationDescriptor) operation.getOperationDescriptor()).getTask().getPath();
+        private String getName(BuildOperationDescriptor operation) {
+            if (operation.getDetails() instanceof TaskOperationDetails) {
+                return ((TaskOperationDetails) operation.getDetails()).getTask().getPath();
             }
             return operation.getDisplayName() + " (" + operation.getId() + ")";
         }
 
-        private void withTaskInfo(Map<String, String> info, TaskOperationDescriptor taskDescriptor) {
+        private void withTaskInfo(Map<String, String> info, TaskOperationDetails taskDescriptor) {
             TaskInternal task = taskDescriptor.getTask();
             info.put("type", task.getClass().getSimpleName().replace("_Decorated", ""));
             info.put("enabled", String.valueOf(task.getEnabled()));
