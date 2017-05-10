@@ -153,7 +153,7 @@ public class GradleTracingPlugin implements Plugin<Gradle> {
                 buildOperationListener33 = Proxy.newProxyInstance(getClass().getClassLoader(), new Class[]{Class.forName("org.gradle.internal.progress.InternalBuildListener")}, invocationHandler);
                 getGlobalListenerManager(gradle).addListener(buildOperationListener33);
             } catch (ClassNotFoundException e) {
-                throw new IllegalStateException(e);
+                throw new IllegalStateException("Gradle version 3.3+ required", e);
             }
         }
     }
