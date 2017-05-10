@@ -50,7 +50,7 @@ public class GradleTracingPlugin implements Plugin<Gradle> {
     private ScheduledExecutorService scheduledExecutorService = Executors.newSingleThreadScheduledExecutor();
     private final long maxHeap;
     Object buildOperationListener35;
-    Object legacyBuildOperationListener;
+    Object buildOperationListener33;
 
     @Inject
     public GradleTracingPlugin(BuildRequestMetaData buildRequestMetaData) {
@@ -147,11 +147,11 @@ public class GradleTracingPlugin implements Plugin<Gradle> {
         try {
             buildOperationListener35 = Proxy.newProxyInstance(getClass().getClassLoader(), new Class[]{BuildOperationListener.class}, invocationHandler);
             BuildOperationService buildOperationService = ((GradleInternal) gradle).getServices().get(BuildOperationService.class);
-            buildOperationService.addListener((BuildOperationListener)buildOperationListener35);
+            buildOperationService.addListener((BuildOperationListener) buildOperationListener35);
         } catch (NoClassDefFoundError notOnGradle35) {
             try {
-                legacyBuildOperationListener = Proxy.newProxyInstance(getClass().getClassLoader(), new Class[]{Class.forName("org.gradle.internal.progress.InternalBuildListener")}, invocationHandler);
-                getGlobalListenerManager(gradle).addListener(legacyBuildOperationListener);
+                buildOperationListener33 = Proxy.newProxyInstance(getClass().getClassLoader(), new Class[]{Class.forName("org.gradle.internal.progress.InternalBuildListener")}, invocationHandler);
+                getGlobalListenerManager(gradle).addListener(buildOperationListener33);
             } catch (ClassNotFoundException e) {
                 throw new IllegalStateException(e);
             }
@@ -161,11 +161,11 @@ public class GradleTracingPlugin implements Plugin<Gradle> {
     private void unregisterBuildOperationListener(Gradle gradle) {
         if (buildOperationListener35 != null) {
             BuildOperationService buildOperationService = ((GradleInternal) gradle).getServices().get(BuildOperationService.class);
-            buildOperationService.removeListener((BuildOperationListener)buildOperationListener35);
+            buildOperationService.removeListener((BuildOperationListener) buildOperationListener35);
         }
 
-        if (legacyBuildOperationListener != null) {
-            getGlobalListenerManager(gradle).removeListener(legacyBuildOperationListener);
+        if (buildOperationListener33 != null) {
+            getGlobalListenerManager(gradle).removeListener(buildOperationListener33);
         }
     }
 
@@ -287,6 +287,43 @@ public class GradleTracingPlugin implements Plugin<Gradle> {
     private class BackwardsCompatibleBuildOperationListener implements InvocationHandler {
         @Override
         public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
+            try {
+                return invoke40(method, args);
+            } catch (NoClassDefFoundError notOnGradle40) {
+                if (notOnGradle40.getMessage().equals("org/gradle/internal/progress/BuildOperationDescriptor")) {
+                    return invoke35(method, args);
+                }
+                throw notOnGradle40;
+            }
+        }
+
+        private Object invoke35(Method method, Object[] args) {
+            if (method.getName().equals("started")) {
+                Object operation = args[0];
+                OperationStartEvent startEvent = (OperationStartEvent) args[1];
+                start(getName35(operation), CATEGORY_OPERATION, toNanoTime(startEvent.getStartTime()));
+            } else if (method.getName().equals("finished")) {
+                Object operation = args[0];
+                Object result = args[1];
+                Map<String, String> info = new HashMap<>();
+                Object details = call(operation, "getOperationDescriptor");
+                if (details.getClass().getSimpleName().equals("TaskOperationDescriptor")) {
+                    withTaskInfo(info, (TaskInternal) call(details, "getTask"));
+                }
+                finish(getName35(operation), toNanoTime((long) call(result, "getEndTime")), info);
+            }
+            return null;
+        }
+
+        private String getName35(Object operation) {
+            Object details = call(operation, "getOperationDescriptor");
+            if (details.getClass().getSimpleName().equals("TaskOperationDescriptor")) {
+                return (String) call(call(details, "getTask"), "getPath");
+            }
+            return call(operation, "getDisplayName") + " (" + call(operation, "getId") + ")";
+        }
+
+        private Object invoke40(Method method, Object[] args) {
             if (method.getName().equals("started")) {
                 BuildOperationDescriptor operation = (BuildOperationDescriptor) args[0];
                 OperationStartEvent startEvent = (OperationStartEvent) args[1];
@@ -297,7 +334,7 @@ public class GradleTracingPlugin implements Plugin<Gradle> {
                 Map<String, String> info = new HashMap<>();
                 if (operation.getDetails() instanceof TaskOperationDetails) {
                     TaskOperationDetails taskDescriptor = (TaskOperationDetails) operation.getDetails();
-                    withTaskInfo(info, taskDescriptor);
+                    withTaskInfo(info, taskDescriptor.getTask());
                 }
                 finish(getName(operation), toNanoTime(result.getEndTime()), info);
             } else if (method.getName().equals("hashCode")) {
@@ -315,13 +352,20 @@ public class GradleTracingPlugin implements Plugin<Gradle> {
             return operation.getDisplayName() + " (" + operation.getId() + ")";
         }
 
-        private void withTaskInfo(Map<String, String> info, TaskOperationDetails taskDescriptor) {
-            TaskInternal task = taskDescriptor.getTask();
+        private void withTaskInfo(Map<String, String> info, TaskInternal task) {
             info.put("type", task.getClass().getSimpleName().replace("_Decorated", ""));
             info.put("enabled", String.valueOf(task.getEnabled()));
             info.put("cacheable", String.valueOf(task.getState().isCacheable()));
             info.put("parallelizeable", String.valueOf(false));
             info.put("outcome", task.getState().getOutcome().name());
+        }
+
+        private Object call(Object object, String method) {
+            try {
+                return object.getClass().getMethod(method).invoke(object);
+            } catch (Exception e) {
+                throw new RuntimeException(e);
+            }
         }
     }
 }
