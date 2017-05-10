@@ -1,6 +1,7 @@
 package org.gradle.profiler.jfr;
 
 import org.gradle.profiler.CommandExec;
+import org.gradle.profiler.OperatingSystem;
 import org.gradle.profiler.ProfilerController;
 import org.gradle.profiler.fg.FlameGraphGenerator;
 import org.gradle.profiler.fg.FlameGraphSanitizer;
@@ -21,9 +22,9 @@ public class JFRControl implements ProfilerController {
 
     public JFRControl( final JFRArgs args, final String pid, final File outputDir ) {
         File javaHome = new File(System.getProperty("java.home"));
-        File jcmd = new File(javaHome, "bin/jcmd");
+        File jcmd = new File(javaHome, jcmdPath());
         if (!jcmd.isFile() && javaHome.getName().equals("jre")) {
-            jcmd = new File(javaHome.getParentFile(), "bin/jcmd");
+            jcmd = new File(javaHome.getParentFile(), jcmdPath());
         }
         if (!jcmd.isFile()) {
             throw new RuntimeException("Could not find 'jcmd' executable for Java home directory " + javaHome);
@@ -32,6 +33,10 @@ public class JFRControl implements ProfilerController {
         this.jfrArgs = args;
         this.pid = pid;
         this.outputDir = outputDir;
+    }
+
+    private String jcmdPath() {
+        return "bin/jcmd" + (OperatingSystem.isWindows() ? ".exe" : "");
     }
 
     @Override
