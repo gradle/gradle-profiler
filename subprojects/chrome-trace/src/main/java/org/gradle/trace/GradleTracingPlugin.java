@@ -307,7 +307,7 @@ public class GradleTracingPlugin implements Plugin<Gradle> {
                 Object result = args[1];
                 Map<String, String> info = new HashMap<>();
                 Object details = call(operation, "getOperationDescriptor");
-                if (details.getClass().getSimpleName().equals("TaskOperationDescriptor")) {
+                if (details != null && details.getClass().getSimpleName().equals("TaskOperationDescriptor")) {
                     withTaskInfo(info, (TaskInternal) call(details, "getTask"));
                 }
                 finish(getName35(operation), toNanoTime((long) call(result, "getEndTime")), info);
@@ -317,7 +317,7 @@ public class GradleTracingPlugin implements Plugin<Gradle> {
 
         private String getName35(Object operation) {
             Object details = call(operation, "getOperationDescriptor");
-            if (details.getClass().getSimpleName().equals("TaskOperationDescriptor")) {
+            if (details != null && details.getClass().getSimpleName().equals("TaskOperationDescriptor")) {
                 return (String) call(call(details, "getTask"), "getPath");
             }
             return call(operation, "getDisplayName") + " (" + call(operation, "getId") + ")";
