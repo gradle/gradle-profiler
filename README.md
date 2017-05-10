@@ -91,7 +91,7 @@ Honest Profiler currently only works on Linux.
 
 ### Chrome Trace
 
-Add the `--profile chrome-trace` option and open the result in Google Chrome. It shows a low-level event dump (e.g. projects being evaluated, tasks being run etc.) together with CPU and memory usage as well as GC activity.
+Add the `--profile chrome-trace` option and open the result in Google Chrome. It shows a low-level event dump (e.g. projects being evaluated, tasks being run etc.) together with CPU and memory usage as well as GC activity. Note that using chrome-trace requires Gradle 3.3+.
 
 ## Command line options
 
