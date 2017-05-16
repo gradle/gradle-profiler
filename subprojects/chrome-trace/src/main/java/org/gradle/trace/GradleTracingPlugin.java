@@ -7,7 +7,6 @@ import org.gradle.BuildResult;
 import org.gradle.api.Plugin;
 import org.gradle.api.invocation.Gradle;
 import org.gradle.initialization.BuildRequestMetaData;
-import org.gradle.internal.UncheckedException;
 import org.gradle.trace.listener.BuildOperationListenerAdapter;
 
 import javax.inject.Inject;
@@ -15,11 +14,13 @@ import javax.management.ListenerNotFoundException;
 import javax.management.NotificationEmitter;
 import javax.management.NotificationListener;
 import javax.management.openmbean.CompositeData;
-import java.io.*;
 import java.lang.management.GarbageCollectorMXBean;
 import java.lang.management.ManagementFactory;
 import java.lang.management.MemoryUsage;
-import java.util.*;
+import java.util.HashMap;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
@@ -102,7 +103,7 @@ public class GradleTracingPlugin implements Plugin<Gradle> {
 
         registerBuildOperationListener(gradle);
 
-        gradle.getGradle().addListener(new JsonAdapter(gradle));
+        gradle.addListener(new JsonAdapter(gradle));
     }
 
     private void registerBuildOperationListener(Gradle gradle) {
@@ -140,46 +141,9 @@ public class GradleTracingPlugin implements Plugin<Gradle> {
             traceResult.start(PHASE_BUILD, CATEGORY_PHASE, toNanoTime(buildRequestMetaData.getBuildTimeClock().getStartTime()));
             traceResult.finish(PHASE_BUILD, System.nanoTime(), new HashMap<>());
 
-            if (System.getProperty("trace") != null) {
-                File traceFile = getTraceFile();
-
-                copyResourceToFile("/trace-header.html", traceFile, false);
-                traceResult.writeEvents(traceFile);
-                copyResourceToFile("/trace-footer.html", traceFile, true);
-
-                result.getGradle().getRootProject().getLogger().lifecycle("Trace written to file://" + traceFile.getAbsolutePath());
-            }
+            traceResult.finalizeTraceFile(result.getGradle());
 
             gradle.removeListener(this);
-        }
-
-        private void copyResourceToFile(String resourcePath, File traceFile, boolean append) {
-            try (OutputStream out = new FileOutputStream(traceFile, append);
-                 InputStream in = getClass().getResourceAsStream(resourcePath)) {
-                byte[] buffer = new byte[1024];
-                int len;
-                while ((len = in.read(buffer)) != -1) {
-                    out.write(buffer, 0, len);
-                }
-            } catch (IOException e) {
-                throw UncheckedException.throwAsUncheckedException(e);
-            }
-        }
-
-        private File getTraceFile() {
-            File traceFile = (File) gradle.getRootProject().findProperty("chromeTraceFile");
-            if (traceFile == null) {
-                traceFile = defaultTraceFile();
-            }
-            traceFile.getParentFile().mkdirs();
-            return traceFile;
-        }
-
-        private File defaultTraceFile() {
-            File traceFile;
-            File buildDir = gradle.getRootProject().getBuildDir();
-            traceFile = new File(buildDir, "trace/task-trace.html");
-            return traceFile;
         }
     }
 
