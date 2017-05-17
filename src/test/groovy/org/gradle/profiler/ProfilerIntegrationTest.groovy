@@ -19,7 +19,7 @@ class ProfilerIntegrationTest extends Specification {
     @Shared
     String gradle35Version = "3.5"
     @Shared
-    String gradle40Version = "4.0-20170508235908+0000"
+    String gradle40Version = "4.0-milestone-2"
     File projectDir
     File outputDir
 
@@ -1119,7 +1119,7 @@ println "<parallel: " + gradle.startParameter.parallelProjectExecutionEnabled + 
         given:
         buildFile.text = """
 apply plugin: BasePlugin
-println "<src-length: \${file('src/main/java/Library.java').length()}>" 
+println "<src-length: \${file('src/main/java/Library.java').length()}>"
 """
         def srcFile = file("src/main/java/Library.java")
         srcFile.parentFile.mkdirs()
@@ -1154,7 +1154,7 @@ classes {
         given:
         buildFile.text = """
 apply plugin: BasePlugin
-println "<src-length: \${file('src/main/res/values/strings.xml').length()}>" 
+println "<src-length: \${file('src/main/res/values/strings.xml').length()}>"
 """
         def srcFile = file("src/main/res/values/strings.xml")
         srcFile.parentFile.mkdirs()
@@ -1189,7 +1189,7 @@ classes {
         given:
         buildFile.text = """
 apply plugin: BasePlugin
-println "<src-length: \${file('src/main/res/values/strings.xml').length()}>" 
+println "<src-length: \${file('src/main/res/values/strings.xml').length()}>"
 """
         def srcFile = file("src/main/res/values/strings.xml")
         srcFile.parentFile.mkdirs()
@@ -1226,7 +1226,7 @@ classes {
 apply plugin: 'java'
 if (file('src/main/java/Library.java').text.contains('_m')) {
     throw new Exception("Boom")
-} 
+}
 """
         def srcFile = file("src/main/java/Library.java")
         srcFile.parentFile.mkdirs()
@@ -1451,14 +1451,14 @@ then
         echo "//target:$3_2"
         echo "//target/child:$3_3"
         echo "//target/child:$3_4"
-    else 
+    else
         echo "//target:android_binary"
         echo "//target:java_library"
         echo "//target:cpp_library"
         echo "//target/child:android_library"
         echo "//target/child:cpp_library"
     fi
-else 
+else
     echo "building $@"
 fi
 '''
