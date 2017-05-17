@@ -54,10 +54,12 @@ public abstract class BuildOperationListenerInvocationHandler implements Invocat
         }
         info.put("type", task.getClass().getSimpleName().replace("_Decorated", ""));
         info.put("enabled", String.valueOf(task.getEnabled()));
-        info.put("cacheable", String.valueOf(task.getState().isCacheable()));
+        info.put("cacheable", String.valueOf(isTaskCacheable(task)));
         info.put("parallelizeable", String.valueOf(false));
         info.put("outcome", task.getState().getOutcome().name());
     }
+
+    protected abstract boolean isTaskCacheable(TaskInternal task);
 
     protected Object call(Object object, String method) {
         try {
