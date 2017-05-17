@@ -11,7 +11,7 @@
         <parameters>
           <param name="org.jfrog.artifactory.selectedDeployableServer.defaultModuleVersionConfiguration" value="GLOBAL" />
           <param name="teamcity.step.mode" value="default" />
-          <param name="ui.gradleRunner.additional.gradle.cmd.params" value="-s -l" />
+          <param name="ui.gradleRunner.additional.gradle.cmd.params" value="-s" />
           <param name="ui.gradleRunner.gradle.tasks.names" value="clean build" />
           <param name="ui.gradleRunner.gradle.wrapper.useWrapper" value="true" />
         </parameters>
