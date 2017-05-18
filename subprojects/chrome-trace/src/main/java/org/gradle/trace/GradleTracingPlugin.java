@@ -30,6 +30,7 @@ public class GradleTracingPlugin implements Plugin<Gradle> {
 
     @Override
     public void apply(Gradle gradle) {
+        traceResult.startTraceFile();
         systemMonitoring.start(traceResult);
         gcMonitoring.start(traceResult);
         buildOperationListener = BuildOperationListenerAdapter.create(gradle, traceResult);

@@ -35,6 +35,10 @@ public class TraceResult {
         }
     }
 
+    public void startTraceFile() {
+        traceWriter.start();
+    }
+
     public void finalizeTraceFile(Gradle gradle) {
         for (DurationEvent unfinishedEvent : events.values()) {
             traceWriter.add(unfinishedEvent);

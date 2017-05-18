@@ -19,10 +19,11 @@ public class AsynchronousTraceWriter extends Thread {
     }
 
     public void add(TraceEvent event) {
-        if (!this.isAlive() && !isInterrupted()) {
-            this.start();
-        }
         eventQueue.add(event);
+    }
+
+    public void start() {
+        super.start();
     }
 
     public void finish(Gradle gradle) {
