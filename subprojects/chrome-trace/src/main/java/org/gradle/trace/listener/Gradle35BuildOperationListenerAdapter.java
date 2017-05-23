@@ -3,7 +3,6 @@ package org.gradle.trace.listener;
 import org.gradle.api.internal.GradleInternal;
 import org.gradle.api.invocation.Gradle;
 import org.gradle.internal.progress.BuildOperationListener;
-import org.gradle.internal.progress.BuildOperationService;
 
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Proxy;
@@ -19,13 +18,21 @@ public class Gradle35BuildOperationListenerAdapter implements BuildOperationList
 
     private void register(InvocationHandler invocationHandler) {
         listener = (BuildOperationListener) Proxy.newProxyInstance(gradle.getClass().getClassLoader(), new Class[]{BuildOperationListener.class}, invocationHandler);
-        BuildOperationService buildOperationService = gradle.getServices().get(BuildOperationService.class);
-        buildOperationService.addListener(listener);
+        runBuildOperationServiceMethodForListener("addListener");
     }
 
     @Override
     public void remove() {
-        BuildOperationService buildOperationService = gradle.getServices().get(BuildOperationService.class);
-        buildOperationService.removeListener(listener);
+        runBuildOperationServiceMethodForListener("removeListener");
+    }
+
+    private void runBuildOperationServiceMethodForListener(String method) {
+        try {
+            Class<?> boServiceClass = Class.forName("org.gradle.internal.progress.BuildOperationService");
+            Object buildOperationService = gradle.getServices().get(boServiceClass);
+            buildOperationService.getClass().getMethod(method, BuildOperationListener.class).invoke(buildOperationService, listener);
+        } catch (ReflectiveOperationException e) {
+            throw new RuntimeException(e);
+        }
     }
 }
