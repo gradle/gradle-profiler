@@ -20,4 +20,9 @@ public class AdhocGradleScenarioDefinition extends GradleScenarioDefinition {
     public String getShortDisplayName() {
         return getVersion().getVersion();
     }
+
+    @Override
+    public String getProfileName() {
+        return getVersion().getVersion();
+    }
 }

@@ -31,7 +31,7 @@ public class YourKitJvmArgsCalculator extends JvmArgsCalculator {
         if (!jnilib.isFile()) {
             throw new IllegalArgumentException("Could not locate YourKit library in YourKit home directory " + yourKitHome);
         }
-        String agentOptions = "-agentpath:" + jnilib.getAbsolutePath() + "=dir=" + settings.getScenario().getOutputDir().getAbsolutePath() + ",sessionname=" + settings.getScenario().getName();
+        String agentOptions = "-agentpath:" + jnilib.getAbsolutePath() + "=dir=" + settings.getScenario().getOutputDir().getAbsolutePath() + ",sessionname=" + settings.getScenario().getProfileName();
         if (yourKitConfig.isMemorySnapshot() || yourKitConfig.isUseSampling()) {
             agentOptions += ",disabletracing";
         } else {

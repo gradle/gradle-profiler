@@ -25,6 +25,11 @@ public class BuckScenarioDefinition extends ScenarioDefinition {
         return getName() + " using buck";
     }
 
+    @Override
+    public String getProfileName() {
+        throw new UnsupportedOperationException();
+    }
+
     public List<String> getTargets() {
         return targets;
     }

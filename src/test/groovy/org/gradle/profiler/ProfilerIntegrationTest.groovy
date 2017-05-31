@@ -161,7 +161,7 @@ println "<daemon: " + gradle.services.get(org.gradle.internal.environment.Gradle
         logFile.grep("<daemon: true").size() == 4
         logFile.grep("<tasks: [assemble]>").size() == 3
 
-        def profileFile = new File(outputDir, "profile.jfr")
+        def profileFile = new File(outputDir, "${versionUnderTest}.jfr")
         profileFile.exists()
 
         where:
@@ -190,8 +190,8 @@ println "<daemon: " + gradle.services.get(org.gradle.internal.environment.Gradle
         logFile.grep("<gradle-version: $minimalSupportedGradleVersion").size() == 4
         logFile.grep("<gradle-version: 3.0").size() == 4
 
-        new File(outputDir, "$minimalSupportedGradleVersion/profile.jfr").file
-        new File(outputDir, "3.0/profile.jfr").file
+        new File(outputDir, "$minimalSupportedGradleVersion/${minimalSupportedGradleVersion}.jfr").file
+        new File(outputDir, "3.0/3.0.jfr").file
     }
 
     def "can specify the number of warm-up builds and iterations when profiling"() {
@@ -216,7 +216,7 @@ println "<tasks: " + gradle.startParameter.taskNames + ">"
         logFile.grep("<gradle-version: $minimalSupportedGradleVersion>").size() == 6
         logFile.grep("<tasks: [assemble]>").size() == 5
 
-        def profileFile = new File(outputDir, "profile.jfr")
+        def profileFile = new File(outputDir, "${minimalSupportedGradleVersion}.jfr")
         profileFile.exists()
     }
 
@@ -243,15 +243,15 @@ println "<daemon: " + gradle.services.get(org.gradle.internal.environment.Gradle
         logFile.grep("<daemon: true").size() == 4
         logFile.grep("<tasks: [assemble]>").size() == 3
 
-        def profileFile = new File(outputDir, "profile.hpl")
+        def profileFile = new File(outputDir, "${minimalSupportedGradleVersion}.hpl")
         profileFile.exists() && profileFile.size()>0
-        def profileTxtFile = new File(outputDir, "profile.txt")
+        def profileTxtFile = new File(outputDir, "$minimalSupportedGradleVersion-hp.txt")
         profileTxtFile.exists() && profileTxtFile.size()>0
-        def sanitizedProfileTxtFile = new File(outputDir, "profile-sanitized.txt")
+        def sanitizedProfileTxtFile = new File(outputDir, "$minimalSupportedGradleVersion-hp-sanitized.txt")
         sanitizedProfileTxtFile.exists()  && sanitizedProfileTxtFile.size()>0
 
         if (System.getenv('FG_HOME_DIR')) {
-            def fgFile = new File(outputDir, "default/flames.svg")
+            def fgFile = new File(outputDir, "${minimalSupportedGradleVersion}-hp-flames.svg")
             assert fgFile.exists() && fgFile.size()>0
         }
     }
@@ -269,7 +269,7 @@ apply plugin: BasePlugin
                         "assemble")
 
         then:
-        outputDir.listFiles().find { it.name.matches("default-.+\\.snapshot") }
+        outputDir.listFiles().find { it.name.matches("${minimalSupportedGradleVersion}-.+\\.snapshot") }
     }
 
     @Requires({ YourKit.findYourKitHome() })
@@ -285,7 +285,7 @@ apply plugin: BasePlugin
                         "--no-daemon", "assemble")
 
         then:
-        outputDir.listFiles().find { it.name.matches("default-.+\\.snapshot") }
+        outputDir.listFiles().find { it.name.matches("${minimalSupportedGradleVersion}-.+\\.snapshot") }
     }
 
     @Requires({ YourKit.findYourKitHome() })
@@ -301,7 +301,7 @@ apply plugin: BasePlugin
                         "--yourkit-sampling", "assemble")
 
         then:
-        outputDir.listFiles().find { it.name.matches("default-.+\\.snapshot") }
+        outputDir.listFiles().find { it.name.matches("${minimalSupportedGradleVersion}-.+\\.snapshot") }
     }
 
     @Requires({ YourKit.findYourKitHome() })
@@ -317,7 +317,7 @@ apply plugin: BasePlugin
                         "--yourkit-sampling", "--no-daemon", "assemble")
 
         then:
-        outputDir.listFiles().find { it.name.matches("default-.+\\.snapshot") }
+        outputDir.listFiles().find { it.name.matches("${minimalSupportedGradleVersion}-.+\\.snapshot") }
     }
 
     @Requires({ YourKit.findYourKitHome() })
@@ -333,7 +333,7 @@ apply plugin: BasePlugin
                         "--yourkit-memory", "assemble")
 
         then:
-        outputDir.listFiles().find { it.name.matches("default-.+\\.snapshot") }
+        outputDir.listFiles().find { it.name.matches("${minimalSupportedGradleVersion}-.+\\.snapshot") }
     }
 
     @Requires({ YourKit.findYourKitHome() })
@@ -349,7 +349,7 @@ apply plugin: BasePlugin
                         "--yourkit-memory", "--no-daemon", "assemble")
 
         then:
-        outputDir.listFiles().find { it.name.matches("default-.+\\.snapshot") }
+        outputDir.listFiles().find { it.name.matches("${minimalSupportedGradleVersion}-.+\\.snapshot") }
     }
 
     def "profiles build using Build Scans, specified Gradle version and tasks"() {
@@ -387,7 +387,7 @@ apply plugin: BasePlugin
                         "assemble")
 
         then:
-        outputDir.listFiles().find { it.name.matches("default.jps") }
+        outputDir.listFiles().find { it.name.matches("${minimalSupportedGradleVersion}.jps") }
     }
 
     @Requires({ new File(JProfiler.getDefaultHomeDir()).exists() })
@@ -403,7 +403,7 @@ apply plugin: BasePlugin
                         "--no-daemon", "assemble")
 
         then:
-        outputDir.listFiles().find { it.name.matches("default.jps") }
+        outputDir.listFiles().find { it.name.matches("${minimalSupportedGradleVersion}.jps") }
     }
 
     @Requires({ new File(JProfiler.getDefaultHomeDir()).exists() })
@@ -421,7 +421,7 @@ apply plugin: BasePlugin
                         "assemble")
 
         then:
-        outputDir.listFiles().find { it.name.matches("default.jps") }
+        outputDir.listFiles().find { it.name.matches("${minimalSupportedGradleVersion}.jps") }
     }
 
     def "profiles build using Build Scans overridden version specified Gradle version and tasks"() {
@@ -476,7 +476,7 @@ println "<daemon: " + gradle.services.get(org.gradle.internal.environment.Gradle
         logFile.grep("<tasks: [assemble]>").size() == 3
         assertBuildScanPublished("1.2")
 
-        def profileFile = new File(outputDir, "profile.jfr")
+        def profileFile = new File(outputDir, "${minimalSupportedGradleVersion}.jfr")
         profileFile.isFile()
     }
 
@@ -492,7 +492,7 @@ apply plugin: BasePlugin
                 run("--project-dir", projectDir.absolutePath, "--output-dir", outputDir.absolutePath, "--gradle-version", versionUnderTest, "--profile", "chrome-trace", "assemble")
 
         then:
-        new File(outputDir, "chrome-trace.html").isFile()
+        new File(outputDir, "${versionUnderTest}-trace.html").isFile()
 
         where:
         versionUnderTest << supportedGradleVersions
@@ -511,7 +511,7 @@ apply plugin: BasePlugin
                         "--no-daemon", "assemble")
 
         then:
-        new File(outputDir, "chrome-trace.html").isFile()
+        new File(outputDir, "${versionUnderTest}-trace.html").isFile()
 
         where:
         versionUnderTest << supportedGradleVersions
@@ -696,8 +696,8 @@ println "<tasks: " + gradle.startParameter.taskNames + ">"
         logFile.contains("* Running scenario assemble using Gradle $minimalSupportedGradleVersion (scenario 1/2)")
         logFile.contains("* Running scenario help using Gradle $minimalSupportedGradleVersion (scenario 2/2)")
 
-        new File(outputDir, "assemble/profile.jfr").file
-        new File(outputDir, "help/profile.jfr").file
+        new File(outputDir, "assemble/assemble-${minimalSupportedGradleVersion}.jfr").file
+        new File(outputDir, "help/help-${minimalSupportedGradleVersion}.jfr").file
     }
 
     def "profiles scenarios defined in scenario file using multiple Gradle versions"() {
@@ -733,10 +733,10 @@ println "<tasks: " + gradle.startParameter.taskNames + ">"
         logFile.contains("* Running scenario help using Gradle $minimalSupportedGradleVersion (scenario 3/4)")
         logFile.contains("* Running scenario help using Gradle 3.0 (scenario 4/4)")
 
-        new File(outputDir, "assemble/$minimalSupportedGradleVersion/profile.jfr").file
-        new File(outputDir, "assemble/3.0/profile.jfr").file
-        new File(outputDir, "help/$minimalSupportedGradleVersion/profile.jfr").file
-        new File(outputDir, "help/3.0/profile.jfr").file
+        new File(outputDir, "assemble/$minimalSupportedGradleVersion/assemble-${minimalSupportedGradleVersion}.jfr").file
+        new File(outputDir, "assemble/3.0/assemble-3.0.jfr").file
+        new File(outputDir, "help/$minimalSupportedGradleVersion/help-${minimalSupportedGradleVersion}.jfr").file
+        new File(outputDir, "help/3.0/help-3.0.jfr").file
     }
 
     def "runs cleanup tasks defined in scenario file"() {

@@ -17,6 +17,7 @@ package org.gradle.profiler.hp;
 
 import org.gradle.profiler.CommandExec;
 import org.gradle.profiler.ProfilerController;
+import org.gradle.profiler.ScenarioSettings;
 import org.gradle.profiler.fg.FlameGraphGenerator;
 import org.gradle.profiler.fg.FlameGraphSanitizer;
 
@@ -27,17 +28,17 @@ import java.net.Socket;
 import java.nio.file.Files;
 
 public class HonestProfilerControl implements ProfilerController {
-    private static final String PROFILE_HPL = "profile.hpl";
-    private static final String PROFILE_TXT = "profile.txt";
-    private static final String PROFILE_SANITIZED_TXT = "profile-sanitized.txt";
-    private static final String FLAMES_SVG = "flames.svg";
+    private static final String PROFILE_HPL_SUFFIX = ".hpl";
+    private static final String PROFILE_TXT_SUFFIX = "-hp.txt";
+    private static final String PROFILE_SANITIZED_TXT_SUFFIX = "-hp-sanitized.txt";
+    private static final String FLAMES_SVG_SUFFIX = "-hp-flames.svg";
 
     private final HonestProfilerArgs args;
-    private final File outputDir;
+    private final ScenarioSettings scenarioSettings;
 
-    public HonestProfilerControl(final HonestProfilerArgs args, final File outputDir) {
+    public HonestProfilerControl(final HonestProfilerArgs args, ScenarioSettings scenarioSettings) {
         this.args = args;
-        this.outputDir = outputDir;
+        this.scenarioSettings = scenarioSettings;
     }
 
     @Override
@@ -50,10 +51,10 @@ public class HonestProfilerControl implements ProfilerController {
     public void stop() throws IOException, InterruptedException {
         System.out.println("Stopping profiling with Honest Profiler on port " + args.getPort());
         sendCommand("stop");
-        File hplFile = new File(outputDir, PROFILE_HPL);
-        File txtFile = new File(outputDir, PROFILE_TXT);
-        File sanitizedTxtFile = new File(outputDir, PROFILE_SANITIZED_TXT);
-        File fgFile = new File(outputDir, FLAMES_SVG);
+        File hplFile = new File(getOuptutDir(), getProfileName() + PROFILE_HPL_SUFFIX);
+        File txtFile = new File(getOuptutDir(), getProfileName() + PROFILE_TXT_SUFFIX);
+        File sanitizedTxtFile = new File(getOuptutDir(), getProfileName() + PROFILE_SANITIZED_TXT_SUFFIX);
+        File fgFile = new File(getOuptutDir(), getProfileName() + FLAMES_SVG_SUFFIX);
         Files.copy(args.getLogPath().toPath(), hplFile.toPath());
         convertToFlameGraphTxtFile(hplFile, txtFile);
         sanitizeFlameGraphTxtFile(txtFile, sanitizedTxtFile);
@@ -80,7 +81,7 @@ public class HonestProfilerControl implements ProfilerController {
     }
 
     private void generateFlameGraph(final File sanitizedTxtFile, final File fgFile) throws IOException, InterruptedException {
-        new FlameGraphGenerator( args.getFgHomeDir() ).generateFlameGraph( sanitizedTxtFile, fgFile );
+        new FlameGraphGenerator(args.getFgHomeDir()).generateFlameGraph(sanitizedTxtFile, fgFile);
     }
 
     private void sendCommand(String command) throws IOException {
@@ -92,6 +93,14 @@ public class HonestProfilerControl implements ProfilerController {
 
     private byte[] commandBytes(final String command) {
         return (command + "\r\n").getBytes();
+    }
+
+    private File getOuptutDir() {
+        return scenarioSettings.getScenario().getOutputDir();
+    }
+
+    private String getProfileName() {
+        return scenarioSettings.getScenario().getProfileName();
     }
 
 }

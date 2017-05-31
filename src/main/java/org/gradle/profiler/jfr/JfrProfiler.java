@@ -49,7 +49,7 @@ public class JfrProfiler extends Profiler {
 
     @Override
     public ProfilerController newController(final String pid, final ScenarioSettings settings) {
-        return new JFRControl(jfrArgs, pid, settings.getScenario().getOutputDir());
+        return new JFRControl(jfrArgs, pid, settings);
     }
 
     @Override

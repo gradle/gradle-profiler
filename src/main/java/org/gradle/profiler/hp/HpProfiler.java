@@ -58,7 +58,7 @@ public class HpProfiler extends Profiler {
 
     @Override
     public ProfilerController newController(final String pid, final ScenarioSettings settings) {
-        return new HonestProfilerControl(honestProfilerArgs, settings.getScenario().getOutputDir());
+        return new HonestProfilerControl(honestProfilerArgs, settings);
     }
 
     @Override
