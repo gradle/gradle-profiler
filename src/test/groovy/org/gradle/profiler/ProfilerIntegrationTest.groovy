@@ -400,6 +400,7 @@ apply plugin: BasePlugin
         when:
         new Main().
                 run("--project-dir", projectDir.absolutePath, "--output-dir", outputDir.absolutePath, "--gradle-version", minimalSupportedGradleVersion, "--profile", "jprofiler",
+                        "--jprofiler-monitors", "--jprofiler-probes", "builtin.JdbcProbe:+special,builtin.FileProbe,builtin.ClassLoaderProbe:+events",
                         "--no-daemon", "assemble")
 
         then:

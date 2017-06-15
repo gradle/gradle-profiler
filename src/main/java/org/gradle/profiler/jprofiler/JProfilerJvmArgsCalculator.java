@@ -2,10 +2,17 @@ package org.gradle.profiler.jprofiler;
 
 import org.gradle.profiler.JvmArgsCalculator;
 import org.gradle.profiler.OperatingSystem;
+import org.gradle.profiler.ScenarioSettings;
+import org.w3c.dom.Document;
+import org.w3c.dom.Element;
 
-import java.io.File;
-import java.io.IOException;
-import java.io.InputStream;
+import javax.xml.parsers.DocumentBuilderFactory;
+import javax.xml.parsers.ParserConfigurationException;
+import javax.xml.transform.*;
+import javax.xml.transform.dom.DOMSource;
+import javax.xml.transform.stream.StreamResult;
+import javax.xml.transform.stream.StreamSource;
+import java.io.*;
 import java.net.InetSocketAddress;
 import java.net.ServerSocket;
 import java.net.SocketAddress;
@@ -17,9 +24,11 @@ import java.util.List;
 
 public class JProfilerJvmArgsCalculator extends JvmArgsCalculator {
     private final JProfilerConfig jProfilerConfig;
+    private ScenarioSettings settings;
 
-    public JProfilerJvmArgsCalculator(JProfilerConfig jProfilerConfig) {
+    public JProfilerJvmArgsCalculator(JProfilerConfig jProfilerConfig, ScenarioSettings settings) {
         this.jProfilerConfig = jProfilerConfig;
+        this.settings = settings;
     }
 
     @Override
@@ -67,17 +76,73 @@ public class JProfilerJvmArgsCalculator extends JvmArgsCalculator {
 
         builder.append("=offline,");
         String sessionId = jProfilerConfig.getSessionId();
+        File configFile;
+        String id;
         if (sessionId != null) {
-            builder.append("id=").append(sessionId);
-            String configFile = jProfilerConfig.getConfigFile();
-            if (configFile != null) {
-                builder.append(",config=").append(configFile);
+            if (jProfilerConfig.getConfigFile() != null) {
+                configFile = new File(jProfilerConfig.getConfigFile());
+                id = sessionId;
+            } else {
+                configFile = null;
+                id = null;
             }
         } else {
-            builder.append("id=1,config=").append(getConfigFile());
+            configFile = getConfigFile();
+            id = "1";
         }
+        if (configFile != null) {
+            builder.append("id=").append(id).append(",config=").append(transformConfigFile(configFile, id));
+        }
+
         builder.append(",sysprop=jprofiler.jmxServerPort=").append(port);
         return builder.toString();
+    }
+
+    private File transformConfigFile(File configFile, String id) {
+        if (profileWholeLifeTime()) {
+            try {
+                File transformedConfigFile = deleteOnExit(File.createTempFile("jprofiler", ".xml"));
+                File probesFile = createProbesDocument();
+                URL resource = getClass().getResource("/jprofiler/transform.xsl");
+                Templates template = TransformerFactory.newInstance().newTemplates(new StreamSource(resource.openStream()));
+                Source source = new StreamSource(new FileInputStream(configFile));
+                Result result = new StreamResult(new FileOutputStream(transformedConfigFile));
+                Transformer transformer = template.newTransformer();
+                transformer.setOutputProperty(OutputKeys.INDENT, "yes");
+                transformer.setParameter("id", id);
+                transformer.setParameter("allocRecording", jProfilerConfig.isRecordAlloc());
+                transformer.setParameter("monitorRecording", jProfilerConfig.isRecordMonitors());
+                transformer.setParameter("probesFile", probesFile.getPath());
+                transformer.setParameter("snapshotPath", getSnapshotPath());
+                transformer.transform(source, result);
+                if (Boolean.getBoolean("jprofiler.debugTransform")) {
+                    Files.readAllLines(transformedConfigFile.toPath()).forEach(System.out::println);
+                }
+                return transformedConfigFile;
+            } catch (TransformerException | IOException | ParserConfigurationException e) {
+                throw new RuntimeException(e);
+            }
+        } else {
+            return configFile;
+        }
+    }
+
+    private File createProbesDocument() throws ParserConfigurationException, TransformerException, IOException {
+        File probesFile = deleteOnExit(File.createTempFile("jprofiler", ".xml"));
+        Document document = DocumentBuilderFactory.newInstance().newDocumentBuilder().newDocument();
+        Element probesElement = document.createElement("probes");
+        for (String probeName : jProfilerConfig.getRecordedProbes()) {
+            Element probeElement = document.createElement("probe");
+            probeElement.setAttribute("name", probeName);
+            probeElement.setAttribute("events", String.valueOf(jProfilerConfig.getProbesWithEventRecording().contains(probeName)));
+            probeElement.setAttribute("recordSpecial", String.valueOf(jProfilerConfig.getProbesWithSpecialRecording().contains(probeName)));
+            probesElement.appendChild(probeElement);
+        }
+        document.appendChild(probesElement);
+        DOMSource source = new DOMSource(document);
+        StreamResult result = new StreamResult(new FileOutputStream(probesFile));
+        TransformerFactory.newInstance().newTransformer().transform(source, result);
+        return probesFile;
     }
 
     private File getJProfilerDir() {
@@ -100,11 +165,16 @@ public class JProfilerJvmArgsCalculator extends JvmArgsCalculator {
                 try (InputStream inputStream = resource.openStream()) {
                     Files.copy(inputStream, tmpFile, StandardCopyOption.REPLACE_EXISTING);
                 }
-                return tmpFile.toFile();
+                return deleteOnExit(tmpFile.toFile());
             }
         } catch (IOException e) {
             throw new RuntimeException("Could not create JProfiler config file.", e);
         }
+    }
+
+    private File deleteOnExit(File tmpFile) {
+        tmpFile.deleteOnExit();
+        return tmpFile;
     }
 
     private static int findUnusedPort() {
@@ -132,4 +202,13 @@ public class JProfilerJvmArgsCalculator extends JvmArgsCalculator {
             }
         }
     }
+
+    private boolean profileWholeLifeTime() {
+        return JProfiler.profileWholeLifeTime(settings);
+    }
+
+    private String getSnapshotPath() {
+        return JProfiler.getSnapshotPath(settings);
+    }
+
 }
