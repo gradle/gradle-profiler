@@ -15,7 +15,7 @@ import java.util.stream.Stream;
 
 public class BuildScanProfiler extends Profiler {
 
-    private final static String VERSION = "1.6";
+    private final static String VERSION = "1.8";
 
     private final String buildScanVersion;
 
