@@ -450,7 +450,7 @@ println "<daemon: " + gradle.services.get(org.gradle.internal.environment.Gradle
     private void assertBuildScanPublished(String buildScanPluginVersion) {
         assert logFile.grep("Using build scan profiler version " + buildScanPluginVersion).size() == 1
         // Must be 1, may be 2 if user applies build scan in home dir
-        assert logFile.grep("Publishing build information...").size() >= 1 : ("LOG FILE:" + logFile.text)
+        assert logFile.grep("Publishing build").size() >= 1 : ("LOG FILE:" + logFile.text)
     }
 
     def "profiles build using JFR, Build Scans, specified Gradle version and tasks"() {
