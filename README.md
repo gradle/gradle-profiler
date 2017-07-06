@@ -100,7 +100,7 @@ In order to profile with `perf`, add the `--profile perf` option. `perf` has sev
 
 #### Prerequisites
 
-  - Linux Kernel 4.5 or later (4.8 or later for best results)
+  - Linux Kernel 4.7 or later
   - `perf` and `cmake`. For example: 
   
         sudo apt install linux-tools-$(uname -r) cmake
