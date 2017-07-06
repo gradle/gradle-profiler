@@ -5,6 +5,8 @@ import org.gradle.profiler.CommandExec;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.util.Arrays;
+import java.util.List;
 
 public class FlameGraphGenerator {
     private final File fgHomeDir;
@@ -20,10 +22,11 @@ public class FlameGraphGenerator {
     public void generateFlameGraph(final File txtFile, final File fgFile, boolean icicle) throws IOException, InterruptedException {
         CommandExec commandExec = new CommandExec();
         File fdCmd = new File(fgHomeDir, "flamegraph.pl");
+        List<String> fgArgs = Arrays.asList(fdCmd.getAbsolutePath(), txtFile.getAbsolutePath(), "--minwidth=0.5", "--color=java", "--hash");
         if (icicle) {
-            commandExec.runAndCollectOutput(fgFile, fdCmd.getAbsolutePath(), txtFile.getAbsolutePath(), "--reverse", "--inverted");
-        } else {
-            commandExec.runAndCollectOutput(fgFile, fdCmd.getAbsolutePath(), txtFile.getAbsolutePath());
+            fgArgs.add("--reverse");
+            fgArgs.add("--inverted");
         }
+        commandExec.runAndCollectOutput(fgFile, fgArgs.toArray(new String[0]));
     }
 }
