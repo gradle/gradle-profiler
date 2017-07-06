@@ -97,7 +97,6 @@ In order to profile with `perf`, add the `--profile perf` option. `perf` has sev
 - All Java processes forked by the build are included
 - Native stack frames are included
 - Inlined methods can be optionally unfolded
-- Both regular flamegraphs and Java package flamegraphs are generated
 
 #### Prerequisites
 

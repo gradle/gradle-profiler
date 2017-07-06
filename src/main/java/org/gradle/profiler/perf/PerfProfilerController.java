@@ -44,6 +44,7 @@ public class PerfProfilerController implements ProfilerController {
     private static final String PROFILE_SANITIZED_TXT_SUFFIX = "-perf-sanitized.txt";
     private static final String FLAMES_SVG_SUFFIX = "-perf-flames.svg";
     private static final String FLAMES_PACKAGE_SVG_SUFFIX = "-perf-flames-package.svg";
+    private static final String ICICLES_SVG_SUFFIX = "-perf-icicles.svg";
 
     private static final String TOOL_FLAMEGRAPH = "brendangregg/FlameGraph";
     private static final String TOOL_MISC = "brendangregg/Misc";
@@ -84,8 +85,10 @@ public class PerfProfilerController implements ProfilerController {
         perfHandle.interrupt();
         generateJmaps();
         generateFlameGraph();
-        // TODO Get this working
-//        generatePackageFlameGraph();
+        // Disabled for now, I need to talk to Brendan about the pkgsplit script
+        /*
+        generatePackageFlameGraph();
+        */
     }
 
     private void println(String message) {
@@ -155,6 +158,7 @@ public class PerfProfilerController implements ProfilerController {
 
         File sanitizedFile = profileFileForSuffix(PROFILE_SANITIZED_TXT_SUFFIX);
         File fgFile = profileFileForSuffix(FLAMES_SVG_SUFFIX);
+        File icicleFile = profileFileForSuffix(ICICLES_SVG_SUFFIX);
 
         String stackcollapseCmd = new File(getToolDir(TOOL_FLAMEGRAPH), CMD_STACKCOLLAPSE).getAbsolutePath();
 
@@ -164,7 +168,8 @@ public class PerfProfilerController implements ProfilerController {
         sanitizeFlameGraphFile(new IdleCpuSanitizeFunction(), foldedFile, foldedNoIdleFile);
         sanitizeFlameGraphFile(new JavaProcessSanitizeFunction(), foldedNoIdleFile, foldedJavaFile);
         sanitizeFlameGraphFile(FlameGraphSanitizer.DEFAULT_SANITIZE_FUNCTION, foldedJavaFile, sanitizedFile);
-        generateFlameGraph(sanitizedFile, fgFile);
+        generateFlameGraph(sanitizedFile, fgFile, false);
+        generateFlameGraph(sanitizedFile, icicleFile, true);
     }
 
     /**
@@ -181,15 +186,15 @@ public class PerfProfilerController implements ProfilerController {
 
         commandExec.runAndCollectOutput(pkgSplitFile, scriptFile, pkgsplitCmd);
         sanitizeFlameGraphFile(new JavaPackageSanitizeFunction(), pkgSplitFile, sanitizedFile);
-        generateFlameGraph(sanitizedFile, fgFile);
+        generateFlameGraph(sanitizedFile, fgFile, false);
     }
 
     private void sanitizeFlameGraphFile(FlameGraphSanitizer.SanitizeFunction sanitizeFunction, final File txtFile, final File sanitizedTxtFile) {
         new FlameGraphSanitizer(sanitizeFunction).sanitize(txtFile, sanitizedTxtFile);
     }
 
-    private void generateFlameGraph(final File sanitizedTxtFile, final File fgFile) throws IOException, InterruptedException {
-        new FlameGraphGenerator(getToolDir(TOOL_FLAMEGRAPH)).generateFlameGraph(sanitizedTxtFile, fgFile);
+    private void generateFlameGraph(final File sanitizedTxtFile, final File fgFile, boolean icicle) throws IOException, InterruptedException {
+        new FlameGraphGenerator(getToolDir(TOOL_FLAMEGRAPH)).generateFlameGraph(sanitizedTxtFile, fgFile, icicle);
     }
 
     private File getToolsDir() {
