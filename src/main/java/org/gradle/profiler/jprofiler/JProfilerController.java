@@ -46,9 +46,6 @@ public class JProfilerController implements ProfilerController {
         if (jProfilerConfig.isHeapDump() && hasOperation("markHeap")) { // available in JProfiler 10
             invoke("markHeap");
         }
-        if (profileWholeLifeTime()) {
-            invoke("saveSnapshotOnExit", getSnapshotPath());
-        }
     }
 
     @Override
