@@ -28,25 +28,26 @@ public class JProfilerController implements ProfilerController {
 
     @Override
     public void start() throws IOException, InterruptedException {
-        if (!profileWholeLifeTime()) {
-            invoke("startCPURecording", true);
-            if (jProfilerConfig.isRecordAlloc()) {
-                invoke("startAllocRecording", true);
-            }
-            if (jProfilerConfig.isRecordMonitors()) {
-                invoke("startMonitorRecording");
-            }
-            for (String probeName : jProfilerConfig.getRecordedProbes()) {
-                boolean eventRecording = jProfilerConfig.getProbesWithEventRecording().contains(probeName);
-                boolean specialRecording = jProfilerConfig.getProbesWithSpecialRecording().contains(probeName);
-                invoke("startProbeRecording", probeName, eventRecording, specialRecording);
-            }
-            if (jProfilerConfig.isHeapDump() && hasOperation("markHeap")) { // available in JProfiler 10
-                invoke("markHeap");
-            }
-            if (profileWholeLifeTime()) {
-                invoke("saveSnapshotOnExit", getSnapshotPath());
-            }
+        if (profileWholeLifeTime()) {
+            return;
+        }
+        invoke("startCPURecording", true);
+        if (jProfilerConfig.isRecordAlloc()) {
+            invoke("startAllocRecording", true);
+        }
+        if (jProfilerConfig.isRecordMonitors()) {
+            invoke("startMonitorRecording");
+        }
+        for (String probeName : jProfilerConfig.getRecordedProbes()) {
+            boolean eventRecording = jProfilerConfig.getProbesWithEventRecording().contains(probeName);
+            boolean specialRecording = jProfilerConfig.getProbesWithSpecialRecording().contains(probeName);
+            invoke("startProbeRecording", probeName, eventRecording, specialRecording);
+        }
+        if (jProfilerConfig.isHeapDump() && hasOperation("markHeap")) { // available in JProfiler 10
+            invoke("markHeap");
+        }
+        if (profileWholeLifeTime()) {
+            invoke("saveSnapshotOnExit", getSnapshotPath());
         }
     }
 
