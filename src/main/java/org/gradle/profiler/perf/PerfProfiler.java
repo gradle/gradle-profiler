@@ -18,7 +18,6 @@ public class PerfProfiler extends Profiler {
 
     private ArgumentAcceptingOptionSpec<Integer> frequency;
     private ArgumentAcceptingOptionSpec<Integer> maxStack;
-    private OptionSpecBuilder unfold;
 
     public PerfProfiler() {
         this(null);
@@ -49,8 +48,7 @@ public class PerfProfiler extends Profiler {
     private PerfProfilerArgs newConfigObject(final OptionSet parsedOptions) {
         return new PerfProfilerArgs(
                 parsedOptions.valueOf(frequency),
-                parsedOptions.valueOf(maxStack),
-                parsedOptions.has(unfold));
+                parsedOptions.valueOf(maxStack));
     }
 
     @Override
@@ -70,8 +68,6 @@ public class PerfProfiler extends Profiler {
                 .withOptionalArg()
                 .ofType(Integer.class)
                 .defaultsTo(1024);
-        unfold = parser.accepts("perf-unfold", "Unfold inlined frames")
-                .availableIf("profile");
     }
 
     @Override

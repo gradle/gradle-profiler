@@ -3,12 +3,10 @@ package org.gradle.profiler.perf;
 public class PerfProfilerArgs {
     private final int frequency;
     private final int maxStack;
-    private final boolean unfold;
 
-    public PerfProfilerArgs(int frequency, int maxStack, boolean unfold) {
+    public PerfProfilerArgs(int frequency, int maxStack) {
         this.frequency = frequency;
         this.maxStack = maxStack;
-        this.unfold = unfold;
     }
 
     public int getFrequency() {
@@ -17,9 +15,5 @@ public class PerfProfilerArgs {
 
     public int getMaxStack() {
         return maxStack;
-    }
-
-    public boolean isUnfold() {
-        return unfold;
     }
 }

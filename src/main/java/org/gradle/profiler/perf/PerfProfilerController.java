@@ -142,11 +142,7 @@ public class PerfProfilerController implements ProfilerController {
             throw new RuntimeException(e);
         }
         setAndCheckExecutable(jmapsUpdated);
-        if (args.isUnfold()) {
-            commandExec.run(jmapsUpdated.getAbsolutePath(), "-u");
-        } else {
-            commandExec.run(jmapsUpdated.getAbsolutePath());
-        }
+        commandExec.run(jmapsUpdated.getAbsolutePath(), "-u");
     }
 
     private void generateFlameGraph() throws IOException, InterruptedException {
@@ -163,7 +159,7 @@ public class PerfProfilerController implements ProfilerController {
         String stackcollapseCmd = new File(getToolDir(TOOL_FLAMEGRAPH), CMD_STACKCOLLAPSE).getAbsolutePath();
 
         commandExec.runAndCollectOutput(scriptFile, "perf", "script", "-F", "comm,pid,tid,cpu,time,event,ip,sym,dso,trace", "-i", dataFile.getAbsolutePath(), "--max-stack", String.valueOf(args.getMaxStack()));
-        commandExec.runAndCollectOutput(foldedFile, stackcollapseCmd, "--pid", "--tid", scriptFile.getAbsolutePath());
+        commandExec.runAndCollectOutput(foldedFile, stackcollapseCmd, "--inline", "--pid", "--tid", scriptFile.getAbsolutePath());
 
         sanitizeFlameGraphFile(new IdleCpuSanitizeFunction(), foldedFile, foldedNoIdleFile);
         sanitizeFlameGraphFile(new JavaProcessSanitizeFunction(), foldedNoIdleFile, foldedJavaFile);
