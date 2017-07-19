@@ -27,7 +27,7 @@ public class ChromeTraceProfiler extends Profiler {
         return new GradleArgsCalculator() {
             @Override
             public void calculateGradleArgs(List<String> gradleArgs) {
-                gradleArgs.addAll(new ChromeTraceInitScript(settings.getScenario().getOutputDir()).getArgs());
+                gradleArgs.addAll(new ChromeTraceInitScript(settings).getArgs());
             }
         };
     }

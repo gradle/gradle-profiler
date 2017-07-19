@@ -89,6 +89,28 @@ Install both [Honest Profiler](https://github.com/RichardWarburton/honest-profil
 
 Honest Profiler currently only works on Linux.
 
+### Linux Perf
+
+In order to profile with `perf`, add the `--profile perf` option. `perf` has several advantages over Java agent based profiling:
+
+- Accurate and low overhead
+- All Java processes forked by the build are included
+- Native stack frames are included
+- Inlined methods can be optionally unfolded
+
+#### Prerequisites
+
+  - Linux Kernel 4.7 or later
+  - `perf` and `cmake`. For example: 
+  
+        sudo apt install linux-tools-$(uname -r) cmake
+    
+  - Set the `kernel.perf_event_max_stack` Kernel parameter to accommodate deep Java stacks:
+  
+        `sysctl kernel.perf_event_max_stack=1024`
+
+The profiler automatically downloads and builds the other required tools.
+
 ### Chrome Trace
 
 Add the `--profile chrome-trace` option and open the result in Google Chrome. It shows a low-level event dump (e.g. projects being evaluated, tasks being run etc.) together with CPU and memory usage as well as GC activity. Note that using chrome-trace requires Gradle 3.3+.

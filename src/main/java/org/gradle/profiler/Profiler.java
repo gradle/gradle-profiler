@@ -22,6 +22,7 @@ import org.gradle.profiler.ct.ChromeTraceProfiler;
 import org.gradle.profiler.hp.HpProfiler;
 import org.gradle.profiler.jfr.JfrProfiler;
 import org.gradle.profiler.jprofiler.JProfilerProfiler;
+import org.gradle.profiler.perf.PerfProfiler;
 import org.gradle.profiler.yjp.YourKitProfiler;
 
 import java.io.File;
@@ -45,6 +46,7 @@ public class Profiler {
                 put("chrome-trace", new ChromeTraceProfiler());
                 put("yourkit", new YourKitProfiler());
                 put("jprofiler", new JProfilerProfiler());
+                put("perf", new PerfProfiler());
             }}
     );
 

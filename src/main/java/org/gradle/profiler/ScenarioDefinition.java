@@ -23,6 +23,8 @@ public abstract class ScenarioDefinition {
 
     public abstract String getShortDisplayName();
 
+    public abstract String getProfileName();
+
     public String getName() {
         return name;
     }

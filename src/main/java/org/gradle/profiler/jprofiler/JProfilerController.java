@@ -113,7 +113,7 @@ public class JProfilerController implements ProfilerController {
 
     private String getSnapshotPath() {
         File outputDir = settings.getScenario().getOutputDir();
-        String snapshotName = settings.getScenario().getName();
+        String snapshotName = settings.getScenario().getProfileName();
 
         int i = 0;
         File snapshotFile;

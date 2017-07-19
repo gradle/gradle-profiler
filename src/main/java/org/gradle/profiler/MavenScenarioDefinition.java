@@ -23,6 +23,11 @@ public class MavenScenarioDefinition extends ScenarioDefinition {
         return getName() + " using maven";
     }
 
+    @Override
+    public String getProfileName() {
+        throw new UnsupportedOperationException();
+    }
+
     public List<String> getTargets() {
         return targets;
     }

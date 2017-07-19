@@ -15,7 +15,7 @@ import java.util.stream.Stream;
 
 public class BuildScanProfiler extends Profiler {
 
-    private final static String VERSION = "1.6";
+    private final static String VERSION = "1.8";
 
     private final String buildScanVersion;
 
@@ -44,7 +44,7 @@ public class BuildScanProfiler extends Profiler {
                     if (line.matches("\\* Running .*\\[.*\\]")) {
                         tasks.clear();
                         tasks.add(line.substring(line.indexOf('[') + 1, line.indexOf(']')));
-                    } else if (line.startsWith("Publishing build information...")) {
+                    } else if (line.startsWith("Publishing build ")) {
                         buildScanURLs.add("");
                     } else {
                         int lastElementIndex = buildScanURLs.size() - 1;

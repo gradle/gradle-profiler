@@ -17,6 +17,8 @@ package org.gradle.profiler.ct;
 
 import org.gradle.internal.UncheckedException;
 import org.gradle.profiler.GeneratedInitScript;
+import org.gradle.profiler.GradleScenarioDefinition;
+import org.gradle.profiler.ScenarioSettings;
 
 import java.io.File;
 import java.io.IOException;
@@ -29,15 +31,18 @@ public class ChromeTraceInitScript extends GeneratedInitScript {
     private final File chromeTracePlugin;
     private final File traceFile;
 
-    public ChromeTraceInitScript(File outputDir) {
+    public ChromeTraceInitScript(ScenarioSettings scenarioSettings) {
         try {
             chromeTracePlugin = File.createTempFile("chrome-trace", "jar");
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
         chromeTracePlugin.deleteOnExit();
-        traceFile = new File(outputDir, "chrome-trace.html");
+        GradleScenarioDefinition scenario = scenarioSettings.getScenario();
+        traceFile = new File(scenario.getOutputDir(), scenario.getProfileName() + "-trace.html");
     }
+
+
 
     private void unpackChromeTracePlugin() {
         InputStream inputStream = getClass().getResourceAsStream("/META-INF/jars/chrome-trace.jar");

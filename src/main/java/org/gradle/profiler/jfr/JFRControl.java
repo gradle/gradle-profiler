@@ -3,6 +3,7 @@ package org.gradle.profiler.jfr;
 import org.gradle.profiler.CommandExec;
 import org.gradle.profiler.OperatingSystem;
 import org.gradle.profiler.ProfilerController;
+import org.gradle.profiler.ScenarioSettings;
 import org.gradle.profiler.fg.FlameGraphGenerator;
 import org.gradle.profiler.fg.FlameGraphSanitizer;
 
@@ -10,17 +11,18 @@ import java.io.File;
 import java.io.IOException;
 
 public class JFRControl implements ProfilerController {
-    private static final String PROFILE_JFR = "profile.jfr";
-    private static final String PROFILE_TXT = "profile-jfr.txt";
-    private static final String PROFILE_SANITIZED_TXT = "profile-jfr-sanitized.txt";
-    private static final String FLAMES_SVG = "jfr-flames.svg";
+    private static final String PROFILE_JFR_SUFFIX = ".jfr";
+    private static final String PROFILE_TXT_SUFFIX = "-jfr.txt";
+    private static final String PROFILE_SANITIZED_TXT_SUFFIX = "-jfr-sanitized.txt";
+    private static final String FLAMES_SVG_SUFFX = "-jfr-flames.svg";
 
     private final File jcmd;
     private final JFRArgs jfrArgs;
-    private final File outputDir;
     private final String pid;
+    private final ScenarioSettings scenarioSettings;
 
-    public JFRControl( final JFRArgs args, final String pid, final File outputDir ) {
+    public JFRControl( final JFRArgs args, final String pid, final ScenarioSettings scenarioSettings) {
+        this.scenarioSettings = scenarioSettings;
         File javaHome = new File(System.getProperty("java.home"));
         File jcmd = new File(javaHome, jcmdPath());
         if (!jcmd.isFile() && javaHome.getName().equals("jre")) {
@@ -32,7 +34,7 @@ public class JFRControl implements ProfilerController {
         this.jcmd = jcmd;
         this.jfrArgs = args;
         this.pid = pid;
-        this.outputDir = outputDir;
+
     }
 
     private String jcmdPath() {
@@ -46,12 +48,12 @@ public class JFRControl implements ProfilerController {
 
     @Override
     public void stop() throws IOException, InterruptedException {
-        File jfrFile = new File(outputDir, PROFILE_JFR);
+        File jfrFile = new File(getOutputDir(), getProfileName() + PROFILE_JFR_SUFFIX);
         run(jcmd.getAbsolutePath(), pid, "JFR.stop", "name=profile", "filename=" + jfrFile.getAbsolutePath());
         if(canProduceFlameGraphs()) {
-            File txtFile = new File( outputDir, PROFILE_TXT );
-            File sanitizedTxtFile = new File( outputDir, PROFILE_SANITIZED_TXT );
-            File fgFile = new File( outputDir, FLAMES_SVG );
+            File txtFile = new File( getOutputDir(), getProfileName() + PROFILE_TXT_SUFFIX);
+            File sanitizedTxtFile = new File( getOutputDir(), getProfileName() + PROFILE_SANITIZED_TXT_SUFFIX);
+            File fgFile = new File( getOutputDir(), getProfileName() + FLAMES_SVG_SUFFX);
             convertToFlameGraphTxtFile( jfrFile, txtFile );
             sanitizeFlameGraphTxtFile( txtFile, sanitizedTxtFile );
             generateFlameGraph( sanitizedTxtFile, fgFile );
@@ -100,5 +102,13 @@ public class JFRControl implements ProfilerController {
 
     private void run(String... commandLine) {
         new CommandExec().run(commandLine);
+    }
+
+    private File getOutputDir() {
+        return scenarioSettings.getScenario().getOutputDir();
+    }
+
+    private String getProfileName() {
+        return scenarioSettings.getScenario().getProfileName();
     }
 }

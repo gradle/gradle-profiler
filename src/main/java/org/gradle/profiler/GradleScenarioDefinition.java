@@ -35,6 +35,11 @@ public class GradleScenarioDefinition extends ScenarioDefinition {
         return getName() + " " + version.getVersion();
     }
 
+    @Override
+    public String getProfileName() {
+        return getName() + "-" + version.getVersion();
+    }
+
     public List<String> getGradleArgs() {
         return gradleArgs;
     }
