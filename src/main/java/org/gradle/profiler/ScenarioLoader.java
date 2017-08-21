@@ -70,7 +70,7 @@ class ScenarioLoader {
 
     private List<ScenarioDefinition> loadScenarios(File scenarioFile, InvocationSettings settings, GradleVersionInspector inspector) {
         List<ScenarioDefinition> definitions = new ArrayList<>();
-        Config config = ConfigFactory.parseFile(scenarioFile, ConfigParseOptions.defaults().setAllowMissing(false));
+        Config config = ConfigFactory.parseFile(scenarioFile, ConfigParseOptions.defaults().setAllowMissing(false)).resolve();
         Set<String> selectedScenarios = new TreeSet<>(config.root().keySet());
         if (!settings.getTargets().isEmpty()) {
             for (String target : settings.getTargets()) {
