@@ -739,6 +739,47 @@ println "<tasks: " + gradle.startParameter.taskNames + ">"
         new File(outputDir, "help/3.0/help-3.0.jfr").file
     }
 
+    def "resolve placeholders in configuration"() {
+        given:
+
+        def scenarioFile = file("benchmark.conf")
+        scenarioFile.text = """
+baseVersion = "${minimalSupportedGradleVersion}"
+
+defaults = {
+    versions = [ \${baseVersion}, "3.0" ]
+}
+
+assemble = \${defaults} {
+    tasks = assemble
+}
+help = \${defaults} {
+    tasks = help
+}
+"""
+
+        buildFile.text = """
+apply plugin: BasePlugin
+println "<gradle-version: " + gradle.gradleVersion + ">"
+println "<tasks: " + gradle.startParameter.taskNames + ">"
+"""
+
+        when:
+        new Main().run("--project-dir", projectDir.absolutePath, "--output-dir", outputDir.absolutePath, "--scenario-file", scenarioFile.absolutePath,
+                "--profile", "jfr", "help")
+
+        then:
+        logFile.grep("<gradle-version: $minimalSupportedGradleVersion>").size() == 4
+        logFile.grep("<gradle-version: 3.0>").size() == 4
+        logFile.grep("<tasks: [help]>").size() == 8
+
+        logFile.contains("* Running scenario help using Gradle $minimalSupportedGradleVersion (scenario 1/2)")
+        logFile.contains("* Running scenario help using Gradle 3.0 (scenario 2/2)")
+
+        new File(outputDir, "help/$minimalSupportedGradleVersion/help-${minimalSupportedGradleVersion}.jfr").file
+        new File(outputDir, "help/3.0/help-3.0.jfr").file
+    }
+
     def "runs cleanup tasks defined in scenario file"() {
         given:
         def scenarioFile = file("benchmark.conf")
