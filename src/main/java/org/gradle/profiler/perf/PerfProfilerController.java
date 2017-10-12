@@ -20,19 +20,19 @@ import org.apache.tools.ant.types.mappers.CutDirsMapper;
 import org.gradle.profiler.CommandExec;
 import org.gradle.profiler.ProfilerController;
 import org.gradle.profiler.ScenarioSettings;
+import org.gradle.profiler.SudoCommandExec;
 import org.gradle.profiler.fg.FlameGraphGenerator;
 import org.gradle.profiler.fg.FlameGraphSanitizer;
 
-import java.io.File;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.PrintWriter;
+import java.io.*;
 import java.lang.management.ManagementFactory;
 import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.StandardCopyOption;
 import java.util.Arrays;
 import java.util.List;
+import java.util.function.BiFunction;
+import java.util.stream.Collectors;
 
 public class PerfProfilerController implements ProfilerController {
     private static final String PROFILE_DATA_SUFFIX = ".data";
@@ -45,6 +45,7 @@ public class PerfProfilerController implements ProfilerController {
     private static final String FLAMES_SVG_SUFFIX = "-perf-flames.svg";
     private static final String FLAMES_PACKAGE_SVG_SUFFIX = "-perf-flames-package.svg";
     private static final String ICICLES_SVG_SUFFIX = "-perf-icicles.svg";
+    private static final String CONFIGURE_SUDO_ACCESS = "configure_sudo_access.sh";
 
     private static final String TOOL_FLAMEGRAPH = "brendangregg/FlameGraph";
     private static final String TOOL_MISC = "brendangregg/Misc";
@@ -59,13 +60,16 @@ public class PerfProfilerController implements ProfilerController {
     private final PerfProfilerArgs args;
     private final ScenarioSettings scenarioSettings;
     private final CommandExec commandExec;
+    private final CommandExec sudoCommandExec;
     private CommandExec.RunHandle perfHandle;
 
     PerfProfilerController(final PerfProfilerArgs args, ScenarioSettings scenarioSettings) {
         this.args = args;
         this.scenarioSettings = scenarioSettings;
         this.commandExec = new CommandExec();
+        this.sudoCommandExec = new SudoCommandExec();
     }
+
 
     @Override
     public void start() throws IOException, InterruptedException {
@@ -75,7 +79,10 @@ public class PerfProfilerController implements ProfilerController {
         prepareTools();
 
         File dataFile = profileFileForSuffix(PROFILE_DATA_SUFFIX);
-        perfHandle = commandExec.runBackgrounded("perf", "record", "-F", String.valueOf(args.getFrequency()), "-o", dataFile.getAbsolutePath(), "-g", "-a");
+        // create an empty file so that running "sudo perf record ... -o file ... "
+        // will reuse the file created here with correct ownership & permissions
+        touchFile(dataFile);
+        perfHandle = sudoCommandExec.runBackgrounded("perf", "record", "-F", String.valueOf(args.getFrequency()), "-o", dataFile.getAbsolutePath(), "-g", "-a");
     }
 
     @Override
@@ -99,12 +106,17 @@ public class PerfProfilerController implements ProfilerController {
         return new File(getOutputDir(), getProfileName() + suffix);
     }
 
-    private void checkPrerequisites() {
-        checkCommand("perf", "--version");
-        checkCommand("cmake", "--version");
-        if (!System.getProperty("user.name").equals("root")) {
-            throw new IllegalStateException("You must be 'root' to profile with perf");
+    private static void touchFile(File dataFile) {
+        try {
+            dataFile.createNewFile();
+        } catch (IOException e) {
+            throw new UncheckedIOException(e);
         }
+    }
+
+    private void checkPrerequisites() {
+        checkCommand(sudoCommandExec, this::handleSudoCommandError, "perf", "--version");
+        checkCommand(commandExec, this::handleCheckCommandError, "cmake", "--version");
         String javaHome = System.getProperty("java.home");
         if (!new File(javaHome, "../lib/tools.jar").exists()) {
             throw new IllegalStateException("You must use the JDK to run this profiler (tools.jar is required). Current java.home is " + javaHome);
@@ -115,12 +127,38 @@ public class PerfProfilerController implements ProfilerController {
         }
     }
 
-    private void checkCommand(String... commandLine) {
+    private static void checkCommand(CommandExec commandExec, BiFunction<Exception, ProcessBuilder, RuntimeException> errorHandler, String... commandLine) {
+        ProcessBuilder processBuilder = new ProcessBuilder();
         try {
-            commandExec.run(commandLine);
+            processBuilder.command(commandLine);
+            commandExec.run(processBuilder);
         } catch (Exception e) {
-            throw new IllegalStateException("Could not execute '" + commandLine[0] + "'. Is it installed?", e);
+            throw errorHandler.apply(e, processBuilder);
         }
+    }
+
+    private RuntimeException handleCheckCommandError(Exception exception, ProcessBuilder processBuilder) {
+        return new IllegalStateException(createCheckCommandErrorMessage(processBuilder) + " Is it installed?", exception);
+    }
+
+    private String createCheckCommandErrorMessage(ProcessBuilder processBuilder) {
+        return "Could not execute '" + processBuilder.command().stream().collect(Collectors.joining(" ")) + "'.";
+    }
+
+    private RuntimeException handleSudoCommandError(Exception exception, ProcessBuilder processBuilder) {
+        File configureSudoAccess = extractConfigureSudoAccessScript();
+        return new IllegalStateException(createCheckCommandErrorMessage(processBuilder) + " Is it installed and is sudo properly configured?\nRun " + configureSudoAccess.getAbsolutePath() + " to configure sudo access.", exception);
+    }
+
+    private File extractConfigureSudoAccessScript() {
+        File configureSudoAccess = new File(getOutputDir(), CONFIGURE_SUDO_ACCESS);
+        try (InputStream inputStream = getClass().getResourceAsStream(CONFIGURE_SUDO_ACCESS)) {
+            Files.copy(inputStream, configureSudoAccess.toPath(), StandardCopyOption.REPLACE_EXISTING);
+            configureSudoAccess.setExecutable(true);
+        } catch (IOException e) {
+            throw new UncheckedIOException(e);
+        }
+        return configureSudoAccess;
     }
 
     private void generateJmaps() {
@@ -142,7 +180,7 @@ public class PerfProfilerController implements ProfilerController {
             throw new RuntimeException(e);
         }
         setAndCheckExecutable(jmapsUpdated);
-        commandExec.run(jmapsUpdated.getAbsolutePath(), "-u");
+        sudoCommandExec.run(jmapsUpdated.getAbsolutePath(), "-u");
     }
 
     private void generateFlameGraph() throws IOException, InterruptedException {
