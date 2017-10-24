@@ -18,7 +18,7 @@ public class CommandExec {
         this.directory = null;
     }
 
-    private CommandExec(File directory) {
+    protected CommandExec(File directory) {
         this.directory = directory;
     }
 
@@ -82,7 +82,7 @@ public class CommandExec {
         return run(new ProcessBuilder(commandLine), outputStream, null, null);
     }
 
-    private RunHandle run(ProcessBuilder processBuilder, OutputStream outputStream, @Nullable OutputStream errorStream, @Nullable InputStream inputStream) {
+    protected RunHandle run(ProcessBuilder processBuilder, OutputStream outputStream, @Nullable OutputStream errorStream, @Nullable InputStream inputStream) {
         if (directory != null) {
             processBuilder.directory(directory);
         }
