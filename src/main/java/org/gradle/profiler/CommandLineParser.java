@@ -42,6 +42,7 @@ class CommandLineParser {
         OptionSpecBuilder noDaemonOption = parser.accepts("no-daemon", "Do not use the Gradle daemon");
         OptionSpecBuilder cliOption = parser.accepts("cli", "Uses the command-line client to connect to the daemon");
         OptionSpecBuilder dryRunOption = parser.accepts("dry-run", "Verify configuration");
+        OptionSpecBuilder bazelOption = parser.accepts("bazel", "Benchmark scenarios using Bazel");
         OptionSpecBuilder buckOption = parser.accepts("buck", "Benchmark scenarios using buck");
         OptionSpecBuilder mavenOption = parser.accepts("maven", "Benchmark scenarios using Maven");
 
@@ -79,6 +80,9 @@ class CommandLineParser {
         }
         if (parsedOptions.has(noDaemonOption)) {
             invoker = Invoker.NoDaemon;
+        }
+        if (parsedOptions.has(bazelOption)) {
+            invoker = Invoker.Bazel;
         }
         if (parsedOptions.has(buckOption)) {
             invoker = Invoker.Buck;

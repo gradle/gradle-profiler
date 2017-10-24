@@ -66,7 +66,9 @@ public class Main {
                 Logging.startOperation("Running scenario " + scenario.getDisplayName() + " (scenario " + scenarioCount + "/" + totalScenarios + ")");
 
                 try {
-                    if (scenario instanceof BuckScenarioDefinition) {
+                    if (scenario instanceof BazelScenarioDefinition) {
+                        runBazelScenario((BazelScenarioDefinition) scenario, settings, benchmarkResults);
+                    } else if (scenario instanceof BuckScenarioDefinition) {
                         runBuckScenario((BuckScenarioDefinition) scenario, settings, benchmarkResults);
                     } else if (scenario instanceof MavenScenarioDefinition){
                         runMavenScenario((MavenScenarioDefinition) scenario, settings, benchmarkResults);
@@ -235,6 +237,51 @@ public class Main {
         Logging.detailed().println("JVM args:");
         for (String jvmArg : allBuildsJvmArgs) {
             Logging.detailed().println("  " + jvmArg);
+        }
+    }
+
+    private void runBazelScenario(BazelScenarioDefinition scenario, InvocationSettings settings, BenchmarkResults benchmarkResults) throws IOException {
+        String bazelHome = System.getenv("BAZEL_HOME");
+        String bazelExe = bazelHome == null ? "bazel" : bazelHome + "/bin/bazel";
+
+        List<String> targets = new ArrayList<>();
+        targets.addAll(scenario.getTargets());
+
+        System.out.println();
+        System.out.println("* Bazel targets: " + targets);
+
+        List<String> commandLine = new ArrayList<>();
+        commandLine.add(bazelExe);
+        commandLine.add("build");
+        commandLine.addAll(targets);
+
+        BuildMutator mutator = scenario.getBuildMutator().get();
+        try {
+            Consumer<BuildInvocationResult> resultConsumer = benchmarkResults.version(scenario);
+            for (int i = 0; i < scenario.getWarmUpCount(); i++) {
+                String displayName = "warm-up build " + (i + 1);
+                mutator.beforeBuild();
+
+                startOperation("Running " + displayName);
+                Timer timer = new Timer();
+                new CommandExec().inDir(settings.getProjectDir()).run(commandLine);
+                Duration executionTime = timer.elapsed();
+                System.out.println("Execution time " + executionTime.toMillis() + "ms");
+                resultConsumer.accept(new BuildInvocationResult(displayName, executionTime, null));
+            }
+            for (int i = 0; i < scenario.getBuildCount(); i++) {
+                String displayName = "build " + (i + 1);
+                mutator.beforeBuild();
+
+                startOperation("Running " + displayName);
+                Timer timer = new Timer();
+                new CommandExec().inDir(settings.getProjectDir()).run(commandLine);
+                Duration executionTime = timer.elapsed();
+                System.out.println("Execution time " + executionTime.toMillis() + "ms");
+                resultConsumer.accept(new BuildInvocationResult(displayName, executionTime, null));
+            }
+        } finally {
+            mutator.cleanup();
         }
     }
 

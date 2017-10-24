@@ -18,6 +18,7 @@ class ScenarioLoader {
     private static final String GRADLE_ARGS = "gradle-args";
     private static final String RUN_USING = "run-using";
     private static final String SYSTEM_PROPERTIES = "system-properties";
+    private static final String BAZEL = "bazel";
     private static final String BUCK = "buck";
     private static final String MAVEN = "maven";
     private static final String WARM_UP_COUNT = "warm-ups";
@@ -33,8 +34,9 @@ class ScenarioLoader {
     private static final String TYPE = "type";
 
     private static final List<String> ALL_SCENARIO_KEYS = Arrays.asList(
-        VERSIONS, TASKS, CLEANUP_TASKS, GRADLE_ARGS, RUN_USING, SYSTEM_PROPERTIES, WARM_UP_COUNT, APPLY_ABI_CHANGE_TO, APPLY_NON_ABI_CHANGE_TO, APPLY_ANDROID_RESOURCE_CHANGE_TO, APPLY_ANDROID_RESOURCE_VALUE_CHANGE_TO, APPLY_ANDROID_MANIFEST_CHANGE_TO, APPLY_PROPERTY_RESOURCE_CHANGE_TO, APPLY_CPP_SOURCE_CHANGE_TO, APPLY_H_SOURCE_CHANGE_TO, BUCK, MAVEN
+        VERSIONS, TASKS, CLEANUP_TASKS, GRADLE_ARGS, RUN_USING, SYSTEM_PROPERTIES, WARM_UP_COUNT, APPLY_ABI_CHANGE_TO, APPLY_NON_ABI_CHANGE_TO, APPLY_ANDROID_RESOURCE_CHANGE_TO, APPLY_ANDROID_RESOURCE_VALUE_CHANGE_TO, APPLY_ANDROID_MANIFEST_CHANGE_TO, APPLY_PROPERTY_RESOURCE_CHANGE_TO, APPLY_CPP_SOURCE_CHANGE_TO, APPLY_H_SOURCE_CHANGE_TO, BAZEL, BUCK, MAVEN
     );
+    private static final List<String> BAZEL_KEYS = Arrays.asList(TARGETS);
     private static final List<String> BUCK_KEYS = Arrays.asList(TARGETS, TYPE);
     private static final List<String> MAVEN_KEYS = Collections.singletonList(TARGETS);
 
@@ -101,7 +103,20 @@ class ScenarioLoader {
 
             BuildMutatorFactory buildMutatorFactory = new BuildMutatorFactory(mutators);
 
-            if (scenario.hasPath(BUCK) && settings.isBuck()) {
+            if (scenario.hasPath(BAZEL) && settings.isBazel()) {
+                if (settings.isProfile()) {
+                    throw new IllegalArgumentException("Can only profile scenario '" + scenarioName + "' when building using Gradle.");
+                }
+                Config executionInstructions = scenario.getConfig(BAZEL);
+                for (String key : scenario.getObject(BAZEL).keySet()) {
+                    if (!BAZEL_KEYS.contains(key)) {
+                        throw new IllegalArgumentException("Unrecognized key '" + scenarioName + ".bazel." + key + "' defined in scenario file " + scenarioFile);
+                    }
+                }
+                List<String> targets = strings(executionInstructions, TARGETS, Collections.emptyList());
+                File outputDir = new File(settings.getOutputDir(), scenarioName + "-bazel");
+                definitions.add(new BazelScenarioDefinition(scenarioName, targets, buildMutatorFactory, warmUpCount, settings.getBuildCount(), outputDir));
+            } else if (scenario.hasPath(BUCK) && settings.isBuck()) {
                 if (settings.isProfile()) {
                     throw new IllegalArgumentException("Can only profile scenario '" + scenarioName + "' when building using Gradle.");
                 }
@@ -128,7 +143,7 @@ class ScenarioLoader {
                 List<String> targets = strings(executionInstructions, TARGETS, Collections.emptyList());
                 File outputDir = new File(settings.getOutputDir(), scenarioName + "-maven");
                 definitions.add(new MavenScenarioDefinition(scenarioName, targets, buildMutatorFactory, warmUpCount, settings.getBuildCount(), outputDir));
-            } else if (!settings.isBuck() && !settings.isMaven()) {
+            } else if (!settings.isBazel() && !settings.isBuck() && !settings.isMaven()) {
                 List<GradleVersion> versions = strings(scenario, VERSIONS, settings.getVersions()).stream().map(v -> inspector.resolve(v)).collect(
                         Collectors.toList());
                 if (versions.isEmpty()) {
