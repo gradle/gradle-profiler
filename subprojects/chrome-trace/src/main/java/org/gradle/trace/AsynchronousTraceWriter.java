@@ -4,7 +4,9 @@ import org.gradle.api.invocation.Gradle;
 import org.gradle.internal.UncheckedException;
 
 import java.io.*;
+import java.nio.file.FileSystems;
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 
@@ -47,7 +49,13 @@ public class AsynchronousTraceWriter extends Thread {
             copyResourceToTraceFile("/trace-footer.html", true);
 
             File finalTraceFile = traceFile(gradle);
-            tempTraceFile.renameTo(finalTraceFile);
+            Path tempPath = FileSystems.getDefault().getPath(tempTraceFile.getAbsolutePath());
+            Path finalTracePath = FileSystems.getDefault().getPath(finalTraceFile.getAbsolutePath());
+            try {
+                Files.move(tempPath, finalTracePath);
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
             gradle.getRootProject().getLogger().lifecycle("Trace written to file://" + finalTraceFile.getAbsolutePath());
         }
     }
