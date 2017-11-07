@@ -1,10 +1,14 @@
 package org.gradle.profiler.jprofiler;
 
+import org.gradle.profiler.Invoker;
 import org.gradle.profiler.OperatingSystem;
+import org.gradle.profiler.ScenarioSettings;
+
+import java.io.File;
 
 public class JProfiler {
 
-    private static final String MAJOR_VERSION = "9";
+    private static final String MAJOR_VERSION = "10";
 
     public static String getDefaultHomeDir() {
         if (OperatingSystem.isWindows()) {
@@ -16,4 +20,20 @@ public class JProfiler {
         }
     }
 
+    public static boolean profileWholeLifeTime(ScenarioSettings settings) {
+        return settings.getInvocationSettings().getInvoker().equals(Invoker.NoDaemon);
+    }
+
+    public static String getSnapshotPath(ScenarioSettings settings) {
+        File outputDir = settings.getScenario().getOutputDir();
+        String snapshotName = settings.getScenario().getProfileName();
+
+        int i = 0;
+        File snapshotFile;
+        do {
+            snapshotFile = new File(outputDir, snapshotName  + ( i == 0 ? "" : ("_" + i)) + ".jps");
+            ++i;
+        } while (snapshotFile.exists());
+        return snapshotFile.getAbsolutePath();
+    }
 }

@@ -52,7 +52,7 @@ public class JProfilerProfiler extends Profiler {
 
     @Override
     public JvmArgsCalculator newJvmArgsCalculator(ScenarioSettings settings) {
-        return new JProfilerJvmArgsCalculator(jProfilerConfig);
+        return new JProfilerJvmArgsCalculator(jProfilerConfig, settings);
     }
 
     @Override

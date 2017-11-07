@@ -2,6 +2,7 @@ package org.gradle.profiler.jprofiler;
 
 import org.gradle.profiler.JvmArgsCalculator;
 import org.gradle.profiler.OperatingSystem;
+import org.gradle.profiler.ScenarioSettings;
 
 import java.io.File;
 import java.io.IOException;
@@ -17,9 +18,11 @@ import java.util.List;
 
 public class JProfilerJvmArgsCalculator extends JvmArgsCalculator {
     private final JProfilerConfig jProfilerConfig;
+    private ScenarioSettings settings;
 
-    public JProfilerJvmArgsCalculator(JProfilerConfig jProfilerConfig) {
+    public JProfilerJvmArgsCalculator(JProfilerConfig jProfilerConfig, ScenarioSettings settings) {
         this.jProfilerConfig = jProfilerConfig;
+        this.settings = settings;
     }
 
     @Override
@@ -67,17 +70,34 @@ public class JProfilerJvmArgsCalculator extends JvmArgsCalculator {
 
         builder.append("=offline,");
         String sessionId = jProfilerConfig.getSessionId();
+        File configFile;
+        String id;
         if (sessionId != null) {
-            builder.append("id=").append(sessionId);
-            String configFile = jProfilerConfig.getConfigFile();
-            if (configFile != null) {
-                builder.append(",config=").append(configFile);
+            if (jProfilerConfig.getConfigFile() != null) {
+                configFile = new File(jProfilerConfig.getConfigFile());
+                id = sessionId;
+            } else {
+                configFile = null;
+                id = null;
             }
         } else {
-            builder.append("id=1,config=").append(getConfigFile());
+            configFile = getConfigFile();
+            id = "1";
         }
+        if (configFile != null) {
+            builder.append("id=").append(id).append(",config=").append(transformConfigFile(configFile, id));
+        }
+
         builder.append(",sysprop=jprofiler.jmxServerPort=").append(port);
         return builder.toString();
+    }
+
+    private File transformConfigFile(File configFile, String id) {
+        if (profileWholeLifeTime()) {
+            return JProfilerConfigFileTransformer.transform(configFile, id, jProfilerConfig, JProfiler.getSnapshotPath(settings));
+        } else {
+            return configFile;
+        }
     }
 
     private File getJProfilerDir() {
@@ -96,11 +116,13 @@ public class JProfilerJvmArgsCalculator extends JvmArgsCalculator {
             if (resource == null) {
                 throw new RuntimeException("Classpath resource \"" + resourceName + "\" not found");
             } else {
-                Path tmpFile = Files.createTempFile("jprofiler", ".xml");
+                Path tmpPath = Files.createTempFile("jprofiler", ".xml");
                 try (InputStream inputStream = resource.openStream()) {
-                    Files.copy(inputStream, tmpFile, StandardCopyOption.REPLACE_EXISTING);
+                    Files.copy(inputStream, tmpPath, StandardCopyOption.REPLACE_EXISTING);
                 }
-                return tmpFile.toFile();
+                File tmpFile = tmpPath.toFile();
+                tmpFile.deleteOnExit();
+                return tmpFile;
             }
         } catch (IOException e) {
             throw new RuntimeException("Could not create JProfiler config file.", e);
@@ -132,4 +154,9 @@ public class JProfilerJvmArgsCalculator extends JvmArgsCalculator {
             }
         }
     }
+
+    private boolean profileWholeLifeTime() {
+        return JProfiler.profileWholeLifeTime(settings);
+    }
+
 }
