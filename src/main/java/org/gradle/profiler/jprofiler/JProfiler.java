@@ -36,9 +36,4 @@ public class JProfiler {
         } while (snapshotFile.exists());
         return snapshotFile.getAbsolutePath();
     }
-
-    public static File deleteOnExit(File tmpFile) {
-        tmpFile.deleteOnExit();
-        return tmpFile;
-    }
 }

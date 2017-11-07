@@ -116,11 +116,13 @@ public class JProfilerJvmArgsCalculator extends JvmArgsCalculator {
             if (resource == null) {
                 throw new RuntimeException("Classpath resource \"" + resourceName + "\" not found");
             } else {
-                Path tmpFile = Files.createTempFile("jprofiler", ".xml");
+                Path tmpPath = Files.createTempFile("jprofiler", ".xml");
                 try (InputStream inputStream = resource.openStream()) {
-                    Files.copy(inputStream, tmpFile, StandardCopyOption.REPLACE_EXISTING);
+                    Files.copy(inputStream, tmpPath, StandardCopyOption.REPLACE_EXISTING);
                 }
-                return JProfiler.deleteOnExit(tmpFile.toFile());
+                File tmpFile = tmpPath.toFile();
+                tmpFile.deleteOnExit();
+                return tmpFile;
             }
         } catch (IOException e) {
             throw new RuntimeException("Could not create JProfiler config file.", e);

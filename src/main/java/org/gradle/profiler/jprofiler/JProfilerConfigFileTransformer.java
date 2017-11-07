@@ -20,7 +20,8 @@ public class JProfilerConfigFileTransformer {
 
     public static File transform(File configFile, String id, JProfilerConfig jProfilerConfig, String snapshotPath) {
         try {
-            File transformedConfigFile = JProfiler.deleteOnExit(File.createTempFile("jprofiler", ".xml"));
+            File transformedConfigFile = File.createTempFile("jprofiler", ".xml");
+            transformedConfigFile.deleteOnExit();
             File probesFile = createProbesDocument(jProfilerConfig);
             URL resource = JProfilerConfigFileTransformer.class.getResource("/jprofiler/transform.xsl");
             Templates template = TransformerFactory.newInstance().newTemplates(new StreamSource(resource.openStream()));
@@ -44,7 +45,8 @@ public class JProfilerConfigFileTransformer {
     }
 
     private static File createProbesDocument(JProfilerConfig jProfilerConfig) throws ParserConfigurationException, TransformerException, IOException {
-        File probesFile = JProfiler.deleteOnExit(File.createTempFile("jprofiler", ".xml"));
+        File probesFile = File.createTempFile("jprofiler", ".xml");
+        probesFile.deleteOnExit();
         Document document = DocumentBuilderFactory.newInstance().newDocumentBuilder().newDocument();
         Element probesElement = document.createElement("probes");
         for (String probeName : jProfilerConfig.getRecordedProbes()) {
