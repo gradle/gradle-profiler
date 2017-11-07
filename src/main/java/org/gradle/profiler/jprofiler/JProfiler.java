@@ -8,7 +8,7 @@ import java.io.File;
 
 public class JProfiler {
 
-    private static final String MAJOR_VERSION = "9";
+    private static final String MAJOR_VERSION = "10";
 
     public static String getDefaultHomeDir() {
         if (OperatingSystem.isWindows()) {
