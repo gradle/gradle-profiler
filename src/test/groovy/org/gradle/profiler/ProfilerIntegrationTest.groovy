@@ -1479,7 +1479,6 @@ buildTarget {
 
     def "cannot profile a bazel build"() {
         given:
-        writeBazelw()
         def scenarios = file("performance.scenario")
         scenarios.text = """
 buildTarget {
@@ -1504,7 +1503,6 @@ help {
 
     def "can profile a scenario that contains bazel build instructions when building with Gradle"() {
         given:
-        writeBazelw()
         def scenarios = file("performance.scenario")
         scenarios.text = """
 buildTarget {
@@ -1524,7 +1522,6 @@ buildTarget {
 
     def "ignores bazel build instructions when benchmarking using Gradle"() {
         given:
-        writeBazelw()
         buildFile << "apply plugin: 'base'"
         def scenarios = file("performance.scenario")
         scenarios.text = """
