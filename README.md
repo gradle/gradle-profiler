@@ -150,6 +150,7 @@ Add the `--profile chrome-trace` option and open the result in Google Chrome. It
 - `-D<key>=<value>`: Defines a system property when running the build, overriding the default for the build.
 - `--warmups`: Specifies the number of warm-up builds to run for each scenario. Defaults to 2 for profiling, 6 for benchmarking.
 - `--iterations`: Specifies the number of builds to run for each scenario. Defaults to 1 for profiling, 10 for benchmarking.
+- `--bazel`: Benchmark scenarios using Bazel instead of Gradle. By default, only Gradle scenarios are run. You cannot `--profile` a Bazel build using this tool.
 - `--buck`: Benchmark scenarios using Buck instead of Gradle. By default, only Gradle scenarios are run. You cannot `--profile` a Buck build using this tool.
 - `--maven`: Benchmark scenarios using Maven instead of Gradle. By default, only Gradle scenarios are run. You cannot `--profile` a Maven build using this tool.
 
@@ -213,7 +214,7 @@ They can be added to a scenario file like this:
 
 ### Comparing against other build tools
 
-You can compare Gradle against Buck and Maven, by specifying their equivalent invocations in the scenario file. Only benchmarking mode is supported.
+You can compare Gradle against Bazel, Buck, and Maven by specifying their equivalent invocations in the scenario file. Only benchmarking mode is supported.
 
 #### Maven
 
@@ -227,6 +228,18 @@ You can compare Gradle against Buck and Maven, by specifying their equivalent in
         }
     }
 
+#### Bazel
+
+    > gradle-profiler --benchmark --bazel build_some_target
+
+    build_some_target {
+        tasks = ["assemble"]
+
+        bazel {
+            targets = ["//some/target"]
+        }
+    }
+    
 #### Buck
 
     > gradle-profiler --benchmark --buck build_binaries

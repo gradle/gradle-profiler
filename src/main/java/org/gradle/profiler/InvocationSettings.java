@@ -58,6 +58,10 @@ public class InvocationSettings {
         return profiler != Profiler.NONE;
     }
 
+    public boolean isBazel() {
+        return invoker == Invoker.Bazel;
+    }
+
     public boolean isBuck() {
         return invoker == Invoker.Buck;
     }

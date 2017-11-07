@@ -1442,6 +1442,107 @@ buildTarget {
         logFile.grep("* Running scenario buildTarget using Gradle $minimalSupportedGradleVersion (scenario 1/1)")
     }
 
+    @Requires({!OperatingSystem.windows && System.getenv("BAZEL_HOME")})
+    def "can benchmark scenario using bazel"() {
+        given:
+        createSimpleBazelWorkspace()
+        def scenarios = file("performance.scenario")
+        scenarios.text = """
+buildTarget {
+    tasks = ["some:assemble"]
+    bazel {
+        targets = [":hello"]
+    }
+}
+"""
+
+        when:
+        new Main().run("--project-dir", projectDir.absolutePath, "--output-dir", outputDir.absolutePath, "--benchmark", "--scenario-file", scenarios.absolutePath, "--bazel")
+
+        then:
+        logFile.contains("* Running scenario buildTarget using bazel (scenario 1/1)")
+        logFile.contains("* Bazel targets: [:hello]")
+
+        resultFile.isFile()
+        resultFile.text.readLines().size() == 21 // 2 headers, 16 executions, 3 stats
+        resultFile.text.readLines().get(0) == "build,buildTarget bazel"
+        resultFile.text.readLines().get(1) == "tasks,"
+        resultFile.text.readLines().get(2).matches("warm-up build 1,\\d+")
+        resultFile.text.readLines().get(7).matches("warm-up build 6,\\d+")
+        resultFile.text.readLines().get(8).matches("build 1,\\d+")
+        resultFile.text.readLines().get(9).matches("build 2,\\d+")
+        resultFile.text.readLines().get(17).matches("build 10,\\d+")
+        resultFile.text.readLines().get(18).matches("mean,\\d+\\.\\d+")
+        resultFile.text.readLines().get(19).matches("median,\\d+\\.\\d+")
+        resultFile.text.readLines().get(20).matches("stddev,\\d+\\.\\d+")
+    }
+
+    def "cannot profile a bazel build"() {
+        given:
+        writeBazelw()
+        def scenarios = file("performance.scenario")
+        scenarios.text = """
+buildTarget {
+    bazel {
+        targets = "//some/target"
+    }
+}
+help {
+    tasks = ["help"]
+}
+"""
+
+        when:
+        new Main().run("--project-dir", projectDir.absolutePath, "--output-dir", outputDir.absolutePath, "--bazel", "--profile", "jfr", "--scenario-file", scenarios.absolutePath, "--gradle-version", minimalSupportedGradleVersion, "buildTarget")
+
+        then:
+        thrown(IllegalArgumentException)
+
+        and:
+        output.contains("Can only profile scenario 'buildTarget' when building using Gradle.")
+    }
+
+    def "can profile a scenario that contains bazel build instructions when building with Gradle"() {
+        given:
+        writeBazelw()
+        def scenarios = file("performance.scenario")
+        scenarios.text = """
+buildTarget {
+    tasks = ["help"]
+    bazel {
+        targets = "//some/target"
+    }
+}
+"""
+
+        when:
+        new Main().run("--project-dir", projectDir.absolutePath, "--output-dir", outputDir.absolutePath, "--profile", "jfr", "--scenario-file", scenarios.absolutePath, "--gradle-version", minimalSupportedGradleVersion, "buildTarget")
+
+        then:
+        logFile.grep("* Running scenario buildTarget using Gradle $minimalSupportedGradleVersion (scenario 1/1)")
+    }
+
+    def "ignores bazel build instructions when benchmarking using Gradle"() {
+        given:
+        writeBazelw()
+        buildFile << "apply plugin: 'base'"
+        def scenarios = file("performance.scenario")
+        scenarios.text = """
+buildTarget {
+    tasks = ["help"]
+    bazel {
+        targets = "//some/target"
+    }
+}
+"""
+
+        when:
+        new Main().run("--project-dir", projectDir.absolutePath, "--output-dir", outputDir.absolutePath, "--benchmark", "--scenario-file", scenarios.absolutePath, "--gradle-version", minimalSupportedGradleVersion, "buildTarget")
+
+        then:
+        logFile.grep("* Running scenario buildTarget using Gradle $minimalSupportedGradleVersion (scenario 1/1)")
+    }
+
     @Requires({System.getenv("MAVEN_HOME")})
     def "can benchmark scenario using Maven"() {
         given:
@@ -1501,6 +1602,16 @@ else
 fi
 '''
         buckw.executable = true
+    }
+
+    def createSimpleBazelWorkspace() {
+        new File(projectDir, "WORKSPACE").createNewFile()
+        new File(projectDir, "BUILD").text = '''
+genrule(
+  name = "hello",
+  outs = ["hello_world.txt"],
+  cmd = "echo Hello World > $@",
+)'''
     }
 
     static class LogFile {
