@@ -192,12 +192,14 @@ Values are optional and default to the values provided on the command-line or de
 
 A scenario can define changes that should be applied to the source before each build. You can use this to benchmark or profile an incremental build. The following mutations are available:
 
-- Add a public method to a Java source class. Each iteration adds a new method and removes the method added by the previous iteration.
-- Change the body of a public method in a Java source class.
-- Add an entry to a properties file. Each iteration adds a new entry and removes the entry added by the previous iteration.
-- Add a string resource to an Android resource file. Each iteration adds a new resource and removes the resource added by the previous iteration.
-- Change a string resource in an Android resource file.
-- Add a permission to an Android manifest file.
+- `apply-abi-change-to`: Add a public method to a Java source class. Each iteration adds a new method and removes the method added by the previous iteration.
+- `apply-non-abi-change-to`: Change the body of a public method in a Java source class.
+- `apply-h-change-to`: Add a function to a C/C++ header file. Each iteration adds a new function declaration and removes the function added by the previous iteration. 
+- `apply-cpp-change-to`: Add a function to a C/C++ source file. Each iteration adds a new function and removes the function added by the previous iteration. 
+- `apply-property-resource-change-to`: Add an entry to a properties file. Each iteration adds a new entry and removes the entry added by the previous iteration.
+- `apply-android-resource-change-to`: Add a string resource to an Android resource file. Each iteration adds a new resource and removes the resource added by the previous iteration.
+- `apply-android-resource-value-change-to`: Change a string resource in an Android resource file.
+- `apply-android-manifest-change-to`: Add a permission to an Android manifest file.
 
 They can be added to a scenario file like this:
 
@@ -206,6 +208,8 @@ They can be added to a scenario file like this:
 
         apply-abi-change-to = "src/main/java/MyThing.java"
         apply-non-abi-change-to = "src/main/java/MyThing.java"
+        apply-h-change-to = "src/main/headers/app.h"
+        apply-cpp-change-to = "src/main/cpp/app.cpp"
         apply-property-resource-change-to = "src/main/resources/thing.properties"
         apply-android-resource-change-to = "src/main/res/value/strings.xml"
         apply-android-resource-value-change-to = "src/main/res/value/strings.xml"
