@@ -4,7 +4,7 @@ import java.io.File;
 
 public class YourKit {
 
-    private static final String YOURKIT_HOME = System.getenv("YOURKIT_HOME");
+    static final String YOURKIT_HOME = System.getenv("YOURKIT_HOME");
 
     /**
      * Locates the user's YourKit installation. Returns null when not found.

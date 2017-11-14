@@ -7,6 +7,8 @@ import org.gradle.profiler.ScenarioSettings;
 import java.io.File;
 import java.util.List;
 
+import static org.gradle.profiler.yjp.YourKit.*;
+
 public class YourKitJvmArgsCalculator extends JvmArgsCalculator {
     private final ScenarioSettings settings;
     private final YourKitConfig yourKitConfig;
@@ -25,7 +27,7 @@ public class YourKitJvmArgsCalculator extends JvmArgsCalculator {
         }
         File yourKitHome = YourKit.findYourKitHome();
         if (yourKitHome == null) {
-            throw new IllegalArgumentException("Could not locate YourKit installation.");
+            throw new IllegalArgumentException("Could not locate YourKit installation. Try setting the " + YOURKIT_HOME + " environment variable");
         }
         File jnilib = YourKit.findJniLib();
         if (!jnilib.isFile()) {
@@ -33,7 +35,7 @@ public class YourKitJvmArgsCalculator extends JvmArgsCalculator {
         }
         String agentOptions = "-agentpath:" + jnilib.getAbsolutePath() + "=dir=" + settings.getScenario().getOutputDir().getAbsolutePath() + ",sessionname=" + settings.getScenario().getProfileName();
         if (yourKitConfig.isMemorySnapshot() || yourKitConfig.isUseSampling()) {
-            agentOptions += ",disabletracing";
+            agentOptions += ",disabletracing,probe_disable=*";
         } else {
             agentOptions += ",disablealloc";
         }

@@ -76,9 +76,9 @@ This will use JProfiler's CPU sampling by default. JProfiler supports several ot
 
 ### YourKit
 
-In order to work with YourKit, make sure `YOURKIT_HOME` is set and then use the `--profile yourkit` option.
+In order to work with YourKit, make sure `YOURKIT_HOME` environment variable is set and then use the `--profile yourkit` option.
 
-This will use YourKit's CPU instrumentation by default. You can switch to CPU sampling by adding the `--yourkit-sampling` option. You can switch to memory allocation profiling by adding the `--yourkit-memory` option.
+This will use YourKit's CPU instrumentation by default. You can switch to CPU sampling by adding the `--yourkit-sampling` option. You can switch to memory allocation profiling by adding the `--yourkit-memory` option. All probes are disabled when using sampling or memory allocation profiling.
 
 ### Java Flight Recorder
 
