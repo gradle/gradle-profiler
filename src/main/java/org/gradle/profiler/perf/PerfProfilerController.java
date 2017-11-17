@@ -62,6 +62,7 @@ public class PerfProfilerController implements ProfilerController {
     private final CommandExec commandExec;
     private final CommandExec sudoCommandExec;
     private CommandExec.RunHandle perfHandle;
+    private boolean recordedBefore = false;
 
     PerfProfilerController(final PerfProfilerArgs args, ScenarioSettings scenarioSettings) {
         this.args = args;
@@ -70,9 +71,16 @@ public class PerfProfilerController implements ProfilerController {
         this.sudoCommandExec = new SudoCommandExec();
     }
 
+    @Override
+    public void startSession() throws IOException, InterruptedException {
+
+    }
 
     @Override
-    public void start() throws IOException, InterruptedException {
+    public void startRecording() throws IOException, InterruptedException {
+        if (recordedBefore) {
+            throw new RuntimeException("Recording multiple iterations with cleanup runs in between is not supported by Perf");
+        }
         System.out.println("Starting profiling with Perf");
 
         checkPrerequisites();
@@ -86,7 +94,12 @@ public class PerfProfilerController implements ProfilerController {
     }
 
     @Override
-    public void stop() throws IOException, InterruptedException {
+    public void stopRecording() throws IOException, InterruptedException {
+        recordedBefore = true;
+    }
+
+    @Override
+    public void stopSession() throws IOException, InterruptedException {
         println("Stopping profiling with Perf");
 
         perfHandle.interrupt();
@@ -96,6 +109,7 @@ public class PerfProfilerController implements ProfilerController {
         /*
         generatePackageFlameGraph();
         */
+
     }
 
     private void println(String message) {

@@ -21,6 +21,8 @@ public class JFRControl implements ProfilerController {
     private final String pid;
     private final ScenarioSettings scenarioSettings;
 
+    private boolean recordedBefore = false;
+
     public JFRControl( final JFRArgs args, final String pid, final ScenarioSettings scenarioSettings) {
         this.scenarioSettings = scenarioSettings;
         File javaHome = new File(System.getProperty("java.home"));
@@ -42,12 +44,25 @@ public class JFRControl implements ProfilerController {
     }
 
     @Override
-    public void start() throws IOException, InterruptedException {
+    public void startSession() throws IOException, InterruptedException {
+
+    }
+
+    @Override
+    public void startRecording() throws IOException, InterruptedException {
+        if (recordedBefore) {
+            throw new RuntimeException("Recording multiple iterations with cleanup runs in between is not supported by JFR");
+        }
         run(jcmd.getAbsolutePath(), pid, "JFR.start", "name=profile", "settings=profile", "duration=0");
     }
 
     @Override
-    public void stop() throws IOException, InterruptedException {
+    public void stopRecording() throws IOException, InterruptedException {
+        recordedBefore = true;
+    }
+
+    @Override
+    public void stopSession() throws IOException, InterruptedException {
         File jfrFile = new File(getOutputDir(), getProfileName() + PROFILE_JFR_SUFFIX);
         run(jcmd.getAbsolutePath(), pid, "JFR.stop", "name=profile", "filename=" + jfrFile.getAbsolutePath());
         if(canProduceFlameGraphs()) {

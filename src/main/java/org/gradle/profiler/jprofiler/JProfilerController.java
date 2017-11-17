@@ -27,7 +27,14 @@ public class JProfilerController implements ProfilerController {
     }
 
     @Override
-    public void start() throws IOException, InterruptedException {
+    public void startSession() throws IOException, InterruptedException {
+        if (!profileWholeLifeTime()) {
+            ensureConnected();
+        }
+    }
+
+    @Override
+    public void startRecording() throws IOException, InterruptedException {
         if (profileWholeLifeTime()) {
             return;
         }
@@ -49,23 +56,31 @@ public class JProfilerController implements ProfilerController {
     }
 
     @Override
-    public void stop() throws IOException, InterruptedException {
-        if (!profileWholeLifeTime()) {
-            invoke("stopCPURecording");
-            if (jProfilerConfig.isRecordAlloc()) {
-                invoke("stopAllocRecording");
-            }
-            if (jProfilerConfig.isRecordMonitors()) {
-                invoke("stopMonitorRecording");
-            }
-            for (String probeName : jProfilerConfig.getRecordedProbes()) {
-                invoke("stopProbeRecording", probeName);
-            }
-            if (jProfilerConfig.isHeapDump()) {
-                invoke("triggerHeapDump");
-            }
-            invoke("saveSnapshot", getSnapshotPath());
+    public void stopRecording() throws IOException, InterruptedException {
+        if (profileWholeLifeTime()) {
+            return;
         }
+        invoke("stopCPURecording");
+        if (jProfilerConfig.isRecordAlloc()) {
+            invoke("stopAllocRecording");
+        }
+        if (jProfilerConfig.isRecordMonitors()) {
+            invoke("stopMonitorRecording");
+        }
+        for (String probeName : jProfilerConfig.getRecordedProbes()) {
+            invoke("stopProbeRecording", probeName);
+        }
+    }
+
+    @Override
+    public void stopSession() throws IOException, InterruptedException {
+        if (profileWholeLifeTime()) {
+            return;
+        }
+        if (jProfilerConfig.isHeapDump()) {
+            invoke("triggerHeapDump");
+        }
+        invoke("saveSnapshot", getSnapshotPath());
         closeConnection();
     }
 
@@ -73,17 +88,21 @@ public class JProfilerController implements ProfilerController {
         return JProfiler.getSnapshotPath(settings);
     }
 
-    private void ensureConnected() throws IOException, MalformedObjectNameException {
+    private void ensureConnected() throws IOException {
         if (connector == null) {
-            JMXServiceURL jmxUrl = new JMXServiceURL("service:jmx:rmi:///jndi/rmi://localhost:" + jProfilerConfig.getPort() + "/jmxrmi");
-            JMXConnector newConnector = JMXConnectorFactory.newJMXConnector(jmxUrl, Collections.emptyMap());
-            newConnector.connect();
-            connection = newConnector.getMBeanServerConnection();
-            objectName = new ObjectName("com.jprofiler.api.agent.mbean:type=RemoteController");
-            if (!connection.isRegistered(objectName)) {
-                throw new RuntimeException("JProfiler MBean not found");
+            try {
+                JMXServiceURL jmxUrl = new JMXServiceURL("service:jmx:rmi:///jndi/rmi://localhost:" + jProfilerConfig.getPort() + "/jmxrmi");
+                JMXConnector newConnector = JMXConnectorFactory.newJMXConnector(jmxUrl, Collections.emptyMap());
+                newConnector.connect();
+                connection = newConnector.getMBeanServerConnection();
+                objectName = new ObjectName("com.jprofiler.api.agent.mbean:type=RemoteController");
+                if (!connection.isRegistered(objectName)) {
+                    throw new RuntimeException("JProfiler MBean not found");
+                }
+                connector = newConnector;
+            } catch (MalformedObjectNameException e) {
+                throw new RuntimeException(e);
             }
-            connector = newConnector;
         }
     }
 
@@ -106,9 +125,8 @@ public class JProfilerController implements ProfilerController {
                 .map(Class::getName)
                 .toArray(String[]::new);
         try {
-            ensureConnected();
             connection.invoke(objectName, operationName, parameterValues, parameterTypes);
-        } catch (InstanceNotFoundException | MBeanException | ReflectionException | MalformedObjectNameException e) {
+        } catch (InstanceNotFoundException | MBeanException | ReflectionException e) {
             throw new RuntimeException(e);
         }
     }
@@ -125,10 +143,9 @@ public class JProfilerController implements ProfilerController {
 
     private boolean hasOperation(String operationName) throws IOException {
         try {
-            ensureConnected();
             return Arrays.stream(connection.getMBeanInfo(objectName).getOperations())
                     .anyMatch(operationInfo -> operationInfo.getName().equals(operationName));
-        } catch (InstanceNotFoundException | ReflectionException | MalformedObjectNameException | IntrospectionException e) {
+        } catch (InstanceNotFoundException | ReflectionException | IntrospectionException e) {
             throw new RuntimeException(e);
         }
     }

@@ -35,6 +35,7 @@ public class HonestProfilerControl implements ProfilerController {
 
     private final HonestProfilerArgs args;
     private final ScenarioSettings scenarioSettings;
+    private boolean recordedBefore = false;
 
     public HonestProfilerControl(final HonestProfilerArgs args, ScenarioSettings scenarioSettings) {
         this.args = args;
@@ -42,13 +43,26 @@ public class HonestProfilerControl implements ProfilerController {
     }
 
     @Override
-    public void start() throws IOException, InterruptedException {
+    public void startSession() throws IOException, InterruptedException {
+
+    }
+
+    @Override
+    public void startRecording() throws IOException, InterruptedException {
+        if (recordedBefore) {
+            throw new RuntimeException("Recording multiple iterations with cleanup runs in between is not supported by Honest Profiler");
+        }
         System.out.println("Starting profiling with Honest Profiler on port " + args.getPort());
         sendCommand("start");
     }
 
     @Override
-    public void stop() throws IOException, InterruptedException {
+    public void stopRecording() throws IOException, InterruptedException {
+        recordedBefore = true;
+    }
+
+    @Override
+    public void stopSession() throws IOException, InterruptedException {
         System.out.println("Stopping profiling with Honest Profiler on port " + args.getPort());
         sendCommand("stop");
         File hplFile = new File(getOuptutDir(), getProfileName() + PROFILE_HPL_SUFFIX);
