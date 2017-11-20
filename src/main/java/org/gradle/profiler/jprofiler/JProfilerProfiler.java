@@ -4,10 +4,7 @@ import joptsimple.ArgumentAcceptingOptionSpec;
 import joptsimple.OptionParser;
 import joptsimple.OptionSet;
 import joptsimple.OptionSpecBuilder;
-import org.gradle.profiler.JvmArgsCalculator;
-import org.gradle.profiler.Profiler;
-import org.gradle.profiler.ProfilerController;
-import org.gradle.profiler.ScenarioSettings;
+import org.gradle.profiler.*;
 
 import java.io.File;
 import java.util.Collections;
@@ -47,7 +44,11 @@ public class JProfilerProfiler extends Profiler {
 
     @Override
     public ProfilerController newController(String pid, ScenarioSettings settings) {
-        return new JProfilerController(settings, jProfilerConfig);
+        if (settings.getInvocationSettings().getInvoker() == Invoker.NoDaemon) {
+            return ProfilerController.EMPTY;
+        } else {
+            return new JProfilerController(settings, jProfilerConfig);
+        }
     }
 
     @Override

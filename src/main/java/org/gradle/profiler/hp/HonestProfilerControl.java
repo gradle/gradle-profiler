@@ -16,8 +16,8 @@
 package org.gradle.profiler.hp;
 
 import org.gradle.profiler.CommandExec;
-import org.gradle.profiler.ProfilerController;
 import org.gradle.profiler.ScenarioSettings;
+import org.gradle.profiler.SingleIterationProfilerController;
 import org.gradle.profiler.fg.FlameGraphGenerator;
 import org.gradle.profiler.fg.FlameGraphSanitizer;
 
@@ -27,7 +27,7 @@ import java.io.OutputStream;
 import java.net.Socket;
 import java.nio.file.Files;
 
-public class HonestProfilerControl implements ProfilerController {
+public class HonestProfilerControl extends SingleIterationProfilerController {
     private static final String PROFILE_HPL_SUFFIX = ".hpl";
     private static final String PROFILE_TXT_SUFFIX = "-hp.txt";
     private static final String PROFILE_SANITIZED_TXT_SUFFIX = "-hp-sanitized.txt";
@@ -35,7 +35,6 @@ public class HonestProfilerControl implements ProfilerController {
 
     private final HonestProfilerArgs args;
     private final ScenarioSettings scenarioSettings;
-    private boolean recordedBefore = false;
 
     public HonestProfilerControl(final HonestProfilerArgs args, ScenarioSettings scenarioSettings) {
         this.args = args;
@@ -43,22 +42,9 @@ public class HonestProfilerControl implements ProfilerController {
     }
 
     @Override
-    public void startSession() throws IOException, InterruptedException {
-
-    }
-
-    @Override
-    public void startRecording() throws IOException, InterruptedException {
-        if (recordedBefore) {
-            throw new RuntimeException("Recording multiple iterations with cleanup runs in between is not supported by Honest Profiler");
-        }
+    public void doStartRecording() throws IOException, InterruptedException {
         System.out.println("Starting profiling with Honest Profiler on port " + args.getPort());
         sendCommand("start");
-    }
-
-    @Override
-    public void stopRecording() throws IOException, InterruptedException {
-        recordedBefore = true;
     }
 
     @Override
@@ -73,6 +59,11 @@ public class HonestProfilerControl implements ProfilerController {
         convertToFlameGraphTxtFile(hplFile, txtFile);
         sanitizeFlameGraphTxtFile(txtFile, sanitizedTxtFile);
         generateFlameGraph(sanitizedTxtFile, fgFile);
+    }
+
+    @Override
+    public String getName() {
+        return "honest profiler";
     }
 
     private void convertToFlameGraphTxtFile(final File hplFile, final File txtFile) throws IOException, InterruptedException {

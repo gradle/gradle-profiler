@@ -1,16 +1,13 @@
 package org.gradle.profiler.jfr;
 
-import org.gradle.profiler.CommandExec;
-import org.gradle.profiler.OperatingSystem;
-import org.gradle.profiler.ProfilerController;
-import org.gradle.profiler.ScenarioSettings;
+import org.gradle.profiler.*;
 import org.gradle.profiler.fg.FlameGraphGenerator;
 import org.gradle.profiler.fg.FlameGraphSanitizer;
 
 import java.io.File;
 import java.io.IOException;
 
-public class JFRControl implements ProfilerController {
+public class JFRControl extends SingleIterationProfilerController {
     private static final String PROFILE_JFR_SUFFIX = ".jfr";
     private static final String PROFILE_TXT_SUFFIX = "-jfr.txt";
     private static final String PROFILE_SANITIZED_TXT_SUFFIX = "-jfr-sanitized.txt";
@@ -20,9 +17,6 @@ public class JFRControl implements ProfilerController {
     private final JFRArgs jfrArgs;
     private final String pid;
     private final ScenarioSettings scenarioSettings;
-
-    private boolean recordedBefore = false;
-
     public JFRControl( final JFRArgs args, final String pid, final ScenarioSettings scenarioSettings) {
         this.scenarioSettings = scenarioSettings;
         File javaHome = new File(System.getProperty("java.home"));
@@ -44,21 +38,8 @@ public class JFRControl implements ProfilerController {
     }
 
     @Override
-    public void startSession() throws IOException, InterruptedException {
-
-    }
-
-    @Override
-    public void startRecording() throws IOException, InterruptedException {
-        if (recordedBefore) {
-            throw new RuntimeException("Recording multiple iterations with cleanup runs in between is not supported by JFR");
-        }
+    public void doStartRecording() throws IOException, InterruptedException {
         run(jcmd.getAbsolutePath(), pid, "JFR.start", "name=profile", "settings=profile", "duration=0");
-    }
-
-    @Override
-    public void stopRecording() throws IOException, InterruptedException {
-        recordedBefore = true;
     }
 
     @Override
@@ -74,6 +55,11 @@ public class JFRControl implements ProfilerController {
             generateFlameGraph( sanitizedTxtFile, fgFile );
         }
         System.out.println("Wrote profiling data to " + jfrFile.getPath());
+    }
+
+    @Override
+    public String getName() {
+        return "jfr";
     }
 
     private boolean canProduceFlameGraphs() {

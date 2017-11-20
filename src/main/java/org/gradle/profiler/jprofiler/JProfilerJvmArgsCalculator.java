@@ -1,5 +1,6 @@
 package org.gradle.profiler.jprofiler;
 
+import org.gradle.profiler.Invoker;
 import org.gradle.profiler.JvmArgsCalculator;
 import org.gradle.profiler.OperatingSystem;
 import org.gradle.profiler.ScenarioSettings;
@@ -156,7 +157,7 @@ public class JProfilerJvmArgsCalculator extends JvmArgsCalculator {
     }
 
     private boolean profileWholeLifeTime() {
-        return JProfiler.profileWholeLifeTime(settings);
+        return settings.getInvocationSettings().getInvoker() == Invoker.NoDaemon;
     }
 
 }

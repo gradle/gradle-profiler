@@ -28,16 +28,11 @@ public class JProfilerController implements ProfilerController {
 
     @Override
     public void startSession() throws IOException, InterruptedException {
-        if (!profileWholeLifeTime()) {
-            ensureConnected();
-        }
+        ensureConnected();
     }
 
     @Override
     public void startRecording() throws IOException, InterruptedException {
-        if (profileWholeLifeTime()) {
-            return;
-        }
         invoke("startCPURecording", true);
         if (jProfilerConfig.isRecordAlloc()) {
             invoke("startAllocRecording", true);
@@ -57,9 +52,6 @@ public class JProfilerController implements ProfilerController {
 
     @Override
     public void stopRecording() throws IOException, InterruptedException {
-        if (profileWholeLifeTime()) {
-            return;
-        }
         invoke("stopCPURecording");
         if (jProfilerConfig.isRecordAlloc()) {
             invoke("stopAllocRecording");
@@ -74,9 +66,6 @@ public class JProfilerController implements ProfilerController {
 
     @Override
     public void stopSession() throws IOException, InterruptedException {
-        if (profileWholeLifeTime()) {
-            return;
-        }
         if (jProfilerConfig.isHeapDump()) {
             invoke("triggerHeapDump");
         }
@@ -148,9 +137,5 @@ public class JProfilerController implements ProfilerController {
         } catch (InstanceNotFoundException | ReflectionException | IntrospectionException e) {
             throw new RuntimeException(e);
         }
-    }
-
-    private boolean profileWholeLifeTime() {
-        return JProfiler.profileWholeLifeTime(settings);
     }
 }

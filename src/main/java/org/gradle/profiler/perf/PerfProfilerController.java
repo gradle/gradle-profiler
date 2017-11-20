@@ -18,8 +18,8 @@ package org.gradle.profiler.perf;
 import org.apache.ant.compress.taskdefs.Unzip;
 import org.apache.tools.ant.types.mappers.CutDirsMapper;
 import org.gradle.profiler.CommandExec;
-import org.gradle.profiler.ProfilerController;
 import org.gradle.profiler.ScenarioSettings;
+import org.gradle.profiler.SingleIterationProfilerController;
 import org.gradle.profiler.SudoCommandExec;
 import org.gradle.profiler.fg.FlameGraphGenerator;
 import org.gradle.profiler.fg.FlameGraphSanitizer;
@@ -34,7 +34,7 @@ import java.util.List;
 import java.util.function.BiFunction;
 import java.util.stream.Collectors;
 
-public class PerfProfilerController implements ProfilerController {
+public class PerfProfilerController extends SingleIterationProfilerController {
     private static final String PROFILE_DATA_SUFFIX = ".data";
     private static final String PROFILE_SCRIPT_SUFFIX = "-perf-script.txt";
     private static final String PROFILE_FOLDED_SUFFIX = "-perf-folded.txt";
@@ -62,7 +62,6 @@ public class PerfProfilerController implements ProfilerController {
     private final CommandExec commandExec;
     private final CommandExec sudoCommandExec;
     private CommandExec.RunHandle perfHandle;
-    private boolean recordedBefore = false;
 
     PerfProfilerController(final PerfProfilerArgs args, ScenarioSettings scenarioSettings) {
         this.args = args;
@@ -72,15 +71,8 @@ public class PerfProfilerController implements ProfilerController {
     }
 
     @Override
-    public void startSession() throws IOException, InterruptedException {
+    public void doStartRecording() throws IOException, InterruptedException {
 
-    }
-
-    @Override
-    public void startRecording() throws IOException, InterruptedException {
-        if (recordedBefore) {
-            throw new RuntimeException("Recording multiple iterations with cleanup runs in between is not supported by Perf");
-        }
         System.out.println("Starting profiling with Perf");
 
         checkPrerequisites();
@@ -91,11 +83,6 @@ public class PerfProfilerController implements ProfilerController {
         // will reuse the file created here with correct ownership & permissions
         touchFile(dataFile);
         perfHandle = sudoCommandExec.runBackgrounded("perf", "record", "-F", String.valueOf(args.getFrequency()), "-o", dataFile.getAbsolutePath(), "-g", "-a");
-    }
-
-    @Override
-    public void stopRecording() throws IOException, InterruptedException {
-        recordedBefore = true;
     }
 
     @Override
@@ -126,6 +113,11 @@ public class PerfProfilerController implements ProfilerController {
         } catch (IOException e) {
             throw new UncheckedIOException(e);
         }
+    }
+
+    @Override
+    public String getName() {
+        return "perf";
     }
 
     private void checkPrerequisites() {
