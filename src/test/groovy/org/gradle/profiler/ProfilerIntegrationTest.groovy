@@ -156,7 +156,7 @@ println "<daemon: " + gradle.services.get(org.gradle.internal.environment.Gradle
         logFile.contains("* Running scenario using Gradle $versionUnderTest (scenario 1/1)")
         logFile.grep("* Running warm-up build").size() == 2
         logFile.grep("* Running build").size() == 1
-        logFile.grep("* starting profiler for daemon with pid").size() == 1
+        logFile.grep("* Starting profiler for daemon with pid").size() == 1
         logFile.grep("<gradle-version: $versionUnderTest>").size() == 4
         logFile.grep("<daemon: true").size() == 4
         logFile.grep("<tasks: [assemble]>").size() == 3
@@ -212,7 +212,7 @@ println "<tasks: " + gradle.startParameter.taskNames + ">"
         logFile.contains("* Running scenario using Gradle $minimalSupportedGradleVersion (scenario 1/1)")
         logFile.grep("* Running warm-up build").size() == 3
         logFile.grep("* Running build").size() == 2
-        logFile.grep("* starting profiler for daemon with pid").size() == 2
+        logFile.grep("* Starting profiler for daemon with pid").size() == 1
         logFile.grep("<gradle-version: $minimalSupportedGradleVersion>").size() == 6
         logFile.grep("<tasks: [assemble]>").size() == 5
 
