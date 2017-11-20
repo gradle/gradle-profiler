@@ -172,9 +172,9 @@ public class Main {
             BuildInvocationResult results = invoker.runBuild("warm-up build 1", tasks);
             String pid = results.getDaemonPid();
 
-            for (int i = 1; i < scenario.getWarmUpCount(); i++) {
+            for (int i = 2; i <= scenario.getWarmUpCount(); i++) {
                 beforeBuild(invoker, cleanupTasks, mutator);
-                results = invoker.runBuild("warm-up build " + (i + 1), tasks);
+                results = invoker.runBuild("warm-up build " + i, tasks);
                 checkPid(pid, results.getDaemonPid(), scenario.getInvoker());
             }
 
@@ -197,28 +197,32 @@ public class Main {
 
             BuildInvoker instrumentedBuildInvoker = invoker.withJvmArgs(instrumentedBuildJvmArgs).withGradleArgs(instrumentedBuildGradleArgs);
 
-            for (int i = 0; i < scenario.getBuildCount(); i++) {
+            if (settings.isProfile()) {
+                Logging.startOperation("Starting profiler for daemon with pid " + pid);
+                control.startSession();
+            }
+            for (int i = 1; i <= scenario.getBuildCount(); i++) {
                 beforeBuild(invoker, cleanupTasks, mutator);
 
-                if (settings.isProfile()) {
-                    Logging.startOperation("Starting recording for daemon with pid " + pid);
-                    control.start();
+                if (settings.isProfile() && (i == 1 || !cleanupTasks.isEmpty())) {
+                    control.startRecording();
                 }
 
-                results = instrumentedBuildInvoker.runBuild("build " + (i + 1), tasks);
+                results = instrumentedBuildInvoker.runBuild("build " + i, tasks);
 
-                if (settings.isProfile()) {
-                    Logging.startOperation("Stopping recording for daemon with pid " + pid);
-                    control.stop();
-                }
-
-                checkPid(pid, results.getDaemonPid(), scenario.getInvoker());
-
-                // Flush results to file, in case this process crashes or fails in some way before completing all scenarios
-                if (settings.isBenchmark()) {
-                    benchmarkResults.writeTo(resultsFile);
+                if (settings.isProfile() && (i == scenario.getBuildCount() || !cleanupTasks.isEmpty())) {
+                    control.stopRecording();
                 }
             }
+
+            if (settings.isProfile()) {
+                Logging.startOperation("Stopping profiler for daemon with pid " + pid);
+                control.stopSession();
+            }
+            if (settings.isBenchmark()) {
+                benchmarkResults.writeTo(resultsFile);
+            }
+            checkPid(pid, results.getDaemonPid(), scenario.getInvoker());
         } finally {
             mutator.cleanup();
             projectConnection.close();

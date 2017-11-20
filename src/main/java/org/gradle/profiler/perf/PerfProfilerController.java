@@ -18,8 +18,8 @@ package org.gradle.profiler.perf;
 import org.apache.ant.compress.taskdefs.Unzip;
 import org.apache.tools.ant.types.mappers.CutDirsMapper;
 import org.gradle.profiler.CommandExec;
-import org.gradle.profiler.ProfilerController;
 import org.gradle.profiler.ScenarioSettings;
+import org.gradle.profiler.SingleIterationProfilerController;
 import org.gradle.profiler.SudoCommandExec;
 import org.gradle.profiler.fg.FlameGraphGenerator;
 import org.gradle.profiler.fg.FlameGraphSanitizer;
@@ -34,7 +34,7 @@ import java.util.List;
 import java.util.function.BiFunction;
 import java.util.stream.Collectors;
 
-public class PerfProfilerController implements ProfilerController {
+public class PerfProfilerController extends SingleIterationProfilerController {
     private static final String PROFILE_DATA_SUFFIX = ".data";
     private static final String PROFILE_SCRIPT_SUFFIX = "-perf-script.txt";
     private static final String PROFILE_FOLDED_SUFFIX = "-perf-folded.txt";
@@ -70,9 +70,9 @@ public class PerfProfilerController implements ProfilerController {
         this.sudoCommandExec = new SudoCommandExec();
     }
 
-
     @Override
-    public void start() throws IOException, InterruptedException {
+    public void doStartRecording() throws IOException, InterruptedException {
+
         System.out.println("Starting profiling with Perf");
 
         checkPrerequisites();
@@ -86,7 +86,7 @@ public class PerfProfilerController implements ProfilerController {
     }
 
     @Override
-    public void stop() throws IOException, InterruptedException {
+    public void stopSession() throws IOException, InterruptedException {
         println("Stopping profiling with Perf");
 
         perfHandle.interrupt();
@@ -96,6 +96,7 @@ public class PerfProfilerController implements ProfilerController {
         /*
         generatePackageFlameGraph();
         */
+
     }
 
     private void println(String message) {
@@ -112,6 +113,11 @@ public class PerfProfilerController implements ProfilerController {
         } catch (IOException e) {
             throw new UncheckedIOException(e);
         }
+    }
+
+    @Override
+    public String getName() {
+        return "perf";
     }
 
     private void checkPrerequisites() {

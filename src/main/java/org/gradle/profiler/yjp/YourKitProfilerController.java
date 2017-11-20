@@ -14,7 +14,12 @@ public class YourKitProfilerController implements ProfilerController {
     }
 
     @Override
-    public void start() throws IOException, InterruptedException {
+    public void startSession() throws IOException, InterruptedException {
+
+    }
+
+    @Override
+    public void startRecording() throws IOException, InterruptedException {
         if (options.isMemorySnapshot()) {
             runYourKitCommand("start-alloc-recording-adaptive");
         } else if (options.isUseSampling()) {
@@ -25,15 +30,20 @@ public class YourKitProfilerController implements ProfilerController {
     }
 
     @Override
-    public void stop() throws IOException, InterruptedException {
+    public void stopRecording() throws IOException, InterruptedException {
         if (options.isMemorySnapshot()) {
             runYourKitCommand("stop-alloc-recording");
-            runYourKitCommand("capture-memory-snapshot");
-            runYourKitCommand("clear-alloc-data");
         } else {
             runYourKitCommand("stop-cpu-profiling");
+        }
+    }
+
+    @Override
+    public void stopSession() throws IOException, InterruptedException {
+        if (options.isMemorySnapshot()) {
+            runYourKitCommand("capture-memory-snapshot");
+        } else {
             runYourKitCommand("capture-performance-snapshot");
-            runYourKitCommand("clear-cpu-data");
         }
     }
 

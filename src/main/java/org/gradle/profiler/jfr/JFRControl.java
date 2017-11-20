@@ -1,16 +1,13 @@
 package org.gradle.profiler.jfr;
 
-import org.gradle.profiler.CommandExec;
-import org.gradle.profiler.OperatingSystem;
-import org.gradle.profiler.ProfilerController;
-import org.gradle.profiler.ScenarioSettings;
+import org.gradle.profiler.*;
 import org.gradle.profiler.fg.FlameGraphGenerator;
 import org.gradle.profiler.fg.FlameGraphSanitizer;
 
 import java.io.File;
 import java.io.IOException;
 
-public class JFRControl implements ProfilerController {
+public class JFRControl extends SingleIterationProfilerController {
     private static final String PROFILE_JFR_SUFFIX = ".jfr";
     private static final String PROFILE_TXT_SUFFIX = "-jfr.txt";
     private static final String PROFILE_SANITIZED_TXT_SUFFIX = "-jfr-sanitized.txt";
@@ -20,7 +17,6 @@ public class JFRControl implements ProfilerController {
     private final JFRArgs jfrArgs;
     private final String pid;
     private final ScenarioSettings scenarioSettings;
-
     public JFRControl( final JFRArgs args, final String pid, final ScenarioSettings scenarioSettings) {
         this.scenarioSettings = scenarioSettings;
         File javaHome = new File(System.getProperty("java.home"));
@@ -42,12 +38,12 @@ public class JFRControl implements ProfilerController {
     }
 
     @Override
-    public void start() throws IOException, InterruptedException {
+    public void doStartRecording() throws IOException, InterruptedException {
         run(jcmd.getAbsolutePath(), pid, "JFR.start", "name=profile", "settings=profile", "duration=0");
     }
 
     @Override
-    public void stop() throws IOException, InterruptedException {
+    public void stopSession() throws IOException, InterruptedException {
         File jfrFile = new File(getOutputDir(), getProfileName() + PROFILE_JFR_SUFFIX);
         run(jcmd.getAbsolutePath(), pid, "JFR.stop", "name=profile", "filename=" + jfrFile.getAbsolutePath());
         if(canProduceFlameGraphs()) {
@@ -59,6 +55,11 @@ public class JFRControl implements ProfilerController {
             generateFlameGraph( sanitizedTxtFile, fgFile );
         }
         System.out.println("Wrote profiling data to " + jfrFile.getPath());
+    }
+
+    @Override
+    public String getName() {
+        return "jfr";
     }
 
     private boolean canProduceFlameGraphs() {

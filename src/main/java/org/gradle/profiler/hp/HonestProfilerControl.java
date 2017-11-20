@@ -16,8 +16,8 @@
 package org.gradle.profiler.hp;
 
 import org.gradle.profiler.CommandExec;
-import org.gradle.profiler.ProfilerController;
 import org.gradle.profiler.ScenarioSettings;
+import org.gradle.profiler.SingleIterationProfilerController;
 import org.gradle.profiler.fg.FlameGraphGenerator;
 import org.gradle.profiler.fg.FlameGraphSanitizer;
 
@@ -27,7 +27,7 @@ import java.io.OutputStream;
 import java.net.Socket;
 import java.nio.file.Files;
 
-public class HonestProfilerControl implements ProfilerController {
+public class HonestProfilerControl extends SingleIterationProfilerController {
     private static final String PROFILE_HPL_SUFFIX = ".hpl";
     private static final String PROFILE_TXT_SUFFIX = "-hp.txt";
     private static final String PROFILE_SANITIZED_TXT_SUFFIX = "-hp-sanitized.txt";
@@ -42,13 +42,13 @@ public class HonestProfilerControl implements ProfilerController {
     }
 
     @Override
-    public void start() throws IOException, InterruptedException {
+    public void doStartRecording() throws IOException, InterruptedException {
         System.out.println("Starting profiling with Honest Profiler on port " + args.getPort());
         sendCommand("start");
     }
 
     @Override
-    public void stop() throws IOException, InterruptedException {
+    public void stopSession() throws IOException, InterruptedException {
         System.out.println("Stopping profiling with Honest Profiler on port " + args.getPort());
         sendCommand("stop");
         File hplFile = new File(getOuptutDir(), getProfileName() + PROFILE_HPL_SUFFIX);
@@ -59,6 +59,11 @@ public class HonestProfilerControl implements ProfilerController {
         convertToFlameGraphTxtFile(hplFile, txtFile);
         sanitizeFlameGraphTxtFile(txtFile, sanitizedTxtFile);
         generateFlameGraph(sanitizedTxtFile, fgFile);
+    }
+
+    @Override
+    public String getName() {
+        return "honest profiler";
     }
 
     private void convertToFlameGraphTxtFile(final File hplFile, final File txtFile) throws IOException, InterruptedException {

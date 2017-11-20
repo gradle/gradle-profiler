@@ -38,16 +38,30 @@ class CompositeProfiler extends Profiler {
                 .collect(Collectors.toList());
         return new ProfilerController() {
             @Override
-            public void start() throws IOException, InterruptedException {
+            public void startSession() throws IOException, InterruptedException {
                 for (ProfilerController controller : controllers) {
-                    controller.start();
+                    controller.startSession();
                 }
             }
 
             @Override
-            public void stop() throws IOException, InterruptedException {
+            public void startRecording() throws IOException, InterruptedException {
                 for (ProfilerController controller : controllers) {
-                    controller.stop();
+                    controller.startRecording();
+                }
+            }
+
+            @Override
+            public void stopRecording() throws IOException, InterruptedException {
+                for (ProfilerController controller : controllers) {
+                    controller.stopRecording();
+                }
+            }
+
+            @Override
+            public void stopSession() throws IOException, InterruptedException {
+                for (ProfilerController controller : controllers) {
+                    controller.stopSession();
                 }
             }
         };

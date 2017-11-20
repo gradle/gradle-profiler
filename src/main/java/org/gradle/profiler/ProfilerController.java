@@ -20,17 +20,52 @@ import java.io.IOException;
 public interface ProfilerController {
     ProfilerController EMPTY = new ProfilerController() {
         @Override
-        public void start() throws IOException, InterruptedException {
+        public void startSession() throws IOException, InterruptedException {
 
         }
 
         @Override
-        public void stop() throws IOException, InterruptedException {
+        public void startRecording() throws IOException, InterruptedException {
+
+        }
+
+        @Override
+        public void stopRecording() throws IOException, InterruptedException {
+
+        }
+
+        @Override
+        public void stopSession() throws IOException, InterruptedException {
 
         }
     };
 
-    void start() throws IOException, InterruptedException;
+    /**
+     * Connects the profiler to the daemon and does any other one-time setup work.
+     * The profiler should not start collecting data yet. If the profiler cannot
+     * connect without starting data collection, it should defer startup to {@link #startRecording()}
+     * instead.
+     */
+    void startSession() throws IOException, InterruptedException;
 
-    void stop() throws IOException, InterruptedException;
+    /**
+     * Tells the profiler to start collecting data (again). Profilers may chose to throw an
+     * exception if they don't support multiple start/stop operations.
+     */
+    void startRecording() throws IOException, InterruptedException;
+
+    /**
+     * Tells the profiler to stop collecting data for now, e.g. so it doesn't
+     * profile cleanup tasks. If the data collection can only be stopped by
+     * stopping the session, the profiler should implement this as a no-op
+     * and throw an exception when {@link #startRecording()} is called another
+     * time.
+     */
+    void stopRecording() throws IOException, InterruptedException;
+
+    /**
+     * Ends the profiling session, writing the collected results to disk
+     * and disconnecting the profiler from the daemon.
+     */
+    void stopSession() throws IOException, InterruptedException;
 }

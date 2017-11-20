@@ -1,6 +1,5 @@
 package org.gradle.profiler.jprofiler;
 
-import org.gradle.profiler.Invoker;
 import org.gradle.profiler.OperatingSystem;
 import org.gradle.profiler.ScenarioSettings;
 
@@ -18,10 +17,6 @@ public class JProfiler {
         } else {
             return "/opt/jprofiler" + MAJOR_VERSION;
         }
-    }
-
-    public static boolean profileWholeLifeTime(ScenarioSettings settings) {
-        return settings.getInvocationSettings().getInvoker().equals(Invoker.NoDaemon);
     }
 
     public static String getSnapshotPath(ScenarioSettings settings) {
