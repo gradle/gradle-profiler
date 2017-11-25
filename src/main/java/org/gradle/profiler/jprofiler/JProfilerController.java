@@ -33,9 +33,9 @@ public class JProfilerController implements ProfilerController {
 
     @Override
     public void startRecording() throws IOException, InterruptedException {
-        invoke("startCPURecording", true);
+        invoke("startCPURecording", false);
         if (jProfilerConfig.isRecordAlloc()) {
-            invoke("startAllocRecording", true);
+            invoke("startAllocRecording", false);
         }
         if (jProfilerConfig.isRecordMonitors()) {
             invoke("startMonitorRecording");
