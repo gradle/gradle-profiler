@@ -76,17 +76,17 @@ public class JProfilerJvmArgsCalculator extends JvmArgsCalculator {
         if (sessionId != null) {
             if (jProfilerConfig.getConfigFile() != null) {
                 configFile = new File(jProfilerConfig.getConfigFile());
-                id = sessionId;
             } else {
                 configFile = null;
-                id = null;
             }
+            id = sessionId;
         } else {
             configFile = getConfigFile();
             id = "1";
         }
+        builder.append("id=").append(id);
         if (configFile != null) {
-            builder.append("id=").append(id).append(",config=").append(transformConfigFile(configFile, id));
+            builder.append(",config=").append(transformConfigFile(configFile, id));
         }
 
         builder.append(",sysprop=jprofiler.jmxServerPort=").append(port);
