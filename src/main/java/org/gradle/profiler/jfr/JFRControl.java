@@ -76,7 +76,7 @@ public class JFRControl extends SingleIterationProfilerController {
             throw new IllegalArgumentException("Please set the JAVA_HOME environment variable to your Java installation");
         }
         String java = javaHome + File.separatorChar + "bin" + File.separatorChar + "java";
-        run(java, "-jar", findJfrFgJar().getAbsolutePath(), "folded",
+        run(java, "-jar", findJfrFgJar().getAbsolutePath(),
              "-f", jfrFile.getAbsolutePath(),
              "-o", txtFile.getAbsolutePath());
     }
