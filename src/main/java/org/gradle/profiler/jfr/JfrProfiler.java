@@ -41,9 +41,14 @@ public class JfrProfiler extends Profiler {
     }
 
     private JFRArgs newConfigObject(OptionSet parsedOptions ) {
+        String jfrSettings = (String) parsedOptions.valueOf("jfr-settings");
+        if (jfrSettings.endsWith(".jfc")) {
+            jfrSettings = new File(jfrSettings).getAbsolutePath();
+        }
         return new JFRArgs(
             new File((String) parsedOptions.valueOf( "jfr-fg-home" )),
-            new File((String) parsedOptions.valueOf( "fg-home" ))
+            new File((String) parsedOptions.valueOf( "fg-home" )),
+            jfrSettings
         );
     }
 
@@ -68,5 +73,9 @@ public class JfrProfiler extends Profiler {
               .availableIf("profile")
               .withOptionalArg()
               .defaultsTo(System.getenv().getOrDefault("FG_HOME_DIR", ""));
+        parser.accepts("jfr-settings", "JFR settings - Either a .jfc file or the name of a template known to your JFR installation")
+                .availableIf("profile")
+                .withOptionalArg()
+                .defaultsTo("profile");
     }
 }

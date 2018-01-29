@@ -1,6 +1,9 @@
 package org.gradle.profiler.jfr;
 
-import org.gradle.profiler.*;
+import org.gradle.profiler.CommandExec;
+import org.gradle.profiler.OperatingSystem;
+import org.gradle.profiler.ScenarioSettings;
+import org.gradle.profiler.SingleIterationProfilerController;
 import org.gradle.profiler.fg.FlameGraphGenerator;
 import org.gradle.profiler.fg.FlameGraphSanitizer;
 
@@ -39,7 +42,7 @@ public class JFRControl extends SingleIterationProfilerController {
 
     @Override
     public void doStartRecording() throws IOException, InterruptedException {
-        run(jcmd.getAbsolutePath(), pid, "JFR.start", "name=profile", "settings=profile", "duration=0");
+        run(jcmd.getAbsolutePath(), pid, "JFR.start", "name=profile", "settings=" + jfrArgs.getJfrSettings(), "duration=0");
     }
 
     @Override
