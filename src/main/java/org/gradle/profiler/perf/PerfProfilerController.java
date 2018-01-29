@@ -234,7 +234,7 @@ public class PerfProfilerController extends SingleIterationProfilerController {
     }
 
     private void generateFlameGraph(final File sanitizedTxtFile, final File fgFile, boolean icicle) throws IOException, InterruptedException {
-        new FlameGraphGenerator(getToolDir(TOOL_FLAMEGRAPH)).generateFlameGraph(sanitizedTxtFile, fgFile, icicle);
+        new FlameGraphGenerator(getToolDir(TOOL_FLAMEGRAPH)).generateFlameGraph(sanitizedTxtFile, fgFile, icicle, "--color=java", "--hash");
     }
 
     private File getToolsDir() {

@@ -6,6 +6,7 @@ import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 
 public class FlameGraphGenerator {
@@ -19,10 +20,11 @@ public class FlameGraphGenerator {
         generateFlameGraph(txtFile, fgFile, false);
     }
 
-    public void generateFlameGraph(final File txtFile, final File fgFile, boolean icicle) throws IOException, InterruptedException {
+    public void generateFlameGraph(final File txtFile, final File fgFile, boolean icicle, String... extraArgs) throws IOException, InterruptedException {
         CommandExec commandExec = new CommandExec();
         File fdCmd = new File(fgHomeDir, "flamegraph.pl");
-        List<String> fgArgs = new ArrayList<>(Arrays.asList(fdCmd.getAbsolutePath(), txtFile.getAbsolutePath(), "--minwidth=0.5", "--color=java", "--hash"));
+        List<String> fgArgs = new ArrayList<>(Arrays.asList(fdCmd.getAbsolutePath(), txtFile.getAbsolutePath(), "--minwidth=0.5"));
+        Collections.addAll(fgArgs, extraArgs);
         if (icicle) {
             fgArgs.add("--reverse");
             fgArgs.add("--inverted");
