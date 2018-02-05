@@ -6,7 +6,6 @@ import org.gradle.profiler.BuildMutator;
 import org.gradle.profiler.ConfigUtil;
 
 import java.io.File;
-import java.io.IOException;
 import java.util.Arrays;
 import java.util.Objects;
 import java.util.function.Supplier;
@@ -29,14 +28,14 @@ public class ClearBuildCacheMutator implements BuildMutator {
 	}
 
 	@Override
-	public void beforeScenario() throws IOException {
+	public void beforeScenario() {
 		if (schedule == CleanupSchedule.SCENARIO) {
 			cleanCacheDirs();
 		}
 	}
 
 	@Override
-	public void beforeCleanup() throws IOException {
+	public void beforeCleanup() {
 		if (schedule == CleanupSchedule.CLEANUP) {
 			cleanCacheDirs();
 		}

@@ -6,7 +6,6 @@ import org.gradle.profiler.CommandExec;
 import org.gradle.profiler.ConfigUtil;
 
 import java.io.File;
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -25,7 +24,7 @@ public class GitRevertMutator implements BuildMutator {
 	}
 
 	@Override
-	public void beforeScenario() throws IOException {
+	public void beforeScenario() {
 		resetGit();
 	}
 
@@ -35,13 +34,12 @@ public class GitRevertMutator implements BuildMutator {
 	}
 
 	@Override
-	public void afterBuild() throws IOException {
-		resetGit();
-	}
-
-	@Override
-	public void afterScenario() {
-        resetGit();
+	public void afterBuild(Throwable error) {
+		if (error == null) {
+			resetGit();
+		} else {
+			System.out.println("> Not resetting Git because of error during build");
+		}
 	}
 
     private void resetGit() {

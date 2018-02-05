@@ -1,30 +1,33 @@
 package org.gradle.profiler;
 
-import java.io.IOException;
-
 public interface BuildMutator {
     /**
      * Runs before the first iteration of the scenario.
      */
-    default void beforeScenario() throws IOException {};
+    default void beforeScenario() {};
 
     /**
      * Runs before each iteration if cleanup tasks are declared.
      */
-    default void beforeCleanup() throws IOException {};
-
-    /**
-     * Runs before starting an iteration of the build, after any potential cleanup has finished.
-     */
-    default void beforeBuild() throws IOException {};
+    default void beforeCleanup() {};
 
     /**
      * Runs after each iteration of the build has finished.
      */
-    default void afterBuild() throws IOException {};
+    default void afterCleanup(Throwable error) {};
+
+    /**
+     * Runs before starting an iteration of the build, after any potential cleanup has finished.
+     */
+    default void beforeBuild() {};
+
+    /**
+     * Runs after each iteration of the build has finished.
+     */
+    default void afterBuild(Throwable error) {};
 
     /**
      * Runs after the last iteration of the scenario has finished.
      */
-    default void afterScenario() throws IOException {};
+    default void afterScenario() {};
 }

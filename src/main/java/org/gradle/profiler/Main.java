@@ -1,5 +1,6 @@
 package org.gradle.profiler;
 
+import org.apache.commons.io.FileUtils;
 import org.gradle.tooling.GradleConnector;
 import org.gradle.tooling.ProjectConnection;
 import org.gradle.tooling.model.build.BuildEnvironment;
@@ -12,13 +13,15 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.function.Consumer;
+import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
 import static org.gradle.profiler.Logging.startOperation;
 
 public class Main {
-    public static void main(String[] args) throws Exception {
+    public static void main(String[] args) {
         boolean ok;
         try {
             new Main().run(args);
@@ -108,7 +111,7 @@ public class Main {
     private void runGradleScenario(GradleScenarioDefinition scenario,  InvocationSettings settings, DaemonControl daemonControl, BenchmarkResults benchmarkResults,
                                    PidInstrumentation pidInstrumentation, File resultsFile) throws IOException, InterruptedException {
         ScenarioSettings scenarioSettings = new ScenarioSettings(settings, scenario);
-        scenario.getOutputDir().mkdirs();
+        FileUtils.forceMkdir(scenario.getOutputDir());
         JvmArgsCalculator allBuildsJvmArgsCalculator = settings.getProfiler().newJvmArgsCalculator(scenarioSettings);
         GradleArgsCalculator allBuildsGradleArgsCalculator = settings.getProfiler().newGradleArgsCalculator(scenarioSettings);
 
@@ -170,16 +173,20 @@ public class Main {
 
             mutator.beforeScenario();
 
-            beforeBuild(invoker, cleanupTasks, mutator);
-            BuildInvocationResult results = invoker.runBuild("warm-up build 1", tasks);
-            String pid = results.getDaemonPid();
+			BuildInvocationResult results = null;
+            String pid = null;
 
-            for (int i = 2; i <= scenario.getWarmUpCount(); i++) {
-                beforeBuild(invoker, cleanupTasks, mutator);
-                results = invoker.runBuild("warm-up build " + i, tasks);
-                checkPid(pid, results.getDaemonPid(), scenario.getInvoker());
-                mutator.afterBuild();
-            }
+			for (int i = 1; i <= scenario.getWarmUpCount(); i++) {
+				final int counter = i;
+				beforeBuild(invoker, cleanupTasks, mutator);
+				results = tryRun(() -> invoker.runBuild("warm-up build " + counter, tasks),
+						mutator::afterBuild);
+				if (pid == null) {
+					pid = results.getDaemonPid();
+				} else {
+					checkPid(pid, results.getDaemonPid(), scenario.getInvoker());
+				}
+			}
 
             ProfilerController control = settings.getProfiler().newController(pid, scenarioSettings);
 
@@ -204,20 +211,30 @@ public class Main {
                 Logging.startOperation("Starting profiler for daemon with pid " + pid);
                 control.startSession();
             }
-            for (int i = 1; i <= scenario.getBuildCount(); i++) {
-                beforeBuild(invoker, cleanupTasks, mutator);
+			for (int i = 1; i <= scenario.getBuildCount(); i++) {
+				final int counter = i;
+				beforeBuild(invoker, cleanupTasks, mutator);
+				results = tryRun(() -> {
+					if (settings.isProfile() && (counter == 1 || !cleanupTasks.isEmpty())) {
+						try {
+							control.startRecording();
+						} catch (IOException | InterruptedException e) {
+							throw new RuntimeException(e);
+						}
+					}
 
-                if (settings.isProfile() && (i == 1 || !cleanupTasks.isEmpty())) {
-                    control.startRecording();
-                }
+					BuildInvocationResult result = instrumentedBuildInvoker.runBuild("build " + counter, tasks);
 
-                results = instrumentedBuildInvoker.runBuild("build " + i, tasks);
+					if (settings.isProfile() && (counter == scenario.getBuildCount() || !cleanupTasks.isEmpty())) {
+						try {
+							control.stopRecording();
+						} catch (IOException | InterruptedException e) {
+							throw new RuntimeException(e);
+						}
+					}
 
-                if (settings.isProfile() && (i == scenario.getBuildCount() || !cleanupTasks.isEmpty())) {
-                    control.stopRecording();
-                }
-
-				mutator.afterBuild();
+					return result;
+				}, mutator::afterBuild);
             }
 
             if (settings.isProfile()) {
@@ -227,6 +244,7 @@ public class Main {
             if (settings.isBenchmark()) {
                 benchmarkResults.writeTo(resultsFile);
             }
+			Objects.requireNonNull(results);
             checkPid(pid, results.getDaemonPid(), scenario.getInvoker());
         } finally {
             mutator.afterScenario();
@@ -235,7 +253,7 @@ public class Main {
         }
     }
 
-    private void logGradleArgs(List<String> allBuildsGradleArgs) {
+	private void logGradleArgs(List<String> allBuildsGradleArgs) {
         Logging.detailed().println("Gradle args:");
         for (String arg : allBuildsGradleArgs) {
             Logging.detailed().println("  " + arg);
@@ -249,12 +267,11 @@ public class Main {
         }
     }
 
-    private void runBazelScenario(BazelScenarioDefinition scenario, InvocationSettings settings, BenchmarkResults benchmarkResults) throws IOException {
+    private void runBazelScenario(BazelScenarioDefinition scenario, InvocationSettings settings, BenchmarkResults benchmarkResults) {
         String bazelHome = System.getenv("BAZEL_HOME");
         String bazelExe = bazelHome == null ? "bazel" : bazelHome + "/bin/bazel";
 
-        List<String> targets = new ArrayList<>();
-        targets.addAll(scenario.getTargets());
+		List<String> targets = new ArrayList<>(scenario.getTargets());
 
         System.out.println();
         System.out.println("* Bazel targets: " + targets);
@@ -271,36 +288,35 @@ public class Main {
             for (int i = 0; i < scenario.getWarmUpCount(); i++) {
                 String displayName = "warm-up build " + (i + 1);
                 mutator.beforeBuild();
-
-                startOperation("Running " + displayName);
-                Timer timer = new Timer();
-                new CommandExec().inDir(settings.getProjectDir()).run(commandLine);
-                Duration executionTime = timer.elapsed();
-                System.out.println("Execution time " + executionTime.toMillis() + "ms");
-                resultConsumer.accept(new BuildInvocationResult(displayName, executionTime, null));
-                mutator.afterBuild();
+				tryRun(() -> {
+					startOperation("Running " + displayName);
+					Timer timer = new Timer();
+					new CommandExec().inDir(settings.getProjectDir()).run(commandLine);
+					Duration executionTime = timer.elapsed();
+					System.out.println("Execution time " + executionTime.toMillis() + "ms");
+					resultConsumer.accept(new BuildInvocationResult(displayName, executionTime, null));
+				}, mutator::afterBuild);
             }
             for (int i = 0; i < scenario.getBuildCount(); i++) {
                 String displayName = "build " + (i + 1);
                 mutator.beforeBuild();
-
-                startOperation("Running " + displayName);
-                Timer timer = new Timer();
-                new CommandExec().inDir(settings.getProjectDir()).run(commandLine);
-                Duration executionTime = timer.elapsed();
-                System.out.println("Execution time " + executionTime.toMillis() + "ms");
-                resultConsumer.accept(new BuildInvocationResult(displayName, executionTime, null));
-				mutator.afterBuild();
+				tryRun(() -> {
+					startOperation("Running " + displayName);
+					Timer timer = new Timer();
+					new CommandExec().inDir(settings.getProjectDir()).run(commandLine);
+					Duration executionTime = timer.elapsed();
+					System.out.println("Execution time " + executionTime.toMillis() + "ms");
+					resultConsumer.accept(new BuildInvocationResult(displayName, executionTime, null));
+				}, mutator::afterBuild);
             }
         } finally {
             mutator.afterScenario();
         }
     }
 
-    private void runBuckScenario(BuckScenarioDefinition scenario, InvocationSettings settings, BenchmarkResults benchmarkResults) throws IOException {
+    private void runBuckScenario(BuckScenarioDefinition scenario, InvocationSettings settings, BenchmarkResults benchmarkResults) {
         String buckwExe = settings.getProjectDir() + "/buckw";
-        List<String> targets = new ArrayList<>();
-        targets.addAll(scenario.getTargets());
+		List<String> targets = new ArrayList<>(scenario.getTargets());
         if (scenario.getType() != null) {
             Logging.startOperation("Query targets with type " + scenario.getType());
             List<String> commandLine = new ArrayList<>();
@@ -329,33 +345,33 @@ public class Main {
             for (int i = 0; i < scenario.getWarmUpCount(); i++) {
                 String displayName = "warm-up build " + (i + 1);
                 mutator.beforeBuild();
-
-                startOperation("Running " + displayName);
-                Timer timer = new Timer();
-                new CommandExec().inDir(settings.getProjectDir()).run(commandLine);
-                Duration executionTime = timer.elapsed();
-                System.out.println("Execution time " + executionTime.toMillis() + "ms");
-                resultConsumer.accept(new BuildInvocationResult(displayName, executionTime, null));
-                mutator.afterBuild();
+				tryRun(() -> {
+					startOperation("Running " + displayName);
+					Timer timer = new Timer();
+					new CommandExec().inDir(settings.getProjectDir()).run(commandLine);
+					Duration executionTime = timer.elapsed();
+					System.out.println("Execution time " + executionTime.toMillis() + "ms");
+					resultConsumer.accept(new BuildInvocationResult(displayName, executionTime, null));
+				}, mutator::afterBuild);
             }
             for (int i = 0; i < scenario.getBuildCount(); i++) {
                 String displayName = "build " + (i + 1);
                 mutator.beforeBuild();
-
-                startOperation("Running " + displayName);
-                Timer timer = new Timer();
-                new CommandExec().inDir(settings.getProjectDir()).run(commandLine);
-                Duration executionTime = timer.elapsed();
-                System.out.println("Execution time " + executionTime.toMillis() + "ms");
-                resultConsumer.accept(new BuildInvocationResult(displayName, executionTime, null));
-                mutator.afterBuild();
+				tryRun(() -> {
+					startOperation("Running " + displayName);
+					Timer timer = new Timer();
+					new CommandExec().inDir(settings.getProjectDir()).run(commandLine);
+					Duration executionTime = timer.elapsed();
+					System.out.println("Execution time " + executionTime.toMillis() + "ms");
+					resultConsumer.accept(new BuildInvocationResult(displayName, executionTime, null));
+				}, mutator::afterBuild);
             }
         } finally {
             mutator.afterScenario();
         }
     }
 
-    private void runMavenScenario(MavenScenarioDefinition scenario, InvocationSettings settings, BenchmarkResults benchmarkResults) throws IOException {
+    private void runMavenScenario(MavenScenarioDefinition scenario, InvocationSettings settings, BenchmarkResults benchmarkResults) {
         String mavenHome = System.getenv("MAVEN_HOME");
         String mvn = mavenHome == null ? "mvn" : mavenHome + "/bin/mvn";
 
@@ -373,36 +389,58 @@ public class Main {
             for (int i = 0; i < scenario.getWarmUpCount(); i++) {
                 String displayName = "warm-up build " + (i + 1);
                 mutator.beforeBuild();
-
-                startOperation("Running " + displayName);
-                Timer timer = new Timer();
-                new CommandExec().inDir(settings.getProjectDir()).run(commandLine);
-                Duration executionTime = timer.elapsed();
-                System.out.println("Execution time " + executionTime.toMillis() + "ms");
-                resultConsumer.accept(new BuildInvocationResult(displayName, executionTime, null));
-                mutator.afterBuild();
+				tryRun(() -> {
+					startOperation("Running " + displayName);
+					Timer timer = new Timer();
+					new CommandExec().inDir(settings.getProjectDir()).run(commandLine);
+					Duration executionTime = timer.elapsed();
+					System.out.println("Execution time " + executionTime.toMillis() + "ms");
+					resultConsumer.accept(new BuildInvocationResult(displayName, executionTime, null));
+				}, mutator::afterBuild);
             }
             for (int i = 0; i < scenario.getBuildCount(); i++) {
                 String displayName = "build " + (i + 1);
                 mutator.beforeBuild();
-
-                startOperation("Running " + displayName);
-                Timer timer = new Timer();
-                new CommandExec().inDir(settings.getProjectDir()).run(commandLine);
-                Duration executionTime = timer.elapsed();
-                System.out.println("Execution time " + executionTime.toMillis() + "ms");
-                resultConsumer.accept(new BuildInvocationResult(displayName, executionTime, null));
-                mutator.afterBuild();
+				tryRun(() -> {
+					startOperation("Running " + displayName);
+					Timer timer = new Timer();
+					new CommandExec().inDir(settings.getProjectDir()).run(commandLine);
+					Duration executionTime = timer.elapsed();
+					System.out.println("Execution time " + executionTime.toMillis() + "ms");
+					resultConsumer.accept(new BuildInvocationResult(displayName, executionTime, null));
+				}, mutator::afterBuild);
             }
         } finally {
             mutator.afterScenario();
         }
     }
 
-    private void beforeBuild(BuildInvoker invoker, List<String> cleanupTasks, BuildMutator mutator) throws IOException {
+	private static <T> T tryRun(Supplier<T> action, Consumer<Throwable> after) {
+		Throwable error = null;
+		try {
+			return action.get();
+		} catch (RuntimeException | Error ex) {
+			error = ex;
+			throw ex;
+		} catch (Throwable ex) {
+			error = ex;
+			throw new RuntimeException(ex);
+		} finally {
+			after.accept(error);
+		}
+	}
+
+	private static void tryRun(Runnable action, Consumer<Throwable> after) {
+    	tryRun(() -> {
+    		action.run();
+    		return null;
+		}, after);
+	}
+
+	private static void beforeBuild(BuildInvoker invoker, List<String> cleanupTasks, BuildMutator mutator) {
         if (!cleanupTasks.isEmpty()) {
         	mutator.beforeCleanup();
-            invoker.notInstrumented().runBuild("cleanup", cleanupTasks);
+        	tryRun(() -> invoker.notInstrumented().runBuild("cleanup", cleanupTasks), mutator::afterCleanup);
         }
         mutator.beforeBuild();
     }
@@ -432,7 +470,8 @@ public class Main {
         }
     }
 
-    private static void printResultFileSummaries(File outputDir, Profiler profiler) {
+    @SuppressWarnings("ConstantConditions")
+	private static void printResultFileSummaries(File outputDir, Profiler profiler) {
         if (outputDir == null) {
             return;
         }

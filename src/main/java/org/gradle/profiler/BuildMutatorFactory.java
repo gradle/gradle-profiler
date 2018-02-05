@@ -1,6 +1,5 @@
 package org.gradle.profiler;
 
-import java.io.IOException;
 import java.util.List;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
@@ -45,35 +44,42 @@ public class BuildMutatorFactory implements Supplier<BuildMutator> {
         }
 
         @Override
-        public void beforeScenario() throws IOException {
+        public void beforeScenario() {
             for (BuildMutator mutator : mutators) {
                 mutator.beforeScenario();
             }
         }
 
         @Override
-        public void beforeCleanup() throws IOException {
+        public void beforeCleanup() {
             for (BuildMutator mutator : mutators) {
                 mutator.beforeCleanup();
             }
         }
 
         @Override
-        public void beforeBuild() throws IOException {
+        public void afterCleanup(Throwable error) {
+            for (BuildMutator mutator : mutators) {
+                mutator.afterCleanup(error);
+            }
+        }
+
+        @Override
+        public void beforeBuild() {
             for (BuildMutator mutator : mutators) {
                 mutator.beforeBuild();
             }
         }
 
         @Override
-        public void afterBuild() throws IOException {
+        public void afterBuild(Throwable error) {
             for (BuildMutator mutator : mutators) {
-                mutator.afterBuild();
+                mutator.afterBuild(error);
             }
         }
 
         @Override
-        public void afterScenario() throws IOException {
+        public void afterScenario() {
             for (BuildMutator mutator : mutators) {
                 mutator.afterScenario();
             }

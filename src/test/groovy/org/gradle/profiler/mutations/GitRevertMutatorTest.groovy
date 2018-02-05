@@ -40,12 +40,22 @@ class GitRevertMutatorTest extends Specification {
         file.text == "Modified"
 
         when:
+        mutator.afterCleanup()
+        then:
+        file.text == "Modified"
+
+        when:
         mutator.beforeBuild()
         then:
         file.text == "Original"
 
         when:
-        mutator.afterBuild()
+        mutator.afterBuild(new RuntimeException("Error"))
+        then:
+        file.text == "Original"
+
+        when:
+        mutator.afterBuild(null)
         then:
         file.text == "Modified"
 

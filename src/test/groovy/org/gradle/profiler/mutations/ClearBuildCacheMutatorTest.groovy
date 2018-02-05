@@ -48,7 +48,21 @@ class ClearBuildCacheMutatorTest extends Specification {
 
         when:
         remakeCacheEntries()
+        mutator.afterCleanup(null)
+        then:
+        buildCache1Entry.exists()
+        buildCache2Entry.exists()
+
+        when:
+        remakeCacheEntries()
         mutator.beforeBuild()
+        then:
+        buildCache1Entry.exists()
+        buildCache2Entry.exists()
+
+        when:
+        remakeCacheEntries()
+        mutator.afterBuild(null)
         then:
         buildCache1Entry.exists()
         buildCache2Entry.exists()
@@ -80,7 +94,21 @@ class ClearBuildCacheMutatorTest extends Specification {
 
         when:
         remakeCacheEntries()
+        mutator.afterCleanup(null)
+        then:
+        buildCache1Entry.exists()
+        buildCache2Entry.exists()
+
+        when:
+        remakeCacheEntries()
         mutator.beforeBuild()
+        then:
+        buildCache1Entry.exists()
+        buildCache2Entry.exists()
+
+        when:
+        remakeCacheEntries()
+        mutator.afterBuild(null)
         then:
         buildCache1Entry.exists()
         buildCache2Entry.exists()
@@ -112,10 +140,24 @@ class ClearBuildCacheMutatorTest extends Specification {
 
         when:
         remakeCacheEntries()
+        mutator.afterCleanup(null)
+        then:
+        buildCache1Entry.exists()
+        buildCache2Entry.exists()
+
+        when:
+        remakeCacheEntries()
         mutator.beforeBuild()
         then:
         !buildCache1Entry.exists()
         !buildCache2Entry.exists()
+
+        when:
+        remakeCacheEntries()
+        mutator.afterBuild(null)
+        then:
+        buildCache1Entry.exists()
+        buildCache2Entry.exists()
 
         when:
         remakeCacheEntries()

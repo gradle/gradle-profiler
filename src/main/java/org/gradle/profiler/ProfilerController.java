@@ -20,22 +20,22 @@ import java.io.IOException;
 public interface ProfilerController {
     ProfilerController EMPTY = new ProfilerController() {
         @Override
-        public void startSession() throws IOException, InterruptedException {
+        public void startSession() {
 
         }
 
         @Override
-        public void startRecording() throws IOException, InterruptedException {
+        public void startRecording() {
 
         }
 
         @Override
-        public void stopRecording() throws IOException, InterruptedException {
+        public void stopRecording() {
 
         }
 
         @Override
-        public void stopSession() throws IOException, InterruptedException {
+        public void stopSession() {
 
         }
     };
