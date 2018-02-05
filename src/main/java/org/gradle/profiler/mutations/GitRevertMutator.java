@@ -36,6 +36,7 @@ public class GitRevertMutator implements BuildMutator {
 	@Override
 	public void afterBuild(Throwable error) {
 		if (error == null) {
+			abortRevert();
 			resetGit();
 		} else {
 			System.out.println("> Not resetting Git because of error during build");
@@ -45,14 +46,21 @@ public class GitRevertMutator implements BuildMutator {
     private void resetGit() {
         System.out.println("> Resetting Git hard");
         new CommandExec().inDir(projectDir).run("git", "reset", "--hard", "HEAD");
+        new CommandExec().inDir(projectDir).run("git", "status");
     }
 
     private void revertCommits() {
         System.out.println("> Reverting Git commit(s) " + commits.stream().collect(Collectors.joining(", ")));
+        new CommandExec().inDir(projectDir).run("git", "revert", "--quit");
         List<String> commandLine = new ArrayList<>();
         commandLine.addAll(Arrays.asList("git", "revert", "--no-commit"));
         commandLine.addAll(commits);
         new CommandExec().inDir(projectDir).run(commandLine);
+    }
+
+    private void abortRevert() {
+        System.out.println("> Aborting revert");
+        new CommandExec().inDir(projectDir).run("git", "revert", "--abort");
     }
 
     public static class Configurator implements BuildMutatorConfigurator {
