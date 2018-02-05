@@ -293,7 +293,7 @@ public class Main {
 					Timer timer = new Timer();
 					new CommandExec().inDir(settings.getProjectDir()).run(commandLine);
 					Duration executionTime = timer.elapsed();
-					System.out.println("Execution time " + executionTime.toMillis() + "ms");
+					printExecutionTime(executionTime);
 					resultConsumer.accept(new BuildInvocationResult(displayName, executionTime, null));
 				}, mutator::afterBuild);
             }
@@ -305,7 +305,7 @@ public class Main {
 					Timer timer = new Timer();
 					new CommandExec().inDir(settings.getProjectDir()).run(commandLine);
 					Duration executionTime = timer.elapsed();
-					System.out.println("Execution time " + executionTime.toMillis() + "ms");
+					printExecutionTime(executionTime);
 					resultConsumer.accept(new BuildInvocationResult(displayName, executionTime, null));
 				}, mutator::afterBuild);
             }
@@ -314,7 +314,7 @@ public class Main {
         }
     }
 
-    private void runBuckScenario(BuckScenarioDefinition scenario, InvocationSettings settings, BenchmarkResults benchmarkResults) {
+	private void runBuckScenario(BuckScenarioDefinition scenario, InvocationSettings settings, BenchmarkResults benchmarkResults) {
         String buckwExe = settings.getProjectDir() + "/buckw";
 		List<String> targets = new ArrayList<>(scenario.getTargets());
         if (scenario.getType() != null) {
@@ -350,7 +350,7 @@ public class Main {
 					Timer timer = new Timer();
 					new CommandExec().inDir(settings.getProjectDir()).run(commandLine);
 					Duration executionTime = timer.elapsed();
-					System.out.println("Execution time " + executionTime.toMillis() + "ms");
+					printExecutionTime(executionTime);
 					resultConsumer.accept(new BuildInvocationResult(displayName, executionTime, null));
 				}, mutator::afterBuild);
             }
@@ -362,7 +362,7 @@ public class Main {
 					Timer timer = new Timer();
 					new CommandExec().inDir(settings.getProjectDir()).run(commandLine);
 					Duration executionTime = timer.elapsed();
-					System.out.println("Execution time " + executionTime.toMillis() + "ms");
+					printExecutionTime(executionTime);
 					resultConsumer.accept(new BuildInvocationResult(displayName, executionTime, null));
 				}, mutator::afterBuild);
             }
@@ -394,7 +394,7 @@ public class Main {
 					Timer timer = new Timer();
 					new CommandExec().inDir(settings.getProjectDir()).run(commandLine);
 					Duration executionTime = timer.elapsed();
-					System.out.println("Execution time " + executionTime.toMillis() + "ms");
+					printExecutionTime(executionTime);
 					resultConsumer.accept(new BuildInvocationResult(displayName, executionTime, null));
 				}, mutator::afterBuild);
             }
@@ -406,7 +406,7 @@ public class Main {
 					Timer timer = new Timer();
 					new CommandExec().inDir(settings.getProjectDir()).run(commandLine);
 					Duration executionTime = timer.elapsed();
-					System.out.println("Execution time " + executionTime.toMillis() + "ms");
+					printExecutionTime(executionTime);
 					resultConsumer.accept(new BuildInvocationResult(displayName, executionTime, null));
 				}, mutator::afterBuild);
             }
@@ -490,7 +490,11 @@ public class Main {
         }
     }
 
-    static class ScenarioFailedException extends RuntimeException {
+	public static void printExecutionTime(Duration executionTime) {
+		System.out.println("Execution time " + executionTime.toMillis() + " ms");
+	}
+
+	static class ScenarioFailedException extends RuntimeException {
         public ScenarioFailedException(Throwable cause) {
             super(cause);
         }
