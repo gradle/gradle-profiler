@@ -8,12 +8,16 @@ import java.nio.file.Files;
 
 public abstract class AbstractFileChangeMutator implements BuildMutator {
     protected final File sourceFile;
-    private final String originalText;
+    private String originalText;
     private long timestamp;
     protected int counter;
 
     protected AbstractFileChangeMutator(File sourceFile) {
         this.sourceFile = sourceFile;
+    }
+
+    @Override
+    public void beforeScenario() throws IOException {
         this.timestamp = System.currentTimeMillis();
         try {
             originalText = new String(Files.readAllBytes(sourceFile.toPath()));
@@ -57,7 +61,7 @@ public abstract class AbstractFileChangeMutator implements BuildMutator {
     }
 
     @Override
-    public void cleanup() throws IOException {
+    public void afterScenario() throws IOException {
         if (counter > 0) {
             revert();
             counter = 0;

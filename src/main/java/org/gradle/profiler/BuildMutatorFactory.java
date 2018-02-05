@@ -20,7 +20,7 @@ public class BuildMutatorFactory implements Supplier<BuildMutator> {
         if (factories.size() == 1) {
             return factories.get(0).get();
         }
-        List<BuildMutator> mutators = factories.stream().map(s -> s.get()).collect(Collectors.toList());
+        List<BuildMutator> mutators = factories.stream().map(Supplier::get).collect(Collectors.toList());
         return new CompositeBuildMutator(mutators);
     }
 
@@ -32,16 +32,7 @@ public class BuildMutatorFactory implements Supplier<BuildMutator> {
 
     private static class NoOpMutator implements BuildMutator {
         @Override
-        public void beforeBuild() throws IOException {
-        }
-
-        @Override
-        public void cleanup() throws IOException {
-        }
-
-        @Override
-        public String toString()
-        {
+        public String toString() {
             return "none";
         }
     }
@@ -54,6 +45,20 @@ public class BuildMutatorFactory implements Supplier<BuildMutator> {
         }
 
         @Override
+        public void beforeScenario() throws IOException {
+            for (BuildMutator mutator : mutators) {
+                mutator.beforeScenario();
+            }
+        }
+
+        @Override
+        public void beforeCleanup() throws IOException {
+            for (BuildMutator mutator : mutators) {
+                mutator.beforeCleanup();
+            }
+        }
+
+        @Override
         public void beforeBuild() throws IOException {
             for (BuildMutator mutator : mutators) {
                 mutator.beforeBuild();
@@ -61,9 +66,16 @@ public class BuildMutatorFactory implements Supplier<BuildMutator> {
         }
 
         @Override
-        public void cleanup() throws IOException {
+        public void afterBuild() throws IOException {
             for (BuildMutator mutator : mutators) {
-                mutator.cleanup();
+                mutator.afterBuild();
+            }
+        }
+
+        @Override
+        public void afterScenario() throws IOException {
+            for (BuildMutator mutator : mutators) {
+                mutator.afterScenario();
             }
         }
 

@@ -3,11 +3,27 @@ package org.gradle.profiler;
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
 import com.typesafe.config.ConfigParseOptions;
-import com.typesafe.config.ConfigValue;
-import org.gradle.profiler.mutations.*;
+import org.gradle.profiler.mutations.AbstractFileChangeMutator;
+import org.gradle.profiler.mutations.ApplyAbiChangeToJavaSourceFileMutator;
+import org.gradle.profiler.mutations.ApplyChangeToAndroidManifestFileMutator;
+import org.gradle.profiler.mutations.ApplyChangeToAndroidResourceFileMutator;
+import org.gradle.profiler.mutations.ApplyChangeToNativeSourceFileMutator;
+import org.gradle.profiler.mutations.ApplyChangeToPropertyResourceFileMutator;
+import org.gradle.profiler.mutations.ApplyNonAbiChangeToJavaSourceFileMutator;
+import org.gradle.profiler.mutations.ApplyValueChangeToAndroidResourceFileMutator;
+import org.gradle.profiler.mutations.BuildMutatorConfigurator;
+import org.gradle.profiler.mutations.ClearBuildCacheMutator;
+import org.gradle.profiler.mutations.FileChangeMutatorConfigurator;
+import org.gradle.profiler.mutations.GitRevertMutator;
 
 import java.io.File;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.TreeSet;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
@@ -30,11 +46,13 @@ class ScenarioLoader {
     private static final String APPLY_ANDROID_MANIFEST_CHANGE_TO = "apply-android-manifest-change-to";
     private static final String APPLY_CPP_SOURCE_CHANGE_TO = "apply-cpp-change-to";
     private static final String APPLY_H_SOURCE_CHANGE_TO = "apply-h-change-to";
+    private static final String CLEAR_BUILD_CACHE_BEFORE = "clear-build-cache-before";
+    private static final String GIT_REVERT = "git-revert";
     private static final String TARGETS = "targets";
     private static final String TYPE = "type";
 
     private static final List<String> ALL_SCENARIO_KEYS = Arrays.asList(
-        VERSIONS, TASKS, CLEANUP_TASKS, GRADLE_ARGS, RUN_USING, SYSTEM_PROPERTIES, WARM_UP_COUNT, APPLY_ABI_CHANGE_TO, APPLY_NON_ABI_CHANGE_TO, APPLY_ANDROID_RESOURCE_CHANGE_TO, APPLY_ANDROID_RESOURCE_VALUE_CHANGE_TO, APPLY_ANDROID_MANIFEST_CHANGE_TO, APPLY_PROPERTY_RESOURCE_CHANGE_TO, APPLY_CPP_SOURCE_CHANGE_TO, APPLY_H_SOURCE_CHANGE_TO, BAZEL, BUCK, MAVEN
+        VERSIONS, TASKS, CLEANUP_TASKS, GRADLE_ARGS, RUN_USING, SYSTEM_PROPERTIES, WARM_UP_COUNT, APPLY_ABI_CHANGE_TO, APPLY_NON_ABI_CHANGE_TO, APPLY_ANDROID_RESOURCE_CHANGE_TO, APPLY_ANDROID_RESOURCE_VALUE_CHANGE_TO, APPLY_ANDROID_MANIFEST_CHANGE_TO, APPLY_PROPERTY_RESOURCE_CHANGE_TO, APPLY_CPP_SOURCE_CHANGE_TO, APPLY_H_SOURCE_CHANGE_TO, CLEAR_BUILD_CACHE_BEFORE, GIT_REVERT, BAZEL, BUCK, MAVEN
     );
     private static final List<String> BAZEL_KEYS = Arrays.asList(TARGETS);
     private static final List<String> BUCK_KEYS = Arrays.asList(TARGETS, TYPE);
@@ -89,7 +107,7 @@ class ScenarioLoader {
                 }
             }
 
-            int warmUpCount = integer(scenario, WARM_UP_COUNT, settings.getWarmUpCount());
+            int warmUpCount = ConfigUtil.integer(scenario, WARM_UP_COUNT, settings.getWarmUpCount());
 
             List<Supplier<BuildMutator>> mutators = new ArrayList<>();
             maybeAddMutator(scenario, scenarioName, settings.getProjectDir(), APPLY_ABI_CHANGE_TO, ApplyAbiChangeToJavaSourceFileMutator.class, mutators);
@@ -100,6 +118,8 @@ class ScenarioLoader {
             maybeAddMutator(scenario, scenarioName, settings.getProjectDir(), APPLY_PROPERTY_RESOURCE_CHANGE_TO, ApplyChangeToPropertyResourceFileMutator.class, mutators);
             maybeAddMutator(scenario, scenarioName, settings.getProjectDir(), APPLY_CPP_SOURCE_CHANGE_TO, ApplyChangeToNativeSourceFileMutator.class, mutators);
             maybeAddMutator(scenario, scenarioName, settings.getProjectDir(), APPLY_H_SOURCE_CHANGE_TO, ApplyChangeToNativeSourceFileMutator.class, mutators);
+            maybeAddMutator(scenario, scenarioName, settings.getProjectDir(), CLEAR_BUILD_CACHE_BEFORE, new ClearBuildCacheMutator.Configurator(settings.getGradleUserHome()), mutators);
+            maybeAddMutator(scenario, scenarioName, settings.getProjectDir(), GIT_REVERT, new GitRevertMutator.Configurator(), mutators);
 
             BuildMutatorFactory buildMutatorFactory = new BuildMutatorFactory(mutators);
 
@@ -113,7 +133,7 @@ class ScenarioLoader {
                         throw new IllegalArgumentException("Unrecognized key '" + scenarioName + ".bazel." + key + "' defined in scenario file " + scenarioFile);
                     }
                 }
-                List<String> targets = strings(executionInstructions, TARGETS, Collections.emptyList());
+                List<String> targets = ConfigUtil.strings(executionInstructions, TARGETS, Collections.emptyList());
                 File outputDir = new File(settings.getOutputDir(), scenarioName + "-bazel");
                 definitions.add(new BazelScenarioDefinition(scenarioName, targets, buildMutatorFactory, warmUpCount, settings.getBuildCount(), outputDir));
             } else if (scenario.hasPath(BUCK) && settings.isBuck()) {
@@ -126,8 +146,8 @@ class ScenarioLoader {
                         throw new IllegalArgumentException("Unrecognized key '" + scenarioName + ".buck." + key + "' defined in scenario file " + scenarioFile);
                     }
                 }
-                List<String> targets = strings(executionInstructions, TARGETS, Collections.emptyList());
-                String type = string(executionInstructions, TYPE, null);
+                List<String> targets = ConfigUtil.strings(executionInstructions, TARGETS, Collections.emptyList());
+                String type = ConfigUtil.string(executionInstructions, TYPE, null);
                 File outputDir = new File(settings.getOutputDir(), scenarioName + "-buck");
                 definitions.add(new BuckScenarioDefinition(scenarioName, targets, type, buildMutatorFactory, warmUpCount, settings.getBuildCount(), outputDir));
             } else if (scenario.hasPath(MAVEN) && settings.isMaven()) {
@@ -140,21 +160,21 @@ class ScenarioLoader {
                         throw new IllegalArgumentException("Unrecognized key '" + scenarioName + ".maven." + key + "' defined in scenario file " + scenarioFile);
                     }
                 }
-                List<String> targets = strings(executionInstructions, TARGETS, Collections.emptyList());
+                List<String> targets = ConfigUtil.strings(executionInstructions, TARGETS, Collections.emptyList());
                 File outputDir = new File(settings.getOutputDir(), scenarioName + "-maven");
                 definitions.add(new MavenScenarioDefinition(scenarioName, targets, buildMutatorFactory, warmUpCount, settings.getBuildCount(), outputDir));
             } else if (!settings.isBazel() && !settings.isBuck() && !settings.isMaven()) {
-                List<GradleVersion> versions = strings(scenario, VERSIONS, settings.getVersions()).stream().map(v -> inspector.resolve(v)).collect(
+                List<GradleVersion> versions = ConfigUtil.strings(scenario, VERSIONS, settings.getVersions()).stream().map(inspector::resolve).collect(
                         Collectors.toList());
                 if (versions.isEmpty()) {
                     versions.add(gradleVersionInspector.defaultVersion());
                 }
 
-                List<String> tasks = strings(scenario, TASKS, settings.getTargets());
-                List<String> cleanupTasks = strings(scenario, CLEANUP_TASKS, Collections.emptyList());
-                List<String> gradleArgs = strings(scenario, GRADLE_ARGS, Collections.emptyList());
-                Invoker invoker = invoker(scenario, RUN_USING, settings.getInvoker());
-                Map<String, String> systemProperties = map(scenario, SYSTEM_PROPERTIES, settings.getSystemProperties());
+                List<String> tasks = ConfigUtil.strings(scenario, TASKS, settings.getTargets());
+                List<String> cleanupTasks = ConfigUtil.strings(scenario, CLEANUP_TASKS, Collections.emptyList());
+                List<String> gradleArgs = ConfigUtil.strings(scenario, GRADLE_ARGS, Collections.emptyList());
+                Invoker invoker = ConfigUtil.invoker(scenario, RUN_USING, settings.getInvoker());
+                Map<String, String> systemProperties = ConfigUtil.map(scenario, SYSTEM_PROPERTIES, settings.getSystemProperties());
                 for (GradleVersion version : versions) {
                     File outputDir = versions.size() == 1 ? new File(settings.getOutputDir(), scenarioName) : new File(settings.getOutputDir(), scenarioName + "/" + version.getVersion());
                     definitions.add(new GradleScenarioDefinition(scenarioName, invoker, version, tasks, cleanupTasks, gradleArgs, systemProperties,
@@ -166,87 +186,13 @@ class ScenarioLoader {
         return definitions;
     }
 
-    private void maybeAddMutator(Config scenario, String scenarioName, File projectDir, String key, Class<? extends AbstractFileChangeMutator> mutatorClass, List<Supplier<BuildMutator>> mutators) {
-        File sourceFileToChange = sourceFile(scenario, key, scenarioName, projectDir);
-        if (sourceFileToChange != null) {
-            mutators.add(() -> {
-                try {
-                    return mutatorClass.getConstructor(File.class).newInstance(sourceFileToChange);
-                } catch (Exception e) {
-                    throw new RuntimeException("Could not create instance of mutator " + mutatorClass.getSimpleName(), e);
-                }
-            });
-        }
-    }
+    private static void maybeAddMutator(Config scenario, String scenarioName, File projectDir, String key, Class<? extends AbstractFileChangeMutator> mutatorClass, List<Supplier<BuildMutator>> mutators) {
+    	maybeAddMutator(scenario, scenarioName, projectDir, key, new FileChangeMutatorConfigurator(mutatorClass), mutators);
+	}
 
-    File sourceFile(Config config, String key, String scenarioName, File projectDir) {
-        String sourceFileName = string(config, key, null);
-        if (sourceFileName == null) {
-            return null;
-        }
-        File sourceFile = new File(projectDir, sourceFileName);
-        if (!sourceFile.isFile()) {
-            throw new IllegalArgumentException("Source file " + sourceFile + " specified for scenario " + scenarioName + " does not exist.");
-        }
-        return sourceFile;
-    }
-
-    private Map<String, String> map(Config config, String key, Map<String, String> defaultValues) {
-        if (config.hasPath(key)) {
-            Map<String, String> props = new LinkedHashMap<>();
-            for (Map.Entry<String, ConfigValue> entry : config.getConfig(key).entrySet()) {
-                props.put(entry.getKey(), entry.getValue().unwrapped().toString());
-            }
-            return props;
-        } else {
-            return defaultValues;
-        }
-    }
-
-    private static Invoker invoker(Config config, String key, Invoker defaultValue) {
-        if (config.hasPath(key)) {
-            String value = config.getAnyRef(key).toString();
-            if (value.equals("no-daemon")) {
-                return Invoker.NoDaemon;
-            }
-            if (value.equals("cli")) {
-                return Invoker.Cli;
-            }
-            if (value.equals("tooling-api")) {
-                return Invoker.ToolingApi;
-            }
-            throw new IllegalArgumentException("Unexpected value for '" + key + "' provided: " + value);
-        } else {
-            return defaultValue;
-        }
-    }
-
-    private static String string(Config config, String key, String defaultValue) {
-        if (config.hasPath(key)) {
-            return config.getString(key);
-        } else {
-            return defaultValue;
-        }
-    }
-
-    private static int integer(Config config, String key, int defaultValue) {
-        if (config.hasPath(key)) {
-            return Integer.valueOf(config.getString(key));
-        } else {
-            return defaultValue;
-        }
-    }
-
-    private static List<String> strings(Config config, String key, List<String> defaults) {
-        if (config.hasPath(key)) {
-            Object value = config.getAnyRef(key);
-            if (value instanceof List) {
-                List<?> list = (List) value;
-                return list.stream().map(v -> v.toString()).collect(Collectors.toList());
-            } else if (value.toString().length() > 0) {
-                return Collections.singletonList(value.toString());
-            }
-        }
-        return defaults;
+    private static void maybeAddMutator(Config scenario, String scenarioName, File projectDir, String key, BuildMutatorConfigurator configurator, List<Supplier<BuildMutator>> mutators) {
+    	if (scenario.hasPath(key)) {
+			mutators.add(configurator.configure(scenario, scenarioName, projectDir, key));
+		}
     }
 }

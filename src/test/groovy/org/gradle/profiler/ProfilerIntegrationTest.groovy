@@ -1574,6 +1574,90 @@ buildGoal {
         resultFile.text.readLines().get(20).matches("stddev,\\d+\\.\\d+")
     }
 
+    def "clears build cache when asked"() {
+        given:
+        buildFile << """
+            apply plugin: "java"
+
+            def cacheFiles(File gradleHome) {
+                file("\${gradleHome}/caches/build-cache-1").listFiles().findAll { it.name.length() == 32 }
+            }
+            
+            task checkNoCacheBefore {
+                doFirst {
+                    def files = cacheFiles(gradle.gradleUserHomeDir)
+                    files == null || files.empty
+                }
+            }
+            compileJava.mustRunAfter checkNoCacheBefore
+            
+            task checkHasCacheAfter {
+                mustRunAfter compileJava
+                doFirst {
+                    assert !cacheFiles(gradle.gradleUserHomeDir).empty
+                }
+            }
+        """
+
+        file("src/main/java").mkdirs()
+        file("src/main/java/Main.java") << """
+            public class Main {
+                public static void main(String... args) {
+                    System.out.println("Hello, World!");
+                }
+            }
+        """
+
+        def scenarios = file("performance.scenario")
+        scenarios.text = """
+buildTarget {
+    versions = ["4.5"]
+    clear-build-cache-before = SCENARIO
+    gradle-args = ["--build-cache"]
+    tasks = ["checkNoCacheBefore", "clean", "compileJava", "checkHasCacheAfter"]
+}
+"""
+
+        when:
+        new Main().run("--project-dir", projectDir.absolutePath, "--output-dir", outputDir.absolutePath, "--benchmark", "--scenario-file", scenarios.absolutePath, "--gradle-version", minimalSupportedGradleVersion, "buildTarget", "--warmups", "1", "--iterations", "1")
+
+        then:
+        noExceptionThrown()
+    }
+
+    def "does Git revert when asked"() {
+        given:
+        buildFile << """
+            task test {
+                doFirst {
+                    println "> During runtime:"
+                    println file("performance.scenario").text
+                    assert !file("performance.scenario").text.contains("// Modification")
+                }
+            }
+        """
+        def scenarios = file("performance.scenario")
+        scenarios.text = """
+buildTarget {
+    git-revert = "HEAD"
+    tasks = ["test"]
+}
+"""
+        ["git", "init"].execute([], projectDir).waitFor()
+        ["git", "add", "-A"].execute([], projectDir).waitFor()
+        ["git", "commit", "-m", "Initial import"].execute([], projectDir).waitFor()
+
+        scenarios << "// Modification"
+        ["git", "add", "-A"].execute([], projectDir).waitFor()
+        ["git", "commit", "-m", "Modification"].execute([], projectDir).waitFor()
+
+        when:
+        new Main().run("--project-dir", projectDir.absolutePath, "--output-dir", outputDir.absolutePath, "--benchmark", "--scenario-file", scenarios.absolutePath, "--gradle-version", minimalSupportedGradleVersion, "buildTarget", "--warmups", "1", "--iterations", "1")
+
+        then:
+        scenarios.text.contains("// Modification")
+    }
+
     def writeBuckw() {
         def buckw = file("buckw")
         buckw.text = '''

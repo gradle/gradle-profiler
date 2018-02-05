@@ -38,7 +38,7 @@ class ApplyChangeToAndroidResourceFileMutatorTest extends Specification {
         def mutator = new ApplyChangeToAndroidResourceFileMutator(sourceFile)
 
         when:
-        mutator.cleanup()
+        mutator.afterScenario()
 
         then:
         sourceFile.text == "<resources></resources>"
@@ -51,7 +51,7 @@ class ApplyChangeToAndroidResourceFileMutatorTest extends Specification {
 
         when:
         mutator.beforeBuild()
-        mutator.cleanup()
+        mutator.afterScenario()
 
         then:
         sourceFile.text == "<resources></resources>"

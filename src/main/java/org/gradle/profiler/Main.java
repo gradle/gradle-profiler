@@ -168,6 +168,8 @@ public class Main {
                     throw new IllegalArgumentException();
             }
 
+            mutator.beforeScenario();
+
             beforeBuild(invoker, cleanupTasks, mutator);
             BuildInvocationResult results = invoker.runBuild("warm-up build 1", tasks);
             String pid = results.getDaemonPid();
@@ -176,6 +178,7 @@ public class Main {
                 beforeBuild(invoker, cleanupTasks, mutator);
                 results = invoker.runBuild("warm-up build " + i, tasks);
                 checkPid(pid, results.getDaemonPid(), scenario.getInvoker());
+                mutator.afterBuild();
             }
 
             ProfilerController control = settings.getProfiler().newController(pid, scenarioSettings);
@@ -213,6 +216,8 @@ public class Main {
                 if (settings.isProfile() && (i == scenario.getBuildCount() || !cleanupTasks.isEmpty())) {
                     control.stopRecording();
                 }
+
+				mutator.afterBuild();
             }
 
             if (settings.isProfile()) {
@@ -224,7 +229,7 @@ public class Main {
             }
             checkPid(pid, results.getDaemonPid(), scenario.getInvoker());
         } finally {
-            mutator.cleanup();
+            mutator.afterScenario();
             projectConnection.close();
             daemonControl.stop(version);
         }
@@ -260,6 +265,7 @@ public class Main {
         commandLine.addAll(targets);
 
         BuildMutator mutator = scenario.getBuildMutator().get();
+        mutator.beforeScenario();
         try {
             Consumer<BuildInvocationResult> resultConsumer = benchmarkResults.version(scenario);
             for (int i = 0; i < scenario.getWarmUpCount(); i++) {
@@ -272,6 +278,7 @@ public class Main {
                 Duration executionTime = timer.elapsed();
                 System.out.println("Execution time " + executionTime.toMillis() + "ms");
                 resultConsumer.accept(new BuildInvocationResult(displayName, executionTime, null));
+                mutator.afterBuild();
             }
             for (int i = 0; i < scenario.getBuildCount(); i++) {
                 String displayName = "build " + (i + 1);
@@ -283,9 +290,10 @@ public class Main {
                 Duration executionTime = timer.elapsed();
                 System.out.println("Execution time " + executionTime.toMillis() + "ms");
                 resultConsumer.accept(new BuildInvocationResult(displayName, executionTime, null));
+				mutator.afterBuild();
             }
         } finally {
-            mutator.cleanup();
+            mutator.afterScenario();
         }
     }
 
@@ -315,6 +323,7 @@ public class Main {
         commandLine.addAll(targets);
 
         BuildMutator mutator = scenario.getBuildMutator().get();
+        mutator.beforeScenario();
         try {
             Consumer<BuildInvocationResult> resultConsumer = benchmarkResults.version(scenario);
             for (int i = 0; i < scenario.getWarmUpCount(); i++) {
@@ -327,6 +336,7 @@ public class Main {
                 Duration executionTime = timer.elapsed();
                 System.out.println("Execution time " + executionTime.toMillis() + "ms");
                 resultConsumer.accept(new BuildInvocationResult(displayName, executionTime, null));
+                mutator.afterBuild();
             }
             for (int i = 0; i < scenario.getBuildCount(); i++) {
                 String displayName = "build " + (i + 1);
@@ -338,9 +348,10 @@ public class Main {
                 Duration executionTime = timer.elapsed();
                 System.out.println("Execution time " + executionTime.toMillis() + "ms");
                 resultConsumer.accept(new BuildInvocationResult(displayName, executionTime, null));
+                mutator.afterBuild();
             }
         } finally {
-            mutator.cleanup();
+            mutator.afterScenario();
         }
     }
 
@@ -356,6 +367,7 @@ public class Main {
         commandLine.addAll(scenario.getTargets());
 
         BuildMutator mutator = scenario.getBuildMutator().get();
+        mutator.beforeScenario();
         try {
             Consumer<BuildInvocationResult> resultConsumer = benchmarkResults.version(scenario);
             for (int i = 0; i < scenario.getWarmUpCount(); i++) {
@@ -368,6 +380,7 @@ public class Main {
                 Duration executionTime = timer.elapsed();
                 System.out.println("Execution time " + executionTime.toMillis() + "ms");
                 resultConsumer.accept(new BuildInvocationResult(displayName, executionTime, null));
+                mutator.afterBuild();
             }
             for (int i = 0; i < scenario.getBuildCount(); i++) {
                 String displayName = "build " + (i + 1);
@@ -379,14 +392,16 @@ public class Main {
                 Duration executionTime = timer.elapsed();
                 System.out.println("Execution time " + executionTime.toMillis() + "ms");
                 resultConsumer.accept(new BuildInvocationResult(displayName, executionTime, null));
+                mutator.afterBuild();
             }
         } finally {
-            mutator.cleanup();
+            mutator.afterScenario();
         }
     }
 
     private void beforeBuild(BuildInvoker invoker, List<String> cleanupTasks, BuildMutator mutator) throws IOException {
         if (!cleanupTasks.isEmpty()) {
+        	mutator.beforeCleanup();
             invoker.notInstrumented().runBuild("cleanup", cleanupTasks);
         }
         mutator.beforeBuild();
