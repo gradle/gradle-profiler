@@ -14,6 +14,7 @@ import org.gradle.profiler.mutations.ApplyValueChangeToAndroidResourceFileMutato
 import org.gradle.profiler.mutations.BuildMutatorConfigurator;
 import org.gradle.profiler.mutations.ClearBuildCacheMutator;
 import org.gradle.profiler.mutations.FileChangeMutatorConfigurator;
+import org.gradle.profiler.mutations.GitCheckoutMutator;
 import org.gradle.profiler.mutations.GitRevertMutator;
 
 import java.io.File;
@@ -47,12 +48,13 @@ class ScenarioLoader {
     private static final String APPLY_CPP_SOURCE_CHANGE_TO = "apply-cpp-change-to";
     private static final String APPLY_H_SOURCE_CHANGE_TO = "apply-h-change-to";
     private static final String CLEAR_BUILD_CACHE_BEFORE = "clear-build-cache-before";
+    private static final String GIT_CHECKOUT = "git-checkout";
     private static final String GIT_REVERT = "git-revert";
     private static final String TARGETS = "targets";
     private static final String TYPE = "type";
 
     private static final List<String> ALL_SCENARIO_KEYS = Arrays.asList(
-        VERSIONS, TASKS, CLEANUP_TASKS, GRADLE_ARGS, RUN_USING, SYSTEM_PROPERTIES, WARM_UP_COUNT, APPLY_ABI_CHANGE_TO, APPLY_NON_ABI_CHANGE_TO, APPLY_ANDROID_RESOURCE_CHANGE_TO, APPLY_ANDROID_RESOURCE_VALUE_CHANGE_TO, APPLY_ANDROID_MANIFEST_CHANGE_TO, APPLY_PROPERTY_RESOURCE_CHANGE_TO, APPLY_CPP_SOURCE_CHANGE_TO, APPLY_H_SOURCE_CHANGE_TO, CLEAR_BUILD_CACHE_BEFORE, GIT_REVERT, BAZEL, BUCK, MAVEN
+        VERSIONS, TASKS, CLEANUP_TASKS, GRADLE_ARGS, RUN_USING, SYSTEM_PROPERTIES, WARM_UP_COUNT, APPLY_ABI_CHANGE_TO, APPLY_NON_ABI_CHANGE_TO, APPLY_ANDROID_RESOURCE_CHANGE_TO, APPLY_ANDROID_RESOURCE_VALUE_CHANGE_TO, APPLY_ANDROID_MANIFEST_CHANGE_TO, APPLY_PROPERTY_RESOURCE_CHANGE_TO, APPLY_CPP_SOURCE_CHANGE_TO, APPLY_H_SOURCE_CHANGE_TO, CLEAR_BUILD_CACHE_BEFORE, GIT_CHECKOUT, GIT_REVERT, BAZEL, BUCK, MAVEN
     );
     private static final List<String> BAZEL_KEYS = Arrays.asList(TARGETS);
     private static final List<String> BUCK_KEYS = Arrays.asList(TARGETS, TYPE);
@@ -119,6 +121,7 @@ class ScenarioLoader {
             maybeAddMutator(scenario, scenarioName, settings.getProjectDir(), APPLY_CPP_SOURCE_CHANGE_TO, ApplyChangeToNativeSourceFileMutator.class, mutators);
             maybeAddMutator(scenario, scenarioName, settings.getProjectDir(), APPLY_H_SOURCE_CHANGE_TO, ApplyChangeToNativeSourceFileMutator.class, mutators);
             maybeAddMutator(scenario, scenarioName, settings.getProjectDir(), CLEAR_BUILD_CACHE_BEFORE, new ClearBuildCacheMutator.Configurator(settings.getGradleUserHome()), mutators);
+            maybeAddMutator(scenario, scenarioName, settings.getProjectDir(), GIT_CHECKOUT, new GitCheckoutMutator.Configurator(), mutators);
             maybeAddMutator(scenario, scenarioName, settings.getProjectDir(), GIT_REVERT, new GitRevertMutator.Configurator(), mutators);
 
             BuildMutatorFactory buildMutatorFactory = new BuildMutatorFactory(mutators);

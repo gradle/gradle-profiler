@@ -1627,35 +1627,74 @@ buildTarget {
 
     def "does Git revert when asked"() {
         given:
-        buildFile << """
+        def repoDir = new File(projectDir, "repo")
+        def repo = new TestGitRepo(repoDir)
+
+        new File(repoDir, "build.gradle") << """
+            task cleanTest {
+                doFirst {
+                    assert file("file.txt").text == "Final"
+                }
+            }
             task test {
                 doFirst {
-                    println "> During runtime:"
-                    println file("performance.scenario").text
-                    assert !file("performance.scenario").text.contains("// Modification")
+                    assert file("file.txt").text == "Original"
                 }
             }
         """
+
         def scenarios = file("performance.scenario")
         scenarios.text = """
 buildTarget {
-    git-revert = "HEAD"
+    git-revert = ["${repo.finalCommit}", "${repo.modifiedCommit}"]
     tasks = ["test"]
 }
 """
-        ["git", "init"].execute([], projectDir).waitFor()
-        ["git", "add", "-A"].execute([], projectDir).waitFor()
-        ["git", "commit", "-m", "Initial import"].execute([], projectDir).waitFor()
-
-        scenarios << "// Modification"
-        ["git", "add", "-A"].execute([], projectDir).waitFor()
-        ["git", "commit", "-m", "Modification"].execute([], projectDir).waitFor()
 
         when:
-        new Main().run("--project-dir", projectDir.absolutePath, "--output-dir", outputDir.absolutePath, "--benchmark", "--scenario-file", scenarios.absolutePath, "--gradle-version", minimalSupportedGradleVersion, "buildTarget", "--warmups", "1", "--iterations", "1")
+        new Main().run("--project-dir", repoDir.absolutePath, "--output-dir", outputDir.absolutePath, "--benchmark", "--scenario-file", scenarios.absolutePath, "--gradle-version", minimalSupportedGradleVersion, "buildTarget", "--warmups", "1", "--iterations", "1")
 
         then:
-        scenarios.text.contains("// Modification")
+        repo.atFinalCommit()
+        repo.hasFinalContent()
+    }
+
+    def "does Git checkout when asked"() {
+        given:
+        def repoDir = new File(projectDir, "repo")
+        def repo = new TestGitRepo(repoDir)
+
+        new File(repoDir, "build.gradle") << """
+            task cleanTest {
+                doFirst {
+                    assert file("file.txt").text == "Original"
+                }
+            }
+            task test {
+                doFirst {
+                    assert file("file.txt").text == "Modified"
+                }
+            }
+        """
+
+        def scenarios = file("performance.scenario")
+        scenarios.text = """
+buildTarget {
+    git-checkout = {
+        cleanup = ${repo.originalCommit}
+        build = ${repo.modifiedCommit}
+    }
+    cleanup-tasks = ["cleanTest"]
+    tasks = ["test"]
+}
+"""
+
+        when:
+        new Main().run("--project-dir", repoDir.absolutePath, "--output-dir", outputDir.absolutePath, "--benchmark", "--scenario-file", scenarios.absolutePath, "--gradle-version", minimalSupportedGradleVersion, "buildTarget", "--warmups", "1", "--iterations", "1")
+
+        then:
+        repo.atFinalCommit()
+        repo.hasFinalContent()
     }
 
     def writeBuckw() {

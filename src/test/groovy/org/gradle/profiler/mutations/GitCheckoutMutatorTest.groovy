@@ -5,53 +5,46 @@ import org.junit.Rule
 import org.junit.rules.TemporaryFolder
 import spock.lang.Specification
 
-class GitRevertMutatorTest extends Specification {
+class GitCheckoutMutatorTest extends Specification {
     @Rule TemporaryFolder tmpDir = new TemporaryFolder()
 
-    def "reverts things properly"() {
+    def "checks out target commit"() {
         def repo = new TestGitRepo(tmpDir.newFolder())
-        def mutator = new GitRevertMutator(repo.directory, [repo.finalCommit, repo.modifiedCommit])
+        def mutator = new GitCheckoutMutator(repo.directory, repo.modifiedCommit, repo.originalCommit)
 
         when:
         mutator.beforeScenario()
         then:
         repo.atFinalCommit()
-        repo.hasFinalContent()
 
         when:
         mutator.beforeCleanup()
         then:
-        repo.atFinalCommit()
-        repo.hasFinalContent()
+        repo.atModifiedCommit()
 
         when:
         mutator.afterCleanup()
         then:
-        repo.atFinalCommit()
-        repo.hasFinalContent()
+        repo.atModifiedCommit()
 
         when:
         mutator.beforeBuild()
         then:
-        repo.atFinalCommit()
-        repo.hasOriginalContent()
+        repo.atOriginalCommit()
 
         when:
         mutator.afterBuild(new RuntimeException("Error"))
         then:
-        repo.atFinalCommit()
-        repo.hasOriginalContent()
+        repo.atOriginalCommit()
 
         when:
         mutator.afterBuild(null)
         then:
         repo.atFinalCommit()
-        repo.hasFinalContent()
 
         when:
         mutator.afterScenario()
         then:
         repo.atFinalCommit()
-        repo.hasFinalContent()
     }
 }

@@ -13,13 +13,12 @@ import java.util.List;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
-public class GitRevertMutator implements BuildMutator {
+public class GitRevertMutator extends AbstractGitMutator {
 
-	private final File projectDir;
 	private final List<String> commits;
 
 	public GitRevertMutator(File projectDir, List<String> commits) {
-		this.projectDir = projectDir;
+		super(projectDir);
 		this.commits = commits;
 	}
 
@@ -43,13 +42,7 @@ public class GitRevertMutator implements BuildMutator {
 		}
 	}
 
-    private void resetGit() {
-        System.out.println("> Resetting Git hard");
-        new CommandExec().inDir(projectDir).run("git", "reset", "--hard", "HEAD");
-        new CommandExec().inDir(projectDir).run("git", "status");
-    }
-
-    private void revertCommits() {
+	private void revertCommits() {
         System.out.println("> Reverting Git commit(s) " + commits.stream().collect(Collectors.joining(", ")));
         new CommandExec().inDir(projectDir).run("git", "revert", "--quit");
         List<String> commandLine = new ArrayList<>();
