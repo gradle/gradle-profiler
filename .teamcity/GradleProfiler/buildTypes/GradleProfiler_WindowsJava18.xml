@@ -18,7 +18,7 @@
       </runner>
     </build-runners>
     <vcs-settings>
-      <vcs-entry-ref root-id="GradleProfiler_Master" />
+      <vcs-entry-ref root-id="GradleProfiler_Branches" />
     </vcs-settings>
     <requirements>
       <contains id="RQ_19" name="teamcity.agent.jvm.os.name" value="Windows" />
@@ -39,7 +39,7 @@
           <param name="github_host" value="https://api.github.com" />
           <param name="publisherId" value="githubStatusPublisher" />
           <param name="secure:github_access_token" value="credentialsJSON:7c8c64ad-776d-4469-8400-5618da5de337" />
-          <param name="vcsRootId" value="GradleProfiler_Master" />
+          <param name="vcsRootId" value="GradleProfiler_Branches" />
         </parameters>
       </extension>
     </build-extensions>
