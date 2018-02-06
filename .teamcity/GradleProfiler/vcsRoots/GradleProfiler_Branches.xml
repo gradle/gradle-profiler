@@ -7,7 +7,8 @@
   <param name="branch" value="master" />
   <param name="ignoreKnownHosts" value="true" />
   <param name="submoduleCheckout" value="CHECKOUT" />
-  <param name="teamcity:branchSpec" value="+:refs/head/*" />
+  <param name="teamcity:branchSpec"><![CDATA[+:refs/heads/*
++:refs/(pull/*/head)]]></param>
   <param name="url" value="git://github.com/gradle/gradle-profiler.git" />
   <param name="usernameStyle" value="USERID" />
 </vcs-root>
