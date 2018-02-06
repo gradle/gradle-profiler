@@ -64,6 +64,9 @@ public class GitCheckoutMutator extends AbstractGitMutator {
 			Config config = scenario.getConfig(key);
 			String cleanup = ConfigUtil.string(config, "cleanup", null);
 			String build = ConfigUtil.string(config, "build", null);
+			if (build == null) {
+				throw new IllegalArgumentException("No git-checkout target specified for build");
+			}
 			return () -> new GitCheckoutMutator(projectDir, cleanup, build);
 		}
 	}
