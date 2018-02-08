@@ -11,6 +11,9 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.function.Consumer;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import java.util.stream.Stream;
 
 public class BuildScanProfiler extends Profiler {
@@ -33,32 +36,56 @@ public class BuildScanProfiler extends Profiler {
         return "buildscan";
     }
 
+    private static class LogParser implements Consumer<String> {
+		private static final Pattern RUNNING_SCENARIO = Pattern.compile("\\* Running scenario (.*) \\(scenario \\d+/\\d+\\)");
+		private static final Pattern RUNNING_TASKS = Pattern.compile("\\* Running (.*) with tasks \\[(.*)]");
+		private boolean nextLineIsBuildScanUrl;
+		private String build = "UNKNOWN";
+		private String tasks = "UNKNOWN";
+		private final List<String> results;
+
+		public LogParser(List<String> results) {
+			this.results = results;
+		}
+
+		@Override
+		public void accept(String line) {
+			if (nextLineIsBuildScanUrl) {
+				results.add(String.format("- Build scan for '%s' [%s]: %s", build, tasks, line));
+				nextLineIsBuildScanUrl = false;
+			} else {
+				Matcher tasksMatcher = RUNNING_TASKS.matcher(line);
+				if (tasksMatcher.matches()) {
+					build = tasksMatcher.group(1);
+					tasks = tasksMatcher.group(2);
+				} else if (line.equals("Publishing build scan...")) {
+					nextLineIsBuildScanUrl = true;
+				} else {
+					Matcher scenarioMatcher = RUNNING_SCENARIO.matcher(line);
+					if (scenarioMatcher.matches()) {
+						String scenario = scenarioMatcher.group(1);
+						if (!results.isEmpty()) {
+							results.add("");
+						}
+						results.add(String.format("Scenario %s", scenario));
+					}
+				}
+			}
+		}
+	}
+
     @Override
     public List<String> summarizeResultFile(File resultFile) {
-        List<String> buildScanURLs = new ArrayList<>();
-        List<String> tasks = new ArrayList<>();
-        tasks.add("");
+        List<String> results = new ArrayList<>();
         if (resultFile.getName().equals("profile.log")) {
-            try (Stream<String> logStream = Files.lines(resultFile.toPath())) {
-                logStream.forEach(line -> {
-                    if (line.matches("\\* Running .*\\[.*\\]")) {
-                        tasks.clear();
-                        tasks.add(line.substring(line.indexOf('[') + 1, line.indexOf(']')));
-                    } else if (line.startsWith("Publishing build ")) {
-                        buildScanURLs.add("");
-                    } else {
-                        int lastElementIndex = buildScanURLs.size() - 1;
-                        if (lastElementIndex >= 0 && "".equals(buildScanURLs.get(lastElementIndex))) {
-                            buildScanURLs.remove(lastElementIndex);
-                            buildScanURLs.add("Build Scan [" + tasks.get(0) + "]: " + line);
-                        }
-                    }
-                });
+			LogParser logParser = new LogParser(results);
+			try (Stream<String> logStream = Files.lines(resultFile.toPath())) {
+                logStream.forEach(logParser);
             } catch (IOException e) {
-                e.printStackTrace();
+                throw new RuntimeException(e);
             }
         }
-        return buildScanURLs;
+        return results;
     }
 
     @Override
