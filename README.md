@@ -200,6 +200,9 @@ A scenario can define changes that should be applied to the source before each b
 - `apply-android-resource-change-to`: Add a string resource to an Android resource file. Each iteration adds a new resource and removes the resource added by the previous iteration.
 - `apply-android-resource-value-change-to`: Change a string resource in an Android resource file.
 - `apply-android-manifest-change-to`: Add a permission to an Android manifest file.
+- `clear-build-cache-before`: Deletes the contents of the build cache before the scenario is executed (`SCENARIO`), before cleanup (`CLEANUP`) or before the build is executed (`BUILD`).
+- `git-checkout`: Checks out a specific for the build step, and a different one for the cleanup step.
+- `git-revert`: Reverts a given set of commits before the build and resets it afterward.
 
 They can be added to a scenario file like this:
 
@@ -214,6 +217,12 @@ They can be added to a scenario file like this:
         apply-android-resource-change-to = "src/main/res/value/strings.xml"
         apply-android-resource-value-change-to = "src/main/res/value/strings.xml"
         apply-android-manifest-change-to = "src/main/AndroidManifest.xml"
+        clear-build-cache-before = SCENARIO
+        git-checkout = {
+            cleanup = "efb43a1"
+            build = "master"
+        }
+        git-revert = ["efb43a1"]
     }
 
 ### Comparing against other build tools

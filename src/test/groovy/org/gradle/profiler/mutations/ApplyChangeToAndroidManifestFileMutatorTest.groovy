@@ -39,7 +39,7 @@ class ApplyChangeToAndroidManifestFileMutatorTest extends Specification {
         def mutator = new ApplyChangeToAndroidManifestFileMutator(sourceFile)
 
         when:
-        mutator.cleanup()
+        mutator.afterScenario()
 
         then:
         sourceFile.text == "<manifest></manifest>"
@@ -52,7 +52,7 @@ class ApplyChangeToAndroidManifestFileMutatorTest extends Specification {
 
         when:
         mutator.beforeBuild()
-        mutator.cleanup()
+        mutator.afterScenario()
 
         then:
         sourceFile.text == "<manifest></manifest>"

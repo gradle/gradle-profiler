@@ -8,7 +8,7 @@ import java.nio.file.Files;
 
 public abstract class AbstractFileChangeMutator implements BuildMutator {
     protected final File sourceFile;
-    private final String originalText;
+    private String originalText;
     private long timestamp;
     protected int counter;
 
@@ -27,14 +27,6 @@ public abstract class AbstractFileChangeMutator implements BuildMutator {
     }
 
     /**
-     * Returns some text that is specific to the current profiler tool invocation and is unlikely to have been included in the target source file prior to this invocation
-     * The string can be used as a Java identifier.
-     */
-    protected String getInvocationText() {
-        return "_" + String.valueOf(timestamp);
-    }
-
-    /**
      * Returns some text that is unlikely to have been included in any previous version of the target source file.
      * The string can be used as a Java identifier.
      */
@@ -43,21 +35,29 @@ public abstract class AbstractFileChangeMutator implements BuildMutator {
     }
 
     @Override
-    public void beforeBuild() throws IOException {
+    public void beforeBuild() {
         counter++;
         StringBuilder modifiedText = new StringBuilder(originalText);
         applyChangeTo(modifiedText);
-        Files.write(sourceFile.toPath(), modifiedText.toString().getBytes());
+        try {
+            Files.write(sourceFile.toPath(), modifiedText.toString().getBytes());
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     protected abstract void applyChangeTo(StringBuilder text);
 
-    private void revert() throws IOException {
-        Files.write(sourceFile.toPath(), originalText.getBytes());
+    private void revert() {
+        try {
+            Files.write(sourceFile.toPath(), originalText.getBytes());
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     @Override
-    public void cleanup() throws IOException {
+    public void afterScenario() {
         if (counter > 0) {
             revert();
             counter = 0;

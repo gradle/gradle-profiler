@@ -40,13 +40,13 @@ class ApplyAbiChangeToJavaSourceFileMutatorTest extends Specification {
         def mutator = new ApplyAbiChangeToJavaSourceFileMutator(sourceFile)
 
         when:
-        mutator.cleanup()
+        mutator.afterScenario()
 
         then:
         sourceFile.text == "class Thing { public void existingMethod() { }}"
 
         when:
-        mutator.cleanup()
+        mutator.afterScenario()
 
         then:
         sourceFile.text == "class Thing { public void existingMethod() { }}"
@@ -59,13 +59,13 @@ class ApplyAbiChangeToJavaSourceFileMutatorTest extends Specification {
 
         when:
         mutator.beforeBuild()
-        mutator.cleanup()
+        mutator.afterScenario()
 
         then:
         sourceFile.text == "class Thing { public void existingMethod() { }}"
 
         when:
-        mutator.cleanup()
+        mutator.afterScenario()
 
         then:
         sourceFile.text == "class Thing { public void existingMethod() { }}"

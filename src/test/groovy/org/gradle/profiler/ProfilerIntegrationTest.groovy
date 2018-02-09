@@ -1574,6 +1574,129 @@ buildGoal {
         resultFile.text.readLines().get(20).matches("stddev,\\d+\\.\\d+")
     }
 
+    def "clears build cache when asked"() {
+        given:
+        buildFile << """
+            apply plugin: "java"
+
+            def cacheFiles(File gradleHome) {
+                file("\${gradleHome}/caches/build-cache-1").listFiles().findAll { it.name.length() == 32 }
+            }
+            
+            task checkNoCacheBefore {
+                doFirst {
+                    def files = cacheFiles(gradle.gradleUserHomeDir)
+                    files == null || files.empty
+                }
+            }
+            compileJava.mustRunAfter checkNoCacheBefore
+            
+            task checkHasCacheAfter {
+                mustRunAfter compileJava
+                doFirst {
+                    assert !cacheFiles(gradle.gradleUserHomeDir).empty
+                }
+            }
+        """
+
+        file("src/main/java").mkdirs()
+        file("src/main/java/Main.java") << """
+            public class Main {
+                public static void main(String... args) {
+                    System.out.println("Hello, World!");
+                }
+            }
+        """
+
+        def scenarios = file("performance.scenario")
+        scenarios.text = """
+buildTarget {
+    versions = ["4.5"]
+    clear-build-cache-before = SCENARIO
+    gradle-args = ["--build-cache"]
+    tasks = ["checkNoCacheBefore", "clean", "compileJava", "checkHasCacheAfter"]
+}
+"""
+
+        when:
+        new Main().run("--project-dir", projectDir.absolutePath, "--output-dir", outputDir.absolutePath, "--benchmark", "--scenario-file", scenarios.absolutePath, "--gradle-version", minimalSupportedGradleVersion, "buildTarget", "--warmups", "1", "--iterations", "1")
+
+        then:
+        noExceptionThrown()
+    }
+
+    def "does Git revert when asked"() {
+        given:
+        def repoDir = new File(projectDir, "repo")
+        def repo = new TestGitRepo(repoDir)
+
+        new File(repoDir, "build.gradle") << """
+            task cleanTest {
+                doFirst {
+                    assert file("file.txt").text == "Final"
+                }
+            }
+            task test {
+                doFirst {
+                    assert file("file.txt").text == "Original"
+                }
+            }
+        """
+
+        def scenarios = file("performance.scenario")
+        scenarios.text = """
+buildTarget {
+    git-revert = ["${repo.finalCommit}", "${repo.modifiedCommit}"]
+    tasks = ["test"]
+}
+"""
+
+        when:
+        new Main().run("--project-dir", repoDir.absolutePath, "--output-dir", outputDir.absolutePath, "--benchmark", "--scenario-file", scenarios.absolutePath, "--gradle-version", minimalSupportedGradleVersion, "buildTarget", "--warmups", "1", "--iterations", "1")
+
+        then:
+        repo.atFinalCommit()
+        repo.hasFinalContent()
+    }
+
+    def "does Git checkout when asked"() {
+        given:
+        def repoDir = new File(projectDir, "repo")
+        def repo = new TestGitRepo(repoDir)
+
+        new File(repoDir, "build.gradle") << """
+            task cleanTest {
+                doFirst {
+                    assert file("file.txt").text == "Original"
+                }
+            }
+            task test {
+                doFirst {
+                    assert file("file.txt").text == "Modified"
+                }
+            }
+        """
+
+        def scenarios = file("performance.scenario")
+        scenarios.text = """
+buildTarget {
+    git-checkout = {
+        cleanup = ${repo.originalCommit}
+        build = ${repo.modifiedCommit}
+    }
+    cleanup-tasks = ["cleanTest"]
+    tasks = ["test"]
+}
+"""
+
+        when:
+        new Main().run("--project-dir", repoDir.absolutePath, "--output-dir", outputDir.absolutePath, "--benchmark", "--scenario-file", scenarios.absolutePath, "--gradle-version", minimalSupportedGradleVersion, "buildTarget", "--warmups", "1", "--iterations", "1")
+
+        then:
+        repo.atFinalCommit()
+        repo.hasFinalContent()
+    }
+
     def writeBuckw() {
         def buckw = file("buckw")
         buckw.text = '''

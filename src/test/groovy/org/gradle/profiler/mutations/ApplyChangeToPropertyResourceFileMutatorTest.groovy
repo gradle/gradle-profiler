@@ -39,7 +39,7 @@ class ApplyChangeToPropertyResourceFileMutatorTest extends Specification {
         def mutator = new ApplyChangeToPropertyResourceFileMutator(sourceFile)
 
         when:
-        mutator.cleanup()
+        mutator.afterScenario()
 
         then:
         sourceFile.text == ORIGINAL_CONTENTS
@@ -52,7 +52,7 @@ class ApplyChangeToPropertyResourceFileMutatorTest extends Specification {
 
         when:
         mutator.beforeBuild()
-        mutator.cleanup()
+        mutator.afterScenario()
 
         then:
         sourceFile.text == ORIGINAL_CONTENTS
