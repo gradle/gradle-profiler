@@ -12,7 +12,7 @@ public interface BuildMutator {
     default void beforeCleanup() {};
 
     /**
-     * Runs after each iteration of the build has finished.
+     * Runs after each iteration of cleanup has finished.
      */
     default void afterCleanup(Throwable error) {};
 

@@ -14,6 +14,8 @@ class TestGitRepo {
         file = new File(directory, "file.txt")
         file.text = "Original"
         run "git", "init"
+        run "git", "config", "user.name", "Test User"
+        run "git", "config", "user.email", "test@gradle.com"
         commit "Initial import"
         originalCommit = currentCommit
 
