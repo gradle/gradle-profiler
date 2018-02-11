@@ -1625,6 +1625,40 @@ buildTarget {
         noExceptionThrown()
     }
 
+    def "shows build cache size"() {
+        given:
+        buildFile << """
+            apply plugin: "java"
+        """
+
+        file("src/main/java").mkdirs()
+        file("src/main/java/Main.java") << """
+            public class Main {
+                public static void main(String... args) {
+                    System.out.println("Hello, World!");
+                }
+            }
+        """
+
+        def scenarios = file("performance.scenario")
+        scenarios.text = """
+buildTarget {
+    versions = ["4.5"]
+    clear-build-cache-before = SCENARIO
+    show-build-cache-size = true
+    gradle-args = ["--build-cache"]
+    cleanup-tasks = ["clean"]
+    tasks = ["compileJava"]
+}
+"""
+
+        when:
+        new Main().run("--project-dir", projectDir.absolutePath, "--output-dir", outputDir.absolutePath, "--benchmark", "--scenario-file", scenarios.absolutePath, "--gradle-version", minimalSupportedGradleVersion, "buildTarget", "--warmups", "1", "--iterations", "1")
+
+        then:
+        output.count ("> Build cache size:") == 5
+    }
+
     def "does Git revert when asked"() {
         given:
         def repoDir = new File(projectDir, "repo")
