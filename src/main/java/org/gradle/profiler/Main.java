@@ -18,6 +18,10 @@ import java.util.function.Consumer;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
+import static org.gradle.profiler.BuildStep.BUILD;
+import static org.gradle.profiler.BuildStep.CLEANUP;
+import static org.gradle.profiler.Phase.MEASURE;
+import static org.gradle.profiler.Phase.WARM_UP;
 import static org.gradle.profiler.Logging.startOperation;
 
 public class Main {
@@ -140,6 +144,7 @@ public class Main {
             for (Map.Entry<String, String> entry : scenario.getSystemProperties().entrySet()) {
                 allBuildsJvmArgs.add("-D" + entry.getKey() + "=" + entry.getValue());
             }
+            allBuildsJvmArgs.add("-Dorg.gradle.profiler.scenario=" + scenario.getName());
             allBuildsJvmArgsCalculator.calculateJvmArgs(allBuildsJvmArgs);
             logJvmArgs(allBuildsJvmArgs);
             List<String> allBuildsGradleArgs = new ArrayList<>(pidInstrumentation.getArgs());
@@ -178,8 +183,8 @@ public class Main {
 
 			for (int i = 1; i <= scenario.getWarmUpCount(); i++) {
 				final int counter = i;
-				beforeBuild(invoker, cleanupTasks, mutator);
-				results = tryRun(() -> invoker.runBuild("warm-up build " + counter, tasks),
+				beforeBuild(WARM_UP, counter, invoker, cleanupTasks, mutator);
+				results = tryRun(() -> invoker.runBuild(WARM_UP, counter, BUILD, tasks),
 						mutator::afterBuild);
 				if (pid == null) {
 					pid = results.getDaemonPid();
@@ -213,7 +218,7 @@ public class Main {
             }
 			for (int i = 1; i <= scenario.getBuildCount(); i++) {
 				final int counter = i;
-				beforeBuild(invoker, cleanupTasks, mutator);
+				beforeBuild(MEASURE, counter, invoker, cleanupTasks, mutator);
 				results = tryRun(() -> {
 					if (settings.isProfile() && (counter == 1 || !cleanupTasks.isEmpty())) {
 						try {
@@ -223,7 +228,7 @@ public class Main {
 						}
 					}
 
-					BuildInvocationResult result = instrumentedBuildInvoker.runBuild("build " + counter, tasks);
+					BuildInvocationResult result = instrumentedBuildInvoker.runBuild(MEASURE, counter, BUILD, tasks);
 
 					if (settings.isProfile() && (counter == scenario.getBuildCount() || !cleanupTasks.isEmpty())) {
 						try {
@@ -286,7 +291,7 @@ public class Main {
         try {
             Consumer<BuildInvocationResult> resultConsumer = benchmarkResults.version(scenario);
             for (int i = 0; i < scenario.getWarmUpCount(); i++) {
-                String displayName = "warm-up build " + (i + 1);
+                String displayName = WARM_UP.displayBuildNumber(i + 1);
                 mutator.beforeBuild();
 				tryRun(() -> {
 					startOperation("Running " + displayName);
@@ -298,7 +303,7 @@ public class Main {
 				}, mutator::afterBuild);
             }
             for (int i = 0; i < scenario.getBuildCount(); i++) {
-                String displayName = "build " + (i + 1);
+                String displayName = MEASURE.displayBuildNumber(i + 1);
                 mutator.beforeBuild();
 				tryRun(() -> {
 					startOperation("Running " + displayName);
@@ -343,7 +348,7 @@ public class Main {
         try {
             Consumer<BuildInvocationResult> resultConsumer = benchmarkResults.version(scenario);
             for (int i = 0; i < scenario.getWarmUpCount(); i++) {
-                String displayName = "warm-up build " + (i + 1);
+                String displayName = WARM_UP.displayBuildNumber(i + 1);
                 mutator.beforeBuild();
 				tryRun(() -> {
 					startOperation("Running " + displayName);
@@ -355,7 +360,7 @@ public class Main {
 				}, mutator::afterBuild);
             }
             for (int i = 0; i < scenario.getBuildCount(); i++) {
-                String displayName = "build " + (i + 1);
+                String displayName = MEASURE.displayBuildNumber(i + 1);
                 mutator.beforeBuild();
 				tryRun(() -> {
 					startOperation("Running " + displayName);
@@ -387,7 +392,7 @@ public class Main {
         try {
             Consumer<BuildInvocationResult> resultConsumer = benchmarkResults.version(scenario);
             for (int i = 0; i < scenario.getWarmUpCount(); i++) {
-                String displayName = "warm-up build " + (i + 1);
+				String displayName = WARM_UP.displayBuildNumber(i + 1);
                 mutator.beforeBuild();
 				tryRun(() -> {
 					startOperation("Running " + displayName);
@@ -399,7 +404,7 @@ public class Main {
 				}, mutator::afterBuild);
             }
             for (int i = 0; i < scenario.getBuildCount(); i++) {
-                String displayName = "build " + (i + 1);
+				String displayName = MEASURE.displayBuildNumber(i + 1);
                 mutator.beforeBuild();
 				tryRun(() -> {
 					startOperation("Running " + displayName);
@@ -437,10 +442,10 @@ public class Main {
 		}, after);
 	}
 
-	private static void beforeBuild(BuildInvoker invoker, List<String> cleanupTasks, BuildMutator mutator) {
+	private static void beforeBuild(Phase phase, int buildNumber, BuildInvoker invoker, List<String> cleanupTasks, BuildMutator mutator) {
         if (!cleanupTasks.isEmpty()) {
         	mutator.beforeCleanup();
-        	tryRun(() -> invoker.notInstrumented().runBuild("cleanup", cleanupTasks), mutator::afterCleanup);
+        	tryRun(() -> invoker.notInstrumented().runBuild(phase, buildNumber, CLEANUP, cleanupTasks), mutator::afterCleanup);
         }
         mutator.beforeBuild();
     }
