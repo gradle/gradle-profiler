@@ -54,7 +54,7 @@ public class Main {
             settings.printTo(System.out);
 
             DaemonControl daemonControl = new DaemonControl(settings.getGradleUserHome());
-            GradleVersionInspector gradleVersionInspector = new GradleVersionInspector(settings.getProjectDir(), settings.getGradleUserHome(), daemonControl);
+            GradleVersionInspector gradleVersionInspector = new DefaultGradleVersionInspector(settings.getProjectDir(), settings.getGradleUserHome(), daemonControl);
             ScenarioLoader scenarioLoader = new ScenarioLoader(gradleVersionInspector);
             List<ScenarioDefinition> scenarios = scenarioLoader.loadScenarios(settings);
             int totalScenarios = scenarios.size();
