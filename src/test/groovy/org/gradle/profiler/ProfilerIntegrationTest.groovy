@@ -745,6 +745,8 @@ println "<tasks: " + gradle.startParameter.taskNames + ">"
 
         def scenarioFile = file("benchmark.conf")
         scenarioFile.text = """
+default-scenarios = ["assemble", "help"]
+
 baseVersion = "${minimalSupportedGradleVersion}"
 
 defaults = {
@@ -767,15 +769,18 @@ println "<tasks: " + gradle.startParameter.taskNames + ">"
 
         when:
         new Main().run("--project-dir", projectDir.absolutePath, "--output-dir", outputDir.absolutePath, "--scenario-file", scenarioFile.absolutePath,
-                "--profile", "jfr", "help")
+                "--profile", "jfr")
 
         then:
-        logFile.grep("<gradle-version: $minimalSupportedGradleVersion>").size() == 4
-        logFile.grep("<gradle-version: 3.0>").size() == 4
+        logFile.grep("<gradle-version: $minimalSupportedGradleVersion>").size() == 7
+        logFile.grep("<gradle-version: 3.0>").size() == 7
+        logFile.grep("<tasks: [assemble]>").size() == 6
         logFile.grep("<tasks: [help]>").size() == 8
 
-        logFile.contains("* Running scenario help using Gradle $minimalSupportedGradleVersion (scenario 1/2)")
-        logFile.contains("* Running scenario help using Gradle 3.0 (scenario 2/2)")
+        logFile.contains("* Running scenario assemble using Gradle $minimalSupportedGradleVersion (scenario 1/4)")
+        logFile.contains("* Running scenario assemble using Gradle 3.0 (scenario 2/4)")
+        logFile.contains("* Running scenario help using Gradle $minimalSupportedGradleVersion (scenario 3/4)")
+        logFile.contains("* Running scenario help using Gradle 3.0 (scenario 4/4)")
 
         new File(outputDir, "help/$minimalSupportedGradleVersion/help-${minimalSupportedGradleVersion}.jfr").file
         new File(outputDir, "help/3.0/help-3.0.jfr").file
