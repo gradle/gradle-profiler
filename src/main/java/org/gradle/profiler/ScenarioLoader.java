@@ -26,6 +26,7 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.TreeSet;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
@@ -107,7 +108,7 @@ class ScenarioLoader {
         } else if (roots.contains("default-scenarios")) {
             selectedScenarios = new LinkedHashSet<>(config.getStringList("default-scenarios"));
         } else {
-            selectedScenarios = new LinkedHashSet<>(roots);
+            selectedScenarios = new TreeSet<>(roots);
         }
         for (String scenarioName : selectedScenarios) {
             Config scenario = config.getConfig(scenarioName);
