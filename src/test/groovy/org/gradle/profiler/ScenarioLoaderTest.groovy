@@ -79,9 +79,8 @@ class ScenarioLoaderTest extends Specification {
         """
         def scenarios = loadScenarios(scenarioFile, settings, Mock(GradleVersionInspector))
         expect:
-        scenarios*.name == ["alma", "bela"]
+        scenarios*.name == ["alma"]
         (scenarios[0] as GradleScenarioDefinition).tasks == ["alma"]
-        (scenarios[1] as GradleScenarioDefinition).tasks == ["bela"]
     }
 
     def "can load Bazel scenario"() {
