@@ -18,7 +18,7 @@ import java.util.stream.Stream;
 
 public class BuildScanProfiler extends Profiler {
 
-    private final static String VERSION = "1.11";
+    public final static String VERSION = "1.11";
 
     private final String buildScanVersion;
 
@@ -38,9 +38,10 @@ public class BuildScanProfiler extends Profiler {
 
     private static class LogParser implements Consumer<String> {
 		private static final Pattern RUNNING_SCENARIO = Pattern.compile("\\* Running scenario (.*) \\(scenario \\d+/\\d+\\)");
-		private static final Pattern RUNNING_TASKS = Pattern.compile("\\* Running (.*) with tasks \\[(.*)]");
+		private static final Pattern RUNNING_TASKS = Pattern.compile("\\* Running (.*) with (.*) tasks \\[(.*)]");
 		private boolean nextLineIsBuildScanUrl;
 		private String build = "UNKNOWN";
+		private String step = "UNKNOWN";
 		private String tasks = "UNKNOWN";
 		private final List<String> results;
 
@@ -51,13 +52,14 @@ public class BuildScanProfiler extends Profiler {
 		@Override
 		public void accept(String line) {
 			if (nextLineIsBuildScanUrl) {
-				results.add(String.format("- Build scan for '%s' [%s]: %s", build, tasks, line));
+				results.add(String.format("- Build scan for '%s' %s [%s]: %s", build, step, tasks, line));
 				nextLineIsBuildScanUrl = false;
 			} else {
 				Matcher tasksMatcher = RUNNING_TASKS.matcher(line);
 				if (tasksMatcher.matches()) {
 					build = tasksMatcher.group(1);
-					tasks = tasksMatcher.group(2);
+					step = tasksMatcher.group(2);
+					tasks = tasksMatcher.group(3);
 				} else if (line.equals("Publishing build scan...")) {
 					nextLineIsBuildScanUrl = true;
 				} else {

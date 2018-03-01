@@ -22,6 +22,7 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -92,16 +93,22 @@ class ScenarioLoader {
         return scenarios;
     }
 
-    private List<ScenarioDefinition> loadScenarios(File scenarioFile, InvocationSettings settings, GradleVersionInspector inspector) {
+    static List<ScenarioDefinition> loadScenarios(File scenarioFile, InvocationSettings settings, GradleVersionInspector inspector) {
         List<ScenarioDefinition> definitions = new ArrayList<>();
         Config config = ConfigFactory.parseFile(scenarioFile, ConfigParseOptions.defaults().setAllowMissing(false)).resolve();
-        Set<String> selectedScenarios = new TreeSet<>(config.root().keySet());
+        Set<String> roots = config.root().keySet();
+        Set<String> selectedScenarios;
         if (!settings.getTargets().isEmpty()) {
             for (String target : settings.getTargets()) {
-                if (!selectedScenarios.contains(target)) {
-                    throw new IllegalArgumentException("Unknown scenario '" + target + "' requested. Available scenarios are: " + selectedScenarios.stream() .collect(Collectors.joining(", "))); }
+                if (!roots.contains(target)) {
+                    throw new IllegalArgumentException("Unknown scenario '" + target + "' requested. Available scenarios are: " + roots.stream().sorted().collect(Collectors.joining(", ")));
+                }
             }
-            selectedScenarios = new TreeSet<>(settings.getTargets());
+            selectedScenarios = new LinkedHashSet<>(settings.getTargets());
+        } else if (roots.contains("default-scenarios")) {
+            selectedScenarios = new LinkedHashSet<>(config.getStringList("default-scenarios"));
+        } else {
+            selectedScenarios = new TreeSet<>(roots);
         }
         for (String scenarioName : selectedScenarios) {
             Config scenario = config.getConfig(scenarioName);
@@ -173,7 +180,7 @@ class ScenarioLoader {
                 List<GradleVersion> versions = ConfigUtil.strings(scenario, VERSIONS, settings.getVersions()).stream().map(inspector::resolve).collect(
                         Collectors.toList());
                 if (versions.isEmpty()) {
-                    versions.add(gradleVersionInspector.defaultVersion());
+                    versions.add(inspector.defaultVersion());
                 }
 
                 List<String> tasks = ConfigUtil.strings(scenario, TASKS, settings.getTargets());

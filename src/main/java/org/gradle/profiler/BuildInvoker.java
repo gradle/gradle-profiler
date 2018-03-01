@@ -4,11 +4,12 @@ import org.gradle.tooling.GradleConnectionException;
 import org.gradle.tooling.LongRunningOperation;
 
 import java.time.Duration;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
-import static org.gradle.profiler.Logging.*;
+import static org.gradle.profiler.Logging.startOperation;
 
 public abstract class BuildInvoker {
     private final List<String> jvmArgs;
@@ -23,10 +24,15 @@ public abstract class BuildInvoker {
         this.resultsConsumer = resultsConsumer;
     }
 
-    public BuildInvocationResult runBuild(String displayName, List<String> tasks) {
-        startOperation("Running " + displayName + " with tasks " + tasks);
+    public BuildInvocationResult runBuild(Phase phase, int buildNumber, BuildStep buildStep, List<String> tasks) {
+        String displayName = phase.displayBuildNumber(buildNumber);
+        startOperation("Running " + displayName + " with " + buildStep.name().toLowerCase() + " tasks " + tasks);
 
         Timer timer = new Timer();
+        List<String> jvmArgs = new ArrayList<>(this.jvmArgs);
+        jvmArgs.add("-Dorg.gradle.profiler.phase=" + phase);
+        jvmArgs.add("-Dorg.gradle.profiler.number=" + buildNumber);
+        jvmArgs.add("-Dorg.gradle.profiler.step=" + buildStep);
         run(tasks, gradleArgs, jvmArgs);
         Duration executionTime = timer.elapsed();
 
