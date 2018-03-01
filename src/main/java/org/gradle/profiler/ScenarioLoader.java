@@ -101,7 +101,7 @@ class ScenarioLoader {
         if (!settings.getTargets().isEmpty()) {
             for (String target : settings.getTargets()) {
                 if (!roots.contains(target)) {
-                    throw new IllegalArgumentException("Unknown scenario '" + target + "' requested. Available scenarios are: " + roots.stream().collect(Collectors.joining(", ")));
+                    throw new IllegalArgumentException("Unknown scenario '" + target + "' requested. Available scenarios are: " + roots.stream().sorted().collect(Collectors.joining(", ")));
                 }
             }
             selectedScenarios = new LinkedHashSet<>(settings.getTargets());

@@ -75,7 +75,7 @@ class ScenarioLoaderTest extends Specification {
                 tasks = ["bela"]
             }
             
-            include file("${otherConf.absolutePath}")
+            include file("${otherConf.absolutePath.replace((char)'\\', (char) '/')}")
         """
         def scenarios = loadScenarios(scenarioFile, settings, Mock(GradleVersionInspector))
         expect:
