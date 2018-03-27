@@ -5,6 +5,7 @@ import java.io.PrintStream;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Supplier;
+import java.util.stream.Collectors;
 
 public class GradleScenarioDefinition extends ScenarioDefinition {
 
@@ -38,6 +39,11 @@ public class GradleScenarioDefinition extends ScenarioDefinition {
     @Override
     public String getProfileName() {
         return getName() + "-" + version.getVersion();
+    }
+
+    @Override
+    public String getTasksDisplayName() {
+        return tasks.stream().collect(Collectors.joining(" "));
     }
 
     public List<String> getGradleArgs() {

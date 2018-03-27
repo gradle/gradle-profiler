@@ -2,6 +2,7 @@ package org.gradle.profiler;
 
 import org.apache.commons.io.FileUtils;
 import org.gradle.profiler.report.CsvGenerator;
+import org.gradle.profiler.report.HtmlGenerator;
 import org.gradle.tooling.GradleConnector;
 import org.gradle.tooling.ProjectConnection;
 import org.gradle.tooling.model.build.BuildEnvironment;
@@ -56,8 +57,9 @@ public class Main {
 
             logScenarios(scenarios);
 
-            File resultsFile = new File(settings.getOutputDir(), "benchmark.csv");
-            BenchmarkResults benchmarkResults = new BenchmarkResults(new CsvGenerator(resultsFile));
+            File cvsFile = new File(settings.getOutputDir(), "benchmark.csv");
+            File htmlFile = new File(settings.getOutputDir(), "benchmark.html");
+            BenchmarkResults benchmarkResults = new BenchmarkResults(new CsvGenerator(cvsFile), new HtmlGenerator(htmlFile));
             PidInstrumentation pidInstrumentation = new PidInstrumentation();
 
             List<Throwable> failures = new ArrayList<>();
@@ -75,7 +77,7 @@ public class Main {
                     } else if (scenario instanceof MavenScenarioDefinition){
                         runMavenScenario((MavenScenarioDefinition) scenario, settings, benchmarkResults);
                     } else {
-                        runGradleScenario((GradleScenarioDefinition)scenario, settings, daemonControl, benchmarkResults, pidInstrumentation, resultsFile);
+                        runGradleScenario((GradleScenarioDefinition)scenario, settings, daemonControl, benchmarkResults, pidInstrumentation);
                     }
 
                 } catch (Throwable t) {
@@ -107,8 +109,7 @@ public class Main {
         }
     }
 
-    private void runGradleScenario(GradleScenarioDefinition scenario,  InvocationSettings settings, DaemonControl daemonControl, BenchmarkResults benchmarkResults,
-                                   PidInstrumentation pidInstrumentation, File resultsFile) throws IOException, InterruptedException {
+    private void runGradleScenario(GradleScenarioDefinition scenario,  InvocationSettings settings, DaemonControl daemonControl, BenchmarkResults benchmarkResults, PidInstrumentation pidInstrumentation) throws IOException, InterruptedException {
         ScenarioSettings scenarioSettings = new ScenarioSettings(settings, scenario);
         FileUtils.forceMkdir(scenario.getOutputDir());
         JvmArgsCalculator allBuildsJvmArgsCalculator = settings.getProfiler().newJvmArgsCalculator(scenarioSettings);

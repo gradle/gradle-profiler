@@ -1,19 +1,20 @@
 package org.gradle.profiler;
 
 import org.apache.commons.math3.stat.descriptive.DescriptiveStatistics;
-import org.gradle.profiler.report.CsvGenerator;
+import org.gradle.profiler.report.AbstractGenerator;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.function.Consumer;
 
 public class BenchmarkResults {
     private final List<BuildScenario> allBuilds = new ArrayList<>();
-    private final CsvGenerator csvGenerator;
+    private final List<AbstractGenerator> generators;
 
-    public BenchmarkResults(CsvGenerator csvGenerator) {
-        this.csvGenerator = csvGenerator;
+    public BenchmarkResults(AbstractGenerator... generators) {
+        this.generators = Arrays.asList(generators);
     }
 
     public Consumer<BuildInvocationResult> version(ScenarioDefinition scenario) {
@@ -28,7 +29,9 @@ public class BenchmarkResults {
     }
 
     public void write() throws IOException {
-        csvGenerator.write(allBuilds);
+        for (AbstractGenerator generator : generators) {
+            generator.write(allBuilds);
+        }
     }
 
     private static class BuildScenario implements BuildScenarioResult {

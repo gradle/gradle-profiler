@@ -25,6 +25,10 @@ public abstract class ScenarioDefinition {
 
     public abstract String getProfileName();
 
+    public String getTasksDisplayName() {
+        return "";
+    }
+
     public String getName() {
         return name;
     }
