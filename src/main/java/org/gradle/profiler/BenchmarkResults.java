@@ -31,7 +31,7 @@ public class BenchmarkResults {
         csvGenerator.write(allBuilds);
     }
 
-    public static class BuildScenario {
+    private static class BuildScenario implements BuildScenarioResult {
         public final ScenarioDefinition scenario;
         public final List<BuildInvocationResult> results = new ArrayList<>();
 
@@ -39,6 +39,17 @@ public class BenchmarkResults {
             this.scenario = scenario;
         }
 
+        @Override
+        public ScenarioDefinition getScenarioDefinition() {
+            return scenario;
+        }
+
+        @Override
+        public List<? extends BuildInvocationResult> getResults() {
+            return results;
+        }
+
+        @Override
         public DescriptiveStatistics getStatistics() {
             DescriptiveStatistics statistics = new DescriptiveStatistics();
             if (results.size() > scenario.getWarmUpCount() + 1) {
@@ -48,11 +59,5 @@ public class BenchmarkResults {
             }
             return statistics;
         }
-
-        @Override
-        public boolean equals(Object obj) {
-            throw new UnsupportedOperationException();
-        }
-
     }
 }

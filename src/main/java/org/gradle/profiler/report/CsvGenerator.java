@@ -1,8 +1,8 @@
 package org.gradle.profiler.report;
 
 import org.apache.commons.math3.stat.descriptive.DescriptiveStatistics;
-import org.gradle.profiler.BenchmarkResults;
 import org.gradle.profiler.BuildInvocationResult;
+import org.gradle.profiler.BuildScenarioResult;
 import org.gradle.profiler.GradleScenarioDefinition;
 
 import java.io.BufferedWriter;
@@ -19,20 +19,20 @@ public class CsvGenerator {
         this.outputFile = outputFile;
     }
 
-    public void write(List<BenchmarkResults.BuildScenario> allBuilds) throws IOException {
-        int maxRows = allBuilds.stream().mapToInt(v -> v.results.size()).max().orElse(0);
+    public void write(List<? extends BuildScenarioResult> allScenarios) throws IOException {
+        int maxRows = allScenarios.stream().mapToInt(v -> v.getResults().size()).max().orElse(0);
         try (BufferedWriter writer = new BufferedWriter(new FileWriter(outputFile))) {
             writer.write("build");
-            for (BenchmarkResults.BuildScenario result : allBuilds) {
+            for (BuildScenarioResult result : allScenarios) {
                 writer.write(",");
-                writer.write(result.scenario.getShortDisplayName());
+                writer.write(result.getScenarioDefinition().getShortDisplayName());
             }
             writer.newLine();
             writer.write("tasks");
-            for (BenchmarkResults.BuildScenario result : allBuilds) {
+            for (BuildScenarioResult result : allScenarios) {
                 writer.write(",");
-                if (result.scenario instanceof GradleScenarioDefinition) {
-                    GradleScenarioDefinition scenario = (GradleScenarioDefinition) result.scenario;
+                if (result.getScenarioDefinition() instanceof GradleScenarioDefinition) {
+                    GradleScenarioDefinition scenario = (GradleScenarioDefinition) result.getScenarioDefinition();
                     writer.write(scenario.getTasks().stream().collect(Collectors.joining(" ")));
                 } else {
                     writer.write("");
@@ -40,8 +40,8 @@ public class CsvGenerator {
             }
             writer.newLine();
             for (int row = 0; row < maxRows; row++) {
-                for (BenchmarkResults.BuildScenario result : allBuilds) {
-                    List<BuildInvocationResult> results = result.results;
+                for (BuildScenarioResult result : allScenarios) {
+                    List<? extends BuildInvocationResult> results = result.getResults();
                     if (row >= results.size()) {
                         continue;
                     }
@@ -49,8 +49,8 @@ public class CsvGenerator {
                     writer.write(buildResult.getDisplayName());
                     break;
                 }
-                for (BenchmarkResults.BuildScenario result : allBuilds) {
-                    List<BuildInvocationResult> results = result.results;
+                for (BuildScenarioResult result : allScenarios) {
+                    List<? extends BuildInvocationResult> results = result.getResults();
                     writer.write(",");
                     if (row >= results.size()) {
                         continue;
@@ -61,7 +61,7 @@ public class CsvGenerator {
                 writer.newLine();
             }
 
-            List<DescriptiveStatistics> statistics = allBuilds.stream().map(BenchmarkResults.BuildScenario::getStatistics).collect(Collectors.toList());
+            List<DescriptiveStatistics> statistics = allScenarios.stream().map(BuildScenarioResult::getStatistics).collect(Collectors.toList());
             writer.write("mean");
             for (DescriptiveStatistics statistic : statistics) {
                 writer.write(",");
