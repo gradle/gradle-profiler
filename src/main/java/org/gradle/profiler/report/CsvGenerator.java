@@ -8,6 +8,7 @@ import java.io.BufferedWriter;
 import java.io.File;
 import java.io.IOException;
 import java.util.List;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 public class CsvGenerator extends AbstractGenerator {
@@ -17,10 +18,16 @@ public class CsvGenerator extends AbstractGenerator {
 
     @Override
     protected void write(List<? extends BuildScenarioResult> allScenarios, BufferedWriter writer) throws IOException {
-        writer.write("build");
+        writer.write("scenario");
         for (BuildScenarioResult result : allScenarios) {
             writer.write(",");
-            writer.write(result.getScenarioDefinition().getShortDisplayName());
+            writer.write(result.getScenarioDefinition().getName());
+        }
+        writer.newLine();
+        writer.write("version");
+        for (BuildScenarioResult result : allScenarios) {
+            writer.write(",");
+            writer.write(result.getScenarioDefinition().getBuildToolDisplayName());
         }
         writer.newLine();
         writer.write("tasks");
@@ -53,22 +60,20 @@ public class CsvGenerator extends AbstractGenerator {
         }
 
         List<DescriptiveStatistics> statistics = allScenarios.stream().map(BuildScenarioResult::getStatistics).collect(Collectors.toList());
-        writer.write("mean");
+        statistic(writer, "mean", statistics, DescriptiveStatistics::getMean);
+        statistic(writer, "min", statistics, DescriptiveStatistics::getMin);
+        statistic(writer, "25th percentile", statistics, v -> v.getPercentile(25));
+        statistic(writer, "median", statistics, v -> v.getPercentile(50));
+        statistic(writer, "75th percentile", statistics, v -> v.getPercentile(75));
+        statistic(writer, "max", statistics, DescriptiveStatistics::getMax);
+        statistic(writer, "stddev", statistics, DescriptiveStatistics::getStandardDeviation);
+    }
+
+    private void statistic(BufferedWriter writer, String name, List<DescriptiveStatistics> statistics, Function<DescriptiveStatistics, Double> value) throws IOException {
+        writer.write(name);
         for (DescriptiveStatistics statistic : statistics) {
             writer.write(",");
-            writer.write(String.valueOf(statistic.getMean()));
-        }
-        writer.newLine();
-        writer.write("median");
-        for (DescriptiveStatistics statistic : statistics) {
-            writer.write(",");
-            writer.write(String.valueOf(statistic.getPercentile(50)));
-        }
-        writer.newLine();
-        writer.write("stddev");
-        for (DescriptiveStatistics statistic : statistics) {
-            writer.write(",");
-            writer.write(String.valueOf(statistic.getStandardDeviation()));
+            writer.write(String.valueOf(value.apply(statistic)));
         }
         writer.newLine();
     }

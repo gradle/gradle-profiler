@@ -32,13 +32,13 @@ public class GradleScenarioDefinition extends ScenarioDefinition {
     }
 
     @Override
-    public String getShortDisplayName() {
-        return getName() + " " + version.getVersion();
+    public String getProfileName() {
+        return getName() + "-" + version.getVersion();
     }
 
     @Override
-    public String getProfileName() {
-        return getName() + "-" + version.getVersion();
+    public String getBuildToolDisplayName() {
+        return version.getVersion();
     }
 
     @Override

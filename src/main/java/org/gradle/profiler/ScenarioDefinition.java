@@ -11,23 +11,33 @@ public abstract class ScenarioDefinition {
     private final int buildCount;
     private final File outpuDir;
 
-    public ScenarioDefinition(String name, Supplier<BuildMutator> buildMutator, int warmUpCount, int buildCount, File outpuDir) {
+    public ScenarioDefinition(String name, Supplier<BuildMutator> buildMutator, int warmUpCount, int buildCount, File outputDir) {
         this.name = name;
         this.buildMutator = buildMutator;
         this.warmUpCount = warmUpCount;
         this.buildCount = buildCount;
-        this.outpuDir = outpuDir;
+        this.outpuDir = outputDir;
     }
 
+    /**
+     * A human consumable and unique display name for this scenario.
+     */
     public abstract String getDisplayName();
 
-    public abstract String getShortDisplayName();
-
+    /**
+     * A unique name for this scenario, that can be used for file names and other identifiers.
+     */
     public abstract String getProfileName();
 
-    public String getTasksDisplayName() {
-        return "";
-    }
+    /**
+     * A human consumable description of the build tool that runs this scenario.
+     */
+    public abstract String getBuildToolDisplayName();
+
+    /**
+     * A human consumable description of the 'tasks' that are run for this scenario (may not be Gradle tasks).
+     */
+    public abstract String getTasksDisplayName();
 
     public String getName() {
         return name;

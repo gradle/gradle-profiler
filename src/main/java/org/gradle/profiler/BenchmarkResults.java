@@ -19,11 +19,11 @@ public class BenchmarkResults {
     }
 
     public Consumer<BuildInvocationResult> version(ScenarioDefinition scenario) {
-        List<BuildInvocationResult> results = getResultsForVersion(scenario);
+        List<BuildInvocationResult> results = getResultsForScenario(scenario);
         return results::add;
     }
 
-    private List<BuildInvocationResult> getResultsForVersion(ScenarioDefinition scenario) {
+    private List<BuildInvocationResult> getResultsForScenario(ScenarioDefinition scenario) {
         BuildScenario buildScenario = new BuildScenario(scenario);
         allBuilds.add(buildScenario);
         return buildScenario.results;

@@ -9,6 +9,7 @@ import java.io.File;
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.List;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 public class HtmlGenerator extends AbstractGenerator {
@@ -40,10 +41,17 @@ public class HtmlGenerator extends AbstractGenerator {
         writer.write("<canvas id='samples' width='900' height='400'></canvas>");
         writer.write("<table>\n");
         writer.write("<thead>\n");
-        writer.write("<tr><td>Build</td>");
+        writer.write("<tr><td>Scenario</td>");
         for (BuildScenarioResult scenario : allScenarios) {
             writer.write("<td>");
-            writer.write(scenario.getScenarioDefinition().getShortDisplayName());
+            writer.write(scenario.getScenarioDefinition().getName());
+            writer.write("</td>");
+        }
+        writer.write("</tr>\n");
+        writer.write("<tr><td>Version</td>");
+        for (BuildScenarioResult scenario : allScenarios) {
+            writer.write("<td>");
+            writer.write(scenario.getScenarioDefinition().getBuildToolDisplayName());
             writer.write("</td>");
         }
         writer.write("</tr>\n");
@@ -87,27 +95,13 @@ public class HtmlGenerator extends AbstractGenerator {
 
         writer.write("<tfoot>\n");
         List<DescriptiveStatistics> statistics = allScenarios.stream().map(BuildScenarioResult::getStatistics).collect(Collectors.toList());
-        writer.write("<tr><td>mean</td>");
-        for (DescriptiveStatistics statistic : statistics) {
-            writer.write("<td>");
-            writer.write(String.valueOf(statistic.getMean()));
-            writer.write("</td>");
-        }
-        writer.write("</tr>\n");
-        writer.write("<tr><td>median</td>");
-        for (DescriptiveStatistics statistic : statistics) {
-            writer.write("<td>");
-            writer.write(String.valueOf(statistic.getPercentile(50)));
-            writer.write("</td>");
-        }
-        writer.write("</tr>\n");
-        writer.write("<tr><td>stddev</td>");
-        for (DescriptiveStatistics statistic : statistics) {
-            writer.write("<td>");
-            writer.write(String.valueOf(statistic.getStandardDeviation()));
-            writer.write("</td>");
-        }
-        writer.write("</tr>\n");
+        statistic(writer, "mean", statistics, DescriptiveStatistics::getMean);
+        statistic(writer, "min", statistics, DescriptiveStatistics::getMin);
+        statistic(writer, "25th percentile", statistics, v -> v.getPercentile(25));
+        statistic(writer, "median", statistics, v -> v.getPercentile(50));
+        statistic(writer, "75th percentile", statistics, v -> v.getPercentile(75));
+        statistic(writer, "max", statistics, DescriptiveStatistics::getMax);
+        statistic(writer, "stddev", statistics, DescriptiveStatistics::getStandardDeviation);
         writer.write("</tfoot>\n");
 
         writer.write("</table>\n");
@@ -129,7 +123,9 @@ public class HtmlGenerator extends AbstractGenerator {
         for (BuildScenarioResult scenario : allScenarios) {
             writer.write("{\n");
             writer.write("            label: '");
-            writer.write(scenario.getScenarioDefinition().getShortDisplayName());
+            writer.write(scenario.getScenarioDefinition().getName());
+            writer.write(" ");
+            writer.write(scenario.getScenarioDefinition().getBuildToolDisplayName());
             writer.write("',\n");
             writer.write("            showLine: false,\n");
             writer.write("            fill: false,\n");
@@ -153,6 +149,19 @@ public class HtmlGenerator extends AbstractGenerator {
 
         writer.write("</body>\n");
         writer.write("</html>\n");
+    }
+
+    private void statistic(BufferedWriter writer, String name, List<DescriptiveStatistics> statistics, Function<DescriptiveStatistics, Double> value) throws IOException {
+        writer.write("<tr><td>");
+        writer.write(name);
+        writer.write("</td>");
+        for (DescriptiveStatistics statistic : statistics) {
+            writer.write("<td>");
+            writer.write(String.valueOf(value.apply(statistic)));
+            writer.write("</td>");
+        }
+        writer.write("</tr>");
+        writer.newLine();
     }
 
     static private class PaletteGenerator {

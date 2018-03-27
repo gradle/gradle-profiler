@@ -4,6 +4,7 @@ import java.io.File;
 import java.io.PrintStream;
 import java.util.List;
 import java.util.function.Supplier;
+import java.util.stream.Collectors;
 
 public class BazelScenarioDefinition extends ScenarioDefinition {
     private final List<String> targets;
@@ -14,11 +15,6 @@ public class BazelScenarioDefinition extends ScenarioDefinition {
     }
 
     @Override
-    public String getShortDisplayName() {
-        return getName() + " bazel";
-    }
-
-    @Override
     public String getDisplayName() {
         return getName() + " using bazel";
     }
@@ -26,6 +22,16 @@ public class BazelScenarioDefinition extends ScenarioDefinition {
     @Override
     public String getProfileName() {
         throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public String getBuildToolDisplayName() {
+        return "bazel";
+    }
+
+    @Override
+    public String getTasksDisplayName() {
+        return targets.stream().collect(Collectors.joining(" "));
     }
 
     public List<String> getTargets() {
