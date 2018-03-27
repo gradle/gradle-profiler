@@ -1,12 +1,11 @@
 package org.gradle.profiler.report;
 
-import org.gradle.profiler.BuildScenarioResult;
+import org.gradle.profiler.BenchmarkResult;
 
 import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
-import java.util.List;
 
 public abstract class AbstractGenerator {
     private final File outputFile;
@@ -15,11 +14,11 @@ public abstract class AbstractGenerator {
         this.outputFile = outputFile;
     }
 
-    public void write(List<? extends BuildScenarioResult> allScenarios) throws IOException {
+    public void write(BenchmarkResult result) throws IOException {
         try (BufferedWriter writer = new BufferedWriter(new FileWriter(outputFile))) {
-            write(allScenarios, writer);
+            write(result, writer);
         }
     }
 
-    protected abstract void write(List<? extends BuildScenarioResult> allScenarios, BufferedWriter writer) throws IOException;
+    protected abstract void write(BenchmarkResult result, BufferedWriter writer) throws IOException;
 }

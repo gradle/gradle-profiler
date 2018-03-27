@@ -59,7 +59,7 @@ public class Main {
 
             File cvsFile = new File(settings.getOutputDir(), "benchmark.csv");
             File htmlFile = new File(settings.getOutputDir(), "benchmark.html");
-            BenchmarkResults benchmarkResults = new BenchmarkResults(new CsvGenerator(cvsFile), new HtmlGenerator(htmlFile));
+            BenchmarkResultCollector benchmarkResults = new BenchmarkResultCollector(new CsvGenerator(cvsFile), new HtmlGenerator(htmlFile));
             PidInstrumentation pidInstrumentation = new PidInstrumentation();
 
             List<Throwable> failures = new ArrayList<>();
@@ -109,7 +109,7 @@ public class Main {
         }
     }
 
-    private void runGradleScenario(GradleScenarioDefinition scenario,  InvocationSettings settings, DaemonControl daemonControl, BenchmarkResults benchmarkResults, PidInstrumentation pidInstrumentation) throws IOException, InterruptedException {
+    private void runGradleScenario(GradleScenarioDefinition scenario, InvocationSettings settings, DaemonControl daemonControl, BenchmarkResultCollector benchmarkResults, PidInstrumentation pidInstrumentation) throws IOException, InterruptedException {
         ScenarioSettings scenarioSettings = new ScenarioSettings(settings, scenario);
         FileUtils.forceMkdir(scenario.getOutputDir());
         JvmArgsCalculator allBuildsJvmArgsCalculator = settings.getProfiler().newJvmArgsCalculator(scenarioSettings);
@@ -268,7 +268,7 @@ public class Main {
         }
     }
 
-    private void runBazelScenario(BazelScenarioDefinition scenario, InvocationSettings settings, BenchmarkResults benchmarkResults) {
+    private void runBazelScenario(BazelScenarioDefinition scenario, InvocationSettings settings, BenchmarkResultCollector benchmarkResults) {
         String bazelHome = System.getenv("BAZEL_HOME");
         String bazelExe = bazelHome == null ? "bazel" : bazelHome + "/bin/bazel";
 
@@ -315,7 +315,7 @@ public class Main {
         }
     }
 
-	private void runBuckScenario(BuckScenarioDefinition scenario, InvocationSettings settings, BenchmarkResults benchmarkResults) {
+	private void runBuckScenario(BuckScenarioDefinition scenario, InvocationSettings settings, BenchmarkResultCollector benchmarkResults) {
         String buckwExe = settings.getProjectDir() + "/buckw";
 		List<String> targets = new ArrayList<>(scenario.getTargets());
         if (scenario.getType() != null) {
@@ -372,7 +372,7 @@ public class Main {
         }
     }
 
-    private void runMavenScenario(MavenScenarioDefinition scenario, InvocationSettings settings, BenchmarkResults benchmarkResults) {
+    private void runMavenScenario(MavenScenarioDefinition scenario, InvocationSettings settings, BenchmarkResultCollector benchmarkResults) {
         String mavenHome = System.getenv("MAVEN_HOME");
         String mvn = mavenHome == null ? "mvn" : mavenHome + "/bin/mvn";
 
