@@ -1,6 +1,5 @@
 package org.gradle.profiler.report;
 
-import org.apache.commons.math3.stat.descriptive.DescriptiveStatistics;
 import org.gradle.profiler.BenchmarkResult;
 import org.gradle.profiler.BuildInvocationResult;
 import org.gradle.profiler.BuildScenarioResult;
@@ -104,13 +103,14 @@ public class HtmlGenerator extends AbstractGenerator {
         writer.write("</tbody>\n");
 
         writer.write("<tfoot>\n");
-        statistic(writer, "mean", allScenarios, DescriptiveStatistics::getMean, true);
-        statistic(writer, "min", allScenarios, DescriptiveStatistics::getMin, true);
-        statistic(writer, "25th percentile", allScenarios, v -> v.getPercentile(25), true);
-        statistic(writer, "median", allScenarios, v -> v.getPercentile(50), true);
-        statistic(writer, "75th percentile", allScenarios, v -> v.getPercentile(75), true);
-        statistic(writer, "max", allScenarios, DescriptiveStatistics::getMax, true);
-        statistic(writer, "stddev", allScenarios, DescriptiveStatistics::getStandardDeviation, false);
+        statistic(writer, "mean", allScenarios, v -> v.getStatistics().getMean(), true);
+        statistic(writer, "min", allScenarios, v -> v.getStatistics().getMin(), true);
+        statistic(writer, "25th percentile", allScenarios, v -> v.getStatistics().getPercentile(25), true);
+        statistic(writer, "median", allScenarios, v -> v.getStatistics().getPercentile(50), true);
+        statistic(writer, "75th percentile", allScenarios, v -> v.getStatistics().getPercentile(75), true);
+        statistic(writer, "max", allScenarios, v -> v.getStatistics().getMax(), true);
+        statistic(writer, "stddev", allScenarios, v -> v.getStatistics().getStandardDeviation(), false);
+        statistic(writer, "p-value (Mann Whitney U test)", allScenarios, v -> v.getBaseline().isPresent() ? v.getPValue() : 0d, false);
         writer.write("</tfoot>\n");
 
         writer.write("</table>\n");
@@ -160,17 +160,17 @@ public class HtmlGenerator extends AbstractGenerator {
         writer.write("</html>\n");
     }
 
-    private void statistic(BufferedWriter writer, String name, List<? extends BuildScenarioResult> scenarios, Function<DescriptiveStatistics, Double> value, boolean time) throws IOException {
+    private void statistic(BufferedWriter writer, String name, List<? extends BuildScenarioResult> scenarios, Function<BuildScenarioResult, Double> value, boolean time) throws IOException {
         writer.write("<tr><td class='summary'>");
         writer.write(name);
         writer.write("</td>");
         for (BuildScenarioResult scenario : scenarios) {
             writer.write("<td class='numeric summary'>");
-            double stat = value.apply(scenario.getStatistics());
+            double stat = value.apply(scenario);
             writer.write(numberFormat.format(stat));
             if (time && scenario.getBaseline().isPresent()) {
                 writer.write("<br><span class='diff'>(");
-                double baseLineStat = value.apply(scenario.getBaseline().get().getStatistics());
+                double baseLineStat = value.apply(scenario.getBaseline().get());
                 double diff = stat - baseLineStat;
                 writer.write(diffFormat.format(diff));
                 writer.write(" ");

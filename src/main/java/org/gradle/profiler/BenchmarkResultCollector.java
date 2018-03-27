@@ -1,6 +1,7 @@
 package org.gradle.profiler;
 
 import org.apache.commons.math3.stat.descriptive.DescriptiveStatistics;
+import org.apache.commons.math3.stat.inference.MannWhitneyUTest;
 import org.gradle.profiler.report.AbstractGenerator;
 
 import java.io.IOException;
@@ -81,6 +82,22 @@ public class BenchmarkResultCollector {
                 }
             }
             return statistics;
+        }
+
+        @Override
+        public double getPValue() {
+            double[] a = toArray(getBaseline().get().getMeasuredResults());
+            double[] b = toArray(getMeasuredResults());
+            return new MannWhitneyUTest().mannWhitneyUTest(a, b);
+        }
+
+        private double[] toArray(List<? extends BuildInvocationResult> results) {
+            double[] values = new double[results.size()];
+            for (int i = 0; i < results.size(); i++) {
+                BuildInvocationResult buildInvocationResult = results.get(i);
+                values[i] = buildInvocationResult.getExecutionTime().toMillis();
+            }
+            return values;
         }
     }
 

@@ -27,4 +27,6 @@ public interface BuildScenarioResult {
      * Returns some statistics of the measured results.
      */
     DescriptiveStatistics getStatistics();
+
+    double getPValue();
 }
