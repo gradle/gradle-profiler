@@ -1,6 +1,7 @@
 package org.gradle.profiler;
 
 import org.apache.commons.io.FileUtils;
+import org.gradle.profiler.report.CsvGenerator;
 import org.gradle.tooling.GradleConnector;
 import org.gradle.tooling.ProjectConnection;
 import org.gradle.tooling.model.build.BuildEnvironment;
@@ -9,20 +10,14 @@ import java.io.File;
 import java.io.IOException;
 import java.time.Duration;
 import java.time.Instant;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
+import java.util.*;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
-import static org.gradle.profiler.BuildStep.BUILD;
-import static org.gradle.profiler.BuildStep.CLEANUP;
-import static org.gradle.profiler.Phase.MEASURE;
-import static org.gradle.profiler.Phase.WARM_UP;
-import static org.gradle.profiler.Logging.startOperation;
+import static org.gradle.profiler.BuildStep.*;
+import static org.gradle.profiler.Logging.*;
+import static org.gradle.profiler.Phase.*;
 
 public class Main {
     public static void main(String[] args) {
@@ -61,9 +56,9 @@ public class Main {
 
             logScenarios(scenarios);
 
-            BenchmarkResults benchmarkResults = new BenchmarkResults();
-            PidInstrumentation pidInstrumentation = new PidInstrumentation();
             File resultsFile = new File(settings.getOutputDir(), "benchmark.csv");
+            BenchmarkResults benchmarkResults = new BenchmarkResults(new CsvGenerator(resultsFile));
+            PidInstrumentation pidInstrumentation = new PidInstrumentation();
 
             List<Throwable> failures = new ArrayList<>();
             int scenarioCount = 0;
@@ -90,7 +85,7 @@ public class Main {
             }
 
             if (settings.isBenchmark()) {
-                benchmarkResults.writeTo(resultsFile);
+                benchmarkResults.write();
             }
 
             System.out.println();
@@ -247,7 +242,7 @@ public class Main {
                 control.stopSession();
             }
             if (settings.isBenchmark()) {
-                benchmarkResults.writeTo(resultsFile);
+                benchmarkResults.write();
             }
 			Objects.requireNonNull(results);
             checkPid(pid, results.getDaemonPid(), scenario.getInvoker());

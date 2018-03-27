@@ -2,7 +2,7 @@ package org.gradle.profiler;
 
 import java.time.Duration;
 
-class BuildInvocationResult {
+public class BuildInvocationResult {
     private final String displayName;
     private final Duration executionTime;
     private final String daemonPid;
