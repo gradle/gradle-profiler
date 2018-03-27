@@ -3,8 +3,8 @@ package org.gradle.profiler.yjp;
 import java.io.File;
 
 public class YourKit {
-
-    static final String YOURKIT_HOME = System.getenv("YOURKIT_HOME");
+    static final String ENIVONMENT_VARIABLE = "YOURKIT_HOME";
+    private static final String YOURKIT_HOME = System.getenv(ENIVONMENT_VARIABLE);
 
     /**
      * Locates the user's YourKit installation. Returns null when not found.

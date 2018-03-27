@@ -27,7 +27,7 @@ public class YourKitJvmArgsCalculator extends JvmArgsCalculator {
         }
         File yourKitHome = YourKit.findYourKitHome();
         if (yourKitHome == null) {
-            throw new IllegalArgumentException("Could not locate YourKit installation. Try setting the " + YOURKIT_HOME + " environment variable");
+            throw new IllegalArgumentException("Could not locate YourKit installation. Try setting the " + ENIVONMENT_VARIABLE + " environment variable");
         }
         File jnilib = YourKit.findJniLib();
         if (!jnilib.isFile()) {
