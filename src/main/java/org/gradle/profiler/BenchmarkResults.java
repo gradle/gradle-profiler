@@ -6,6 +6,7 @@ import org.gradle.profiler.report.AbstractGenerator;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.function.Consumer;
 
@@ -53,12 +54,18 @@ public class BenchmarkResults {
         }
 
         @Override
+        public List<? extends BuildInvocationResult> getMeasuredResults() {
+            if (results.size() > scenario.getWarmUpCount()) {
+                return results.subList(scenario.getWarmUpCount(), results.size());
+            }
+            return Collections.emptyList();
+        }
+
+        @Override
         public DescriptiveStatistics getStatistics() {
             DescriptiveStatistics statistics = new DescriptiveStatistics();
-            if (results.size() > scenario.getWarmUpCount() + 1) {
-                for (BuildInvocationResult result : results.subList(1 + scenario.getWarmUpCount(), results.size())) {
-                    statistics.addValue(result.getExecutionTime().toMillis());
-                }
+            for (BuildInvocationResult result : getMeasuredResults()) {
+                statistics.addValue(result.getExecutionTime().toMillis());
             }
             return statistics;
         }

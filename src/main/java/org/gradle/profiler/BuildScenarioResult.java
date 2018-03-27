@@ -9,5 +9,7 @@ public interface BuildScenarioResult {
 
     List<? extends BuildInvocationResult> getResults();
 
+    List<? extends BuildInvocationResult> getMeasuredResults();
+
     DescriptiveStatistics getStatistics();
 }

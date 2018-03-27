@@ -7,6 +7,7 @@ import org.gradle.profiler.BuildScenarioResult;
 import java.io.BufferedWriter;
 import java.io.File;
 import java.io.IOException;
+import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -23,17 +24,20 @@ public class HtmlGenerator extends AbstractGenerator {
         writer.write("<title>Benchmark Results</title>\n");
         writer.write("<style>\n");
         writer.write("html, table { margin: 0; padding: 0 }\n");
-        writer.write("body { padding: 20px; font-family: sans-serif; color: rgba(94,93,82,1); }\n");
+        writer.write("body { padding: 20px; font-family: sans-serif; font-size: 11pt; color: #211F2D; }\n");
         writer.write("h1 { font-size: 16pt; }\n");
-        writer.write("table { border-collapse: collapse; }\n");
-        writer.write("td { padding: 5px 10px 5px 10px; margin: 0; }\n");
-        writer.write("thead td { background-color: rgba(29,150,178,1); color: white; }\n");
-        writer.write("tbody tr:nth-child(even) { background-color: rgba(240,240,240,1); }\n");
-        writer.write("tfoot { border-top: 3px solid rgba(60,120,180,1) }\n");
+        writer.write("canvas { margin-top: 30px; margin-bottom: 30px; }\n");
+        writer.write("table { border-collapse: collapse; margin-top: 30px; margin-bottom: 30px; }\n");
+        writer.write("td { padding: 5px 10px 5px 10px; margin: 0; white-space: nowrap; }\n");
+        writer.write("thead td { background-color: #6ea5ce; color: white; }\n");
+        writer.write("tbody tr:nth-child(even) { background-color: #f0f0f0; }\n");
+        writer.write("tfoot { border-top: 3px solid #8B899A; }\n");
         writer.write("</style>\n");
+        writer.write("<script src='https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.7.2/Chart.bundle.min.js'></script>\n");
         writer.write("</head>\n");
         writer.write("<body>\n");
         writer.write("<h1>Benchmark results</h1>\n");
+        writer.write("<canvas id='samples' width='900' height='400'></canvas>");
         writer.write("<table>\n");
         writer.write("<thead>\n");
         writer.write("<tr><td>Build</td>");
@@ -107,7 +111,59 @@ public class HtmlGenerator extends AbstractGenerator {
         writer.write("</tfoot>\n");
 
         writer.write("</table>\n");
+
+        writer.write("<script>\n");
+        writer.write("var ctx = document.getElementById('samples').getContext('2d');\n");
+        writer.write("var chart = new Chart(ctx, {\n");
+        writer.write("    type: 'line',\n");
+        writer.write("    data: {\n");
+        writer.write("        labels: [");
+        int maxIterations = allScenarios.stream().mapToInt(v -> v.getScenarioDefinition().getBuildCount()).max().orElse(0);
+        for (int i = 0; i < maxIterations; i++) {
+            writer.write(String.valueOf(i + 1));
+            writer.write(",");
+        }
+        writer.write("],\n");
+        writer.write("        datasets: [\n");
+        PaletteGenerator generator = new PaletteGenerator();
+        for (BuildScenarioResult scenario : allScenarios) {
+            writer.write("{\n");
+            writer.write("            label: '");
+            writer.write(scenario.getScenarioDefinition().getShortDisplayName());
+            writer.write("',\n");
+            writer.write("            showLine: false,\n");
+            writer.write("            fill: false,\n");
+            writer.write("            borderWidth: 2,\n");
+            writer.write("            borderColor: '");
+            writer.write(generator.nextColor());
+            writer.write("',\n");
+            writer.write("            data: [");
+            for (BuildInvocationResult buildResult : scenario.getMeasuredResults()) {
+                writer.write(String.valueOf(buildResult.getExecutionTime().toMillis()));
+                writer.write(",");
+            }
+            writer.write("]\n");
+            writer.write("},\n");
+        }
+        writer.write("        ]\n");
+        writer.write("    },\n");
+        writer.write("    options: { responsive: false }\n");
+        writer.write("});\n");
+        writer.write("</script>\n");
+
         writer.write("</body>\n");
         writer.write("</html>\n");
+    }
+
+    static private class PaletteGenerator {
+        private static final List<String> COLORS = Arrays.asList("#527AB3", "#56ac76", "#f44336", "#d49c3e", "#211f2d");
+        private int next = 0;
+
+        String nextColor() {
+            if (next < COLORS.size()) {
+                return COLORS.get(next++);
+            }
+            return "#8B899A";
+        }
     }
 }
