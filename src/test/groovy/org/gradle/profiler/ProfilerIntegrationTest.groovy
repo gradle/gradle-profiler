@@ -542,17 +542,18 @@ println "<daemon: " + gradle.services.get(org.gradle.internal.environment.Gradle
         logFile.grep("<tasks: [assemble]>").size() == 16
 
         resultFile.isFile()
-        resultFile.text.readLines().size() == 21 // 2 headers, 16 executions, 3 stats
-        resultFile.text.readLines().get(0) == "build,${minimalSupportedGradleVersion}"
-        resultFile.text.readLines().get(1) == "tasks,assemble"
-        resultFile.text.readLines().get(2).matches("warm-up build #1,\\d+")
-        resultFile.text.readLines().get(7).matches("warm-up build #6,\\d+")
-        resultFile.text.readLines().get(8).matches("measured build #1,\\d+")
-        resultFile.text.readLines().get(9).matches("measured build #2,\\d+")
-        resultFile.text.readLines().get(17).matches("measured build #10,\\d+")
-        resultFile.text.readLines().get(18).matches("mean,\\d+\\.\\d+")
-        resultFile.text.readLines().get(19).matches("median,\\d+\\.\\d+")
-        resultFile.text.readLines().get(20).matches("stddev,\\d+\\.\\d+")
+        resultFile.text.readLines().size() == 26 // 3 headers, 16 executions, 7 stats
+        resultFile.text.readLines().get(0) == "scenario,default"
+        resultFile.text.readLines().get(1) == "version,${minimalSupportedGradleVersion}"
+        resultFile.text.readLines().get(2) == "tasks,assemble"
+        resultFile.text.readLines().get(3).matches("warm-up build #1,\\d+")
+        resultFile.text.readLines().get(8).matches("warm-up build #6,\\d+")
+        resultFile.text.readLines().get(9).matches("measured build #1,\\d+")
+        resultFile.text.readLines().get(10).matches("measured build #2,\\d+")
+        resultFile.text.readLines().get(18).matches("measured build #10,\\d+")
+        resultFile.text.readLines().get(19).matches("mean,\\d+\\.\\d+")
+        resultFile.text.readLines().get(22).matches("median,\\d+\\.\\d+")
+        resultFile.text.readLines().get(25).matches("stddev,\\d+\\.\\d+")
     }
 
     def "runs benchmarks using CLI for specified Gradle version and tasks"() {
@@ -579,17 +580,18 @@ println "<daemon: " + gradle.services.get(org.gradle.internal.environment.Gradle
         logFile.grep("<tasks: [assemble]>").size() == 16
 
         resultFile.isFile()
-        resultFile.text.readLines().size() == 21 // 2 headers, 16 executions, 3 stats
-        resultFile.text.readLines().get(0) == "build,${minimalSupportedGradleVersion}"
-        resultFile.text.readLines().get(1) == "tasks,assemble"
-        resultFile.text.readLines().get(2).matches("warm-up build #1,\\d+")
-        resultFile.text.readLines().get(7).matches("warm-up build #6,\\d+")
-        resultFile.text.readLines().get(8).matches("measured build #1,\\d+")
-        resultFile.text.readLines().get(9).matches("measured build #2,\\d+")
-        resultFile.text.readLines().get(17).matches("measured build #10,\\d+")
-        resultFile.text.readLines().get(18).matches("mean,\\d+\\.\\d+")
-        resultFile.text.readLines().get(19).matches("median,\\d+\\.\\d+")
-        resultFile.text.readLines().get(20).matches("stddev,\\d+\\.\\d+")
+        resultFile.text.readLines().size() == 26 // 3 headers, 16 executions, 7 stats
+        resultFile.text.readLines().get(0) == "scenario,default"
+        resultFile.text.readLines().get(1) == "version,${minimalSupportedGradleVersion}"
+        resultFile.text.readLines().get(2) == "tasks,assemble"
+        resultFile.text.readLines().get(3).matches("warm-up build #1,\\d+")
+        resultFile.text.readLines().get(8).matches("warm-up build #6,\\d+")
+        resultFile.text.readLines().get(9).matches("measured build #1,\\d+")
+        resultFile.text.readLines().get(10).matches("measured build #2,\\d+")
+        resultFile.text.readLines().get(18).matches("measured build #10,\\d+")
+        resultFile.text.readLines().get(19).matches("mean,\\d+\\.\\d+")
+        resultFile.text.readLines().get(22).matches("median,\\d+\\.\\d+")
+        resultFile.text.readLines().get(25).matches("stddev,\\d+\\.\\d+")
     }
 
     def "runs benchmarks using no-daemon for specified Gradle version and tasks"() {
@@ -617,9 +619,10 @@ println "<daemon: " + gradle.services.get(org.gradle.internal.environment.Gradle
         logFile.grep("<tasks: [assemble]>").size() == 11
 
         resultFile.isFile()
-        resultFile.text.readLines().get(0) == "build,${minimalSupportedGradleVersion}"
-        resultFile.text.readLines().get(1) == "tasks,assemble"
-        resultFile.text.readLines().size() == 16 // 2 headers, 11 executions, 3 stats
+        resultFile.text.readLines().get(0) == "scenario,default"
+        resultFile.text.readLines().get(1) == "version,${minimalSupportedGradleVersion}"
+        resultFile.text.readLines().get(2) == "tasks,assemble"
+        resultFile.text.readLines().size() == 21 // 3 headers, 11 executions, 7 stats
     }
 
     def "runs benchmarks using scenarios defined in scenario file"() {
@@ -662,9 +665,10 @@ println "<daemon: " + gradle.services.get(org.gradle.internal.environment.Gradle
         logFile.contains("* Running scenario help using Gradle $minimalSupportedGradleVersion (scenario 3/3)")
 
         resultFile.isFile()
-        resultFile.text.readLines().get(0) == "build,assemble 3.0,assemble ${minimalSupportedGradleVersion},help ${minimalSupportedGradleVersion}"
-        resultFile.text.readLines().get(1) == "tasks,assemble,assemble,help"
-        resultFile.text.readLines().size() == 21 // 2 headers, 16 executions, 3 stats
+        resultFile.text.readLines().get(0) == "scenario,assemble,assemble,help"
+        resultFile.text.readLines().get(1) == "version,3.0,${minimalSupportedGradleVersion},${minimalSupportedGradleVersion}"
+        resultFile.text.readLines().get(2) == "tasks,assemble,assemble,help"
+        resultFile.text.readLines().size() == 26 // 3 headers, 16 executions, 7 stats
     }
 
     def "profiles scenarios defined in scenario file"() {
@@ -814,14 +818,15 @@ println "<daemon: " + gradle.services.get(org.gradle.internal.environment.Gradle
         logFile.grep("<tasks: [help]>").size() == 17
 
         resultFile.isFile()
-        resultFile.text.readLines().get(0) == "build,help ${minimalSupportedGradleVersion}"
-        resultFile.text.readLines().get(1) == "tasks,help"
-        resultFile.text.readLines().get(2).matches("warm-up build #1,\\d+")
-        resultFile.text.readLines().get(7).matches("warm-up build #6,\\d+")
-        resultFile.text.readLines().get(8).matches("measured build #1,\\d+")
-        resultFile.text.readLines().get(9).matches("measured build #2,\\d+")
-        resultFile.text.readLines().get(17).matches("measured build #10,\\d+")
-        resultFile.text.readLines().size() == 21 // 2 headers, 16 executions, 3 stats
+        resultFile.text.readLines().get(0) == "scenario,help"
+        resultFile.text.readLines().get(1) == "version,${minimalSupportedGradleVersion}"
+        resultFile.text.readLines().get(2) == "tasks,help"
+        resultFile.text.readLines().get(3).matches("warm-up build #1,\\d+")
+        resultFile.text.readLines().get(8).matches("warm-up build #6,\\d+")
+        resultFile.text.readLines().get(9).matches("measured build #1,\\d+")
+        resultFile.text.readLines().get(10).matches("measured build #2,\\d+")
+        resultFile.text.readLines().get(18).matches("measured build #10,\\d+")
+        resultFile.text.readLines().size() == 26 // 3 headers, 16 executions, 7 stats
     }
 
     def "runs benchmarks using single scenario defined in scenario file"() {
@@ -889,11 +894,12 @@ println "<dry-run: " + gradle.startParameter.dryRun + ">"
         logFile.grep("<tasks: [clean, assemble]>").size() == 2
 
         resultFile.isFile()
-        resultFile.text.readLines().get(0) == "build,s1 3.0,s1 ${minimalSupportedGradleVersion},s2 ${minimalSupportedGradleVersion}"
-        resultFile.text.readLines().get(1) == "tasks,assemble,assemble,clean assemble"
-        resultFile.text.readLines().get(2).matches("warm-up build #1,\\d+,\\d+,\\d+")
-        resultFile.text.readLines().get(3).matches("measured build #1,\\d+,\\d+,\\d+")
-        resultFile.text.readLines().size() == 7
+        resultFile.text.readLines().get(0) == "scenario,s1,s1,s2"
+        resultFile.text.readLines().get(1) == "version,3.0,${minimalSupportedGradleVersion},${minimalSupportedGradleVersion}"
+        resultFile.text.readLines().get(2) == "tasks,assemble,assemble,clean assemble"
+        resultFile.text.readLines().get(3).matches("warm-up build #1,\\d+,\\d+,\\d+")
+        resultFile.text.readLines().get(4).matches("measured build #1,\\d+,\\d+,\\d+")
+        resultFile.text.readLines().size() == 12
     }
 
     def "recovers from failure in warmup while running benchmarks"() {
@@ -932,21 +938,22 @@ assemble.doFirst {
         logFile.grep("<tasks: [assemble]>").size() == 4 + 16
 
         resultFile.isFile()
-        resultFile.text.readLines().size() == 21 // 2 headers, 16 executions, 3 stats
-        resultFile.text.readLines().get(0) == "build,${minimalSupportedGradleVersion},3.0"
-        resultFile.text.readLines().get(1) == "tasks,assemble,assemble"
-        resultFile.text.readLines().get(2).matches("warm-up build #1,\\d+,\\d+")
-        resultFile.text.readLines().get(3).matches("warm-up build #2,\\d+,\\d+")
-        resultFile.text.readLines().get(4).matches("warm-up build #3,\\d+,\\d+")
-        resultFile.text.readLines().get(5).matches("warm-up build #4,,\\d+")
-        resultFile.text.readLines().get(6).matches("warm-up build #5,,\\d+")
-        resultFile.text.readLines().get(7).matches("warm-up build #6,,\\d+")
-        resultFile.text.readLines().get(8).matches("measured build #1,,\\d+")
-        resultFile.text.readLines().get(9).matches("measured build #2,,\\d+")
-        resultFile.text.readLines().get(17).matches("measured build #10,,\\d+")
-        resultFile.text.readLines().get(18).matches("mean,NaN,\\d+\\.\\d+")
-        resultFile.text.readLines().get(19).matches("median,NaN,\\d+\\.\\d+")
-        resultFile.text.readLines().get(20).matches("stddev,NaN,\\d+\\.\\d+")
+        resultFile.text.readLines().size() == 26 // 3 headers, 16 executions, 7 stats
+        resultFile.text.readLines().get(0) == "scenario,default,default"
+        resultFile.text.readLines().get(1) == "version,${minimalSupportedGradleVersion},3.0"
+        resultFile.text.readLines().get(2) == "tasks,assemble,assemble"
+        resultFile.text.readLines().get(3).matches("warm-up build #1,\\d+,\\d+")
+        resultFile.text.readLines().get(4).matches("warm-up build #2,\\d+,\\d+")
+        resultFile.text.readLines().get(5).matches("warm-up build #3,\\d+,\\d+")
+        resultFile.text.readLines().get(6).matches("warm-up build #4,,\\d+")
+        resultFile.text.readLines().get(7).matches("warm-up build #5,,\\d+")
+        resultFile.text.readLines().get(8).matches("warm-up build #6,,\\d+")
+        resultFile.text.readLines().get(9).matches("measured build #1,,\\d+")
+        resultFile.text.readLines().get(10).matches("measured build #2,,\\d+")
+        resultFile.text.readLines().get(18).matches("measured build #10,,\\d+")
+        resultFile.text.readLines().get(19).matches("mean,NaN,\\d+\\.\\d+")
+        resultFile.text.readLines().get(22).matches("median,NaN,\\d+\\.\\d+")
+        resultFile.text.readLines().get(25).matches("stddev,NaN,\\d+\\.\\d+")
     }
 
     def "recovers from failure running benchmarks"() {
@@ -985,18 +992,19 @@ assemble.doFirst {
         logFile.grep("<tasks: [assemble]>").size() == 9 + 16
 
         resultFile.isFile()
-        resultFile.text.readLines().size() == 21 // 2 headers, 16 executions, 3 stats
-        resultFile.text.readLines().get(0) == "build,${minimalSupportedGradleVersion},3.0"
-        resultFile.text.readLines().get(1) == "tasks,assemble,assemble"
-        resultFile.text.readLines().get(2).matches("warm-up build #1,\\d+,\\d+")
-        resultFile.text.readLines().get(7).matches("warm-up build #6,\\d+,\\d+")
-        resultFile.text.readLines().get(8).matches("measured build #1,\\d+,\\d+")
-        resultFile.text.readLines().get(9).matches("measured build #2,\\d+,\\d+")
-        resultFile.text.readLines().get(10).matches("measured build #3,,\\d+")
-        resultFile.text.readLines().get(17).matches("measured build #10,,\\d+")
-        resultFile.text.readLines().get(18).matches("mean,\\d+\\.\\d+,\\d+\\.\\d+")
-        resultFile.text.readLines().get(19).matches("median,\\d+\\.\\d+,\\d+\\.\\d+")
-        resultFile.text.readLines().get(20).matches("stddev,\\d+\\.\\d+,\\d+\\.\\d+")
+        resultFile.text.readLines().size() == 26 // 3 headers, 16 executions, 7 stats
+        resultFile.text.readLines().get(0) == "scenario,default,default"
+        resultFile.text.readLines().get(1) == "version,${minimalSupportedGradleVersion},3.0"
+        resultFile.text.readLines().get(2) == "tasks,assemble,assemble"
+        resultFile.text.readLines().get(3).matches("warm-up build #1,\\d+,\\d+")
+        resultFile.text.readLines().get(8).matches("warm-up build #6,\\d+,\\d+")
+        resultFile.text.readLines().get(9).matches("measured build #1,\\d+,\\d+")
+        resultFile.text.readLines().get(10).matches("measured build #2,\\d+,\\d+")
+        resultFile.text.readLines().get(11).matches("measured build #3,,\\d+")
+        resultFile.text.readLines().get(18).matches("measured build #10,,\\d+")
+        resultFile.text.readLines().get(19).matches("mean,\\d+\\.\\d+,\\d+\\.\\d+")
+        resultFile.text.readLines().get(22).matches("median,\\d+\\.\\d+,\\d+\\.\\d+")
+        resultFile.text.readLines().get(25).matches("stddev,\\d+\\.\\d+,\\d+\\.\\d+")
     }
 
     def "can define system property when benchmarking using tooling API"() {
@@ -1369,17 +1377,18 @@ help {
         logFile.contains("* Buck targets: [//target:android_binary_1, //target:android_binary_2, //target/child:android_binary_3, //target/child:android_binary_4]")
 
         resultFile.isFile()
-        resultFile.text.readLines().size() == 21 // 2 headers, 16 executions, 3 stats
-        resultFile.text.readLines().get(0) == "build,buildAll buck,buildTarget buck,buildType buck"
-        resultFile.text.readLines().get(1) == "tasks,,,"
-        resultFile.text.readLines().get(2).matches("warm-up build #1,\\d+,\\d+,\\d+")
-        resultFile.text.readLines().get(7).matches("warm-up build #6,\\d+,\\d+,\\d+")
-        resultFile.text.readLines().get(8).matches("measured build #1,\\d+,\\d+,\\d+")
-        resultFile.text.readLines().get(9).matches("measured build #2,\\d+,\\d+,\\d+")
-        resultFile.text.readLines().get(17).matches("measured build #10,\\d+,\\d+,\\d+")
-        resultFile.text.readLines().get(18).matches("mean,\\d+\\.\\d+,\\d+\\.\\d+,\\d+\\.\\d+")
-        resultFile.text.readLines().get(19).matches("median,\\d+\\.\\d+,\\d+\\.\\d+,\\d+\\.\\d+")
-        resultFile.text.readLines().get(20).matches("stddev,\\d+\\.\\d+,\\d+\\.\\d+,\\d+\\.\\d+")
+        resultFile.text.readLines().size() == 26 // 3 headers, 16 executions, 7 stats
+        resultFile.text.readLines().get(0) == "scenario,buildAll,buildTarget,buildType"
+        resultFile.text.readLines().get(1) == "version,buck,buck,buck"
+        resultFile.text.readLines().get(2) == "tasks,,//some/target,"
+        resultFile.text.readLines().get(3).matches("warm-up build #1,\\d+,\\d+,\\d+")
+        resultFile.text.readLines().get(8).matches("warm-up build #6,\\d+,\\d+,\\d+")
+        resultFile.text.readLines().get(9).matches("measured build #1,\\d+,\\d+,\\d+")
+        resultFile.text.readLines().get(10).matches("measured build #2,\\d+,\\d+,\\d+")
+        resultFile.text.readLines().get(18).matches("measured build #10,\\d+,\\d+,\\d+")
+        resultFile.text.readLines().get(19).matches("mean,\\d+\\.\\d+,\\d+\\.\\d+,\\d+\\.\\d+")
+        resultFile.text.readLines().get(22).matches("median,\\d+\\.\\d+,\\d+\\.\\d+,\\d+\\.\\d+")
+        resultFile.text.readLines().get(25).matches("stddev,\\d+\\.\\d+,\\d+\\.\\d+,\\d+\\.\\d+")
     }
 
     def "cannot profile a buck build"() {
@@ -1470,7 +1479,7 @@ buildTarget {
         logFile.contains("* Bazel targets: [:hello]")
 
         resultFile.isFile()
-        resultFile.text.readLines().size() == 21 // 2 headers, 16 executions, 3 stats
+        resultFile.text.readLines().size() == 26 // 3 headers, 16 executions, 7 stats
         resultFile.text.readLines().get(0) == "build,buildTarget bazel"
         resultFile.text.readLines().get(1) == "tasks,"
         resultFile.text.readLines().get(2).matches("warm-up build #1,\\d+")
@@ -1566,7 +1575,7 @@ buildGoal {
         logFile.contains("* Maven targets: [-v]")
 
         resultFile.isFile()
-        resultFile.text.readLines().size() == 21 // 2 headers, 16 executions, 3 stats
+        resultFile.text.readLines().size() == 26 // 3 headers, 16 executions, 7 stats
         resultFile.text.readLines().get(0) == "build,buildGoal maven"
         resultFile.text.readLines().get(1) == "tasks,"
         resultFile.text.readLines().get(2).matches("warm-up build #1,\\d+")
