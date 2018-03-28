@@ -88,6 +88,9 @@ public class BenchmarkResultCollector {
         public double getPValue() {
             double[] a = toArray(getBaseline().get().getMeasuredResults());
             double[] b = toArray(getMeasuredResults());
+            if (a.length == 0 || b.length == 0) {
+                return 1;
+            }
             return new MannWhitneyUTest().mannWhitneyUTest(a, b);
         }
 
