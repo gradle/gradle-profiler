@@ -2,7 +2,6 @@ package org.gradle.trace.listener;
 
 import org.gradle.api.execution.internal.ExecuteTaskBuildOperationDetails;
 import org.gradle.api.internal.TaskInternal;
-import org.gradle.internal.progress.BuildOperationDescriptor;
 import org.gradle.trace.TraceResult;
 
 public class Gradle40BuildOperationListenerInvocationHandler extends BuildOperationListenerInvocationHandler {
@@ -12,17 +11,17 @@ public class Gradle40BuildOperationListenerInvocationHandler extends BuildOperat
     }
 
     protected String getName(Object operation) {
-        BuildOperationDescriptor operationDescriptor = (BuildOperationDescriptor) operation;
-        if (operationDescriptor.getDetails() instanceof ExecuteTaskBuildOperationDetails) {
-            return ((ExecuteTaskBuildOperationDetails) operationDescriptor.getDetails()).getTask().getPath();
+        Object details = call(operation, "getDetails");
+        if (details instanceof ExecuteTaskBuildOperationDetails) {
+            return ((ExecuteTaskBuildOperationDetails) details).getTask().getPath();
         }
-        return operationDescriptor.getDisplayName() + " (" + operationDescriptor.getId() + ")";
+        return call(operation, "getDisplayName") + " (" + call(operation, "getId") + ")";
     }
 
     protected TaskInternal getTask(Object operation) {
-        BuildOperationDescriptor operationDescriptor = (BuildOperationDescriptor) operation;
-        if (operationDescriptor.getDetails() instanceof ExecuteTaskBuildOperationDetails) {
-            ExecuteTaskBuildOperationDetails taskDescriptor = (ExecuteTaskBuildOperationDetails) operationDescriptor.getDetails();
+        Object details = call(operation, "getDetails");
+        if (details instanceof ExecuteTaskBuildOperationDetails) {
+            ExecuteTaskBuildOperationDetails taskDescriptor = (ExecuteTaskBuildOperationDetails) details;
             return taskDescriptor.getTask();
         }
         return null;
