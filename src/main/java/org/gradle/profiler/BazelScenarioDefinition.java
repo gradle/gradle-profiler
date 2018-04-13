@@ -8,10 +8,12 @@ import java.util.stream.Collectors;
 
 public class BazelScenarioDefinition extends ScenarioDefinition {
     private final List<String> targets;
+    private final List<String> commands;
 
-    public BazelScenarioDefinition(String scenarioName, List<String> targets, Supplier<BuildMutator> buildMutator, int warmUpCount, int buildCount, File outputDir) {
+    public BazelScenarioDefinition(String scenarioName, List<String> targets, List<String> commands, Supplier<BuildMutator> buildMutator, int warmUpCount, int buildCount, File outputDir) {
         super(scenarioName, buildMutator, warmUpCount, buildCount, outputDir);
         this.targets = targets;
+        this.commands = commands;
     }
 
     @Override
@@ -36,6 +38,10 @@ public class BazelScenarioDefinition extends ScenarioDefinition {
 
     public List<String> getTargets() {
         return targets;
+    }
+
+    public List<String> getCommands() {
+        return commands;
     }
 
     @Override

@@ -3,20 +3,7 @@ package org.gradle.profiler;
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
 import com.typesafe.config.ConfigParseOptions;
-import org.gradle.profiler.mutations.AbstractFileChangeMutator;
-import org.gradle.profiler.mutations.ApplyAbiChangeToJavaSourceFileMutator;
-import org.gradle.profiler.mutations.ApplyChangeToAndroidManifestFileMutator;
-import org.gradle.profiler.mutations.ApplyChangeToAndroidResourceFileMutator;
-import org.gradle.profiler.mutations.ApplyChangeToNativeSourceFileMutator;
-import org.gradle.profiler.mutations.ApplyChangeToPropertyResourceFileMutator;
-import org.gradle.profiler.mutations.ApplyNonAbiChangeToJavaSourceFileMutator;
-import org.gradle.profiler.mutations.ApplyValueChangeToAndroidResourceFileMutator;
-import org.gradle.profiler.mutations.BuildMutatorConfigurator;
-import org.gradle.profiler.mutations.ClearBuildCacheMutator;
-import org.gradle.profiler.mutations.FileChangeMutatorConfigurator;
-import org.gradle.profiler.mutations.GitCheckoutMutator;
-import org.gradle.profiler.mutations.GitRevertMutator;
-import org.gradle.profiler.mutations.ShowBuildCacheSizeMutator;
+import org.gradle.profiler.mutations.*;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -52,14 +39,16 @@ class ScenarioLoader {
     private static final String CLEAR_BUILD_CACHE_BEFORE = "clear-build-cache-before";
     private static final String SHOW_BUILD_CACHE_SIZE = "show-build-cache-size";
     private static final String GIT_CHECKOUT = "git-checkout";
+    private static final String CLEAN_BUILD_BEFORE = "clean-build-before";
     private static final String GIT_REVERT = "git-revert";
     private static final String TARGETS = "targets";
+    private static final String COMMANDS = "commands";
     private static final String TYPE = "type";
 
     private static final List<String> ALL_SCENARIO_KEYS = Arrays.asList(
-        VERSIONS, TASKS, CLEANUP_TASKS, GRADLE_ARGS, RUN_USING, SYSTEM_PROPERTIES, WARM_UP_COUNT, APPLY_ABI_CHANGE_TO, APPLY_NON_ABI_CHANGE_TO, APPLY_ANDROID_RESOURCE_CHANGE_TO, APPLY_ANDROID_RESOURCE_VALUE_CHANGE_TO, APPLY_ANDROID_MANIFEST_CHANGE_TO, APPLY_PROPERTY_RESOURCE_CHANGE_TO, APPLY_CPP_SOURCE_CHANGE_TO, APPLY_H_SOURCE_CHANGE_TO, CLEAR_BUILD_CACHE_BEFORE, SHOW_BUILD_CACHE_SIZE, GIT_CHECKOUT, GIT_REVERT, BAZEL, BUCK, MAVEN
+            CLEAN_BUILD_BEFORE, VERSIONS, TASKS, CLEANUP_TASKS, GRADLE_ARGS, RUN_USING, SYSTEM_PROPERTIES, WARM_UP_COUNT, APPLY_ABI_CHANGE_TO, APPLY_NON_ABI_CHANGE_TO, APPLY_ANDROID_RESOURCE_CHANGE_TO, APPLY_ANDROID_RESOURCE_VALUE_CHANGE_TO, APPLY_ANDROID_MANIFEST_CHANGE_TO, APPLY_PROPERTY_RESOURCE_CHANGE_TO, APPLY_CPP_SOURCE_CHANGE_TO, APPLY_H_SOURCE_CHANGE_TO, CLEAR_BUILD_CACHE_BEFORE, SHOW_BUILD_CACHE_SIZE, GIT_CHECKOUT, GIT_REVERT, BAZEL, BUCK, MAVEN
     );
-    private static final List<String> BAZEL_KEYS = Arrays.asList(TARGETS);
+    private static final List<String> BAZEL_KEYS = Arrays.asList(TARGETS, CLEANUP_TASKS, CLEAN_BUILD_BEFORE, COMMANDS);
     private static final List<String> BUCK_KEYS = Arrays.asList(TARGETS, TYPE);
     private static final List<String> MAVEN_KEYS = Collections.singletonList(TARGETS);
 
@@ -133,6 +122,7 @@ class ScenarioLoader {
             maybeAddMutator(scenario, scenarioName, settings.getProjectDir(), SHOW_BUILD_CACHE_SIZE, new ShowBuildCacheSizeMutator.Configurator(settings.getGradleUserHome()), mutators);
             maybeAddMutator(scenario, scenarioName, settings.getProjectDir(), GIT_CHECKOUT, new GitCheckoutMutator.Configurator(), mutators);
             maybeAddMutator(scenario, scenarioName, settings.getProjectDir(), GIT_REVERT, new GitRevertMutator.Configurator(), mutators);
+            maybeAddMutator(scenario, scenarioName, settings.getProjectDir(), "bazel." + CLEAN_BUILD_BEFORE, new BazelCleanBuildMutator.Configurator(), mutators);
 
             BuildMutatorFactory buildMutatorFactory = new BuildMutatorFactory(mutators);
 
@@ -148,7 +138,8 @@ class ScenarioLoader {
                 }
                 List<String> targets = ConfigUtil.strings(executionInstructions, TARGETS, Collections.emptyList());
                 File outputDir = new File(settings.getOutputDir(), scenarioName + "-bazel");
-                definitions.add(new BazelScenarioDefinition(scenarioName, targets, buildMutatorFactory, warmUpCount, settings.getBuildCount(), outputDir));
+                List<String> commands = ConfigUtil.strings(executionInstructions, COMMANDS, Collections.singletonList("build"));
+                definitions.add(new BazelScenarioDefinition(scenarioName, targets, commands, buildMutatorFactory, warmUpCount, settings.getBuildCount(), outputDir));
             } else if (scenario.hasPath(BUCK) && settings.isBuck()) {
                 if (settings.isProfile()) {
                     throw new IllegalArgumentException("Can only profile scenario '" + scenarioName + "' when building using Gradle.");
@@ -200,12 +191,28 @@ class ScenarioLoader {
     }
 
     private static void maybeAddMutator(Config scenario, String scenarioName, File projectDir, String key, Class<? extends AbstractFileChangeMutator> mutatorClass, List<Supplier<BuildMutator>> mutators) {
-    	maybeAddMutator(scenario, scenarioName, projectDir, key, new FileChangeMutatorConfigurator(mutatorClass), mutators);
-	}
+        maybeAddMutator(scenario, scenarioName, projectDir, key, new FileChangeMutatorConfigurator(mutatorClass), mutators);
+    }
 
     private static void maybeAddMutator(Config scenario, String scenarioName, File projectDir, String key, BuildMutatorConfigurator configurator, List<Supplier<BuildMutator>> mutators) {
-    	if (scenario.hasPath(key)) {
-			mutators.add(configurator.configure(scenario, scenarioName, projectDir, key));
-		}
+        String[] pathKeys = key.split("\\.");
+        String leafKey = pathKeys[pathKeys.length - 1];
+        Config config = scenario;
+        for (int i = 0; i < pathKeys.length; i++) {
+            String keyToCheck = pathKeys[i];
+            if (config.hasPath(keyToCheck)) {
+                if (i < pathKeys.length - 1) {
+                    config = config.getObject(keyToCheck).toConfig();
+                } else {
+                    mutators.add(configurator.configure(config, scenarioName, projectDir, keyToCheck));
+                    break;
+                }
+            } else {
+                break;
+            }
+        }
+
     }
+
+
 }

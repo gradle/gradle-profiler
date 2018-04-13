@@ -279,7 +279,7 @@ public class Main {
 
         List<String> commandLine = new ArrayList<>();
         commandLine.add(bazelExe);
-        commandLine.add("build");
+        commandLine.addAll(scenario.getCommands());
         commandLine.addAll(targets);
 
         BuildMutator mutator = scenario.getBuildMutator().get();
