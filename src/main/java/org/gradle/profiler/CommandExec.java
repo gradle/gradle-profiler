@@ -50,6 +50,10 @@ public class CommandExec {
         return new String(outputStream.toByteArray());
     }
 
+    public void runAndCollectOutput(File outputFile, Collection<String> commandLine) {
+        runAndCollectOutput(outputFile, commandLine.toArray(new String[0]));
+    }
+
     public void runAndCollectOutput(File outputFile, String... commandLine) {
         FileOutputStream outputStream;
         try {
