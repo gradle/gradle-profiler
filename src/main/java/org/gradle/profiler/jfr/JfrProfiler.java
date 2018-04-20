@@ -8,11 +8,16 @@ import org.gradle.profiler.ProfilerController;
 import org.gradle.profiler.ScenarioSettings;
 
 import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
+import java.nio.file.Files;
+import java.nio.file.StandardCopyOption;
 import java.util.Collections;
 import java.util.List;
 
 public class JfrProfiler extends Profiler {
     private final JFRArgs jfrArgs;
+    private final File config;
 
     public JfrProfiler() {
         this(null);
@@ -20,6 +25,20 @@ public class JfrProfiler extends Profiler {
 
     private JfrProfiler(JFRArgs jfrArgs) {
         this.jfrArgs = jfrArgs;
+        this.config = createConfig();
+    }
+
+    private static File createConfig() {
+        try {
+            File jfcFile = File.createTempFile("gradle", ".jfc");
+            try (InputStream stream = JfrProfiler.class.getResource("gradle.jfc").openStream()) {
+                Files.copy(stream, jfcFile.toPath(), StandardCopyOption.REPLACE_EXISTING);
+            }
+            jfcFile.deleteOnExit();
+            return jfcFile;
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     @Override
@@ -40,15 +59,15 @@ public class JfrProfiler extends Profiler {
         return new JfrProfiler(newConfigObject(parsedOptions));
     }
 
-    private JFRArgs newConfigObject(OptionSet parsedOptions ) {
+    private JFRArgs newConfigObject(OptionSet parsedOptions) {
         String jfrSettings = (String) parsedOptions.valueOf("jfr-settings");
         if (jfrSettings.endsWith(".jfc")) {
             jfrSettings = new File(jfrSettings).getAbsolutePath();
         }
         return new JFRArgs(
-            new File((String) parsedOptions.valueOf( "jfr-fg-home" )),
-            new File((String) parsedOptions.valueOf( "fg-home" )),
-            jfrSettings
+                new File((String) parsedOptions.valueOf("jfr-fg-home")),
+                new File((String) parsedOptions.valueOf("fg-home")),
+                jfrSettings
         );
     }
 
@@ -63,19 +82,18 @@ public class JfrProfiler extends Profiler {
     }
 
     @Override
-    public void addOptions( final OptionParser parser )
-    {
+    public void addOptions(final OptionParser parser) {
         parser.accepts("jfr-fg-home", "JFR FlameGraph home directory - https://github.com/chrishantha/jfr-flame-graph")
-              .availableIf("profile")
-              .withOptionalArg()
-              .defaultsTo(System.getenv().getOrDefault("JFR_FG_HOME_DIR", ""));
+                .availableIf("profile")
+                .withOptionalArg()
+                .defaultsTo(System.getenv().getOrDefault("JFR_FG_HOME_DIR", ""));
         parser.accepts("fg-home", "FlameGraph home directory")
-              .availableIf("profile")
-              .withOptionalArg()
-              .defaultsTo(System.getenv().getOrDefault("FG_HOME_DIR", ""));
+                .availableIf("profile")
+                .withOptionalArg()
+                .defaultsTo(System.getenv().getOrDefault("FG_HOME_DIR", ""));
         parser.accepts("jfr-settings", "JFR settings - Either a .jfc file or the name of a template known to your JFR installation")
                 .availableIf("profile")
                 .withOptionalArg()
-                .defaultsTo("profile");
+                .defaultsTo(config.getAbsolutePath());
     }
 }
