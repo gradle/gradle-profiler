@@ -6,3 +6,4 @@ classes
 /profile-out-*
 /foobar
 /gradle-user-home
+/buck-out

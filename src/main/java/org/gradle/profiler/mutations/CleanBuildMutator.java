@@ -14,12 +14,12 @@ import java.util.Collections;
 import java.util.List;
 import java.util.function.Supplier;
 
-public class BazelCleanBuildMutator implements BuildMutator {
+public class CleanBuildMutator implements BuildMutator {
 
     private CleanupSchedule schedule;
     private List<String> commands;
 
-    public BazelCleanBuildMutator(CleanupSchedule schedule, List<String> commands) {
+    public CleanBuildMutator(CleanupSchedule schedule, List<String> commands) {
         this.schedule = schedule;
         this.commands = commands;
     }
@@ -55,7 +55,9 @@ public class BazelCleanBuildMutator implements BuildMutator {
             processBuilder.redirectError(ProcessBuilder.Redirect.INHERIT);
             Process process = processBuilder.start();
             int result = process.waitFor();
-            System.out.println("Result: " + result);
+            if (result != 0) {
+                System.err.println(String.format("Unexpected exit code %s for command `%s`", result, StringUtils.join(commands, " ")));
+            }
         } catch (IOException | InterruptedException e) {
             throw new RuntimeException(e);
         }
@@ -63,21 +65,27 @@ public class BazelCleanBuildMutator implements BuildMutator {
 
     public static class Configurator implements BuildMutatorConfigurator {
 
-        public Configurator() {
+        private List<String> defaultCleanCommands;
+
+        public Configurator(String... defaultCleanCommands) {
+            if (defaultCleanCommands.length == 0) {
+                throw new IllegalArgumentException("No default command specified");
+            }
+            this.defaultCleanCommands = Arrays.asList(defaultCleanCommands);
         }
 
         @Override
         public Supplier<BuildMutator> configure(Config scenario, String scenarioName, File projectDir, String key) {
-            List<BazelCleanBuildMutator> mutators = new ArrayList<>();
+            List<CleanBuildMutator> mutators = new ArrayList<>();
             List<? extends Config> list = scenario.getConfigList("clean-build-before");
             for (Config config : list) {
                 CleanupSchedule schedule = ConfigUtil.enumValue(config, "schedule", CleanupSchedule.class, null);
                 if (schedule == null) {
                     throw new IllegalArgumentException("Schedule for cleanup is not specified");
                 }
-                // default to expunging
-                List<String> commands = ConfigUtil.strings(config, "commands", Arrays.asList("bazel", "clean", "--expunge"));
-                mutators.add(new BazelCleanBuildMutator(schedule, commands));
+                // use default if not defined
+                List<String> commands = ConfigUtil.strings(config, "commands", defaultCleanCommands);
+                mutators.add(new CleanBuildMutator(schedule, commands));
             }
             return () -> new CompositeBuildMutator<>(mutators);
         }

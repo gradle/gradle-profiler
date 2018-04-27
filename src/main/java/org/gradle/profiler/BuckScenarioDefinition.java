@@ -7,11 +7,13 @@ import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
 public class BuckScenarioDefinition extends ScenarioDefinition {
+    private final Version version;
     private final List<String> targets;
     private final String type;
 
-    public BuckScenarioDefinition(String scenarioName, List<String> targets, String type, Supplier<BuildMutator> buildMutator, int warmUpCount, int buildCount, File outputDir) {
+    public BuckScenarioDefinition(String scenarioName, Version version, List<String> targets, String type, Supplier<BuildMutator> buildMutator, int warmUpCount, int buildCount, File outputDir) {
         super(scenarioName, buildMutator, warmUpCount, buildCount, outputDir);
+        this.version = version;
         this.targets = targets;
         this.type = type;
     }
@@ -28,7 +30,7 @@ public class BuckScenarioDefinition extends ScenarioDefinition {
 
     @Override
     public String getBuildToolDisplayName() {
-        return "buck";
+        return version.getVersion();
     }
 
     @Override
