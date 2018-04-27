@@ -66,6 +66,12 @@ public class InvocationSettings {
         return invoker == Invoker.Buck;
     }
 
+    public boolean isGradle() {
+        return (invoker == Invoker.Cli ||
+                invoker == Invoker.NoDaemon ||
+                invoker == Invoker.ToolingApi);
+    }
+
     public boolean isMaven() {
         return invoker == Invoker.Maven;
     }

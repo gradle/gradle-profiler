@@ -51,7 +51,7 @@ public class Main {
 
             DaemonControl daemonControl = new DaemonControl(settings.getGradleUserHome());
             GradleVersionInspector gradleVersionInspector = new DefaultGradleVersionInspector(settings.getProjectDir(), settings.getGradleUserHome(), daemonControl);
-            ScenarioLoader scenarioLoader = new ScenarioLoader(gradleVersionInspector);
+            ScenarioLoader scenarioLoader = new ScenarioLoader(gradleVersionInspector, VersionInspector.BAZEL, VersionInspector.BUCK);
             List<ScenarioDefinition> scenarios = scenarioLoader.loadScenarios(settings);
             int totalScenarios = scenarios.size();
 
@@ -180,7 +180,7 @@ public class Main {
 			for (int i = 1; i <= scenario.getWarmUpCount(); i++) {
 				final int counter = i;
 				beforeBuild(WARM_UP, counter, invoker, cleanupTasks, mutator);
-				results = tryRun(() -> invoker.runBuild(WARM_UP, counter, BUILD, tasks),
+				results = tryRunAndContinue(() -> invoker.runBuild(WARM_UP, counter, BUILD, tasks),
 						mutator::afterBuild);
 				if (pid == null) {
 					pid = results.getDaemonPid();
@@ -215,7 +215,7 @@ public class Main {
 			for (int i = 1; i <= scenario.getBuildCount(); i++) {
 				final int counter = i;
 				beforeBuild(MEASURE, counter, invoker, cleanupTasks, mutator);
-				results = tryRun(() -> {
+				results = tryRunAndContinue(() -> {
 					if (settings.isProfile() && (counter == 1 || !cleanupTasks.isEmpty())) {
 						try {
 							control.startRecording();
@@ -279,7 +279,7 @@ public class Main {
 
         List<String> commandLine = new ArrayList<>();
         commandLine.add(bazelExe);
-        commandLine.add("build");
+        commandLine.addAll(scenario.getCommands());
         commandLine.addAll(targets);
 
         BuildMutator mutator = scenario.getBuildMutator().get();
@@ -289,7 +289,7 @@ public class Main {
             for (int i = 0; i < scenario.getWarmUpCount(); i++) {
                 String displayName = WARM_UP.displayBuildNumber(i + 1);
                 mutator.beforeBuild();
-				tryRun(() -> {
+				tryRunAndContinue(() -> {
 					startOperation("Running " + displayName);
 					Timer timer = new Timer();
 					new CommandExec().inDir(settings.getProjectDir()).run(commandLine);
@@ -301,7 +301,7 @@ public class Main {
             for (int i = 0; i < scenario.getBuildCount(); i++) {
                 String displayName = MEASURE.displayBuildNumber(i + 1);
                 mutator.beforeBuild();
-				tryRun(() -> {
+                tryRunAndContinue(() -> {
 					startOperation("Running " + displayName);
 					Timer timer = new Timer();
 					new CommandExec().inDir(settings.getProjectDir()).run(commandLine);
@@ -346,7 +346,7 @@ public class Main {
             for (int i = 0; i < scenario.getWarmUpCount(); i++) {
                 String displayName = WARM_UP.displayBuildNumber(i + 1);
                 mutator.beforeBuild();
-				tryRun(() -> {
+                tryRunAndContinue(() -> {
 					startOperation("Running " + displayName);
 					Timer timer = new Timer();
 					new CommandExec().inDir(settings.getProjectDir()).run(commandLine);
@@ -358,7 +358,7 @@ public class Main {
             for (int i = 0; i < scenario.getBuildCount(); i++) {
                 String displayName = MEASURE.displayBuildNumber(i + 1);
                 mutator.beforeBuild();
-				tryRun(() -> {
+                tryRunAndContinue(() -> {
 					startOperation("Running " + displayName);
 					Timer timer = new Timer();
 					new CommandExec().inDir(settings.getProjectDir()).run(commandLine);
@@ -390,7 +390,7 @@ public class Main {
             for (int i = 0; i < scenario.getWarmUpCount(); i++) {
 				String displayName = WARM_UP.displayBuildNumber(i + 1);
                 mutator.beforeBuild();
-				tryRun(() -> {
+                tryRunAndContinue(() -> {
 					startOperation("Running " + displayName);
 					Timer timer = new Timer();
 					new CommandExec().inDir(settings.getProjectDir()).run(commandLine);
@@ -402,7 +402,7 @@ public class Main {
             for (int i = 0; i < scenario.getBuildCount(); i++) {
 				String displayName = MEASURE.displayBuildNumber(i + 1);
                 mutator.beforeBuild();
-				tryRun(() -> {
+				tryRunAndContinue(() -> {
 					startOperation("Running " + displayName);
 					Timer timer = new Timer();
 					new CommandExec().inDir(settings.getProjectDir()).run(commandLine);
@@ -414,6 +414,24 @@ public class Main {
         } finally {
             mutator.afterScenario();
         }
+    }
+
+    private static void tryRunAndContinue(Runnable action, Consumer<Throwable> after) {
+        tryRunAndContinue(() -> {
+            action.run();
+            return null;
+        }, after);
+    }
+
+    private static <T> T tryRunAndContinue(Supplier<T> action, Consumer<Throwable> after) {
+        T t = null;
+        try {
+           t= tryRun(action, after);
+        } catch (Exception e) {
+            e.printStackTrace();
+            // continue
+        }
+        return t;
     }
 
 	private static <T> T tryRun(Supplier<T> action, Consumer<Throwable> after) {

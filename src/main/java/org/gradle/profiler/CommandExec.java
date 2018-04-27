@@ -151,7 +151,7 @@ public class CommandExec {
     }
 
     private String commandErrorMessage(ProcessBuilder processBuilder) {
-        return "Could not run command " + processBuilder.command().stream().collect(Collectors.joining(" "));
+        return "Could not run command " + processBuilder.command().stream().collect(Collectors.joining(" ")) + " in dir " + processBuilder.directory().getAbsolutePath();
     }
 
     public class RunHandle {
