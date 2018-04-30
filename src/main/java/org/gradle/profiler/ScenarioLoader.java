@@ -66,14 +66,22 @@ class ScenarioLoader {
     private static final List<String> MAVEN_KEYS = Collections.singletonList(TARGETS);
 
     private final GradleVersionInspector gradleVersionInspector;
+    private final VersionInspector bazelVersionInspector;
+    private final VersionInspector buckVersionInspector;
 
-    public ScenarioLoader(GradleVersionInspector gradleVersionInspector) {
+    public ScenarioLoader(GradleVersionInspector gradleVersionInspector,
+                          VersionInspector bazelVersionInspector,
+                          VersionInspector buckVersionInspector) {
         this.gradleVersionInspector = gradleVersionInspector;
+        this.bazelVersionInspector = bazelVersionInspector;
+        this.buckVersionInspector = buckVersionInspector;
     }
 
     public List<ScenarioDefinition> loadScenarios(InvocationSettings settings) {
         if (settings.getScenarioFile() != null) {
-            return loadScenarios(settings.getScenarioFile(), settings, gradleVersionInspector);
+            return loadScenarios(settings.getScenarioFile(), settings, gradleVersionInspector,
+                    bazelVersionInspector,
+                    buckVersionInspector);
         } else {
             return adhocScenarios(settings);
         }
@@ -95,7 +103,9 @@ class ScenarioLoader {
         return scenarios;
     }
 
-    static List<ScenarioDefinition> loadScenarios(File scenarioFile, InvocationSettings settings, GradleVersionInspector inspector) {
+    static List<ScenarioDefinition> loadScenarios(File scenarioFile, InvocationSettings settings, GradleVersionInspector inspector,
+                                                  VersionInspector bazelVersionInspector,
+                                                  VersionInspector buckVersionInspector) {
         List<ScenarioDefinition> definitions = new ArrayList<>();
         Config config = ConfigFactory.parseFile(scenarioFile, ConfigParseOptions.defaults().setAllowMissing(false)).resolve();
         Set<String> roots = config.root().keySet();
@@ -151,7 +161,7 @@ class ScenarioLoader {
                 }
                 List<String> targets = ConfigUtil.strings(executionInstructions, TARGETS, Collections.emptyList());
                 File outputDir = new File(settings.getOutputDir(), scenarioName + "-bazel");
-                definitions.add(new BazelScenarioDefinition(scenarioName, targets, buildMutatorFactory, warmUpCount, settings.getBuildCount(), outputDir));
+                definitions.add(new BazelScenarioDefinition(scenarioName, targets, bazelVersionInspector.getVersion(), buildMutatorFactory, warmUpCount, settings.getBuildCount(), outputDir));
             } else if (scenario.hasPath(BUCK) && settings.isBuck()) {
                 if (settings.isProfile()) {
                     throw new IllegalArgumentException("Can only profile scenario '" + scenarioName + "' when building using Gradle.");
@@ -165,7 +175,7 @@ class ScenarioLoader {
                 List<String> targets = ConfigUtil.strings(executionInstructions, TARGETS, Collections.emptyList());
                 String type = ConfigUtil.string(executionInstructions, TYPE, null);
                 File outputDir = new File(settings.getOutputDir(), scenarioName + "-buck");
-                definitions.add(new BuckScenarioDefinition(scenarioName, targets, type, buildMutatorFactory, warmUpCount, settings.getBuildCount(), outputDir));
+                definitions.add(new BuckScenarioDefinition(scenarioName, targets, type, buckVersionInspector.getVersion(), buildMutatorFactory, warmUpCount, settings.getBuildCount(), outputDir));
             } else if (scenario.hasPath(MAVEN) && settings.isMaven()) {
                 if (settings.isProfile()) {
                     throw new IllegalArgumentException("Can only profile scenario '" + scenarioName + "' when building using Gradle.");
@@ -203,12 +213,12 @@ class ScenarioLoader {
     }
 
     private static void maybeAddMutator(Config scenario, String scenarioName, File projectDir, String key, Class<? extends AbstractFileChangeMutator> mutatorClass, List<Supplier<BuildMutator>> mutators) {
-    	maybeAddMutator(scenario, scenarioName, projectDir, key, new FileChangeMutatorConfigurator(mutatorClass), mutators);
-	}
+        maybeAddMutator(scenario, scenarioName, projectDir, key, new FileChangeMutatorConfigurator(mutatorClass), mutators);
+    }
 
     private static void maybeAddMutator(Config scenario, String scenarioName, File projectDir, String key, BuildMutatorConfigurator configurator, List<Supplier<BuildMutator>> mutators) {
-    	if (scenario.hasPath(key)) {
-			mutators.add(configurator.configure(scenario, scenarioName, projectDir, key));
-		}
+        if (scenario.hasPath(key)) {
+            mutators.add(configurator.configure(scenario, scenarioName, projectDir, key));
+        }
     }
 }

@@ -8,15 +8,17 @@ import java.util.stream.Collectors;
 
 public class BazelScenarioDefinition extends ScenarioDefinition {
     private final List<String> targets;
+    private final Version version;
 
-    public BazelScenarioDefinition(String scenarioName, List<String> targets, Supplier<BuildMutator> buildMutator, int warmUpCount, int buildCount, File outputDir) {
+    public BazelScenarioDefinition(String scenarioName, List<String> targets, Version version, Supplier<BuildMutator> buildMutator, int warmUpCount, int buildCount, File outputDir) {
         super(scenarioName, buildMutator, warmUpCount, buildCount, outputDir);
         this.targets = targets;
+        this.version = version;
     }
 
     @Override
     public String getDisplayName() {
-        return getName() + " using bazel";
+        return getName() + " using Bazel " + version.getVersion();
     }
 
     @Override
@@ -26,7 +28,7 @@ public class BazelScenarioDefinition extends ScenarioDefinition {
 
     @Override
     public String getBuildToolDisplayName() {
-        return "bazel";
+        return version.getVersion();
     }
 
     @Override

@@ -5,18 +5,13 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-class GradleVersion {
+class GradleVersion extends Version {
 
-    private final String version;
     private final File gradleHome;
 
     public GradleVersion(String version, File gradleHome) {
-        this.version = version;
+        super(version);
         this.gradleHome = gradleHome;
-    }
-
-    public String getVersion() {
-        return version;
     }
 
     public File getGradleHome() {

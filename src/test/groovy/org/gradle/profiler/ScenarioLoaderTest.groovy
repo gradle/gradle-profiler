@@ -28,7 +28,7 @@ class ScenarioLoaderTest extends Specification {
                 tasks = ["help"]
             }
         """
-        def scenarios = loadScenarios(scenarioFile, settings, Mock(GradleVersionInspector))
+        def scenarios = loadScenarios(scenarioFile, settings, Mock(GradleVersionInspector), Mock(VersionInspector), Mock(VersionInspector))
         expect:
         scenarios*.name == ["default"]
         (scenarios[0] as GradleScenarioDefinition).tasks == ["help"]
@@ -52,7 +52,7 @@ class ScenarioLoaderTest extends Specification {
                 tasks = ["bela"]
             }
         """
-        def scenarios = loadScenarios(scenarioFile, settings, Mock(GradleVersionInspector))
+        def scenarios = loadScenarios(scenarioFile, settings, Mock(GradleVersionInspector), Mock(VersionInspector), Mock(VersionInspector))
         expect:
         scenarios*.name == ["alma", "bela"]
         (scenarios[0] as GradleScenarioDefinition).tasks == ["alma"]
@@ -77,7 +77,7 @@ class ScenarioLoaderTest extends Specification {
             
             include file("${otherConf.absolutePath.replace((char)'\\', (char) '/')}")
         """
-        def scenarios = loadScenarios(scenarioFile, settings, Mock(GradleVersionInspector))
+        def scenarios = loadScenarios(scenarioFile, settings, Mock(GradleVersionInspector), Mock(VersionInspector), Mock(VersionInspector))
         expect:
         scenarios*.name == ["alma"]
         (scenarios[0] as GradleScenarioDefinition).tasks == ["alma"]
@@ -93,7 +93,7 @@ class ScenarioLoaderTest extends Specification {
                 }
             }
         """
-        def scenarios = loadScenarios(scenarioFile, settings, Mock(GradleVersionInspector))
+        def scenarios = loadScenarios(scenarioFile, settings, Mock(GradleVersionInspector), Mock(VersionInspector), Mock(VersionInspector))
         expect:
         scenarios*.name == ["default"]
         (scenarios[0] as BazelScenarioDefinition).targets == ["help"]
@@ -109,7 +109,7 @@ class ScenarioLoaderTest extends Specification {
                 }
             }
         """
-        def scenarios = loadScenarios(scenarioFile, settings, Mock(GradleVersionInspector))
+        def scenarios = loadScenarios(scenarioFile, settings, Mock(GradleVersionInspector), Mock(VersionInspector), Mock(VersionInspector))
         expect:
         scenarios*.name == ["default"]
         (scenarios[0] as BuckScenarioDefinition).targets == ["help"]
@@ -125,7 +125,7 @@ class ScenarioLoaderTest extends Specification {
                 }
             }
         """
-        def scenarios = loadScenarios(scenarioFile, settings, Mock(GradleVersionInspector))
+        def scenarios = loadScenarios(scenarioFile, settings, Mock(GradleVersionInspector), Mock(VersionInspector), Mock(VersionInspector))
         expect:
         scenarios*.name == ["default"]
         (scenarios[0] as MavenScenarioDefinition).targets == ["help"]
