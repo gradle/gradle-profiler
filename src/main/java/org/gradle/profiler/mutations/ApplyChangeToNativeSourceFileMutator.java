@@ -7,7 +7,7 @@ public class ApplyChangeToNativeSourceFileMutator extends AbstractFileChangeMuta
 
     public ApplyChangeToNativeSourceFileMutator(File file) {
         super(file);
-        if (!sourceFile.getName().endsWith(".cpp") && !sourceFile.getName().endsWith(".h")) {
+        if (!sourceFile.getName().endsWith(".cpp") && !sourceFile.getName().endsWith(".h") && !sourceFile.getName().endsWith(".hpp")) {
             throw new IllegalArgumentException("Can only modify C++ source or header files");
         }
     }
