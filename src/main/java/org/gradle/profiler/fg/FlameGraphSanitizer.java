@@ -45,7 +45,6 @@ public class FlameGraphSanitizer {
     private final SanitizeFunction sanitizeFunction;
 
     public FlameGraphSanitizer(SanitizeFunction... sanitizeFunctions) {
-        ;
         ImmutableList<SanitizeFunction> functions = ImmutableList.<SanitizeFunction>builder()
                 .addAll(Arrays.asList(sanitizeFunctions))
                 .add(new CollapseDuplicateFrames())
