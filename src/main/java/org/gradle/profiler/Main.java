@@ -477,11 +477,9 @@ public class Main {
             return;
         }
         for (File file : outputDir.listFiles()) {
-            if (file.isFile()) {
-                List<String> summary = profiler.summarizeResultFile(file);
-                if (summary != null) {
-                    summary.forEach(line -> System.out.println("  " + line));
-                }
+            List<String> summary = profiler.summarizeResultFile(file);
+            if (summary != null) {
+                summary.forEach(line -> System.out.println("  " + line));
             }
         }
         for (File file : outputDir.listFiles()) {

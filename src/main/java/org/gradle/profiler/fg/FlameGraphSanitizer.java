@@ -1,41 +1,32 @@
-/*
- * Copyright 2003-2012 the original author or authors.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
 package org.gradle.profiler.fg;
 
-import java.io.BufferedReader;
-import java.io.BufferedWriter;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileWriter;
-import java.io.IOException;
-import java.io.InputStreamReader;
+import com.google.common.base.Joiner;
+import com.google.common.base.Splitter;
+import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.Iterables;
+import com.google.common.collect.Maps;
+
+import java.io.*;
 import java.util.ArrayList;
-import java.util.Collections;
-import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.StringJoiner;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import static java.util.Arrays.asList;
+
+/**
+ * Simplifies stacks to make flame graphs more readable.
+ */
 public class FlameGraphSanitizer {
+    private static final Splitter STACKTRACE_SPLITTER = Splitter.on(";").omitEmptyStrings();
+    private static final Joiner STACKTRACE_JOINER = Joiner.on(";");
+
     private final SanitizeFunction sanitizeFunction;
 
-    public FlameGraphSanitizer(SanitizeFunction sanitizeFunction) {
-        this.sanitizeFunction = sanitizeFunction;
+    public FlameGraphSanitizer(SanitizeFunction... sanitizeFunctions) {
+        this.sanitizeFunction = new CompositeSanitizeFunction(sanitizeFunctions);
     }
 
     public void sanitize(final File in, File out) {
@@ -47,27 +38,26 @@ public class FlameGraphSanitizer {
                     if (sanitizeFunction.skipLine(line)) {
                         continue;
                     }
-                    String[] data = line.replaceAll(", ", ",").split(" ");
-                    if (data.length == 2) {
-                        String stackTraces = data[0];
-                        String suffix = data[1];
-                        String[] stackTraceElements = stackTraces.split(";");
-                        List<String> remapped = new ArrayList<String>(stackTraceElements.length);
+                    int endOfStack = line.lastIndexOf(" ");
+                    if (endOfStack > 0) {
+                        String stackTrace = line.substring(0, endOfStack);
+                        String invocationCount = line.substring(endOfStack + 1);
+                        List<String> stackTraceElements = STACKTRACE_SPLITTER.splitToList(stackTrace);
+                        List<String> sanitizedStackElements = new ArrayList<String>(stackTraceElements.size());
                         for (String stackTraceElement : stackTraceElements) {
-                            String mapped = sanitizeFunction.map(stackTraceElement);
-                            if (mapped != null) {
-                                remapped.add(mapped);
+                            String sanitizedStackElement = sanitizeFunction.map(stackTraceElement);
+                            if (sanitizedStackElement != null) {
+                                String previousStackElement = Iterables.getLast(sanitizedStackElements, null);
+                                if (!sanitizedStackElement.equals(previousStackElement)) {
+                                    sanitizedStackElements.add(sanitizedStackElement);
+                                }
                             }
                         }
-                        if (!remapped.isEmpty()) {
+                        if (!sanitizedStackElements.isEmpty()) {
                             sb.setLength(0);
-                            StringJoiner joiner = new StringJoiner(";");
-                            for (String s : remapped) {
-                                joiner.add(s);
-                            }
-                            sb.append(joiner);
-                            sb.append(' ');
-                            sb.append(suffix);
+                            STACKTRACE_JOINER.appendTo(sb, sanitizedStackElements);
+                            sb.append(" ");
+                            sb.append(invocationCount);
                             sb.append("\n");
                             writer.write(sb.toString());
                         }
@@ -77,35 +67,92 @@ public class FlameGraphSanitizer {
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
+
     }
 
     public interface SanitizeFunction {
-        boolean skipLine(String line);
+        SanitizeFunction COLLAPSE_BUILD_SCRIPTS = new FlameGraphSanitizer.RegexBasedSanitizeFunction(
+                ImmutableMap.of(
+                        Pattern.compile("build_[a-z0-9]+"), "build script",
+                        Pattern.compile("settings_[a-z0-9]+"), "settings script"
+                )
+        );
+        SanitizeFunction COLLAPSE_GRADLE_INFRASTRUCTURE = new FlameGraphSanitizer.ContainmentBasedSanitizeFunction(
+                ImmutableMap.of(
+                        asList("BuildOperation"), "build operations",
+                        asList("PluginManager", "ObjectConfigurationAction", "PluginTarget", "PluginAware", "Script.apply", "ScriptPlugin", "ScriptTarget", "ScriptRunner"), "plugin management",
+                        asList("DynamicObject", "Closure.call", "MetaClass", "MetaMethod", "CallSite", "ConfigureDelegate", "Method.invoke", "MethodAccessor", "Proxy", "ConfigureUtil", "Script.invoke", "ClosureBackedAction", "getProperty("), "dynamic invocation",
+                        asList("ProjectEvaluator", "Project.evaluate"), "project evaluation",
+                        asList("CommandLine", "Executer", "Executor", "Execution", "Runner", "BuildController", "Bootstrap", "EntryPoint", "Main"), "execution infrastructure"
+                )
+        );
 
         String map(String entry);
+
+        boolean skipLine(String line);
     }
 
-    public static final Map<Pattern, String> DEFAULT_REPLACEMENTS = Collections.unmodifiableMap(
-        new LinkedHashMap<Pattern, String>() { {
-            put(Pattern.compile("build_([a-z0-9]+)"), "build_");
-            put(Pattern.compile("settings_([a-z0-9]+)"), "settings_");
-            put(Pattern.compile("org[.]gradle[.]"), "");
-            put(Pattern.compile("sun[.]reflect[.]GeneratedMethodAccessor[0-9]+"), "GeneratedMethodAccessor");
-        }}
-    );
+    private static class CompositeSanitizeFunction implements SanitizeFunction {
 
-    public static final SanitizeFunction DEFAULT_SANITIZE_FUNCTION = new RegexBasedSanitizerFunction( DEFAULT_REPLACEMENTS );
+        private final List<SanitizeFunction> sanitizeFunctions;
 
-    public static class RegexBasedSanitizerFunction implements SanitizeFunction {
-        private final Map<Pattern, String> replacements;
+        private CompositeSanitizeFunction(SanitizeFunction... sanitizeFunctions) {
+            this.sanitizeFunctions = ImmutableList.copyOf(sanitizeFunctions);
+        }
 
-        public RegexBasedSanitizerFunction(Map<Pattern, String> replacements) {
-            this.replacements = replacements;
+        @Override
+        public String map(String entry) {
+            String result = entry;
+            for (SanitizeFunction sanitizeFunction : sanitizeFunctions) {
+                result = sanitizeFunction.map(result);
+            }
+            return result;
+        }
+
+        @Override
+        public boolean skipLine(String line) {
+            for (SanitizeFunction sanitizeFunction : sanitizeFunctions) {
+                if (sanitizeFunction.skipLine(line)) {
+                    return true;
+                }
+            }
+            return false;
+        }
+    }
+
+    public static class ContainmentBasedSanitizeFunction implements SanitizeFunction {
+        private final Map<String, String> replacements;
+
+        public ContainmentBasedSanitizeFunction(Map<List<String>, String> replacements) {
+            this.replacements = Maps.newHashMap();
+            for (Map.Entry<List<String>, String> entry : replacements.entrySet()) {
+                for (String key : entry.getKey()) {
+                    this.replacements.put(key, entry.getValue());
+                }
+            }
+        }
+
+        @Override
+        public String map(String entry) {
+            for (Map.Entry<String, String> replacement : replacements.entrySet()) {
+                if (entry.contains(replacement.getKey())) {
+                    return replacement.getValue();
+                }
+            }
+            return entry;
         }
 
         @Override
         public boolean skipLine(String line) {
             return false;
+        }
+    }
+
+    public static class RegexBasedSanitizeFunction implements SanitizeFunction {
+        private final Map<Pattern, String> replacements;
+
+        public RegexBasedSanitizeFunction(Map<Pattern, String> replacements) {
+            this.replacements = replacements;
         }
 
         @Override
@@ -125,5 +172,9 @@ public class FlameGraphSanitizer {
             return entry;
         }
 
+        @Override
+        public boolean skipLine(String line) {
+            return false;
+        }
     }
 }

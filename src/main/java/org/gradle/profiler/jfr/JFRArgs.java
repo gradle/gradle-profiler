@@ -15,25 +15,11 @@
  */
 package org.gradle.profiler.jfr;
 
-import java.io.File;
-
 public class JFRArgs {
-    private final File jfrFgHomeDir;
-    private final File fgHomeDir;
     private final String jfrSettings;
 
-    public JFRArgs(File jfrFgHomeDir, final File fgHomeDir, String jfrSettings) {
-        this.jfrFgHomeDir = jfrFgHomeDir;
-        this.fgHomeDir = fgHomeDir;
+    public JFRArgs(String jfrSettings) {
         this.jfrSettings = jfrSettings;
-    }
-
-    public File getJfrFgHomeDir() {
-        return jfrFgHomeDir;
-    }
-
-    public File getFgHomeDir() {
-        return fgHomeDir;
     }
 
     public String getJfrSettings() {
