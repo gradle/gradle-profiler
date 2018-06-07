@@ -1,5 +1,6 @@
 package org.gradle.profiler.fg;
 
+import com.google.common.base.CharMatcher;
 import com.google.common.base.Joiner;
 import com.google.common.base.Splitter;
 import com.google.common.collect.ImmutableList;
@@ -20,7 +21,6 @@ import static java.util.Collections.singletonList;
 public class FlameGraphSanitizer {
     private static final Splitter STACKTRACE_SPLITTER = Splitter.on(";").omitEmptyStrings();
     private static final Joiner STACKTRACE_JOINER = Joiner.on(";");
-    private static final String GRADLE_INFRASTRUCTURE = "Gradle infrastructure";
 
     public static final SanitizeFunction COLLAPSE_BUILD_SCRIPTS = new ReplaceRegex(
             ImmutableMap.of(
@@ -30,15 +30,17 @@ public class FlameGraphSanitizer {
     );
 
     public static final SanitizeFunction COLLAPSE_GRADLE_INFRASTRUCTURE = new CompositeSanitizeFunction(
-            new ChopPrefix("DefaultGradleLauncher.loadSettings()"),
-            new ChopPrefix("DefaultGradleLauncher.configureBuild()"),
-            new ChopPrefix("DefaultGradleLauncher.constructTaskGraph()"),
-            new ChopPrefix("DefaultGradleLauncher.executeTasks()"),
-            new ChopPrefix("CatchExceptionTaskExecuter.execute(...)"),
+            new ChopPrefix("loadSettings"),
+            new ChopPrefix("configureBuild"),
+            new ChopPrefix("constructTaskGraph"),
+            new ChopPrefix("executeTasks"),
+            new ChopPrefix("org.gradle.api.internal.tasks.execution"),
+            new ReplaceContainment(singletonList("org.gradle.api.internal.tasks.execution"), "task execution"),
             new ReplaceContainment(asList("DynamicObject", "Closure.call", "MetaClass", "MetaMethod", "CallSite", "ConfigureDelegate", "Method.invoke", "MethodAccessor", "Proxy", "ConfigureUtil", "Script.invoke", "ClosureBackedAction", "getProperty("), "dynamic invocation"),
-            new ReplaceContainment(asList("BuildOperation", "PluginManager", "ObjectConfigurationAction", "PluginTarget", "PluginAware", "Script.apply", "ScriptPlugin", "ScriptTarget", "ScriptRunner", "ProjectEvaluator", "Project.evaluate"), GRADLE_INFRASTRUCTURE),
-            new ReplaceContainment(singletonList("TaskExecuter"), "task executer")
+            new ReplaceContainment(asList("BuildOperation", "PluginManager", "ObjectConfigurationAction", "PluginTarget", "PluginAware", "Script.apply", "ScriptPlugin", "ScriptTarget", "ScriptRunner", "ProjectEvaluator", "Project.evaluate"), "Gradle infrastructure")
     );
+
+    public static final SanitizeFunction SIMPLE_NAMES = new ToSimpleName();
 
     private final SanitizeFunction sanitizeFunction;
 
@@ -183,20 +185,30 @@ public class FlameGraphSanitizer {
     }
 
     private static class ChopPrefix implements SanitizeFunction {
-        private final String prefix;
+        private final String stopToken;
 
-        private ChopPrefix(String prefix) {
-            this.prefix = prefix;
+        private ChopPrefix(String stopToken) {
+            this.stopToken = stopToken;
         }
 
         @Override
         public List<String> map(List<String> stack) {
-            int i = stack.indexOf(prefix);
-            if (i >= 0) {
-                return stack.subList(i, stack.size());
-            } else {
-                return stack;
+            for (int i = 0; i < stack.size(); i++) {
+                String frame = stack.get(i);
+                if (frame.contains(stopToken)) {
+                    return stack.subList(i, stack.size());
+                }
             }
+            return stack;
+        }
+    }
+
+    private static class ToSimpleName extends FrameWiseSanitizeFunction {
+
+        @Override
+        protected String mapFrame(String frame) {
+            int firstUpper = CharMatcher.javaUpperCase().indexIn(frame);
+            return frame.substring(Math.max(firstUpper, 0));
         }
     }
 }

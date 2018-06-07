@@ -103,10 +103,10 @@ class JfrFlameGraphGenerator {
                 new FlameGraphSanitizer(FlameGraphSanitizer.COLLAPSE_BUILD_SCRIPTS)
         ),
         SIMPLIFIED(
-                Arrays.asList("--hide-arguments", "--ignore-line-numbers", "--use-simple-names"),
+                Arrays.asList("--hide-arguments", "--ignore-line-numbers"),
                 Arrays.asList("--minwidth", "1"),
                 Arrays.asList("--minwidth", "2"),
-                new FlameGraphSanitizer(FlameGraphSanitizer.COLLAPSE_BUILD_SCRIPTS, FlameGraphSanitizer.COLLAPSE_GRADLE_INFRASTRUCTURE)
+                new FlameGraphSanitizer(FlameGraphSanitizer.COLLAPSE_BUILD_SCRIPTS, FlameGraphSanitizer.COLLAPSE_GRADLE_INFRASTRUCTURE, FlameGraphSanitizer.SIMPLE_NAMES)
         );
 
         private List<String> stackConversionOptions;
