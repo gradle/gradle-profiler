@@ -18,8 +18,8 @@ package org.gradle.profiler.hp;
 import org.gradle.profiler.CommandExec;
 import org.gradle.profiler.ScenarioSettings;
 import org.gradle.profiler.SingleIterationProfilerController;
-import org.gradle.profiler.fg.FlameGraphTool;
 import org.gradle.profiler.fg.FlameGraphSanitizer;
+import org.gradle.profiler.fg.FlameGraphTool;
 
 import java.io.File;
 import java.io.IOException;
@@ -82,7 +82,7 @@ public class HonestProfilerControl extends SingleIterationProfilerController {
     }
 
     private void sanitizeFlameGraphTxtFile(final File txtFile, final File sanitizedTxtFile) {
-        new FlameGraphSanitizer(FlameGraphSanitizer.SanitizeFunction.COLLAPSE_BUILD_SCRIPTS).sanitize(txtFile, sanitizedTxtFile);
+        new FlameGraphSanitizer(FlameGraphSanitizer.COLLAPSE_BUILD_SCRIPTS).sanitize(txtFile, sanitizedTxtFile);
     }
 
     private void generateFlameGraph(final File sanitizedTxtFile, final File fgFile) {

@@ -31,6 +31,7 @@ import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.StandardCopyOption;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.function.BiFunction;
 import java.util.stream.Collectors;
@@ -208,7 +209,7 @@ public class PerfProfilerController extends SingleIterationProfilerController {
 
         sanitizeFlameGraphFile(new IdleCpuSanitizeFunction(), foldedFile, foldedNoIdleFile);
         sanitizeFlameGraphFile(new JavaProcessSanitizeFunction(), foldedNoIdleFile, foldedJavaFile);
-        sanitizeFlameGraphFile(FlameGraphSanitizer.SanitizeFunction.COLLAPSE_BUILD_SCRIPTS, foldedJavaFile, sanitizedFile);
+        sanitizeFlameGraphFile(FlameGraphSanitizer.COLLAPSE_BUILD_SCRIPTS, foldedJavaFile, sanitizedFile);
         generateFlameGraph(sanitizedFile, fgFile, false);
         generateFlameGraph(sanitizedFile, icicleFile, true);
     }
@@ -316,14 +317,13 @@ public class PerfProfilerController extends SingleIterationProfilerController {
     }
 
     private static class IdleCpuSanitizeFunction implements FlameGraphSanitizer.SanitizeFunction {
-        @Override
-        public boolean skipLine(String line) {
-            return line.contains("cpu_idle");
-        }
 
         @Override
-        public String map(String entry) {
-            return entry;
+        public List<String> map(List<String> stack) {
+            if (stack.contains("cpu_idle")) {
+                return Collections.emptyList();
+            }
+            return stack;
         }
     }
 
@@ -335,26 +335,27 @@ public class PerfProfilerController extends SingleIterationProfilerController {
             this.currentProcess = "java=" + split[0];
         }
 
-        @Override
-        public boolean skipLine(String line) {
+        private boolean isUninterestingProcess(String line) {
             return !line.startsWith("java-") || line.startsWith(currentProcess);
         }
 
         @Override
-        public String map(String entry) {
-            return entry;
+        public List<String> map(List<String> stack) {
+            if (stack.isEmpty() || isUninterestingProcess(stack.get(0))) {
+                return Collections.emptyList();
+            }
+            return stack;
         }
     }
 
     private static class JavaPackageSanitizeFunction implements FlameGraphSanitizer.SanitizeFunction {
-        @Override
-        public boolean skipLine(String line) {
-            return !line.startsWith("java");
-        }
 
         @Override
-        public String map(String entry) {
-            return entry;
+        public List<String> map(List<String> stack) {
+            if (stack.isEmpty() || !stack.get(0).startsWith("java")) {
+                return Collections.emptyList();
+            }
+            return stack;
         }
     }
 }
