@@ -18,8 +18,8 @@ package org.gradle.profiler.hp;
 import org.gradle.profiler.CommandExec;
 import org.gradle.profiler.ScenarioSettings;
 import org.gradle.profiler.SingleIterationProfilerController;
-import org.gradle.profiler.fg.FlameGraphGenerator;
 import org.gradle.profiler.fg.FlameGraphSanitizer;
+import org.gradle.profiler.fg.FlameGraphTool;
 
 import java.io.File;
 import java.io.IOException;
@@ -82,11 +82,11 @@ public class HonestProfilerControl extends SingleIterationProfilerController {
     }
 
     private void sanitizeFlameGraphTxtFile(final File txtFile, final File sanitizedTxtFile) {
-        new FlameGraphSanitizer(FlameGraphSanitizer.DEFAULT_SANITIZE_FUNCTION).sanitize(txtFile, sanitizedTxtFile);
+        new FlameGraphSanitizer(FlameGraphSanitizer.COLLAPSE_BUILD_SCRIPTS).sanitize(txtFile, sanitizedTxtFile);
     }
 
-    private void generateFlameGraph(final File sanitizedTxtFile, final File fgFile) throws IOException, InterruptedException {
-        new FlameGraphGenerator(args.getFgHomeDir()).generateFlameGraph(sanitizedTxtFile, fgFile);
+    private void generateFlameGraph(final File sanitizedTxtFile, final File fgFile) {
+        new FlameGraphTool(args.getFgHomeDir()).generateFlameGraph(sanitizedTxtFile, fgFile, "--minwdith", "1");
     }
 
     private void sendCommand(String command) throws IOException {

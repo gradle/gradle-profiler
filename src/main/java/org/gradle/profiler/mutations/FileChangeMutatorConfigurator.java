@@ -5,6 +5,7 @@ import org.gradle.profiler.BuildMutator;
 import org.gradle.profiler.ConfigUtil;
 
 import java.io.File;
+import java.lang.reflect.InvocationTargetException;
 import java.util.function.Supplier;
 
 public class FileChangeMutatorConfigurator implements BuildMutatorConfigurator {
@@ -20,8 +21,12 @@ public class FileChangeMutatorConfigurator implements BuildMutatorConfigurator {
 		if (sourceFileToChange != null) {
 			return () -> {
 				try {
-					return mutatorClass.getConstructor(File.class).newInstance(sourceFileToChange);
-				} catch (Exception e) {
+					try {
+						return mutatorClass.getConstructor(File.class).newInstance(sourceFileToChange);
+					} catch (InvocationTargetException e) {
+						throw e.getCause();
+					}
+				} catch (Throwable e) {
 					throw new RuntimeException("Could not create instance of mutator " + mutatorClass.getSimpleName(), e);
 				}
 			};

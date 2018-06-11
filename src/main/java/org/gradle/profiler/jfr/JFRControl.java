@@ -4,17 +4,11 @@ import org.gradle.profiler.CommandExec;
 import org.gradle.profiler.OperatingSystem;
 import org.gradle.profiler.ScenarioSettings;
 import org.gradle.profiler.SingleIterationProfilerController;
-import org.gradle.profiler.fg.FlameGraphGenerator;
-import org.gradle.profiler.fg.FlameGraphSanitizer;
 
 import java.io.File;
-import java.io.IOException;
 
 public class JFRControl extends SingleIterationProfilerController {
     private static final String PROFILE_JFR_SUFFIX = ".jfr";
-    private static final String PROFILE_TXT_SUFFIX = "-jfr.txt";
-    private static final String PROFILE_SANITIZED_TXT_SUFFIX = "-jfr-sanitized.txt";
-    private static final String FLAMES_SVG_SUFFX = "-jfr-flames.svg";
 
     private final File jcmd;
     private final JFRArgs jfrArgs;
@@ -41,67 +35,21 @@ public class JFRControl extends SingleIterationProfilerController {
     }
 
     @Override
-    public void doStartRecording() throws IOException, InterruptedException {
+    public void doStartRecording() {
         run(jcmd.getAbsolutePath(), pid, "JFR.start", "name=profile", "settings=" + jfrArgs.getJfrSettings(), "duration=0");
     }
 
     @Override
-    public void stopSession() throws IOException, InterruptedException {
+    public void stopSession() {
         File jfrFile = new File(getOutputDir(), getProfileName() + PROFILE_JFR_SUFFIX);
         run(jcmd.getAbsolutePath(), pid, "JFR.stop", "name=profile", "filename=" + jfrFile.getAbsolutePath());
-        if(canProduceFlameGraphs()) {
-            File txtFile = new File( getOutputDir(), getProfileName() + PROFILE_TXT_SUFFIX);
-            File sanitizedTxtFile = new File( getOutputDir(), getProfileName() + PROFILE_SANITIZED_TXT_SUFFIX);
-            File fgFile = new File( getOutputDir(), getProfileName() + FLAMES_SVG_SUFFX);
-            convertToFlameGraphTxtFile( jfrFile, txtFile );
-            sanitizeFlameGraphTxtFile( txtFile, sanitizedTxtFile );
-            generateFlameGraph( sanitizedTxtFile, fgFile );
-        }
+        new JfrFlameGraphGenerator().generateGraphs(jfrFile);
         System.out.println("Wrote profiling data to " + jfrFile.getPath());
     }
 
     @Override
     public String getName() {
         return "jfr";
-    }
-
-    private boolean canProduceFlameGraphs() {
-        return findJfrFgJar() != null && findFlamegraphPl().exists();
-    }
-
-    private void convertToFlameGraphTxtFile(File jfrFile, File txtFile) throws IOException, InterruptedException
-    {
-        String javaHome = System.getenv("JAVA_HOME");
-        if (javaHome == null) {
-            throw new IllegalArgumentException("Please set the JAVA_HOME environment variable to your Java installation");
-        }
-        String java = javaHome + File.separatorChar + "bin" + File.separatorChar + "java";
-        run(java, "-jar", findJfrFgJar().getAbsolutePath(),
-             "-f", jfrFile.getAbsolutePath(),
-             "-o", txtFile.getAbsolutePath());
-    }
-
-    private void sanitizeFlameGraphTxtFile(final File txtFile, final File sanitizedTxtFile) throws IOException {
-        new FlameGraphSanitizer( FlameGraphSanitizer.DEFAULT_SANITIZE_FUNCTION ).sanitize( txtFile, sanitizedTxtFile );
-    }
-
-    private void generateFlameGraph(final File sanitizedTxtFile, final File fgFile) throws IOException, InterruptedException {
-        new FlameGraphGenerator( jfrArgs.getFgHomeDir() ).generateFlameGraph( sanitizedTxtFile, fgFile );
-    }
-
-    private File findJfrFgJar() {
-        File target = new File( jfrArgs.getJfrFgHomeDir(), "target" );
-        if(target.exists()) {
-            File[] found = target.listFiles(( dir, name ) -> name.startsWith( "flamegraph-output-" ) && name.endsWith( ".jar" ) );
-            if(found != null && found.length > 0) {
-                return found[ 0 ];
-            }
-        }
-        return null;
-    }
-
-    private File findFlamegraphPl() {
-        return new File(jfrArgs.getFgHomeDir(), "flamegraph.pl");
     }
 
     private void run(String... commandLine) {
