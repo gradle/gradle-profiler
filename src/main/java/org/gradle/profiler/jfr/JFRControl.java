@@ -36,7 +36,7 @@ public class JFRControl extends SingleIterationProfilerController {
 
     @Override
     public void doStartRecording() {
-        run(jcmd.getAbsolutePath(), pid, "JFR.start", "name=profile", "settings=" + jfrArgs.getJfrSettings(), "duration=0");
+        run(jcmd.getAbsolutePath(), pid, "JFR.start", "name=profile", "settings=" + jfrArgs.getJfrSettings());
     }
 
     @Override

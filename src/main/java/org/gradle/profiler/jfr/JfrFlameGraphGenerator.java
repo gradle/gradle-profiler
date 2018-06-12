@@ -1,5 +1,6 @@
 package org.gradle.profiler.jfr;
 
+import org.gradle.api.JavaVersion;
 import org.gradle.profiler.OperatingSystem;
 import org.gradle.profiler.fg.FlameGraphSanitizer;
 import org.gradle.profiler.fg.FlameGraphTool;
@@ -16,11 +17,13 @@ import static java.util.Collections.emptyList;
  * Generates flame graphs based on JFR recordings.
  * <p>
  * TODO create flame graph diffs between profiled versions
+ * TOOD make this work on Java 9+
+ * TODO detect missing Perl instead of just excluding Windows
  */
 class JfrFlameGraphGenerator {
     public void generateGraphs(File jfrRecording) {
-        if (OperatingSystem.isWindows()) {
-            return; // TODO get rid of Perl dependency
+        if (OperatingSystem.isWindows() || JavaVersion.current().isJava9Compatible()) {
+            return;
         }
         for (EventType type : EventType.values()) {
             for (DetailLevel level : DetailLevel.values()) {

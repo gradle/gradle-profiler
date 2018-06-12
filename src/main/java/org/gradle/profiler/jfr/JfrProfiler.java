@@ -2,6 +2,7 @@ package org.gradle.profiler.jfr;
 
 import joptsimple.OptionParser;
 import joptsimple.OptionSet;
+import org.gradle.api.JavaVersion;
 import org.gradle.profiler.JvmArgsCalculator;
 import org.gradle.profiler.Profiler;
 import org.gradle.profiler.ProfilerController;
@@ -10,6 +11,7 @@ import org.gradle.profiler.ScenarioSettings;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.StandardCopyOption;
 import java.util.Collections;
@@ -31,7 +33,9 @@ public class JfrProfiler extends Profiler {
     private static File createDefaultConfig() {
         try {
             File jfcFile = File.createTempFile("gradle", ".jfc");
-            try (InputStream stream = JfrProfiler.class.getResource("gradle.jfc").openStream()) {
+            String jfcTemplateName = JavaVersion.current().isJava9Compatible() ? "gradle-java9.jfc" : "gradle.jfc";
+            URL jfcResource = JfrProfiler.class.getResource(jfcTemplateName);
+            try (InputStream stream = jfcResource.openStream()) {
                 Files.copy(stream, jfcFile.toPath(), StandardCopyOption.REPLACE_EXISTING);
             }
             jfcFile.deleteOnExit();
