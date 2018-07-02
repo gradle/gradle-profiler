@@ -22,9 +22,28 @@ public class BenchmarkResultCollector {
     }
 
     private List<BuildInvocationResult> getResultsForScenario(ScenarioDefinition scenario) {
-        BuildScenario buildScenario = new BuildScenario(scenario, allBuilds.isEmpty() ? null : allBuilds.get(0));
+        BuildScenario buildScenario = new BuildScenario(scenario, baseLineFor(scenario));
         allBuilds.add(buildScenario);
         return buildScenario.results;
+    }
+
+    private BuildScenario baseLineFor(ScenarioDefinition scenario) {
+        if (allBuilds.isEmpty()) {
+            return null;
+        }
+        for (int i = 0; i < allBuilds.size(); i++) {
+            BuildScenario candidate = allBuilds.get(i);
+            if (candidate.getScenarioDefinition().getName().equals(scenario.getName())) {
+                return candidate;
+            }
+        }
+        if (allBuilds.size() >= 2) {
+            if (allBuilds.get(allBuilds.size() - 1).getScenarioDefinition().getName().equals(allBuilds.get(allBuilds.size() - 2)
+                    .getScenarioDefinition().getName())) {
+                return null;
+            }
+        }
+        return allBuilds.get(0);
     }
 
     public void write() throws IOException {
