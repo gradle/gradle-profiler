@@ -22,7 +22,7 @@ public abstract class AbstractFileChangeMutator implements BuildMutator {
         }
     }
 
-    void setTimestamp(long timestamp) {
+    protected void setTimestamp(long timestamp) {
         this.timestamp = timestamp;
     }
 

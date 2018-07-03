@@ -4,38 +4,38 @@ import org.junit.Rule
 import org.junit.rules.TemporaryFolder
 import spock.lang.Specification
 
-class ApplyChangeToKotlinSourceFileMutatorTest extends Specification {
+class ApplyNonAbiChangeToKotlinSourceFileMutatorTest extends Specification {
     @Rule TemporaryFolder tmpDir = new TemporaryFolder()
 
     def "adds and replaces public method at end of source file"() {
         def sourceFile = tmpDir.newFile("Thing.kt")
         sourceFile.text = "class Thing { fun existingMethod() { }}"
-        def mutator = new ApplyChangeToKotlinSourceFileMutator(sourceFile)
+        def mutator = new ApplyNonAbiChangeToKotlinSourceFileMutator(sourceFile)
         mutator.timestamp = 1234
 
         when:
         mutator.beforeBuild()
 
         then:
-        sourceFile.text == "class Thing { fun existingMethod() { }}fun _m_1234_1() {}"
+        sourceFile.text == "class Thing { fun existingMethod() { }}private fun _m_1234_1() {}"
 
         when:
         mutator.beforeBuild()
 
         then:
-        sourceFile.text == "class Thing { fun existingMethod() { }}fun _m_1234_2() {}"
+        sourceFile.text == "class Thing { fun existingMethod() { }}private fun _m_1234_2() {}"
 
         when:
         mutator.beforeBuild()
 
         then:
-        sourceFile.text == "class Thing { fun existingMethod() { }}fun _m_1234_3() {}"
+        sourceFile.text == "class Thing { fun existingMethod() { }}private fun _m_1234_3() {}"
     }
 
     def "reverts changes when nothing has been applied"() {
         def sourceFile = tmpDir.newFile("Thing.kt")
         sourceFile.text = "class Thing { fun existingMethod() { }}"
-        def mutator = new ApplyChangeToKotlinSourceFileMutator(sourceFile)
+        def mutator = new ApplyNonAbiChangeToKotlinSourceFileMutator(sourceFile)
 
         when:
         mutator.afterScenario()
@@ -53,7 +53,7 @@ class ApplyChangeToKotlinSourceFileMutatorTest extends Specification {
     def "reverts changes when changes has been applied"() {
         def sourceFile = tmpDir.newFile("Thing.kt")
         sourceFile.text = "class Thing { fun existingMethod() { }}"
-        def mutator = new ApplyChangeToKotlinSourceFileMutator(sourceFile)
+        def mutator = new ApplyNonAbiChangeToKotlinSourceFileMutator(sourceFile)
 
         when:
         mutator.beforeBuild()

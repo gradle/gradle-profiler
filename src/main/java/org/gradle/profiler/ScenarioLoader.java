@@ -4,13 +4,12 @@ import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
 import com.typesafe.config.ConfigParseOptions;
 import org.gradle.profiler.mutations.AbstractFileChangeMutator;
-import org.gradle.profiler.mutations.ApplyAbiChangeToJavaSourceFileMutator;
+import org.gradle.profiler.mutations.ApplyAbiChangeToSourceFileMutator;
 import org.gradle.profiler.mutations.ApplyChangeToAndroidManifestFileMutator;
 import org.gradle.profiler.mutations.ApplyChangeToAndroidResourceFileMutator;
-import org.gradle.profiler.mutations.ApplyChangeToKotlinSourceFileMutator;
 import org.gradle.profiler.mutations.ApplyChangeToNativeSourceFileMutator;
 import org.gradle.profiler.mutations.ApplyChangeToPropertyResourceFileMutator;
-import org.gradle.profiler.mutations.ApplyNonAbiChangeToJavaSourceFileMutator;
+import org.gradle.profiler.mutations.ApplyNonAbiChangeToSourceFileMutator;
 import org.gradle.profiler.mutations.ApplyValueChangeToAndroidResourceFileMutator;
 import org.gradle.profiler.mutations.BuildMutatorConfigurator;
 import org.gradle.profiler.mutations.ClearBuildCacheMutator;
@@ -44,7 +43,6 @@ class ScenarioLoader {
     private static final String WARM_UP_COUNT = "warm-ups";
     private static final String APPLY_ABI_CHANGE_TO = "apply-abi-change-to";
     private static final String APPLY_NON_ABI_CHANGE_TO = "apply-non-abi-change-to";
-    private static final String APPLY_KOTLIN_CHANGE_TO = "apply-kotlin-change-to";
     private static final String APPLY_ANDROID_RESOURCE_CHANGE_TO = "apply-android-resource-change-to";
     private static final String APPLY_ANDROID_RESOURCE_VALUE_CHANGE_TO = "apply-android-resource-value-change-to";
     private static final String APPLY_PROPERTY_RESOURCE_CHANGE_TO = "apply-property-resource-change-to";
@@ -59,7 +57,7 @@ class ScenarioLoader {
     private static final String TYPE = "type";
 
     private static final List<String> ALL_SCENARIO_KEYS = Arrays.asList(
-        VERSIONS, TASKS, CLEANUP_TASKS, GRADLE_ARGS, RUN_USING, SYSTEM_PROPERTIES, WARM_UP_COUNT, APPLY_ABI_CHANGE_TO, APPLY_NON_ABI_CHANGE_TO, APPLY_KOTLIN_CHANGE_TO,APPLY_ANDROID_RESOURCE_CHANGE_TO, APPLY_ANDROID_RESOURCE_VALUE_CHANGE_TO, APPLY_ANDROID_MANIFEST_CHANGE_TO, APPLY_PROPERTY_RESOURCE_CHANGE_TO, APPLY_CPP_SOURCE_CHANGE_TO, APPLY_H_SOURCE_CHANGE_TO, CLEAR_BUILD_CACHE_BEFORE, SHOW_BUILD_CACHE_SIZE, GIT_CHECKOUT, GIT_REVERT, BAZEL, BUCK, MAVEN
+        VERSIONS, TASKS, CLEANUP_TASKS, GRADLE_ARGS, RUN_USING, SYSTEM_PROPERTIES, WARM_UP_COUNT, APPLY_ABI_CHANGE_TO, APPLY_NON_ABI_CHANGE_TO, APPLY_ANDROID_RESOURCE_CHANGE_TO, APPLY_ANDROID_RESOURCE_VALUE_CHANGE_TO, APPLY_ANDROID_MANIFEST_CHANGE_TO, APPLY_PROPERTY_RESOURCE_CHANGE_TO, APPLY_CPP_SOURCE_CHANGE_TO, APPLY_H_SOURCE_CHANGE_TO, CLEAR_BUILD_CACHE_BEFORE, SHOW_BUILD_CACHE_SIZE, GIT_CHECKOUT, GIT_REVERT, BAZEL, BUCK, MAVEN
     );
     private static final List<String> BAZEL_KEYS = Arrays.asList(TARGETS);
     private static final List<String> BUCK_KEYS = Arrays.asList(TARGETS, TYPE);
@@ -123,9 +121,8 @@ class ScenarioLoader {
             int warmUpCount = ConfigUtil.integer(scenario, WARM_UP_COUNT, settings.getWarmUpCount());
 
             List<Supplier<BuildMutator>> mutators = new ArrayList<>();
-            maybeAddMutator(scenario, scenarioName, settings.getProjectDir(), APPLY_ABI_CHANGE_TO, ApplyAbiChangeToJavaSourceFileMutator.class, mutators);
-            maybeAddMutator(scenario, scenarioName, settings.getProjectDir(), APPLY_NON_ABI_CHANGE_TO, ApplyNonAbiChangeToJavaSourceFileMutator.class, mutators);
-            maybeAddMutator(scenario, scenarioName, settings.getProjectDir(), APPLY_KOTLIN_CHANGE_TO, ApplyChangeToKotlinSourceFileMutator.class, mutators);
+            maybeAddMutator(scenario, scenarioName, settings.getProjectDir(), APPLY_ABI_CHANGE_TO, ApplyAbiChangeToSourceFileMutator.class, mutators);
+            maybeAddMutator(scenario, scenarioName, settings.getProjectDir(), APPLY_NON_ABI_CHANGE_TO, ApplyNonAbiChangeToSourceFileMutator.class, mutators);
             maybeAddMutator(scenario, scenarioName, settings.getProjectDir(), APPLY_ANDROID_RESOURCE_CHANGE_TO, ApplyChangeToAndroidResourceFileMutator.class, mutators);
             maybeAddMutator(scenario, scenarioName, settings.getProjectDir(), APPLY_ANDROID_RESOURCE_VALUE_CHANGE_TO, ApplyValueChangeToAndroidResourceFileMutator.class, mutators);
             maybeAddMutator(scenario, scenarioName, settings.getProjectDir(), APPLY_ANDROID_MANIFEST_CHANGE_TO, ApplyChangeToAndroidManifestFileMutator.class, mutators);
