@@ -6,3 +6,5 @@ classes
 /profile-out-*
 /foobar
 /gradle-user-home
+/out
+.DS_STORE

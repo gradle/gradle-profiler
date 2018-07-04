@@ -19,19 +19,19 @@ class ApplyAbiChangeToJavaSourceFileMutatorTest extends Specification {
         mutator.beforeBuild()
 
         then:
-        parse(sourceFile) == parse("class Thing { public void existingMethod() { _m_1234_1();}public void _m_1234_1() { }}")
+        parse(sourceFile) == parse("class Thing { public void existingMethod() { _m_1234_1();}public static void _m_1234_1() { }}")
 
         when:
         mutator.beforeBuild()
 
         then:
-        parse(sourceFile) == parse("class Thing { public void existingMethod() { _m_1234_2();}public void _m_1234_2() { }}")
+        parse(sourceFile) == parse("class Thing { public void existingMethod() { _m_1234_2();}public static void _m_1234_2() { }}")
 
         when:
         mutator.beforeBuild()
 
         then:
-        parse(sourceFile) == parse("class Thing { public void existingMethod() { _m_1234_3();}public void _m_1234_3() { }}")
+        parse(sourceFile) == parse("class Thing { public void existingMethod() { _m_1234_3();}public static void _m_1234_3() { }}")
     }
 
     def "reverts changes when nothing has been applied"() {
