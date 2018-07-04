@@ -37,7 +37,7 @@ class ApplyAbiChangeToSourceFileMutatorTest extends Specification {
         mutator.beforeBuild()
 
         then:
-        parse(sourceFile) == parse("class Thing { public void existingMethod() { _m_1234_1();}public void _m_1234_1() { }}")
+        parse(sourceFile) == parse("class Thing { public void existingMethod() { _m_1234_1();}public static void _m_1234_1() { }}")
     }
 
 }

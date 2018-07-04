@@ -1197,8 +1197,8 @@ classes {
         then:
         // Probe version, 6 warm up, 10 builds
         logFile.grep("<src-length: ${srcFile.length()}>").size() == 1
-        logFile.grep("<src-length: ${srcFile.length() + (OperatingSystem.windows ? 89 : 80)}>").size() == 9
-        logFile.grep("<src-length: ${srcFile.length() + (OperatingSystem.windows ? 91 : 82)}>").size() == 7
+        logFile.grep("<src-length: ${srcFile.length() + (OperatingSystem.windows ? 96 : 87)}>").size() == 9
+        logFile.grep("<src-length: ${srcFile.length() + (OperatingSystem.windows ? 98 : 89)}>").size() == 7
         srcFile.text == originalText
     }
 
