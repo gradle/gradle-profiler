@@ -47,7 +47,11 @@ public class AsynchronousTraceWriter extends Thread {
             copyResourceToTraceFile("/trace-footer.html", true);
 
             File finalTraceFile = traceFile(gradle);
-            tempTraceFile.renameTo(finalTraceFile);
+            boolean success = tempTraceFile.renameTo(finalTraceFile);
+            if (!success) {
+                throw new RuntimeException("Failed to move the trace file from a temporary location (" +
+                    tempTraceFile.getAbsolutePath() + ") to the final location (" + finalTraceFile.getAbsolutePath() + ")");
+            }
             gradle.getRootProject().getLogger().lifecycle("Trace written to file://" + finalTraceFile.getAbsolutePath());
         }
     }
