@@ -86,7 +86,7 @@ public class HonestProfilerControl extends SingleIterationProfilerController {
     }
 
     private void generateFlameGraph(final File sanitizedTxtFile, final File fgFile) {
-        new FlameGraphTool(args.getFgHomeDir()).generateFlameGraph(sanitizedTxtFile, fgFile, "--minwdith", "1");
+        new FlameGraphTool(args.getFgHomeDir()).generateFlameGraph(sanitizedTxtFile, fgFile, "--minwidth", "1");
     }
 
     private void sendCommand(String command) throws IOException {
