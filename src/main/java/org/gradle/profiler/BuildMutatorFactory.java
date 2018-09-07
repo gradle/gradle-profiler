@@ -36,10 +36,10 @@ public class BuildMutatorFactory implements Supplier<BuildMutator> {
         }
     }
 
-    private static class CompositeBuildMutator implements BuildMutator {
+    public static class CompositeBuildMutator implements BuildMutator {
         private final List<BuildMutator> mutators;
 
-        CompositeBuildMutator(List<BuildMutator> mutators) {
+        public CompositeBuildMutator(List<BuildMutator> mutators) {
             this.mutators = mutators;
         }
 

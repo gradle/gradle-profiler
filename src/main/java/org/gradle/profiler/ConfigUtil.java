@@ -4,6 +4,7 @@ import com.typesafe.config.Config;
 import com.typesafe.config.ConfigValue;
 
 import java.io.File;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -81,6 +82,23 @@ public class ConfigUtil {
 
 	public static File file(Config config, File projectDir, String key, File defaultValue) {
 		String fileName = ConfigUtil.string(config, key, null);
+		if (fileName == null) {
+			return defaultValue;
+		} else {
+			return new File(projectDir, fileName);
+		}
+	}
+
+	public static List<File> files(Config config, File projectDir, String key, File defaultValue) {
+		List<File> result = new ArrayList<>();
+		List<String> fileNames = ConfigUtil.strings(config, key, null);
+		for (String fileName : fileNames) {
+			result.add(openFile(fileName, projectDir, defaultValue));
+		}
+		return result;
+	}
+
+	private static File openFile(String fileName, File projectDir, File defaultValue) {
 		if (fileName == null) {
 			return defaultValue;
 		} else {
