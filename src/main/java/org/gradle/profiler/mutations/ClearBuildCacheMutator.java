@@ -1,83 +1,32 @@
 package org.gradle.profiler.mutations;
 
-import com.typesafe.config.Config;
 import org.apache.commons.io.FileUtils;
 import org.gradle.profiler.BuildMutator;
-import org.gradle.profiler.ConfigUtil;
 
 import java.io.File;
 import java.util.Arrays;
 import java.util.Objects;
-import java.util.function.Supplier;
 
-public class ClearBuildCacheMutator implements BuildMutator {
-
-	private final File gradleUserHome;
-	private CleanupSchedule schedule;
+public class ClearBuildCacheMutator extends AbstractCleanupMutator {
 
 	public ClearBuildCacheMutator(File gradleUserHome, CleanupSchedule schedule) {
-		this.gradleUserHome = gradleUserHome;
-		this.schedule = schedule;
+		super(gradleUserHome, schedule, "build-cache-");
 	}
 
 	@Override
-	public void beforeBuild() {
-		if (schedule == CleanupSchedule.BUILD) {
-			cleanCacheDirs();
-		}
+	protected void cleanupCacheDir(File cacheDir) {
+		Arrays.stream(Objects.requireNonNull(cacheDir.listFiles((file) -> file.getName().length() == 32))).forEach(FileUtils::deleteQuietly);
 	}
 
-	@Override
-	public void beforeScenario() {
-		if (schedule == CleanupSchedule.SCENARIO) {
-			cleanCacheDirs();
-		}
-	}
-
-	@Override
-	public void beforeCleanup() {
-		if (schedule == CleanupSchedule.CLEANUP) {
-			cleanCacheDirs();
-		}
-	}
-
-	private void cleanCacheDirs() {
-		System.out.println("> Cleaning build caches in " + gradleUserHome);
-		File cachesDir = new File(gradleUserHome, "caches");
-		if (cachesDir.isDirectory()) {
-			File[] buildCacheDirs = cachesDir.listFiles((File file) -> file.getName().startsWith("build-cache-"));
-			if (buildCacheDirs == null) {
-				throw new IllegalStateException("Cannot find build cache directories in " + gradleUserHome);
-			}
-			for (File buildCacheDir : buildCacheDirs) {
-                Arrays.stream(Objects.requireNonNull(buildCacheDir.listFiles((file) -> file.getName().length() == 32))).forEach(FileUtils::deleteQuietly);
-			}
-		}
-	}
-
-	public static class Configurator implements BuildMutatorConfigurator {
-		private final File gradleUserHome;
+	public static class Configurator extends AbstractCleanupMutator.Configurator {
 
 		public Configurator(File gradleUserHome) {
-			this.gradleUserHome = gradleUserHome;
+			super(gradleUserHome);
 		}
 
 		@Override
-		public Supplier<BuildMutator> configure(Config scenario, String scenarioName, File projectDir, String key) {
-			CleanupSchedule schedule = ConfigUtil.enumValue(scenario, key, CleanupSchedule.class, null);
-			if (schedule == null) {
-				throw new IllegalArgumentException("Schedule for cleanup is not specified");
-			}
-			return () -> new ClearBuildCacheMutator(gradleUserHome, schedule);
+		protected BuildMutator newInstance(File gradleUserHome, CleanupSchedule schedule) {
+			return new ClearBuildCacheMutator(gradleUserHome, schedule);
 		}
-	}
-
-	@Override
-	public String toString() {
-		return getClass().getSimpleName() + "(" + schedule + ")";
-	}
-
-	public enum CleanupSchedule {
-		SCENARIO, CLEANUP, BUILD
 	}
 }
