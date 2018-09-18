@@ -18,10 +18,10 @@ public interface BuildOperationListenerAdapter {
         if (gradleVersion.equals(version("4.0-milestone-2"))) {
             return new Gradle35BuildOperationListenerAdapter(gradle, new Gradle40BuildOperationListenerInvocationHandler(traceResult));
         }
-        if (inVersionRange(gradleVersion, "4.0", "4.8")) {
+        if (inVersionRange(gradleVersion, "4.0", "4.7")) {
             return new Gradle40BuildOperationListenerAdapter(gradle, new Gradle40BuildOperationListenerInvocationHandler(traceResult));
         }
-        if (gradleVersion.compareTo(version("4.8")) >= 0) {
+        if (gradleVersion.compareTo(version("4.7")) >= 0) {
             return new Gradle47BuildOperationListenerAdapter(gradle, new Gradle47BuildOperationListenerInvocationHandler(traceResult));
         }
         throw new IllegalStateException("Gradle version " + gradleVersion + " not supported, 3.3+ required");
