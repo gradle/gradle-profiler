@@ -9,24 +9,24 @@ import java.util.Objects;
 
 public class ClearBuildCacheMutator extends AbstractCleanupMutator {
 
-	public ClearBuildCacheMutator(File gradleUserHome, CleanupSchedule schedule) {
-		super(gradleUserHome, schedule, "build-cache-");
-	}
+    public ClearBuildCacheMutator(File gradleUserHome, CleanupSchedule schedule) {
+        super(gradleUserHome, schedule, "build-cache-");
+    }
 
-	@Override
-	protected void cleanupCacheDir(File cacheDir) {
-		Arrays.stream(Objects.requireNonNull(cacheDir.listFiles((file) -> file.getName().length() == 32))).forEach(FileUtils::deleteQuietly);
-	}
+    @Override
+    protected void cleanupCacheDir(File cacheDir) {
+        Arrays.stream(Objects.requireNonNull(cacheDir.listFiles((file) -> file.getName().length() == 32))).forEach(FileUtils::deleteQuietly);
+    }
 
-	public static class Configurator extends AbstractCleanupMutator.Configurator {
+    public static class Configurator extends AbstractCleanupMutator.Configurator {
 
-		public Configurator(File gradleUserHome) {
-			super(gradleUserHome);
-		}
+        public Configurator(File gradleUserHome) {
+            super(gradleUserHome);
+        }
 
-		@Override
-		protected BuildMutator newInstance(File gradleUserHome, CleanupSchedule schedule) {
-			return new ClearBuildCacheMutator(gradleUserHome, schedule);
-		}
-	}
+        @Override
+        protected BuildMutator newInstance(File gradleUserHome, CleanupSchedule schedule) {
+            return new ClearBuildCacheMutator(gradleUserHome, schedule);
+        }
+    }
 }

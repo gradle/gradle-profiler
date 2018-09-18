@@ -11,31 +11,31 @@ import java.util.stream.Stream;
 
 public class ClearArtifactTransformCacheMutator extends AbstractCleanupMutator {
 
-	public ClearArtifactTransformCacheMutator(File gradleUserHome, CleanupSchedule schedule) {
-		super(gradleUserHome, schedule, "transforms-");
-	}
+    public ClearArtifactTransformCacheMutator(File gradleUserHome, CleanupSchedule schedule) {
+        super(gradleUserHome, schedule, "transforms-");
+    }
 
-	@Override
-	protected void cleanupCacheDir(File cacheDir) {
-		filesAsStream(
-				cacheDir,
-				(dir, name) -> name.startsWith("files-"))
-				.flatMap(file -> filesAsStream(file, (dir, name) -> !name.endsWith(".lock")))
-				.forEach(FileUtils::deleteQuietly);
-	}
+    @Override
+    protected void cleanupCacheDir(File cacheDir) {
+        filesAsStream(
+            cacheDir,
+            (dir, name) -> name.startsWith("files-")
+        ).flatMap(file -> filesAsStream(file, (dir, name) -> !name.endsWith(".lock")))
+            .forEach(FileUtils::deleteQuietly);
+    }
 
-	private Stream<File> filesAsStream(File dir, FilenameFilter filter) {
-		return Arrays.stream(Objects.requireNonNull(dir.listFiles(filter)));
-	}
+    private Stream<File> filesAsStream(File dir, FilenameFilter filter) {
+        return Arrays.stream(Objects.requireNonNull(dir.listFiles(filter)));
+    }
 
-	public static class Configurator extends AbstractCleanupMutator.Configurator {
-		public Configurator(File gradleUserHome) {
-			super(gradleUserHome);
-		}
+    public static class Configurator extends AbstractCleanupMutator.Configurator {
+        public Configurator(File gradleUserHome) {
+            super(gradleUserHome);
+        }
 
-		@Override
-		protected BuildMutator newInstance(File gradleUserHome, AbstractCleanupMutator.CleanupSchedule schedule) {
-			return new ClearArtifactTransformCacheMutator(gradleUserHome, schedule);
-		}
-	}
+        @Override
+        protected BuildMutator newInstance(File gradleUserHome, AbstractCleanupMutator.CleanupSchedule schedule) {
+            return new ClearArtifactTransformCacheMutator(gradleUserHome, schedule);
+        }
+    }
 }
