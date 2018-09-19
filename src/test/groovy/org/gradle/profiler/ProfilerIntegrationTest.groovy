@@ -13,7 +13,7 @@ import spock.lang.Unroll
 class ProfilerIntegrationTest extends Specification {
 
     @Shared
-    List<String> supportedGradleVersions = ["3.3", "3.4.1", "3.5", "4.0", "4.1", "4.2.1", "4.7-rc-1"]
+    List<String> supportedGradleVersions = ["3.3", "3.4.1", "3.5", "4.0", "4.1", "4.2.1", "4.7", "5.0-20180917123954+0000"]
     @Shared
     String minimalSupportedGradleVersion = supportedGradleVersions.first()
     @Shared
@@ -1600,7 +1600,7 @@ buildGoal {
             task checkNoCacheBefore {
                 doFirst {
                     def files = cacheFiles(gradle.gradleUserHomeDir)
-                    files == null || files.empty
+                    assert (files == null || files.empty)
                 }
             }
             compileJava.mustRunAfter checkNoCacheBefore
@@ -1626,14 +1626,111 @@ buildGoal {
         scenarios.text = """
 buildTarget {
     versions = ["4.5"]
-    clear-build-cache-before = SCENARIO
+    clear-build-cache-before = BUILD
     gradle-args = ["--build-cache"]
     tasks = ["checkNoCacheBefore", "clean", "compileJava", "checkHasCacheAfter"]
 }
 """
 
         when:
-        new Main().run("--project-dir", projectDir.absolutePath, "--output-dir", outputDir.absolutePath, "--benchmark", "--scenario-file", scenarios.absolutePath, "--gradle-version", minimalSupportedGradleVersion, "buildTarget", "--warmups", "1", "--iterations", "1")
+        new Main().run("--project-dir", projectDir.absolutePath, "--output-dir", outputDir.absolutePath, "--benchmark", "--scenario-file", scenarios.absolutePath, "buildTarget", "--warmups", "1", "--iterations", "1")
+
+        then:
+        noExceptionThrown()
+    }
+
+    def "clears transform cache when asked"() {
+        given:
+        buildFile << """
+            plugins {
+                id 'java-library'
+            }
+
+            def usage = Attribute.of('usage', String)
+            def artifactType = Attribute.of('artifactType', String)
+                
+            repositories {
+                mavenCentral()
+            }
+            dependencies {
+                attributesSchema {
+                    attribute(usage)
+                }
+
+                registerTransform {
+                    from.attribute(artifactType, 'jar')
+                    to.attribute(artifactType, 'size')
+                    artifactTransform(FileSizer)
+                }
+
+                compile 'com.google.guava:guava:21.0'
+            }
+            configurations {
+                compile {
+                    attributes { attribute usage, 'api' }
+                }
+            }
+            
+            class FileSizer extends ArtifactTransform {
+                FileSizer() {
+                    println "Creating FileSizer"
+                }
+                
+                List<File> transform(File input) {
+                    assert outputDirectory.directory && outputDirectory.list().length == 0
+                    def output = new File(outputDirectory, input.name + ".txt")
+                    println "Transforming \${input.name} to \${output.name}"
+                    output.text = String.valueOf(input.length())
+                    return [output]
+                }
+            }
+                        
+            task resolve(type: Copy) {
+                def artifacts = configurations.compile.incoming.artifactView {
+                    attributes { it.attribute(artifactType, 'size') }
+                }.artifacts
+                from artifacts.artifactFiles
+                into "\${buildDir}/libs"
+                doLast {
+                    println "files: " + artifacts.collect { it.file.name }
+                }
+            }
+
+            def cacheFiles(File gradleHome) {
+                file("\${gradleHome}/caches/transforms-1/files-1.1").listFiles().findAll { it.name.endsWith(".jar") }
+            }
+            
+            def checkNoCacheBefore() {
+                def files = cacheFiles(gradle.gradleUserHomeDir)
+                assert (files == null || files.empty)
+            }
+            
+            gradle.taskGraph.whenReady {
+                if (it.hasTask(resolve)) {
+                    checkNoCacheBefore()   
+                }
+            }     
+
+            task checkHasCacheAfter {
+                mustRunAfter resolve
+                doFirst {          
+                    def files = cacheFiles(gradle.gradleUserHomeDir)
+                    assert !files.empty
+                }
+            }
+        """
+
+        def scenarios = file("performance.scenario")
+        scenarios.text = """
+buildTarget {
+    versions = ["4.10"]
+    clear-transform-cache-before = BUILD
+    tasks = ["clean", "resolve", "checkHasCacheAfter"]
+}
+"""
+
+        when:
+        new Main().run("--project-dir", projectDir.absolutePath, "--output-dir", outputDir.absolutePath, "--benchmark", "--scenario-file", scenarios.absolutePath, "buildTarget", "--warmups", "1", "--iterations", "1")
 
         then:
         noExceptionThrown()

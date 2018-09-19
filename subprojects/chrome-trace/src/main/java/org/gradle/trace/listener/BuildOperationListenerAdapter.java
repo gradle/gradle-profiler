@@ -1,27 +1,34 @@
 package org.gradle.trace.listener;
 
+import static org.gradle.util.GradleVersion.version;
+
 import org.gradle.api.invocation.Gradle;
 import org.gradle.trace.TraceResult;
+import org.gradle.util.GradleVersion;
 
 public interface BuildOperationListenerAdapter {
     static BuildOperationListenerAdapter create(Gradle gradle, TraceResult traceResult) {
-        String gradleVersion = gradle.getGradleVersion();
-        if (gradleVersion.startsWith("3.3") || gradleVersion.startsWith("3.4")) {
+        GradleVersion gradleVersion = version(gradle.getGradleVersion()).getBaseVersion();
+        if (inVersionRange(gradleVersion, "3.3", "3.5")) {
             return new Gradle33BuildOperationListenerAdapter(gradle, new Gradle33BuildOperationListenerInvocationHandler(traceResult));
         }
-        if (gradleVersion.startsWith("3.5") || gradleVersion.equals("4.0-milestone-1")) {
+        if (inVersionRange(gradleVersion, "3.5", "4.0-milestone-2")) {
             return new Gradle35BuildOperationListenerAdapter(gradle, new Gradle33BuildOperationListenerInvocationHandler(traceResult));
         }
-        if (gradleVersion.equals("4.0-milestone-2")) {
+        if (gradleVersion.equals(version("4.0-milestone-2"))) {
             return new Gradle35BuildOperationListenerAdapter(gradle, new Gradle40BuildOperationListenerInvocationHandler(traceResult));
         }
-        if (gradleVersion.matches("4\\.[0-6](\\D.*)?")) {
+        if (inVersionRange(gradleVersion, "4.0", "4.7")) {
             return new Gradle40BuildOperationListenerAdapter(gradle, new Gradle40BuildOperationListenerInvocationHandler(traceResult));
         }
-        if (gradleVersion.startsWith("4.")) {
+        if (gradleVersion.compareTo(version("4.7")) >= 0) {
             return new Gradle47BuildOperationListenerAdapter(gradle, new Gradle47BuildOperationListenerInvocationHandler(traceResult));
         }
         throw new IllegalStateException("Gradle version " + gradleVersion + " not supported, 3.3+ required");
+    }
+
+    static boolean inVersionRange(GradleVersion gradleVersion, String lower, String upper) {
+        return gradleVersion.compareTo(version(lower)) >= 0 && gradleVersion.compareTo(version(upper)) < 0;
     }
 
     void remove();

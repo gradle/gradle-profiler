@@ -4,9 +4,9 @@ import org.junit.Rule
 import org.junit.rules.TemporaryFolder
 import spock.lang.Specification
 
-import static org.gradle.profiler.mutations.ClearBuildCacheMutator.CleanupSchedule.BUILD
-import static org.gradle.profiler.mutations.ClearBuildCacheMutator.CleanupSchedule.CLEANUP
-import static org.gradle.profiler.mutations.ClearBuildCacheMutator.CleanupSchedule.SCENARIO
+import static org.gradle.profiler.mutations.AbstractCleanupMutator.CleanupSchedule.BUILD
+import static org.gradle.profiler.mutations.AbstractCleanupMutator.CleanupSchedule.CLEANUP
+import static org.gradle.profiler.mutations.AbstractCleanupMutator.CleanupSchedule.SCENARIO
 
 class ClearBuildCacheMutatorTest extends Specification {
     @Rule
