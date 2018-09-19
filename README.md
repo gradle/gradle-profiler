@@ -220,7 +220,7 @@ They can be added to a scenario file like this:
         apply-android-resource-value-change-to = "src/main/res/value/strings.xml"
         apply-android-manifest-change-to = "src/main/AndroidManifest.xml"
         clear-build-cache-before = SCENARIO
-        clear-transform-cache-before = CLEANUP
+        clear-transform-cache-before = BUILD
         show-build-cache-size = true
         git-checkout = {
             cleanup = "efb43a1"
