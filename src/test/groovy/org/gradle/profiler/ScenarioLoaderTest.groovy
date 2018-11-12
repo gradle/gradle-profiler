@@ -130,4 +130,25 @@ class ScenarioLoaderTest extends Specification {
         scenarios*.name == ["default"]
         (scenarios[0] as MavenScenarioDefinition).targets == ["help"]
     }
+
+    def "can load scenario with multiple files for a single mutation"() {
+        def settings = new InvocationSettings(projectDir, Profiler.NONE, true, outputDir, Invoker.Cli, false, scenarioFile, [], [], [:], gradleUserHomeDir, 1, 1)
+        def fileForMutation1 = new File(projectDir, "fileForMutation1.java")
+        def fileForMutation2 = new File(projectDir, "fileForMutation2.kt")
+
+        fileForMutation1.createNewFile()
+        fileForMutation2.createNewFile()
+
+        scenarioFile << """
+            default {
+                tasks = ["help"]
+                
+                apply-abi-change-to = ["${fileForMutation1.name}", "${fileForMutation2.name}"]
+            }
+        """
+        def scenarios = loadScenarios(scenarioFile, settings, Mock(GradleVersionInspector))
+
+        expect:
+        scenarios*.name == ["default"]
+    }
 }
