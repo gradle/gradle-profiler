@@ -209,6 +209,9 @@ public class Main {
             BuildInvoker instrumentedBuildInvoker = invoker.withJvmArgs(instrumentedBuildJvmArgs).withGradleArgs(instrumentedBuildGradleArgs);
 
             if (settings.isProfile()) {
+                if (pid == null) {
+                    throw new IllegalStateException("Using the --profile option requires at least one warm-up");
+                }
                 Logging.startOperation("Starting profiler for daemon with pid " + pid);
                 control.startSession();
             }
