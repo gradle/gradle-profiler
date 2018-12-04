@@ -1,6 +1,5 @@
 package org.gradle.trace.listener;
 
-import org.gradle.api.execution.internal.ExecuteTaskBuildOperationDetails;
 import org.gradle.api.internal.TaskInternal;
 import org.gradle.trace.TraceResult;
 
@@ -11,18 +10,18 @@ public class Gradle40BuildOperationListenerInvocationHandler extends BuildOperat
     }
 
     protected String getName(Object operation) {
-        Object details = call(operation, "getDetails");
-        if (details instanceof ExecuteTaskBuildOperationDetails) {
-            return ((ExecuteTaskBuildOperationDetails) details).getTask().getPath();
+        TaskInternal task = getTask(operation);
+        if (task == null) {
+            return call(operation, "getDisplayName") + " (" + call(operation, "getId") + ")";
+        } else {
+            return task.getPath();
         }
-        return call(operation, "getDisplayName") + " (" + call(operation, "getId") + ")";
     }
 
     protected TaskInternal getTask(Object operation) {
         Object details = call(operation, "getDetails");
-        if (details instanceof ExecuteTaskBuildOperationDetails) {
-            ExecuteTaskBuildOperationDetails taskDescriptor = (ExecuteTaskBuildOperationDetails) details;
-            return taskDescriptor.getTask();
+        if (details.getClass().getName().equals("org.gradle.api.execution.internal.ExecuteTaskBuildOperationDetails")) {
+            return (TaskInternal) call(details, "getTask");
         }
         return null;
     }

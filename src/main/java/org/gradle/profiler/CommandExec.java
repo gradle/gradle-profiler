@@ -78,12 +78,12 @@ public class CommandExec {
 
     public void run(ProcessBuilder processBuilder) {
         OutputStream outputStream = Logging.detailed();
-        run(processBuilder, outputStream, null, null).waitForSuccess();
+        run(processBuilder, outputStream, outputStream, null).waitForSuccess();
     }
 
     public RunHandle runBackgrounded(String... commandLine) {
         OutputStream outputStream = Logging.detailed();
-        return run(new ProcessBuilder(commandLine), outputStream, null, null);
+        return run(new ProcessBuilder(commandLine), outputStream, outputStream, null);
     }
 
     protected RunHandle run(ProcessBuilder processBuilder, OutputStream outputStream, @Nullable OutputStream errorStream, @Nullable InputStream inputStream) {

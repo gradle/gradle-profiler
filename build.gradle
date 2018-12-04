@@ -15,7 +15,7 @@ configurations {
 }
 
 dependencies {
-    compile 'org.gradle:gradle-tooling-api:4.10.2'
+    compile 'org.gradle:gradle-tooling-api:5.0'
     compile 'com.google.code.findbugs:annotations:3.0.1'
     compile 'com.google.guava:guava:21.0'
     compile 'net.sf.jopt-simple:jopt-simple:5.0.2'

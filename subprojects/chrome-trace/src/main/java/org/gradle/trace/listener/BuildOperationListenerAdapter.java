@@ -24,6 +24,9 @@ public interface BuildOperationListenerAdapter {
         if (gradleVersion.compareTo(version("4.7")) >= 0) {
             return new Gradle47BuildOperationListenerAdapter(gradle, new Gradle47BuildOperationListenerInvocationHandler(traceResult));
         }
+        if (gradleVersion.compareTo(version("5.0")) >= 0) {
+            return new Gradle47BuildOperationListenerAdapter(gradle, new Gradle50BuildOperationListenerInvocationHandler(traceResult));
+        }
         throw new IllegalStateException("Gradle version " + gradleVersion + " not supported, 3.3+ required");
     }
 
