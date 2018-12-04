@@ -20,7 +20,7 @@ public class Gradle40BuildOperationListenerInvocationHandler extends BuildOperat
 
     protected TaskInternal getTask(Object operation) {
         Object details = call(operation, "getDetails");
-        if (details.getClass().getName().equals("org.gradle.api.execution.internal.ExecuteTaskBuildOperationDetails")) {
+        if (details != null && details.getClass().getName().equals("org.gradle.api.execution.internal.ExecuteTaskBuildOperationDetails")) {
             return (TaskInternal) call(details, "getTask");
         }
         return null;
