@@ -7,9 +7,10 @@ import org.gradle.profiler.ScenarioSettings;
 import java.io.File;
 import java.util.List;
 
-import static org.gradle.profiler.yjp.YourKit.*;
+import static org.gradle.profiler.yjp.YourKit.ENIVONMENT_VARIABLE;
 
 public class YourKitJvmArgsCalculator extends JvmArgsCalculator {
+    public static final int PORT = 10021;
     private final ScenarioSettings settings;
     private final YourKitConfig yourKitConfig;
     private final boolean instrumentWholeProcess;
@@ -33,7 +34,9 @@ public class YourKitJvmArgsCalculator extends JvmArgsCalculator {
         if (!jnilib.isFile()) {
             throw new IllegalArgumentException("Could not locate YourKit library in YourKit home directory " + yourKitHome);
         }
-        String agentOptions = "-agentpath:" + jnilib.getAbsolutePath() + "=dir=" + settings.getScenario().getOutputDir().getAbsolutePath() + ",sessionname=" + settings.getScenario().getProfileName();
+        String agentOptions = "-agentpath:" + jnilib.getAbsolutePath() + "=dir=" + settings.getScenario().getOutputDir().getAbsolutePath()
+                + ",sessionname=" + settings.getScenario().getProfileName()
+                + ",port=" + PORT;
         if (yourKitConfig.isMemorySnapshot() || yourKitConfig.isUseSampling()) {
             agentOptions += ",disabletracing,probe_disable=*";
         } else {
