@@ -11,14 +11,20 @@ import java.io.File;
 import java.io.IOException;
 import java.time.Duration;
 import java.time.Instant;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
-import static org.gradle.profiler.BuildStep.*;
-import static org.gradle.profiler.Logging.*;
-import static org.gradle.profiler.Phase.*;
+import static org.gradle.profiler.BuildStep.BUILD;
+import static org.gradle.profiler.BuildStep.CLEANUP;
+import static org.gradle.profiler.Logging.startOperation;
+import static org.gradle.profiler.Phase.MEASURE;
+import static org.gradle.profiler.Phase.WARM_UP;
 
 public class Main {
     public static void main(String[] args) {
@@ -180,7 +186,7 @@ public class Main {
 			for (int i = 1; i <= scenario.getWarmUpCount(); i++) {
 				final int counter = i;
 				beforeBuild(WARM_UP, counter, invoker, cleanupTasks, mutator);
-				results = tryRun(() -> invoker.runBuild(WARM_UP, counter, BUILD, tasks),
+				results = tryRun(() -> invoker.runBuild(WARM_UP, counter, BUILD, tasks, scenario.getToolingModel()),
 						mutator::afterBuild);
 				if (pid == null) {
 					pid = results.getDaemonPid();
@@ -227,7 +233,7 @@ public class Main {
 						}
 					}
 
-					BuildInvocationResult result = instrumentedBuildInvoker.runBuild(MEASURE, counter, BUILD, tasks);
+					BuildInvocationResult result = instrumentedBuildInvoker.runBuild(MEASURE, counter, BUILD, tasks, scenario.getToolingModel());
 
 					if (settings.isProfile() && (counter == scenario.getBuildCount() || !cleanupTasks.isEmpty())) {
 						try {
@@ -444,7 +450,7 @@ public class Main {
 	private static void beforeBuild(Phase phase, int buildNumber, BuildInvoker invoker, List<String> cleanupTasks, BuildMutator mutator) {
         if (!cleanupTasks.isEmpty()) {
         	mutator.beforeCleanup();
-        	tryRun(() -> invoker.notInstrumented().runBuild(phase, buildNumber, CLEANUP, cleanupTasks), mutator::afterCleanup);
+        	tryRun(() -> invoker.notInstrumented().runBuild(phase, buildNumber, CLEANUP, cleanupTasks, null), mutator::afterCleanup);
         }
         mutator.beforeBuild();
     }

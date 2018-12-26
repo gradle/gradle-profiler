@@ -8,8 +8,7 @@ import java.util.function.Consumer;
 public class ToolingApiInvoker extends BuildInvoker {
     private final ProjectConnection projectConnection;
 
-    public ToolingApiInvoker(ProjectConnection projectConnection, List<String> jvmArgs, List<String> gradleArgs, PidInstrumentation pidInstrumentation,
-                             Consumer<BuildInvocationResult> resultsConsumer) {
+    public ToolingApiInvoker(ProjectConnection projectConnection, List<String> jvmArgs, List<String> gradleArgs, PidInstrumentation pidInstrumentation, Consumer<BuildInvocationResult> resultsConsumer) {
         super(jvmArgs, gradleArgs, pidInstrumentation, resultsConsumer);
         this.projectConnection = projectConnection;
     }
@@ -20,14 +19,24 @@ public class ToolingApiInvoker extends BuildInvoker {
     }
 
     @Override
-    protected void run(List<String> tasks, List<String> gradleArgs, List<String> jvmArgs) {
-        run(projectConnection.newBuild(), build -> {
-            build.forTasks(tasks.toArray(new String[0]));
-            build.withArguments(gradleArgs);
-            build.setJvmArguments(jvmArgs);
-            build.run();
-            return null;
-        });
+    protected void run(List<String> tasks, List<String> gradleArgs, List<String> jvmArgs, Class<?> toolingModel) {
+        if (toolingModel == null) {
+            run(projectConnection.newBuild(), build -> {
+                build.forTasks(tasks.toArray(new String[0]));
+                build.withArguments(gradleArgs);
+                build.setJvmArguments(jvmArgs);
+                build.run();
+                return null;
+            });
+        } else {
+            run(projectConnection.model(toolingModel), build -> {
+                build.forTasks(tasks.toArray(new String[0]));
+                build.withArguments(gradleArgs);
+                build.setJvmArguments(jvmArgs);
+                build.get();
+                return null;
+            });
+        }
     }
 }
 

@@ -705,6 +705,49 @@ println "<tasks: " + gradle.startParameter.taskNames + ">"
         new File(outputDir, "help/help-${minimalSupportedGradleVersion}.jfr").file
     }
 
+    def "runs benchmarks fetching tooling model"() {
+        given:
+        def scenarioFile = file("benchmark.conf")
+        scenarioFile.text = """
+ideaModel {
+    versions = ["3.0", "$minimalSupportedGradleVersion"]
+    model = idea
+}
+"""
+
+        buildFile.text = """
+apply plugin: BasePlugin
+println "<gradle-version: " + gradle.gradleVersion + ">"
+println "<tasks: " + gradle.startParameter.taskNames + ">"
+println "<daemon: " + gradle.services.get(org.gradle.internal.environment.GradleBuildEnvironment).longLivingProcess + ">"
+plugins.withId("idea") {
+    // most likely due to IDEA model builder 
+    println("<idea>")
+}
+"""
+
+        when:
+        new Main().run("--project-dir", projectDir.absolutePath, "--output-dir", outputDir.absolutePath, "--scenario-file", scenarioFile.absolutePath,
+                "--benchmark")
+
+        then:
+        // Probe version, 6 warm up, 10 builds
+        logFile.grep("<gradle-version: $minimalSupportedGradleVersion>").size() == 17
+        logFile.grep("<gradle-version: 3.0").size() == 17
+        logFile.grep("<daemon: true").size() == 17 * 2
+        logFile.grep("<tasks: []>").size() == 16 * 2
+        logFile.grep("<idea>").size() == 16 * 2
+
+        logFile.contains("* Running scenario ideaModel using Gradle 3.0 (scenario 1/2)")
+        logFile.contains("* Running scenario ideaModel using Gradle $minimalSupportedGradleVersion (scenario 2/2)")
+
+        resultFile.isFile()
+        resultFile.text.readLines().get(0) == "scenario,ideaModel,ideaModel"
+        resultFile.text.readLines().get(1) == "version,3.0,${minimalSupportedGradleVersion}"
+        resultFile.text.readLines().get(2) == "tasks,,"
+        resultFile.text.readLines().size() == 26 // 3 headers, 16 executions, 7 stats
+    }
+
     def "profiles scenarios defined in scenario file using multiple Gradle versions"() {
         given:
         def scenarioFile = file("benchmark.conf")

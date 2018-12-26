@@ -11,16 +11,18 @@ public class GradleScenarioDefinition extends ScenarioDefinition {
 
     private final Invoker invoker;
     private final GradleVersion version;
+    private final Class<?> toolingModel;
     private final List<String> cleanupTasks;
     private final List<String> tasks;
     private final List<String> gradleArgs;
     private final Map<String, String> systemProperties;
 
-    public GradleScenarioDefinition(String name, Invoker invoker, GradleVersion version, List<String> tasks, List<String> cleanupTasks, List<String> gradleArgs, Map<String, String> systemProperties, Supplier<BuildMutator> buildMutator, int warmUpCount, int buildCount, File outputDir) {
+    public GradleScenarioDefinition(String name, Invoker invoker, GradleVersion version, List<String> tasks, Class<?> toolingModel, List<String> cleanupTasks, List<String> gradleArgs, Map<String, String> systemProperties, Supplier<BuildMutator> buildMutator, int warmUpCount, int buildCount, File outputDir) {
         super(name, buildMutator, warmUpCount, buildCount, outputDir);
         this.invoker = invoker;
         this.tasks = tasks;
         this.version = version;
+        this.toolingModel = toolingModel;
         this.cleanupTasks = cleanupTasks;
         this.gradleArgs = gradleArgs;
         this.systemProperties = systemProperties;
@@ -58,6 +60,10 @@ public class GradleScenarioDefinition extends ScenarioDefinition {
         return tasks;
     }
 
+    public Class<?> getToolingModel() {
+        return toolingModel;
+    }
+
     public List<String> getCleanupTasks() {
         return cleanupTasks;
     }
@@ -76,6 +82,9 @@ public class GradleScenarioDefinition extends ScenarioDefinition {
         out.println("  Run using: " + getInvoker());
         out.println("  Cleanup Tasks: " + getCleanupTasks());
         out.println("  Tasks: " + getTasks());
+        if (toolingModel != null) {
+            out.println("  Tooling model: " + getToolingModel());
+        }
         out.println("  Gradle args: " + getGradleArgs());
         if (!getSystemProperties().isEmpty()) {
             out.println("  System properties:");

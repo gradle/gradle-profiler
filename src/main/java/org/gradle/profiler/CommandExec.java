@@ -1,6 +1,14 @@
 package org.gradle.profiler;
 
-import java.io.*;
+import javax.annotation.Nullable;
+import java.io.ByteArrayOutputStream;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.lang.reflect.Field;
 import java.util.Collection;
 import java.util.List;
@@ -8,8 +16,6 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
-
-import javax.annotation.Nullable;
 
 public class CommandExec {
     private final File directory;
@@ -78,12 +84,12 @@ public class CommandExec {
 
     public void run(ProcessBuilder processBuilder) {
         OutputStream outputStream = Logging.detailed();
-        run(processBuilder, outputStream, outputStream, null).waitForSuccess();
+        run(processBuilder, outputStream, null, null).waitForSuccess();
     }
 
     public RunHandle runBackgrounded(String... commandLine) {
         OutputStream outputStream = Logging.detailed();
-        return run(new ProcessBuilder(commandLine), outputStream, outputStream, null);
+        return run(new ProcessBuilder(commandLine), outputStream, null, null);
     }
 
     protected RunHandle run(ProcessBuilder processBuilder, OutputStream outputStream, @Nullable OutputStream errorStream, @Nullable InputStream inputStream) {

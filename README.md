@@ -166,6 +166,7 @@ Here is an example:
 
     # Scenarios are run in alphabetical order
     assemble {
+        # Run the 'assemble' task
         tasks = ["assemble"]
     }
     clean_build {
@@ -184,6 +185,10 @@ Here is an example:
         }
 
         warm-ups = 10
+    }
+    ideaModel {
+        # Fetch the IDEA tooling model
+        model = idea
     }
 
 Values are optional and default to the values provided on the command-line or defined in the build.

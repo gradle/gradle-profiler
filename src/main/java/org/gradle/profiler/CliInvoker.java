@@ -27,7 +27,10 @@ public class CliInvoker extends BuildInvoker {
     }
 
     @Override
-    protected void run(List<String> tasks, List<String> gradleArgs, List<String> jvmArgs) {
+    protected void run(List<String> tasks, List<String> gradleArgs, List<String> jvmArgs, Class<?> toolingModel) {
+        if (toolingModel != null) {
+            throw new UnsupportedOperationException("Cannot fetch a tooling model using the Gradle CLI.");
+        }
         String gradleOpts = jvmArgs.stream().collect(Collectors.joining(" "));
 
         List<String> commandLine = new ArrayList<>();

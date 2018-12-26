@@ -8,7 +8,7 @@ import java.util.function.Supplier;
 
 public class AdhocGradleScenarioDefinition extends GradleScenarioDefinition {
     public AdhocGradleScenarioDefinition(GradleVersion version, Invoker invoker, List<String> tasks, Map<String, String> systemProperties, Supplier<BuildMutator> buildMutator, int warmUpCount, int buildCount, File outputDir) {
-        super("default", invoker, version, tasks, Collections.emptyList(), Collections.emptyList(), systemProperties, buildMutator, warmUpCount, buildCount, outputDir);
+        super("default", invoker, version, tasks, null, Collections.emptyList(), Collections.emptyList(), systemProperties, buildMutator, warmUpCount, buildCount, outputDir);
     }
 
     @Override

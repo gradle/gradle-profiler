@@ -24,16 +24,17 @@ public abstract class BuildInvoker {
         this.resultsConsumer = resultsConsumer;
     }
 
-    public BuildInvocationResult runBuild(Phase phase, int buildNumber, BuildStep buildStep, List<String> tasks) {
+    public BuildInvocationResult runBuild(Phase phase, int buildNumber, BuildStep buildStep, List<String> tasks, Class<?> toolingModel) {
         String displayName = phase.displayBuildNumber(buildNumber);
         startOperation("Running " + displayName + " with " + buildStep.name().toLowerCase() + " tasks " + tasks);
 
-        Timer timer = new Timer();
         List<String> jvmArgs = new ArrayList<>(this.jvmArgs);
         jvmArgs.add("-Dorg.gradle.profiler.phase=" + phase);
         jvmArgs.add("-Dorg.gradle.profiler.number=" + buildNumber);
         jvmArgs.add("-Dorg.gradle.profiler.step=" + buildStep);
-        run(tasks, gradleArgs, jvmArgs);
+
+        Timer timer = new Timer();
+        run(tasks, gradleArgs, jvmArgs, toolingModel);
         Duration executionTime = timer.elapsed();
 
         String pid = pidInstrumentation.getPidForLastBuild();
@@ -45,7 +46,7 @@ public abstract class BuildInvoker {
         return results;
     }
 
-    protected abstract void run(List<String> tasks, List<String> gradleArgs, List<String> jvmArgs);
+    protected abstract void run(List<String> tasks, List<String> gradleArgs, List<String> jvmArgs, Class<?> toolingModel);
 
     public static <T extends LongRunningOperation, R> R run(T operation, Function<T, R> function) {
         operation.setStandardOutput(Logging.detailed());
