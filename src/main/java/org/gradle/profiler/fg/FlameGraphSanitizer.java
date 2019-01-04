@@ -53,6 +53,7 @@ public class FlameGraphSanitizer {
     }
 
     public void sanitize(final File in, File out) {
+        out.getParentFile().mkdirs();
         try (BufferedWriter writer = new BufferedWriter(new FileWriter(out))) {
             try (BufferedReader reader = new BufferedReader(new InputStreamReader(new FileInputStream(in)))) {
                 String line;
