@@ -22,15 +22,28 @@ import java.io.PrintWriter;
 public class BuildScanInitScript extends GeneratedInitScript {
 
     private final String version;
+    private final String additionalRepo;
 
-    public BuildScanInitScript(String version) {
+    public BuildScanInitScript(String version, String additionalRepo) {
         this.version = version;
+        this.additionalRepo = additionalRepo;
     }
 
     @Override
     public void writeContents(final PrintWriter writer) {
         writer.write("initscript {\n");
         writer.write("    repositories {\n");
+        if (additionalRepo != null) {
+            /*
+            Additional repository, if provided, is added before the default repository
+            so that the profiler will access this repo first and won't access the default repo
+            if not needed.
+             */
+            System.out.println("Build Scan additional repo: " + additionalRepo);
+            writer.write("      maven {\n");
+            writer.write("          url \"" + additionalRepo + "\"\n");
+            writer.write("        }\n");
+        }
         writer.write("      maven {\n");
         writer.write("          url \"https://plugins.gradle.org/m2\"\n");
         writer.write("        }\n");

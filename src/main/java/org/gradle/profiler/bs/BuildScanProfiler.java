@@ -21,14 +21,20 @@ public class BuildScanProfiler extends Profiler {
     public final static String VERSION = "1.11";
 
     private final String buildScanVersion;
+    /*
+    buildScanAdditionalRepo may be needed if users run gradle-profiler in an environment that
+    only has access to intranet (internal repo or artifacts) but does not have access to
+    internet (plugins.gradle.org, the default repo)
+     */
+    private final String buildScanAdditionalRepo;
 
     public BuildScanProfiler() {
-        this(null);
+        this(null, null);
     }
 
-    private BuildScanProfiler(String buildScanVersion) {
+    private BuildScanProfiler(String buildScanVersion, String buildScanAdditionalRepo) {
         this.buildScanVersion = buildScanVersion == null ? VERSION : buildScanVersion;
-        ;
+        this.buildScanAdditionalRepo = buildScanAdditionalRepo == null ? null : buildScanAdditionalRepo;
     }
 
     @Override
@@ -95,7 +101,8 @@ public class BuildScanProfiler extends Profiler {
         return new GradleArgsCalculator() {
             @Override
             public void calculateGradleArgs(List<String> gradleArgs) {
-                gradleArgs.addAll(new BuildScanInitScript(buildScanVersion).getArgs());
+                gradleArgs.addAll(new BuildScanInitScript(buildScanVersion, buildScanAdditionalRepo)
+                    .getArgs());
             }
         };
     }
@@ -113,7 +120,8 @@ public class BuildScanProfiler extends Profiler {
 
     @Override
     public Profiler withConfig(OptionSet parsedOptions) {
-        return new BuildScanProfiler((String) parsedOptions.valueOf("buildscan-version"));
+        return new BuildScanProfiler((String) parsedOptions.valueOf("buildscan-version"),
+            (String) parsedOptions.valueOf("buildscan-additional-repo"));
     }
 
     @Override
@@ -121,5 +129,8 @@ public class BuildScanProfiler extends Profiler {
         parser.accepts("buildscan-version", "Version of the Build Scan plugin")
                 .availableIf("profile")
                 .withOptionalArg();
+        parser.accepts("buildscan-additional-repo", "Additional repository for Build Scan")
+            .availableIf("profile")
+            .withOptionalArg();
     }
 }
