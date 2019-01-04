@@ -144,6 +144,7 @@ Add the `--profile chrome-trace` option and open the result in Google Chrome. It
 - `--benchmark`: Benchmark the build. Runs the builds more times and writes the results to a CSV file.
 - `--profile <profiler>`: Profile the build using the specified profiler. See above for details on each profiler.
 - `--gradle-version <version>`: Specifies a Gradle version or installation to use to run the builds, overriding the default for the build. You can specify multiple versions.
+- `--gradle-user-home <path>`: Override the Gradle User Home location.
 - `--output-dir <dir>`: Directory to write results to.
 - `--no-daemon`: Uses the gradle command-line client with the `--no-daemon` option to run the builds. The default is to use the Gradle tooling API and Gradle daemon.
 - `--cli`: Uses the gradle command-line client to run the builds. The default is to use the Gradle tooling API.
