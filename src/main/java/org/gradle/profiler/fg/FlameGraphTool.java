@@ -37,8 +37,19 @@ public class FlameGraphTool {
         flamegraphScript = new File(flamegraphHome, "flamegraph.pl");
     }
 
+    public boolean checkInstallation() {
+        try {
+            new CommandExec().run("perl", "-v");
+            return true;
+        } catch (Exception e) {
+            System.out.println("To get flamegraphs, please install perl.");
+            return false;
+        }
+    }
+
     public void generateFlameGraph(File stacks, File flames, List<String> args) {
         List<String> allArgs = new ArrayList<>();
+        allArgs.add("perl");
         allArgs.add(flamegraphScript.getAbsolutePath());
         allArgs.add(stacks.getAbsolutePath());
         allArgs.addAll(args);

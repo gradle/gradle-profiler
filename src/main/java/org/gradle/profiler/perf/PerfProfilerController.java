@@ -63,6 +63,7 @@ public class PerfProfilerController extends SingleIterationProfilerController {
     private final ScenarioSettings scenarioSettings;
     private final CommandExec commandExec;
     private final CommandExec sudoCommandExec;
+    private final FlameGraphTool flameGraphTool;
     private CommandExec.RunHandle perfHandle;
 
     PerfProfilerController(final PerfProfilerArgs args, ScenarioSettings scenarioSettings) {
@@ -70,6 +71,7 @@ public class PerfProfilerController extends SingleIterationProfilerController {
         this.scenarioSettings = scenarioSettings;
         this.commandExec = new CommandExec();
         this.sudoCommandExec = new SudoCommandExec();
+        this.flameGraphTool = new FlameGraphTool(getToolDir(TOOL_FLAMEGRAPH));
     }
 
     @Override
@@ -92,12 +94,14 @@ public class PerfProfilerController extends SingleIterationProfilerController {
         println("Stopping profiling with Perf");
 
         perfHandle.interrupt();
-        generateJmaps();
-        generateFlameGraph();
-        // Disabled for now, I need to talk to Brendan about the pkgsplit script
-        /*
-        generatePackageFlameGraph();
-        */
+        if (flameGraphTool.checkInstallation()) {
+            generateJmaps();
+            generateFlameGraph();
+            // Disabled for now, I need to talk to Brendan about the pkgsplit script
+            /*
+            generatePackageFlameGraph();
+            */
+        }
 
     }
 
@@ -241,7 +245,7 @@ public class PerfProfilerController extends SingleIterationProfilerController {
             args.add("--invert");
             args.add("--reverse");
         }
-        new FlameGraphTool(getToolDir(TOOL_FLAMEGRAPH)).generateFlameGraph(sanitizedTxtFile, fgFile, args);
+        flameGraphTool.generateFlameGraph(sanitizedTxtFile, fgFile, args);
     }
 
     private File getToolsDir() {

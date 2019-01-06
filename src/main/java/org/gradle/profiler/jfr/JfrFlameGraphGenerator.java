@@ -1,6 +1,5 @@
 package org.gradle.profiler.jfr;
 
-import org.gradle.profiler.OperatingSystem;
 import org.gradle.profiler.fg.FlameGraphSanitizer;
 import org.gradle.profiler.fg.FlameGraphTool;
 import org.openjdk.jmc.common.item.IItemCollection;
@@ -19,11 +18,13 @@ import static org.gradle.profiler.jfr.JfrToStacksConverter.Options;
  * Generates flame graphs based on JFR recordings.
  * <p>
  * TODO create flame graph diffs between profiled versions
- * TODO detect missing Perl instead of just excluding Windows
  */
 class JfrFlameGraphGenerator {
+    private JfrToStacksConverter stacksConverter = new JfrToStacksConverter();
+    private FlameGraphTool flameGraphGenerator = new FlameGraphTool();
+
     public void generateGraphs(File jfrFile) {
-        if (OperatingSystem.isWindows()) {
+        if (!flameGraphGenerator.checkInstallation()) {
             return;
         }
         try {
@@ -81,9 +82,6 @@ class JfrFlameGraphGenerator {
         options.addAll(Arrays.asList("--title", type.getDisplayName() + " Icicle Graph", "--countname", type.getUnitOfMeasure(), "--reverse", "--invert", "--colors", "aqua"));
         flameGraphGenerator.generateFlameGraph(stacks, icicles, options);
     }
-
-    private JfrToStacksConverter stacksConverter = new JfrToStacksConverter();
-    private FlameGraphTool flameGraphGenerator = new FlameGraphTool();
 
     private enum DetailLevel {
         RAW(
