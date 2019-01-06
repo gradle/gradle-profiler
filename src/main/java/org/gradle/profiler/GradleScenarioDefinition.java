@@ -10,18 +10,18 @@ import java.util.stream.Collectors;
 public class GradleScenarioDefinition extends ScenarioDefinition {
 
     private final Invoker invoker;
-    private final GradleVersion version;
+    private final GradleBuildConfiguration buildConfiguration;
     private final Class<?> toolingModel;
     private final List<String> cleanupTasks;
     private final List<String> tasks;
     private final List<String> gradleArgs;
     private final Map<String, String> systemProperties;
 
-    public GradleScenarioDefinition(String name, Invoker invoker, GradleVersion version, List<String> tasks, Class<?> toolingModel, List<String> cleanupTasks, List<String> gradleArgs, Map<String, String> systemProperties, Supplier<BuildMutator> buildMutator, int warmUpCount, int buildCount, File outputDir) {
+    public GradleScenarioDefinition(String name, Invoker invoker, GradleBuildConfiguration buildConfiguration, List<String> tasks, Class<?> toolingModel, List<String> cleanupTasks, List<String> gradleArgs, Map<String, String> systemProperties, Supplier<BuildMutator> buildMutator, int warmUpCount, int buildCount, File outputDir) {
         super(name, buildMutator, warmUpCount, buildCount, outputDir);
         this.invoker = invoker;
         this.tasks = tasks;
-        this.version = version;
+        this.buildConfiguration = buildConfiguration;
         this.toolingModel = toolingModel;
         this.cleanupTasks = cleanupTasks;
         this.gradleArgs = gradleArgs;
@@ -30,17 +30,17 @@ public class GradleScenarioDefinition extends ScenarioDefinition {
 
     @Override
     public String getDisplayName() {
-        return getName() + " using Gradle " + version.getVersion();
+        return getName() + " using " + buildConfiguration.getGradleVersion();
     }
 
     @Override
     public String getProfileName() {
-        return getName() + "-" + version.getVersion();
+        return getName() + "-" + buildConfiguration.getGradleVersion().getVersion();
     }
 
     @Override
     public String getBuildToolDisplayName() {
-        return version.getVersion();
+        return buildConfiguration.getGradleVersion().getVersion();
     }
 
     @Override
@@ -68,8 +68,8 @@ public class GradleScenarioDefinition extends ScenarioDefinition {
         return cleanupTasks;
     }
 
-    public GradleVersion getVersion() {
-        return version;
+    public GradleBuildConfiguration getBuildConfiguration() {
+        return buildConfiguration;
     }
 
     public Map<String, String> getSystemProperties() {
@@ -78,7 +78,7 @@ public class GradleScenarioDefinition extends ScenarioDefinition {
 
     @Override
     protected void printDetail(PrintStream out) {
-        out.println("  Gradle version: " + getVersion().getVersion() + " (" + getVersion().getGradleHome() + ")");
+        out.println("  " + getBuildConfiguration().getGradleVersion() + " (" + getBuildConfiguration().getGradleHome() + ")");
         out.println("  Run using: " + getInvoker());
         out.println("  Cleanup Tasks: " + getCleanupTasks());
         out.println("  Tasks: " + getTasks());

@@ -5,7 +5,6 @@ import org.gradle.profiler.report.CsvGenerator;
 import org.gradle.profiler.report.HtmlGenerator;
 import org.gradle.tooling.GradleConnector;
 import org.gradle.tooling.ProjectConnection;
-import org.gradle.tooling.model.build.BuildEnvironment;
 
 import java.io.File;
 import java.io.IOException;
@@ -56,8 +55,8 @@ public class Main {
             settings.printTo(System.out);
 
             DaemonControl daemonControl = new DaemonControl(settings.getGradleUserHome());
-            GradleVersionInspector gradleVersionInspector = new DefaultGradleVersionInspector(settings.getProjectDir(), settings.getGradleUserHome(), daemonControl);
-            ScenarioLoader scenarioLoader = new ScenarioLoader(gradleVersionInspector);
+            GradleBuildConfigurationReader gradleBuildConfigurationReader = new DefaultGradleBuildConfigurationReader(settings.getProjectDir(), settings.getGradleUserHome(), daemonControl);
+            ScenarioLoader scenarioLoader = new ScenarioLoader(gradleBuildConfigurationReader);
             List<ScenarioDefinition> scenarios = scenarioLoader.loadScenarios(settings);
             int totalScenarios = scenarios.size();
 
@@ -80,10 +79,10 @@ public class Main {
                         runBazelScenario((BazelScenarioDefinition) scenario, settings, benchmarkResults);
                     } else if (scenario instanceof BuckScenarioDefinition) {
                         runBuckScenario((BuckScenarioDefinition) scenario, settings, benchmarkResults);
-                    } else if (scenario instanceof MavenScenarioDefinition){
+                    } else if (scenario instanceof MavenScenarioDefinition) {
                         runMavenScenario((MavenScenarioDefinition) scenario, settings, benchmarkResults);
                     } else {
-                        runGradleScenario((GradleScenarioDefinition)scenario, settings, daemonControl, benchmarkResults, pidInstrumentation);
+                        runGradleScenario((GradleScenarioDefinition) scenario, settings, daemonControl, benchmarkResults, pidInstrumentation);
                     }
 
                 } catch (Throwable t) {
@@ -123,26 +122,18 @@ public class Main {
 
         List<String> cleanupTasks = scenario.getCleanupTasks();
         List<String> tasks = scenario.getTasks();
-        GradleVersion version = scenario.getVersion();
+        GradleBuildConfiguration buildConfiguration = scenario.getBuildConfiguration();
 
-        daemonControl.stop(version);
+        daemonControl.stop(buildConfiguration);
 
-        GradleConnector connector = GradleConnector.newConnector()
-                .useInstallation(version.getGradleHome())
-                .useGradleUserHomeDir(settings.getGradleUserHome().getAbsoluteFile());
-        ProjectConnection projectConnection = connector.forProjectDirectory(settings.getProjectDir()).connect();
         BuildMutator mutator = scenario.getBuildMutator().get();
+        GradleConnector connector = GradleConnector.newConnector()
+            .useInstallation(buildConfiguration.getGradleHome())
+            .useGradleUserHomeDir(settings.getGradleUserHome().getAbsoluteFile());
+        ProjectConnection projectConnection = connector.forProjectDirectory(settings.getProjectDir()).connect();
         try {
-            BuildEnvironment buildEnvironment = projectConnection.getModel(BuildEnvironment.class);
-            Logging.detailed().println();
-            Logging.detailed().println("* Build details");
-            Logging.detailed().println("Gradle version: " + buildEnvironment.getGradle().getGradleVersion());
-
-            File javaHome = buildEnvironment.getJava().getJavaHome();
-            Logging.detailed().println("Java home: " + javaHome);
-            Logging.detailed().println("OS name: " + System.getProperty("os.name") + " " + System.getProperty("os.version"));
-
-            List<String> allBuildsJvmArgs = new ArrayList<>(buildEnvironment.getJava().getJvmArguments());
+            buildConfiguration.printVersionInfo();
+            List<String> allBuildsJvmArgs = new ArrayList<>(buildConfiguration.getJvmArguments());
             for (Map.Entry<String, String> entry : scenario.getSystemProperties().entrySet()) {
                 allBuildsJvmArgs.add("-D" + entry.getKey() + "=" + entry.getValue());
             }
@@ -166,13 +157,13 @@ public class Main {
             BuildInvoker invoker;
             switch (scenario.getInvoker()) {
                 case NoDaemon:
-                    invoker = new CliInvoker(version, javaHome, settings.getProjectDir(), allBuildsJvmArgs, allBuildsGradleArgs, pidInstrumentation, resultsCollector, false);
+                    invoker = new CliInvoker(buildConfiguration, buildConfiguration.getJavaHome(), settings.getProjectDir(), allBuildsJvmArgs, allBuildsGradleArgs, pidInstrumentation, resultsCollector, false);
                     break;
                 case ToolingApi:
                     invoker = new ToolingApiInvoker(projectConnection, allBuildsJvmArgs, allBuildsGradleArgs, pidInstrumentation, resultsCollector);
                     break;
                 case Cli:
-                    invoker = new CliInvoker(version, javaHome, settings.getProjectDir(), allBuildsJvmArgs, allBuildsGradleArgs, pidInstrumentation, resultsCollector, true);
+                    invoker = new CliInvoker(buildConfiguration, buildConfiguration.getJavaHome(), settings.getProjectDir(), allBuildsJvmArgs, allBuildsGradleArgs, pidInstrumentation, resultsCollector, true);
                     break;
                 default:
                     throw new IllegalArgumentException();
@@ -180,20 +171,20 @@ public class Main {
 
             mutator.beforeScenario();
 
-			BuildInvocationResult results = null;
+            BuildInvocationResult results = null;
             String pid = null;
 
-			for (int i = 1; i <= scenario.getWarmUpCount(); i++) {
-				final int counter = i;
-				beforeBuild(WARM_UP, counter, invoker, cleanupTasks, mutator);
-				results = tryRun(() -> invoker.runBuild(WARM_UP, counter, BUILD, tasks, scenario.getToolingModel()),
-						mutator::afterBuild);
-				if (pid == null) {
-					pid = results.getDaemonPid();
-				} else {
-					checkPid(pid, results.getDaemonPid(), scenario.getInvoker());
-				}
-			}
+            for (int i = 1; i <= scenario.getWarmUpCount(); i++) {
+                final int counter = i;
+                beforeBuild(WARM_UP, counter, invoker, cleanupTasks, mutator);
+                results = tryRun(() -> invoker.runBuild(WARM_UP, counter, BUILD, tasks, scenario.getToolingModel()),
+                    mutator::afterBuild);
+                if (pid == null) {
+                    pid = results.getDaemonPid();
+                } else {
+                    checkPid(pid, results.getDaemonPid(), scenario.getInvoker());
+                }
+            }
 
             ProfilerController control = settings.getProfiler().newController(pid, scenarioSettings);
 
@@ -221,30 +212,30 @@ public class Main {
                 Logging.startOperation("Starting profiler for daemon with pid " + pid);
                 control.startSession();
             }
-			for (int i = 1; i <= scenario.getBuildCount(); i++) {
-				final int counter = i;
-				beforeBuild(MEASURE, counter, invoker, cleanupTasks, mutator);
-				results = tryRun(() -> {
-					if (settings.isProfile() && (counter == 1 || !cleanupTasks.isEmpty())) {
-						try {
-							control.startRecording();
-						} catch (IOException | InterruptedException e) {
-							throw new RuntimeException(e);
-						}
-					}
+            for (int i = 1; i <= scenario.getBuildCount(); i++) {
+                final int counter = i;
+                beforeBuild(MEASURE, counter, invoker, cleanupTasks, mutator);
+                results = tryRun(() -> {
+                    if (settings.isProfile() && (counter == 1 || !cleanupTasks.isEmpty())) {
+                        try {
+                            control.startRecording();
+                        } catch (IOException | InterruptedException e) {
+                            throw new RuntimeException(e);
+                        }
+                    }
 
-					BuildInvocationResult result = instrumentedBuildInvoker.runBuild(MEASURE, counter, BUILD, tasks, scenario.getToolingModel());
+                    BuildInvocationResult result = instrumentedBuildInvoker.runBuild(MEASURE, counter, BUILD, tasks, scenario.getToolingModel());
 
-					if (settings.isProfile() && (counter == scenario.getBuildCount() || !cleanupTasks.isEmpty())) {
-						try {
-							control.stopRecording();
-						} catch (IOException | InterruptedException e) {
-							throw new RuntimeException(e);
-						}
-					}
+                    if (settings.isProfile() && (counter == scenario.getBuildCount() || !cleanupTasks.isEmpty())) {
+                        try {
+                            control.stopRecording();
+                        } catch (IOException | InterruptedException e) {
+                            throw new RuntimeException(e);
+                        }
+                    }
 
-					return result;
-				}, mutator::afterBuild);
+                    return result;
+                }, mutator::afterBuild);
             }
 
             if (settings.isProfile()) {
@@ -254,16 +245,16 @@ public class Main {
             if (settings.isBenchmark()) {
                 benchmarkResults.write();
             }
-			Objects.requireNonNull(results);
+            Objects.requireNonNull(results);
             checkPid(pid, results.getDaemonPid(), scenario.getInvoker());
         } finally {
             mutator.afterScenario();
             projectConnection.close();
-            daemonControl.stop(version);
+            daemonControl.stop(buildConfiguration);
         }
     }
 
-	private void logGradleArgs(List<String> allBuildsGradleArgs) {
+    private void logGradleArgs(List<String> allBuildsGradleArgs) {
         Logging.detailed().println("Gradle args:");
         for (String arg : allBuildsGradleArgs) {
             Logging.detailed().println("  " + arg);
@@ -281,7 +272,7 @@ public class Main {
         String bazelHome = System.getenv("BAZEL_HOME");
         String bazelExe = bazelHome == null ? "bazel" : bazelHome + "/bin/bazel";
 
-		List<String> targets = new ArrayList<>(scenario.getTargets());
+        List<String> targets = new ArrayList<>(scenario.getTargets());
 
         System.out.println();
         System.out.println("* Bazel targets: " + targets);
@@ -298,35 +289,35 @@ public class Main {
             for (int i = 0; i < scenario.getWarmUpCount(); i++) {
                 String displayName = WARM_UP.displayBuildNumber(i + 1);
                 mutator.beforeBuild();
-				tryRun(() -> {
-					startOperation("Running " + displayName);
-					Timer timer = new Timer();
-					new CommandExec().inDir(settings.getProjectDir()).run(commandLine);
-					Duration executionTime = timer.elapsed();
-					printExecutionTime(executionTime);
-					resultConsumer.accept(new BuildInvocationResult(displayName, executionTime, null));
-				}, mutator::afterBuild);
+                tryRun(() -> {
+                    startOperation("Running " + displayName);
+                    Timer timer = new Timer();
+                    new CommandExec().inDir(settings.getProjectDir()).run(commandLine);
+                    Duration executionTime = timer.elapsed();
+                    printExecutionTime(executionTime);
+                    resultConsumer.accept(new BuildInvocationResult(displayName, executionTime, null));
+                }, mutator::afterBuild);
             }
             for (int i = 0; i < scenario.getBuildCount(); i++) {
                 String displayName = MEASURE.displayBuildNumber(i + 1);
                 mutator.beforeBuild();
-				tryRun(() -> {
-					startOperation("Running " + displayName);
-					Timer timer = new Timer();
-					new CommandExec().inDir(settings.getProjectDir()).run(commandLine);
-					Duration executionTime = timer.elapsed();
-					printExecutionTime(executionTime);
-					resultConsumer.accept(new BuildInvocationResult(displayName, executionTime, null));
-				}, mutator::afterBuild);
+                tryRun(() -> {
+                    startOperation("Running " + displayName);
+                    Timer timer = new Timer();
+                    new CommandExec().inDir(settings.getProjectDir()).run(commandLine);
+                    Duration executionTime = timer.elapsed();
+                    printExecutionTime(executionTime);
+                    resultConsumer.accept(new BuildInvocationResult(displayName, executionTime, null));
+                }, mutator::afterBuild);
             }
         } finally {
             mutator.afterScenario();
         }
     }
 
-	private void runBuckScenario(BuckScenarioDefinition scenario, InvocationSettings settings, BenchmarkResultCollector benchmarkResults) {
+    private void runBuckScenario(BuckScenarioDefinition scenario, InvocationSettings settings, BenchmarkResultCollector benchmarkResults) {
         String buckwExe = settings.getProjectDir() + "/buckw";
-		List<String> targets = new ArrayList<>(scenario.getTargets());
+        List<String> targets = new ArrayList<>(scenario.getTargets());
         if (scenario.getType() != null) {
             Logging.startOperation("Query targets with type " + scenario.getType());
             List<String> commandLine = new ArrayList<>();
@@ -355,26 +346,26 @@ public class Main {
             for (int i = 0; i < scenario.getWarmUpCount(); i++) {
                 String displayName = WARM_UP.displayBuildNumber(i + 1);
                 mutator.beforeBuild();
-				tryRun(() -> {
-					startOperation("Running " + displayName);
-					Timer timer = new Timer();
-					new CommandExec().inDir(settings.getProjectDir()).run(commandLine);
-					Duration executionTime = timer.elapsed();
-					printExecutionTime(executionTime);
-					resultConsumer.accept(new BuildInvocationResult(displayName, executionTime, null));
-				}, mutator::afterBuild);
+                tryRun(() -> {
+                    startOperation("Running " + displayName);
+                    Timer timer = new Timer();
+                    new CommandExec().inDir(settings.getProjectDir()).run(commandLine);
+                    Duration executionTime = timer.elapsed();
+                    printExecutionTime(executionTime);
+                    resultConsumer.accept(new BuildInvocationResult(displayName, executionTime, null));
+                }, mutator::afterBuild);
             }
             for (int i = 0; i < scenario.getBuildCount(); i++) {
                 String displayName = MEASURE.displayBuildNumber(i + 1);
                 mutator.beforeBuild();
-				tryRun(() -> {
-					startOperation("Running " + displayName);
-					Timer timer = new Timer();
-					new CommandExec().inDir(settings.getProjectDir()).run(commandLine);
-					Duration executionTime = timer.elapsed();
-					printExecutionTime(executionTime);
-					resultConsumer.accept(new BuildInvocationResult(displayName, executionTime, null));
-				}, mutator::afterBuild);
+                tryRun(() -> {
+                    startOperation("Running " + displayName);
+                    Timer timer = new Timer();
+                    new CommandExec().inDir(settings.getProjectDir()).run(commandLine);
+                    Duration executionTime = timer.elapsed();
+                    printExecutionTime(executionTime);
+                    resultConsumer.accept(new BuildInvocationResult(displayName, executionTime, null));
+                }, mutator::afterBuild);
             }
         } finally {
             mutator.afterScenario();
@@ -397,60 +388,60 @@ public class Main {
         try {
             Consumer<BuildInvocationResult> resultConsumer = benchmarkResults.version(scenario);
             for (int i = 0; i < scenario.getWarmUpCount(); i++) {
-				String displayName = WARM_UP.displayBuildNumber(i + 1);
+                String displayName = WARM_UP.displayBuildNumber(i + 1);
                 mutator.beforeBuild();
-				tryRun(() -> {
-					startOperation("Running " + displayName);
-					Timer timer = new Timer();
-					new CommandExec().inDir(settings.getProjectDir()).run(commandLine);
-					Duration executionTime = timer.elapsed();
-					printExecutionTime(executionTime);
-					resultConsumer.accept(new BuildInvocationResult(displayName, executionTime, null));
-				}, mutator::afterBuild);
+                tryRun(() -> {
+                    startOperation("Running " + displayName);
+                    Timer timer = new Timer();
+                    new CommandExec().inDir(settings.getProjectDir()).run(commandLine);
+                    Duration executionTime = timer.elapsed();
+                    printExecutionTime(executionTime);
+                    resultConsumer.accept(new BuildInvocationResult(displayName, executionTime, null));
+                }, mutator::afterBuild);
             }
             for (int i = 0; i < scenario.getBuildCount(); i++) {
-				String displayName = MEASURE.displayBuildNumber(i + 1);
+                String displayName = MEASURE.displayBuildNumber(i + 1);
                 mutator.beforeBuild();
-				tryRun(() -> {
-					startOperation("Running " + displayName);
-					Timer timer = new Timer();
-					new CommandExec().inDir(settings.getProjectDir()).run(commandLine);
-					Duration executionTime = timer.elapsed();
-					printExecutionTime(executionTime);
-					resultConsumer.accept(new BuildInvocationResult(displayName, executionTime, null));
-				}, mutator::afterBuild);
+                tryRun(() -> {
+                    startOperation("Running " + displayName);
+                    Timer timer = new Timer();
+                    new CommandExec().inDir(settings.getProjectDir()).run(commandLine);
+                    Duration executionTime = timer.elapsed();
+                    printExecutionTime(executionTime);
+                    resultConsumer.accept(new BuildInvocationResult(displayName, executionTime, null));
+                }, mutator::afterBuild);
             }
         } finally {
             mutator.afterScenario();
         }
     }
 
-	private static <T> T tryRun(Supplier<T> action, Consumer<Throwable> after) {
-		Throwable error = null;
-		try {
-			return action.get();
-		} catch (RuntimeException | Error ex) {
-			error = ex;
-			throw ex;
-		} catch (Throwable ex) {
-			error = ex;
-			throw new RuntimeException(ex);
-		} finally {
-			after.accept(error);
-		}
-	}
+    private static <T> T tryRun(Supplier<T> action, Consumer<Throwable> after) {
+        Throwable error = null;
+        try {
+            return action.get();
+        } catch (RuntimeException | Error ex) {
+            error = ex;
+            throw ex;
+        } catch (Throwable ex) {
+            error = ex;
+            throw new RuntimeException(ex);
+        } finally {
+            after.accept(error);
+        }
+    }
 
-	private static void tryRun(Runnable action, Consumer<Throwable> after) {
-    	tryRun(() -> {
-    		action.run();
-    		return null;
-		}, after);
-	}
+    private static void tryRun(Runnable action, Consumer<Throwable> after) {
+        tryRun(() -> {
+            action.run();
+            return null;
+        }, after);
+    }
 
-	private static void beforeBuild(Phase phase, int buildNumber, BuildInvoker invoker, List<String> cleanupTasks, BuildMutator mutator) {
+    private static void beforeBuild(Phase phase, int buildNumber, BuildInvoker invoker, List<String> cleanupTasks, BuildMutator mutator) {
         if (!cleanupTasks.isEmpty()) {
-        	mutator.beforeCleanup();
-        	tryRun(() -> invoker.notInstrumented().runBuild(phase, buildNumber, CLEANUP, cleanupTasks, null), mutator::afterCleanup);
+            mutator.beforeCleanup();
+            tryRun(() -> invoker.notInstrumented().runBuild(phase, buildNumber, CLEANUP, cleanupTasks, null), mutator::afterCleanup);
         }
         mutator.beforeBuild();
     }
@@ -481,7 +472,7 @@ public class Main {
     }
 
     @SuppressWarnings("ConstantConditions")
-	private static void printResultFileSummaries(File outputDir, Profiler profiler) {
+    private static void printResultFileSummaries(File outputDir, Profiler profiler) {
         if (outputDir == null) {
             return;
         }
@@ -498,11 +489,11 @@ public class Main {
         }
     }
 
-	public static void printExecutionTime(Duration executionTime) {
-		System.out.println("Execution time " + executionTime.toMillis() + " ms");
-	}
+    public static void printExecutionTime(Duration executionTime) {
+        System.out.println("Execution time " + executionTime.toMillis() + " ms");
+    }
 
-	static class ScenarioFailedException extends RuntimeException {
+    static class ScenarioFailedException extends RuntimeException {
         public ScenarioFailedException(Throwable cause) {
             super(cause);
         }

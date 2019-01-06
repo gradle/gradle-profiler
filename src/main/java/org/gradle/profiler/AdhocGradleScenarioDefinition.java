@@ -7,17 +7,17 @@ import java.util.Map;
 import java.util.function.Supplier;
 
 public class AdhocGradleScenarioDefinition extends GradleScenarioDefinition {
-    public AdhocGradleScenarioDefinition(GradleVersion version, Invoker invoker, List<String> tasks, Map<String, String> systemProperties, Supplier<BuildMutator> buildMutator, int warmUpCount, int buildCount, File outputDir) {
+    public AdhocGradleScenarioDefinition(GradleBuildConfiguration version, Invoker invoker, List<String> tasks, Map<String, String> systemProperties, Supplier<BuildMutator> buildMutator, int warmUpCount, int buildCount, File outputDir) {
         super("default", invoker, version, tasks, null, Collections.emptyList(), Collections.emptyList(), systemProperties, buildMutator, warmUpCount, buildCount, outputDir);
     }
 
     @Override
     public String getDisplayName() {
-        return "using Gradle " + getVersion().getVersion();
+        return "using " + getBuildConfiguration().getGradleVersion();
     }
 
     @Override
     public String getProfileName() {
-        return getVersion().getVersion();
+        return getBuildConfiguration().getGradleVersion().getVersion();
     }
 }

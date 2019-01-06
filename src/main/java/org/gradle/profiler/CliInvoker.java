@@ -7,15 +7,15 @@ import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
 public class CliInvoker extends BuildInvoker {
-    private final GradleVersion gradleVersion;
+    private final GradleBuildConfiguration gradleBuildConfiguration;
     private final File javaHome;
     private final File projectDir;
     private final boolean daemon;
 
 
-    public CliInvoker(GradleVersion gradleVersion, File javaHome, File projectDir, List<String> jvmArgs, List<String> gradleArgs, PidInstrumentation pidInstrumentation, Consumer<BuildInvocationResult> resultsConsumer, boolean daemon) {
+    public CliInvoker(GradleBuildConfiguration gradleBuildConfiguration, File javaHome, File projectDir, List<String> jvmArgs, List<String> gradleArgs, PidInstrumentation pidInstrumentation, Consumer<BuildInvocationResult> resultsConsumer, boolean daemon) {
         super(jvmArgs, gradleArgs, pidInstrumentation, resultsConsumer);
-        this.gradleVersion = gradleVersion;
+        this.gradleBuildConfiguration = gradleBuildConfiguration;
         this.javaHome = javaHome;
         this.projectDir = projectDir;
         this.daemon = daemon;
@@ -23,7 +23,7 @@ public class CliInvoker extends BuildInvoker {
 
     @Override
     protected BuildInvoker copy(List<String> jvmArgs, List<String> gradleArgs, PidInstrumentation pidInstrumentation, Consumer<BuildInvocationResult> resultsConsumer) {
-        return new CliInvoker(gradleVersion, javaHome, projectDir, jvmArgs, gradleArgs, pidInstrumentation, resultsConsumer, daemon);
+        return new CliInvoker(gradleBuildConfiguration, javaHome, projectDir, jvmArgs, gradleArgs, pidInstrumentation, resultsConsumer, daemon);
     }
 
     @Override
@@ -34,7 +34,7 @@ public class CliInvoker extends BuildInvoker {
         String gradleOpts = jvmArgs.stream().collect(Collectors.joining(" "));
 
         List<String> commandLine = new ArrayList<>();
-        gradleVersion.addGradleCommand(commandLine);
+        gradleBuildConfiguration.addGradleCommand(commandLine);
         commandLine.addAll(gradleArgs);
         commandLine.addAll(tasks);
         commandLine.add("-Dorg.gradle.daemon=" + daemon);

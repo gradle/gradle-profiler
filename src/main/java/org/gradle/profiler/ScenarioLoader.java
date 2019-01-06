@@ -67,15 +67,15 @@ class ScenarioLoader {
     private static final List<String> BUCK_KEYS = Arrays.asList(TARGETS, TYPE);
     private static final List<String> MAVEN_KEYS = Collections.singletonList(TARGETS);
 
-    private final GradleVersionInspector gradleVersionInspector;
+    private final GradleBuildConfigurationReader gradleBuildConfigurationReader;
 
-    public ScenarioLoader(GradleVersionInspector gradleVersionInspector) {
-        this.gradleVersionInspector = gradleVersionInspector;
+    public ScenarioLoader(GradleBuildConfigurationReader gradleBuildConfigurationReader) {
+        this.gradleBuildConfigurationReader = gradleBuildConfigurationReader;
     }
 
     public List<ScenarioDefinition> loadScenarios(InvocationSettings settings) {
         if (settings.getScenarioFile() != null) {
-            return loadScenarios(settings.getScenarioFile(), settings, gradleVersionInspector);
+            return loadScenarios(settings.getScenarioFile(), settings, gradleBuildConfigurationReader);
         } else {
             return adhocScenarios(settings);
         }
@@ -83,21 +83,21 @@ class ScenarioLoader {
 
     private List<ScenarioDefinition> adhocScenarios(InvocationSettings settings) {
         List<ScenarioDefinition> scenarios = new ArrayList<>();
-        List<GradleVersion> versions = new ArrayList<>();
+        List<GradleBuildConfiguration> versions = new ArrayList<>();
         for (String v : settings.getVersions()) {
-            versions.add(gradleVersionInspector.resolve(v));
+            versions.add(gradleBuildConfigurationReader.readConfiguration(v));
         }
         if (versions.isEmpty()) {
-            versions.add(gradleVersionInspector.defaultVersion());
+            versions.add(gradleBuildConfigurationReader.readConfiguration());
         }
-        for (GradleVersion version : versions) {
-            File outputDir = versions.size() == 1 ? settings.getOutputDir() : new File(settings.getOutputDir(), version.getVersion());
+        for (GradleBuildConfiguration version : versions) {
+            File outputDir = versions.size() == 1 ? settings.getOutputDir() : new File(settings.getOutputDir(), version.getGradleVersion().getVersion());
             scenarios.add(new AdhocGradleScenarioDefinition(version, settings.getInvoker(), settings.getTargets(), settings.getSystemProperties(), new BuildMutatorFactory(Collections.emptyList()), settings.getWarmUpCount(), settings.getBuildCount(), outputDir));
         }
         return scenarios;
     }
 
-    static List<ScenarioDefinition> loadScenarios(File scenarioFile, InvocationSettings settings, GradleVersionInspector inspector) {
+    static List<ScenarioDefinition> loadScenarios(File scenarioFile, InvocationSettings settings, GradleBuildConfigurationReader inspector) {
         List<ScenarioDefinition> definitions = new ArrayList<>();
         Config config = ConfigFactory.parseFile(scenarioFile, ConfigParseOptions.defaults().setAllowMissing(false)).resolve();
         Set<String> roots = config.root().keySet();
@@ -182,10 +182,10 @@ class ScenarioLoader {
                 File outputDir = new File(settings.getOutputDir(), scenarioName + "-maven");
                 definitions.add(new MavenScenarioDefinition(scenarioName, targets, buildMutatorFactory, warmUpCount, settings.getBuildCount(), outputDir));
             } else if (!settings.isBazel() && !settings.isBuck() && !settings.isMaven()) {
-                List<GradleVersion> versions = ConfigUtil.strings(scenario, VERSIONS, settings.getVersions()).stream().map(inspector::resolve).collect(
+                List<GradleBuildConfiguration> versions = ConfigUtil.strings(scenario, VERSIONS, settings.getVersions()).stream().map(inspector::readConfiguration).collect(
                         Collectors.toList());
                 if (versions.isEmpty()) {
-                    versions.add(inspector.defaultVersion());
+                    versions.add(inspector.readConfiguration());
                 }
 
                 List<String> tasks = ConfigUtil.strings(scenario, TASKS, settings.getTargets());
@@ -194,8 +194,8 @@ class ScenarioLoader {
                 List<String> gradleArgs = ConfigUtil.strings(scenario, GRADLE_ARGS, Collections.emptyList());
                 Invoker invoker = ConfigUtil.invoker(scenario, RUN_USING, settings.getInvoker());
                 Map<String, String> systemProperties = ConfigUtil.map(scenario, SYSTEM_PROPERTIES, settings.getSystemProperties());
-                for (GradleVersion version : versions) {
-                    File outputDir = versions.size() == 1 ? new File(settings.getOutputDir(), scenarioName) : new File(settings.getOutputDir(), scenarioName + "/" + version.getVersion());
+                for (GradleBuildConfiguration version : versions) {
+                    File outputDir = versions.size() == 1 ? new File(settings.getOutputDir(), scenarioName) : new File(settings.getOutputDir(), scenarioName + "/" + version.getGradleVersion().getVersion());
                     definitions.add(new GradleScenarioDefinition(scenarioName, invoker, version, tasks, toolingModel, cleanupTasks, gradleArgs, systemProperties,
                             buildMutatorFactory, warmUpCount, settings.getBuildCount(), outputDir));
                 }

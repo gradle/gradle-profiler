@@ -9,7 +9,7 @@ public class DaemonControl {
         this.gradleUserHome = gradleUserHome;
     }
 
-    public void stop(GradleVersion version) {
+    public void stop(GradleBuildConfiguration version) {
         Logging.startOperation("Stopping daemons");
         version.runGradle("--stop", "--gradle-user-home", gradleUserHome.getAbsolutePath());
     }

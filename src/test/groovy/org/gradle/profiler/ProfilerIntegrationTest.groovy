@@ -3,6 +3,7 @@ package org.gradle.profiler
 import org.gradle.profiler.bs.BuildScanProfiler
 import org.gradle.profiler.jprofiler.JProfiler
 import org.gradle.profiler.yjp.YourKit
+import org.gradle.util.GradleVersion
 import org.junit.Rule
 import org.junit.rules.TemporaryFolder
 import spock.lang.Requires
@@ -371,7 +372,35 @@ println "<daemon: " + gradle.services.get(org.gradle.internal.environment.Gradle
         logFile.grep("<gradle-version: $minimalSupportedGradleVersion>").size() == 4
         logFile.grep("<daemon: true").size() == 4
         logFile.grep("<tasks: [assemble]>").size() == 3
-        assertBuildScanPublished(BuildScanProfiler.VERSION)
+        assertBuildScanPublished(BuildScanProfiler.defaultBuildScanVersion(GradleVersion.version(minimalSupportedGradleVersion)))
+    }
+
+    def "uses build scan version used by the build if present"() {
+        given:
+        buildFile.text = """
+plugins {
+    id 'com.gradle.build-scan' version '1.16'
+}
+apply plugin: BasePlugin
+
+buildScan { termsOfServiceUrl = 'https://gradle.com/terms-of-service'; termsOfServiceAgree = 'yes' }
+
+println "<gradle-version: " + gradle.gradleVersion + ">"
+println "<tasks: " + gradle.startParameter.taskNames + ">"
+println "<daemon: " + gradle.services.get(org.gradle.internal.environment.GradleBuildEnvironment).longLivingProcess + ">"
+"""
+
+        when:
+        new Main().
+                run("--project-dir", projectDir.absolutePath, "--output-dir", outputDir.absolutePath, "--gradle-version", minimalSupportedGradleVersion, "--profile", "buildscan",
+                        "assemble")
+
+        then:
+        // Probe version, 2 warm up, 1 build
+        logFile.grep("<gradle-version: $minimalSupportedGradleVersion>").size() == 4
+        logFile.grep("<daemon: true").size() == 4
+        logFile.grep("<tasks: [assemble]>").size() == 3
+        assertBuildScanPublished()
     }
 
     @Requires({ new File(JProfiler.getDefaultHomeDir()).exists() })
@@ -449,9 +478,12 @@ println "<daemon: " + gradle.services.get(org.gradle.internal.environment.Gradle
     }
 
     private void assertBuildScanPublished(String buildScanPluginVersion) {
-        assert logFile.grep("Using build scan profiler version " + buildScanPluginVersion).size() == 1
-        // Must be 1, may be 2 if user applies build scan in home dir
-        assert logFile.grep("Publishing build").size() >= 1 : ("LOG FILE:" + logFile.text)
+        if (buildScanPluginVersion) {
+            assert logFile.grep("Using build scan plugin " + buildScanPluginVersion).size() == 1
+        } else {
+            assert logFile.grep("Using build scan plugin specified in the build").size() == 1
+        }
+        assert logFile.grep("Publishing build").size() == 1 : ("LOG FILE:" + logFile.text)
     }
 
     def "profiles build using JFR, Build Scans, specified Gradle version and tasks"() {
