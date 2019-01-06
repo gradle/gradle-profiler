@@ -31,7 +31,7 @@ public class CliInvoker extends BuildInvoker {
         if (toolingModel != null) {
             throw new UnsupportedOperationException("Cannot fetch a tooling model using the Gradle CLI.");
         }
-        String gradleOpts = jvmArgs.stream().collect(Collectors.joining(" "));
+        String gradleOpts = jvmArgs.stream().map (arg -> '"' + arg + '"').collect(Collectors.joining(" "));
 
         List<String> commandLine = new ArrayList<>();
         gradleBuildConfiguration.addGradleCommand(commandLine);

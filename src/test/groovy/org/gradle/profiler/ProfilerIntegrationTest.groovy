@@ -123,8 +123,8 @@ assemble.doFirst {
 
         when:
         new Main().
-                run("--project-dir", projectDir.absolutePath, "--output-dir", outputDir.absolutePath, "--gradle-version", minimalSupportedGradleVersion, "--profile", "jfr",
-                        "assemble")
+            run("--project-dir", projectDir.absolutePath, "--output-dir", outputDir.absolutePath, "--gradle-version", minimalSupportedGradleVersion, "--profile", "jfr",
+                "assemble")
 
         then:
         def e = thrown(Main.ScenarioFailedException)
@@ -149,8 +149,8 @@ println "<daemon: " + gradle.services.get(org.gradle.internal.environment.Gradle
 
         when:
         new Main().
-                run("--project-dir", projectDir.absolutePath, "--output-dir", outputDir.absolutePath, "--gradle-version", versionUnderTest, "--profile", "jfr",
-                        "assemble")
+            run("--project-dir", projectDir.absolutePath, "--output-dir", outputDir.absolutePath, "--gradle-version", versionUnderTest, "--profile", "jfr",
+                "assemble")
 
         then:
         // Probe version, 2 warm up, 1 build
@@ -182,7 +182,7 @@ println "<daemon: " + gradle.services.get(org.gradle.internal.environment.Gradle
 
         when:
         new Main().
-                run("--project-dir", projectDir.absolutePath, "--output-dir", outputDir.absolutePath, "--gradle-version", minimalSupportedGradleVersion, "--gradle-version", "3.0", "--profile", "jfr", "assemble")
+            run("--project-dir", projectDir.absolutePath, "--output-dir", outputDir.absolutePath, "--gradle-version", minimalSupportedGradleVersion, "--gradle-version", "3.0", "--profile", "jfr", "assemble")
 
         then:
         // Probe version, 2 warm up, 1 build
@@ -205,8 +205,8 @@ println "<tasks: " + gradle.startParameter.taskNames + ">"
 
         when:
         new Main().
-                run("--project-dir", projectDir.absolutePath, "--output-dir", outputDir.absolutePath, "--gradle-version", minimalSupportedGradleVersion, "--profile", "jfr",
-                        "--warmups", "3", "--iterations", "2", "assemble")
+            run("--project-dir", projectDir.absolutePath, "--output-dir", outputDir.absolutePath, "--gradle-version", minimalSupportedGradleVersion, "--profile", "jfr",
+                "--warmups", "3", "--iterations", "2", "assemble")
 
         then:
         // Probe version, 3 warm up, 2 builds
@@ -235,8 +235,8 @@ println "<daemon: " + gradle.services.get(org.gradle.internal.environment.Gradle
 
         when:
         new Main().
-                run("--project-dir", projectDir.absolutePath, "--output-dir", outputDir.absolutePath, "--gradle-version", minimalSupportedGradleVersion, "--profile", "hp",
-                        "assemble")
+            run("--project-dir", projectDir.absolutePath, "--output-dir", outputDir.absolutePath, "--gradle-version", minimalSupportedGradleVersion, "--profile", "hp",
+                "assemble")
 
         then:
         // Probe version, 2 warm up, 1 build
@@ -245,15 +245,15 @@ println "<daemon: " + gradle.services.get(org.gradle.internal.environment.Gradle
         logFile.grep("<tasks: [assemble]>").size() == 3
 
         def profileFile = new File(outputDir, "${minimalSupportedGradleVersion}.hpl")
-        profileFile.exists() && profileFile.size()>0
+        profileFile.exists() && profileFile.size() > 0
         def profileTxtFile = new File(outputDir, "$minimalSupportedGradleVersion-hp.txt")
-        profileTxtFile.exists() && profileTxtFile.size()>0
+        profileTxtFile.exists() && profileTxtFile.size() > 0
         def sanitizedProfileTxtFile = new File(outputDir, "$minimalSupportedGradleVersion-hp-sanitized.txt")
-        sanitizedProfileTxtFile.exists()  && sanitizedProfileTxtFile.size()>0
+        sanitizedProfileTxtFile.exists() && sanitizedProfileTxtFile.size() > 0
 
         if (System.getenv('FG_HOME_DIR')) {
             def fgFile = new File(outputDir, "${minimalSupportedGradleVersion}-hp-flames.svg")
-            assert fgFile.exists() && fgFile.size()>0
+            assert fgFile.exists() && fgFile.size() > 0
         }
     }
 
@@ -266,8 +266,8 @@ apply plugin: BasePlugin
 
         when:
         new Main().
-                run("--project-dir", projectDir.absolutePath, "--output-dir", outputDir.absolutePath, "--gradle-version", minimalSupportedGradleVersion, "--profile", "yourkit",
-                        "assemble")
+            run("--project-dir", projectDir.absolutePath, "--output-dir", outputDir.absolutePath, "--gradle-version", minimalSupportedGradleVersion, "--profile", "yourkit",
+                "assemble")
 
         then:
         outputDir.listFiles().find { it.name.matches("${minimalSupportedGradleVersion}-.+\\.snapshot") }
@@ -282,8 +282,8 @@ apply plugin: BasePlugin
 
         when:
         new Main().
-                run("--project-dir", projectDir.absolutePath, "--output-dir", outputDir.absolutePath, "--gradle-version", minimalSupportedGradleVersion, "--profile", "yourkit",
-                        "--no-daemon", "assemble")
+            run("--project-dir", projectDir.absolutePath, "--output-dir", outputDir.absolutePath, "--gradle-version", minimalSupportedGradleVersion, "--profile", "yourkit",
+                "--no-daemon", "assemble")
 
         then:
         outputDir.listFiles().find { it.name.matches("${minimalSupportedGradleVersion}-.+\\.snapshot") }
@@ -298,8 +298,8 @@ apply plugin: BasePlugin
 
         when:
         new Main().
-                run("--project-dir", projectDir.absolutePath, "--output-dir", outputDir.absolutePath, "--gradle-version", minimalSupportedGradleVersion, "--profile", "yourkit",
-                        "--yourkit-sampling", "assemble")
+            run("--project-dir", projectDir.absolutePath, "--output-dir", outputDir.absolutePath, "--gradle-version", minimalSupportedGradleVersion, "--profile", "yourkit",
+                "--yourkit-sampling", "assemble")
 
         then:
         outputDir.listFiles().find { it.name.matches("${minimalSupportedGradleVersion}-.+\\.snapshot") }
@@ -314,8 +314,8 @@ apply plugin: BasePlugin
 
         when:
         new Main().
-                run("--project-dir", projectDir.absolutePath, "--output-dir", outputDir.absolutePath, "--gradle-version", minimalSupportedGradleVersion, "--profile", "yourkit",
-                        "--yourkit-sampling", "--no-daemon", "assemble")
+            run("--project-dir", projectDir.absolutePath, "--output-dir", outputDir.absolutePath, "--gradle-version", minimalSupportedGradleVersion, "--profile", "yourkit",
+                "--yourkit-sampling", "--no-daemon", "assemble")
 
         then:
         outputDir.listFiles().find { it.name.matches("${minimalSupportedGradleVersion}-.+\\.snapshot") }
@@ -330,8 +330,8 @@ apply plugin: BasePlugin
 
         when:
         new Main().
-                run("--project-dir", projectDir.absolutePath, "--output-dir", outputDir.absolutePath, "--gradle-version", minimalSupportedGradleVersion, "--profile", "yourkit",
-                        "--yourkit-memory", "assemble")
+            run("--project-dir", projectDir.absolutePath, "--output-dir", outputDir.absolutePath, "--gradle-version", minimalSupportedGradleVersion, "--profile", "yourkit",
+                "--yourkit-memory", "assemble")
 
         then:
         outputDir.listFiles().find { it.name.matches("${minimalSupportedGradleVersion}-.+\\.snapshot") }
@@ -346,8 +346,8 @@ apply plugin: BasePlugin
 
         when:
         new Main().
-                run("--project-dir", projectDir.absolutePath, "--output-dir", outputDir.absolutePath, "--gradle-version", minimalSupportedGradleVersion, "--profile", "yourkit",
-                        "--yourkit-memory", "--no-daemon", "assemble")
+            run("--project-dir", projectDir.absolutePath, "--output-dir", outputDir.absolutePath, "--gradle-version", minimalSupportedGradleVersion, "--profile", "yourkit",
+                "--yourkit-memory", "--no-daemon", "assemble")
 
         then:
         outputDir.listFiles().find { it.name.matches("${minimalSupportedGradleVersion}-.+\\.snapshot") }
@@ -364,8 +364,8 @@ println "<daemon: " + gradle.services.get(org.gradle.internal.environment.Gradle
 
         when:
         new Main().
-                run("--project-dir", projectDir.absolutePath, "--output-dir", outputDir.absolutePath, "--gradle-version", minimalSupportedGradleVersion, "--profile", "buildscan",
-                        "assemble")
+            run("--project-dir", projectDir.absolutePath, "--output-dir", outputDir.absolutePath, "--gradle-version", minimalSupportedGradleVersion, "--profile", "buildscan",
+                "assemble")
 
         then:
         // Probe version, 2 warm up, 1 build
@@ -392,8 +392,8 @@ println "<daemon: " + gradle.services.get(org.gradle.internal.environment.Gradle
 
         when:
         new Main().
-                run("--project-dir", projectDir.absolutePath, "--output-dir", outputDir.absolutePath, "--gradle-version", minimalSupportedGradleVersion, "--profile", "buildscan",
-                        "assemble")
+            run("--project-dir", projectDir.absolutePath, "--output-dir", outputDir.absolutePath, "--gradle-version", minimalSupportedGradleVersion, "--profile", "buildscan",
+                "assemble")
 
         then:
         // Probe version, 2 warm up, 1 build
@@ -412,8 +412,8 @@ apply plugin: BasePlugin
 
         when:
         new Main().
-                run("--project-dir", projectDir.absolutePath, "--output-dir", outputDir.absolutePath, "--gradle-version", minimalSupportedGradleVersion, "--profile", "jprofiler",
-                        "assemble")
+            run("--project-dir", projectDir.absolutePath, "--output-dir", outputDir.absolutePath, "--gradle-version", minimalSupportedGradleVersion, "--profile", "jprofiler",
+                "assemble")
 
         then:
         outputDir.listFiles().find { it.name.matches("${minimalSupportedGradleVersion}.jps") }
@@ -428,9 +428,9 @@ apply plugin: BasePlugin
 
         when:
         new Main().
-                run("--project-dir", projectDir.absolutePath, "--output-dir", outputDir.absolutePath, "--gradle-version", minimalSupportedGradleVersion, "--profile", "jprofiler",
-                        "--jprofiler-monitors", "--jprofiler-probes", "builtin.JdbcProbe:+special,builtin.FileProbe,builtin.ClassLoaderProbe:+events",
-                        "--no-daemon", "assemble")
+            run("--project-dir", projectDir.absolutePath, "--output-dir", outputDir.absolutePath, "--gradle-version", minimalSupportedGradleVersion, "--profile", "jprofiler",
+                "--jprofiler-monitors", "--jprofiler-probes", "builtin.JdbcProbe:+special,builtin.FileProbe,builtin.ClassLoaderProbe:+events",
+                "--no-daemon", "assemble")
 
         then:
         outputDir.listFiles().find { it.name.matches("${minimalSupportedGradleVersion}.jps") }
@@ -445,10 +445,10 @@ apply plugin: BasePlugin
 
         when:
         new Main().
-                run("--project-dir", projectDir.absolutePath, "--output-dir", outputDir.absolutePath, "--gradle-version", minimalSupportedGradleVersion, "--profile", "jprofiler",
-                        "--jprofiler-config", "instrumentation", "--jprofiler-alloc", "--jprofiler-monitors", "--jprofiler-heapdump",
-                        "--jprofiler-probes", "builtin.FileProbe,builtin.ClassLoaderProbe:+events",
-                        "assemble")
+            run("--project-dir", projectDir.absolutePath, "--output-dir", outputDir.absolutePath, "--gradle-version", minimalSupportedGradleVersion, "--profile", "jprofiler",
+                "--jprofiler-config", "instrumentation", "--jprofiler-alloc", "--jprofiler-monitors", "--jprofiler-heapdump",
+                "--jprofiler-probes", "builtin.FileProbe,builtin.ClassLoaderProbe:+events",
+                "assemble")
 
         then:
         outputDir.listFiles().find { it.name.matches("${minimalSupportedGradleVersion}.jps") }
@@ -465,9 +465,9 @@ println "<daemon: " + gradle.services.get(org.gradle.internal.environment.Gradle
 
         when:
         new Main().
-                run("--project-dir", projectDir.absolutePath, "--output-dir", outputDir.absolutePath, "--gradle-version", minimalSupportedGradleVersion,
-                        "--profile", "buildscan", "--buildscan-version", "1.2",
-                        "assemble")
+            run("--project-dir", projectDir.absolutePath, "--output-dir", outputDir.absolutePath, "--gradle-version", minimalSupportedGradleVersion,
+                "--profile", "buildscan", "--buildscan-version", "1.2",
+                "assemble")
 
         then:
         // Probe version, 2 warm up, 1 build
@@ -483,7 +483,7 @@ println "<daemon: " + gradle.services.get(org.gradle.internal.environment.Gradle
         } else {
             assert logFile.grep("Using build scan plugin specified in the build").size() == 1
         }
-        assert logFile.grep("Publishing build").size() == 1 : ("LOG FILE:" + logFile.text)
+        assert logFile.grep("Publishing build").size() == 1: ("LOG FILE:" + logFile.text)
     }
 
     def "profiles build using JFR, Build Scans, specified Gradle version and tasks"() {
@@ -497,10 +497,10 @@ println "<daemon: " + gradle.services.get(org.gradle.internal.environment.Gradle
 
         when:
         new Main().
-                run("--project-dir", projectDir.absolutePath, "--output-dir", outputDir.absolutePath, "--gradle-version", minimalSupportedGradleVersion,
-                        "--profile", "buildscan",  "--buildscan-version", "1.2",
-                        "--profile", "jfr",
-                        "assemble")
+            run("--project-dir", projectDir.absolutePath, "--output-dir", outputDir.absolutePath, "--gradle-version", minimalSupportedGradleVersion,
+                "--profile", "buildscan", "--buildscan-version", "1.2",
+                "--profile", "jfr",
+                "assemble")
 
         then:
         // Probe version, 2 warm up, 1 build
@@ -522,7 +522,7 @@ apply plugin: BasePlugin
 
         when:
         new Main().
-                run("--project-dir", projectDir.absolutePath, "--output-dir", outputDir.absolutePath, "--gradle-version", versionUnderTest, "--profile", "chrome-trace", "assemble")
+            run("--project-dir", projectDir.absolutePath, "--output-dir", outputDir.absolutePath, "--gradle-version", versionUnderTest, "--profile", "chrome-trace", "assemble")
 
         then:
         new File(outputDir, "${versionUnderTest}-trace.html").isFile()
@@ -540,8 +540,8 @@ apply plugin: BasePlugin
 
         when:
         new Main().
-                run("--project-dir", projectDir.absolutePath, "--output-dir", outputDir.absolutePath, "--gradle-version", versionUnderTest, "--profile", "chrome-trace",
-                        "--no-daemon", "assemble")
+            run("--project-dir", projectDir.absolutePath, "--output-dir", outputDir.absolutePath, "--gradle-version", versionUnderTest, "--profile", "chrome-trace",
+                "--no-daemon", "assemble")
 
         then:
         new File(outputDir, "${versionUnderTest}-trace.html").isFile()
@@ -561,7 +561,7 @@ println "<daemon: " + gradle.services.get(org.gradle.internal.environment.Gradle
 
         when:
         new Main().run("--project-dir", projectDir.absolutePath, "--output-dir", outputDir.absolutePath, "--gradle-version", minimalSupportedGradleVersion,
-                "--benchmark", "assemble")
+            "--benchmark", "assemble")
 
         then:
         // Probe version, initial clean build, 6 warm up, 10 builds
@@ -599,7 +599,7 @@ println "<daemon: " + gradle.services.get(org.gradle.internal.environment.Gradle
 
         when:
         new Main().run("--project-dir", projectDir.absolutePath, "--output-dir", outputDir.absolutePath, "--gradle-version", minimalSupportedGradleVersion,
-                "--benchmark", "--cli", "assemble")
+            "--benchmark", "--cli", "assemble")
 
         then:
         // Probe version, initial clean build, 6 warm up, 10 builds
@@ -637,7 +637,7 @@ println "<daemon: " + gradle.services.get(org.gradle.internal.environment.Gradle
 
         when:
         new Main().run("--project-dir", projectDir.absolutePath, "--output-dir", outputDir.absolutePath, "--gradle-version", minimalSupportedGradleVersion,
-                "--benchmark", "--no-daemon", "assemble")
+            "--benchmark", "--no-daemon", "assemble")
 
         then:
         // Probe version, 1 warm up, 10 builds
@@ -681,7 +681,7 @@ println "<daemon: " + gradle.services.get(org.gradle.internal.environment.Gradle
 
         when:
         new Main().run("--project-dir", projectDir.absolutePath, "--output-dir", outputDir.absolutePath, "--scenario-file", scenarioFile.absolutePath,
-                "--benchmark")
+            "--benchmark")
 
         then:
         // Probe version, 6 warm up, 10 builds
@@ -723,7 +723,7 @@ println "<tasks: " + gradle.startParameter.taskNames + ">"
 
         when:
         new Main().run("--project-dir", projectDir.absolutePath, "--output-dir", outputDir.absolutePath, "--scenario-file", scenarioFile.absolutePath,
-                "--profile", "jfr", "--gradle-version", minimalSupportedGradleVersion)
+            "--profile", "jfr", "--gradle-version", minimalSupportedGradleVersion)
 
         then:
         logFile.grep("<gradle-version: $minimalSupportedGradleVersion>").size() == 7
@@ -760,7 +760,7 @@ plugins.withId("idea") {
 
         when:
         new Main().run("--project-dir", projectDir.absolutePath, "--output-dir", outputDir.absolutePath, "--scenario-file", scenarioFile.absolutePath,
-                "--benchmark")
+            "--benchmark")
 
         then:
         // Probe version, 6 warm up, 10 builds
@@ -800,7 +800,7 @@ println "<tasks: " + gradle.startParameter.taskNames + ">"
 
         when:
         new Main().run("--project-dir", projectDir.absolutePath, "--output-dir", outputDir.absolutePath, "--scenario-file", scenarioFile.absolutePath,
-                "--profile", "jfr", "--gradle-version", minimalSupportedGradleVersion, "--gradle-version", "3.0")
+            "--profile", "jfr", "--gradle-version", minimalSupportedGradleVersion, "--gradle-version", "3.0")
 
         then:
         logFile.grep("<gradle-version: $minimalSupportedGradleVersion>").size() == 7
@@ -848,7 +848,7 @@ println "<tasks: " + gradle.startParameter.taskNames + ">"
 
         when:
         new Main().run("--project-dir", projectDir.absolutePath, "--output-dir", outputDir.absolutePath, "--scenario-file", scenarioFile.absolutePath,
-                "--profile", "jfr")
+            "--profile", "jfr")
 
         then:
         logFile.grep("<gradle-version: $minimalSupportedGradleVersion>").size() == 7
@@ -885,7 +885,7 @@ println "<daemon: " + gradle.services.get(org.gradle.internal.environment.Gradle
 
         when:
         new Main().run("--project-dir", projectDir.absolutePath, "--output-dir", outputDir.absolutePath, "--scenario-file", scenarioFile.absolutePath,
-                "--benchmark")
+            "--benchmark")
 
         then:
         // Probe version, 6 warm up, 10 builds
@@ -925,7 +925,7 @@ apply plugin: BasePlugin
 
         when:
         new Main().run("--project-dir", projectDir.absolutePath, "--output-dir", outputDir.absolutePath, "--scenario-file", scenarioFile.absolutePath,
-                "--benchmark", "assemble")
+            "--benchmark", "assemble")
 
         then:
         logFile.contains("* Running scenario assemble using Gradle 3.0 (scenario 1/2)")
@@ -997,7 +997,7 @@ assemble.doFirst {
 
         when:
         new Main().run("--project-dir", projectDir.absolutePath, "--output-dir", outputDir.absolutePath, "--gradle-version", minimalSupportedGradleVersion,
-                "--gradle-version", "3.0", "--benchmark", "assemble")
+            "--gradle-version", "3.0", "--benchmark", "assemble")
 
         then:
         def e = thrown(Main.ScenarioFailedException)
@@ -1051,7 +1051,7 @@ assemble.doFirst {
 
         when:
         new Main().run("--project-dir", projectDir.absolutePath, "--output-dir", outputDir.absolutePath, "--gradle-version", minimalSupportedGradleVersion,
-                "--gradle-version", "3.0", "--benchmark", "assemble")
+            "--gradle-version", "3.0", "--benchmark", "assemble")
 
         then:
         def e = thrown(Main.ScenarioFailedException)
@@ -1091,12 +1091,44 @@ println "<sys-prop: " + System.getProperty("org.gradle.test") + ">"
 
         when:
         new Main().run("--project-dir", projectDir.absolutePath, "--output-dir", outputDir.absolutePath, "--gradle-version", minimalSupportedGradleVersion,
-                "--benchmark", "-Dorg.gradle.test=value", "assemble")
+            "--benchmark", "-Dorg.gradle.test=value", "assemble")
 
         then:
         // Probe version, 6 warm up, 10 builds
         logFile.grep("<sys-prop: null>").size() == 1
         logFile.grep("<sys-prop: value>").size() == 16
+    }
+
+    def "can define system property in gradle properties"() {
+        given:
+        file("gradle.properties").text = "org.gradle.jvmargs=-Dorg.gradle.test=value"
+        buildFile.text = """
+apply plugin: BasePlugin
+println "<sys-prop: " + System.getProperty("org.gradle.test") + ">"
+"""
+
+        when:
+        new Main().run("--project-dir", projectDir.absolutePath, "--output-dir", outputDir.absolutePath, "--gradle-version", GradleVersion.current().version, "--benchmark", "assemble")
+
+        then:
+        // Probe version, 6 warm up, 10 builds
+        logFile.grep("<sys-prop: value>").size() == 17
+    }
+
+    def "can define gradle property in gradle properties"() {
+        given:
+        file("gradle.properties").text = "org.gradle.test=value"
+        buildFile.text = """
+apply plugin: BasePlugin
+println "<gradle-prop: " + getProperty("org.gradle.test") + ">"
+"""
+
+        when:
+        new Main().run("--project-dir", projectDir.absolutePath, "--output-dir", outputDir.absolutePath, "--gradle-version", GradleVersion.current().version, "--benchmark", "assemble")
+
+        then:
+        // Probe version, 6 warm up, 10 builds
+        logFile.grep("<gradle-prop: value>").size() == 17
     }
 
     def "can define system property when benchmarking using no-daemon"() {
@@ -1108,7 +1140,7 @@ println "<sys-prop: " + System.getProperty("org.gradle.test") + ">"
 
         when:
         new Main().run("--project-dir", projectDir.absolutePath, "--output-dir", outputDir.absolutePath, "--gradle-version", minimalSupportedGradleVersion,
-                "--benchmark", "-Dorg.gradle.test=value", "assemble")
+            "--benchmark", "-Dorg.gradle.test=value", "assemble")
 
         then:
         // Probe version, 6 warm up, 10 builds
@@ -1142,7 +1174,7 @@ println "<sys-prop: " + System.getProperty("org.gradle.test") + ">"
 
         when:
         new Main().run("--project-dir", projectDir.absolutePath, "--output-dir", outputDir.absolutePath, "--scenario-file", scenarioFile.absolutePath,
-                "--benchmark")
+            "--benchmark")
 
         then:
         // Probe version, 6 warm up, 10 builds
@@ -1169,7 +1201,7 @@ println "Running \$gradle.gradleVersion"
 
         when:
         new Main().run("--project-dir", projectDir.absolutePath, "--output-dir", outputDir.absolutePath, "--scenario-file", scenarioFile.absolutePath,
-                "--benchmark")
+            "--benchmark")
 
         then:
         logFile.contains("* Running scenario a using Gradle $minimalSupportedGradleVersion (scenario 1/1)")
@@ -1198,7 +1230,7 @@ println "<sys-prop: " + System.getProperty("org.gradle.test") + ">"
 
         when:
         new Main().run("--project-dir", projectDir.absolutePath, "--output-dir", outputDir.absolutePath, "--scenario-file", scenarioFile.absolutePath,
-                "--benchmark")
+            "--benchmark")
 
         then:
         // Probe version, 6 warm up, 10 builds
@@ -1267,7 +1299,7 @@ classes {
 
         when:
         new Main().run("--project-dir", projectDir.absolutePath, "--output-dir", outputDir.absolutePath, "--gradle-version", minimalSupportedGradleVersion,
-                "--benchmark", "--scenario-file", scenarioFile.absolutePath)
+            "--benchmark", "--scenario-file", scenarioFile.absolutePath)
 
         then:
         // Probe version, 6 warm up, 10 builds
@@ -1302,7 +1334,7 @@ classes {
 
         when:
         new Main().run("--project-dir", projectDir.absolutePath, "--output-dir", outputDir.absolutePath, "--gradle-version", minimalSupportedGradleVersion,
-                "--benchmark", "--scenario-file", scenarioFile.absolutePath)
+            "--benchmark", "--scenario-file", scenarioFile.absolutePath)
 
         then:
         // Probe version, 6 warm up, 10 builds
@@ -1337,7 +1369,7 @@ classes {
 
         when:
         new Main().run("--project-dir", projectDir.absolutePath, "--output-dir", outputDir.absolutePath, "--gradle-version", minimalSupportedGradleVersion,
-                "--benchmark", "--scenario-file", scenarioFile.absolutePath)
+            "--benchmark", "--scenario-file", scenarioFile.absolutePath)
 
         then:
         // Probe version, 6 warm up, 10 builds
@@ -1374,7 +1406,7 @@ classes {
 
         when:
         new Main().run("--project-dir", projectDir.absolutePath, "--output-dir", outputDir.absolutePath, "--gradle-version", minimalSupportedGradleVersion,
-                "--benchmark", "--scenario-file", scenarioFile.absolutePath)
+            "--benchmark", "--scenario-file", scenarioFile.absolutePath)
 
         then:
         thrown Exception
@@ -1390,7 +1422,7 @@ println "User home: \$gradle.gradleUserHomeDir"
 
         when:
         new Main().run("--project-dir", projectDir.absolutePath, "--output-dir", outputDir.absolutePath, "--gradle-version", minimalSupportedGradleVersion,
-                "--benchmark", "help")
+            "--benchmark", "help")
 
         then:
         logFile.grep("User home: " + new File("gradle-user-home").absolutePath)
@@ -1405,13 +1437,13 @@ println "User home: \$gradle.gradleUserHomeDir"
 
         when:
         new Main().run("--project-dir", projectDir.absolutePath, "--output-dir", outputDir.absolutePath, "--gradle-version", minimalSupportedGradleVersion,
-                "--benchmark", "--gradle-user-home", "foobar", "help")
+            "--benchmark", "--gradle-user-home", "foobar", "help")
 
         then:
         logFile.grep("User home: " + new File("foobar").absolutePath)
     }
 
-    @Requires({!OperatingSystem.windows})
+    @Requires({ !OperatingSystem.windows })
     def "can benchmark scenario using buck wrapper script"() {
         given:
         writeBuckw()
@@ -1532,7 +1564,7 @@ buildTarget {
         logFile.grep("* Running scenario buildTarget using Gradle $minimalSupportedGradleVersion (scenario 1/1)")
     }
 
-    @Requires({!OperatingSystem.windows && System.getenv("BAZEL_HOME")})
+    @Requires({ !OperatingSystem.windows && System.getenv("BAZEL_HOME") })
     def "can benchmark scenario using bazel"() {
         given:
         createSimpleBazelWorkspace()
@@ -1630,7 +1662,7 @@ buildTarget {
         logFile.grep("* Running scenario buildTarget using Gradle $minimalSupportedGradleVersion (scenario 1/1)")
     }
 
-    @Requires({System.getenv("MAVEN_HOME")})
+    @Requires({ System.getenv("MAVEN_HOME") })
     def "can benchmark scenario using Maven"() {
         given:
         def scenarios = file("performance.scenario")
@@ -1842,7 +1874,7 @@ buildTarget {
         new Main().run("--project-dir", projectDir.absolutePath, "--output-dir", outputDir.absolutePath, "--benchmark", "--scenario-file", scenarios.absolutePath, "--gradle-version", minimalSupportedGradleVersion, "buildTarget", "--warmups", "1", "--iterations", "1")
 
         then:
-        output.count ("> Build cache size:") == 5
+        output.count("> Build cache size:") == 5
     }
 
     def "does Git revert when asked"() {
@@ -1937,7 +1969,7 @@ buildTarget {
 
         when:
         new Main().
-                run("--project-dir", projectDir.absolutePath, "--output-dir", outputDir.absolutePath, "--gradle-version", minimalSupportedGradleVersion, "--benchmark", "--scenario-file", scenarios.absolutePath, "--warmups", "2", "--iterations", "2")
+            run("--project-dir", projectDir.absolutePath, "--output-dir", outputDir.absolutePath, "--gradle-version", minimalSupportedGradleVersion, "--benchmark", "--scenario-file", scenarios.absolutePath, "--warmups", "2", "--iterations", "2")
 
         then:
         logFile.grep("> org.gradle.profiler.scenario = buildTarget").size() == 8

@@ -6,15 +6,19 @@ import org.gradle.tooling.GradleConnector;
 import org.gradle.tooling.ProjectConnection;
 import org.gradle.tooling.model.build.BuildEnvironment;
 import org.gradle.tooling.model.build.JavaEnvironment;
+import org.gradle.util.GUtil;
 import org.gradle.util.GradleVersion;
 
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.PrintWriter;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 public class DefaultGradleBuildConfigurationReader implements GradleBuildConfigurationReader {
     private final File projectDir;
@@ -38,9 +42,15 @@ public class DefaultGradleBuildConfigurationReader implements GradleBuildConfigu
 
     private void generateInitScript() throws IOException {
         try (PrintWriter writer = new PrintWriter(new FileWriter(initScript))) {
-            writer.println("def detailsFile = new File(new URI('" + buildDetails.toURI() + "'))");
-            writer.println("detailsFile.text = gradle.gradleHomeDir");
-            writer.println("rootProject { plugins.withId('com.gradle.build-scan') { detailsFile << '\\nscan' } }");
+            writer.println(
+                "rootProject {\n" +
+                    "  afterEvaluate {\n" +
+                    "    def detailsFile = new File(new URI('" + buildDetails.toURI() + "'))\n" +
+                    "    detailsFile.text = \"${gradle.gradleHomeDir}\\n\"\n" +
+                    "    detailsFile << plugins.hasPlugin('com.gradle.build-scan') << '\\n'\n" +
+                    "  }\n" +
+                    "}\n"
+            );
         }
     }
 
@@ -105,17 +115,38 @@ public class DefaultGradleBuildConfigurationReader implements GradleBuildConfigu
             });
             List<String> buildDetails = readBuildDetails();
             JavaEnvironment javaEnvironment = buildEnvironment.getJava();
+            List<String> allJvmArgs = new ArrayList<>(javaEnvironment.getJvmArguments());
+            allJvmArgs.addAll(readSystemPropertiesFromGradleProperties());
             version = new GradleBuildConfiguration(
                 GradleVersion.version(buildEnvironment.getGradle().getGradleVersion()),
                 new File(buildDetails.get(0)),
                 javaEnvironment.getJavaHome(),
-                javaEnvironment.getJvmArguments(),
-                buildDetails.contains("scan")
+                allJvmArgs,
+                Boolean.valueOf(buildDetails.get(1))
             );
         } finally {
             connection.close();
         }
         daemonControl.stop(version);
         return version;
+    }
+
+    private List<String> readSystemPropertiesFromGradleProperties() {
+        String jvmArgs = getJvmArgsProperty(gradleUserHome);
+        if (jvmArgs == null) {
+            jvmArgs = getJvmArgsProperty(projectDir);
+        }
+        if (jvmArgs == null) {
+            return Collections.emptyList();
+        }
+        return ArgumentsSplitter.split(jvmArgs).stream().filter(arg -> arg.startsWith("-D")).collect(Collectors.toList());
+    }
+
+    private String getJvmArgsProperty(File scope) {
+        File propertyFile = new File(scope, "gradle.properties");
+        if (!propertyFile.exists()) {
+            return null;
+        }
+        return GUtil.loadProperties(propertyFile).getProperty("org.gradle.jvmargs");
     }
 }
