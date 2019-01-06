@@ -188,7 +188,7 @@ Here is an example:
     }
     ideaModel {
         # Fetch the IDEA tooling model
-        model = idea
+        model = "org.gradle.tooling.model.idea.IdeaProject"
     }
 
 Values are optional and default to the values provided on the command-line or defined in the build.

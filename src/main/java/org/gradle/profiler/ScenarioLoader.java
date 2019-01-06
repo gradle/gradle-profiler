@@ -18,7 +18,6 @@ import org.gradle.profiler.mutations.FileChangeMutatorConfigurator;
 import org.gradle.profiler.mutations.GitCheckoutMutator;
 import org.gradle.profiler.mutations.GitRevertMutator;
 import org.gradle.profiler.mutations.ShowBuildCacheSizeMutator;
-import org.gradle.tooling.model.idea.IdeaProject;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -183,7 +182,7 @@ class ScenarioLoader {
                 definitions.add(new MavenScenarioDefinition(scenarioName, targets, buildMutatorFactory, warmUpCount, settings.getBuildCount(), outputDir));
             } else if (!settings.isBazel() && !settings.isBuck() && !settings.isMaven()) {
                 List<GradleBuildConfiguration> versions = ConfigUtil.strings(scenario, VERSIONS, settings.getVersions()).stream().map(inspector::readConfiguration).collect(
-                        Collectors.toList());
+                    Collectors.toList());
                 if (versions.isEmpty()) {
                     versions.add(inspector.readConfiguration());
                 }
@@ -197,7 +196,7 @@ class ScenarioLoader {
                 for (GradleBuildConfiguration version : versions) {
                     File outputDir = versions.size() == 1 ? new File(settings.getOutputDir(), scenarioName) : new File(settings.getOutputDir(), scenarioName + "/" + version.getGradleVersion().getVersion());
                     definitions.add(new GradleScenarioDefinition(scenarioName, invoker, version, tasks, toolingModel, cleanupTasks, gradleArgs, systemProperties,
-                            buildMutatorFactory, warmUpCount, settings.getBuildCount(), outputDir));
+                        buildMutatorFactory, warmUpCount, settings.getBuildCount(), outputDir));
                 }
             }
         }
@@ -207,22 +206,23 @@ class ScenarioLoader {
 
     private static Class<?> getToolingModelClass(Config scenario, File scenarioFile) {
         String toolingModelName = ConfigUtil.string(scenario, MODEL, null);
-        Class<?> toolingModel = null;
-        if ("idea".equalsIgnoreCase(toolingModelName)) {
-            toolingModel = IdeaProject.class;
-        } else if (toolingModelName != null) {
+        if (toolingModelName == null) {
+            return null;
+        }
+        try {
+            return Class.forName(toolingModelName);
+        } catch (ClassNotFoundException e) {
             throw new IllegalArgumentException("Unrecognized tooling model '" + toolingModelName + "' defined in scenario file " + scenarioFile);
         }
-        return toolingModel;
     }
 
     private static void maybeAddMutator(Config scenario, String scenarioName, File projectDir, String key, Class<? extends AbstractFileChangeMutator> mutatorClass, List<Supplier<BuildMutator>> mutators) {
-    	maybeAddMutator(scenario, scenarioName, projectDir, key, new FileChangeMutatorConfigurator(mutatorClass), mutators);
-	}
+        maybeAddMutator(scenario, scenarioName, projectDir, key, new FileChangeMutatorConfigurator(mutatorClass), mutators);
+    }
 
     private static void maybeAddMutator(Config scenario, String scenarioName, File projectDir, String key, BuildMutatorConfigurator configurator, List<Supplier<BuildMutator>> mutators) {
-    	if (scenario.hasPath(key)) {
-			mutators.add(configurator.configure(scenario, scenarioName, projectDir, key));
-		}
+        if (scenario.hasPath(key)) {
+            mutators.add(configurator.configure(scenario, scenarioName, projectDir, key));
+        }
     }
 }

@@ -743,7 +743,7 @@ println "<tasks: " + gradle.startParameter.taskNames + ">"
         scenarioFile.text = """
 ideaModel {
     versions = ["3.0", "$minimalSupportedGradleVersion"]
-    model = idea
+    model = "org.gradle.tooling.model.idea.IdeaProject"
 }
 """
 
