@@ -50,11 +50,19 @@ public class GradleTracingPlugin implements Plugin<Gradle> {
             gcMonitoring.stop();
             buildOperationListener.remove();
 
-            traceResult.start(PHASE_BUILD, CATEGORY_PHASE, TimeUtil.toNanoTime(buildRequestMetaData.getBuildTimeClock().getStartTime()));
+            traceResult.start(PHASE_BUILD, CATEGORY_PHASE, TimeUtil.toNanoTime(getStartTime()));
             traceResult.finish(PHASE_BUILD, System.nanoTime(), new HashMap<>());
             traceResult.finalizeTraceFile(result.getGradle());
 
             gradle.removeListener(this);
+        }
+
+        private long getStartTime() {
+            try {
+                return buildRequestMetaData.getStartTime();
+            } catch (NoSuchMethodError e) {
+                return buildRequestMetaData.getBuildTimeClock().getStartTime();
+            }
         }
     }
 }
