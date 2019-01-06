@@ -1,6 +1,10 @@
 package org.gradle.profiler;
 
-import joptsimple.*;
+import joptsimple.ArgumentAcceptingOptionSpec;
+import joptsimple.OptionException;
+import joptsimple.OptionParser;
+import joptsimple.OptionSet;
+import joptsimple.OptionSpecBuilder;
 
 import java.io.File;
 import java.io.IOException;
@@ -20,23 +24,23 @@ class CommandLineParser {
         OptionParser parser = new OptionParser();
         parser.nonOptions("The scenarios or task names to run");
         ArgumentAcceptingOptionSpec<File> projectOption = parser.accepts("project-dir", "The directory containing the build to run")
-                .withRequiredArg().ofType(File.class).defaultsTo(new File("."));
+            .withRequiredArg().ofType(File.class).defaultsTo(new File("."));
         ArgumentAcceptingOptionSpec<String> versionOption = parser.accepts("gradle-version", "Gradle version or installation to use to run build")
-                .withRequiredArg();
+            .withRequiredArg();
         ArgumentAcceptingOptionSpec<File> gradleUserHomeOption = parser.accepts("gradle-user-home", "The Gradle user home to use")
-                .withRequiredArg()
-                .ofType(File.class)
-                .defaultsTo(new File("gradle-user-home"));
+            .withRequiredArg()
+            .ofType(File.class)
+            .defaultsTo(new File("gradle-user-home"));
         ArgumentAcceptingOptionSpec<File> scenarioFileOption = parser.accepts("scenario-file", "Scenario definition file to use").withRequiredArg().ofType(File.class);
         ArgumentAcceptingOptionSpec<String> sysPropOption = parser.accepts("D", "Defines a system property").withRequiredArg();
         ArgumentAcceptingOptionSpec<File> outputDirOption = parser.accepts("output-dir", "Directory to write results to").withRequiredArg()
-                .ofType(File.class).defaultsTo(findOutputDir());
+            .ofType(File.class).defaultsTo(findOutputDir());
         ArgumentAcceptingOptionSpec<Integer> warmupsOption = parser.accepts("warmups", "Number of warm-up build to run for each scenario").withRequiredArg().ofType(Integer.class);
         ArgumentAcceptingOptionSpec<Integer> iterationsOption = parser.accepts("iterations", "Number of builds to run for each scenario").withRequiredArg().ofType(Integer.class);
         ArgumentAcceptingOptionSpec<String> profilerOption = parser.accepts("profile",
-                "Collect profiling information using profiler (" + Profiler.getAvailableProfilers().stream().collect(Collectors.joining(", ")) + ")")
-                .withRequiredArg()
-                .defaultsTo("jfr");
+            "Collect profiling information using profiler (" + Profiler.getAvailableProfilers().stream().collect(Collectors.joining(", ")) + ")")
+            .withRequiredArg()
+            .defaultsTo("jfr");
         Profiler.configureParser(parser);
         OptionSpecBuilder benchmarkOption = parser.accepts("benchmark", "Collect benchmark metrics");
         OptionSpecBuilder noDaemonOption = parser.accepts("no-daemon", "Do not use the Gradle daemon");
@@ -93,11 +97,11 @@ class CommandLineParser {
         boolean dryRun = parsedOptions.has(dryRunOption);
         Map<String, String> sysProperties = new LinkedHashMap<>();
         for (String value : parsedOptions.valuesOf(sysPropOption)) {
-            String[] parts = value.split("\\s*=\\s*");
-            if (parts.length == 1) {
-                sysProperties.put(parts[0], "true");
+            int sep = value.indexOf("=");
+            if (sep < 0) {
+                sysProperties.put(value, "true");
             } else {
-                sysProperties.put(parts[0], parts[1]);
+                sysProperties.put(value.substring(0, sep), value.substring(sep + 1, value.length()));
             }
         }
         return new InvocationSettings(projectDir, profiler, benchmark, outputDir, invoker, dryRun, scenarioFile, versions, targetNames, sysProperties, gradleUserHome, warmups, iterations);
