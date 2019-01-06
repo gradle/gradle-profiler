@@ -6,6 +6,7 @@ import org.gradle.trace.util.TimeUtil;
 
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Method;
+import java.lang.reflect.Proxy;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -38,9 +39,24 @@ public abstract class BuildOperationListenerInvocationHandler implements Invocat
             case "hashCode":
                 return hashCode();
             case "equals":
-                return equals(args[0]);
+                return isEqual(proxy, args[0]);
+            case "toString":
+                return toString();
         }
         return null;
+    }
+
+    private Object isEqual(Object me, Object other) {
+        if (me == other) {
+            return true;
+        }
+        if (other == null) {
+            return false;
+        }
+        if (me.getClass() != other.getClass()) {
+            return false;
+        }
+        return equals(Proxy.getInvocationHandler(other));
     }
 
     protected long getStartTime(Object startEvent) {
