@@ -35,9 +35,9 @@ public class FlameGraphSanitizer {
             new ChopPrefix("constructTaskGraph"),
             new ChopPrefix("executeTasks"),
             new ChopPrefix("org.gradle.api.internal.tasks.execution"),
-            new ReplaceContainment(singletonList("org.gradle.api.internal.tasks.execution"), "task execution"),
-            new ReplaceContainment(asList("DynamicObject", "Closure.call", "MetaClass", "MetaMethod", "CallSite", "ConfigureDelegate", "Method.invoke", "MethodAccessor", "Proxy", "ConfigureUtil", "Script.invoke", "ClosureBackedAction", "getProperty("), "dynamic invocation"),
-            new ReplaceContainment(asList("BuildOperation", "PluginManager", "ObjectConfigurationAction", "PluginTarget", "PluginAware", "Script.apply", "ScriptPlugin", "ScriptTarget", "ScriptRunner", "ProjectEvaluator", "Project.evaluate"), "Gradle infrastructure")
+            new ReplaceContainment(singletonList("org.gradle.api.internal.tasks.execution"), "task execution_[j]"),
+            new ReplaceContainment(asList("DynamicObject", "Closure.call", "MetaClass", "MetaMethod", "CallSite", "ConfigureDelegate", "Method.invoke", "MethodAccessor", "Proxy", "ConfigureUtil", "Script.invoke", "ClosureBackedAction", "getProperty("), "dynamic invocation_[j]"),
+            new ReplaceContainment(asList("BuildOperation", "PluginManager", "ObjectConfigurationAction", "PluginTarget", "PluginAware", "Script.apply", "ScriptPlugin", "ScriptTarget", "ScriptRunner", "ProjectEvaluator", "Project.evaluate"), "Gradle infrastructure_[j]")
     );
 
     public static final SanitizeFunction SIMPLE_NAMES = new ToSimpleName();

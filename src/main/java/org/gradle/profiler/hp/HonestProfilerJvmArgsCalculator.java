@@ -19,7 +19,7 @@ import org.gradle.profiler.JvmArgsCalculator;
 
 import java.util.List;
 
-public class HonestProfilerJvmArgsCalculator extends JvmArgsCalculator {
+public class HonestProfilerJvmArgsCalculator implements JvmArgsCalculator {
 
     private final HonestProfilerArgs args;
 

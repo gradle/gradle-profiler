@@ -20,7 +20,7 @@ import org.apache.ant.compress.taskdefs.Unzip;
 import org.apache.tools.ant.types.mappers.CutDirsMapper;
 import org.gradle.profiler.CommandExec;
 import org.gradle.profiler.ScenarioSettings;
-import org.gradle.profiler.SingleIterationProfilerController;
+import org.gradle.profiler.SingleRecordingProfilerController;
 import org.gradle.profiler.SudoCommandExec;
 import org.gradle.profiler.fg.FlameGraphSanitizer;
 import org.gradle.profiler.fg.FlameGraphTool;
@@ -36,7 +36,7 @@ import java.util.List;
 import java.util.function.BiFunction;
 import java.util.stream.Collectors;
 
-public class PerfProfilerController extends SingleIterationProfilerController {
+public class PerfProfilerController extends SingleRecordingProfilerController {
     private static final String PROFILE_DATA_SUFFIX = ".data";
     private static final String PROFILE_SCRIPT_SUFFIX = "-perf-script.txt";
     private static final String PROFILE_FOLDED_SUFFIX = "-perf-folded.txt";

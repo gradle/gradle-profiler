@@ -78,22 +78,12 @@ class CompositeProfiler extends Profiler {
 
     @Override
     public JvmArgsCalculator newJvmArgsCalculator(final ScenarioSettings settings) {
-        return new JvmArgsCalculator() {
-            @Override
-            public void calculateJvmArgs(final List<String> jvmArgs) {
-                delegates.forEach(prof -> prof.newJvmArgsCalculator(settingsFor(prof, settings)).calculateJvmArgs(jvmArgs));
-            }
-        };
+        return jvmArgs -> delegates.forEach(prof -> prof.newJvmArgsCalculator(settingsFor(prof, settings)).calculateJvmArgs(jvmArgs));
     }
 
     @Override
     public JvmArgsCalculator newInstrumentedBuildsJvmArgsCalculator(ScenarioSettings settings) {
-        return new JvmArgsCalculator() {
-            @Override
-            public void calculateJvmArgs(final List<String> jvmArgs) {
-                delegates.forEach(prof -> prof.newInstrumentedBuildsJvmArgsCalculator(settingsFor(prof, settings)).calculateJvmArgs(jvmArgs));
-            }
-        };
+        return jvmArgs -> delegates.forEach(prof -> prof.newInstrumentedBuildsJvmArgsCalculator(settingsFor(prof, settings)).calculateJvmArgs(jvmArgs));
     }
 
     @Override

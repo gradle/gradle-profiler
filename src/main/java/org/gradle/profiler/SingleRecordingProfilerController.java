@@ -2,7 +2,7 @@ package org.gradle.profiler;
 
 import java.io.IOException;
 
-public abstract class SingleIterationProfilerController implements ProfilerController {
+public abstract class SingleRecordingProfilerController implements ProfilerController {
 
     private boolean recordedBefore = false;
 
@@ -25,11 +25,6 @@ public abstract class SingleIterationProfilerController implements ProfilerContr
     @Override
     public final void stopRecording() throws IOException, InterruptedException {
         recordedBefore = true;
-    }
-
-    @Override
-    public void stopSession() throws IOException, InterruptedException {
-
     }
 
     public abstract String getName();

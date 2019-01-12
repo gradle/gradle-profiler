@@ -17,7 +17,7 @@ import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
 import java.util.List;
 
-public class JProfilerJvmArgsCalculator extends JvmArgsCalculator {
+public class JProfilerJvmArgsCalculator implements JvmArgsCalculator {
     private final JProfilerConfig jProfilerConfig;
     private ScenarioSettings settings;
 

@@ -9,7 +9,7 @@ import java.util.List;
 
 import static org.gradle.profiler.yjp.YourKit.ENIVONMENT_VARIABLE;
 
-public class YourKitJvmArgsCalculator extends JvmArgsCalculator {
+public class YourKitJvmArgsCalculator implements JvmArgsCalculator {
     public static final int PORT = 10021;
     private final ScenarioSettings settings;
     private final YourKitConfig yourKitConfig;

@@ -2,9 +2,9 @@ package org.gradle.profiler;
 
 import java.util.List;
 
-public class JvmArgsCalculator {
-    public static final JvmArgsCalculator DEFAULT = new JvmArgsCalculator();
+public interface JvmArgsCalculator {
+    JvmArgsCalculator DEFAULT = jvmArgs -> {
+    };
 
-    public void calculateJvmArgs(List<String> jvmArgs) {
-    }
+    void calculateJvmArgs(List<String> jvmArgs);
 }

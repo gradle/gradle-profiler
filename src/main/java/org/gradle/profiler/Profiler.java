@@ -17,6 +17,7 @@ package org.gradle.profiler;
 
 import joptsimple.OptionParser;
 import joptsimple.OptionSet;
+import org.gradle.profiler.asyncprofiler.AsyncProfiler;
 import org.gradle.profiler.bs.BuildScanProfiler;
 import org.gradle.profiler.ct.ChromeTraceProfiler;
 import org.gradle.profiler.hp.HpProfiler;
@@ -40,13 +41,14 @@ public class Profiler {
 
     private final static Map<String, Profiler> AVAILABLE_PROFILERS = Collections.unmodifiableMap(
             new LinkedHashMap<String, Profiler>() {{
-                put("jfr", new JfrProfiler());
-                put("hp", new HpProfiler());
                 put("buildscan", new BuildScanProfiler());
-                put("chrome-trace", new ChromeTraceProfiler());
-                put("yourkit", new YourKitProfiler());
+                put("jfr", new JfrProfiler());
                 put("jprofiler", new JProfilerProfiler());
+                put("yourkit", new YourKitProfiler());
+                put("async-profiler", new AsyncProfiler());
+                put("hp", new HpProfiler());
                 put("perf", new PerfProfiler());
+                put("chrome-trace", new ChromeTraceProfiler());
             }}
     );
 

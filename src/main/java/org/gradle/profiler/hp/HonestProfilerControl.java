@@ -17,7 +17,7 @@ package org.gradle.profiler.hp;
 
 import org.gradle.profiler.CommandExec;
 import org.gradle.profiler.ScenarioSettings;
-import org.gradle.profiler.SingleIterationProfilerController;
+import org.gradle.profiler.SingleRecordingProfilerController;
 import org.gradle.profiler.fg.FlameGraphSanitizer;
 import org.gradle.profiler.fg.FlameGraphTool;
 
@@ -27,7 +27,7 @@ import java.io.OutputStream;
 import java.net.Socket;
 import java.nio.file.Files;
 
-public class HonestProfilerControl extends SingleIterationProfilerController {
+public class HonestProfilerControl extends SingleRecordingProfilerController {
     private static final String PROFILE_HPL_SUFFIX = ".hpl";
     private static final String PROFILE_TXT_SUFFIX = "-hp.txt";
     private static final String PROFILE_SANITIZED_TXT_SUFFIX = "-hp-sanitized.txt";

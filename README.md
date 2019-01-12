@@ -5,10 +5,11 @@ A tool to automate the gathering of profiling and benchmarking information for G
 Profiling information can be captured using several different tools:
 
 - Using a [Gradle build scan](https://gradle.com)
+- Using [Java flight recorder](https://docs.oracle.com/javacomponents/jmc-5-4/jfr-runtime-guide/about.htm#JFRUH170) built into the Oracle JVM
 - Using [JProfiler](https://www.ej-technologies.com/products/jprofiler/overview.html).
 - Using [YourKit](https://www.yourkit.com) profiler.
+- Using [Async Profiler](https://github.com/jvm-profiling-tools/async-profiler)
 - Using [Honest Profiler](https://github.com/RichardWarburton/honest-profiler)
-- Using [Java flight recorder](https://docs.oracle.com/javacomponents/jmc-5-4/jfr-runtime-guide/about.htm#JFRUH170) built into the Oracle JVM
 - Using [Linux Perf](https://perf.wiki.kernel.org)
 - Producing [Chrome Trace](https://www.chromium.org/developers/how-tos/trace-event-profiling-tool) output.
 
@@ -59,6 +60,10 @@ Once complete, the results are available under `profile-out`
 In order to create a [build scan](https://gradle.com) of your build, use `--profile buildscan`. The build scan URL is available in `profile-out/profile.log`. You can then use the powerful timeline view
 in the build scan to analyze which tasks ran, how long they took, how well your build parallelized etc. Also make sure to look at the performance tab to see where time was spent and for hints on how to optimize your build.
 
+### Java Flight Recorder
+
+In order to profile with JFR, add the `--profile jfr` option. Note that JFR has a very low sampling frequency compared to other profilers and is unlikely to be helpful for short builds.
+
 ### JProfiler
 
 In order to work with JProfiler, use the `--profile jprofiler` option.
@@ -80,9 +85,22 @@ In order to work with YourKit, make sure `YOURKIT_HOME` environment variable is 
 
 This will use YourKit's CPU instrumentation by default. You can switch to CPU sampling by adding the `--yourkit-sampling` option. You can switch to memory allocation profiling by adding the `--yourkit-memory` option. All probes are disabled when using sampling or memory allocation profiling.
 
-### Java Flight Recorder
+### Async Profiler
 
-In order to profile with JFR, add the `--profile jfr` option. Note that JFR has a very low sampling frequency compared to other profilers and is unlikely to be helpful for short builds.
+Checkout [async-profiler](https://github.com/jvm-profiling-tools/async-profiler) and follow the setup instructions in its readme. 
+You can now use the `--profile async-profiler` option.  
+Make sure either the `ASYNC_PROFILER_HOME` environment variable or the `--async-profiler-home` command line option points to the async-profiler directory.
+
+The output are flame and icicle graphs which show you the call tree and hotspots of your code.
+
+The following options are supported and closely mimic the options of async-profiler. Have a look at its readme to find out more about each option:
+
+- `--async-profiler-event`: The event to sample, e.g. 'cpu' or 'alloc'. 
+- `--async-profiler-count`: The count to use when aggregating event data. Either `samples` or `total`. `total` is especially useful for allocation profiling.
+- `--async-profiler-interval`: The sampling interval in ns, defaults to 10_000_000 (10ms)
+- `--async-profiler-stackdepth`: The maximum stack depth. Lower this if profiles with deep recursion get too large. Defaults to 2048.
+- `--async-profiler-framebuffer`: The size of the frame buffer in bytes. Defaults to 10_000_000 (~10MB)
+- `--async-profiler-system-threads`: Whether to show system threads like GC and JIT compilation in the profile. Usually makes them harder to read, but can be useful if you suspect problems in that area. Defaults to `false` 
 
 ### Honest Profiler
 

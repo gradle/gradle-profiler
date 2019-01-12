@@ -4,7 +4,7 @@ import org.gradle.profiler.JvmArgsCalculator;
 
 import java.util.List;
 
-public class PerfJvmArgsCalculator extends JvmArgsCalculator {
+public class PerfJvmArgsCalculator implements JvmArgsCalculator {
     @Override
     public void calculateJvmArgs(List<String> jvmArgs) {
         jvmArgs.add("-XX:+UnlockDiagnosticVMOptions");

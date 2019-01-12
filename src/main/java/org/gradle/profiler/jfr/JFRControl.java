@@ -3,11 +3,11 @@ package org.gradle.profiler.jfr;
 import org.gradle.profiler.CommandExec;
 import org.gradle.profiler.OperatingSystem;
 import org.gradle.profiler.ScenarioSettings;
-import org.gradle.profiler.SingleIterationProfilerController;
+import org.gradle.profiler.SingleRecordingProfilerController;
 
 import java.io.File;
 
-public class JFRControl extends SingleIterationProfilerController {
+public class JFRControl extends SingleRecordingProfilerController {
     private static final String PROFILE_JFR_SUFFIX = ".jfr";
 
     private final File jcmd;
@@ -22,7 +22,7 @@ public class JFRControl extends SingleIterationProfilerController {
             jcmd = new File(javaHome.getParentFile(), jcmdPath());
         }
         if (!jcmd.isFile()) {
-            throw new RuntimeException("Could not find 'jcmd' executable for Java home directory " + javaHome);
+            throw new RuntimeException("Could not find 'jcmd' executable for Java home directory " + javaHome+ ". Make sure your JAVA_HOME variable points to a JDK.");
         }
         this.jcmd = jcmd;
         this.jfrArgs = args;

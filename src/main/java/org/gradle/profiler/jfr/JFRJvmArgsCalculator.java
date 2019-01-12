@@ -5,7 +5,7 @@ import org.gradle.profiler.JvmArgsCalculator;
 
 import java.util.List;
 
-public class JFRJvmArgsCalculator extends JvmArgsCalculator {
+public class JFRJvmArgsCalculator implements JvmArgsCalculator {
     @Override
     public void calculateJvmArgs(List<String> jvmArgs) {
         if (!JavaVersion.current().isJava11Compatible()) {
