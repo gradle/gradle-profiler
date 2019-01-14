@@ -5,10 +5,10 @@ A tool to automate the gathering of profiling and benchmarking information for G
 Profiling information can be captured using several different tools:
 
 - Using a [Gradle build scan](https://gradle.com)
-- Using [Java flight recorder](https://docs.oracle.com/javacomponents/jmc-5-4/jfr-runtime-guide/about.htm#JFRUH170) built into the Oracle JVM
+- Using [Async Profiler](https://github.com/jvm-profiling-tools/async-profiler)
 - Using [JProfiler](https://www.ej-technologies.com/products/jprofiler/overview.html).
 - Using [YourKit](https://www.yourkit.com) profiler.
-- Using [Async Profiler](https://github.com/jvm-profiling-tools/async-profiler)
+- Using [Java flight recorder](https://docs.oracle.com/javacomponents/jmc-5-4/jfr-runtime-guide/about.htm#JFRUH170) built into the Oracle JVM
 - Producing [Chrome Trace](https://www.chromium.org/developers/how-tos/trace-event-profiling-tool) output.
 
 ## Installing
@@ -55,35 +55,16 @@ Once complete, the results are available under `profile-out`
 
 ### Gradle build scans
 
-In order to create a [build scan](https://gradle.com) of your build, use `--profile buildscan`. The build scan URL is available in `profile-out/profile.log`. You can then use the powerful timeline view
-in the build scan to analyze which tasks ran, how long they took, how well your build parallelized etc. Also make sure to look at the performance tab to see where time was spent and for hints on how to optimize your build.
+[Gradle build scans](https://gradle.com) are a powerful tool to investigate the structure of your build and quickly find bottlenecks. 
+You can use timeline view to seewhich tasks ran, how long they took, whether they were cached, how well your build parallelized etc. 
+The performance tab will show you details about configuration time and other hints on how to make your build faster.
 
-### Java Flight Recorder
-
-In order to profile with JFR, add the `--profile jfr` option. Note that JFR has a very low sampling frequency compared to other profilers and is unlikely to be helpful for short builds.
-
-### JProfiler
-
-In order to work with JProfiler, use the `--profile jprofiler` option.
-
-This will use JProfiler's CPU sampling by default. JProfiler supports several other options:
-
-- Enable CPU sampling of all methods by adding `--jprofiler-config sampling-all` (by default only packages containing the word `gradle` are sampled)
-- Switch to CPU instrumentation by adding `--jprofiler-config instrumentation`
-- Enable memory allocation recording by adding `--jprofiler-alloc`
-- Enable monitor usage recording by adding `--jprofiler-monitors`
-- Enable probes with `--jprofiler-probes:<probe ids, separated by comma>` (e.g. `--jprofiler-probes builtin.FileProbe`)
-- Enable heapdump after build with `--jprofiler-heapdump`
-- Use a specific profiler session (for full control over filters, sampling intervals etc.) by adding `--jprofiler-session <sessionId>`
-- use a different JProfiler installation with `--jprofiler-home /path/to/jprofiler`
-
-### YourKit
-
-In order to work with YourKit, make sure `YOURKIT_HOME` environment variable is set and then use the `--profile yourkit` option.
-
-This will use YourKit's CPU instrumentation by default. You can switch to CPU sampling by adding the `--yourkit-sampling` option. You can switch to memory allocation profiling by adding the `--yourkit-memory` option. All probes are disabled when using sampling or memory allocation profiling.
+In order to create a build scan of your build, use `--profile buildscan`. The build scan URL is available in `profile-out/profile.log`. 
 
 ### Async Profiler
+
+Async profiler provides low-overhead CPU, allocation and perf event sampling on Linux and MacOS. 
+It also correctly handles native method calls, making it preferable to JFR on these operating systems. 
 
 Checkout [async-profiler](https://github.com/jvm-profiling-tools/async-profiler) and follow the setup instructions in its readme. 
 You can now use the `--profile async-profiler` option.  
@@ -100,9 +81,58 @@ The following options are supported and closely mimic the options of async-profi
 - `--async-profiler-framebuffer`: The size of the frame buffer in bytes. Defaults to 10_000_000 (~10MB)
 - `--async-profiler-system-threads`: Whether to show system threads like GC and JIT compilation in the profile. Usually makes them harder to read, but can be useful if you suspect problems in that area. Defaults to `false` 
 
+### JProfiler
+
+JProfiler is a powerful commercial profiler, which provides both sampling and instrumentation capabilites.
+You can tailor its settings in the JProfiler UI and then instruct the Gradle profiler to use these settings for full control
+over what you want to investigate. For instance, you could split calls to a dependency resolution rule by argument to
+find out if the rule is slow for a specific dependency.
+
+In order to work with JProfiler, use the `--profile jprofiler` option.
+
+This will use JProfiler's CPU sampling by default. JProfiler supports several other options:
+
+- Enable CPU sampling of all methods by adding `--jprofiler-config sampling-all` (by default only packages containing the word `gradle` are sampled)
+- Switch to CPU instrumentation by adding `--jprofiler-config instrumentation`
+- Enable memory allocation recording by adding `--jprofiler-alloc`
+- Enable monitor usage recording by adding `--jprofiler-monitors`
+- Enable probes with `--jprofiler-probes:<probe ids, separated by comma>` (e.g. `--jprofiler-probes builtin.FileProbe`)
+- Enable heapdump after build with `--jprofiler-heapdump`
+- Use a specific profiler session (for full control over filters, sampling intervals etc.) by adding `--jprofiler-session <sessionId>`
+- use a different JProfiler installation with `--jprofiler-home /path/to/jprofiler`
+
+### YourKit
+
+YourKit is a powerful commercial profiler, which provides both sampling and instrumentation capabilites.
+Its integration in the Gradle profiler is currently limited, e.g. support for probes and other custom settings
+is missing. If you are using YourKit and would like to see better support, pull requests are welcome.
+
+In order to work with YourKit, make sure the `YOURKIT_HOME` environment variable is set and then use the `--profile yourkit` option.
+
+This will use YourKit's CPU instrumentation by default. 
+You can switch to CPU sampling by adding the `--yourkit-sampling` option. 
+You can switch to memory allocation profiling by adding the `--yourkit-memory` option. 
+All probes are disabled when using sampling or memory allocation profiling.
+
+### Java Flight Recorder
+
+JFR provides low overhead CPU, allocation, IO wait and lock profiling and runs on all major operating systems. It is available on Oracle JDK since Java 7 and on OpenJDK since Java 11. 
+To our knowledge, it is the only low-overhead allocation profiler for Windows.
+However, it has several shortcomings: It will not sample native method calls, so you will get misleading CPU results if your code does a lot of system calls (like reading files). 
+Also, there is a [bug in Java 10](https://bugs.openjdk.java.net/browse/JDK-8215727) that completely breaks CPU profiling. It is scheduled to be fixed in Java 13 and backported to Java 11.  
+
+You will get both the JFR file and flame graph visualizations of the data, which are much easier to understand than the Java Mission Control UI. 
+
+In order to profile with JFR, add the `--profile jfr` option. 
+You can change the profiler settings using `--jfr-settings`, specifying either the path to a `.jfc` file or the name of a built-in template like `profile`.
+
 ### Chrome Trace
 
-Add the `--profile chrome-trace` option and open the result in Google Chrome. It shows a low-level event dump (e.g. projects being evaluated, tasks being run etc.) together with CPU and memory usage as well as GC activity. Note that using chrome-trace requires Gradle 3.3+.
+Chrome traces are a low-level event dump (e.g. projects being evaluated, tasks being run etc.).
+They are useful when you can't create a build scan, but need to look at the overall structure of a build.
+It also displays CPU load, memory usage and GC activity. Using chrome-trace requires Gradle 3.3+.
+
+Add the `--profile chrome-trace` option and open the result in Google Chrome. 
 
 ## Command line options
 
