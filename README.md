@@ -9,8 +9,6 @@ Profiling information can be captured using several different tools:
 - Using [JProfiler](https://www.ej-technologies.com/products/jprofiler/overview.html).
 - Using [YourKit](https://www.yourkit.com) profiler.
 - Using [Async Profiler](https://github.com/jvm-profiling-tools/async-profiler)
-- Using [Honest Profiler](https://github.com/RichardWarburton/honest-profiler)
-- Using [Linux Perf](https://perf.wiki.kernel.org)
 - Producing [Chrome Trace](https://www.chromium.org/developers/how-tos/trace-event-profiling-tool) output.
 
 ## Installing
@@ -101,56 +99,6 @@ The following options are supported and closely mimic the options of async-profi
 - `--async-profiler-stackdepth`: The maximum stack depth. Lower this if profiles with deep recursion get too large. Defaults to 2048.
 - `--async-profiler-framebuffer`: The size of the frame buffer in bytes. Defaults to 10_000_000 (~10MB)
 - `--async-profiler-system-threads`: Whether to show system threads like GC and JIT compilation in the profile. Usually makes them harder to read, but can be useful if you suspect problems in that area. Defaults to `false` 
-
-### Honest Profiler
-
-Install both [Honest Profiler](https://github.com/RichardWarburton/honest-profiler) and the [FlameGraph](https://github.com/brendangregg/FlameGraph) tool. Then you can run with the options `--profile hp --hp-home /path/to/honest/profiler --fg-home /path/to/flamegraph`
-
-Honest Profiler currently only works on Linux.
-
-### Linux Perf
-
-In order to profile with `perf`, add the `--profile perf` option. `perf` has several advantages over Java agent based profiling:
-
-- Accurate and low overhead
-- All Java processes forked by the build are included
-- Native stack frames are included
-- Inlined methods can be optionally unfolded
-
-#### Prerequisites
-
-  - Linux Kernel 4.7 or later
-  - `perf` and `cmake`. For example:
-
-        sudo apt install linux-tools-`uname -r` linux-tools-generic cmake
-
-  - Set the `kernel.perf_event_max_stack` Kernel parameter to accommodate deep Java stacks:
-
-  `sudo sysctl kernel.perf_event_max_stack=1024`
-
-  to make the setting persistent
-
-  ```bash
-  echo kernel.perf_event_max_stack=1024 | sudo tee /etc/sysctl.d/99-perf.conf
-  ```
-
-  - `sudo` access to `/usr/bin/perf`, `/bin/kill` and `gradle-user-home/tools/brendangregg/Misc/java/jmaps-updated`. 
-  
-  [An example script exists to configure `sudo` access](src/main/resources/org/gradle/profiler/perf/configure_sudo_access.sh)
-
-  Alternatively add these lines with `sudo visudo` (adapt example location `/home/user/.gradle-profiler` as needed)
-```
-Defaults!/usr/bin/perf use_pty
-%sudo ALL=(ALL) NOPASSWD: /usr/bin/perf, /bin/kill, /home/user/.gradle-profiler/tools/brendangregg/Misc/java/jmaps-updated
-```
-  The `use_pty` sudo default option is required when `perf` is running with `sudo` in a background process. Without
-  `use_pty`, [sudo won't relay the kill signal (SIGQUIT)](https://www.sudo.ws/man/1.8.14/sudo.man.html#Signal_handling)
-  to the perf process and it won't be possible to stop profiling cleanly.
-
-  - add `--gradle-user-home $HOME/.gradle-profiler` parameter to the `gradle-profiler` command-line
-
-
-The profiler automatically downloads and builds the other required tools.
 
 ### Chrome Trace
 

@@ -221,41 +221,6 @@ println "<tasks: " + gradle.startParameter.taskNames + ">"
         profileFile.exists()
     }
 
-    @Requires({
-        System.getenv('HP_HOME_DIR')
-    })
-    def "profiles build using Honest Profiler, specified Gradle version and tasks"() {
-        given:
-        buildFile.text = """
-apply plugin: BasePlugin
-println "<gradle-version: " + gradle.gradleVersion + ">"
-println "<tasks: " + gradle.startParameter.taskNames + ">"
-println "<daemon: " + gradle.services.get(org.gradle.internal.environment.GradleBuildEnvironment).longLivingProcess + ">"
-"""
-
-        when:
-        new Main().
-            run("--project-dir", projectDir.absolutePath, "--output-dir", outputDir.absolutePath, "--gradle-version", minimalSupportedGradleVersion, "--profile", "hp",
-                "assemble")
-
-        then:
-        // Probe version, 2 warm up, 1 build
-        logFile.grep("<gradle-version: $minimalSupportedGradleVersion>").size() == 4
-        logFile.grep("<daemon: true").size() == 4
-        logFile.grep("<tasks: [assemble]>").size() == 3
-
-        def profileFile = new File(outputDir, "${minimalSupportedGradleVersion}.hpl")
-        profileFile.exists() && profileFile.size() > 0
-        def profileTxtFile = new File(outputDir, "$minimalSupportedGradleVersion-hp.txt")
-        profileTxtFile.exists() && profileTxtFile.size() > 0
-        def sanitizedProfileTxtFile = new File(outputDir, "$minimalSupportedGradleVersion-hp-sanitized.txt")
-        sanitizedProfileTxtFile.exists() && sanitizedProfileTxtFile.size() > 0
-
-        if (System.getenv('FG_HOME_DIR')) {
-            def fgFile = new File(outputDir, "${minimalSupportedGradleVersion}-hp-flames.svg")
-            assert fgFile.exists() && fgFile.size() > 0
-        }
-    }
 
     @Requires({ YourKit.findYourKitHome() })
     def "profiles build using YourKit to produce CPU tracing snapshot"() {

@@ -20,14 +20,16 @@ import joptsimple.OptionSet;
 import org.gradle.profiler.asyncprofiler.AsyncProfiler;
 import org.gradle.profiler.bs.BuildScanProfiler;
 import org.gradle.profiler.ct.ChromeTraceProfiler;
-import org.gradle.profiler.hp.HpProfiler;
 import org.gradle.profiler.jfr.JfrProfiler;
 import org.gradle.profiler.jprofiler.JProfilerProfiler;
-import org.gradle.profiler.perf.PerfProfiler;
 import org.gradle.profiler.yjp.YourKitProfiler;
 
 import java.io.File;
-import java.util.*;
+import java.util.Collections;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 public class Profiler {
@@ -46,8 +48,6 @@ public class Profiler {
                 put("jprofiler", new JProfilerProfiler());
                 put("yourkit", new YourKitProfiler());
                 put("async-profiler", new AsyncProfiler());
-                put("hp", new HpProfiler());
-                put("perf", new PerfProfiler());
                 put("chrome-trace", new ChromeTraceProfiler());
             }}
     );
