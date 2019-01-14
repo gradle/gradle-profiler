@@ -1,4 +1,4 @@
-package org.gradle.profiler.fg;
+package org.gradle.profiler.flamegraph;
 
 import org.gradle.profiler.CommandExec;
 

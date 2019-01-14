@@ -6,8 +6,8 @@ import org.gradle.profiler.GradleScenarioDefinition;
 import org.gradle.profiler.Invoker;
 import org.gradle.profiler.ScenarioSettings;
 import org.gradle.profiler.SingleRecordingProfilerController;
-import org.gradle.profiler.fg.FlameGraphSanitizer;
-import org.gradle.profiler.fg.FlameGraphTool;
+import org.gradle.profiler.flamegraph.FlameGraphSanitizer;
+import org.gradle.profiler.flamegraph.FlameGraphTool;
 
 import java.io.File;
 import java.util.Collections;
@@ -15,7 +15,7 @@ import java.util.List;
 import java.util.Locale;
 
 import static org.gradle.profiler.asyncprofiler.AsyncProfilerConfig.Counter;
-import static org.gradle.profiler.fg.FlameGraphSanitizer.*;
+import static org.gradle.profiler.flamegraph.FlameGraphSanitizer.*;
 
 public class AsyncProfilerController extends SingleRecordingProfilerController {
     private final AsyncProfilerConfig profilerConfig;

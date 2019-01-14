@@ -1,4 +1,4 @@
-package org.gradle.profiler.yjp;
+package org.gradle.profiler.yourkit;
 
 import org.gradle.profiler.CommandExec;
 import org.gradle.profiler.ProfilerController;

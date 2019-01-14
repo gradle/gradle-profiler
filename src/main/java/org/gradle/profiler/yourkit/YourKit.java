@@ -1,4 +1,4 @@
-package org.gradle.profiler.yjp;
+package org.gradle.profiler.yourkit;
 
 import java.io.File;
 

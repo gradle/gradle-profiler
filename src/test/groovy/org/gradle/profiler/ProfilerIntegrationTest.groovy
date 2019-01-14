@@ -1,8 +1,8 @@
 package org.gradle.profiler
 
-import org.gradle.profiler.bs.BuildScanProfiler
+import org.gradle.profiler.buildscan.BuildScanProfiler
 import org.gradle.profiler.jprofiler.JProfiler
-import org.gradle.profiler.yjp.YourKit
+import org.gradle.profiler.yourkit.YourKit
 import org.gradle.util.GradleVersion
 import org.junit.Rule
 import org.junit.rules.TemporaryFolder

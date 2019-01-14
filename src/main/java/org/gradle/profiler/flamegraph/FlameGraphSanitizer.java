@@ -1,4 +1,4 @@
-package org.gradle.profiler.fg;
+package org.gradle.profiler.flamegraph;
 
 import com.google.common.base.CharMatcher;
 import com.google.common.base.Joiner;

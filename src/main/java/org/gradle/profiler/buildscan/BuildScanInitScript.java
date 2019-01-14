@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.gradle.profiler.bs;
+package org.gradle.profiler.buildscan;
 
 import org.gradle.profiler.GeneratedInitScript;
 

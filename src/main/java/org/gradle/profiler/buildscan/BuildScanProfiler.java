@@ -1,4 +1,4 @@
-package org.gradle.profiler.bs;
+package org.gradle.profiler.buildscan;
 
 import joptsimple.OptionParser;
 import joptsimple.OptionSet;

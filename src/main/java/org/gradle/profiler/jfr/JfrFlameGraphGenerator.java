@@ -1,7 +1,7 @@
 package org.gradle.profiler.jfr;
 
-import org.gradle.profiler.fg.FlameGraphSanitizer;
-import org.gradle.profiler.fg.FlameGraphTool;
+import org.gradle.profiler.flamegraph.FlameGraphSanitizer;
+import org.gradle.profiler.flamegraph.FlameGraphTool;
 import org.openjdk.jmc.common.item.IItemCollection;
 import org.openjdk.jmc.flightrecorder.JfrLoaderToolkit;
 

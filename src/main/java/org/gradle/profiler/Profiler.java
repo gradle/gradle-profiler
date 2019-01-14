@@ -18,11 +18,11 @@ package org.gradle.profiler;
 import joptsimple.OptionParser;
 import joptsimple.OptionSet;
 import org.gradle.profiler.asyncprofiler.AsyncProfiler;
-import org.gradle.profiler.bs.BuildScanProfiler;
-import org.gradle.profiler.ct.ChromeTraceProfiler;
+import org.gradle.profiler.buildscan.BuildScanProfiler;
+import org.gradle.profiler.chrometrace.ChromeTraceProfiler;
 import org.gradle.profiler.jfr.JfrProfiler;
 import org.gradle.profiler.jprofiler.JProfilerProfiler;
-import org.gradle.profiler.yjp.YourKitProfiler;
+import org.gradle.profiler.yourkit.YourKitProfiler;
 
 import java.io.File;
 import java.util.Collections;

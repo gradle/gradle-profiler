@@ -1,4 +1,4 @@
-package org.gradle.profiler.ct;
+package org.gradle.profiler.chrometrace;
 
 import org.gradle.profiler.GradleArgsCalculator;
 import org.gradle.profiler.Profiler;

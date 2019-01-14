@@ -1,4 +1,4 @@
-package org.gradle.profiler.yjp;
+package org.gradle.profiler.yourkit;
 
 import org.gradle.profiler.JvmArgsCalculator;
 import org.gradle.profiler.OperatingSystem;
@@ -7,7 +7,7 @@ import org.gradle.profiler.ScenarioSettings;
 import java.io.File;
 import java.util.List;
 
-import static org.gradle.profiler.yjp.YourKit.ENIVONMENT_VARIABLE;
+import static org.gradle.profiler.yourkit.YourKit.ENIVONMENT_VARIABLE;
 
 public class YourKitJvmArgsCalculator implements JvmArgsCalculator {
     public static final int PORT = 10021;
