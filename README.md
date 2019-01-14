@@ -56,7 +56,7 @@ Once complete, the results are available under `profile-out`
 ### Gradle build scans
 
 [Gradle build scans](https://gradle.com) are a powerful tool to investigate the structure of your build and quickly find bottlenecks. 
-You can use timeline view to seewhich tasks ran, how long they took, whether they were cached, how well your build parallelized etc. 
+You can use the timeline view to see which tasks ran, how long they took, whether they were cached, how well your build parallelized etc. 
 The performance tab will show you details about configuration time and other hints on how to make your build faster.
 
 In order to create a build scan of your build, use `--profile buildscan`. The build scan URL is available in `profile-out/profile.log`. 
