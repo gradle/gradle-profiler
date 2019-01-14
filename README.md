@@ -8,7 +8,7 @@ Profiling information can be captured using several different tools:
 - Using [Async Profiler](https://github.com/jvm-profiling-tools/async-profiler)
 - Using [JProfiler](https://www.ej-technologies.com/products/jprofiler/overview.html).
 - Using [YourKit](https://www.yourkit.com) profiler.
-- Using [Java flight recorder](https://docs.oracle.com/javacomponents/jmc-5-4/jfr-runtime-guide/about.htm#JFRUH170) built into the Oracle JVM
+- Using [Java flight recorder](https://docs.oracle.com/javacomponents/jmc-5-4/jfr-runtime-guide/about.htm#JFRUH170)
 - Producing [Chrome Trace](https://www.chromium.org/developers/how-tos/trace-event-profiling-tool) output.
 
 ## Installing
