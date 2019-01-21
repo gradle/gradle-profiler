@@ -36,7 +36,22 @@ class ScenarioLoaderTest extends Specification {
         def scenarios = loadScenarios(scenarioFile, settings, Mock(GradleBuildConfigurationReader))
         expect:
         scenarios*.name == ["default"]
-        (scenarios[0] as GradleScenarioDefinition).tasks == ["help"]
+        def scenario = scenarios[0] as GradleScenarioDefinition
+        scenario.tasks == ["help"]
+    }
+
+    def "can load single scenario with no tasks defined"() {
+        def settings = settings()
+        settings.targets.add("default") // don't use the target as the default tasks
+
+        scenarioFile << """
+            default {
+            }
+        """
+        def scenarios = loadScenarios(scenarioFile, settings, Mock(GradleBuildConfigurationReader))
+        expect:
+        def scenario = scenarios[0] as GradleScenarioDefinition
+        scenario.tasks.empty
     }
 
     def "can load tooling model scenarios"() {

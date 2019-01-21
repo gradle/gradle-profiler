@@ -8,7 +8,6 @@ import org.gradle.profiler.ConfigUtil;
 import java.io.File;
 import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 import java.util.function.Supplier;
@@ -49,7 +48,7 @@ public class FileChangeMutatorConfigurator implements BuildMutatorConfigurator {
 	}
 
 	private static List<File> sourceFiles(Config config, String scenarioName, File projectDir, String key) {
-		return ConfigUtil.strings(config, key, Collections.emptyList())
+		return ConfigUtil.strings(config, key)
 				.stream()
 				.map(fileName -> openFile(fileName, projectDir, scenarioName))
 				.filter(Objects::nonNull)

@@ -8,7 +8,6 @@ import org.gradle.profiler.ConfigUtil;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.List;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
@@ -59,7 +58,7 @@ public class GitRevertMutator extends AbstractGitMutator {
     public static class Configurator implements BuildMutatorConfigurator {
 		@Override
 		public Supplier<BuildMutator> configure(Config scenario, String scenarioName, File projectDir, String key) {
-			List<String> commits = ConfigUtil.strings(scenario, key, Collections.emptyList());
+			List<String> commits = ConfigUtil.strings(scenario, key);
 			if (commits.isEmpty()) {
 				throw new IllegalArgumentException("No commits specified for git-revert");
 			}
