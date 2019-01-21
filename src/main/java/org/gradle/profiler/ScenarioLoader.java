@@ -58,9 +58,10 @@ class ScenarioLoader {
     private static final String TARGETS = "targets";
     private static final String TYPE = "type";
     private static final String MODEL = "model";
+    private static final String ANDROID_STUDIO_SYNC = "android-studio-sync";
 
     private static final List<String> ALL_SCENARIO_KEYS = Arrays.asList(
-        VERSIONS, TASKS, CLEANUP_TASKS, GRADLE_ARGS, RUN_USING, SYSTEM_PROPERTIES, WARM_UP_COUNT, APPLY_ABI_CHANGE_TO, APPLY_NON_ABI_CHANGE_TO, APPLY_ANDROID_RESOURCE_CHANGE_TO, APPLY_ANDROID_RESOURCE_VALUE_CHANGE_TO, APPLY_ANDROID_MANIFEST_CHANGE_TO, APPLY_PROPERTY_RESOURCE_CHANGE_TO, APPLY_CPP_SOURCE_CHANGE_TO, APPLY_H_SOURCE_CHANGE_TO, CLEAR_BUILD_CACHE_BEFORE, CLEAR_TRANSFORM_CACHE_BEFORE, SHOW_BUILD_CACHE_SIZE, GIT_CHECKOUT, GIT_REVERT, BAZEL, BUCK, MAVEN, MODEL
+        VERSIONS, TASKS, CLEANUP_TASKS, GRADLE_ARGS, RUN_USING, SYSTEM_PROPERTIES, WARM_UP_COUNT, APPLY_ABI_CHANGE_TO, APPLY_NON_ABI_CHANGE_TO, APPLY_ANDROID_RESOURCE_CHANGE_TO, APPLY_ANDROID_RESOURCE_VALUE_CHANGE_TO, APPLY_ANDROID_MANIFEST_CHANGE_TO, APPLY_PROPERTY_RESOURCE_CHANGE_TO, APPLY_CPP_SOURCE_CHANGE_TO, APPLY_H_SOURCE_CHANGE_TO, CLEAR_BUILD_CACHE_BEFORE, CLEAR_TRANSFORM_CACHE_BEFORE, SHOW_BUILD_CACHE_SIZE, GIT_CHECKOUT, GIT_REVERT, BAZEL, BUCK, MAVEN, MODEL, ANDROID_STUDIO_SYNC
     );
     private static final List<String> BAZEL_KEYS = Arrays.asList(TARGETS);
     private static final List<String> BUCK_KEYS = Arrays.asList(TARGETS, TYPE);
@@ -188,16 +189,10 @@ class ScenarioLoader {
                 }
 
                 List<String> tasks = ConfigUtil.strings(scenario, TASKS, settings.getTargets());
-                Class<?> toolingModel = getToolingModelClass(scenario, scenarioFile);
-                BuildAction buildAction;
-                if (toolingModel != null) {
-                    buildAction = new LoadToolingModelAction(toolingModel);
-                } else {
-                    buildAction = new RunTasksAction();
-                }
                 List<String> cleanupTasks = ConfigUtil.strings(scenario, CLEANUP_TASKS, Collections.emptyList());
                 List<String> gradleArgs = ConfigUtil.strings(scenario, GRADLE_ARGS, Collections.emptyList());
                 Invoker invoker = ConfigUtil.invoker(scenario, RUN_USING, settings.getInvoker());
+                BuildAction buildAction = getBuildAction(scenario, scenarioFile);
                 Map<String, String> systemProperties = ConfigUtil.map(scenario, SYSTEM_PROPERTIES, settings.getSystemProperties());
                 for (GradleBuildConfiguration version : versions) {
                     File outputDir = versions.size() == 1 ? new File(settings.getOutputDir(), scenarioName) : new File(settings.getOutputDir(), scenarioName + "/" + version.getGradleVersion().getVersion());
@@ -208,6 +203,21 @@ class ScenarioLoader {
         }
 
         return definitions;
+    }
+
+    private static BuildAction getBuildAction(Config scenario, File scenarioFile) {
+        Class<?> toolingModel = getToolingModelClass(scenario, scenarioFile);
+        boolean sync = scenario.hasPath(ANDROID_STUDIO_SYNC);
+        if (toolingModel != null && sync) {
+            throw new IllegalArgumentException("Cannot load tooling model and Android studio sync in same scenario.");
+        }
+        if (toolingModel != null) {
+            return new LoadToolingModelAction(toolingModel);
+        }
+        if (sync) {
+            return new AndroidStudioSyncAction();
+        }
+        return new RunTasksAction();
     }
 
     private static Class<?> getToolingModelClass(Config scenario, File scenarioFile) {

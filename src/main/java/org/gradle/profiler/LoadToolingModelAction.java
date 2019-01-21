@@ -16,6 +16,6 @@ public class LoadToolingModelAction implements BuildAction {
 
     @Override
     public void run(BuildInvoker buildInvoker, List<String> tasks, List<String> gradleArgs, List<String> jvmArgs) {
-        buildInvoker.run(tasks, gradleArgs, jvmArgs, toolingModel);
+        buildInvoker.loadToolingModel(tasks, gradleArgs, jvmArgs, toolingModel);
     }
 }

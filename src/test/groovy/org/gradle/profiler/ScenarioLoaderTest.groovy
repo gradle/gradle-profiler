@@ -1,10 +1,11 @@
 package org.gradle.profiler
 
+import org.gradle.tooling.model.idea.IdeaProject
 import org.junit.Rule
 import org.junit.rules.TemporaryFolder
 import spock.lang.Specification
 
-import static org.gradle.profiler.ScenarioLoader.*
+import static org.gradle.profiler.ScenarioLoader.loadScenarios
 
 class ScenarioLoaderTest extends Specification {
     @Rule TemporaryFolder tmpDir = new TemporaryFolder()
@@ -20,8 +21,12 @@ class ScenarioLoaderTest extends Specification {
         scenarioFile = tmpDir.newFile()
     }
 
+    private settings(Invoker invoker = Invoker.Cli) {
+        new InvocationSettings(projectDir, Profiler.NONE, true, outputDir, invoker, false, scenarioFile, [], [], [:], gradleUserHomeDir, 1, 1)
+    }
+
     def "can load single scenario"() {
-        def settings = new InvocationSettings(projectDir, Profiler.NONE, true, outputDir, Invoker.Cli, false, scenarioFile, [], [], [:], gradleUserHomeDir, 1, 1)
+        def settings = settings()
 
         scenarioFile << """
             default {
@@ -34,8 +39,48 @@ class ScenarioLoaderTest extends Specification {
         (scenarios[0] as GradleScenarioDefinition).tasks == ["help"]
     }
 
+    def "can load tooling model scenarios"() {
+        def settings = settings()
+
+        scenarioFile << """
+            one {
+                model = "${IdeaProject.class.name}"
+            }
+            two {
+                model = "${IdeaProject.class.name}"
+                tasks = ["help"]
+            }
+        """
+        def scenarios = loadScenarios(scenarioFile, settings, Mock(GradleBuildConfigurationReader))
+        expect:
+        scenarios*.name == ["one", "two"]
+        def scenario1 = scenarios[0] as GradleScenarioDefinition
+        scenario1.action instanceof LoadToolingModelAction
+        scenario1.action.toolingModel == IdeaProject
+        scenario1.tasks == []
+        def scenario2 = scenarios[1] as GradleScenarioDefinition
+        scenario2.action instanceof LoadToolingModelAction
+        scenario2.action.toolingModel == IdeaProject
+        scenario2.tasks == ["help"]
+    }
+
+    def "can load single Android studio sync scenario"() {
+        def settings = settings()
+
+        scenarioFile << """
+            default {
+                android-studio-sync { }               
+            }
+        """
+        def scenarios = loadScenarios(scenarioFile, settings, Mock(GradleBuildConfigurationReader))
+        expect:
+        scenarios*.name == ["default"]
+        def scenarioDefinition = scenarios[0] as GradleScenarioDefinition
+        scenarioDefinition.action instanceof AndroidStudioSyncAction
+    }
+
     def "loads default scenarios only"() {
-        def settings = new InvocationSettings(projectDir, Profiler.NONE, true, outputDir, Invoker.Cli, false, scenarioFile, [], [], [:], gradleUserHomeDir, 1, 1)
+        def settings = settings()
 
         scenarioFile << """
             default-scenarios = ["alma", "bela"]
@@ -60,7 +105,7 @@ class ScenarioLoaderTest extends Specification {
     }
 
     def "loads included config"() {
-        def settings = new InvocationSettings(projectDir, Profiler.NONE, true, outputDir, Invoker.Cli, false, scenarioFile, [], [], [:], gradleUserHomeDir, 1, 1)
+        def settings = settings()
 
         def otherConf = tmpDir.newFile("other.conf")
         otherConf << """
@@ -84,7 +129,7 @@ class ScenarioLoaderTest extends Specification {
     }
 
     def "can load Bazel scenario"() {
-        def settings = new InvocationSettings(projectDir, Profiler.NONE, true, outputDir, Invoker.Bazel, false, scenarioFile, [], [], [:], gradleUserHomeDir, 1, 1)
+        def settings = settings(Invoker.Bazel)
 
         scenarioFile << """
             default {
@@ -100,7 +145,7 @@ class ScenarioLoaderTest extends Specification {
     }
 
     def "can load Buck scenario"() {
-        def settings = new InvocationSettings(projectDir, Profiler.NONE, true, outputDir, Invoker.Buck, false, scenarioFile, [], [], [:], gradleUserHomeDir, 1, 1)
+        def settings = settings(Invoker.Buck)
 
         scenarioFile << """
             default {
@@ -116,7 +161,7 @@ class ScenarioLoaderTest extends Specification {
     }
 
     def "can load Maven scenario"() {
-        def settings = new InvocationSettings(projectDir, Profiler.NONE, true, outputDir, Invoker.Maven, false, scenarioFile, [], [], [:], gradleUserHomeDir, 1, 1)
+        def settings = settings(Invoker.Maven)
 
         scenarioFile << """
             default {
@@ -132,7 +177,8 @@ class ScenarioLoaderTest extends Specification {
     }
 
     def "can load scenario with multiple files for a single mutation"() {
-        def settings = new InvocationSettings(projectDir, Profiler.NONE, true, outputDir, Invoker.Cli, false, scenarioFile, [], [], [:], gradleUserHomeDir, 1, 1)
+        def settings = settings()
+
         def fileForMutation1 = new File(projectDir, "fileForMutation1.java")
         def fileForMutation2 = new File(projectDir, "fileForMutation2.kt")
 
