@@ -108,7 +108,7 @@ public class DefaultGradleBuildConfigurationReader implements GradleBuildConfigu
         ProjectConnection connection = connector.forProjectDirectory(projectDir).connect();
         try {
             BuildEnvironment buildEnvironment = connection.getModel(BuildEnvironment.class);
-            new ToolingApiInvoker(connection).run(ImmutableList.of("help"), ImmutableList.of("-I", initScript.getAbsolutePath()), ImmutableList.of(), null);
+            new ToolingApiInvoker(connection).runTasks(ImmutableList.of("help"), ImmutableList.of("-I", initScript.getAbsolutePath()), ImmutableList.of());
             List<String> buildDetails = readBuildDetails();
             JavaEnvironment javaEnvironment = buildEnvironment.getJava();
             List<String> allJvmArgs = new ArrayList<>(javaEnvironment.getJvmArguments());

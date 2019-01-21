@@ -6,6 +6,9 @@ import java.util.List;
  * Runs some particular action against a build.
  */
 public interface BuildAction {
+    /**
+     * A human consumable display name for this action.
+     */
     String getDisplayName();
 
     /**

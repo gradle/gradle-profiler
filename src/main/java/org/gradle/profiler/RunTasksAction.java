@@ -10,6 +10,6 @@ public class RunTasksAction implements BuildAction {
 
     @Override
     public void run(BuildInvoker buildInvoker, List<String> tasks, List<String> gradleArgs, List<String> jvmArgs) {
-        buildInvoker.run(tasks, gradleArgs, jvmArgs, null);
+        buildInvoker.runTasks(tasks, gradleArgs, jvmArgs);
     }
 }

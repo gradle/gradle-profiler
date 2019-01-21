@@ -186,6 +186,12 @@ Here is an example:
     ideaModel {
         # Fetch the IDEA tooling model
         model = "org.gradle.tooling.model.idea.IdeaProject"
+        # Can also runs tasks
+        # tasks = ["assemble"]
+    }
+    androidStudioSync {
+        # Simulate an Android studio sync
+        android-studio-sync { }
     }
 
 Values are optional and default to the values provided on the command-line or defined in the build.
