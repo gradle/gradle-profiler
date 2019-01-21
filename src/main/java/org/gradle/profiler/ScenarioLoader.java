@@ -91,7 +91,7 @@ class ScenarioLoader {
         }
         for (GradleBuildConfiguration version : versions) {
             File outputDir = versions.size() == 1 ? settings.getOutputDir() : new File(settings.getOutputDir(), version.getGradleVersion().getVersion());
-            scenarios.add(new AdhocGradleScenarioDefinition(version, settings.getInvoker(), settings.getTargets(), settings.getSystemProperties(), new BuildMutatorFactory(Collections.emptyList()), settings.getWarmUpCount(), settings.getBuildCount(), outputDir));
+            scenarios.add(new AdhocGradleScenarioDefinition(version, settings.getInvoker(), new RunTasksAction(), settings.getTargets(), settings.getSystemProperties(), new BuildMutatorFactory(Collections.emptyList()), settings.getWarmUpCount(), settings.getBuildCount(), outputDir));
         }
         return scenarios;
     }
@@ -189,13 +189,19 @@ class ScenarioLoader {
 
                 List<String> tasks = ConfigUtil.strings(scenario, TASKS, settings.getTargets());
                 Class<?> toolingModel = getToolingModelClass(scenario, scenarioFile);
+                BuildAction buildAction;
+                if (toolingModel != null) {
+                    buildAction = new LoadToolingModelAction(toolingModel);
+                } else {
+                    buildAction = new RunTasksAction();
+                }
                 List<String> cleanupTasks = ConfigUtil.strings(scenario, CLEANUP_TASKS, Collections.emptyList());
                 List<String> gradleArgs = ConfigUtil.strings(scenario, GRADLE_ARGS, Collections.emptyList());
                 Invoker invoker = ConfigUtil.invoker(scenario, RUN_USING, settings.getInvoker());
                 Map<String, String> systemProperties = ConfigUtil.map(scenario, SYSTEM_PROPERTIES, settings.getSystemProperties());
                 for (GradleBuildConfiguration version : versions) {
                     File outputDir = versions.size() == 1 ? new File(settings.getOutputDir(), scenarioName) : new File(settings.getOutputDir(), scenarioName + "/" + version.getGradleVersion().getVersion());
-                    definitions.add(new GradleScenarioDefinition(scenarioName, invoker, version, tasks, toolingModel, cleanupTasks, gradleArgs, systemProperties,
+                    definitions.add(new GradleScenarioDefinition(scenarioName, invoker, version, buildAction, tasks, cleanupTasks, gradleArgs, systemProperties,
                         buildMutatorFactory, warmUpCount, settings.getBuildCount(), outputDir));
                 }
             }

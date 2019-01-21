@@ -3,7 +3,6 @@ package org.gradle.profiler;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
 public class CliInvoker extends BuildInvoker {
@@ -12,9 +11,7 @@ public class CliInvoker extends BuildInvoker {
     private final File projectDir;
     private final boolean daemon;
 
-
-    public CliInvoker(GradleBuildConfiguration gradleBuildConfiguration, File javaHome, File projectDir, List<String> jvmArgs, List<String> gradleArgs, PidInstrumentation pidInstrumentation, Consumer<BuildInvocationResult> resultsConsumer, boolean daemon) {
-        super(jvmArgs, gradleArgs, pidInstrumentation, resultsConsumer);
+    public CliInvoker(GradleBuildConfiguration gradleBuildConfiguration, File javaHome, File projectDir, boolean daemon) {
         this.gradleBuildConfiguration = gradleBuildConfiguration;
         this.javaHome = javaHome;
         this.projectDir = projectDir;
@@ -22,16 +19,11 @@ public class CliInvoker extends BuildInvoker {
     }
 
     @Override
-    protected BuildInvoker copy(List<String> jvmArgs, List<String> gradleArgs, PidInstrumentation pidInstrumentation, Consumer<BuildInvocationResult> resultsConsumer) {
-        return new CliInvoker(gradleBuildConfiguration, javaHome, projectDir, jvmArgs, gradleArgs, pidInstrumentation, resultsConsumer, daemon);
-    }
-
-    @Override
-    protected void run(List<String> tasks, List<String> gradleArgs, List<String> jvmArgs, Class<?> toolingModel) {
+    public void run(List<String> tasks, List<String> gradleArgs, List<String> jvmArgs, Class<?> toolingModel) {
         if (toolingModel != null) {
             throw new UnsupportedOperationException("Cannot fetch a tooling model using the Gradle CLI.");
         }
-        String gradleOpts = jvmArgs.stream().map (arg -> '"' + arg + '"').collect(Collectors.joining(" "));
+        String gradleOpts = jvmArgs.stream().map(arg -> '"' + arg + '"').collect(Collectors.joining(" "));
 
         List<String> commandLine = new ArrayList<>();
         gradleBuildConfiguration.addGradleCommand(commandLine);
@@ -41,7 +33,7 @@ public class CliInvoker extends BuildInvoker {
         if (daemon) {
             commandLine.add("-Dorg.gradle.jvmargs=" + gradleOpts);
         } else {
-          commandLine.add("-Dorg.gradle.jvmargs");
+            commandLine.add("-Dorg.gradle.jvmargs");
         }
 
         Logging.detailed().println("Running command:");
