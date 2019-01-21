@@ -1,6 +1,7 @@
 package org.gradle.profiler;
 
 import com.google.common.base.Charsets;
+import com.google.common.collect.ImmutableList;
 import com.google.common.io.Files;
 import org.gradle.tooling.GradleConnector;
 import org.gradle.tooling.ProjectConnection;
@@ -107,12 +108,7 @@ public class DefaultGradleBuildConfigurationReader implements GradleBuildConfigu
         ProjectConnection connection = connector.forProjectDirectory(projectDir).connect();
         try {
             BuildEnvironment buildEnvironment = connection.getModel(BuildEnvironment.class);
-            BuildInvoker.run(connection.newBuild(), build -> {
-                build.withArguments("-I", initScript.getAbsolutePath());
-                build.forTasks("help");
-                build.run();
-                return null;
-            });
+            new ToolingApiInvoker(connection).run(ImmutableList.of("help"), ImmutableList.of("-I", initScript.getAbsolutePath()), ImmutableList.of(), null);
             List<String> buildDetails = readBuildDetails();
             JavaEnvironment javaEnvironment = buildEnvironment.getJava();
             List<String> allJvmArgs = new ArrayList<>(javaEnvironment.getJvmArguments());

@@ -11,18 +11,18 @@ public class GradleScenarioDefinition extends ScenarioDefinition {
 
     private final Invoker invoker;
     private final GradleBuildConfiguration buildConfiguration;
-    private final Class<?> toolingModel;
+    private final BuildAction buildAction;
     private final List<String> cleanupTasks;
     private final List<String> tasks;
     private final List<String> gradleArgs;
     private final Map<String, String> systemProperties;
 
-    public GradleScenarioDefinition(String name, Invoker invoker, GradleBuildConfiguration buildConfiguration, List<String> tasks, Class<?> toolingModel, List<String> cleanupTasks, List<String> gradleArgs, Map<String, String> systemProperties, Supplier<BuildMutator> buildMutator, int warmUpCount, int buildCount, File outputDir) {
+    public GradleScenarioDefinition(String name, Invoker invoker, GradleBuildConfiguration buildConfiguration, BuildAction buildAction, List<String> tasks, List<String> cleanupTasks, List<String> gradleArgs, Map<String, String> systemProperties, Supplier<BuildMutator> buildMutator, int warmUpCount, int buildCount, File outputDir) {
         super(name, buildMutator, warmUpCount, buildCount, outputDir);
         this.invoker = invoker;
+        this.buildAction = buildAction;
         this.tasks = tasks;
         this.buildConfiguration = buildConfiguration;
-        this.toolingModel = toolingModel;
         this.cleanupTasks = cleanupTasks;
         this.gradleArgs = gradleArgs;
         this.systemProperties = systemProperties;
@@ -60,8 +60,8 @@ public class GradleScenarioDefinition extends ScenarioDefinition {
         return tasks;
     }
 
-    public Class<?> getToolingModel() {
-        return toolingModel;
+    public BuildAction getAction() {
+        return buildAction;
     }
 
     public List<String> getCleanupTasks() {
@@ -79,12 +79,9 @@ public class GradleScenarioDefinition extends ScenarioDefinition {
     @Override
     protected void printDetail(PrintStream out) {
         out.println("  " + getBuildConfiguration().getGradleVersion() + " (" + getBuildConfiguration().getGradleHome() + ")");
-        out.println("  Run using: " + getInvoker());
+        out.println("  Run using: " + getInvoker() + " to " + buildAction.getDisplayName());
         out.println("  Cleanup Tasks: " + getCleanupTasks());
         out.println("  Tasks: " + getTasks());
-        if (toolingModel != null) {
-            out.println("  Tooling model: " + getToolingModel());
-        }
         out.println("  Gradle args: " + getGradleArgs());
         if (!getSystemProperties().isEmpty()) {
             out.println("  System properties:");

@@ -154,20 +154,21 @@ public class Main {
             logGradleArgs(allBuildsGradleArgs);
 
             Consumer<BuildInvocationResult> resultsCollector = benchmarkResults.version(scenario);
-            BuildInvoker invoker;
+            BuildInvoker buildInvoker;
             switch (scenario.getInvoker()) {
                 case NoDaemon:
-                    invoker = new CliInvoker(buildConfiguration, buildConfiguration.getJavaHome(), settings.getProjectDir(), allBuildsJvmArgs, allBuildsGradleArgs, pidInstrumentation, resultsCollector, false);
+                    buildInvoker = new CliInvoker(buildConfiguration, buildConfiguration.getJavaHome(), settings.getProjectDir(), false);
                     break;
                 case ToolingApi:
-                    invoker = new ToolingApiInvoker(projectConnection, allBuildsJvmArgs, allBuildsGradleArgs, pidInstrumentation, resultsCollector);
+                    buildInvoker = new ToolingApiInvoker(projectConnection);
                     break;
                 case Cli:
-                    invoker = new CliInvoker(buildConfiguration, buildConfiguration.getJavaHome(), settings.getProjectDir(), allBuildsJvmArgs, allBuildsGradleArgs, pidInstrumentation, resultsCollector, true);
+                    buildInvoker = new CliInvoker(buildConfiguration, buildConfiguration.getJavaHome(), settings.getProjectDir(), true);
                     break;
                 default:
                     throw new IllegalArgumentException();
             }
+            BuildActionInvoker invoker = new BuildActionInvoker(allBuildsJvmArgs, allBuildsGradleArgs, buildInvoker, pidInstrumentation, resultsCollector);
 
             mutator.beforeScenario();
 
@@ -177,8 +178,7 @@ public class Main {
             for (int i = 1; i <= scenario.getWarmUpCount(); i++) {
                 final int counter = i;
                 beforeBuild(WARM_UP, counter, invoker, cleanupTasks, mutator);
-                results = tryRun(() -> invoker.runBuild(WARM_UP, counter, BUILD, tasks, scenario.getToolingModel()),
-                    mutator::afterBuild);
+                results = tryRun(() -> invoker.runBuild(WARM_UP, counter, BUILD, tasks, scenario.getAction()), mutator::afterBuild);
                 if (pid == null) {
                     pid = results.getDaemonPid();
                 } else {
@@ -203,7 +203,7 @@ public class Main {
                 logGradleArgs(instrumentedBuildGradleArgs);
             }
 
-            BuildInvoker instrumentedBuildInvoker = invoker.withJvmArgs(instrumentedBuildJvmArgs).withGradleArgs(instrumentedBuildGradleArgs);
+            BuildActionInvoker instrumentedBuildInvoker = invoker.withJvmArgs(instrumentedBuildJvmArgs).withGradleArgs(instrumentedBuildGradleArgs);
 
             if (settings.isProfile()) {
                 if (pid == null) {
@@ -224,7 +224,7 @@ public class Main {
                         }
                     }
 
-                    BuildInvocationResult result = instrumentedBuildInvoker.runBuild(MEASURE, counter, BUILD, tasks, scenario.getToolingModel());
+                    BuildInvocationResult result = instrumentedBuildInvoker.runBuild(MEASURE, counter, BUILD, tasks, scenario.getAction());
 
                     if (settings.isProfile() && (counter == scenario.getBuildCount() || !cleanupTasks.isEmpty())) {
                         try {
@@ -438,10 +438,10 @@ public class Main {
         }, after);
     }
 
-    private static void beforeBuild(Phase phase, int buildNumber, BuildInvoker invoker, List<String> cleanupTasks, BuildMutator mutator) {
+    private static void beforeBuild(Phase phase, int buildNumber, BuildActionInvoker invoker, List<String> cleanupTasks, BuildMutator mutator) {
         if (!cleanupTasks.isEmpty()) {
             mutator.beforeCleanup();
-            tryRun(() -> invoker.notInstrumented().runBuild(phase, buildNumber, CLEANUP, cleanupTasks, null), mutator::afterCleanup);
+            tryRun(() -> invoker.notInstrumented().runBuild(phase, buildNumber, CLEANUP, cleanupTasks, new RunTasksAction()), mutator::afterCleanup);
         }
         mutator.beforeBuild();
     }
