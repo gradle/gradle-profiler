@@ -3,8 +3,6 @@ package org.gradle.profiler;
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigValue;
 
-import java.io.File;
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -65,6 +63,10 @@ public class ConfigUtil {
 		} else {
 			return defaultValue;
 		}
+	}
+
+	public static List<String> strings(Config config, String key) {
+		return strings(config, key, Collections.emptyList());
 	}
 
 	public static List<String> strings(Config config, String key, List<String> defaults) {

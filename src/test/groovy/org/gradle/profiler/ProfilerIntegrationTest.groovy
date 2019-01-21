@@ -221,7 +221,6 @@ println "<tasks: " + gradle.startParameter.taskNames + ">"
         profileFile.exists()
     }
 
-
     @Requires({ YourKit.findYourKitHome() })
     def "profiles build using YourKit to produce CPU tracing snapshot"() {
         given:
@@ -689,6 +688,46 @@ println "<daemon: " + gradle.services.get(org.gradle.internal.environment.Gradle
         lines.get(2) == "tasks,assemble,assemble,help"
     }
 
+    def "runs benchmarks using scenario provided on command line and defined in scenario file"() {
+        given:
+        def scenarioFile = file("benchmark.conf")
+        scenarioFile.text = """
+xyz {
+    versions = ["$minimalSupportedGradleVersion"]
+}
+doNotRun {
+    versions = "$minimalSupportedGradleVersion"
+    tasks = [broken]
+}
+"""
+
+        buildFile.text = """
+apply plugin: BasePlugin
+println "<gradle-version: " + gradle.gradleVersion + ">"
+println "<tasks: " + gradle.startParameter.taskNames + ">"
+println "<daemon: " + gradle.services.get(org.gradle.internal.environment.GradleBuildEnvironment).longLivingProcess + ">"
+"""
+
+        when:
+        new Main().run("--project-dir", projectDir.absolutePath, "--output-dir", outputDir.absolutePath, "--scenario-file", scenarioFile.absolutePath,
+            "--benchmark", "xyz")
+
+        then:
+        // Probe version, 6 warm up, 10 builds
+        logFile.grep("<gradle-version: $minimalSupportedGradleVersion>").size() == 17
+        logFile.grep("<daemon: true").size() == 17
+        logFile.grep("<tasks: [help]>").size() == 1
+        logFile.grep("<tasks: []>").size() == 16
+
+        logFile.contains("* Running scenario xyz using Gradle $minimalSupportedGradleVersion (scenario 1/1)")
+
+        resultFile.isFile()
+        resultFile.text.readLines().get(0) == "scenario,xyz"
+        resultFile.text.readLines().get(1) == "version,${minimalSupportedGradleVersion}"
+        resultFile.text.readLines().get(2) == "tasks,"
+        resultFile.text.readLines().size() == 26 // 3 headers, 16 executions, 7 stats
+    }
+
     def "profiles scenarios defined in scenario file"() {
         given:
         def scenarioFile = file("benchmark.conf")
@@ -746,7 +785,7 @@ plugins.withId("idea") {
 
         when:
         new Main().run("--project-dir", projectDir.absolutePath, "--output-dir", outputDir.absolutePath, "--scenario-file", scenarioFile.absolutePath,
-            "--benchmark")
+            "--benchmark", "ideaModel")
 
         then:
         // Probe version, 6 warm up, 10 builds

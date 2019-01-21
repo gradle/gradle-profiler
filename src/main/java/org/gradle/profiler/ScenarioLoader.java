@@ -151,7 +151,7 @@ class ScenarioLoader {
                         throw new IllegalArgumentException("Unrecognized key '" + scenarioName + ".bazel." + key + "' defined in scenario file " + scenarioFile);
                     }
                 }
-                List<String> targets = ConfigUtil.strings(executionInstructions, TARGETS, Collections.emptyList());
+                List<String> targets = ConfigUtil.strings(executionInstructions, TARGETS);
                 File outputDir = new File(settings.getOutputDir(), scenarioName + "-bazel");
                 definitions.add(new BazelScenarioDefinition(scenarioName, targets, buildMutatorFactory, warmUpCount, settings.getBuildCount(), outputDir));
             } else if (scenario.hasPath(BUCK) && settings.isBuck()) {
@@ -164,7 +164,7 @@ class ScenarioLoader {
                         throw new IllegalArgumentException("Unrecognized key '" + scenarioName + ".buck." + key + "' defined in scenario file " + scenarioFile);
                     }
                 }
-                List<String> targets = ConfigUtil.strings(executionInstructions, TARGETS, Collections.emptyList());
+                List<String> targets = ConfigUtil.strings(executionInstructions, TARGETS);
                 String type = ConfigUtil.string(executionInstructions, TYPE, null);
                 File outputDir = new File(settings.getOutputDir(), scenarioName + "-buck");
                 definitions.add(new BuckScenarioDefinition(scenarioName, targets, type, buildMutatorFactory, warmUpCount, settings.getBuildCount(), outputDir));
@@ -178,7 +178,7 @@ class ScenarioLoader {
                         throw new IllegalArgumentException("Unrecognized key '" + scenarioName + ".maven." + key + "' defined in scenario file " + scenarioFile);
                     }
                 }
-                List<String> targets = ConfigUtil.strings(executionInstructions, TARGETS, Collections.emptyList());
+                List<String> targets = ConfigUtil.strings(executionInstructions, TARGETS);
                 File outputDir = new File(settings.getOutputDir(), scenarioName + "-maven");
                 definitions.add(new MavenScenarioDefinition(scenarioName, targets, buildMutatorFactory, warmUpCount, settings.getBuildCount(), outputDir));
             } else if (!settings.isBazel() && !settings.isBuck() && !settings.isMaven()) {
@@ -188,9 +188,9 @@ class ScenarioLoader {
                     versions.add(inspector.readConfiguration());
                 }
 
-                List<String> tasks = ConfigUtil.strings(scenario, TASKS, settings.getTargets());
-                List<String> cleanupTasks = ConfigUtil.strings(scenario, CLEANUP_TASKS, Collections.emptyList());
-                List<String> gradleArgs = ConfigUtil.strings(scenario, GRADLE_ARGS, Collections.emptyList());
+                List<String> tasks = ConfigUtil.strings(scenario, TASKS);
+                List<String> cleanupTasks = ConfigUtil.strings(scenario, CLEANUP_TASKS);
+                List<String> gradleArgs = ConfigUtil.strings(scenario, GRADLE_ARGS);
                 Invoker invoker = ConfigUtil.invoker(scenario, RUN_USING, settings.getInvoker());
                 BuildAction buildAction = getBuildAction(scenario, scenarioFile);
                 Map<String, String> systemProperties = ConfigUtil.map(scenario, SYSTEM_PROPERTIES, settings.getSystemProperties());
