@@ -340,6 +340,23 @@ println "<daemon: " + gradle.services.get(org.gradle.internal.environment.Gradle
         assertBuildScanPublished(BuildScanProfiler.defaultBuildScanVersion(GradleVersion.version(minimalSupportedGradleVersion)))
     }
 
+    def "profiles build using Build Scans with latest supported Gradle version"() {
+        given:
+        buildFile.text = """
+apply plugin: BasePlugin
+println "<gradle-version: " + gradle.gradleVersion + ">"
+"""
+
+        when:
+        new Main().
+                run("--project-dir", projectDir.absolutePath, "--output-dir", outputDir.absolutePath, "--gradle-version", latestSupportedGradleVersion, "--profile", "buildscan",
+                        "assemble")
+
+        then:
+        logFile.grep("<gradle-version: $latestSupportedGradleVersion>").size() == 4
+        assertBuildScanPublished(BuildScanProfiler.defaultBuildScanVersion(GradleVersion.version(latestSupportedGradleVersion)))
+    }
+
     def "uses build scan version used by the build if present"() {
         given:
         buildFile.text = """
