@@ -3,31 +3,10 @@ package org.gradle.profiler;
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
 import com.typesafe.config.ConfigParseOptions;
-import org.gradle.profiler.mutations.AbstractFileChangeMutator;
-import org.gradle.profiler.mutations.ApplyAbiChangeToSourceFileMutator;
-import org.gradle.profiler.mutations.ApplyChangeToAndroidManifestFileMutator;
-import org.gradle.profiler.mutations.ApplyChangeToAndroidResourceFileMutator;
-import org.gradle.profiler.mutations.ApplyChangeToNativeSourceFileMutator;
-import org.gradle.profiler.mutations.ApplyChangeToPropertyResourceFileMutator;
-import org.gradle.profiler.mutations.ApplyNonAbiChangeToSourceFileMutator;
-import org.gradle.profiler.mutations.ApplyValueChangeToAndroidResourceFileMutator;
-import org.gradle.profiler.mutations.BuildMutatorConfigurator;
-import org.gradle.profiler.mutations.ClearArtifactTransformCacheMutator;
-import org.gradle.profiler.mutations.ClearBuildCacheMutator;
-import org.gradle.profiler.mutations.FileChangeMutatorConfigurator;
-import org.gradle.profiler.mutations.GitCheckoutMutator;
-import org.gradle.profiler.mutations.GitRevertMutator;
-import org.gradle.profiler.mutations.ShowBuildCacheSizeMutator;
+import org.gradle.profiler.mutations.*;
 
 import java.io.File;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.LinkedHashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.TreeSet;
+import java.util.*;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
@@ -92,7 +71,7 @@ class ScenarioLoader {
         }
         for (GradleBuildConfiguration version : versions) {
             File outputDir = versions.size() == 1 ? settings.getOutputDir() : new File(settings.getOutputDir(), version.getGradleVersion().getVersion());
-            scenarios.add(new AdhocGradleScenarioDefinition(version, settings.getInvoker(), new RunTasksAction(), settings.getTargets(), settings.getSystemProperties(), new BuildMutatorFactory(Collections.emptyList()), settings.getWarmUpCount(), settings.getBuildCount(), outputDir));
+            scenarios.add(new AdhocGradleScenarioDefinition(version, settings.getInvoker(), new RunTasksAction(settings.getTargets()), settings.getSystemProperties(), new BuildMutatorFactory(Collections.emptyList()), settings.getWarmUpCount(), settings.getBuildCount(), outputDir));
         }
         return scenarios;
     }
@@ -188,15 +167,14 @@ class ScenarioLoader {
                     versions.add(inspector.readConfiguration());
                 }
 
-                List<String> tasks = ConfigUtil.strings(scenario, TASKS);
-                List<String> cleanupTasks = ConfigUtil.strings(scenario, CLEANUP_TASKS);
                 List<String> gradleArgs = ConfigUtil.strings(scenario, GRADLE_ARGS);
                 Invoker invoker = ConfigUtil.invoker(scenario, RUN_USING, settings.getInvoker());
                 BuildAction buildAction = getBuildAction(scenario, scenarioFile);
+                BuildAction cleanupAction = getCleanupAction(scenario);
                 Map<String, String> systemProperties = ConfigUtil.map(scenario, SYSTEM_PROPERTIES, settings.getSystemProperties());
                 for (GradleBuildConfiguration version : versions) {
                     File outputDir = versions.size() == 1 ? new File(settings.getOutputDir(), scenarioName) : new File(settings.getOutputDir(), scenarioName + "/" + version.getGradleVersion().getVersion());
-                    definitions.add(new GradleScenarioDefinition(scenarioName, invoker, version, buildAction, tasks, cleanupTasks, gradleArgs, systemProperties,
+                    definitions.add(new GradleScenarioDefinition(scenarioName, invoker, version, buildAction, cleanupAction, gradleArgs, systemProperties,
                         buildMutatorFactory, warmUpCount, settings.getBuildCount(), outputDir));
                 }
             }
@@ -205,19 +183,31 @@ class ScenarioLoader {
         return definitions;
     }
 
+    private static BuildAction getCleanupAction(Config scenario) {
+        List<String> tasks = ConfigUtil.strings(scenario, CLEANUP_TASKS);
+        if (tasks.isEmpty()) {
+            return BuildAction.NO_OP;
+        }
+        return new RunTasksAction(tasks);
+    }
+
     private static BuildAction getBuildAction(Config scenario, File scenarioFile) {
         Class<?> toolingModel = getToolingModelClass(scenario, scenarioFile);
         boolean sync = scenario.hasPath(ANDROID_STUDIO_SYNC);
+        List<String> tasks = ConfigUtil.strings(scenario, TASKS);
         if (toolingModel != null && sync) {
             throw new IllegalArgumentException("Cannot load tooling model and Android studio sync in same scenario.");
         }
+        if (sync && !tasks.isEmpty()) {
+            throw new IllegalArgumentException("Cannot run tasks and Android studio sync in same scenario.");
+        }
         if (toolingModel != null) {
-            return new LoadToolingModelAction(toolingModel);
+            return new LoadToolingModelAction(toolingModel, tasks);
         }
         if (sync) {
             return new AndroidStudioSyncAction();
         }
-        return new RunTasksAction();
+        return new RunTasksAction(tasks);
     }
 
     private static Class<?> getToolingModelClass(Config scenario, File scenarioFile) {
