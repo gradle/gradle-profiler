@@ -37,7 +37,8 @@ class ScenarioLoaderTest extends Specification {
         expect:
         scenarios*.name == ["default"]
         def scenario = scenarios[0] as GradleScenarioDefinition
-        scenario.tasks == ["help"]
+        scenario.action.tasks == ["help"]
+        scenario.cleanupAction == BuildAction.NO_OP
     }
 
     def "can load single scenario with no tasks defined"() {
@@ -51,7 +52,7 @@ class ScenarioLoaderTest extends Specification {
         def scenarios = loadScenarios(scenarioFile, settings, Mock(GradleBuildConfigurationReader))
         expect:
         def scenario = scenarios[0] as GradleScenarioDefinition
-        scenario.tasks.empty
+        scenario.action.tasks.empty
     }
 
     def "can load tooling model scenarios"() {
@@ -72,11 +73,11 @@ class ScenarioLoaderTest extends Specification {
         def scenario1 = scenarios[0] as GradleScenarioDefinition
         scenario1.action instanceof LoadToolingModelAction
         scenario1.action.toolingModel == IdeaProject
-        scenario1.tasks == []
+        scenario1.action.tasks == []
         def scenario2 = scenarios[1] as GradleScenarioDefinition
         scenario2.action instanceof LoadToolingModelAction
         scenario2.action.toolingModel == IdeaProject
-        scenario2.tasks == ["help"]
+        scenario2.action.tasks == ["help"]
     }
 
     def "can load single Android studio sync scenario"() {
@@ -115,8 +116,8 @@ class ScenarioLoaderTest extends Specification {
         def scenarios = loadScenarios(scenarioFile, settings, Mock(GradleBuildConfigurationReader))
         expect:
         scenarios*.name == ["alma", "bela"]
-        (scenarios[0] as GradleScenarioDefinition).tasks == ["alma"]
-        (scenarios[1] as GradleScenarioDefinition).tasks == ["bela"]
+        (scenarios[0] as GradleScenarioDefinition).action.tasks == ["alma"]
+        (scenarios[1] as GradleScenarioDefinition).action.tasks == ["bela"]
     }
 
     def "loads included config"() {
@@ -140,7 +141,7 @@ class ScenarioLoaderTest extends Specification {
         def scenarios = loadScenarios(scenarioFile, settings, Mock(GradleBuildConfigurationReader))
         expect:
         scenarios*.name == ["alma"]
-        (scenarios[0] as GradleScenarioDefinition).tasks == ["alma"]
+        (scenarios[0] as GradleScenarioDefinition).action.tasks == ["alma"]
     }
 
     def "can load Bazel scenario"() {

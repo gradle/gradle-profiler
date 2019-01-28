@@ -25,9 +25,9 @@ public class BuildUnderTestInvoker {
     /**
      * Runs a single invocation of a build.
      */
-    public BuildInvocationResult runBuild(Phase phase, int buildNumber, BuildStep buildStep, List<String> tasks, BuildAction buildAction) {
+    public BuildInvocationResult runBuild(Phase phase, int buildNumber, BuildStep buildStep, BuildAction buildAction) {
         String displayName = phase.displayBuildNumber(buildNumber);
-        startOperation("Running " + displayName + " with " + buildStep.name().toLowerCase() + " tasks " + tasks);
+        startOperation("Running " + displayName + " with " + buildStep.name().toLowerCase() + " " + buildAction.getDisplayName());
 
         List<String> jvmArgs = new ArrayList<>(this.jvmArgs);
         jvmArgs.add("-Dorg.gradle.profiler.phase=" + phase);
@@ -35,7 +35,7 @@ public class BuildUnderTestInvoker {
         jvmArgs.add("-Dorg.gradle.profiler.step=" + buildStep);
 
         Timer timer = new Timer();
-        buildAction.run(buildInvoker, tasks, gradleArgs, jvmArgs);
+        buildAction.run(buildInvoker, gradleArgs, jvmArgs);
         Duration executionTime = timer.elapsed();
 
         String pid = pidInstrumentation.getPidForLastBuild();

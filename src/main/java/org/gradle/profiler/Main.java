@@ -10,11 +10,7 @@ import java.io.File;
 import java.io.IOException;
 import java.time.Duration;
 import java.time.Instant;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
+import java.util.*;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
@@ -120,8 +116,7 @@ public class Main {
         JvmArgsCalculator allBuildsJvmArgsCalculator = settings.getProfiler().newJvmArgsCalculator(scenarioSettings);
         GradleArgsCalculator allBuildsGradleArgsCalculator = settings.getProfiler().newGradleArgsCalculator(scenarioSettings);
 
-        List<String> cleanupTasks = scenario.getCleanupTasks();
-        List<String> tasks = scenario.getTasks();
+        BuildAction cleanupAction = scenario.getCleanupAction();
         GradleBuildConfiguration buildConfiguration = scenario.getBuildConfiguration();
 
         daemonControl.stop(buildConfiguration);
@@ -177,8 +172,8 @@ public class Main {
 
             for (int i = 1; i <= scenario.getWarmUpCount(); i++) {
                 final int counter = i;
-                beforeBuild(WARM_UP, counter, invoker, cleanupTasks, mutator);
-                results = tryRun(() -> invoker.runBuild(WARM_UP, counter, BUILD, tasks, scenario.getAction()), mutator::afterBuild);
+                beforeBuild(WARM_UP, counter, invoker, cleanupAction, mutator);
+                results = tryRun(() -> invoker.runBuild(WARM_UP, counter, BUILD, scenario.getAction()), mutator::afterBuild);
                 if (pid == null) {
                     pid = results.getDaemonPid();
                 } else {
@@ -214,9 +209,9 @@ public class Main {
             }
             for (int i = 1; i <= scenario.getBuildCount(); i++) {
                 final int counter = i;
-                beforeBuild(MEASURE, counter, invoker, cleanupTasks, mutator);
+                beforeBuild(MEASURE, counter, invoker, cleanupAction, mutator);
                 results = tryRun(() -> {
-                    if (settings.isProfile() && (counter == 1 || !cleanupTasks.isEmpty())) {
+                    if (settings.isProfile() && (counter == 1 || cleanupAction.isDoesSomething())) {
                         try {
                             control.startRecording();
                         } catch (IOException | InterruptedException e) {
@@ -224,9 +219,9 @@ public class Main {
                         }
                     }
 
-                    BuildInvocationResult result = instrumentedBuildInvoker.runBuild(MEASURE, counter, BUILD, tasks, scenario.getAction());
+                    BuildInvocationResult result = instrumentedBuildInvoker.runBuild(MEASURE, counter, BUILD, scenario.getAction());
 
-                    if (settings.isProfile() && (counter == scenario.getBuildCount() || !cleanupTasks.isEmpty())) {
+                    if (settings.isProfile() && (counter == scenario.getBuildCount() || cleanupAction.isDoesSomething())) {
                         try {
                             control.stopRecording();
                         } catch (IOException | InterruptedException e) {
@@ -438,10 +433,10 @@ public class Main {
         }, after);
     }
 
-    private static void beforeBuild(Phase phase, int buildNumber, BuildUnderTestInvoker invoker, List<String> cleanupTasks, BuildMutator mutator) {
-        if (!cleanupTasks.isEmpty()) {
+    private static void beforeBuild(Phase phase, int buildNumber, BuildUnderTestInvoker invoker, BuildAction cleanupAction, BuildMutator mutator) {
+        if (cleanupAction.isDoesSomething()) {
             mutator.beforeCleanup();
-            tryRun(() -> invoker.notInstrumented().runBuild(phase, buildNumber, CLEANUP, cleanupTasks, new RunTasksAction()), mutator::afterCleanup);
+            tryRun(() -> invoker.notInstrumented().runBuild(phase, buildNumber, CLEANUP, cleanupAction), mutator::afterCleanup);
         }
         mutator.beforeBuild();
     }

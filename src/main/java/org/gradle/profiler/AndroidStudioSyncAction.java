@@ -7,29 +7,35 @@ import org.gradle.tooling.model.gradle.BasicGradleProject;
 import org.gradle.tooling.model.gradle.GradleBuild;
 
 import java.io.Serializable;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.TreeMap;
+import java.util.*;
 
 /**
  * A mock-up of Android studio sync.
  */
 public class AndroidStudioSyncAction implements BuildAction {
     @Override
+    public String getShortDisplayName() {
+        return "AS sync";
+    }
+
+    @Override
     public String getDisplayName() {
         return "simulate Android Studio sync";
     }
 
     @Override
-    public void run(GradleInvoker buildInvoker, List<String> tasks, List<String> gradleArgs, List<String> jvmArgs) {
+    public boolean isDoesSomething() {
+        return true;
+    }
+
+    @Override
+    public void run(GradleInvoker buildInvoker, List<String> gradleArgs, List<String> jvmArgs) {
         gradleArgs = new ArrayList<>(gradleArgs);
         gradleArgs.add("-Dcom.android.build.gradle.overrideVersionCheck=true");
         gradleArgs.add("-Pandroid.injected.build.model.only=true");
         gradleArgs.add("-Pandroid.injected.build.model.only.versioned=3");
         gradleArgs.add("-Pandroid.builder.sdkDownload=true");
-        tasks = new ArrayList<>(tasks);
-        tasks.add("generateDebugSources");
+        List<String> tasks = Collections.singletonList("generateDebugSources");
         buildInvoker.runToolingAction(tasks, gradleArgs, jvmArgs, new GetModel(), (builder) -> {
             builder.addProgressListener(noOpListener());
         });

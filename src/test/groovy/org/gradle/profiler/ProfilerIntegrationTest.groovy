@@ -724,7 +724,7 @@ println "<daemon: " + gradle.services.get(org.gradle.internal.environment.Gradle
         resultFile.isFile()
         resultFile.text.readLines().get(0) == "scenario,xyz"
         resultFile.text.readLines().get(1) == "version,${minimalSupportedGradleVersion}"
-        resultFile.text.readLines().get(2) == "tasks,"
+        resultFile.text.readLines().get(2) == "tasks,default tasks"
         resultFile.text.readLines().size() == 26 // 3 headers, 16 executions, 7 stats
     }
 
@@ -767,7 +767,7 @@ println "<tasks: " + gradle.startParameter.taskNames + ">"
         def scenarioFile = file("benchmark.conf")
         scenarioFile.text = """
 ideaModel {
-    versions = ["3.0", "$minimalSupportedGradleVersion"]
+    versions = ["$minimalSupportedGradleVersion", "$latestSupportedGradleVersion"]
     model = "org.gradle.tooling.model.idea.IdeaProject"
 }
 """
@@ -790,20 +790,60 @@ plugins.withId("idea") {
         then:
         // Probe version, 6 warm up, 10 builds
         logFile.grep("<gradle-version: $minimalSupportedGradleVersion>").size() == 17
-        logFile.grep("<gradle-version: 3.0").size() == 17
+        logFile.grep("<gradle-version: $latestSupportedGradleVersion").size() == 17
         logFile.grep("<daemon: true").size() == 17 * 2
         logFile.grep("<tasks: []>").size() == 16 * 2
         logFile.grep("<idea>").size() == 16 * 2
 
-        logFile.contains("* Running scenario ideaModel using Gradle 3.0 (scenario 1/2)")
-        logFile.contains("* Running scenario ideaModel using Gradle $minimalSupportedGradleVersion (scenario 2/2)")
+        logFile.contains("* Running scenario ideaModel using Gradle $minimalSupportedGradleVersion (scenario 1/2)")
+        logFile.contains("* Running scenario ideaModel using Gradle $latestSupportedGradleVersion (scenario 2/2)")
 
         resultFile.isFile()
         List<String> lines = resultFile.text.readLines()
         lines.size() == 26 // 3 headers, 16 executions, 7 stats
         lines.get(0) == "scenario,ideaModel,ideaModel"
-        lines.get(1) == "version,3.0,${minimalSupportedGradleVersion}"
-        lines.get(2) == "tasks,,"
+        lines.get(1) == "version,$minimalSupportedGradleVersion,$latestSupportedGradleVersion"
+        lines.get(2) == "tasks,model IdeaProject,model IdeaProject"
+    }
+
+    def "profiles fetching tooling model using JFR"() {
+        given:
+        def scenarioFile = file("benchmark.conf")
+        scenarioFile.text = """
+ideaModel {
+    versions = ["$minimalSupportedGradleVersion", "$latestSupportedGradleVersion"]
+    model = "org.gradle.tooling.model.idea.IdeaProject"
+}
+"""
+
+        buildFile.text = """
+apply plugin: BasePlugin
+println "<gradle-version: " + gradle.gradleVersion + ">"
+println "<tasks: " + gradle.startParameter.taskNames + ">"
+println "<daemon: " + gradle.services.get(org.gradle.internal.environment.GradleBuildEnvironment).longLivingProcess + ">"
+plugins.withId("idea") {
+    // most likely due to IDEA model builder 
+    println("<idea>")
+}
+"""
+
+        when:
+        new Main().run("--project-dir", projectDir.absolutePath, "--output-dir", outputDir.absolutePath, "--scenario-file", scenarioFile.absolutePath,
+            "--profile", "jfr", "ideaModel")
+
+        then:
+        // Probe version, 2 warm up, 1 profiled build
+        logFile.grep("<gradle-version: $minimalSupportedGradleVersion>").size() == 4
+        logFile.grep("<gradle-version: $latestSupportedGradleVersion>").size() == 4
+        logFile.grep("<daemon: true").size() == 8
+        logFile.grep("<tasks: []>").size() == 6
+        logFile.grep("<idea>").size() == 6
+
+        logFile.contains("* Running scenario ideaModel using Gradle $minimalSupportedGradleVersion (scenario 1/2)")
+        logFile.contains("* Running scenario ideaModel using Gradle $latestSupportedGradleVersion (scenario 2/2)")
+
+        def profileFile = new File(outputDir, "ideaModel/$minimalSupportedGradleVersion/ideaModel-${minimalSupportedGradleVersion}.jfr")
+        profileFile.isFile()
     }
 
     def "profiles scenarios defined in scenario file using multiple Gradle versions"() {
