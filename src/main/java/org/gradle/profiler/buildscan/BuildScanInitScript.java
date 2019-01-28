@@ -43,8 +43,13 @@ public class BuildScanInitScript extends GeneratedInitScript {
         writer.write("rootProject { prj ->\n");
         writer.write("    apply plugin: initscript.classLoader.loadClass(\"com.gradle.scan.plugin.BuildScanPlugin\")\n");
         writer.write("    buildScan {\n");
-        writer.write("        licenseAgreementUrl = 'https://gradle.com/terms-of-service'\n");
-        writer.write("        licenseAgree = 'yes'\n");
+        if (version.startsWith("0.") || version.startsWith("1.")) {
+            writer.write("        licenseAgreementUrl = 'https://gradle.com/terms-of-service'\n");
+            writer.write("        licenseAgree = 'yes'\n");
+        } else {
+            writer.write("        termsOfServiceUrl = 'https://gradle.com/terms-of-service'\n");
+            writer.write("        termsOfServiceAgree = 'yes'\n");
+        }
         writer.write("    }\n");
         writer.write("}\n");
     }
