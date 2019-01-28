@@ -7,14 +7,14 @@ import java.util.function.Consumer;
 
 import static org.gradle.profiler.Logging.startOperation;
 
-public class BuildActionInvoker {
+public class BuildUnderTestInvoker {
     private final List<String> jvmArgs;
     private final List<String> gradleArgs;
     private final PidInstrumentation pidInstrumentation;
     private final Consumer<BuildInvocationResult> resultsConsumer;
-    private final BuildInvoker buildInvoker;
+    private final GradleInvoker buildInvoker;
 
-    public BuildActionInvoker(List<String> jvmArgs, List<String> gradleArgs, BuildInvoker buildInvoker, PidInstrumentation pidInstrumentation, Consumer<BuildInvocationResult> resultsConsumer) {
+    public BuildUnderTestInvoker(List<String> jvmArgs, List<String> gradleArgs, GradleInvoker buildInvoker, PidInstrumentation pidInstrumentation, Consumer<BuildInvocationResult> resultsConsumer) {
         this.jvmArgs = jvmArgs;
         this.gradleArgs = gradleArgs;
         this.buildInvoker = buildInvoker;
@@ -22,6 +22,9 @@ public class BuildActionInvoker {
         this.resultsConsumer = resultsConsumer;
     }
 
+    /**
+     * Runs a single invocation of a build.
+     */
     public BuildInvocationResult runBuild(Phase phase, int buildNumber, BuildStep buildStep, List<String> tasks, BuildAction buildAction) {
         String displayName = phase.displayBuildNumber(buildNumber);
         startOperation("Running " + displayName + " with " + buildStep.name().toLowerCase() + " tasks " + tasks);
@@ -44,25 +47,25 @@ public class BuildActionInvoker {
         return results;
     }
 
-    public BuildActionInvoker notInstrumented() {
+    public BuildUnderTestInvoker notInstrumented() {
         return copy(jvmArgs, gradleArgs, buildInvocationResult -> { });
     }
 
-    public BuildActionInvoker withJvmArgs(List<String> jvmArgs) {
+    public BuildUnderTestInvoker withJvmArgs(List<String> jvmArgs) {
         if (jvmArgs.equals(this.jvmArgs)) {
             return this;
         }
         return copy(jvmArgs, gradleArgs, resultsConsumer);
     }
 
-    public BuildActionInvoker withGradleArgs(List<String> gradleArgs) {
+    public BuildUnderTestInvoker withGradleArgs(List<String> gradleArgs) {
         if (gradleArgs.equals(this.gradleArgs)) {
             return this;
         }
         return copy(jvmArgs, gradleArgs, resultsConsumer);
     }
 
-    private BuildActionInvoker copy(List<String> jvmArgs, List<String> gradleArgs, Consumer<BuildInvocationResult> resultsConsumer) {
-        return new BuildActionInvoker(jvmArgs, gradleArgs, buildInvoker, pidInstrumentation, resultsConsumer);
+    private BuildUnderTestInvoker copy(List<String> jvmArgs, List<String> gradleArgs, Consumer<BuildInvocationResult> resultsConsumer) {
+        return new BuildUnderTestInvoker(jvmArgs, gradleArgs, buildInvoker, pidInstrumentation, resultsConsumer);
     }
 }

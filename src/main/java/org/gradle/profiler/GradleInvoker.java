@@ -6,7 +6,10 @@ import org.gradle.tooling.BuildActionExecuter;
 import java.util.List;
 import java.util.function.Consumer;
 
-public abstract class BuildInvoker {
+/**
+ * Performs operations on a build using Gradle.
+ */
+public abstract class GradleInvoker {
     public abstract void runTasks(List<String> tasks, List<String> gradleArgs, List<String> jvmArgs);
 
     public abstract void loadToolingModel(List<String> tasks, List<String> gradleArgs, List<String> jvmArgs, Class<?> toolingModel);

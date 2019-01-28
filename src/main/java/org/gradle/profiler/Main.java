@@ -154,7 +154,7 @@ public class Main {
             logGradleArgs(allBuildsGradleArgs);
 
             Consumer<BuildInvocationResult> resultsCollector = benchmarkResults.version(scenario);
-            BuildInvoker buildInvoker;
+            GradleInvoker buildInvoker;
             switch (scenario.getInvoker()) {
                 case NoDaemon:
                     buildInvoker = new CliInvoker(buildConfiguration, buildConfiguration.getJavaHome(), settings.getProjectDir(), false);
@@ -168,7 +168,7 @@ public class Main {
                 default:
                     throw new IllegalArgumentException();
             }
-            BuildActionInvoker invoker = new BuildActionInvoker(allBuildsJvmArgs, allBuildsGradleArgs, buildInvoker, pidInstrumentation, resultsCollector);
+            BuildUnderTestInvoker invoker = new BuildUnderTestInvoker(allBuildsJvmArgs, allBuildsGradleArgs, buildInvoker, pidInstrumentation, resultsCollector);
 
             mutator.beforeScenario();
 
@@ -203,7 +203,7 @@ public class Main {
                 logGradleArgs(instrumentedBuildGradleArgs);
             }
 
-            BuildActionInvoker instrumentedBuildInvoker = invoker.withJvmArgs(instrumentedBuildJvmArgs).withGradleArgs(instrumentedBuildGradleArgs);
+            BuildUnderTestInvoker instrumentedBuildInvoker = invoker.withJvmArgs(instrumentedBuildJvmArgs).withGradleArgs(instrumentedBuildGradleArgs);
 
             if (settings.isProfile()) {
                 if (pid == null) {
@@ -438,7 +438,7 @@ public class Main {
         }, after);
     }
 
-    private static void beforeBuild(Phase phase, int buildNumber, BuildActionInvoker invoker, List<String> cleanupTasks, BuildMutator mutator) {
+    private static void beforeBuild(Phase phase, int buildNumber, BuildUnderTestInvoker invoker, List<String> cleanupTasks, BuildMutator mutator) {
         if (!cleanupTasks.isEmpty()) {
             mutator.beforeCleanup();
             tryRun(() -> invoker.notInstrumented().runBuild(phase, buildNumber, CLEANUP, cleanupTasks, new RunTasksAction()), mutator::afterCleanup);

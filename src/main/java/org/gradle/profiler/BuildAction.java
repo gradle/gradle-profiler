@@ -3,7 +3,7 @@ package org.gradle.profiler;
 import java.util.List;
 
 /**
- * Runs some particular action against a build.
+ * Runs some particular action against a Gradle build.
  */
 public interface BuildAction {
     /**
@@ -14,5 +14,5 @@ public interface BuildAction {
     /**
      * Runs the measured work of this action.
      */
-    void run(BuildInvoker buildInvoker, List<String> tasks, List<String> gradleArgs, List<String> jvmArgs);
+    void run(GradleInvoker buildInvoker, List<String> tasks, List<String> gradleArgs, List<String> jvmArgs);
 }
