@@ -9,7 +9,7 @@ import java.util.List;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
-public class CliInvoker extends BuildInvoker {
+public class CliInvoker extends GradleInvoker {
     private final GradleBuildConfiguration gradleBuildConfiguration;
     private final File javaHome;
     private final File projectDir;

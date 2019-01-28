@@ -10,7 +10,7 @@ import java.util.List;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
-public class ToolingApiInvoker extends BuildInvoker {
+public class ToolingApiInvoker extends GradleInvoker {
     private final ProjectConnection projectConnection;
 
     public ToolingApiInvoker(ProjectConnection projectConnection) {

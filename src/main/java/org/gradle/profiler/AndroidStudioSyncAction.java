@@ -22,7 +22,7 @@ public class AndroidStudioSyncAction implements BuildAction {
     }
 
     @Override
-    public void run(BuildInvoker buildInvoker, List<String> tasks, List<String> gradleArgs, List<String> jvmArgs) {
+    public void run(GradleInvoker buildInvoker, List<String> tasks, List<String> gradleArgs, List<String> jvmArgs) {
         gradleArgs = new ArrayList<>(gradleArgs);
         gradleArgs.add("-Dcom.android.build.gradle.overrideVersionCheck=true");
         gradleArgs.add("-Pandroid.injected.build.model.only=true");
