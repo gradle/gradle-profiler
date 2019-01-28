@@ -1,25 +1,13 @@
 package org.gradle.profiler;
 
-import org.apache.commons.io.FileUtils;
 import org.gradle.profiler.report.CsvGenerator;
 import org.gradle.profiler.report.HtmlGenerator;
-import org.gradle.tooling.GradleConnector;
-import org.gradle.tooling.ProjectConnection;
 
 import java.io.File;
-import java.io.IOException;
 import java.time.Duration;
 import java.time.Instant;
-import java.util.*;
-import java.util.function.Consumer;
-import java.util.function.Supplier;
-import java.util.stream.Collectors;
-
-import static org.gradle.profiler.BuildStep.BUILD;
-import static org.gradle.profiler.BuildStep.CLEANUP;
-import static org.gradle.profiler.Logging.startOperation;
-import static org.gradle.profiler.Phase.MEASURE;
-import static org.gradle.profiler.Phase.WARM_UP;
+import java.util.ArrayList;
+import java.util.List;
 
 public class Main {
     public static void main(String[] args) {
@@ -62,6 +50,10 @@ public class Main {
             File htmlFile = new File(settings.getOutputDir(), "benchmark.html");
             BenchmarkResultCollector benchmarkResults = new BenchmarkResultCollector(new CsvGenerator(cvsFile), new HtmlGenerator(htmlFile));
             PidInstrumentation pidInstrumentation = new PidInstrumentation();
+            GradleScenarioInvoker gradleScenarioInvoker = new GradleScenarioInvoker(daemonControl, pidInstrumentation);
+            BazelScenarioInvoker bazelScenarioInvoker = new BazelScenarioInvoker();
+            BuckScenarioInvoker buckScenarioInvoker = new BuckScenarioInvoker();
+            MavenScenarioInvoker mavenScenarioInvoker = new MavenScenarioInvoker();
 
             List<Throwable> failures = new ArrayList<>();
             int scenarioCount = 0;
@@ -72,13 +64,13 @@ public class Main {
 
                 try {
                     if (scenario instanceof BazelScenarioDefinition) {
-                        runBazelScenario((BazelScenarioDefinition) scenario, settings, benchmarkResults);
+                        bazelScenarioInvoker.run((BazelScenarioDefinition) scenario, settings, benchmarkResults);
                     } else if (scenario instanceof BuckScenarioDefinition) {
-                        runBuckScenario((BuckScenarioDefinition) scenario, settings, benchmarkResults);
+                        buckScenarioInvoker.run((BuckScenarioDefinition) scenario, settings, benchmarkResults);
                     } else if (scenario instanceof MavenScenarioDefinition) {
-                        runMavenScenario((MavenScenarioDefinition) scenario, settings, benchmarkResults);
+                        mavenScenarioInvoker.run((MavenScenarioDefinition) scenario, settings, benchmarkResults);
                     } else {
-                        runGradleScenario((GradleScenarioDefinition) scenario, settings, daemonControl, benchmarkResults, pidInstrumentation);
+                        gradleScenarioInvoker.run((GradleScenarioDefinition) scenario, settings, benchmarkResults);
                     }
 
                 } catch (Throwable t) {
@@ -110,359 +102,10 @@ public class Main {
         }
     }
 
-    private void runGradleScenario(GradleScenarioDefinition scenario, InvocationSettings settings, DaemonControl daemonControl, BenchmarkResultCollector benchmarkResults, PidInstrumentation pidInstrumentation) throws IOException, InterruptedException {
-        ScenarioSettings scenarioSettings = new ScenarioSettings(settings, scenario);
-        FileUtils.forceMkdir(scenario.getOutputDir());
-        JvmArgsCalculator allBuildsJvmArgsCalculator = settings.getProfiler().newJvmArgsCalculator(scenarioSettings);
-        GradleArgsCalculator allBuildsGradleArgsCalculator = settings.getProfiler().newGradleArgsCalculator(scenarioSettings);
-
-        BuildAction cleanupAction = scenario.getCleanupAction();
-        GradleBuildConfiguration buildConfiguration = scenario.getBuildConfiguration();
-
-        daemonControl.stop(buildConfiguration);
-
-        BuildMutator mutator = scenario.getBuildMutator().get();
-        GradleConnector connector = GradleConnector.newConnector()
-            .useInstallation(buildConfiguration.getGradleHome())
-            .useGradleUserHomeDir(settings.getGradleUserHome().getAbsoluteFile());
-        ProjectConnection projectConnection = connector.forProjectDirectory(settings.getProjectDir()).connect();
-        try {
-            buildConfiguration.printVersionInfo();
-            List<String> allBuildsJvmArgs = new ArrayList<>(buildConfiguration.getJvmArguments());
-            for (Map.Entry<String, String> entry : scenario.getSystemProperties().entrySet()) {
-                allBuildsJvmArgs.add("-D" + entry.getKey() + "=" + entry.getValue());
-            }
-            allBuildsJvmArgs.add("-Dorg.gradle.profiler.scenario=" + scenario.getName());
-            allBuildsJvmArgsCalculator.calculateJvmArgs(allBuildsJvmArgs);
-            logJvmArgs(allBuildsJvmArgs);
-            List<String> allBuildsGradleArgs = new ArrayList<>(pidInstrumentation.getArgs());
-            allBuildsGradleArgs.add("--gradle-user-home");
-            allBuildsGradleArgs.add(settings.getGradleUserHome().getAbsolutePath());
-            for (Map.Entry<String, String> entry : scenario.getSystemProperties().entrySet()) {
-                allBuildsGradleArgs.add("-D" + entry.getKey() + "=" + entry.getValue());
-            }
-            allBuildsGradleArgs.addAll(scenario.getGradleArgs());
-            if (settings.isDryRun()) {
-                allBuildsGradleArgs.add("--dry-run");
-            }
-            allBuildsGradleArgsCalculator.calculateGradleArgs(allBuildsGradleArgs);
-            logGradleArgs(allBuildsGradleArgs);
-
-            Consumer<BuildInvocationResult> resultsCollector = benchmarkResults.version(scenario);
-            GradleInvoker buildInvoker;
-            switch (scenario.getInvoker()) {
-                case NoDaemon:
-                    buildInvoker = new CliInvoker(buildConfiguration, buildConfiguration.getJavaHome(), settings.getProjectDir(), false);
-                    break;
-                case ToolingApi:
-                    buildInvoker = new ToolingApiInvoker(projectConnection);
-                    break;
-                case Cli:
-                    buildInvoker = new CliInvoker(buildConfiguration, buildConfiguration.getJavaHome(), settings.getProjectDir(), true);
-                    break;
-                default:
-                    throw new IllegalArgumentException();
-            }
-            BuildUnderTestInvoker invoker = new BuildUnderTestInvoker(allBuildsJvmArgs, allBuildsGradleArgs, buildInvoker, pidInstrumentation, resultsCollector);
-
-            mutator.beforeScenario();
-
-            BuildInvocationResult results = null;
-            String pid = null;
-
-            for (int i = 1; i <= scenario.getWarmUpCount(); i++) {
-                final int counter = i;
-                beforeBuild(WARM_UP, counter, invoker, cleanupAction, mutator);
-                results = tryRun(() -> invoker.runBuild(WARM_UP, counter, BUILD, scenario.getAction()), mutator::afterBuild);
-                if (pid == null) {
-                    pid = results.getDaemonPid();
-                } else {
-                    checkPid(pid, results.getDaemonPid(), scenario.getInvoker());
-                }
-            }
-
-            ProfilerController control = settings.getProfiler().newController(pid, scenarioSettings);
-
-            List<String> instrumentedBuildJvmArgs = new ArrayList<>(allBuildsJvmArgs);
-            settings.getProfiler().newInstrumentedBuildsJvmArgsCalculator(scenarioSettings).calculateJvmArgs(instrumentedBuildJvmArgs);
-
-            List<String> instrumentedBuildGradleArgs = new ArrayList<>(allBuildsGradleArgs);
-            settings.getProfiler().newInstrumentedBuildsGradleArgsCalculator(scenarioSettings).calculateGradleArgs(instrumentedBuildGradleArgs);
-
-            Logging.detailed().println();
-            Logging.detailed().println("* Using args for instrumented builds:");
-            if (!instrumentedBuildJvmArgs.equals(allBuildsJvmArgs)) {
-                logJvmArgs(instrumentedBuildJvmArgs);
-            }
-            if (!instrumentedBuildGradleArgs.equals(allBuildsGradleArgs)) {
-                logGradleArgs(instrumentedBuildGradleArgs);
-            }
-
-            BuildUnderTestInvoker instrumentedBuildInvoker = invoker.withJvmArgs(instrumentedBuildJvmArgs).withGradleArgs(instrumentedBuildGradleArgs);
-
-            if (settings.isProfile()) {
-                if (pid == null) {
-                    throw new IllegalStateException("Using the --profile option requires at least one warm-up");
-                }
-                Logging.startOperation("Starting profiler for daemon with pid " + pid);
-                control.startSession();
-            }
-            for (int i = 1; i <= scenario.getBuildCount(); i++) {
-                final int counter = i;
-                beforeBuild(MEASURE, counter, invoker, cleanupAction, mutator);
-                results = tryRun(() -> {
-                    if (settings.isProfile() && (counter == 1 || cleanupAction.isDoesSomething())) {
-                        try {
-                            control.startRecording();
-                        } catch (IOException | InterruptedException e) {
-                            throw new RuntimeException(e);
-                        }
-                    }
-
-                    BuildInvocationResult result = instrumentedBuildInvoker.runBuild(MEASURE, counter, BUILD, scenario.getAction());
-
-                    if (settings.isProfile() && (counter == scenario.getBuildCount() || cleanupAction.isDoesSomething())) {
-                        try {
-                            control.stopRecording();
-                        } catch (IOException | InterruptedException e) {
-                            throw new RuntimeException(e);
-                        }
-                    }
-
-                    return result;
-                }, mutator::afterBuild);
-            }
-
-            if (settings.isProfile()) {
-                Logging.startOperation("Stopping profiler for daemon with pid " + pid);
-                control.stopSession();
-            }
-            if (settings.isBenchmark()) {
-                benchmarkResults.write();
-            }
-            Objects.requireNonNull(results);
-            checkPid(pid, results.getDaemonPid(), scenario.getInvoker());
-        } finally {
-            mutator.afterScenario();
-            projectConnection.close();
-            daemonControl.stop(buildConfiguration);
-        }
-    }
-
-    private void logGradleArgs(List<String> allBuildsGradleArgs) {
-        Logging.detailed().println("Gradle args:");
-        for (String arg : allBuildsGradleArgs) {
-            Logging.detailed().println("  " + arg);
-        }
-    }
-
-    private void logJvmArgs(List<String> allBuildsJvmArgs) {
-        Logging.detailed().println("JVM args:");
-        for (String jvmArg : allBuildsJvmArgs) {
-            Logging.detailed().println("  " + jvmArg);
-        }
-    }
-
-    private void runBazelScenario(BazelScenarioDefinition scenario, InvocationSettings settings, BenchmarkResultCollector benchmarkResults) {
-        String bazelHome = System.getenv("BAZEL_HOME");
-        String bazelExe = bazelHome == null ? "bazel" : bazelHome + "/bin/bazel";
-
-        List<String> targets = new ArrayList<>(scenario.getTargets());
-
-        System.out.println();
-        System.out.println("* Bazel targets: " + targets);
-
-        List<String> commandLine = new ArrayList<>();
-        commandLine.add(bazelExe);
-        commandLine.add("build");
-        commandLine.addAll(targets);
-
-        BuildMutator mutator = scenario.getBuildMutator().get();
-        mutator.beforeScenario();
-        try {
-            Consumer<BuildInvocationResult> resultConsumer = benchmarkResults.version(scenario);
-            for (int i = 0; i < scenario.getWarmUpCount(); i++) {
-                String displayName = WARM_UP.displayBuildNumber(i + 1);
-                mutator.beforeBuild();
-                tryRun(() -> {
-                    startOperation("Running " + displayName);
-                    Timer timer = new Timer();
-                    new CommandExec().inDir(settings.getProjectDir()).run(commandLine);
-                    Duration executionTime = timer.elapsed();
-                    printExecutionTime(executionTime);
-                    resultConsumer.accept(new BuildInvocationResult(displayName, executionTime, null));
-                }, mutator::afterBuild);
-            }
-            for (int i = 0; i < scenario.getBuildCount(); i++) {
-                String displayName = MEASURE.displayBuildNumber(i + 1);
-                mutator.beforeBuild();
-                tryRun(() -> {
-                    startOperation("Running " + displayName);
-                    Timer timer = new Timer();
-                    new CommandExec().inDir(settings.getProjectDir()).run(commandLine);
-                    Duration executionTime = timer.elapsed();
-                    printExecutionTime(executionTime);
-                    resultConsumer.accept(new BuildInvocationResult(displayName, executionTime, null));
-                }, mutator::afterBuild);
-            }
-        } finally {
-            mutator.afterScenario();
-        }
-    }
-
-    private void runBuckScenario(BuckScenarioDefinition scenario, InvocationSettings settings, BenchmarkResultCollector benchmarkResults) {
-        String buckwExe = settings.getProjectDir() + "/buckw";
-        List<String> targets = new ArrayList<>(scenario.getTargets());
-        if (scenario.getType() != null) {
-            Logging.startOperation("Query targets with type " + scenario.getType());
-            List<String> commandLine = new ArrayList<>();
-            commandLine.add(buckwExe);
-            commandLine.add("targets");
-            if (!scenario.getType().equals("all")) {
-                commandLine.add("--type");
-                commandLine.add(scenario.getType());
-            }
-            String output = new CommandExec().inDir(settings.getProjectDir()).runAndCollectOutput(commandLine);
-            targets.addAll(Arrays.stream(output.split("\\n")).filter(s -> s.matches("//\\w+.*")).collect(Collectors.toList()));
-        }
-
-        System.out.println();
-        System.out.println("* Buck targets: " + targets);
-
-        List<String> commandLine = new ArrayList<>();
-        commandLine.add(buckwExe);
-        commandLine.add("build");
-        commandLine.addAll(targets);
-
-        BuildMutator mutator = scenario.getBuildMutator().get();
-        mutator.beforeScenario();
-        try {
-            Consumer<BuildInvocationResult> resultConsumer = benchmarkResults.version(scenario);
-            for (int i = 0; i < scenario.getWarmUpCount(); i++) {
-                String displayName = WARM_UP.displayBuildNumber(i + 1);
-                mutator.beforeBuild();
-                tryRun(() -> {
-                    startOperation("Running " + displayName);
-                    Timer timer = new Timer();
-                    new CommandExec().inDir(settings.getProjectDir()).run(commandLine);
-                    Duration executionTime = timer.elapsed();
-                    printExecutionTime(executionTime);
-                    resultConsumer.accept(new BuildInvocationResult(displayName, executionTime, null));
-                }, mutator::afterBuild);
-            }
-            for (int i = 0; i < scenario.getBuildCount(); i++) {
-                String displayName = MEASURE.displayBuildNumber(i + 1);
-                mutator.beforeBuild();
-                tryRun(() -> {
-                    startOperation("Running " + displayName);
-                    Timer timer = new Timer();
-                    new CommandExec().inDir(settings.getProjectDir()).run(commandLine);
-                    Duration executionTime = timer.elapsed();
-                    printExecutionTime(executionTime);
-                    resultConsumer.accept(new BuildInvocationResult(displayName, executionTime, null));
-                }, mutator::afterBuild);
-            }
-        } finally {
-            mutator.afterScenario();
-        }
-    }
-
-    private void runMavenScenario(MavenScenarioDefinition scenario, InvocationSettings settings, BenchmarkResultCollector benchmarkResults) {
-        String mavenHome = System.getenv("MAVEN_HOME");
-        String mvn = mavenHome == null ? "mvn" : mavenHome + "/bin/mvn";
-
-        System.out.println();
-        System.out.println("* Maven targets: " + scenario.getTargets());
-
-        List<String> commandLine = new ArrayList<>();
-        commandLine.add(mvn);
-        commandLine.addAll(scenario.getTargets());
-
-        BuildMutator mutator = scenario.getBuildMutator().get();
-        mutator.beforeScenario();
-        try {
-            Consumer<BuildInvocationResult> resultConsumer = benchmarkResults.version(scenario);
-            for (int i = 0; i < scenario.getWarmUpCount(); i++) {
-                String displayName = WARM_UP.displayBuildNumber(i + 1);
-                mutator.beforeBuild();
-                tryRun(() -> {
-                    startOperation("Running " + displayName);
-                    Timer timer = new Timer();
-                    new CommandExec().inDir(settings.getProjectDir()).run(commandLine);
-                    Duration executionTime = timer.elapsed();
-                    printExecutionTime(executionTime);
-                    resultConsumer.accept(new BuildInvocationResult(displayName, executionTime, null));
-                }, mutator::afterBuild);
-            }
-            for (int i = 0; i < scenario.getBuildCount(); i++) {
-                String displayName = MEASURE.displayBuildNumber(i + 1);
-                mutator.beforeBuild();
-                tryRun(() -> {
-                    startOperation("Running " + displayName);
-                    Timer timer = new Timer();
-                    new CommandExec().inDir(settings.getProjectDir()).run(commandLine);
-                    Duration executionTime = timer.elapsed();
-                    printExecutionTime(executionTime);
-                    resultConsumer.accept(new BuildInvocationResult(displayName, executionTime, null));
-                }, mutator::afterBuild);
-            }
-        } finally {
-            mutator.afterScenario();
-        }
-    }
-
-    private static <T> T tryRun(Supplier<T> action, Consumer<Throwable> after) {
-        Throwable error = null;
-        try {
-            return action.get();
-        } catch (RuntimeException | Error ex) {
-            error = ex;
-            throw ex;
-        } catch (Throwable ex) {
-            error = ex;
-            throw new RuntimeException(ex);
-        } finally {
-            after.accept(error);
-        }
-    }
-
-    private static void tryRun(Runnable action, Consumer<Throwable> after) {
-        tryRun(() -> {
-            action.run();
-            return null;
-        }, after);
-    }
-
-    private static void beforeBuild(Phase phase, int buildNumber, BuildUnderTestInvoker invoker, BuildAction cleanupAction, BuildMutator mutator) {
-        if (cleanupAction.isDoesSomething()) {
-            mutator.beforeCleanup();
-            tryRun(() -> invoker.notInstrumented().runBuild(phase, buildNumber, CLEANUP, cleanupAction), mutator::afterCleanup);
-        }
-        mutator.beforeBuild();
-    }
-
     private void logScenarios(List<ScenarioDefinition> scenarios) {
         Logging.startOperation("Scenarios");
         for (ScenarioDefinition scenario : scenarios) {
             scenario.printTo(System.out);
-        }
-    }
-
-    private static void checkPid(String expected, String actual, Invoker invoker) {
-        switch (invoker) {
-            case Cli:
-            case ToolingApi:
-                if (!expected.equals(actual)) {
-                    throw new RuntimeException("Multiple Gradle daemons were used.");
-                }
-                break;
-            case NoDaemon:
-                if (expected.equals(actual)) {
-                    throw new RuntimeException("Gradle daemon was used.");
-                }
-                break;
-            default:
-                throw new IllegalArgumentException();
         }
     }
 
