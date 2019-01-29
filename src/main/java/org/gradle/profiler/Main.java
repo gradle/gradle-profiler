@@ -127,10 +127,6 @@ public class Main {
         }
     }
 
-    public static void printExecutionTime(Duration executionTime) {
-        System.out.println("Execution time " + executionTime.toMillis() + " ms");
-    }
-
     static class ScenarioFailedException extends RuntimeException {
         public ScenarioFailedException(Throwable cause) {
             super(cause);

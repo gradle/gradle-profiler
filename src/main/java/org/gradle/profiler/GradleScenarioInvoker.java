@@ -79,7 +79,7 @@ public class GradleScenarioInvoker extends ScenarioInvoker<GradleScenarioDefinit
                 default:
                     throw new IllegalArgumentException();
             }
-            BuildUnderTestInvoker invoker = new BuildUnderTestInvoker(allBuildsJvmArgs, allBuildsGradleArgs, buildInvoker, pidInstrumentation, resultsCollector);
+            BuildUnderTestInvoker invoker = new BuildUnderTestInvoker(allBuildsJvmArgs, allBuildsGradleArgs, buildInvoker, pidInstrumentation);
 
             mutator.beforeScenario();
 
@@ -87,9 +87,10 @@ public class GradleScenarioInvoker extends ScenarioInvoker<GradleScenarioDefinit
             String pid = null;
 
             for (int i = 1; i <= scenario.getWarmUpCount(); i++) {
-                final int counter = i;
+                int counter = i;
                 beforeBuild(WARM_UP, counter, invoker, cleanupAction, mutator);
-                results = tryRun(() -> invoker.runBuild(WARM_UP, counter, BUILD, scenario.getAction()), mutator::afterBuild);
+                String displayName = WARM_UP.displayBuildNumber(counter);
+                results = runMeasured(displayName, mutator, () -> invoker.runBuild(WARM_UP, counter, BUILD, scenario.getAction()), resultsCollector);
                 if (pid == null) {
                     pid = results.getDaemonPid();
                 } else {
@@ -126,7 +127,8 @@ public class GradleScenarioInvoker extends ScenarioInvoker<GradleScenarioDefinit
             for (int i = 1; i <= scenario.getBuildCount(); i++) {
                 final int counter = i;
                 beforeBuild(MEASURE, counter, invoker, cleanupAction, mutator);
-                results = tryRun(() -> {
+                String displayName = MEASURE.displayBuildNumber(counter);
+                results = runMeasured(displayName, mutator, () -> {
                     if (settings.isProfile() && (counter == 1 || cleanupAction.isDoesSomething())) {
                         try {
                             control.startRecording();
@@ -146,7 +148,7 @@ public class GradleScenarioInvoker extends ScenarioInvoker<GradleScenarioDefinit
                     }
 
                     return result;
-                }, mutator::afterBuild);
+                }, resultsCollector);
             }
 
             if (settings.isProfile()) {
@@ -181,10 +183,9 @@ public class GradleScenarioInvoker extends ScenarioInvoker<GradleScenarioDefinit
 
     private void beforeBuild(Phase phase, int buildNumber, BuildUnderTestInvoker invoker, BuildAction cleanupAction, BuildMutator mutator) {
         if (cleanupAction.isDoesSomething()) {
-            mutator.beforeCleanup();
-            tryRun(() -> invoker.notInstrumented().runBuild(phase, buildNumber, CLEANUP, cleanupAction), mutator::afterCleanup);
+            String displayName = phase.displayBuildNumber(buildNumber);
+            runCleanup(displayName, mutator, () -> invoker.runBuild(phase, buildNumber, CLEANUP, cleanupAction));
         }
-        mutator.beforeBuild();
     }
 
     private static void checkPid(String expected, String actual, Invoker invoker) {
