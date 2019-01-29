@@ -1,13 +1,11 @@
 package org.gradle.profiler;
 
-import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
-import static org.gradle.profiler.Logging.startOperation;
 import static org.gradle.profiler.Phase.MEASURE;
 import static org.gradle.profiler.Phase.WARM_UP;
 
@@ -43,27 +41,11 @@ public class BuckScenarioInvoker extends ScenarioInvoker<BuckScenarioDefinition>
             Consumer<BuildInvocationResult> resultConsumer = benchmarkResults.version(scenario);
             for (int i = 0; i < scenario.getWarmUpCount(); i++) {
                 String displayName = WARM_UP.displayBuildNumber(i + 1);
-                mutator.beforeBuild();
-                tryRun(() -> {
-                    startOperation("Running " + displayName);
-                    Timer timer = new Timer();
-                    new CommandExec().inDir(settings.getProjectDir()).run(commandLine);
-                    Duration executionTime = timer.elapsed();
-                    Main.printExecutionTime(executionTime);
-                    resultConsumer.accept(new BuildInvocationResult(displayName, executionTime, null));
-                }, mutator::afterBuild);
+                runMeasured(displayName, mutator, measureCommandLineExecution(displayName, commandLine, settings.getProjectDir()), resultConsumer);
             }
             for (int i = 0; i < scenario.getBuildCount(); i++) {
                 String displayName = MEASURE.displayBuildNumber(i + 1);
-                mutator.beforeBuild();
-                tryRun(() -> {
-                    startOperation("Running " + displayName);
-                    Timer timer = new Timer();
-                    new CommandExec().inDir(settings.getProjectDir()).run(commandLine);
-                    Duration executionTime = timer.elapsed();
-                    Main.printExecutionTime(executionTime);
-                    resultConsumer.accept(new BuildInvocationResult(displayName, executionTime, null));
-                }, mutator::afterBuild);
+                runMeasured(displayName, mutator, measureCommandLineExecution(displayName, commandLine, settings.getProjectDir()), resultConsumer);
             }
         } finally {
             mutator.afterScenario();
