@@ -39,7 +39,7 @@ public class FlameGraphTool {
 
     public boolean checkInstallation() {
         try {
-            new CommandExec().run("perl", "-v");
+            new CommandExec().runAndCollectOutput("perl", "-v");
             return true;
         } catch (Exception e) {
             System.out.println("To get flamegraphs, please install perl.");
