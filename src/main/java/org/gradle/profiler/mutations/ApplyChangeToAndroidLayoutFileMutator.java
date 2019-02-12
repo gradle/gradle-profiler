@@ -2,6 +2,14 @@ package org.gradle.profiler.mutations;
 
 import java.io.File;
 
+/**
+ * This class applies a mutation to an Android layout file by adding an extra, hidden view at the bottom of the layout.
+ * It supports both DataBinding layouts and traditional Android layouts.
+ *
+ * Note: This mutator does not support layouts with a single view in them - it requires a valid ViewGroup to contain the
+ * new view. Attempting to mutate a layout that does not have a ViewGroup as its root element will result in an
+ * invalid layout file.
+ */
 public class ApplyChangeToAndroidLayoutFileMutator extends AbstractFileChangeMutator {
     public ApplyChangeToAndroidLayoutFileMutator(File sourceFile) {
         super(sourceFile);
