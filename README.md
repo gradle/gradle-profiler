@@ -74,8 +74,8 @@ The output are flame and icicle graphs which show you the call tree and hotspots
 
 The following options are supported and closely mimic the options of async-profiler. Have a look at its readme to find out more about each option:
 
-- `--async-profiler-event`: The event to sample, e.g. 'cpu' or 'alloc'. 
-- `--async-profiler-count`: The count to use when aggregating event data. Either `samples` or `total`. `total` is especially useful for allocation profiling.
+- `--async-profiler-event`: The event to sample, e.g. `cpu` or `alloc`. Defaults to `cpu`. 
+- `--async-profiler-count`: The count to use when aggregating event data. Either `samples` or `total`. `total` is especially useful for allocation profiling. Defaults to `samples`.
 - `--async-profiler-interval`: The sampling interval in ns, defaults to 10_000_000 (10ms)
 - `--async-profiler-stackdepth`: The maximum stack depth. Lower this if profiles with deep recursion get too large. Defaults to 2048.
 - `--async-profiler-framebuffer`: The size of the frame buffer in bytes. Defaults to 10_000_000 (~10MB)
