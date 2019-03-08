@@ -14,7 +14,7 @@ import spock.lang.Unroll
 class ProfilerIntegrationTest extends Specification {
 
     @Shared
-    List<String> supportedGradleVersions = ["3.3", "3.4.1", "3.5", "4.0", "4.1", "4.2.1", "4.7", "5.1"]
+    List<String> supportedGradleVersions = ["3.3", "3.4.1", "3.5", "4.0", "4.1", "4.2.1", "4.7", "5.2.1"]
     @Shared
     String minimalSupportedGradleVersion = supportedGradleVersions.first()
     @Shared
