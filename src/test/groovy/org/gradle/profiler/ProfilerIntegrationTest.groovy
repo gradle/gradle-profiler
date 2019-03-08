@@ -112,6 +112,56 @@ help {
         output.contains("Unknown scenario 'asmbl' requested. Available scenarios are: assemble, help")
     }
 
+    def "complains when profiling and skipping warm-up builds"() {
+        given:
+        buildFile.text = """
+apply plugin: BasePlugin
+println "<gradle-version: " + gradle.gradleVersion + ">"
+println "<tasks: " + gradle.startParameter.taskNames + ">"
+"""
+
+        when:
+        new Main().
+            run("--project-dir", projectDir.absolutePath, "--output-dir", outputDir.absolutePath, "--gradle-version", minimalSupportedGradleVersion, "--profile", "jfr",
+                "--warmups", "0", "--iterations", "2", "assemble")
+
+        then:
+        thrown(IllegalArgumentException)
+
+        and:
+        output.contains("You can not skip warm-ups when profiling or benchmarking. Use --no-daemon if you want to profile or benchmark JVM startup")
+    }
+
+    def "complains when benchmarking scenario and skipping warm-up builds"() {
+        given:
+        def scenarioFile = file("benchmark.conf")
+        scenarioFile.text = """
+assemble {
+    tasks = assemble
+}
+help {
+    tasks = help
+    warm-ups = 0
+}
+"""
+        buildFile.text = """
+apply plugin: BasePlugin
+println "<gradle-version: " + gradle.gradleVersion + ">"
+println "<tasks: " + gradle.startParameter.taskNames + ">"
+"""
+
+        when:
+        new Main().
+            run("--project-dir", projectDir.absolutePath, "--output-dir", outputDir.absolutePath, "--gradle-version", minimalSupportedGradleVersion, "--benchmark",
+                "--iterations", "2", "--scenario-file", scenarioFile.absolutePath)
+
+        then:
+        thrown(IllegalArgumentException)
+
+        and:
+        output.contains("You can not skip warm-ups when profiling or benchmarking scenario help. Use --no-daemon if you want to profile or benchmark JVM startup")
+    }
+
     def "reports build failures"() {
         given:
         buildFile.text = """

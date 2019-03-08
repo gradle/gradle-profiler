@@ -70,6 +70,10 @@ class ScenarioLoader {
         if (versions.isEmpty()) {
             versions.add(gradleBuildConfigurationReader.readConfiguration());
         }
+        if(settings.getWarmUpCount()<1) {
+            throw new IllegalArgumentException("You can not skip warm-ups when profiling or benchmarking. Use --no-daemon if you want to profile or benchmark JVM startup");
+        }
+
         for (GradleBuildConfiguration version : versions) {
             File outputDir = versions.size() == 1 ? settings.getOutputDir() : new File(settings.getOutputDir(), version.getGradleVersion().getVersion());
             scenarios.add(new AdhocGradleScenarioDefinition(version, settings.getInvoker(), new RunTasksAction(settings.getTargets()), settings.getSystemProperties(), new BuildMutatorFactory(Collections.emptyList()), settings.getWarmUpCount(), settings.getBuildCount(), outputDir));
@@ -163,6 +167,10 @@ class ScenarioLoader {
                 File outputDir = new File(settings.getOutputDir(), scenarioName + "-maven");
                 definitions.add(new MavenScenarioDefinition(scenarioName, targets, buildMutatorFactory, warmUpCount, settings.getBuildCount(), outputDir));
             } else if (!settings.isBazel() && !settings.isBuck() && !settings.isMaven()) {
+                if(warmUpCount<1) {
+                    throw new IllegalArgumentException("You can not skip warm-ups when profiling or benchmarking scenario "+scenarioName+". Use --no-daemon if you want to profile or benchmark JVM startup");
+                }
+
                 List<GradleBuildConfiguration> versions = ConfigUtil.strings(scenario, VERSIONS, settings.getVersions()).stream().map(inspector::readConfiguration).collect(
                     Collectors.toList());
                 if (versions.isEmpty()) {
