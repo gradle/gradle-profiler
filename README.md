@@ -83,7 +83,7 @@ The following options are supported and closely mimic the options of async-profi
 
 ### JProfiler
 
-JProfiler is a powerful commercial profiler, which provides both sampling and instrumentation capabilites.
+JProfiler is a powerful commercial profiler, which provides both sampling and instrumentation capabilities.
 You can tailor its settings in the JProfiler UI and then instruct the Gradle profiler to use these settings for full control
 over what you want to investigate. For instance, you could split calls to a dependency resolution rule by argument to
 find out if the rule is slow for a specific dependency.
@@ -103,7 +103,7 @@ This will use JProfiler's CPU sampling by default. JProfiler supports several ot
 
 ### YourKit
 
-YourKit is a powerful commercial profiler, which provides both sampling and instrumentation capabilites.
+YourKit is a powerful commercial profiler, which provides both sampling and instrumentation capabilities.
 Its integration in the Gradle profiler is currently limited, e.g. support for probes and other custom settings
 is missing. If you are using YourKit and would like to see better support, pull requests are welcome.
 
