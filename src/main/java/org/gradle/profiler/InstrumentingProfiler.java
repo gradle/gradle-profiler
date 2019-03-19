@@ -3,15 +3,18 @@ package org.gradle.profiler;
 import java.io.IOException;
 
 /**
- * A profiler that instruments a JVM using JVM args, and can:
+ * A profiler that can:
  *
  * <ul>
- *     <li>Start recording on JVM start, using JVM args</li>
- *     <li>Capture snapshot on JVM exit, using JVM args</li>
- *     <li>Use some communication mechanism to start recording in an instrumented JVM that is currently running.</li>
- *     <li>Use some communication mechanism to pause recording in an instrumented JVM that is currently running.</li>
- *     <li>Use some communication mechanism to capture a snapshot from an instrumented JVM that is currently running.</li>
+ * <li>Instrument a JVM using JVM args</li>
+ * <li>Start recording on JVM start, using JVM args</li>
+ * <li>Capture snapshot on JVM exit, using JVM args</li>
+ * <li>Use some communication mechanism to start recording in an instrumented JVM that is currently running.</li>
+ * <li>Use some communication mechanism to pause recording in an instrumented JVM that is currently running.</li>
+ * <li>Use some communication mechanism to capture a snapshot from an instrumented JVM that is currently running.</li>
  * </ul>
+ *
+ * <p>The profiler may or may not support starting recording multiple times for a given JVM.</p>
  */
 public abstract class InstrumentingProfiler extends Profiler {
     @Override
@@ -37,39 +40,75 @@ public abstract class InstrumentingProfiler extends Profiler {
 
     @Override
     public ProfilerController newController(String pid, ScenarioSettings settings) {
-        if (settings.getScenario().getInvoker() == Invoker.CliNoDaemon) {
-            // Nothing to control
-            return ProfilerController.EMPTY;
-        }
         ProfilerController controller = doNewController(pid, settings);
+        if (settings.getScenario().getInvoker() == Invoker.CliNoDaemon) {
+            // Daemon will start recording and create snapshot on exit, so just start and end session
+            return new SessionOnlyController(controller);
+        }
         if (settings.getScenario().getInvoker().isReuseDaemon()) {
             return controller;
         }
-        // Daemon will start recording
-        return new ProfilerController() {
-            @Override
-            public void startSession() throws IOException, InterruptedException {
-                controller.startSession();
-            }
-
-            @Override
-            public void startRecording() throws IOException, InterruptedException {
-                // Ignore
-            }
-
-            @Override
-            public void stopRecording(String pid) throws IOException, InterruptedException {
-                controller.stopRecording(pid);
-            }
-
-            @Override
-            public void stopSession() throws IOException, InterruptedException {
-                controller.stopSession();
-            }
-        };
+        // Daemon will start recording, so ignore request to start recording
+        return new IgnoreStartController(controller);
     }
 
+    /**
+     * Creates JVM args to instrument that JVM with the given capabilities enabled.
+     */
     protected abstract JvmArgsCalculator jvmArgsWithInstrumentation(ScenarioSettings settings, boolean startRecordingOnProcessStart, boolean captureSnapshotOnProcessExit);
 
     protected abstract ProfilerController doNewController(String pid, ScenarioSettings settings);
+
+    private static class DelegatingController implements ProfilerController {
+        private final ProfilerController controller;
+
+        public DelegatingController(ProfilerController controller) {
+            this.controller = controller;
+        }
+
+        @Override
+        public void startSession() throws IOException, InterruptedException {
+            controller.startSession();
+        }
+
+        @Override
+        public void startRecording() throws IOException, InterruptedException {
+            controller.startRecording();
+        }
+
+        @Override
+        public void stopRecording(String pid) throws IOException, InterruptedException {
+            controller.stopRecording(pid);
+        }
+
+        @Override
+        public void stopSession() throws IOException, InterruptedException {
+            controller.stopSession();
+        }
+    }
+
+    private static class IgnoreStartController extends DelegatingController {
+        IgnoreStartController(ProfilerController controller) {
+            super(controller);
+        }
+
+        @Override
+        public void startRecording() throws IOException, InterruptedException {
+            // Ignore
+        }
+    }
+
+    private static class SessionOnlyController extends DelegatingController {
+        SessionOnlyController(ProfilerController controller) {
+            super(controller);
+        }
+
+        @Override
+        public void startRecording() throws IOException, InterruptedException {
+        }
+
+        @Override
+        public void stopRecording(String pid) throws IOException, InterruptedException {
+        }
+    }
 }

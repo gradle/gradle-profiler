@@ -4,11 +4,7 @@ import joptsimple.ArgumentAcceptingOptionSpec;
 import joptsimple.OptionParser;
 import joptsimple.OptionSet;
 import joptsimple.ValueConverter;
-import org.gradle.profiler.GradleScenarioDefinition;
-import org.gradle.profiler.JvmArgsCalculator;
-import org.gradle.profiler.Profiler;
-import org.gradle.profiler.ProfilerController;
-import org.gradle.profiler.ScenarioSettings;
+import org.gradle.profiler.*;
 
 import java.io.File;
 import java.util.Collections;
@@ -17,9 +13,9 @@ import java.util.Locale;
 
 import static org.gradle.profiler.asyncprofiler.AsyncProfilerConfig.Counter;
 
-public class AsyncProfiler extends Profiler {
+public class AsyncProfiler extends InstrumentingProfiler {
 
-    private static final String ASYNC_PROFILER_HOME = "ASYNC_PROFILER_HOME";
+    static final String ASYNC_PROFILER_HOME = "ASYNC_PROFILER_HOME";
     private final AsyncProfilerConfig config;
 
     private ArgumentAcceptingOptionSpec<File> profilerHomeOption;
@@ -105,12 +101,16 @@ public class AsyncProfiler extends Profiler {
     }
 
     @Override
-    public JvmArgsCalculator newInstrumentedBuildsJvmArgsCalculator(ScenarioSettings settings) {
-        return new AsyncProfilerJvmArgsCalculator(config, settings);
+    protected JvmArgsCalculator jvmArgsWithInstrumentation(ScenarioSettings settings, boolean startRecordingOnProcessStart, boolean captureSnapshotOnProcessExit) {
+        if (!startRecordingOnProcessStart && !captureSnapshotOnProcessExit) {
+            // Can attach later instead
+            return JvmArgsCalculator.DEFAULT;
+        }
+        return new AsyncProfilerJvmArgsCalculator(config, settings, captureSnapshotOnProcessExit);
     }
 
     @Override
-    public ProfilerController newController(String pid, ScenarioSettings settings) {
+    protected ProfilerController doNewController(String pid, ScenarioSettings settings) {
         return new AsyncProfilerController(config, pid, settings);
     }
 
