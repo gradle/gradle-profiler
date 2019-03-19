@@ -4,63 +4,10 @@ import org.gradle.profiler.buildscan.BuildScanProfiler
 import org.gradle.profiler.jprofiler.JProfiler
 import org.gradle.profiler.yourkit.YourKit
 import org.gradle.util.GradleVersion
-import org.junit.Rule
-import org.junit.rules.TemporaryFolder
 import spock.lang.Requires
-import spock.lang.Shared
-import spock.lang.Specification
 import spock.lang.Unroll
 
-class ProfilerIntegrationTest extends Specification {
-
-    @Shared
-    List<String> supportedGradleVersions = ["3.3", "3.4.1", "3.5", "4.0", "4.1", "4.2.1", "4.7", "5.2.1"]
-    @Shared
-    String minimalSupportedGradleVersion = supportedGradleVersions.first()
-    @Shared
-    String latestSupportedGradleVersion = supportedGradleVersions.last()
-
-    @Rule
-    TemporaryFolder tmpDir = new TemporaryFolder()
-    ByteArrayOutputStream outputBuffer
-
-    File projectDir
-    File outputDir
-
-    String getOutput() {
-        System.out.flush()
-        return new String(outputBuffer.toByteArray())
-    }
-
-    LogFile getLogFile() {
-        def f = new File(outputDir, "profile.log")
-        assert f.isFile()
-        return new LogFile(f)
-    }
-
-    File getResultFile() {
-        new File(outputDir, "benchmark.csv")
-    }
-
-    File getBuildFile() {
-        return new File(projectDir, "build.gradle")
-    }
-
-    File file(String path) {
-        return new File(projectDir, path)
-    }
-
-    def setup() {
-        Logging.resetLogging()
-        outputBuffer = new ByteArrayOutputStream()
-        System.out = new PrintStream(new TeeOutputStream(System.out, outputBuffer))
-        projectDir = tmpDir.newFolder()
-        outputDir = tmpDir.newFolder()
-    }
-
-    def cleanup() {
-        Logging.resetLogging()
-    }
+class ProfilerIntegrationTest extends AbstractProfilerIntegrationTest {
 
     def "complains when neither profile or benchmark requested"() {
         when:
@@ -508,15 +455,6 @@ println "<daemon: " + gradle.services.get(org.gradle.internal.environment.Gradle
         assertBuildScanPublished("1.2")
     }
 
-    private void assertBuildScanPublished(String buildScanPluginVersion) {
-        if (buildScanPluginVersion) {
-            assert logFile.grep("Using build scan plugin " + buildScanPluginVersion).size() == 1
-        } else {
-            assert logFile.grep("Using build scan plugin specified in the build").size() == 1
-        }
-        assert logFile.grep("Publishing build").size() == 1: ("LOG FILE:" + logFile.text)
-    }
-
     def "profiles build using JFR, Build Scans, specified Gradle version and tasks"() {
         given:
         buildFile.text = """
@@ -581,83 +519,6 @@ apply plugin: BasePlugin
         versionUnderTest << supportedGradleVersions
     }
 
-    def "runs benchmarks using tooling API for specified Gradle version and tasks"() {
-        given:
-        buildFile.text = """
-apply plugin: BasePlugin
-println "<gradle-version: " + gradle.gradleVersion + ">"
-println "<tasks: " + gradle.startParameter.taskNames + ">"
-println "<daemon: " + gradle.services.get(org.gradle.internal.environment.GradleBuildEnvironment).longLivingProcess + ">"
-"""
-
-        when:
-        new Main().run("--project-dir", projectDir.absolutePath, "--output-dir", outputDir.absolutePath, "--gradle-version", minimalSupportedGradleVersion,
-            "--benchmark", "assemble")
-
-        then:
-        // Probe version, initial clean build, 6 warm up, 10 builds
-        logFile.contains("* Running scenario using Gradle $minimalSupportedGradleVersion (scenario 1/1)")
-        logFile.grep("* Running warm-up build").size() == 6
-        logFile.grep("* Running measured build").size() == 10
-        logFile.grep("<gradle-version: $minimalSupportedGradleVersion>").size() == 17
-        logFile.grep("<daemon: true").size() == 17
-        logFile.grep("<tasks: [help]>").size() == 1
-        logFile.grep("<tasks: [assemble]>").size() == 16
-
-        resultFile.isFile()
-        List<String> lines = resultFile.text.readLines()
-        lines.size() == 26 // 3 headers, 16 executions, 7 stats
-        lines.get(0) == "scenario,default"
-        lines.get(1) == "version,${minimalSupportedGradleVersion}"
-        lines.get(2) == "tasks,assemble"
-        lines.get(3).matches("warm-up build #1,\\d+")
-        lines.get(8).matches("warm-up build #6,\\d+")
-        lines.get(9).matches("measured build #1,\\d+")
-        lines.get(10).matches("measured build #2,\\d+")
-        lines.get(18).matches("measured build #10,\\d+")
-        lines.get(19).matches("mean,\\d+\\.\\d+")
-        lines.get(22).matches("median,\\d+\\.\\d+")
-        lines.get(25).matches("stddev,\\d+\\.\\d+")
-    }
-
-    def "runs benchmarks using CLI for specified Gradle version and tasks"() {
-        given:
-        buildFile.text = """
-apply plugin: BasePlugin
-println "<gradle-version: " + gradle.gradleVersion + ">"
-println "<tasks: " + gradle.startParameter.taskNames + ">"
-println "<daemon: " + gradle.services.get(org.gradle.internal.environment.GradleBuildEnvironment).longLivingProcess + ">"
-"""
-
-        when:
-        new Main().run("--project-dir", projectDir.absolutePath, "--output-dir", outputDir.absolutePath, "--gradle-version", minimalSupportedGradleVersion,
-            "--benchmark", "--cli", "assemble")
-
-        then:
-        // Probe version, initial clean build, 6 warm up, 10 builds
-        logFile.contains("* Running scenario using Gradle $minimalSupportedGradleVersion (scenario 1/1)")
-        logFile.grep("* Running warm-up build").size() == 6
-        logFile.grep("* Running measured build").size() == 10
-        logFile.grep("<gradle-version: $minimalSupportedGradleVersion>").size() == 17
-        logFile.grep("<daemon: true").size() == 17
-        logFile.grep("<tasks: [help]>").size() == 1
-        logFile.grep("<tasks: [assemble]>").size() == 16
-
-        resultFile.isFile()
-        List<String> lines = resultFile.text.readLines()
-        lines.size() == 26 // 3 headers, 16 executions, 7 stats
-        lines.get(0) == "scenario,default"
-        lines.get(1) == "version,${minimalSupportedGradleVersion}"
-        lines.get(2) == "tasks,assemble"
-        lines.get(3).matches("warm-up build #1,\\d+")
-        lines.get(8).matches("warm-up build #6,\\d+")
-        lines.get(9).matches("measured build #1,\\d+")
-        lines.get(10).matches("measured build #2,\\d+")
-        lines.get(18).matches("measured build #10,\\d+")
-        lines.get(19).matches("mean,\\d+\\.\\d+")
-        lines.get(22).matches("median,\\d+\\.\\d+")
-        lines.get(25).matches("stddev,\\d+\\.\\d+")
-    }
 
     def "runs benchmarks using no-daemon for specified Gradle version and tasks"() {
         given:
@@ -2104,71 +1965,5 @@ buildTarget {
         logFile.grep("> org.gradle.profiler.step = BUILD").size() == 4
         logFile.grep("> org.gradle.profiler.number = 1").size() == 4
         logFile.grep("> org.gradle.profiler.number = 2").size() == 4
-    }
-
-    def writeBuckw() {
-        def buckw = file("buckw")
-        buckw.text = '''
-#!/usr/bin/env bash
-
-echo "[-] PARSING BUCK FILES...FINISHED 0.3s [100%]"
-if [ $1 = "targets" ]
-then
-    if [ "$2" = "--type" ]
-    then
-        echo "//target:$3_1"
-        echo "//target:$3_2"
-        echo "//target/child:$3_3"
-        echo "//target/child:$3_4"
-    else
-        echo "//target:android_binary"
-        echo "//target:java_library"
-        echo "//target:cpp_library"
-        echo "//target/child:android_library"
-        echo "//target/child:cpp_library"
-    fi
-else
-    echo "building $@"
-fi
-'''
-        buckw.executable = true
-    }
-
-    def createSimpleBazelWorkspace() {
-        new File(projectDir, "WORKSPACE").createNewFile()
-        new File(projectDir, "BUILD").text = '''
-genrule(
-  name = "hello",
-  outs = ["hello_world.txt"],
-  cmd = "echo Hello World > $@",
-)'''
-    }
-
-    static class LogFile {
-        final List<String> lines
-
-        LogFile(File logFile) {
-            lines = logFile.readLines()
-        }
-
-        @Override
-        String toString() {
-            return lines.join("\n")
-        }
-
-        boolean contains(String str) {
-            return grep(str).size() == 1
-        }
-
-        /**
-         * Locates the lines containing the given string
-         */
-        List<String> grep(String str) {
-            lines.findAll { it.contains(str) }
-        }
-
-        String getText() {
-            lines.join("\n")
-        }
     }
 }

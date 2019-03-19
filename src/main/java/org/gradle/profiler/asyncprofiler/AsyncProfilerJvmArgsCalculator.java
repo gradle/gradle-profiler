@@ -20,7 +20,7 @@ class AsyncProfilerJvmArgsCalculator implements JvmArgsCalculator {
 
     @Override
     public void calculateJvmArgs(List<String> jvmArgs) {
-        if (scenarioSettings.getScenario().getInvoker() == Invoker.NoDaemon) {
+        if (scenarioSettings.getScenario().getInvoker() == Invoker.CliNoDaemon) {
             StringBuilder agent = new StringBuilder()
                 .append("-agentpath:").append(profilerConfig.getProfilerHome()).append("/build/libasyncProfiler.so=start")
                 .append(",event=").append(profilerConfig.getEvent())

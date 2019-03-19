@@ -44,7 +44,7 @@ public class JProfilerProfiler extends Profiler {
 
     @Override
     public ProfilerController newController(String pid, ScenarioSettings settings) {
-        if (settings.getInvocationSettings().getInvoker() == Invoker.NoDaemon) {
+        if (settings.getInvocationSettings().getInvoker() == Invoker.CliNoDaemon) {
             return ProfilerController.EMPTY;
         } else {
             return new JProfilerController(settings, jProfilerConfig);

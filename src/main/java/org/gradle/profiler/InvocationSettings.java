@@ -101,7 +101,8 @@ public class InvocationSettings {
         if (warmupCount != null) {
             return warmupCount;
         }
-        if (invoker == Invoker.NoDaemon) {
+        if (invoker.isGradle() && !invoker.isReuseDaemon()) {
+            // Do not warm up the daemon if it is not being reused
             return 1;
         }
         if (benchmark) {

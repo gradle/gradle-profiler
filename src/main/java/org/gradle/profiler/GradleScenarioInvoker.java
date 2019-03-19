@@ -67,18 +67,27 @@ public class GradleScenarioInvoker extends ScenarioInvoker<GradleScenarioDefinit
             Consumer<BuildInvocationResult> resultsCollector = benchmarkResults.version(scenario);
             GradleInvoker buildInvoker;
             switch (scenario.getInvoker()) {
-                case NoDaemon:
+                case CliNoDaemon:
                     buildInvoker = new CliInvoker(buildConfiguration, buildConfiguration.getJavaHome(), settings.getProjectDir(), false);
                     break;
                 case ToolingApi:
+                case ToolingApiColdDaemon:
                     buildInvoker = new ToolingApiInvoker(projectConnection);
                     break;
                 case Cli:
+                case CliColdDaemon:
                     buildInvoker = new CliInvoker(buildConfiguration, buildConfiguration.getJavaHome(), settings.getProjectDir(), true);
                     break;
                 default:
                     throw new IllegalArgumentException();
             }
+            BuildAction beforeBuildAction;
+            if (scenario.getInvoker().isColdDaemon()) {
+                beforeBuildAction = new CleanupThenStopDaemon(cleanupAction,daemonControl, buildConfiguration);
+            } else {
+                beforeBuildAction = cleanupAction;
+            }
+
             BuildUnderTestInvoker invoker = new BuildUnderTestInvoker(allBuildsJvmArgs, allBuildsGradleArgs, buildInvoker, pidInstrumentation);
 
             mutator.beforeScenario();
@@ -88,7 +97,7 @@ public class GradleScenarioInvoker extends ScenarioInvoker<GradleScenarioDefinit
 
             for (int i = 1; i <= scenario.getWarmUpCount(); i++) {
                 int counter = i;
-                beforeBuild(WARM_UP, counter, invoker, cleanupAction, mutator);
+                beforeBuild(WARM_UP, counter, invoker, beforeBuildAction, mutator);
                 String displayName = WARM_UP.displayBuildNumber(counter);
                 results = runMeasured(displayName, mutator, () -> invoker.runBuild(WARM_UP, counter, BUILD, scenario.getAction()), resultsCollector);
                 if (pid == null) {
@@ -126,10 +135,10 @@ public class GradleScenarioInvoker extends ScenarioInvoker<GradleScenarioDefinit
             }
             for (int i = 1; i <= scenario.getBuildCount(); i++) {
                 final int counter = i;
-                beforeBuild(MEASURE, counter, invoker, cleanupAction, mutator);
+                beforeBuild(MEASURE, counter, invoker, beforeBuildAction, mutator);
                 String displayName = MEASURE.displayBuildNumber(counter);
                 results = runMeasured(displayName, mutator, () -> {
-                    if (settings.isProfile() && (counter == 1 || cleanupAction.isDoesSomething())) {
+                    if (settings.isProfile() && (counter == 1 || beforeBuildAction.isDoesSomething())) {
                         try {
                             control.startRecording();
                         } catch (IOException | InterruptedException e) {
@@ -139,7 +148,7 @@ public class GradleScenarioInvoker extends ScenarioInvoker<GradleScenarioDefinit
 
                     BuildInvocationResult result = instrumentedBuildInvoker.runBuild(MEASURE, counter, BUILD, scenario.getAction());
 
-                    if (settings.isProfile() && (counter == scenario.getBuildCount() || cleanupAction.isDoesSomething())) {
+                    if (settings.isProfile() && (counter == scenario.getBuildCount() || beforeBuildAction.isDoesSomething())) {
                         try {
                             control.stopRecording();
                         } catch (IOException | InterruptedException e) {
@@ -189,20 +198,14 @@ public class GradleScenarioInvoker extends ScenarioInvoker<GradleScenarioDefinit
     }
 
     private static void checkPid(String expected, String actual, Invoker invoker) {
-        switch (invoker) {
-            case Cli:
-            case ToolingApi:
-                if (!expected.equals(actual)) {
-                    throw new RuntimeException("Multiple Gradle daemons were used.");
-                }
-                break;
-            case NoDaemon:
-                if (expected.equals(actual)) {
-                    throw new RuntimeException("Gradle daemon was used.");
-                }
-                break;
-            default:
-                throw new IllegalArgumentException();
+        if (invoker.isReuseDaemon()) {
+            if (!expected.equals(actual)) {
+                throw new RuntimeException("Multiple Gradle daemons were used.");
+            }
+        } else {
+            if (expected.equals(actual)) {
+                throw new RuntimeException("Gradle daemon was reused but should not be reused.");
+            }
         }
     }
 }

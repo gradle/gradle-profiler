@@ -157,7 +157,7 @@ public class JProfilerJvmArgsCalculator implements JvmArgsCalculator {
     }
 
     private boolean profileWholeLifeTime() {
-        return settings.getInvocationSettings().getInvoker() == Invoker.NoDaemon;
+        return settings.getInvocationSettings().getInvoker() == Invoker.CliNoDaemon;
     }
 
 }

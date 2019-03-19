@@ -44,6 +44,7 @@ class CommandLineParser {
         Profiler.configureParser(parser);
         OptionSpecBuilder benchmarkOption = parser.accepts("benchmark", "Collect benchmark metrics");
         OptionSpecBuilder noDaemonOption = parser.accepts("no-daemon", "Do not use the Gradle daemon");
+        OptionSpecBuilder coldDaemonOption = parser.accepts("cold-daemon", "Use a cold Gradle daemon");
         OptionSpecBuilder cliOption = parser.accepts("cli", "Uses the command-line client to connect to the daemon");
         OptionSpecBuilder dryRunOption = parser.accepts("dry-run", "Verify configuration");
         OptionSpecBuilder bazelOption = parser.accepts("bazel", "Benchmark scenarios using Bazel");
@@ -78,12 +79,21 @@ class CommandLineParser {
         List<String> targetNames = parsedOptions.nonOptionArguments().stream().map(Object::toString).collect(Collectors.toList());
         List<String> versions = parsedOptions.valuesOf(versionOption);
         File scenarioFile = parsedOptions.valueOf(scenarioFileOption);
+
+        // TODO - should validate the various combinations of invocation options
         Invoker invoker = Invoker.ToolingApi;
         if (parsedOptions.has(cliOption)) {
             invoker = Invoker.Cli;
         }
+        if (parsedOptions.has(coldDaemonOption)) {
+            if (invoker == Invoker.ToolingApi) {
+                invoker = Invoker.ToolingApiColdDaemon;
+            } else {
+                invoker = Invoker.CliColdDaemon;
+            }
+        }
         if (parsedOptions.has(noDaemonOption)) {
-            invoker = Invoker.NoDaemon;
+            invoker = Invoker.CliNoDaemon;
         }
         if (parsedOptions.has(bazelOption)) {
             invoker = Invoker.Bazel;
@@ -94,6 +104,7 @@ class CommandLineParser {
         if (parsedOptions.has(mavenOption)) {
             invoker = Invoker.Maven;
         }
+
         boolean dryRun = parsedOptions.has(dryRunOption);
         Map<String, String> sysProperties = new LinkedHashMap<>();
         for (String value : parsedOptions.valuesOf(sysPropOption)) {

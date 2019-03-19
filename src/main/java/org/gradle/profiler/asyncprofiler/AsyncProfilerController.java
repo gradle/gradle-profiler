@@ -45,7 +45,7 @@ public class AsyncProfilerController extends SingleRecordingProfilerController {
 
     @Override
     protected void doStartRecording() {
-        if (scenarioSettings.getScenario().getInvoker() != Invoker.NoDaemon) {
+        if (scenarioSettings.getScenario().getInvoker() != Invoker.CliNoDaemon) {
             new CommandExec().run(
                 getProfilerScript().getAbsolutePath(),
                 "start",
@@ -62,7 +62,7 @@ public class AsyncProfilerController extends SingleRecordingProfilerController {
     public void stopSession() {
         GradleScenarioDefinition scenario = scenarioSettings.getScenario();
         File stacks = AsyncProfiler.stacksFileFor(scenario);
-        if (scenarioSettings.getScenario().getInvoker() != Invoker.NoDaemon) {
+        if (scenarioSettings.getScenario().getInvoker() != Invoker.CliNoDaemon) {
             new CommandExec().run(
                 getProfilerScript().getAbsolutePath(),
                 "stop",

@@ -37,7 +37,7 @@ public class YourKitProfiler extends Profiler {
 
     @Override
     public ProfilerController newController(String pid, ScenarioSettings settings) {
-        if (settings.getScenario().getInvoker() == Invoker.NoDaemon) {
+        if (settings.getScenario().getInvoker() == Invoker.CliNoDaemon) {
             return ProfilerController.EMPTY;
         }
         return new YourKitProfilerController(yourKitConfig);
@@ -45,7 +45,7 @@ public class YourKitProfiler extends Profiler {
 
     @Override
     public JvmArgsCalculator newJvmArgsCalculator(ScenarioSettings settings) {
-        if (settings.getScenario().getInvoker() == Invoker.NoDaemon) {
+        if (settings.getScenario().getInvoker() == Invoker.CliNoDaemon) {
             return JvmArgsCalculator.DEFAULT;
         }
         return new YourKitJvmArgsCalculator(settings, yourKitConfig, false);
@@ -53,7 +53,7 @@ public class YourKitProfiler extends Profiler {
 
     @Override
     public JvmArgsCalculator newInstrumentedBuildsJvmArgsCalculator(ScenarioSettings settings) {
-        if (settings.getScenario().getInvoker() == Invoker.NoDaemon) {
+        if (settings.getScenario().getInvoker() == Invoker.CliNoDaemon) {
             return new YourKitJvmArgsCalculator(settings, yourKitConfig, true);
         }
         return JvmArgsCalculator.DEFAULT;
