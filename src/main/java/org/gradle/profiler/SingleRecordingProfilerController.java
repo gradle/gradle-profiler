@@ -23,9 +23,12 @@ public abstract class SingleRecordingProfilerController implements ProfilerContr
     protected abstract void doStartRecording() throws IOException, InterruptedException;
 
     @Override
-    public final void stopRecording() throws IOException, InterruptedException {
+    public final void stopRecording(String pid) throws IOException, InterruptedException {
         recordedBefore = true;
+        doStopRecording(pid);
     }
+
+    protected abstract void doStopRecording(String pid);
 
     public abstract String getName();
 }

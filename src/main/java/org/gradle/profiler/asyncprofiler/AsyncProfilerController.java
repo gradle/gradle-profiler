@@ -1,11 +1,7 @@
 package org.gradle.profiler.asyncprofiler;
 
 import com.google.common.collect.ImmutableList;
-import org.gradle.profiler.CommandExec;
-import org.gradle.profiler.GradleScenarioDefinition;
-import org.gradle.profiler.Invoker;
-import org.gradle.profiler.ScenarioSettings;
-import org.gradle.profiler.SingleRecordingProfilerController;
+import org.gradle.profiler.*;
 import org.gradle.profiler.flamegraph.FlameGraphSanitizer;
 import org.gradle.profiler.flamegraph.FlameGraphTool;
 
@@ -56,6 +52,10 @@ public class AsyncProfilerController extends SingleRecordingProfilerController {
                 pid
             );
         }
+    }
+
+    @Override
+    protected void doStopRecording(String pid) {
     }
 
     @Override

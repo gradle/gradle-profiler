@@ -3,10 +3,7 @@ package org.gradle.profiler.jfr;
 import joptsimple.OptionParser;
 import joptsimple.OptionSet;
 import org.gradle.api.JavaVersion;
-import org.gradle.profiler.JvmArgsCalculator;
-import org.gradle.profiler.Profiler;
-import org.gradle.profiler.ProfilerController;
-import org.gradle.profiler.ScenarioSettings;
+import org.gradle.profiler.*;
 
 import java.io.File;
 import java.io.IOException;
@@ -18,6 +15,8 @@ import java.util.Collections;
 import java.util.List;
 
 public class JfrProfiler extends Profiler {
+    private static final String PROFILE_JFR_SUFFIX = ".jfr";
+
     private final JFRArgs jfrArgs;
     private final File defaultConfig;
 
@@ -75,13 +74,21 @@ public class JfrProfiler extends Profiler {
     }
 
     @Override
-    public ProfilerController newController(final String pid, final ScenarioSettings settings) {
-        return new JFRControl(jfrArgs, pid, settings);
+    public ProfilerController newController(String pid, ScenarioSettings settings) {
+        if (settings.getInvocationSettings().getInvoker() == Invoker.CliNoDaemon) {
+            return ProfilerController.EMPTY;
+        }
+        boolean startProfilingOnProcessStart = !settings.getInvocationSettings().getInvoker().isReuseDaemon();
+        File jfrFile = getJfrFile(settings);
+        return new JFRControl(jfrArgs, pid, startProfilingOnProcessStart, jfrFile);
     }
 
     @Override
     public JvmArgsCalculator newJvmArgsCalculator(ScenarioSettings settings) {
-        return new JFRJvmArgsCalculator();
+        boolean startProfilingOnProcessStart = !settings.getInvocationSettings().getInvoker().isReuseDaemon();
+        boolean captureOnProcessExit = settings.getInvocationSettings().getInvoker() == Invoker.CliNoDaemon;
+        File jfrFile = getJfrFile(settings);
+        return new JFRJvmArgsCalculator(jfrArgs, startProfilingOnProcessStart, captureOnProcessExit, jfrFile);
     }
 
     @Override
@@ -90,5 +97,9 @@ public class JfrProfiler extends Profiler {
                 .availableIf("profile")
                 .withOptionalArg()
                 .defaultsTo(defaultConfig.getAbsolutePath());
+    }
+
+    private File getJfrFile(ScenarioSettings settings) {
+        return new File(settings.getScenario().getOutputDir(), settings.getScenario().getProfileName() + PROFILE_JFR_SUFFIX);
     }
 }

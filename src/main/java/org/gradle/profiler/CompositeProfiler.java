@@ -52,9 +52,9 @@ class CompositeProfiler extends Profiler {
             }
 
             @Override
-            public void stopRecording() throws IOException, InterruptedException {
+            public void stopRecording(String pid) throws IOException, InterruptedException {
                 for (ProfilerController controller : controllers) {
-                    controller.stopRecording();
+                    controller.stopRecording(pid);
                 }
             }
 

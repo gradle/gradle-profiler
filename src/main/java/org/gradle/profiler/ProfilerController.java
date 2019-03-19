@@ -30,7 +30,7 @@ public interface ProfilerController {
         }
 
         @Override
-        public void stopRecording() {
+        public void stopRecording(String pid) {
 
         }
 
@@ -61,7 +61,7 @@ public interface ProfilerController {
      * and throw an exception when {@link #startRecording()} is called another
      * time.
      */
-    void stopRecording() throws IOException, InterruptedException;
+    void stopRecording(String pid) throws IOException, InterruptedException;
 
     /**
      * Ends the profiling session, writing the collected results to disk
