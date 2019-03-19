@@ -51,7 +51,7 @@ public class JProfilerController implements ProfilerController {
     }
 
     @Override
-    public void stopRecording() throws IOException, InterruptedException {
+    public void stopRecording(String pid) throws IOException, InterruptedException {
         invoke("stopCPURecording");
         if (jProfilerConfig.isRecordAlloc()) {
             invoke("stopAllocRecording");

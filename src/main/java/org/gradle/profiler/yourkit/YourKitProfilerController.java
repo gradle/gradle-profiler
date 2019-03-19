@@ -28,7 +28,7 @@ public class YourKitProfilerController implements ProfilerController {
     }
 
     @Override
-    public void stopRecording() {
+    public void stopRecording(String pid) {
         if (options.isMemorySnapshot()) {
             runYourKitCommand("stop-alloc-recording");
         } else {

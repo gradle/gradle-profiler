@@ -4,7 +4,7 @@ import groovy.transform.NotYetImplemented
 
 
 class GradleInvocationIntegrationTest extends AbstractProfilerIntegrationTest {
-    def "can benchmark using warm daemon and tooling API"() {
+    def "can benchmark using tooling API and warm daemon"() {
         given:
         instrumentedBuildScript()
 
@@ -38,7 +38,7 @@ class GradleInvocationIntegrationTest extends AbstractProfilerIntegrationTest {
         lines.get(25).matches("stddev,\\d+\\.\\d+")
     }
 
-    def "can benchmark using warm daemon and `gradle` command"() {
+    def "can benchmark using `gradle` command and warm daemon"() {
         given:
         instrumentedBuildScript()
 
@@ -73,7 +73,7 @@ class GradleInvocationIntegrationTest extends AbstractProfilerIntegrationTest {
         lines.get(25).matches("stddev,\\d+\\.\\d+")
     }
 
-    def "can benchmark with cold daemon and tooling API"() {
+    def "can benchmark using tooling API and cold daemon"() {
         given:
         instrumentedBuildScript()
 
@@ -106,7 +106,7 @@ class GradleInvocationIntegrationTest extends AbstractProfilerIntegrationTest {
         lines.get(20).matches("stddev,\\d+\\.\\d+")
     }
 
-    def "can benchmark with cold daemon and `gradle` command"() {
+    def "can benchmark using `gradle` command and cold daemon"() {
         given:
         instrumentedBuildScript()
 
@@ -139,14 +139,31 @@ class GradleInvocationIntegrationTest extends AbstractProfilerIntegrationTest {
         lines.get(20).matches("stddev,\\d+\\.\\d+")
     }
 
-    @NotYetImplemented
-    def "can profile with cold daemon and tooling API"() {
-        expect: false
-    }
+    def "can benchmark using `gradle` command and no daemon"() {
+        given:
+        instrumentedBuildScript()
 
-    @NotYetImplemented
-    def "can profile with cold daemon and `gradle` command"() {
-        expect: false
+        when:
+        new Main().run("--project-dir", projectDir.absolutePath, "--output-dir", outputDir.absolutePath, "--gradle-version", minimalSupportedGradleVersion, "--benchmark", "--no-daemon", "assemble")
+
+        then:
+        // Probe version, 1 warm up, 10 builds
+        logFile.contains("* Running scenario using Gradle $minimalSupportedGradleVersion (scenario 1/1)")
+        logFile.grep("* Running warm-up build").size() == 1
+        logFile.grep("* Running measured build").size() == 10
+        logFile.grep("<gradle-version: $minimalSupportedGradleVersion>").size() == 12
+        logFile.grep("<daemon: true").size() == 1
+        logFile.grep("<daemon: false").size() == 11
+        logFile.grep("<tasks: [help]>").size() == 1
+        logFile.grep("<tasks: [assemble]>").size() == 11
+        logFile.grep("<invocations: 1>").size() == 12
+
+        resultFile.isFile()
+        List<String> lines = resultFile.text.readLines()
+        lines.size() == 21 // 3 headers, 11 executions, 7 stats
+        lines.get(0) == "scenario,default"
+        lines.get(1) == "version,${minimalSupportedGradleVersion}"
+        lines.get(2) == "tasks,assemble"
     }
 
     @NotYetImplemented

@@ -135,39 +135,6 @@ assemble.doFirst {
         output.contains("java.lang.RuntimeException: broken!")
     }
 
-    def "profiles build using JFR, specified Gradle version and tasks"() {
-        given:
-        buildFile.text = """
-apply plugin: BasePlugin
-println "<gradle-version: " + gradle.gradleVersion + ">"
-println "<tasks: " + gradle.startParameter.taskNames + ">"
-println "<daemon: " + gradle.services.get(org.gradle.internal.environment.GradleBuildEnvironment).longLivingProcess + ">"
-"""
-
-        when:
-        new Main().
-            run("--project-dir", projectDir.absolutePath, "--output-dir", outputDir.absolutePath, "--gradle-version", versionUnderTest, "--profile", "jfr",
-                "assemble")
-
-        then:
-        // Probe version, 2 warm up, 1 build
-        logFile.contains("* Running scenario using Gradle $versionUnderTest (scenario 1/1)")
-        logFile.grep("* Running warm-up build").size() == 2
-        logFile.grep("* Running measured build").size() == 1
-        logFile.grep("* Starting profiler for daemon with pid").size() == 1
-        logFile.grep("<gradle-version: $versionUnderTest>").size() == 4
-        logFile.grep("<daemon: true").size() == 4
-        logFile.grep("<tasks: [assemble]>").size() == 3
-
-        def profileFile = new File(outputDir, "${versionUnderTest}.jfr")
-        profileFile.exists()
-
-        where:
-        versionUnderTest              | _
-        minimalSupportedGradleVersion | _
-        latestSupportedGradleVersion  | _
-    }
-
     def "profiles build using JFR, specified Gradle versions and tasks"() {
         given:
         buildFile.text = """
@@ -517,39 +484,6 @@ apply plugin: BasePlugin
 
         where:
         versionUnderTest << supportedGradleVersions
-    }
-
-
-    def "runs benchmarks using no-daemon for specified Gradle version and tasks"() {
-        given:
-        buildFile.text = """
-apply plugin: BasePlugin
-println "<gradle-version: " + gradle.gradleVersion + ">"
-println "<tasks: " + gradle.startParameter.taskNames + ">"
-println "<daemon: " + gradle.services.get(org.gradle.internal.environment.GradleBuildEnvironment).longLivingProcess + ">"
-"""
-
-        when:
-        new Main().run("--project-dir", projectDir.absolutePath, "--output-dir", outputDir.absolutePath, "--gradle-version", minimalSupportedGradleVersion,
-            "--benchmark", "--no-daemon", "assemble")
-
-        then:
-        // Probe version, 1 warm up, 10 builds
-        logFile.contains("* Running scenario using Gradle $minimalSupportedGradleVersion (scenario 1/1)")
-        logFile.grep("* Running warm-up build").size() == 1
-        logFile.grep("* Running measured build").size() == 10
-        logFile.grep("<gradle-version: $minimalSupportedGradleVersion>").size() == 12
-        logFile.grep("<daemon: true").size() == 1
-        logFile.grep("<daemon: false").size() == 11
-        logFile.grep("<tasks: [help]>").size() == 1
-        logFile.grep("<tasks: [assemble]>").size() == 11
-
-        resultFile.isFile()
-        List<String> lines = resultFile.text.readLines()
-        lines.size() == 21 // 3 headers, 11 executions, 7 stats
-        lines.get(0) == "scenario,default"
-        lines.get(1) == "version,${minimalSupportedGradleVersion}"
-        lines.get(2) == "tasks,assemble"
     }
 
     def "runs benchmarks using scenarios defined in scenario file"() {

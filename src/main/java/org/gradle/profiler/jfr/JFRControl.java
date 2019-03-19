@@ -2,20 +2,21 @@ package org.gradle.profiler.jfr;
 
 import org.gradle.profiler.CommandExec;
 import org.gradle.profiler.OperatingSystem;
-import org.gradle.profiler.ScenarioSettings;
 import org.gradle.profiler.SingleRecordingProfilerController;
 
 import java.io.File;
+import java.io.IOException;
 
 public class JFRControl extends SingleRecordingProfilerController {
-    private static final String PROFILE_JFR_SUFFIX = ".jfr";
 
     private final File jcmd;
     private final JFRArgs jfrArgs;
     private final String pid;
-    private final ScenarioSettings scenarioSettings;
-    public JFRControl( final JFRArgs args, final String pid, final ScenarioSettings scenarioSettings) {
-        this.scenarioSettings = scenarioSettings;
+    private final boolean profilingAlreadyStarted;
+    private final File jfrFile;
+
+    public JFRControl(final JFRArgs args, final String pid, boolean profilingAlreadyStarted, File jfrFile) {
+        this.profilingAlreadyStarted = profilingAlreadyStarted;
         File javaHome = new File(System.getProperty("java.home"));
         File jcmd = new File(javaHome, jcmdPath());
         if (!jcmd.isFile() && javaHome.getName().equals("jre")) {
@@ -27,7 +28,7 @@ public class JFRControl extends SingleRecordingProfilerController {
         this.jcmd = jcmd;
         this.jfrArgs = args;
         this.pid = pid;
-
+        this.jfrFile = jfrFile;
     }
 
     private String jcmdPath() {
@@ -36,13 +37,19 @@ public class JFRControl extends SingleRecordingProfilerController {
 
     @Override
     public void doStartRecording() {
+        if (profilingAlreadyStarted) {
+            return;
+        }
         run(jcmd.getAbsolutePath(), pid, "JFR.start", "name=profile", "settings=" + jfrArgs.getJfrSettings());
     }
 
     @Override
-    public void stopSession() {
-        File jfrFile = new File(getOutputDir(), getProfileName() + PROFILE_JFR_SUFFIX);
+    protected void doStopRecording(String pid) {
         run(jcmd.getAbsolutePath(), pid, "JFR.stop", "name=profile", "filename=" + jfrFile.getAbsolutePath());
+    }
+
+    @Override
+    public void stopSession() throws IOException, InterruptedException {
         new JfrFlameGraphGenerator().generateGraphs(jfrFile);
         System.out.println("Wrote profiling data to " + jfrFile.getPath());
     }
@@ -54,13 +61,5 @@ public class JFRControl extends SingleRecordingProfilerController {
 
     private void run(String... commandLine) {
         new CommandExec().run(commandLine);
-    }
-
-    private File getOutputDir() {
-        return scenarioSettings.getScenario().getOutputDir();
-    }
-
-    private String getProfileName() {
-        return scenarioSettings.getScenario().getProfileName();
     }
 }

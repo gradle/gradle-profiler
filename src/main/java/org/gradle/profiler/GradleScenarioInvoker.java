@@ -150,7 +150,7 @@ public class GradleScenarioInvoker extends ScenarioInvoker<GradleScenarioDefinit
 
                     if (settings.isProfile() && (counter == scenario.getBuildCount() || beforeBuildAction.isDoesSomething())) {
                         try {
-                            control.stopRecording();
+                            control.stopRecording(result.getDaemonPid());
                         } catch (IOException | InterruptedException e) {
                             throw new RuntimeException(e);
                         }
