@@ -1,7 +1,10 @@
 package org.gradle.profiler.asyncprofiler;
 
 import com.google.common.collect.ImmutableList;
-import org.gradle.profiler.*;
+import org.gradle.profiler.CommandExec;
+import org.gradle.profiler.GradleScenarioDefinition;
+import org.gradle.profiler.ScenarioSettings;
+import org.gradle.profiler.SingleRecordingProfilerController;
 import org.gradle.profiler.flamegraph.FlameGraphSanitizer;
 import org.gradle.profiler.flamegraph.FlameGraphTool;
 
@@ -19,6 +22,7 @@ public class AsyncProfilerController extends SingleRecordingProfilerController {
     private final ScenarioSettings scenarioSettings;
     private final FlameGraphTool flamegraphGenerator;
     private final FlameGraphSanitizer flamegraphSanitizer;
+    private final File stacks;
 
     public AsyncProfilerController(AsyncProfilerConfig profilerConfig, String pid, ScenarioSettings scenarioSettings) {
         this.profilerConfig = profilerConfig;
@@ -32,6 +36,8 @@ public class AsyncProfilerController extends SingleRecordingProfilerController {
         sanitizers.add(COLLAPSE_BUILD_SCRIPTS, COLLAPSE_GRADLE_INFRASTRUCTURE, SIMPLE_NAMES);
         this.flamegraphSanitizer = new FlameGraphSanitizer(sanitizers.build().toArray(new SanitizeFunction[0]));
         this.flamegraphGenerator = new FlameGraphTool();
+
+        this.stacks = AsyncProfiler.stacksFileFor(scenarioSettings.getScenario());
     }
 
     @Override
@@ -41,37 +47,32 @@ public class AsyncProfilerController extends SingleRecordingProfilerController {
 
     @Override
     protected void doStartRecording() {
-        if (scenarioSettings.getScenario().getInvoker() != Invoker.CliNoDaemon) {
-            new CommandExec().run(
-                getProfilerScript().getAbsolutePath(),
-                "start",
-                "-e", profilerConfig.getEvent(),
-                "-i", String.valueOf(profilerConfig.getInterval()),
-                "-j", String.valueOf(profilerConfig.getStackDepth()),
-                "-b", String.valueOf(profilerConfig.getFrameBuffer()),
-                pid
-            );
-        }
+        new CommandExec().run(
+            getProfilerScript().getAbsolutePath(),
+            "start",
+            "-e", profilerConfig.getEvent(),
+            "-i", String.valueOf(profilerConfig.getInterval()),
+            "-j", String.valueOf(profilerConfig.getStackDepth()),
+            "-b", String.valueOf(profilerConfig.getFrameBuffer()),
+            pid
+        );
     }
 
     @Override
     protected void doStopRecording(String pid) {
+        new CommandExec().run(
+            getProfilerScript().getAbsolutePath(),
+            "stop",
+            "-o", "collapsed=" + profilerConfig.getCounter().name().toLowerCase(Locale.ROOT),
+            "-a",
+            "-f", stacks.getAbsolutePath(),
+            pid
+        );
     }
 
     @Override
     public void stopSession() {
         GradleScenarioDefinition scenario = scenarioSettings.getScenario();
-        File stacks = AsyncProfiler.stacksFileFor(scenario);
-        if (scenarioSettings.getScenario().getInvoker() != Invoker.CliNoDaemon) {
-            new CommandExec().run(
-                getProfilerScript().getAbsolutePath(),
-                "stop",
-                "-o", "collapsed=" + profilerConfig.getCounter().name().toLowerCase(Locale.ROOT),
-                "-a",
-                "-f", stacks.getAbsolutePath(),
-                pid
-            );
-        }
         if (flamegraphGenerator.checkInstallation()) {
             File simplifiedStacks = new File(scenario.getOutputDir(), scenario.getProfileName() + ".simplified-stacks.txt");
             flamegraphSanitizer.sanitize(stacks, simplifiedStacks);
