@@ -9,7 +9,7 @@ import java.io.File;
 import java.util.Collections;
 import java.util.List;
 
-public class YourKitProfiler extends Profiler {
+public class YourKitProfiler extends InstrumentingProfiler {
     private final YourKitConfig yourKitConfig;
     private OptionSpecBuilder memory;
     private OptionSpecBuilder sampling;
@@ -36,27 +36,13 @@ public class YourKitProfiler extends Profiler {
     }
 
     @Override
-    public ProfilerController newController(String pid, ScenarioSettings settings) {
-        if (settings.getScenario().getInvoker() == Invoker.CliNoDaemon) {
-            return ProfilerController.EMPTY;
-        }
+    protected ProfilerController doNewController(String pid, ScenarioSettings settings) {
         return new YourKitProfilerController(yourKitConfig);
     }
 
     @Override
-    public JvmArgsCalculator newJvmArgsCalculator(ScenarioSettings settings) {
-        if (settings.getScenario().getInvoker() == Invoker.CliNoDaemon) {
-            return JvmArgsCalculator.DEFAULT;
-        }
-        return new YourKitJvmArgsCalculator(settings, yourKitConfig, false);
-    }
-
-    @Override
-    public JvmArgsCalculator newInstrumentedBuildsJvmArgsCalculator(ScenarioSettings settings) {
-        if (settings.getScenario().getInvoker() == Invoker.CliNoDaemon) {
-            return new YourKitJvmArgsCalculator(settings, yourKitConfig, true);
-        }
-        return JvmArgsCalculator.DEFAULT;
+    protected JvmArgsCalculator jvmArgsWithInstrumentation(ScenarioSettings settings, boolean startRecordingOnProcessStart, boolean captureSnapshotOnProcessExit) {
+        return new YourKitJvmArgsCalculator(settings, yourKitConfig, startRecordingOnProcessStart, captureSnapshotOnProcessExit);
     }
 
     @Override

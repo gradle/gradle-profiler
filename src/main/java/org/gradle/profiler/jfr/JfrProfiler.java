@@ -14,7 +14,7 @@ import java.nio.file.StandardCopyOption;
 import java.util.Collections;
 import java.util.List;
 
-public class JfrProfiler extends Profiler {
+public class JfrProfiler extends InstrumentingProfiler {
     private static final String PROFILE_JFR_SUFFIX = ".jfr";
 
     private final JFRArgs jfrArgs;
@@ -74,21 +74,15 @@ public class JfrProfiler extends Profiler {
     }
 
     @Override
-    public ProfilerController newController(String pid, ScenarioSettings settings) {
-        if (settings.getInvocationSettings().getInvoker() == Invoker.CliNoDaemon) {
-            return ProfilerController.EMPTY;
-        }
-        boolean startProfilingOnProcessStart = !settings.getInvocationSettings().getInvoker().isReuseDaemon();
+    protected ProfilerController doNewController(String pid, ScenarioSettings settings) {
         File jfrFile = getJfrFile(settings);
-        return new JFRControl(jfrArgs, pid, startProfilingOnProcessStart, jfrFile);
+        return new JFRControl(jfrArgs, pid, jfrFile);
     }
 
     @Override
-    public JvmArgsCalculator newJvmArgsCalculator(ScenarioSettings settings) {
-        boolean startProfilingOnProcessStart = !settings.getInvocationSettings().getInvoker().isReuseDaemon();
-        boolean captureOnProcessExit = settings.getInvocationSettings().getInvoker() == Invoker.CliNoDaemon;
+    protected JvmArgsCalculator jvmArgsWithInstrumentation(ScenarioSettings settings, boolean startRecordingOnProcessStart, boolean captureSnapshotOnProcessExit) {
         File jfrFile = getJfrFile(settings);
-        return new JFRJvmArgsCalculator(jfrArgs, startProfilingOnProcessStart, captureOnProcessExit, jfrFile);
+        return new JFRJvmArgsCalculator(jfrArgs, startRecordingOnProcessStart, captureSnapshotOnProcessExit, jfrFile);
     }
 
     @Override

@@ -13,12 +13,14 @@ public class YourKitJvmArgsCalculator implements JvmArgsCalculator {
     public static final int PORT = 10021;
     private final ScenarioSettings settings;
     private final YourKitConfig yourKitConfig;
-    private final boolean instrumentWholeProcess;
+    private final boolean startRecordingOnStart;
+    private final boolean captureSnapshotOnProcessExit;
 
-    public YourKitJvmArgsCalculator(ScenarioSettings settings, YourKitConfig yourKitConfig, boolean instrumentWholeProcess) {
+    public YourKitJvmArgsCalculator(ScenarioSettings settings, YourKitConfig yourKitConfig, boolean startRecordingOnStart, boolean captureSnapshotOnProcessExit) {
         this.settings = settings;
         this.yourKitConfig = yourKitConfig;
-        this.instrumentWholeProcess = instrumentWholeProcess;
+        this.startRecordingOnStart = startRecordingOnStart;
+        this.captureSnapshotOnProcessExit = captureSnapshotOnProcessExit;
     }
 
     @Override
@@ -42,13 +44,22 @@ public class YourKitJvmArgsCalculator implements JvmArgsCalculator {
         } else {
             agentOptions += ",disablealloc";
         }
-        if (instrumentWholeProcess) {
+        if (startRecordingOnStart) {
             if (yourKitConfig.isMemorySnapshot()) {
-                agentOptions += ",alloceach=10,onexit=memory";
+                agentOptions += ",alloceach=10";
+                if (captureSnapshotOnProcessExit) {
+                    agentOptions += ",onexit=memory";
+                }
             } else if (yourKitConfig.isUseSampling()) {
-                agentOptions += ",sampling,onexit=snapshot";
+                agentOptions += ",sampling";
+                if (captureSnapshotOnProcessExit) {
+                    agentOptions += ",onexit=snapshot";
+                }
             } else {
-                agentOptions += ",tracing,onexit=snapshot";
+                agentOptions += ",tracing";
+                if (captureSnapshotOnProcessExit) {
+                    agentOptions += ",onexit=snapshot";
+                }
             }
         }
         jvmArgs.add(agentOptions);
