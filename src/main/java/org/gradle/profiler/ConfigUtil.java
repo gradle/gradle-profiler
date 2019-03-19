@@ -27,7 +27,7 @@ public class ConfigUtil {
 		if (config.hasPath(key)) {
 			String value = config.getAnyRef(key).toString();
 			if (value.equals("no-daemon")) {
-				return Invoker.NoDaemon;
+				return Invoker.CliNoDaemon;
 			}
 			if (value.equals("cli")) {
 				return Invoker.Cli;
