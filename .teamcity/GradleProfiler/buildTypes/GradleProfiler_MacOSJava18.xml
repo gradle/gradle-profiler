@@ -4,7 +4,7 @@
   <description />
   <settings>
     <parameters>
-      <param name="env.JAVA_HOME" value="%linux.java8.oracle.64bit%" />
+      <param name="env.JAVA_HOME" value="%macos.java8.oracle.64bit%" />
     </parameters>
     <build-runners>
       <runner id="RUNNER_210" name="" type="gradle-runner">
