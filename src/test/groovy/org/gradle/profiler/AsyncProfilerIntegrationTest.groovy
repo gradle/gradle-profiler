@@ -1,16 +1,16 @@
 package org.gradle.profiler
 
-import org.gradle.profiler.asyncprofiler.AsyncProfiler
+
 import spock.lang.Requires
 
 class AsyncProfilerIntegrationTest extends AbstractProfilerIntegrationTest {
-    @Requires({ AsyncProfilerIntegrationTest.asyncProfilerHome() })
+    @Requires({ OperatingSystem.isMacOS() })
     def "profiles build using async-profiler with tooling API and warm daemon"() {
         given:
         instrumentedBuildScript()
 
         when:
-        new Main().run("--project-dir", projectDir.absolutePath, "--output-dir", outputDir.absolutePath, "--gradle-version", minimalSupportedGradleVersion, "--profile", "async-profiler", "assemble")
+        new Main().run("--project-dir", projectDir.absolutePath, "--output-dir", outputDir.absolutePath, "--gradle-version", minimalSupportedGradleVersion, "--profile", "async-profiler",  "assemble")
 
         then:
         logFile.grep("<daemon: true").size() == 4
@@ -21,7 +21,7 @@ class AsyncProfilerIntegrationTest extends AbstractProfilerIntegrationTest {
         new File(outputDir, "${minimalSupportedGradleVersion}-icicles.svg").file
     }
 
-    @Requires({ AsyncProfilerIntegrationTest.asyncProfilerHome() })
+    @Requires({ OperatingSystem.isMacOS() })
     def "profiles multiple iterations using async-profiler with tooling API and warm daemon"() {
         given:
         instrumentedBuildScript()
@@ -38,7 +38,7 @@ class AsyncProfilerIntegrationTest extends AbstractProfilerIntegrationTest {
         new File(outputDir, "${minimalSupportedGradleVersion}-icicles.svg").file
     }
 
-    @Requires({ AsyncProfilerIntegrationTest.asyncProfilerHome() })
+    @Requires({ OperatingSystem.isMacOS() })
     def "profiles build using async-profiler with tooling API and cold daemon"() {
         given:
         instrumentedBuildScript()
@@ -55,7 +55,7 @@ class AsyncProfilerIntegrationTest extends AbstractProfilerIntegrationTest {
         new File(outputDir, "${minimalSupportedGradleVersion}-icicles.svg").file
     }
 
-    @Requires({ AsyncProfilerIntegrationTest.asyncProfilerHome() })
+    @Requires({ OperatingSystem.isMacOS() })
     def "profiles build using async-profiler with tooling API and no daemon"() {
         given:
         instrumentedBuildScript()
@@ -73,7 +73,7 @@ class AsyncProfilerIntegrationTest extends AbstractProfilerIntegrationTest {
         new File(outputDir, "${minimalSupportedGradleVersion}-icicles.svg").file
     }
 
-    @Requires({ AsyncProfilerIntegrationTest.asyncProfilerHome() })
+    @Requires({ OperatingSystem.isMacOS() })
     def "cannot profile using async-profiler with multiple iterations and cold daemon"() {
         given:
         instrumentedBuildScript()
@@ -88,7 +88,7 @@ class AsyncProfilerIntegrationTest extends AbstractProfilerIntegrationTest {
         output.contains("Profiler async profiler does not support profiling multiple daemons.")
     }
 
-    @Requires({ AsyncProfilerIntegrationTest.asyncProfilerHome() })
+    @Requires({ OperatingSystem.isMacOS() })
     def "cannot profile using async-profiler with multiple iterations and no daemon"() {
         given:
         instrumentedBuildScript()
@@ -101,10 +101,5 @@ class AsyncProfilerIntegrationTest extends AbstractProfilerIntegrationTest {
 
         and:
         output.contains("Profiler async profiler does not support profiling multiple daemons.")
-    }
-
-    static File asyncProfilerHome() {
-        def homeDir = System.getenv(AsyncProfiler.ASYNC_PROFILER_HOME)
-        return homeDir ? new File(homeDir) : null
     }
 }

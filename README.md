@@ -65,9 +65,8 @@ In order to create a build scan of your build, use `--profile buildscan`. The bu
 Async profiler provides low-overhead CPU, allocation and perf event sampling on Linux and MacOS. 
 It also correctly handles native method calls, making it preferable to JFR on these operating systems. 
 
-Checkout [async-profiler](https://github.com/jvm-profiling-tools/async-profiler) and follow the setup instructions in its readme. 
-You can now use the `--profile async-profiler` option.  
-Make sure either the `ASYNC_PROFILER_HOME` environment variable or the `--async-profiler-home` command line option points to the async-profiler directory.
+You can use async profiler to profile a Gradle build using `--profiler async-profiler`. By default, this will download an async profiler 
+release from [Github](https://github.com/jvm-profiling-tools/async-profiler/releases) and install it, if not already available.
 
 The output are flame and icicle graphs which show you the call tree and hotspots of your code.
 
@@ -79,6 +78,8 @@ The following options are supported and closely mimic the options of async-profi
 - `--async-profiler-stackdepth`: The maximum stack depth. Lower this if profiles with deep recursion get too large. Defaults to 2048.
 - `--async-profiler-framebuffer`: The size of the frame buffer in bytes. Defaults to 10_000_000 (~10MB)
 - `--async-profiler-system-threads`: Whether to show system threads like GC and JIT compilation in the profile. Usually makes them harder to read, but can be useful if you suspect problems in that area. Defaults to `false` 
+
+You can also use either the `ASYNC_PROFILER_HOME` environment variable or the `--async-profiler-home` command line option points to the async-profiler install directory.
 
 ### JProfiler
 
