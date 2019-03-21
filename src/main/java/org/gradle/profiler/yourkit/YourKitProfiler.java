@@ -3,7 +3,10 @@ package org.gradle.profiler.yourkit;
 import joptsimple.OptionParser;
 import joptsimple.OptionSet;
 import joptsimple.OptionSpecBuilder;
-import org.gradle.profiler.*;
+import org.gradle.profiler.InstrumentingProfiler;
+import org.gradle.profiler.JvmArgsCalculator;
+import org.gradle.profiler.Profiler;
+import org.gradle.profiler.ScenarioSettings;
 
 import java.io.File;
 import java.util.Collections;
@@ -36,7 +39,12 @@ public class YourKitProfiler extends InstrumentingProfiler {
     }
 
     @Override
-    protected ProfilerController doNewController(String pid, ScenarioSettings settings) {
+    protected boolean canRestartRecording() {
+        return true;
+    }
+
+    @Override
+    protected SnapshotCapturingProfilerController doNewController(ScenarioSettings settings) {
         return new YourKitProfilerController(yourKitConfig);
     }
 

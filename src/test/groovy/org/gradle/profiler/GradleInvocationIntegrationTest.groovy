@@ -165,24 +165,4 @@ class GradleInvocationIntegrationTest extends AbstractProfilerIntegrationTest {
         lines.get(1) == "version,${minimalSupportedGradleVersion}"
         lines.get(2) == "tasks,assemble"
     }
-
-    @NotYetImplemented
-    def "scenario file can define scenario that uses cold daemon and tooling API"() {
-        expect: false
-    }
-
-    @NotYetImplemented
-    def "scenario file can define scenario that uses cold daemon and `gradle` command"() {
-        expect: false
-    }
-
-    @NotYetImplemented
-    def "fails when benchmarking with no daemon and tooling API"() {
-        expect: false
-    }
-
-    @NotYetImplemented
-    def "fails when profiling with no daemon and tooling API"() {
-        expect: false
-    }
 }

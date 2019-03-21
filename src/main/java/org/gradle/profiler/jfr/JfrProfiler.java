@@ -74,9 +74,9 @@ public class JfrProfiler extends InstrumentingProfiler {
     }
 
     @Override
-    protected ProfilerController doNewController(String pid, ScenarioSettings settings) {
+    protected SnapshotCapturingProfilerController doNewController(ScenarioSettings settings) {
         File jfrFile = getJfrFile(settings);
-        return new JFRControl(jfrArgs, pid, jfrFile);
+        return new JFRControl(jfrArgs, jfrFile);
     }
 
     @Override

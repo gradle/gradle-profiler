@@ -47,10 +47,6 @@ public class CliInvoker extends GradleInvoker {
             commandLine.add("-Dorg.gradle.jvmargs");
         }
 
-        Logging.detailed().println("Running command:");
-        for (String arg : commandLine) {
-            Logging.detailed().println("  " + arg);
-        }
         ProcessBuilder builder = new ProcessBuilder(commandLine);
         builder.directory(projectDir);
         if (!daemon) {

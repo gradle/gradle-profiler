@@ -3,12 +3,13 @@ package org.gradle.profiler.asyncprofiler;
 import com.google.common.collect.ImmutableList;
 import org.gradle.profiler.CommandExec;
 import org.gradle.profiler.GradleScenarioDefinition;
+import org.gradle.profiler.InstrumentingProfiler;
 import org.gradle.profiler.ScenarioSettings;
-import org.gradle.profiler.SingleRecordingProfilerController;
 import org.gradle.profiler.flamegraph.FlameGraphSanitizer;
 import org.gradle.profiler.flamegraph.FlameGraphTool;
 
 import java.io.File;
+import java.io.IOException;
 import java.util.Collections;
 import java.util.List;
 import java.util.Locale;
@@ -16,17 +17,15 @@ import java.util.Locale;
 import static org.gradle.profiler.asyncprofiler.AsyncProfilerConfig.Counter;
 import static org.gradle.profiler.flamegraph.FlameGraphSanitizer.*;
 
-public class AsyncProfilerController extends SingleRecordingProfilerController {
+public class AsyncProfilerController implements InstrumentingProfiler.SnapshotCapturingProfilerController {
     private final AsyncProfilerConfig profilerConfig;
-    private final String pid;
     private final ScenarioSettings scenarioSettings;
     private final FlameGraphTool flamegraphGenerator;
     private final FlameGraphSanitizer flamegraphSanitizer;
     private final File stacks;
 
-    public AsyncProfilerController(AsyncProfilerConfig profilerConfig, String pid, ScenarioSettings scenarioSettings) {
+    public AsyncProfilerController(AsyncProfilerConfig profilerConfig, ScenarioSettings scenarioSettings) {
         this.profilerConfig = profilerConfig;
-        this.pid = pid;
         this.scenarioSettings = scenarioSettings;
         ImmutableList.Builder<SanitizeFunction> sanitizers = ImmutableList.<SanitizeFunction>builder();
         if (!profilerConfig.isIncludeSystemThreads()) {
@@ -40,13 +39,12 @@ public class AsyncProfilerController extends SingleRecordingProfilerController {
         this.stacks = AsyncProfiler.stacksFileFor(scenarioSettings.getScenario());
     }
 
-    @Override
     public String getName() {
         return "async profiler";
     }
 
     @Override
-    protected void doStartRecording() {
+    public void startRecording(String pid) throws IOException, InterruptedException {
         new CommandExec().run(
             getProfilerScript().getAbsolutePath(),
             "start",
@@ -59,7 +57,7 @@ public class AsyncProfilerController extends SingleRecordingProfilerController {
     }
 
     @Override
-    protected void doStopRecording(String pid) {
+    public void stopRecording(String pid) throws IOException, InterruptedException {
         new CommandExec().run(
             getProfilerScript().getAbsolutePath(),
             "stop",
@@ -68,6 +66,10 @@ public class AsyncProfilerController extends SingleRecordingProfilerController {
             "-f", stacks.getAbsolutePath(),
             pid
         );
+    }
+
+    @Override
+    public void captureSnapshot(String pid) {
     }
 
     @Override

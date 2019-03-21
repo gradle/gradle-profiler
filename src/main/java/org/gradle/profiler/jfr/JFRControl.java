@@ -1,20 +1,19 @@
 package org.gradle.profiler.jfr;
 
 import org.gradle.profiler.CommandExec;
+import org.gradle.profiler.InstrumentingProfiler;
 import org.gradle.profiler.OperatingSystem;
-import org.gradle.profiler.SingleRecordingProfilerController;
 
 import java.io.File;
 import java.io.IOException;
 
-public class JFRControl extends SingleRecordingProfilerController {
+public class JFRControl implements InstrumentingProfiler.SnapshotCapturingProfilerController {
 
     private final File jcmd;
     private final JFRArgs jfrArgs;
-    private final String pid;
     private final File jfrFile;
 
-    public JFRControl(final JFRArgs args, final String pid, File jfrFile) {
+    public JFRControl(JFRArgs args, File jfrFile) {
         File javaHome = new File(System.getProperty("java.home"));
         File jcmd = new File(javaHome, jcmdPath());
         if (!jcmd.isFile() && javaHome.getName().equals("jre")) {
@@ -25,7 +24,6 @@ public class JFRControl extends SingleRecordingProfilerController {
         }
         this.jcmd = jcmd;
         this.jfrArgs = args;
-        this.pid = pid;
         this.jfrFile = jfrFile;
     }
 
@@ -34,13 +32,17 @@ public class JFRControl extends SingleRecordingProfilerController {
     }
 
     @Override
-    public void doStartRecording() {
+    public void startRecording(String pid) throws IOException, InterruptedException {
         run(jcmd.getAbsolutePath(), pid, "JFR.start", "name=profile", "settings=" + jfrArgs.getJfrSettings());
     }
 
     @Override
-    protected void doStopRecording(String pid) {
+    public void stopRecording(String pid) throws IOException, InterruptedException {
         run(jcmd.getAbsolutePath(), pid, "JFR.stop", "name=profile", "filename=" + jfrFile.getAbsolutePath());
+    }
+
+    @Override
+    public void captureSnapshot(String pid) {
     }
 
     @Override
@@ -49,7 +51,6 @@ public class JFRControl extends SingleRecordingProfilerController {
         System.out.println("Wrote profiling data to " + jfrFile.getPath());
     }
 
-    @Override
     public String getName() {
         return "jfr";
     }
