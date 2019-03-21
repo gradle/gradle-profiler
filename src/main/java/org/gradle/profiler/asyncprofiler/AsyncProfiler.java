@@ -90,11 +90,14 @@ public class AsyncProfiler extends InstrumentingProfiler {
             String homePath = System.getenv(ASYNC_PROFILER_HOME);
             profilerHome = homePath != null ? new File(homePath) : null;
         }
-        if (profilerHome == null) {
-            throw new IllegalStateException("No --async-profiler home argument given and " + ASYNC_PROFILER_HOME + " is not set.");
-        }
-        if (!profilerHome.isDirectory()) {
+        if (profilerHome != null && !profilerHome.isDirectory()) {
             throw new IllegalStateException(ASYNC_PROFILER_HOME + " is not a directory.");
+        }
+        if (profilerHome == null) {
+            profilerHome = AsyncProfilerDownload.defaultHome();
+        }
+        if (profilerHome == null) {
+            throw new IllegalStateException("Async profiler not supported on " + System.getProperty("os.name"));
         }
         return profilerHome;
     }
