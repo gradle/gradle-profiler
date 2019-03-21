@@ -49,7 +49,6 @@ To run the `gradle-profiler` app to profile a build use:
 
     > gradle-profiler --profile <name-of-profiler> --project-dir <root-dir-of-build> <task>...
 
-
 The app will run the build several times to warm up a daemon, then enable the profiler and run the build.
 Once complete, the results are available under `profile-out`
 
@@ -143,6 +142,7 @@ Add the `--profile chrome-trace` option and open the result in Google Chrome.
 - `--gradle-version <version>`: Specifies a Gradle version or installation to use to run the builds, overriding the default for the build. You can specify multiple versions.
 - `--output-dir <dir>`: Directory to write results to.
 - `--no-daemon`: Uses the gradle command-line client with the `--no-daemon` option to run the builds. The default is to use the Gradle tooling API and Gradle daemon.
+- `--cold-daemon`: Use a cold daemon (one that has just started) rather than a warm daemon (one that has already run some builds). The default is to use a warm daemon.
 - `--cli`: Uses the gradle command-line client to run the builds. The default is to use the Gradle tooling API.
 - `-D<key>=<value>`: Defines a system property when running the build, overriding the default for the build.
 - `--warmups`: Specifies the number of warm-up builds to run for each scenario. Defaults to 2 for profiling, 6 for benchmarking.
