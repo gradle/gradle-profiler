@@ -40,7 +40,7 @@ public class YourKitProfiler extends InstrumentingProfiler {
 
     @Override
     protected boolean canRestartRecording() {
-        return true;
+        return false;
     }
 
     @Override

@@ -54,32 +54,6 @@ class YourKitProfilerIntegrationTest extends AbstractProfilerIntegrationTest {
     }
 
     @Requires({ YourKit.findYourKitHome() })
-    def "profiles multiple iterations with cleanup steps using YourKit with `gradle` command and warm daemon to produce CPU tracing snapshot"() {
-        given:
-        instrumentedBuildScript()
-
-        def scenarioFile = file("performance.scenarios")
-        scenarioFile.text = """
-            assemble {
-                tasks = "assemble"
-                cleanup-tasks = "clean"
-            }
-        """
-
-        when:
-        new Main().run("--project-dir", projectDir.absolutePath, "--output-dir", outputDir.absolutePath, "--scenario-file", scenarioFile.absolutePath, "--gradle-version", minimalSupportedGradleVersion, "--profile", "yourkit", "--iterations", "2", "--cli", "assemble")
-
-        then:
-        logFile.grep("<daemon: true").size() == 9
-        logFile.grep("<tasks: [clean]").size() == 4
-        logFile.grep("<tasks: [assemble]").size() == 4
-        logFile.contains("<invocations: 8>")
-
-        and:
-        new File(outputDir, "assemble").listFiles().find { it.name.matches("assemble-${minimalSupportedGradleVersion}-.+\\.snapshot") }
-    }
-
-    @Requires({ YourKit.findYourKitHome() })
     def "profiles build using YourKit with tooling API and cold daemon to produce CPU tracing snapshot"() {
         given:
         instrumentedBuildScript()
@@ -224,6 +198,27 @@ class YourKitProfilerIntegrationTest extends AbstractProfilerIntegrationTest {
 
         and:
         outputDir.listFiles().find { it.name.matches("${minimalSupportedGradleVersion}-.+\\.snapshot") }
+    }
+
+    def "cannot profile using YourKit with multiple iterations and cleanup steps"() {
+        given:
+        instrumentedBuildScript()
+
+        def scenarioFile = file("performance.scenarios")
+        scenarioFile.text = """
+            assemble {
+                cleanup-tasks = "clean"
+            }
+        """
+
+        when:
+        new Main().run("--project-dir", projectDir.absolutePath, "--output-dir", outputDir.absolutePath, "--scenario-file", scenarioFile.absolutePath, "--gradle-version", minimalSupportedGradleVersion, "--profile", "yourkit", "--iterations", "2", "assemble")
+
+        then:
+        thrown(Main.ScenarioFailedException)
+
+        and:
+        output.contains("Profiler YourKit does not support profiling multiple iterations with cleanup steps in between.")
     }
 
     def "cannot profile using YourKit with multiple iterations and cold daemon"() {
