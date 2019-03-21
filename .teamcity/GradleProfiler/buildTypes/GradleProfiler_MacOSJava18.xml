@@ -21,7 +21,7 @@
       <vcs-entry-ref root-id="GradleProfiler_Branches" />
     </vcs-settings>
     <requirements>
-      <contains id="RQ_19" name="teamcity.agent.jvm.os.name" value="Linux" />
+      <contains id="RQ_19" name="teamcity.agent.jvm.os.name" value="Mac OS X" />
     </requirements>
     <build-triggers>
       <build-trigger id="vcsTrigger" type="vcsTrigger">
