@@ -1,7 +1,7 @@
 package org.gradle.profiler.jprofiler;
 
+import org.gradle.profiler.InstrumentingProfiler;
 import org.gradle.profiler.Logging;
-import org.gradle.profiler.ProfilerController;
 import org.gradle.profiler.ScenarioSettings;
 
 import javax.management.*;
@@ -12,7 +12,7 @@ import java.io.IOException;
 import java.util.Arrays;
 import java.util.Collections;
 
-public class JProfilerController implements ProfilerController {
+public class JProfilerController implements InstrumentingProfiler.SnapshotCapturingProfilerController {
 
     private final JProfilerConfig jProfilerConfig;
     private final ScenarioSettings settings;
@@ -27,12 +27,7 @@ public class JProfilerController implements ProfilerController {
     }
 
     @Override
-    public void startSession() throws IOException, InterruptedException {
-        ensureConnected();
-    }
-
-    @Override
-    public void startRecording() throws IOException, InterruptedException {
+    public void startRecording(String pid) throws IOException, InterruptedException {
         invoke("startCPURecording", false);
         if (jProfilerConfig.isRecordAlloc()) {
             invoke("startAllocRecording", false);
@@ -65,11 +60,15 @@ public class JProfilerController implements ProfilerController {
     }
 
     @Override
-    public void stopSession() throws IOException, InterruptedException {
+    public void captureSnapshot(String pid) throws IOException, InterruptedException {
         if (jProfilerConfig.isHeapDump()) {
             invoke("triggerHeapDump");
         }
         invoke("saveSnapshot", getSnapshotPath());
+    }
+
+    @Override
+    public void stopSession() throws IOException, InterruptedException {
         closeConnection();
     }
 
@@ -108,6 +107,7 @@ public class JProfilerController implements ProfilerController {
     }
 
     private void invoke(String operationName, Object... parameterValues) throws IOException {
+        ensureConnected();
         String[] parameterTypes = Arrays.stream(parameterValues)
                 .map(Object::getClass)
                 .map(this::replaceWrapperWithPrimitive)

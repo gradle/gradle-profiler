@@ -4,13 +4,16 @@ import joptsimple.ArgumentAcceptingOptionSpec;
 import joptsimple.OptionParser;
 import joptsimple.OptionSet;
 import joptsimple.OptionSpecBuilder;
-import org.gradle.profiler.*;
+import org.gradle.profiler.InstrumentingProfiler;
+import org.gradle.profiler.JvmArgsCalculator;
+import org.gradle.profiler.Profiler;
+import org.gradle.profiler.ScenarioSettings;
 
 import java.io.File;
 import java.util.Collections;
 import java.util.List;
 
-public class JProfilerProfiler extends Profiler {
+public class JProfilerProfiler extends InstrumentingProfiler {
     private final JProfilerConfig jProfilerConfig;
     private ArgumentAcceptingOptionSpec<String> homeDir;
     private ArgumentAcceptingOptionSpec<String> configOption;
@@ -43,17 +46,18 @@ public class JProfilerProfiler extends Profiler {
     }
 
     @Override
-    public ProfilerController newController(String pid, ScenarioSettings settings) {
-        if (settings.getInvocationSettings().getInvoker() == Invoker.CliNoDaemon) {
-            return ProfilerController.EMPTY;
-        } else {
-            return new JProfilerController(settings, jProfilerConfig);
-        }
+    protected boolean canRestartRecording() {
+        return true;
     }
 
     @Override
-    public JvmArgsCalculator newJvmArgsCalculator(ScenarioSettings settings) {
-        return new JProfilerJvmArgsCalculator(jProfilerConfig, settings);
+    protected SnapshotCapturingProfilerController doNewController(ScenarioSettings settings) {
+        return new JProfilerController(settings, jProfilerConfig);
+    }
+
+    @Override
+    protected JvmArgsCalculator jvmArgsWithInstrumentation(ScenarioSettings settings, boolean startRecordingOnProcessStart, boolean captureSnapshotOnProcessExit) {
+        return new JProfilerJvmArgsCalculator(jProfilerConfig, settings, startRecordingOnProcessStart, captureSnapshotOnProcessExit);
     }
 
     @Override
