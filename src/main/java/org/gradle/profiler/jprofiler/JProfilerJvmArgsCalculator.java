@@ -1,6 +1,5 @@
 package org.gradle.profiler.jprofiler;
 
-import org.gradle.profiler.Invoker;
 import org.gradle.profiler.JvmArgsCalculator;
 import org.gradle.profiler.OperatingSystem;
 import org.gradle.profiler.ScenarioSettings;
@@ -19,11 +18,15 @@ import java.util.List;
 
 public class JProfilerJvmArgsCalculator implements JvmArgsCalculator {
     private final JProfilerConfig jProfilerConfig;
-    private ScenarioSettings settings;
+    private final ScenarioSettings settings;
+    private final boolean startRecordingOnProcessStart;
+    private final boolean captureSnapshotOnProcessExit;
 
-    public JProfilerJvmArgsCalculator(JProfilerConfig jProfilerConfig, ScenarioSettings settings) {
+    public JProfilerJvmArgsCalculator(JProfilerConfig jProfilerConfig, ScenarioSettings settings, boolean startRecordingOnProcessStart, boolean captureSnapshotOnProcessExit) {
         this.jProfilerConfig = jProfilerConfig;
         this.settings = settings;
+        this.startRecordingOnProcessStart = startRecordingOnProcessStart;
+        this.captureSnapshotOnProcessExit = captureSnapshotOnProcessExit;
     }
 
     @Override
@@ -94,8 +97,8 @@ public class JProfilerJvmArgsCalculator implements JvmArgsCalculator {
     }
 
     private File transformConfigFile(File configFile, String id) {
-        if (profileWholeLifeTime()) {
-            return JProfilerConfigFileTransformer.transform(configFile, id, jProfilerConfig, JProfiler.getSnapshotPath(settings));
+        if (startRecordingOnProcessStart) {
+            return JProfilerConfigFileTransformer.transform(configFile, id, jProfilerConfig, JProfiler.getSnapshotPath(settings), captureSnapshotOnProcessExit);
         } else {
             return configFile;
         }
@@ -155,9 +158,4 @@ public class JProfilerJvmArgsCalculator implements JvmArgsCalculator {
             }
         }
     }
-
-    private boolean profileWholeLifeTime() {
-        return settings.getInvocationSettings().getInvoker() == Invoker.CliNoDaemon;
-    }
-
 }

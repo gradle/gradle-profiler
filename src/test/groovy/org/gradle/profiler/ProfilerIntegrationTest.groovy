@@ -1,7 +1,6 @@
 package org.gradle.profiler
 
 import org.gradle.profiler.buildscan.BuildScanProfiler
-import org.gradle.profiler.jprofiler.JProfiler
 import org.gradle.util.GradleVersion
 import spock.lang.Requires
 import spock.lang.Unroll
@@ -248,57 +247,6 @@ println "<daemon: " + gradle.services.get(org.gradle.internal.environment.Gradle
         logFile.grep("<daemon: true").size() == 4
         logFile.grep("<tasks: [assemble]>").size() == 3
         assertBuildScanPublished()
-    }
-
-    @Requires({ new File(JProfiler.getDefaultHomeDir()).exists() })
-    def "profiles build using JProfiler"() {
-        given:
-        buildFile.text = """
-apply plugin: BasePlugin
-"""
-
-        when:
-        new Main().
-            run("--project-dir", projectDir.absolutePath, "--output-dir", outputDir.absolutePath, "--gradle-version", minimalSupportedGradleVersion, "--profile", "jprofiler",
-                "assemble")
-
-        then:
-        outputDir.listFiles().find { it.name.matches("${minimalSupportedGradleVersion}.jps") }
-    }
-
-    @Requires({ new File(JProfiler.getDefaultHomeDir()).exists() })
-    def "profiles --no-daemon build using JProfiler"() {
-        given:
-        buildFile.text = """
-apply plugin: BasePlugin
-"""
-
-        when:
-        new Main().
-            run("--project-dir", projectDir.absolutePath, "--output-dir", outputDir.absolutePath, "--gradle-version", minimalSupportedGradleVersion, "--profile", "jprofiler",
-                "--jprofiler-monitors", "--jprofiler-probes", "builtin.JdbcProbe:+special,builtin.FileProbe,builtin.ClassLoaderProbe:+events",
-                "--no-daemon", "assemble")
-
-        then:
-        outputDir.listFiles().find { it.name.matches("${minimalSupportedGradleVersion}.jps") }
-    }
-
-    @Requires({ new File(JProfiler.getDefaultHomeDir()).exists() })
-    def "profiles build using JProfiler with all supported options"() {
-        given:
-        buildFile.text = """
-apply plugin: BasePlugin
-"""
-
-        when:
-        new Main().
-            run("--project-dir", projectDir.absolutePath, "--output-dir", outputDir.absolutePath, "--gradle-version", minimalSupportedGradleVersion, "--profile", "jprofiler",
-                "--jprofiler-config", "instrumentation", "--jprofiler-alloc", "--jprofiler-monitors", "--jprofiler-heapdump",
-                "--jprofiler-probes", "builtin.FileProbe,builtin.ClassLoaderProbe:+events",
-                "assemble")
-
-        then:
-        outputDir.listFiles().find { it.name.matches("${minimalSupportedGradleVersion}.jps") }
     }
 
     def "profiles build using Build Scans overridden version specified Gradle version and tasks"() {

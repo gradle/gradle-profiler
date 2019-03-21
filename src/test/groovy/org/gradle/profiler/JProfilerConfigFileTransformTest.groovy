@@ -18,7 +18,7 @@ class JProfilerConfigFileTransformTest extends Specification {
 
         when:
         JProfilerConfig jProfilerConfig = new JProfilerConfig(null, null, null, null, true, true, false, ['builtin.JdbcProbe:+events+special', 'builtin.FileProbe'])
-        def xml = new XmlSlurper().parse(JProfilerConfigFileTransformer.transform(sourceFile, '1', jProfilerConfig, "output/snapshot.jps"))
+        def xml = new XmlSlurper().parse(JProfilerConfigFileTransformer.transform(sourceFile, '1', jProfilerConfig, "output/snapshot.jps", true))
         def triggers = xml.sessions.session[0].triggers
         def startActions = triggers.jvmStart.actions
         def stopActions = triggers.jvmStop.actions

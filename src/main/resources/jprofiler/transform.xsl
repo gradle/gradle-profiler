@@ -5,6 +5,7 @@
   <xsl:param name="monitorRecording"/>
   <xsl:param name="probesFile"/>
   <xsl:param name="snapshotPath"/>
+  <xsl:param name="captureOnJvmStop"/>
 
   <xsl:template match="/|@*|node()">
     <xsl:copy>
@@ -32,11 +33,13 @@
           </xsl:for-each>
         </actions>
       </jvmStart>
+      <xsl:if test="$captureOnJvmStop">
       <jvmStop enabled="true">
         <actions>
           <saveSnapshot file="{$snapshotPath}" number="false"/>
         </actions>
       </jvmStop>
+      </xsl:if>
       <xsl:apply-templates/>
     </xsl:copy>
   </xsl:template>

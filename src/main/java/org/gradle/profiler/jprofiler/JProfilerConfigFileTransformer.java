@@ -18,7 +18,7 @@ import java.nio.file.Files;
 
 public class JProfilerConfigFileTransformer {
 
-    public static File transform(File configFile, String id, JProfilerConfig jProfilerConfig, String snapshotPath) {
+    public static File transform(File configFile, String id, JProfilerConfig jProfilerConfig, String snapshotPath, boolean captureOnExit) {
         try {
             File transformedConfigFile = File.createTempFile("jprofiler", ".xml");
             transformedConfigFile.deleteOnExit();
@@ -34,6 +34,7 @@ public class JProfilerConfigFileTransformer {
             transformer.setParameter("monitorRecording", jProfilerConfig.isRecordMonitors());
             transformer.setParameter("probesFile", probesFile.getPath());
             transformer.setParameter("snapshotPath", snapshotPath);
+            transformer.setParameter("captureOnJvmStop", captureOnExit);
             transformer.transform(source, result);
             if (Boolean.getBoolean("jprofiler.debugTransform")) {
                 Files.readAllLines(transformedConfigFile.toPath()).forEach(System.out::println);
