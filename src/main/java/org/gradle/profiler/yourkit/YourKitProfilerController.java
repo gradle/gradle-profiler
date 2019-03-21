@@ -1,11 +1,11 @@
 package org.gradle.profiler.yourkit;
 
 import org.gradle.profiler.CommandExec;
-import org.gradle.profiler.ProfilerController;
+import org.gradle.profiler.InstrumentingProfiler;
 
 import java.io.File;
 
-public class YourKitProfilerController implements ProfilerController {
+public class YourKitProfilerController implements InstrumentingProfiler.SnapshotCapturingProfilerController {
     private final YourKitConfig options;
 
     public YourKitProfilerController(YourKitConfig options) {
@@ -13,11 +13,7 @@ public class YourKitProfilerController implements ProfilerController {
     }
 
     @Override
-    public void startSession() {
-    }
-
-    @Override
-    public void startRecording() {
+    public void startRecording(String pid) {
         if (options.isMemorySnapshot()) {
             runYourKitCommand("start-alloc-recording-adaptive");
         } else if (options.isUseSampling()) {
@@ -37,12 +33,16 @@ public class YourKitProfilerController implements ProfilerController {
     }
 
     @Override
-    public void stopSession() {
+    public void captureSnapshot(String pid) {
         if (options.isMemorySnapshot()) {
             runYourKitCommand("capture-memory-snapshot");
         } else {
             runYourKitCommand("capture-performance-snapshot");
         }
+    }
+
+    @Override
+    public void stopSession() {
     }
 
     private void runYourKitCommand(String command) {

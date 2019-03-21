@@ -27,6 +27,10 @@ public class GradleScenarioInvoker extends ScenarioInvoker<GradleScenarioDefinit
 
     @Override
     public void run(GradleScenarioDefinition scenario, InvocationSettings settings, BenchmarkResultCollector benchmarkResults) throws IOException, InterruptedException {
+        if (settings.isProfile() && scenario.getWarmUpCount() == 0) {
+            throw new IllegalStateException("Using the --profile option requires at least one warm-up");
+        }
+
         ScenarioSettings scenarioSettings = new ScenarioSettings(settings, scenario);
         FileUtils.forceMkdir(scenario.getOutputDir());
         JvmArgsCalculator allBuildsJvmArgsCalculator = settings.getProfiler().newJvmArgsCalculator(scenarioSettings);
@@ -126,19 +130,13 @@ public class GradleScenarioInvoker extends ScenarioInvoker<GradleScenarioDefinit
 
             BuildUnderTestInvoker instrumentedBuildInvoker = invoker.withJvmArgs(instrumentedBuildJvmArgs).withGradleArgs(instrumentedBuildGradleArgs);
 
-            if (settings.isProfile()) {
-                if (pid == null) {
-                    throw new IllegalStateException("Using the --profile option requires at least one warm-up");
-                }
-                Logging.startOperation("Starting profiler for daemon with pid " + pid);
-                control.startSession();
-            }
+            control.startSession();
             for (int i = 1; i <= scenario.getBuildCount(); i++) {
                 final int counter = i;
                 beforeBuild(MEASURE, counter, invoker, beforeBuildAction, mutator);
                 String displayName = MEASURE.displayBuildNumber(counter);
                 results = runMeasured(displayName, mutator, () -> {
-                    if (settings.isProfile() && (counter == 1 || beforeBuildAction.isDoesSomething())) {
+                    if ((counter == 1 || beforeBuildAction.isDoesSomething())) {
                         try {
                             control.startRecording();
                         } catch (IOException | InterruptedException e) {
@@ -148,7 +146,7 @@ public class GradleScenarioInvoker extends ScenarioInvoker<GradleScenarioDefinit
 
                     BuildInvocationResult result = instrumentedBuildInvoker.runBuild(MEASURE, counter, BUILD, scenario.getAction());
 
-                    if (settings.isProfile() && (counter == scenario.getBuildCount() || beforeBuildAction.isDoesSomething())) {
+                    if ((counter == scenario.getBuildCount() || beforeBuildAction.isDoesSomething())) {
                         try {
                             control.stopRecording(result.getDaemonPid());
                         } catch (IOException | InterruptedException e) {
@@ -160,10 +158,7 @@ public class GradleScenarioInvoker extends ScenarioInvoker<GradleScenarioDefinit
                 }, resultsCollector);
             }
 
-            if (settings.isProfile()) {
-                Logging.startOperation("Stopping profiler for daemon with pid " + pid);
-                control.stopSession();
-            }
+            control.stopSession();
             if (settings.isBenchmark()) {
                 benchmarkResults.write();
             }

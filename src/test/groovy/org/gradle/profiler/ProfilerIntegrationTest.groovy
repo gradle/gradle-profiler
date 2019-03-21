@@ -75,7 +75,7 @@ println "<tasks: " + gradle.startParameter.taskNames + ">"
         thrown(IllegalArgumentException)
 
         and:
-        output.contains("You can not skip warm-ups when profiling or benchmarking. Use --no-daemon if you want to profile or benchmark JVM startup")
+        output.contains("You can not skip warm-ups when profiling or benchmarking. Use --no-daemon or --cold-daemon if you want to profile or benchmark JVM startup")
     }
 
     def "complains when benchmarking scenario and skipping warm-up builds"() {
@@ -105,7 +105,7 @@ println "<tasks: " + gradle.startParameter.taskNames + ">"
         thrown(IllegalArgumentException)
 
         and:
-        output.contains("You can not skip warm-ups when profiling or benchmarking scenario help. Use --no-daemon if you want to profile or benchmark JVM startup")
+        output.contains("You can not skip warm-ups when profiling or benchmarking scenario help. Use --no-daemon or --cold-daemon if you want to profile or benchmark JVM startup")
     }
 
     def "reports build failures"() {
@@ -176,7 +176,6 @@ println "<tasks: " + gradle.startParameter.taskNames + ">"
         logFile.contains("* Running scenario using Gradle $minimalSupportedGradleVersion (scenario 1/1)")
         logFile.grep("* Running warm-up build").size() == 3
         logFile.grep("* Running measured build").size() == 2
-        logFile.grep("* Starting profiler for daemon with pid").size() == 1
         logFile.grep("<gradle-version: $minimalSupportedGradleVersion>").size() == 6
         logFile.grep("<tasks: [assemble]>").size() == 5
 

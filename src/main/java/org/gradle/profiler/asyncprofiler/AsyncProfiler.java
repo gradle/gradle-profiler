@@ -34,7 +34,6 @@ public class AsyncProfiler extends InstrumentingProfiler {
         this.config = config;
     }
 
-
     @Override
     public void addOptions(OptionParser parser) {
         profilerHomeOption = parser.accepts("async-profiler-home", "Async Profiler home directory")
@@ -110,8 +109,8 @@ public class AsyncProfiler extends InstrumentingProfiler {
     }
 
     @Override
-    protected ProfilerController doNewController(String pid, ScenarioSettings settings) {
-        return new AsyncProfilerController(config, pid, settings);
+    protected SnapshotCapturingProfilerController doNewController(ScenarioSettings settings) {
+        return new AsyncProfilerController(config, settings);
     }
 
     @Override
