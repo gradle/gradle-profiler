@@ -1,7 +1,6 @@
 package org.gradle.trace;
 
-import org.gradle.api.invocation.Gradle;
-
+import java.io.File;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -10,7 +9,11 @@ import java.util.concurrent.ConcurrentHashMap;
 
 public class TraceResult {
     private final Map<String, DurationEvent> events = new ConcurrentHashMap<>();
-    private final AsynchronousTraceWriter traceWriter = new AsynchronousTraceWriter();
+    private final AsynchronousTraceWriter traceWriter;
+
+    public TraceResult(File traceFile) {
+        traceWriter = new AsynchronousTraceWriter(traceFile);
+    }
 
     public void count(String name, String metric, Map<String, Double> info) {
         count(name, metric, info, null);
@@ -37,16 +40,12 @@ public class TraceResult {
         }
     }
 
-    public void startTraceFile() {
-        traceWriter.start();
-    }
-
-    public void finalizeTraceFile(Gradle gradle) {
+    public void finalizeTraceFile() {
         for (String unfinishedEvent : new ArrayList<>(events.keySet())) {
             finish(unfinishedEvent, System.nanoTime(), Collections.emptyMap());
         }
 
-        traceWriter.finish(gradle);
+        traceWriter.finish();
     }
 
 }

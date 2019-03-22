@@ -22,22 +22,16 @@ import org.gradle.profiler.ScenarioSettings;
 import java.io.File;
 import java.io.PrintWriter;
 
-public class ChromeTraceInitScript extends GradleInstrumentation {
+public class ChromeTraceInstrumentation extends GradleInstrumentation {
     private final File traceFile;
 
-    public ChromeTraceInitScript(ScenarioSettings scenarioSettings) {
+    public ChromeTraceInstrumentation(ScenarioSettings scenarioSettings) {
         GradleScenarioDefinition scenario = scenarioSettings.getScenario();
         traceFile = new File(scenario.getOutputDir(), scenario.getProfileName() + "-trace.html");
     }
 
     @Override
-    protected String getJarBaseName() {
-        return "chrome-trace";
-    }
-
-    @Override
     protected void generateInitScriptBody(PrintWriter writer) {
-        writer.write("rootProject { ext.chromeTraceFile = new File(new URI(\"" + traceFile.toURI() + "\")) }\n");
-        writer.write("apply plugin: org.gradle.trace.GradleTracingPlugin\n");
+        writer.println("org.gradle.trace.GradleTracingPlugin.start(gradle, new File(new URI(\"" + traceFile.toURI() + "\")))");
     }
 }

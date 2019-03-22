@@ -1,114 +1,56 @@
 package org.gradle.trace;
 
 import org.gradle.api.invocation.Gradle;
+import org.gradle.api.logging.Logging;
 import org.gradle.internal.UncheckedException;
+import org.gradle.trace.stream.AsyncWriter;
 
 import java.io.*;
 import java.nio.file.Files;
-import java.util.concurrent.BlockingQueue;
-import java.util.concurrent.LinkedBlockingQueue;
 
-public class AsynchronousTraceWriter extends Thread {
+public class AsynchronousTraceWriter {
 
-    private final BlockingQueue<TraceEvent> eventQueue = new LinkedBlockingQueue<>();
-    private File tempTraceFile;
-    private PrintWriter writer;
+    private final AsyncWriter<TraceEvent> eventQueue;
+    private final File tempTraceFile;
+    private final File traceFile;
 
-    public AsynchronousTraceWriter() {
-        super(AsynchronousTraceWriter.class.getSimpleName());
-    }
-
-    public void add(TraceEvent event) {
-        eventQueue.add(event);
-    }
-
-    public void start() {
-        super.start();
-    }
-
-    public void finish(Gradle gradle) {
-        this.interrupt();
-        try {
-            this.join();
-        } catch (InterruptedException e) {
-            throw new RuntimeException(e);
-        }
-
-        if (writer != null && System.getProperty("trace") != null) {
-            writer.println("],\n" +
-                    "  \"displayTimeUnit\": \"ns\",\n" +
-                    "  \"systemTraceEvents\": \"SystemTraceData\",\n" +
-                    "  \"otherData\": {\n" +
-                    "    \"version\": \"My Application v1.0\"\n" +
-                    "  }\n" +
-                    "}\n");
-            writer.close();
-
-            copyResourceToTraceFile("/trace-footer.html", true);
-
-            File finalTraceFile = traceFile(gradle);
-            boolean success = tempTraceFile.renameTo(finalTraceFile);
-            if (!success) {
-                throw new RuntimeException("Failed to move the trace file from a temporary location (" +
-                    tempTraceFile.getAbsolutePath() + ") to the final location (" + finalTraceFile.getAbsolutePath() + ")");
-            }
-            gradle.getRootProject().getLogger().lifecycle("Trace written to file://" + finalTraceFile.getAbsolutePath());
-        }
-    }
-
-    @Override
-    public void run() {
-        boolean finishing = false;
-        while (true) {
-            try {
-                TraceEvent event = finishing ? eventQueue.poll() : eventQueue.take();
-                if (event == null) {
-                    break;
-                } else {
-                    streamToTraceFile(event);
-                }
-            } catch (InterruptedException e) {
-                finishing = true;
-            }
-        }
-    }
-
-    private void streamToTraceFile(TraceEvent event) {
-        if (writer == null) {
-            startTraceFile();
-        } else {
-            writer.print(',');
-        }
-        writer.print(event.toString());
-    }
-
-    private void startTraceFile() {
+    public AsynchronousTraceWriter(File traceFile) {
+        this.traceFile = traceFile;
         try {
             tempTraceFile = Files.createTempFile("gradle-trace", ".html").toFile();
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
-        copyResourceToTraceFile("/trace-header.html", false);
-        writer = createPrintWriter();
-        writer.println("{\n" +
-                "  \"traceEvents\": [\n");
+        eventQueue = new AsyncWriter<>(tempTraceFile, new TraceEventRenderer());
     }
 
-    private PrintWriter createPrintWriter() {
-        try {
-            return new PrintWriter(new FileWriter(tempTraceFile, true), true);
-        } catch (IOException e) {
-            throw UncheckedException.throwAsUncheckedException(e);
+    public void add(TraceEvent event) {
+        eventQueue.append(event);
+    }
+
+    public void finish() {
+        eventQueue.stop();
+        if (System.getProperty("trace") == null) {
+            return;
         }
+
+        boolean success = tempTraceFile.renameTo(traceFile);
+        if (!success) {
+            throw new RuntimeException("Failed to move the trace file from a temporary location (" +
+                tempTraceFile.getAbsolutePath() + ") to the final location (" + traceFile.getAbsolutePath() + ")");
+        }
+        Logging.getLogger(AsynchronousTraceWriter.class).lifecycle("Trace written to file://" + traceFile.getAbsolutePath());
     }
 
-    private void copyResourceToTraceFile(String resourcePath, boolean append) {
-        try (OutputStream out = new FileOutputStream(tempTraceFile, append);
-             InputStream in = getClass().getResourceAsStream(resourcePath)) {
-            byte[] buffer = new byte[1024];
-            int len;
-            while ((len = in.read(buffer)) != -1) {
-                out.write(buffer, 0, len);
+    private void copyResourceToTraceFile(String resourcePath, PrintWriter writer) {
+        try (Reader in = new InputStreamReader(getClass().getResourceAsStream(resourcePath))) {
+            char[] buffer = new char[1024];
+            while (true) {
+                int nread = in.read(buffer);
+                if (nread < 0) {
+                    break;
+                }
+                writer.write(buffer, 0, nread);
             }
         } catch (IOException e) {
             throw UncheckedException.throwAsUncheckedException(e);
@@ -129,4 +71,37 @@ public class AsynchronousTraceWriter extends Thread {
         return new File(buildDir, "trace/task-trace.html");
     }
 
+    private class TraceEventRenderer implements AsyncWriter.Renderer<TraceEvent> {
+        boolean hasEvents;
+
+        @Override
+        public void header(PrintWriter writer) {
+            copyResourceToTraceFile("/trace-header.html", writer);
+            writer.println("{\n" +
+                "  \"traceEvents\": [\n");
+        }
+
+        @Override
+        public void write(TraceEvent value, PrintWriter writer) {
+            if (hasEvents) {
+                writer.print(',');
+            } else {
+                hasEvents = true;
+            }
+            writer.print(value.toString());
+        }
+
+        @Override
+        public void footer(PrintWriter writer) {
+            writer.println("],\n" +
+                "  \"displayTimeUnit\": \"ns\",\n" +
+                "  \"systemTraceEvents\": \"SystemTraceData\",\n" +
+                "  \"otherData\": {\n" +
+                "    \"version\": \"My Application v1.0\"\n" +
+                "  }\n" +
+                "}\n");
+
+            copyResourceToTraceFile("/trace-footer.html", writer);
+        }
+    }
 }
