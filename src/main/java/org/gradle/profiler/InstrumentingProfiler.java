@@ -17,40 +17,63 @@ import java.io.IOException;
  * <p>The profiler may support starting recording multiple times for a given JVM. The implementation should indicate this by overriding {@link #canRestartRecording()}.</p>
  */
 public abstract class InstrumentingProfiler extends Profiler {
+    /**
+     * Calculates the JVM args for all builds, including warm-ups.
+     *
+     * <p>When the daemon will not be reused, this does nothing as there is no need to instrument the warm-up
+     * builds in this case.
+     *
+     * <p>When the daemon will be reused for all builds, then instrument the daemon but do not start recording or capture snapshots yet.
+     * Recording and capture will be enabled later when the measured builds run.
+     */
     @Override
     public JvmArgsCalculator newJvmArgsCalculator(ScenarioSettings settings) {
         validate(settings);
         if (!settings.getScenario().getInvoker().isReuseDaemon()) {
-            // When the daemon is not reused, there is no need to instrument the warm ups
             return JvmArgsCalculator.DEFAULT;
         }
-        // Instrument the daemon but do not start recording yet
         return jvmArgsWithInstrumentation(settings, false, false);
     }
 
+    /**
+     * Calculates the JVM args for measured builds.
+     *
+     * <p>When the daemon will be reused for all builds, this does nothing as the daemon is already instrumented (above).</p>
+     *
+     * <p>When using a cold daemon, start the JVM with recording enabled but do not capture snapshots yet.</p>
+     *
+     * <p>When using no daemon, start the JVM with recording enabled and capture a snapshot when the JVM exits.</p>
+     */
     @Override
     public JvmArgsCalculator newInstrumentedBuildsJvmArgsCalculator(ScenarioSettings settings) {
         if (settings.getScenario().getInvoker().isReuseDaemon()) {
-            // Is already instrumented
             return JvmArgsCalculator.DEFAULT;
         }
-        // Start with recording enabled, and capture snapshot on exit when not using daemon
         boolean captureSnapshotOnExit = settings.getScenario().getInvoker() == Invoker.CliNoDaemon;
         return jvmArgsWithInstrumentation(settings, true, captureSnapshotOnExit);
     }
 
+    /**
+     * Creates a controller for this profiler.
+     *
+     * <p>When the daemon will be reused for all builds, create a controller that starts and stops recording when
+     * requested, and that captures a snapshot at the end of the session.</p>
+     *
+     * <p>When using a cold daemon, create a controller that stops recording and captures a snapshot when requested,
+     * but does not start recording as this is already enabled when the JVM starts.</p>
+     *
+     * <p>When using no daemon, return a controller that finishes the session only, as recording and snapshot capture
+     * are already enabled when the JVM starts.</p>
+     */
     @Override
     public ProfilerController newController(String pid, ScenarioSettings settings) {
         SnapshotCapturingProfilerController controller = doNewController(settings);
         if (settings.getScenario().getInvoker() == Invoker.CliNoDaemon) {
-            // Daemon will start recording and create snapshot on exit, so just start and end session
             return new SessionOnlyController(pid, controller);
         }
         if (settings.getScenario().getInvoker().isReuseDaemon()) {
-            // Daemon will do nothing, so start and stop recording. Capture snapshot at end of session
             return new CaptureSnapshotOnSessionEndController(pid, controller);
         }
-        // Daemon will start recording, so ignore request to start recording. Capture snapshot when stopping recording
         return new RecordingAlreadyStartedController(pid, controller);
     }
 
