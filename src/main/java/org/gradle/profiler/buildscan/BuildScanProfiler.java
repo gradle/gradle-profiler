@@ -101,33 +101,27 @@ public class BuildScanProfiler extends Profiler {
 
     @Override
     public GradleArgsCalculator newGradleArgsCalculator(ScenarioSettings settings) {
-        return new GradleArgsCalculator() {
-            @Override
-            public void calculateGradleArgs(List<String> gradleArgs) {
-                GradleBuildConfiguration buildConfiguration = settings.getScenario().getBuildConfiguration();
-                if (!buildConfiguration.isUsesScanPlugin()) {
-                    gradleArgs.addAll(new BuildScanInitScript(getEffectiveBuildScanVersion(buildConfiguration)).getArgs());
-                }
+        return gradleArgs -> {
+            GradleBuildConfiguration buildConfiguration = settings.getScenario().getBuildConfiguration();
+            if (!buildConfiguration.isUsesScanPlugin()) {
+                new BuildScanInitScript(getEffectiveBuildScanVersion(buildConfiguration)).calculateGradleArgs(gradleArgs);
             }
         };
     }
 
     @Override
     public GradleArgsCalculator newInstrumentedBuildsGradleArgsCalculator(ScenarioSettings settings) {
-        return new GradleArgsCalculator() {
-            @Override
-            public void calculateGradleArgs(List<String> gradleArgs) {
-                GradleBuildConfiguration buildConfiguration = settings.getScenario().getBuildConfiguration();
-                if (buildConfiguration.isUsesScanPlugin()) {
-                    System.out.println("Using build scan plugin specified in the build");
-                } else {
-                    System.out.println("Using build scan plugin " + getEffectiveBuildScanVersion(buildConfiguration));
-                }
-                if (buildConfiguration.getGradleVersion().compareTo(GRADLE_5) < 0) {
-                    gradleArgs.add("-Dscan");
-                } else {
-                    gradleArgs.add("--scan");
-                }
+        return gradleArgs -> {
+            GradleBuildConfiguration buildConfiguration = settings.getScenario().getBuildConfiguration();
+            if (buildConfiguration.isUsesScanPlugin()) {
+                System.out.println("Using build scan plugin specified in the build");
+            } else {
+                System.out.println("Using build scan plugin " + getEffectiveBuildScanVersion(buildConfiguration));
+            }
+            if (buildConfiguration.getGradleVersion().compareTo(GRADLE_5) < 0) {
+                gradleArgs.add("-Dscan");
+            } else {
+                gradleArgs.add("--scan");
             }
         };
     }

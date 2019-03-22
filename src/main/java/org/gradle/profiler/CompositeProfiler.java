@@ -72,7 +72,7 @@ class CompositeProfiler extends Profiler {
         InvocationSettings newSettings = new InvocationSettings(settings.getProjectDir(), prof, settings.isBenchmark(),
                 settings.getOutputDir(), settings.getInvoker(), settings.isDryRun(), settings.getScenarioFile(), settings.getVersions(),
                 settings.getTargets(), settings.getSystemProperties(), settings.getGradleUserHome(), settings.getWarmUpCount(),
-                settings.getBuildCount());
+                settings.getBuildCount(), settings.isMeasureConfigTime());
         return new ScenarioSettings(newSettings, scenarioSettings.getScenario());
     }
 

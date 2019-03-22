@@ -46,6 +46,7 @@ class CommandLineParser {
         OptionSpecBuilder noDaemonOption = parser.accepts("no-daemon", "Do not use the Gradle daemon");
         OptionSpecBuilder coldDaemonOption = parser.accepts("cold-daemon", "Use a cold Gradle daemon");
         OptionSpecBuilder cliOption = parser.accepts("cli", "Uses the command-line client to connect to the daemon");
+        OptionSpecBuilder measureConfigOption = parser.accepts("benchmark-config-time", "Include a breakdown of configuration time in benchmark results");
         OptionSpecBuilder dryRunOption = parser.accepts("dry-run", "Verify configuration");
         OptionSpecBuilder bazelOption = parser.accepts("bazel", "Benchmark scenarios using Bazel");
         OptionSpecBuilder buckOption = parser.accepts("buck", "Benchmark scenarios using buck");
@@ -75,6 +76,7 @@ class CommandLineParser {
         File gradleUserHome = parsedOptions.valueOf(gradleUserHomeOption);
         Integer warmups = parsedOptions.valueOf(warmupsOption);
         Integer iterations = parsedOptions.valueOf(iterationsOption);
+        boolean measureConfig = parsedOptions.has(measureConfigOption);
 
         List<String> targetNames = parsedOptions.nonOptionArguments().stream().map(Object::toString).collect(Collectors.toList());
         List<String> versions = parsedOptions.valuesOf(versionOption);
@@ -115,7 +117,7 @@ class CommandLineParser {
                 sysProperties.put(value.substring(0, sep), value.substring(sep + 1, value.length()));
             }
         }
-        return new InvocationSettings(projectDir, profiler, benchmark, outputDir, invoker, dryRun, scenarioFile, versions, targetNames, sysProperties, gradleUserHome, warmups, iterations);
+        return new InvocationSettings(projectDir, profiler, benchmark, outputDir, invoker, dryRun, scenarioFile, versions, targetNames, sysProperties, gradleUserHome, warmups, iterations, measureConfig);
     }
 
     private File findOutputDir() {

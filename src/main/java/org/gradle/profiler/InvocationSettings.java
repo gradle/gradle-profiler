@@ -19,10 +19,11 @@ public class InvocationSettings {
     private final File gradleUserHome;
     private final Integer warmupCount;
     private final Integer iterations;
+    private final boolean measureConfigTime;
 
     public InvocationSettings(File projectDir, Profiler profiler, boolean benchmark, File outputDir, Invoker invoker,
                               boolean dryRun, File scenarioFile, List<String> versions, List<String> getTargets, Map<String, String> sysProperties,
-                              File gradleUserHome, Integer warmupCount, Integer iterations) {
+                              File gradleUserHome, Integer warmupCount, Integer iterations, boolean measureConfigTime) {
         this.benchmark = benchmark;
         this.projectDir = projectDir;
         this.profiler = profiler;
@@ -36,6 +37,7 @@ public class InvocationSettings {
         this.gradleUserHome = gradleUserHome;
         this.warmupCount = warmupCount;
         this.iterations = iterations;
+        this.measureConfigTime = measureConfigTime;
     }
 
     public File getOutputDir() {
@@ -127,7 +129,11 @@ public class InvocationSettings {
     public File getGradleUserHome() {
         return gradleUserHome;
     }
-    
+
+    public boolean isMeasureConfigTime() {
+        return measureConfigTime;
+    }
+
     public void printTo(PrintStream out) {
         out.println("Project dir: " + getProjectDir());
         out.println("Output dir: " + getOutputDir());
@@ -136,6 +142,8 @@ public class InvocationSettings {
         out.println("Versions: " + getVersions());
         out.println("Gradle User Home: " + getGradleUserHome());
         out.println("Targets: " + getTargets());
+        out.println("Warm-ups: " + getWarmUpCount());
+        out.println("Builds: " + getBuildCount());
         if (!getSystemProperties().isEmpty()) {
             out.println("System properties:");
             for (Map.Entry<String, String> entry : getSystemProperties().entrySet()) {

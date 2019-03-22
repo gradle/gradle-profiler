@@ -1,6 +1,7 @@
 package org.gradle.profiler;
 
 import org.apache.commons.io.FileUtils;
+import org.gradle.profiler.buildops.BuildOperationInstrumentation;
 import org.gradle.tooling.GradleConnector;
 import org.gradle.tooling.ProjectConnection;
 
@@ -34,7 +35,11 @@ public class GradleScenarioInvoker extends ScenarioInvoker<GradleScenarioDefinit
         ScenarioSettings scenarioSettings = new ScenarioSettings(settings, scenario);
         FileUtils.forceMkdir(scenario.getOutputDir());
         JvmArgsCalculator allBuildsJvmArgsCalculator = settings.getProfiler().newJvmArgsCalculator(scenarioSettings);
-        GradleArgsCalculator allBuildsGradleArgsCalculator = settings.getProfiler().newGradleArgsCalculator(scenarioSettings);
+        GradleArgsCalculator allBuildsGradleArgsCalculator = pidInstrumentation;
+        allBuildsGradleArgsCalculator = allBuildsGradleArgsCalculator.plus(settings.getProfiler().newGradleArgsCalculator(scenarioSettings));
+        if (settings.isMeasureConfigTime()) {
+            allBuildsGradleArgsCalculator = allBuildsGradleArgsCalculator.plus(new BuildOperationInstrumentation());
+        }
 
         BuildAction cleanupAction = scenario.getCleanupAction();
         GradleBuildConfiguration buildConfiguration = scenario.getBuildConfiguration();
@@ -48,6 +53,7 @@ public class GradleScenarioInvoker extends ScenarioInvoker<GradleScenarioDefinit
         ProjectConnection projectConnection = connector.forProjectDirectory(settings.getProjectDir()).connect();
         try {
             buildConfiguration.printVersionInfo();
+
             List<String> allBuildsJvmArgs = new ArrayList<>(buildConfiguration.getJvmArguments());
             for (Map.Entry<String, String> entry : scenario.getSystemProperties().entrySet()) {
                 allBuildsJvmArgs.add("-D" + entry.getKey() + "=" + entry.getValue());
@@ -55,7 +61,8 @@ public class GradleScenarioInvoker extends ScenarioInvoker<GradleScenarioDefinit
             allBuildsJvmArgs.add("-Dorg.gradle.profiler.scenario=" + scenario.getName());
             allBuildsJvmArgsCalculator.calculateJvmArgs(allBuildsJvmArgs);
             logJvmArgs(allBuildsJvmArgs);
-            List<String> allBuildsGradleArgs = new ArrayList<>(pidInstrumentation.getArgs());
+
+            List<String> allBuildsGradleArgs = new ArrayList<>();
             allBuildsGradleArgs.add("--gradle-user-home");
             allBuildsGradleArgs.add(settings.getGradleUserHome().getAbsolutePath());
             for (Map.Entry<String, String> entry : scenario.getSystemProperties().entrySet()) {
@@ -87,7 +94,7 @@ public class GradleScenarioInvoker extends ScenarioInvoker<GradleScenarioDefinit
             }
             BuildAction beforeBuildAction;
             if (scenario.getInvoker().isColdDaemon()) {
-                beforeBuildAction = new CleanupThenStopDaemon(cleanupAction,daemonControl, buildConfiguration);
+                beforeBuildAction = new CleanupThenStopDaemon(cleanupAction, daemonControl, buildConfiguration);
             } else {
                 beforeBuildAction = cleanupAction;
             }

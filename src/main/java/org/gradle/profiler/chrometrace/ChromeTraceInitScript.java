@@ -15,63 +15,29 @@
  */
 package org.gradle.profiler.chrometrace;
 
-import org.gradle.internal.UncheckedException;
-import org.gradle.profiler.GeneratedInitScript;
+import org.gradle.profiler.GradleInstrumentation;
 import org.gradle.profiler.GradleScenarioDefinition;
 import org.gradle.profiler.ScenarioSettings;
 
 import java.io.File;
-import java.io.IOException;
-import java.io.InputStream;
 import java.io.PrintWriter;
-import java.nio.file.Files;
-import java.nio.file.StandardCopyOption;
 
-public class ChromeTraceInitScript extends GeneratedInitScript {
-    private final File chromeTracePlugin;
+public class ChromeTraceInitScript extends GradleInstrumentation {
     private final File traceFile;
 
     public ChromeTraceInitScript(ScenarioSettings scenarioSettings) {
-        try {
-            chromeTracePlugin = File.createTempFile("chrome-trace", "jar");
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
-        chromeTracePlugin.deleteOnExit();
         GradleScenarioDefinition scenario = scenarioSettings.getScenario();
         traceFile = new File(scenario.getOutputDir(), scenario.getProfileName() + "-trace.html");
     }
 
-
-
-    private void unpackChromeTracePlugin() {
-        InputStream inputStream = getClass().getResourceAsStream("/META-INF/jars/chrome-trace.jar");
-        try {
-            Files.copy(inputStream, chromeTracePlugin.toPath(), StandardCopyOption.REPLACE_EXISTING);
-        } catch (IOException e) {
-            throw UncheckedException.throwAsUncheckedException(e);
-        }
+    @Override
+    protected String getJarBaseName() {
+        return "chrome-trace";
     }
 
     @Override
-    public void writeContents(final PrintWriter writer) {
-        unpackChromeTracePlugin();
-        writer.write("initscript {\n");
-        writer.write("    dependencies {\n");
-        writer.write("        classpath files(" + stringify(chromeTracePlugin) + ")\n");
-        writer.write("    }\n");
-        writer.write("}\n");
-        writer.write("\n");
-        writer.write("rootProject { ext.chromeTraceFile = new File(" + stringify(traceFile) + ") }\n");
+    protected void generateInitScriptBody(PrintWriter writer) {
+        writer.write("rootProject { ext.chromeTraceFile = new File(new URI(\"" + traceFile.toURI() + "\")) }\n");
         writer.write("apply plugin: org.gradle.trace.GradleTracingPlugin\n");
-    }
-    
-    /**
-     * Make a string literal of the given File path, by adding surronding
-     * qoutes and escaping backslashes.
-     */
-    private static String stringify(File file) {
-        String escaped = file.getAbsolutePath().replace("\\", "\\\\");
-        return "\"" + escaped + "\"";
     }
 }

@@ -22,7 +22,7 @@ class ScenarioLoaderTest extends Specification {
     }
 
     private settings(Invoker invoker = Invoker.Cli) {
-        new InvocationSettings(projectDir, Profiler.NONE, true, outputDir, invoker, false, scenarioFile, [], [], [:], gradleUserHomeDir, 1, 1)
+        new InvocationSettings(projectDir, Profiler.NONE, true, outputDir, invoker, false, scenarioFile, [], [], [:], gradleUserHomeDir, 1, 1, false)
     }
 
     def "can load single scenario"() {

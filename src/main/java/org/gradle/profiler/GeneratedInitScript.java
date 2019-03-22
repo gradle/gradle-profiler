@@ -19,11 +19,11 @@ import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.PrintWriter;
-import java.util.Arrays;
 import java.util.List;
 
-public abstract class GeneratedInitScript {
+public abstract class GeneratedInitScript implements GradleArgsCalculator {
     private final File initScript;
+    private boolean generated;
 
     public GeneratedInitScript() {
         try {
@@ -36,16 +36,22 @@ public abstract class GeneratedInitScript {
 
     protected abstract void writeContents(PrintWriter writer);
 
-    private void generateInitScript(){
+    private void maybeGenerateInitScript() {
+        if (generated) {
+            return;
+        }
         try (PrintWriter writer = new PrintWriter(new FileWriter(initScript))) {
             writeContents(writer);
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
+        generated = true;
     }
 
-    public final List<String> getArgs() {
-        generateInitScript();
-        return Arrays.asList("-I", initScript.getAbsolutePath());
+    @Override
+    public void calculateGradleArgs(List<String> gradleArgs) {
+        maybeGenerateInitScript();
+        gradleArgs.add("-I");
+        gradleArgs.add(initScript.getAbsolutePath());
     }
 }
