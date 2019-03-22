@@ -6,7 +6,9 @@ plugins {
 
 repositories {
     jcenter()
-    maven { url 'https://repo.gradle.org/gradle/repo' }
+    maven {
+        url = 'https://repo.gradle.org/gradle/repo'
+    }
     maven {
         url = 'https://oss.sonatype.org/content/repositories/snapshots'
     }
@@ -30,6 +32,7 @@ dependencies {
     implementation 'com.android.tools.build:builder-model:3.0.0'
 
     profilerPlugins project(':chrome-trace')
+    profilerPlugins project(':build-operations')
 
     runtimeOnly 'org.slf4j:slf4j-simple:1.7.10'
     testCompile 'org.codehaus.groovy:groovy:2.4.7'

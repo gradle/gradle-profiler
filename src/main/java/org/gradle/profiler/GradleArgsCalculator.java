@@ -2,9 +2,15 @@ package org.gradle.profiler;
 
 import java.util.List;
 
-public class GradleArgsCalculator {
-    public static final GradleArgsCalculator DEFAULT = new GradleArgsCalculator();
+public interface GradleArgsCalculator {
+    GradleArgsCalculator DEFAULT = (args) -> {};
 
-    public void calculateGradleArgs(List<String> gradleArgs) {
+    void calculateGradleArgs(List<String> gradleArgs);
+
+    default GradleArgsCalculator plus(GradleArgsCalculator other) {
+        return (args) -> {
+            this.calculateGradleArgs(args);
+            other.calculateGradleArgs(args);
+        };
     }
 }
