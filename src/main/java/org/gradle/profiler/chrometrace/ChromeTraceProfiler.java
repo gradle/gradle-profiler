@@ -24,7 +24,7 @@ public class ChromeTraceProfiler extends Profiler {
 
     @Override
     public GradleArgsCalculator newGradleArgsCalculator(ScenarioSettings settings) {
-        return new ChromeTraceInitScript(settings);
+        return new ChromeTraceInstrumentation(settings);
     }
 
     @Override

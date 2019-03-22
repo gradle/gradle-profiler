@@ -10,6 +10,6 @@ class BuildOperationInstrumentationIntegrationTest extends AbstractProfilerInteg
         new Main().run("--project-dir", projectDir.absolutePath, "--output-dir", outputDir.absolutePath, "--gradle-version", latestSupportedGradleVersion, "--benchmark", "--benchmark-config-time", "assemble")
 
         then:
-        logFile.grep("-> started tasks at").size() == 16
+        logFile.grep("-> config time").size() == 10
     }
 }

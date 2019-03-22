@@ -299,43 +299,6 @@ println "<daemon: " + gradle.services.get(org.gradle.internal.environment.Gradle
         profileFile.isFile()
     }
 
-    @Unroll
-    def "profiles build to produce chrome trace output when running #versionUnderTest"() {
-        given:
-        buildFile.text = """
-apply plugin: BasePlugin
-"""
-
-        when:
-        new Main().
-            run("--project-dir", projectDir.absolutePath, "--output-dir", outputDir.absolutePath, "--gradle-version", versionUnderTest, "--profile", "chrome-trace", "assemble")
-
-        then:
-        new File(outputDir, "${versionUnderTest}-trace.html").isFile()
-
-        where:
-        versionUnderTest << supportedGradleVersions
-    }
-
-    @Unroll
-    def "profiles build to produce chrome trace output when running with no daemon and #versionUnderTest"() {
-        given:
-        buildFile.text = """
-apply plugin: BasePlugin
-"""
-
-        when:
-        new Main().
-            run("--project-dir", projectDir.absolutePath, "--output-dir", outputDir.absolutePath, "--gradle-version", versionUnderTest, "--profile", "chrome-trace",
-                "--no-daemon", "assemble")
-
-        then:
-        new File(outputDir, "${versionUnderTest}-trace.html").isFile()
-
-        where:
-        versionUnderTest << supportedGradleVersions
-    }
-
     def "runs benchmarks using scenarios defined in scenario file"() {
         given:
         def scenarioFile = file("benchmark.conf")

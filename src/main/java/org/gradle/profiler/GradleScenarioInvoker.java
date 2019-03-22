@@ -37,8 +37,10 @@ public class GradleScenarioInvoker extends ScenarioInvoker<GradleScenarioDefinit
         JvmArgsCalculator allBuildsJvmArgsCalculator = settings.getProfiler().newJvmArgsCalculator(scenarioSettings);
         GradleArgsCalculator allBuildsGradleArgsCalculator = pidInstrumentation;
         allBuildsGradleArgsCalculator = allBuildsGradleArgsCalculator.plus(settings.getProfiler().newGradleArgsCalculator(scenarioSettings));
+
+        BuildOperationInstrumentation buildOperationInstrumentation = new BuildOperationInstrumentation();
         if (settings.isMeasureConfigTime()) {
-            allBuildsGradleArgsCalculator = allBuildsGradleArgsCalculator.plus(new BuildOperationInstrumentation());
+            allBuildsGradleArgsCalculator = allBuildsGradleArgsCalculator.plus(buildOperationInstrumentation);
         }
 
         BuildAction cleanupAction = scenario.getCleanupAction();
@@ -152,6 +154,10 @@ public class GradleScenarioInvoker extends ScenarioInvoker<GradleScenarioDefinit
                     }
 
                     BuildInvocationResult result = instrumentedBuildInvoker.runBuild(MEASURE, counter, BUILD, scenario.getAction());
+
+                    if (settings.isMeasureConfigTime()) {
+                        System.out.println("-> config time = " + buildOperationInstrumentation.getConfigTime());
+                    }
 
                     if ((counter == scenario.getBuildCount() || beforeBuildAction.isDoesSomething())) {
                         try {
