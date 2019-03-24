@@ -7,12 +7,12 @@ import java.time.Duration;
 import java.util.List;
 
 public class GradleBuildInvocationResult extends BuildInvocationResult {
-    private final Duration timeToTaskExecution;
+    private final Sample timeToTaskExecution;
     private final String daemonPid;
 
     public GradleBuildInvocationResult(String displayName, Duration executionTime, @Nullable Duration timeToTaskExecution, String daemonPid) {
         super(displayName, executionTime);
-        this.timeToTaskExecution = timeToTaskExecution;
+        this.timeToTaskExecution = timeToTaskExecution == null ? null : new Sample("task start", timeToTaskExecution);
         this.daemonPid = daemonPid;
     }
 
@@ -21,9 +21,9 @@ public class GradleBuildInvocationResult extends BuildInvocationResult {
     }
 
     @Override
-    public List<Duration> getMetrics() {
+    public List<Sample> getSamples() {
         if (timeToTaskExecution == null) {
-            return super.getMetrics();
+            return super.getSamples();
         }
         return ImmutableList.of(getExecutionTime(), timeToTaskExecution);
     }

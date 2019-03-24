@@ -23,7 +23,7 @@ public abstract class ScenarioInvoker<T extends ScenarioDefinition> {
         mutator.beforeBuild();
         R result = tryRun(() -> {
             R result1 = action.get();
-            printExecutionTime(result1.getExecutionTime());
+            printExecutionTime(result1.getExecutionTime().getDuration());
             return result1;
         }, mutator::afterBuild);
         consumer.accept(result);

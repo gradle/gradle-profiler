@@ -1,5 +1,6 @@
 package org.gradle.profiler;
 
+import com.google.common.collect.ImmutableList;
 import org.apache.commons.math3.stat.descriptive.DescriptiveStatistics;
 import org.apache.commons.math3.stat.inference.MannWhitneyUTest;
 import org.gradle.profiler.report.AbstractGenerator;
@@ -9,6 +10,7 @@ import org.gradle.profiler.report.BuildScenarioResult;
 import java.io.IOException;
 import java.util.*;
 import java.util.function.Consumer;
+import java.util.stream.Collectors;
 
 public class BenchmarkResultCollector {
     private final List<BuildScenario> allBuilds = new ArrayList<>();
@@ -57,8 +59,8 @@ public class BenchmarkResultCollector {
         private final ScenarioDefinition scenario;
         private final BuildScenarioResult baseline;
         private final List<BuildInvocationResult> results = new ArrayList<>();
-        private DescriptiveStatistics statistics;
-        private int metricsCount;
+        private List<DescriptiveStatistics> statistics;
+        private List<String> samples;
 
         BuildScenario(ScenarioDefinition scenario, BuildScenarioResult baseline) {
             this.scenario = scenario;
@@ -67,10 +69,11 @@ public class BenchmarkResultCollector {
 
         @Override
         public void accept(BuildInvocationResult buildInvocationResult) {
+            List<String> sampleNames = buildInvocationResult.getSamples().stream().map(BuildInvocationResult.Sample::getName).collect(Collectors.toList());
             if (results.isEmpty()) {
-                metricsCount = buildInvocationResult.getMetrics().size();
-            } else if (buildInvocationResult.getMetrics().size() != metricsCount) {
-                throw new IllegalArgumentException("Results do not contain the same number of metrics.");
+                samples = sampleNames;
+            } else if (!samples.equals(sampleNames)) {
+                throw new IllegalArgumentException("Results do not contain the same samples.");
             }
             results.add(buildInvocationResult);
             statistics = null;
@@ -82,8 +85,8 @@ public class BenchmarkResultCollector {
         }
 
         @Override
-        public int getMetricsCount() {
-            return metricsCount;
+        public List<String> getSamples() {
+            return samples;
         }
 
         @Override
@@ -105,11 +108,18 @@ public class BenchmarkResultCollector {
         }
 
         @Override
-        public DescriptiveStatistics getStatistics() {
+        public List<DescriptiveStatistics> getStatistics() {
             if (statistics == null) {
-                statistics = new DescriptiveStatistics();
+                ImmutableList.Builder<DescriptiveStatistics> builder = ImmutableList.builderWithExpectedSize(samples.size());
+                for (String sample : samples) {
+                    builder.add(new DescriptiveStatistics());
+                }
+                statistics = builder.build();
                 for (BuildInvocationResult result : getMeasuredResults()) {
-                    statistics.addValue(result.getExecutionTime().toMillis());
+                    for (int i = 0; i < result.getSamples().size(); i++) {
+                        BuildInvocationResult.Sample sample = result.getSamples().get(i);
+                        statistics.get(i).addValue(sample.getDuration().toMillis());
+                    }
                 }
             }
             return statistics;
@@ -129,7 +139,7 @@ public class BenchmarkResultCollector {
             double[] values = new double[results.size()];
             for (int i = 0; i < results.size(); i++) {
                 BuildInvocationResult buildInvocationResult = results.get(i);
-                values[i] = buildInvocationResult.getExecutionTime().toMillis();
+                values[i] = buildInvocationResult.getExecutionTime().getDuration().toMillis();
             }
             return values;
         }
