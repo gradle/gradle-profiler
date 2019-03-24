@@ -1,26 +1,34 @@
 package org.gradle.profiler;
 
+import org.gradle.profiler.buildops.BuildOperationInstrumentation;
+import org.gradle.profiler.instrument.PidInstrumentation;
+
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * Runs a single invocation of a Gradle build and collects the result.
+ */
 public class BuildUnderTestInvoker {
     private final List<String> jvmArgs;
     private final List<String> gradleArgs;
     private final PidInstrumentation pidInstrumentation;
+    private final BuildOperationInstrumentation buildOperationInstrumentation;
     private final GradleInvoker buildInvoker;
 
-    public BuildUnderTestInvoker(List<String> jvmArgs, List<String> gradleArgs, GradleInvoker buildInvoker, PidInstrumentation pidInstrumentation) {
+    public BuildUnderTestInvoker(List<String> jvmArgs, List<String> gradleArgs, GradleInvoker buildInvoker, PidInstrumentation pidInstrumentation, BuildOperationInstrumentation buildOperationInstrumentation) {
         this.jvmArgs = jvmArgs;
         this.gradleArgs = gradleArgs;
         this.buildInvoker = buildInvoker;
         this.pidInstrumentation = pidInstrumentation;
+        this.buildOperationInstrumentation = buildOperationInstrumentation;
     }
 
     /**
-     * Runs a single invocation of a build.
+     * Runs a single invocation of a Gradle build.
      */
-    public BuildInvocationResult runBuild(Phase phase, int buildNumber, BuildStep buildStep, BuildAction buildAction) {
+    public GradleBuildInvocationResult runBuild(Phase phase, int buildNumber, BuildStep buildStep, BuildAction buildAction) {
         String displayName = phase.displayBuildNumber(buildNumber);
 
         List<String> jvmArgs = new ArrayList<>(this.jvmArgs);
@@ -35,7 +43,10 @@ public class BuildUnderTestInvoker {
         String pid = pidInstrumentation.getPidForLastBuild();
         Logging.detailed().println("Used daemon with pid " + pid);
 
-        return new BuildInvocationResult(displayName, executionTime, pid);
+        Duration timeToTaskExecution = buildOperationInstrumentation.getTimeToTaskExecution();
+        Logging.detailed().println("Time to task execution " + timeToTaskExecution);
+
+        return new GradleBuildInvocationResult(displayName, executionTime, timeToTaskExecution, pid);
     }
 
     public BuildUnderTestInvoker withJvmArgs(List<String> jvmArgs) {
@@ -53,6 +64,6 @@ public class BuildUnderTestInvoker {
     }
 
     private BuildUnderTestInvoker copy(List<String> jvmArgs, List<String> gradleArgs) {
-        return new BuildUnderTestInvoker(jvmArgs, gradleArgs, buildInvoker, pidInstrumentation);
+        return new BuildUnderTestInvoker(jvmArgs, gradleArgs, buildInvoker, pidInstrumentation, buildOperationInstrumentation);
     }
 }

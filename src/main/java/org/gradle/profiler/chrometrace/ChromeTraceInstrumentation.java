@@ -15,7 +15,7 @@
  */
 package org.gradle.profiler.chrometrace;
 
-import org.gradle.profiler.GradleInstrumentation;
+import org.gradle.profiler.instrument.GradleInstrumentation;
 import org.gradle.profiler.GradleScenarioDefinition;
 import org.gradle.profiler.ScenarioSettings;
 

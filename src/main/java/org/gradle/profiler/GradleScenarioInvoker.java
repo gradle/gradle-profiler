@@ -2,6 +2,7 @@ package org.gradle.profiler;
 
 import org.apache.commons.io.FileUtils;
 import org.gradle.profiler.buildops.BuildOperationInstrumentation;
+import org.gradle.profiler.instrument.PidInstrumentation;
 import org.gradle.tooling.GradleConnector;
 import org.gradle.tooling.ProjectConnection;
 
@@ -27,7 +28,7 @@ public class GradleScenarioInvoker extends ScenarioInvoker<GradleScenarioDefinit
     }
 
     @Override
-    public void run(GradleScenarioDefinition scenario, InvocationSettings settings, BenchmarkResultCollector benchmarkResults) throws IOException, InterruptedException {
+    public void run(GradleScenarioDefinition scenario, InvocationSettings settings, Consumer<BuildInvocationResult> resultConsumer) throws IOException, InterruptedException {
         if (settings.isProfile() && scenario.getWarmUpCount() == 0) {
             throw new IllegalStateException("Using the --profile option requires at least one warm-up");
         }
@@ -77,7 +78,6 @@ public class GradleScenarioInvoker extends ScenarioInvoker<GradleScenarioDefinit
             allBuildsGradleArgsCalculator.calculateGradleArgs(allBuildsGradleArgs);
             logGradleArgs(allBuildsGradleArgs);
 
-            Consumer<BuildInvocationResult> resultsCollector = benchmarkResults.version(scenario);
             GradleInvoker buildInvoker;
             switch (scenario.getInvoker()) {
                 case CliNoDaemon:
@@ -101,18 +101,18 @@ public class GradleScenarioInvoker extends ScenarioInvoker<GradleScenarioDefinit
                 beforeBuildAction = cleanupAction;
             }
 
-            BuildUnderTestInvoker invoker = new BuildUnderTestInvoker(allBuildsJvmArgs, allBuildsGradleArgs, buildInvoker, pidInstrumentation);
+            BuildUnderTestInvoker invoker = new BuildUnderTestInvoker(allBuildsJvmArgs, allBuildsGradleArgs, buildInvoker, pidInstrumentation, buildOperationInstrumentation);
 
             mutator.beforeScenario();
 
-            BuildInvocationResult results = null;
+            GradleBuildInvocationResult results = null;
             String pid = null;
 
             for (int i = 1; i <= scenario.getWarmUpCount(); i++) {
                 int counter = i;
                 beforeBuild(WARM_UP, counter, invoker, beforeBuildAction, mutator);
                 String displayName = WARM_UP.displayBuildNumber(counter);
-                results = runMeasured(displayName, mutator, () -> invoker.runBuild(WARM_UP, counter, BUILD, scenario.getAction()), resultsCollector);
+                results = runMeasured(displayName, mutator, () -> invoker.runBuild(WARM_UP, counter, BUILD, scenario.getAction()), resultConsumer);
                 if (pid == null) {
                     pid = results.getDaemonPid();
                 } else {
@@ -153,10 +153,10 @@ public class GradleScenarioInvoker extends ScenarioInvoker<GradleScenarioDefinit
                         }
                     }
 
-                    BuildInvocationResult result = instrumentedBuildInvoker.runBuild(MEASURE, counter, BUILD, scenario.getAction());
+                    GradleBuildInvocationResult result = instrumentedBuildInvoker.runBuild(MEASURE, counter, BUILD, scenario.getAction());
 
                     if (settings.isMeasureConfigTime()) {
-                        System.out.println("-> config time = " + buildOperationInstrumentation.getConfigTime());
+                        System.out.println("-> config time = " + result.getTimeToTaskExecution().toMillis() + " ms");
                     }
 
                     if ((counter == scenario.getBuildCount() || beforeBuildAction.isDoesSomething())) {
@@ -168,13 +168,10 @@ public class GradleScenarioInvoker extends ScenarioInvoker<GradleScenarioDefinit
                     }
 
                     return result;
-                }, resultsCollector);
+                }, resultConsumer);
             }
 
             control.stopSession();
-            if (settings.isBenchmark()) {
-                benchmarkResults.write();
-            }
             Objects.requireNonNull(results);
             checkPid(pid, results.getDaemonPid(), scenario.getInvoker());
         } finally {

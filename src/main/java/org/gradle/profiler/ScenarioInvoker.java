@@ -10,16 +10,19 @@ import java.util.function.Supplier;
 import static org.gradle.profiler.Logging.startOperation;
 
 public abstract class ScenarioInvoker<T extends ScenarioDefinition> {
-    abstract void run(T scenario, InvocationSettings settings, BenchmarkResultCollector benchmarkResults) throws IOException, InterruptedException;
+    /**
+     * Runs a scenario and collects the results.
+     */
+    abstract void run(T scenario, InvocationSettings settings, Consumer<BuildInvocationResult> resultConsumer) throws IOException, InterruptedException;
 
     /**
      * Runs a single measured build and collects the result.
      */
-    BuildInvocationResult runMeasured(String displayName, BuildMutator mutator, Supplier<? extends BuildInvocationResult> action, Consumer<? super BuildInvocationResult> consumer) {
+    protected <R extends BuildInvocationResult> R runMeasured(String displayName, BuildMutator mutator, Supplier<? extends R> action, Consumer<? super BuildInvocationResult> consumer) {
         startOperation("Running " + displayName);
         mutator.beforeBuild();
-        BuildInvocationResult result = tryRun(() -> {
-            BuildInvocationResult result1 = action.get();
+        R result = tryRun(() -> {
+            R result1 = action.get();
             printExecutionTime(result1.getExecutionTime());
             return result1;
         }, mutator::afterBuild);
@@ -34,7 +37,7 @@ public abstract class ScenarioInvoker<T extends ScenarioDefinition> {
     /**
      * Runs a single clean-up build.
      */
-    void runCleanup(String displayName, BuildMutator mutator, Runnable action) {
+    protected void runCleanup(String displayName, BuildMutator mutator, Runnable action) {
         startOperation("Running cleanup for " + displayName);
         mutator.beforeCleanup();
         tryRun(() -> action.run(), mutator::afterCleanup);
@@ -43,16 +46,16 @@ public abstract class ScenarioInvoker<T extends ScenarioDefinition> {
     /**
      * Returns a {@link Supplier} that returns the result of the given command.
      */
-    Supplier<BuildInvocationResult> measureCommandLineExecution(String displayName, List<String> commandLine, File workingDir) {
+    protected Supplier<BuildInvocationResult> measureCommandLineExecution(String displayName, List<String> commandLine, File workingDir) {
         return () -> {
             Timer timer = new Timer();
             new CommandExec().inDir(workingDir).run(commandLine);
             Duration executionTime = timer.elapsed();
-            return new BuildInvocationResult(displayName, executionTime, null);
+            return new BuildInvocationResult(displayName, executionTime);
         };
     }
 
-    private <T> T tryRun(Supplier<T> action, Consumer<Throwable> after) {
+    private <V> V tryRun(Supplier<? extends V> action, Consumer<Throwable> after) {
         Throwable error = null;
         try {
             return action.get();

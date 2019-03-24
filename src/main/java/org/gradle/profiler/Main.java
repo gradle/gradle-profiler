@@ -1,13 +1,14 @@
 package org.gradle.profiler;
 
+import org.gradle.profiler.instrument.PidInstrumentation;
 import org.gradle.profiler.report.CsvGenerator;
 import org.gradle.profiler.report.HtmlGenerator;
 
 import java.io.File;
-import java.time.Duration;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.function.Consumer;
 
 public class Main {
     public static void main(String[] args) {
@@ -61,21 +62,25 @@ public class Main {
             for (ScenarioDefinition scenario : scenarios) {
                 scenarioCount++;
                 Logging.startOperation("Running scenario " + scenario.getDisplayName() + " (scenario " + scenarioCount + "/" + totalScenarios + ")");
-
+                Consumer<BuildInvocationResult> resultConsumer = benchmarkResults.version(scenario);
                 try {
                     if (scenario instanceof BazelScenarioDefinition) {
-                        bazelScenarioInvoker.run((BazelScenarioDefinition) scenario, settings, benchmarkResults);
+                        bazelScenarioInvoker.run((BazelScenarioDefinition) scenario, settings, resultConsumer);
                     } else if (scenario instanceof BuckScenarioDefinition) {
-                        buckScenarioInvoker.run((BuckScenarioDefinition) scenario, settings, benchmarkResults);
+                        buckScenarioInvoker.run((BuckScenarioDefinition) scenario, settings, resultConsumer);
                     } else if (scenario instanceof MavenScenarioDefinition) {
-                        mavenScenarioInvoker.run((MavenScenarioDefinition) scenario, settings, benchmarkResults);
+                        mavenScenarioInvoker.run((MavenScenarioDefinition) scenario, settings, resultConsumer);
                     } else {
-                        gradleScenarioInvoker.run((GradleScenarioDefinition) scenario, settings, benchmarkResults);
+                        gradleScenarioInvoker.run((GradleScenarioDefinition) scenario, settings, resultConsumer);
                     }
-
                 } catch (Throwable t) {
                     t.printStackTrace();
                     failures.add(t);
+                } finally {
+                    // write the results up to this point
+                    if (settings.isBenchmark()) {
+                        benchmarkResults.write();
+                    }
                 }
             }
 
