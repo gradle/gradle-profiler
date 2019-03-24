@@ -21,31 +21,40 @@ public class CsvGenerator extends AbstractGenerator {
         List<? extends BuildScenarioResult> allScenarios = benchmarkResult.getScenarios();
         writer.write("scenario");
         for (BuildScenarioResult result : allScenarios) {
-            writer.write(",");
-            writer.write(result.getScenarioDefinition().getName());
-            for (int i = 1; i < result.getMetricsCount(); i++) {
+            for (int i = 0; i < result.getSamples().size(); i++) {
                 writer.write(",");
+                writer.write(result.getScenarioDefinition().getName());
             }
         }
         writer.newLine();
+
         writer.write("version");
         for (BuildScenarioResult result : allScenarios) {
-            writer.write(",");
-            writer.write(result.getScenarioDefinition().getBuildToolDisplayName());
-            for (int i = 1; i < result.getMetricsCount(); i++) {
+            for (int i = 0; i < result.getSamples().size(); i++) {
                 writer.write(",");
+                writer.write(result.getScenarioDefinition().getBuildToolDisplayName());
             }
         }
         writer.newLine();
+
         writer.write("tasks");
         for (BuildScenarioResult result : allScenarios) {
-            writer.write(",");
-            writer.write(result.getScenarioDefinition().getTasksDisplayName());
-            for (int i = 1; i < result.getMetricsCount(); i++) {
+            for (int i = 0; i < result.getSamples().size(); i++) {
                 writer.write(",");
+                writer.write(result.getScenarioDefinition().getTasksDisplayName());
             }
         }
         writer.newLine();
+
+        writer.write("value");
+        for (BuildScenarioResult result : allScenarios) {
+            for (String sample : result.getSamples()) {
+                writer.write(",");
+                writer.write(sample);
+            }
+        }
+        writer.newLine();
+
         int maxRows = allScenarios.stream().mapToInt(v -> v.getResults().size()).max().orElse(0);
         for (int row = 0; row < maxRows; row++) {
             for (BuildScenarioResult result : allScenarios) {
@@ -64,8 +73,8 @@ public class CsvGenerator extends AbstractGenerator {
                     continue;
                 }
                 BuildInvocationResult buildResult = results.get(row);
-                for (int i = 0; i < buildResult.getMetrics().size(); i++) {
-                    Duration duration = buildResult.getMetrics().get(i);
+                for (int i = 0; i < buildResult.getSamples().size(); i++) {
+                    Duration duration = buildResult.getSamples().get(i).getDuration();
                     if (i > 0) {
                         writer.write(",");
                     }
@@ -75,7 +84,7 @@ public class CsvGenerator extends AbstractGenerator {
             writer.newLine();
         }
 
-        List<DescriptiveStatistics> statistics = allScenarios.stream().map(BuildScenarioResult::getStatistics).collect(Collectors.toList());
+        List<DescriptiveStatistics> statistics = allScenarios.stream().flatMap(s -> s.getStatistics().stream()).collect(Collectors.toList());
         statistic(writer, "mean", statistics, DescriptiveStatistics::getMean);
         statistic(writer, "min", statistics, DescriptiveStatistics::getMin);
         statistic(writer, "25th percentile", statistics, v -> v.getPercentile(25));

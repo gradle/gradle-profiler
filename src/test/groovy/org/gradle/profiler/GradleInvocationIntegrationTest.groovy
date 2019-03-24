@@ -20,18 +20,19 @@ class GradleInvocationIntegrationTest extends AbstractProfilerIntegrationTest {
         logFile.containsOne("<invocations: 16>")
 
         def lines = resultFile.lines
-        lines.size() == 26 // 3 headers, 16 executions, 7 stats
+        lines.size() == 27 // 4 headers, 16 executions, 7 stats
         lines.get(0) == "scenario,default"
         lines.get(1) == "version,${minimalSupportedGradleVersion}"
         lines.get(2) == "tasks,assemble"
-        lines.get(3).matches("warm-up build #1,\\d+")
-        lines.get(8).matches("warm-up build #6,\\d+")
-        lines.get(9).matches("measured build #1,\\d+")
-        lines.get(10).matches("measured build #2,\\d+")
-        lines.get(18).matches("measured build #10,\\d+")
-        lines.get(19).matches("mean,\\d+\\.\\d+")
-        lines.get(22).matches("median,\\d+\\.\\d+")
-        lines.get(25).matches("stddev,\\d+\\.\\d+")
+        lines.get(3) == "value,execution"
+        lines.get(4).matches("warm-up build #1,\\d+")
+        lines.get(9).matches("warm-up build #6,\\d+")
+        lines.get(10).matches("measured build #1,\\d+")
+        lines.get(11).matches("measured build #2,\\d+")
+        lines.get(19).matches("measured build #10,\\d+")
+        lines.get(20).matches("mean,\\d+\\.\\d+")
+        lines.get(23).matches("median,\\d+\\.\\d+")
+        lines.get(26).matches("stddev,\\d+\\.\\d+")
     }
 
     def "can benchmark using `gradle` command and warm daemon"() {
@@ -54,18 +55,19 @@ class GradleInvocationIntegrationTest extends AbstractProfilerIntegrationTest {
         logFile.containsOne("<invocations: 16>")
 
         def lines = resultFile.lines
-        lines.size() == 26 // 3 headers, 16 executions, 7 stats
+        lines.size() == 27 // 4 headers, 16 executions, 7 stats
         lines.get(0) == "scenario,default"
         lines.get(1) == "version,${minimalSupportedGradleVersion}"
         lines.get(2) == "tasks,assemble"
-        lines.get(3).matches("warm-up build #1,\\d+")
-        lines.get(8).matches("warm-up build #6,\\d+")
-        lines.get(9).matches("measured build #1,\\d+")
-        lines.get(10).matches("measured build #2,\\d+")
-        lines.get(18).matches("measured build #10,\\d+")
-        lines.get(19).matches("mean,\\d+\\.\\d+")
-        lines.get(22).matches("median,\\d+\\.\\d+")
-        lines.get(25).matches("stddev,\\d+\\.\\d+")
+        lines.get(3) == "value,execution"
+        lines.get(4).matches("warm-up build #1,\\d+")
+        lines.get(9).matches("warm-up build #6,\\d+")
+        lines.get(10).matches("measured build #1,\\d+")
+        lines.get(11).matches("measured build #2,\\d+")
+        lines.get(19).matches("measured build #10,\\d+")
+        lines.get(20).matches("mean,\\d+\\.\\d+")
+        lines.get(23).matches("median,\\d+\\.\\d+")
+        lines.get(26).matches("stddev,\\d+\\.\\d+")
     }
 
     def "can benchmark using tooling API and cold daemon"() {
@@ -87,17 +89,18 @@ class GradleInvocationIntegrationTest extends AbstractProfilerIntegrationTest {
         logFile.find("<invocations: 1>").size() == 12
 
         def lines = resultFile.lines
-        lines.size() == 21 // 3 headers, 11 executions, 7 stats
+        lines.size() == 22 // 4 headers, 11 executions, 7 stats
         lines.get(0) == "scenario,default"
         lines.get(1) == "version,${minimalSupportedGradleVersion}"
         lines.get(2) == "tasks,assemble"
-        lines.get(3).matches("warm-up build #1,\\d+")
-        lines.get(4).matches("measured build #1,\\d+")
-        lines.get(5).matches("measured build #2,\\d+")
-        lines.get(13).matches("measured build #10,\\d+")
-        lines.get(14).matches("mean,\\d+\\.\\d+")
-        lines.get(17).matches("median,\\d+\\.\\d+")
-        lines.get(20).matches("stddev,\\d+\\.\\d+")
+        lines.get(3) == "value,execution"
+        lines.get(4).matches("warm-up build #1,\\d+")
+        lines.get(5).matches("measured build #1,\\d+")
+        lines.get(6).matches("measured build #2,\\d+")
+        lines.get(14).matches("measured build #10,\\d+")
+        lines.get(15).matches("mean,\\d+\\.\\d+")
+        lines.get(18).matches("median,\\d+\\.\\d+")
+        lines.get(21).matches("stddev,\\d+\\.\\d+")
     }
 
     def "can benchmark using `gradle` command and cold daemon"() {
@@ -119,17 +122,18 @@ class GradleInvocationIntegrationTest extends AbstractProfilerIntegrationTest {
         logFile.find("<invocations: 1>").size() == 12
 
         def lines = resultFile.lines
-        lines.size() == 21 // 3 headers, 11 executions, 7 stats
+        lines.size() == 22 // 4 headers, 11 executions, 7 stats
         lines.get(0) == "scenario,default"
         lines.get(1) == "version,${minimalSupportedGradleVersion}"
         lines.get(2) == "tasks,assemble"
-        lines.get(3).matches("warm-up build #1,\\d+")
-        lines.get(4).matches("measured build #1,\\d+")
-        lines.get(5).matches("measured build #2,\\d+")
-        lines.get(13).matches("measured build #10,\\d+")
-        lines.get(14).matches("mean,\\d+\\.\\d+")
-        lines.get(17).matches("median,\\d+\\.\\d+")
-        lines.get(20).matches("stddev,\\d+\\.\\d+")
+        lines.get(3) == "value,execution"
+        lines.get(4).matches("warm-up build #1,\\d+")
+        lines.get(5).matches("measured build #1,\\d+")
+        lines.get(6).matches("measured build #2,\\d+")
+        lines.get(14).matches("measured build #10,\\d+")
+        lines.get(15).matches("mean,\\d+\\.\\d+")
+        lines.get(18).matches("median,\\d+\\.\\d+")
+        lines.get(21).matches("stddev,\\d+\\.\\d+")
     }
 
     def "can benchmark using `gradle` command and no daemon"() {
@@ -152,9 +156,10 @@ class GradleInvocationIntegrationTest extends AbstractProfilerIntegrationTest {
         logFile.find("<invocations: 1>").size() == 12
 
         def lines = resultFile.lines
-        lines.size() == 21 // 3 headers, 11 executions, 7 stats
+        lines.size() == 22 // 4 headers, 11 executions, 7 stats
         lines.get(0) == "scenario,default"
         lines.get(1) == "version,${minimalSupportedGradleVersion}"
         lines.get(2) == "tasks,assemble"
+        lines.get(4) == "value,execution"
     }
 }

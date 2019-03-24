@@ -11,12 +11,16 @@ class BuildOperationInstrumentationIntegrationTest extends AbstractProfilerInteg
 
         then:
         def lines = resultFile.lines
-        lines.size() == 26 // 3 headers, 16 executions, 7 stats
-        lines.get(0) == "scenario,default,"
-        lines.get(1) == "version,${latestSupportedGradleVersion},"
-        lines.get(2) == "tasks,assemble,"
-        lines.get(3).matches("warm-up build #1,\\d+,\\d+")
-        lines.get(8).matches("warm-up build #6,\\d+,\\d+")
-        lines.get(9).matches("measured build #1,\\d+,\\d+")
+        lines.size() == 27 // 4 headers, 16 executions, 7 stats
+        lines.get(0) == "scenario,default,default"
+        lines.get(1) == "version,${latestSupportedGradleVersion},${latestSupportedGradleVersion}"
+        lines.get(2) == "tasks,assemble,assemble"
+        lines.get(3) == "value,execution,task start"
+        lines.get(4).matches("warm-up build #1,\\d+,\\d+")
+        lines.get(9).matches("warm-up build #6,\\d+,\\d+")
+        lines.get(10).matches("measured build #1,\\d+,\\d+")
+        lines.get(20).matches("mean,\\d+\\.\\d+,\\d+\\.\\d+")
+        lines.get(23).matches("median,\\d+\\.\\d+,\\d+\\.\\d+")
+        lines.get(26).matches("stddev,\\d+\\.\\d+,\\d+\\.\\d+")
     }
 }

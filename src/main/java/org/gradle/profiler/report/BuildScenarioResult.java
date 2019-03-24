@@ -16,9 +16,9 @@ public interface BuildScenarioResult {
     Optional<BuildScenarioResult> getBaseline();
 
     /**
-     * Returns the number of metrics collected for each build invocation in this scenario.
+     * Returns the names of the samples collected for each build invocation in this scenario.
      */
-    int getMetricsCount();
+    List<String> getSamples();
 
     /**
      * Returns all results, including warm-up builds.
@@ -31,9 +31,9 @@ public interface BuildScenarioResult {
     List<? extends BuildInvocationResult> getMeasuredResults();
 
     /**
-     * Returns some statistics of the measured results.
+     * Returns some statistics of each sample.
      */
-    DescriptiveStatistics getStatistics();
+    List<DescriptiveStatistics> getStatistics();
 
     double getPValue();
 }

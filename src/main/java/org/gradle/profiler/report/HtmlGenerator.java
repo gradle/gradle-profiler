@@ -93,7 +93,7 @@ public class HtmlGenerator extends AbstractGenerator {
                 }
                 BuildInvocationResult buildResult = results.get(row);
                 writer.write("<td class='numeric'>");
-                writer.write(String.valueOf(buildResult.getExecutionTime().toMillis()));
+                writer.write(String.valueOf(buildResult.getExecutionTime().getDuration().toMillis()));
                 writer.write("</td>");
             }
             writer.write("</tr>\n");
@@ -101,13 +101,13 @@ public class HtmlGenerator extends AbstractGenerator {
         writer.write("</tbody>\n");
 
         writer.write("<tfoot>\n");
-        statistic(writer, "mean", allScenarios, v -> v.getStatistics().getMean(), true);
-        statistic(writer, "min", allScenarios, v -> v.getStatistics().getMin(), true);
-        statistic(writer, "25th percentile", allScenarios, v -> v.getStatistics().getPercentile(25), true);
-        statistic(writer, "median", allScenarios, v -> v.getStatistics().getPercentile(50), true);
-        statistic(writer, "75th percentile", allScenarios, v -> v.getStatistics().getPercentile(75), true);
-        statistic(writer, "max", allScenarios, v -> v.getStatistics().getMax(), true);
-        statistic(writer, "stddev", allScenarios, v -> v.getStatistics().getStandardDeviation(), false);
+        statistic(writer, "mean", allScenarios, v -> v.getStatistics().get(0).getMean(), true);
+        statistic(writer, "min", allScenarios, v -> v.getStatistics().get(0).getMin(), true);
+        statistic(writer, "25th percentile", allScenarios, v -> v.getStatistics().get(0).getPercentile(25), true);
+        statistic(writer, "median", allScenarios, v -> v.getStatistics().get(0).getPercentile(50), true);
+        statistic(writer, "75th percentile", allScenarios, v -> v.getStatistics().get(0).getPercentile(75), true);
+        statistic(writer, "max", allScenarios, v -> v.getStatistics().get(0).getMax(), true);
+        statistic(writer, "stddev", allScenarios, v -> v.getStatistics().get(0).getStandardDeviation(), false);
         statistic(writer, "p-value (Mann Whitney U test)", allScenarios, v -> v.getBaseline().isPresent() ? v.getPValue() : 0d, false);
         writer.write("</tfoot>\n");
 
@@ -142,7 +142,7 @@ public class HtmlGenerator extends AbstractGenerator {
             writer.write("',\n");
             writer.write("            data: [");
             for (BuildInvocationResult buildResult : scenario.getMeasuredResults()) {
-                writer.write(String.valueOf(buildResult.getExecutionTime().toMillis()));
+                writer.write(String.valueOf(buildResult.getExecutionTime().getDuration().toMillis()));
                 writer.write(",");
             }
             writer.write("]\n");
