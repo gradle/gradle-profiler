@@ -2,9 +2,9 @@ package org.gradle.profiler.buildops;
 
 import org.gradle.profiler.instrument.GradleInstrumentation;
 
-import javax.annotation.Nullable;
 import java.io.*;
 import java.time.Duration;
+import java.util.Optional;
 
 public class BuildOperationInstrumentation extends GradleInstrumentation {
     private final File dataFile;
@@ -19,15 +19,14 @@ public class BuildOperationInstrumentation extends GradleInstrumentation {
         writer.println("org.gradle.trace.buildops.BuildOperationTrace.start(gradle, new File(new URI('" + dataFile.toURI() + "')))");
     }
 
-    @Nullable
-    public Duration getTimeToTaskExecution() {
+    public Optional<Duration> getTimeToTaskExecution() {
         // Should have two implementations instead
         if (dataFile.length() == 0) {
-            return null;
+            return Optional.empty();
         }
         try {
             try (BufferedReader reader = new BufferedReader(new FileReader(dataFile))) {
-                return Duration.ofMillis(Long.parseLong(reader.readLine()));
+                return Optional.of(Duration.ofMillis(Long.parseLong(reader.readLine())));
             }
         } catch (IOException e) {
             throw new RuntimeException("Could not read result from file.", e);

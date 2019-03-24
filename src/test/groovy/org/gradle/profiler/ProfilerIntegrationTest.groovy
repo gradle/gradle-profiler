@@ -125,11 +125,11 @@ assemble.doFirst {
         def e = thrown(Main.ScenarioFailedException)
 
         and:
-        logFile.contains("ERROR: failed to run build. See log file for details.")
+        logFile.containsOne("ERROR: failed to run build. See log file for details.")
         output.contains("ERROR: failed to run build. See log file for details.")
-        logFile.contains(e.cause.message)
+        logFile.containsOne(e.cause.message)
         output.contains(e.cause.message)
-        logFile.contains("java.lang.RuntimeException: broken!")
+        logFile.containsOne("java.lang.RuntimeException: broken!")
         output.contains("java.lang.RuntimeException: broken!")
     }
 
@@ -148,10 +148,10 @@ println "<daemon: " + gradle.services.get(org.gradle.internal.environment.Gradle
 
         then:
         // Probe version, 2 warm up, 1 build
-        logFile.contains("* Running scenario using Gradle $minimalSupportedGradleVersion (scenario 1/2)")
-        logFile.contains("* Running scenario using Gradle 3.0 (scenario 2/2)")
-        logFile.grep("<gradle-version: $minimalSupportedGradleVersion").size() == 4
-        logFile.grep("<gradle-version: 3.0").size() == 4
+        logFile.containsOne("* Running scenario using Gradle $minimalSupportedGradleVersion (scenario 1/2)")
+        logFile.containsOne("* Running scenario using Gradle 3.0 (scenario 2/2)")
+        logFile.find("<gradle-version: $minimalSupportedGradleVersion").size() == 4
+        logFile.find("<gradle-version: 3.0").size() == 4
 
         new File(outputDir, "$minimalSupportedGradleVersion/${minimalSupportedGradleVersion}.jfr").file
         new File(outputDir, "3.0/3.0.jfr").file
@@ -172,11 +172,11 @@ println "<tasks: " + gradle.startParameter.taskNames + ">"
 
         then:
         // Probe version, 3 warm up, 2 builds
-        logFile.contains("* Running scenario using Gradle $minimalSupportedGradleVersion (scenario 1/1)")
-        logFile.grep("* Running warm-up build").size() == 3
-        logFile.grep("* Running measured build").size() == 2
-        logFile.grep("<gradle-version: $minimalSupportedGradleVersion>").size() == 6
-        logFile.grep("<tasks: [assemble]>").size() == 5
+        logFile.containsOne("* Running scenario using Gradle $minimalSupportedGradleVersion (scenario 1/1)")
+        logFile.find("* Running warm-up build").size() == 3
+        logFile.find("* Running measured build").size() == 2
+        logFile.find("<gradle-version: $minimalSupportedGradleVersion>").size() == 6
+        logFile.find("<tasks: [assemble]>").size() == 5
 
         def profileFile = new File(outputDir, "${minimalSupportedGradleVersion}.jfr")
         profileFile.exists()
@@ -198,9 +198,9 @@ println "<daemon: " + gradle.services.get(org.gradle.internal.environment.Gradle
 
         then:
         // Probe version, 2 warm up, 1 build
-        logFile.grep("<gradle-version: $minimalSupportedGradleVersion>").size() == 4
-        logFile.grep("<daemon: true").size() == 4
-        logFile.grep("<tasks: [assemble]>").size() == 3
+        logFile.find("<gradle-version: $minimalSupportedGradleVersion>").size() == 4
+        logFile.find("<daemon: true").size() == 4
+        logFile.find("<tasks: [assemble]>").size() == 3
         assertBuildScanPublished(BuildScanProfiler.defaultBuildScanVersion(GradleVersion.version(minimalSupportedGradleVersion)))
     }
 
@@ -217,7 +217,7 @@ println "<gradle-version: " + gradle.gradleVersion + ">"
                         "assemble")
 
         then:
-        logFile.grep("<gradle-version: $latestSupportedGradleVersion>").size() == 4
+        logFile.find("<gradle-version: $latestSupportedGradleVersion>").size() == 4
         assertBuildScanPublished(BuildScanProfiler.defaultBuildScanVersion(GradleVersion.version(latestSupportedGradleVersion)))
     }
 
@@ -243,9 +243,9 @@ println "<daemon: " + gradle.services.get(org.gradle.internal.environment.Gradle
 
         then:
         // Probe version, 2 warm up, 1 build
-        logFile.grep("<gradle-version: $minimalSupportedGradleVersion>").size() == 4
-        logFile.grep("<daemon: true").size() == 4
-        logFile.grep("<tasks: [assemble]>").size() == 3
+        logFile.find("<gradle-version: $minimalSupportedGradleVersion>").size() == 4
+        logFile.find("<daemon: true").size() == 4
+        logFile.find("<tasks: [assemble]>").size() == 3
         assertBuildScanPublished()
     }
 
@@ -266,9 +266,9 @@ println "<daemon: " + gradle.services.get(org.gradle.internal.environment.Gradle
 
         then:
         // Probe version, 2 warm up, 1 build
-        logFile.grep("<gradle-version: $minimalSupportedGradleVersion>").size() == 4
-        logFile.grep("<daemon: true").size() == 4
-        logFile.grep("<tasks: [assemble]>").size() == 3
+        logFile.find("<gradle-version: $minimalSupportedGradleVersion>").size() == 4
+        logFile.find("<daemon: true").size() == 4
+        logFile.find("<tasks: [assemble]>").size() == 3
         assertBuildScanPublished("1.2")
     }
 
@@ -290,9 +290,9 @@ println "<daemon: " + gradle.services.get(org.gradle.internal.environment.Gradle
 
         then:
         // Probe version, 2 warm up, 1 build
-        logFile.grep("<gradle-version: $minimalSupportedGradleVersion>").size() == 4
-        logFile.grep("<daemon: true").size() == 4
-        logFile.grep("<tasks: [assemble]>").size() == 3
+        logFile.find("<gradle-version: $minimalSupportedGradleVersion>").size() == 4
+        logFile.find("<daemon: true").size() == 4
+        logFile.find("<tasks: [assemble]>").size() == 3
         assertBuildScanPublished("1.2")
 
         def profileFile = new File(outputDir, "${minimalSupportedGradleVersion}.jfr")
@@ -327,19 +327,18 @@ println "<daemon: " + gradle.services.get(org.gradle.internal.environment.Gradle
 
         then:
         // Probe version, 6 warm up, 10 builds
-        logFile.grep("<gradle-version: $minimalSupportedGradleVersion>").size() == 1 + 16 * 2
-        logFile.grep("<gradle-version: 3.0").size() == 17
-        logFile.grep("<daemon: true").size() == 2 + 16 * 2
-        logFile.grep("<daemon: false").size() == 16
-        logFile.grep("<tasks: [help]>").size() == 2 + 16
-        logFile.grep("<tasks: [assemble]>").size() == 16 * 2
+        logFile.find("<gradle-version: $minimalSupportedGradleVersion>").size() == 1 + 16 * 2
+        logFile.find("<gradle-version: 3.0").size() == 17
+        logFile.find("<daemon: true").size() == 2 + 16 * 2
+        logFile.find("<daemon: false").size() == 16
+        logFile.find("<tasks: [help]>").size() == 2 + 16
+        logFile.find("<tasks: [assemble]>").size() == 16 * 2
 
-        logFile.contains("* Running scenario assemble using Gradle 3.0 (scenario 1/3)")
-        logFile.contains("* Running scenario assemble using Gradle $minimalSupportedGradleVersion (scenario 2/3)")
-        logFile.contains("* Running scenario help using Gradle $minimalSupportedGradleVersion (scenario 3/3)")
+        logFile.containsOne("* Running scenario assemble using Gradle 3.0 (scenario 1/3)")
+        logFile.containsOne("* Running scenario assemble using Gradle $minimalSupportedGradleVersion (scenario 2/3)")
+        logFile.containsOne("* Running scenario help using Gradle $minimalSupportedGradleVersion (scenario 3/3)")
 
-        resultFile.isFile()
-        List<String> lines = resultFile.text.readLines()
+        def lines = resultFile.lines
         lines.size() == 26 // 3 headers, 16 executions, 7 stats
         lines.get(0) == "scenario,assemble,assemble,help"
         lines.get(1) == "version,3.0,${minimalSupportedGradleVersion},${minimalSupportedGradleVersion}"
@@ -372,18 +371,18 @@ println "<daemon: " + gradle.services.get(org.gradle.internal.environment.Gradle
 
         then:
         // Probe version, 6 warm up, 10 builds
-        logFile.grep("<gradle-version: $minimalSupportedGradleVersion>").size() == 17
-        logFile.grep("<daemon: true").size() == 17
-        logFile.grep("<tasks: [help]>").size() == 1
-        logFile.grep("<tasks: []>").size() == 16
+        logFile.find("<gradle-version: $minimalSupportedGradleVersion>").size() == 17
+        logFile.find("<daemon: true").size() == 17
+        logFile.find("<tasks: [help]>").size() == 1
+        logFile.find("<tasks: []>").size() == 16
 
-        logFile.contains("* Running scenario xyz using Gradle $minimalSupportedGradleVersion (scenario 1/1)")
+        logFile.containsOne("* Running scenario xyz using Gradle $minimalSupportedGradleVersion (scenario 1/1)")
 
-        resultFile.isFile()
-        resultFile.text.readLines().get(0) == "scenario,xyz"
-        resultFile.text.readLines().get(1) == "version,${minimalSupportedGradleVersion}"
-        resultFile.text.readLines().get(2) == "tasks,default tasks"
-        resultFile.text.readLines().size() == 26 // 3 headers, 16 executions, 7 stats
+        def lines = resultFile.lines
+        lines.get(0) == "scenario,xyz"
+        lines.get(1) == "version,${minimalSupportedGradleVersion}"
+        lines.get(2) == "tasks,default tasks"
+        lines.size() == 26 // 3 headers, 16 executions, 7 stats
     }
 
     def "profiles scenarios defined in scenario file"() {
@@ -409,12 +408,12 @@ println "<tasks: " + gradle.startParameter.taskNames + ">"
             "--profile", "jfr", "--gradle-version", minimalSupportedGradleVersion)
 
         then:
-        logFile.grep("<gradle-version: $minimalSupportedGradleVersion>").size() == 7
-        logFile.grep("<tasks: [help]>").size() == 4
-        logFile.grep("<tasks: [assemble]>").size() == 3
+        logFile.find("<gradle-version: $minimalSupportedGradleVersion>").size() == 7
+        logFile.find("<tasks: [help]>").size() == 4
+        logFile.find("<tasks: [assemble]>").size() == 3
 
-        logFile.contains("* Running scenario assemble using Gradle $minimalSupportedGradleVersion (scenario 1/2)")
-        logFile.contains("* Running scenario help using Gradle $minimalSupportedGradleVersion (scenario 2/2)")
+        logFile.containsOne("* Running scenario assemble using Gradle $minimalSupportedGradleVersion (scenario 1/2)")
+        logFile.containsOne("* Running scenario help using Gradle $minimalSupportedGradleVersion (scenario 2/2)")
 
         new File(outputDir, "assemble/assemble-${minimalSupportedGradleVersion}.jfr").file
         new File(outputDir, "help/help-${minimalSupportedGradleVersion}.jfr").file
@@ -447,17 +446,16 @@ plugins.withId("idea") {
 
         then:
         // Probe version, 6 warm up, 10 builds
-        logFile.grep("<gradle-version: $minimalSupportedGradleVersion>").size() == 17
-        logFile.grep("<gradle-version: $latestSupportedGradleVersion").size() == 17
-        logFile.grep("<daemon: true").size() == 17 * 2
-        logFile.grep("<tasks: []>").size() == 16 * 2
-        logFile.grep("<idea>").size() == 16 * 2
+        logFile.find("<gradle-version: $minimalSupportedGradleVersion>").size() == 17
+        logFile.find("<gradle-version: $latestSupportedGradleVersion").size() == 17
+        logFile.find("<daemon: true").size() == 17 * 2
+        logFile.find("<tasks: []>").size() == 16 * 2
+        logFile.find("<idea>").size() == 16 * 2
 
-        logFile.contains("* Running scenario ideaModel using Gradle $minimalSupportedGradleVersion (scenario 1/2)")
-        logFile.contains("* Running scenario ideaModel using Gradle $latestSupportedGradleVersion (scenario 2/2)")
+        logFile.containsOne("* Running scenario ideaModel using Gradle $minimalSupportedGradleVersion (scenario 1/2)")
+        logFile.containsOne("* Running scenario ideaModel using Gradle $latestSupportedGradleVersion (scenario 2/2)")
 
-        resultFile.isFile()
-        List<String> lines = resultFile.text.readLines()
+        def lines = resultFile.lines
         lines.size() == 26 // 3 headers, 16 executions, 7 stats
         lines.get(0) == "scenario,ideaModel,ideaModel"
         lines.get(1) == "version,$minimalSupportedGradleVersion,$latestSupportedGradleVersion"
@@ -491,14 +489,14 @@ plugins.withId("idea") {
 
         then:
         // Probe version, 2 warm up, 1 profiled build
-        logFile.grep("<gradle-version: $minimalSupportedGradleVersion>").size() == 4
-        logFile.grep("<gradle-version: $latestSupportedGradleVersion>").size() == 4
-        logFile.grep("<daemon: true").size() == 8
-        logFile.grep("<tasks: []>").size() == 6
-        logFile.grep("<idea>").size() == 6
+        logFile.find("<gradle-version: $minimalSupportedGradleVersion>").size() == 4
+        logFile.find("<gradle-version: $latestSupportedGradleVersion>").size() == 4
+        logFile.find("<daemon: true").size() == 8
+        logFile.find("<tasks: []>").size() == 6
+        logFile.find("<idea>").size() == 6
 
-        logFile.contains("* Running scenario ideaModel using Gradle $minimalSupportedGradleVersion (scenario 1/2)")
-        logFile.contains("* Running scenario ideaModel using Gradle $latestSupportedGradleVersion (scenario 2/2)")
+        logFile.containsOne("* Running scenario ideaModel using Gradle $minimalSupportedGradleVersion (scenario 1/2)")
+        logFile.containsOne("* Running scenario ideaModel using Gradle $latestSupportedGradleVersion (scenario 2/2)")
 
         def profileFile = new File(outputDir, "ideaModel/$minimalSupportedGradleVersion/ideaModel-${minimalSupportedGradleVersion}.jfr")
         profileFile.isFile()
@@ -527,15 +525,15 @@ println "<tasks: " + gradle.startParameter.taskNames + ">"
             "--profile", "jfr", "--gradle-version", minimalSupportedGradleVersion, "--gradle-version", "3.0")
 
         then:
-        logFile.grep("<gradle-version: $minimalSupportedGradleVersion>").size() == 7
-        logFile.grep("<gradle-version: 3.0>").size() == 7
-        logFile.grep("<tasks: [help]>").size() == 8
-        logFile.grep("<tasks: [assemble]>").size() == 6
+        logFile.find("<gradle-version: $minimalSupportedGradleVersion>").size() == 7
+        logFile.find("<gradle-version: 3.0>").size() == 7
+        logFile.find("<tasks: [help]>").size() == 8
+        logFile.find("<tasks: [assemble]>").size() == 6
 
-        logFile.contains("* Running scenario assemble using Gradle $minimalSupportedGradleVersion (scenario 1/4)")
-        logFile.contains("* Running scenario assemble using Gradle 3.0 (scenario 2/4)")
-        logFile.contains("* Running scenario help using Gradle $minimalSupportedGradleVersion (scenario 3/4)")
-        logFile.contains("* Running scenario help using Gradle 3.0 (scenario 4/4)")
+        logFile.containsOne("* Running scenario assemble using Gradle $minimalSupportedGradleVersion (scenario 1/4)")
+        logFile.containsOne("* Running scenario assemble using Gradle 3.0 (scenario 2/4)")
+        logFile.containsOne("* Running scenario help using Gradle $minimalSupportedGradleVersion (scenario 3/4)")
+        logFile.containsOne("* Running scenario help using Gradle 3.0 (scenario 4/4)")
 
         new File(outputDir, "assemble/$minimalSupportedGradleVersion/assemble-${minimalSupportedGradleVersion}.jfr").file
         new File(outputDir, "assemble/3.0/assemble-3.0.jfr").file
@@ -575,15 +573,15 @@ println "<tasks: " + gradle.startParameter.taskNames + ">"
             "--profile", "jfr")
 
         then:
-        logFile.grep("<gradle-version: $minimalSupportedGradleVersion>").size() == 7
-        logFile.grep("<gradle-version: 3.0>").size() == 7
-        logFile.grep("<tasks: [assemble]>").size() == 6
-        logFile.grep("<tasks: [help]>").size() == 8
+        logFile.find("<gradle-version: $minimalSupportedGradleVersion>").size() == 7
+        logFile.find("<gradle-version: 3.0>").size() == 7
+        logFile.find("<tasks: [assemble]>").size() == 6
+        logFile.find("<tasks: [help]>").size() == 8
 
-        logFile.contains("* Running scenario assemble using Gradle $minimalSupportedGradleVersion (scenario 1/4)")
-        logFile.contains("* Running scenario assemble using Gradle 3.0 (scenario 2/4)")
-        logFile.contains("* Running scenario help using Gradle $minimalSupportedGradleVersion (scenario 3/4)")
-        logFile.contains("* Running scenario help using Gradle 3.0 (scenario 4/4)")
+        logFile.containsOne("* Running scenario assemble using Gradle $minimalSupportedGradleVersion (scenario 1/4)")
+        logFile.containsOne("* Running scenario assemble using Gradle 3.0 (scenario 2/4)")
+        logFile.containsOne("* Running scenario help using Gradle $minimalSupportedGradleVersion (scenario 3/4)")
+        logFile.containsOne("* Running scenario help using Gradle 3.0 (scenario 4/4)")
 
         new File(outputDir, "help/$minimalSupportedGradleVersion/help-${minimalSupportedGradleVersion}.jfr").file
         new File(outputDir, "help/3.0/help-3.0.jfr").file
@@ -613,11 +611,10 @@ println "<daemon: " + gradle.services.get(org.gradle.internal.environment.Gradle
 
         then:
         // Probe version, 6 warm up, 10 builds
-        logFile.grep("<gradle-version: $minimalSupportedGradleVersion>").size() == 33
-        logFile.grep("<tasks: [help]>").size() == 17
+        logFile.find("<gradle-version: $minimalSupportedGradleVersion>").size() == 33
+        logFile.find("<tasks: [help]>").size() == 17
 
-        resultFile.isFile()
-        List<String> lines = resultFile.text.readLines()
+        def lines = resultFile.lines
         lines.size() == 26 // 3 headers, 16 executions, 7 stats
         lines.get(0) == "scenario,help"
         lines.get(1) == "version,${minimalSupportedGradleVersion}"
@@ -653,10 +650,10 @@ apply plugin: BasePlugin
             "--benchmark", "assemble")
 
         then:
-        logFile.contains("* Running scenario assemble using Gradle 3.0 (scenario 1/2)")
-        logFile.contains("* Running scenario assemble using Gradle $minimalSupportedGradleVersion (scenario 2/2)")
+        logFile.containsOne("* Running scenario assemble using Gradle 3.0 (scenario 1/2)")
+        logFile.containsOne("* Running scenario assemble using Gradle $minimalSupportedGradleVersion (scenario 2/2)")
 
-        !logFile.grep("Tasks: [help]")
+        !logFile.find("Tasks: [help]")
     }
 
     def "dry run runs test builds to verify configuration"() {
@@ -685,16 +682,15 @@ println "<dry-run: " + gradle.startParameter.dryRun + ">"
 
         then:
         // Probe version, 1 warm up, 1 build
-        logFile.grep("<gradle-version: $minimalSupportedGradleVersion>").size() == 5
-        logFile.grep("<gradle-version: 3.0").size() == 3
-        logFile.grep("<dry-run: false>").size() == 2
-        logFile.grep("<dry-run: true>").size() == 6
-        logFile.grep("<tasks: [help]>").size() == 2
-        logFile.grep("<tasks: [assemble]>").size() == 4
-        logFile.grep("<tasks: [clean, assemble]>").size() == 2
+        logFile.find("<gradle-version: $minimalSupportedGradleVersion>").size() == 5
+        logFile.find("<gradle-version: 3.0").size() == 3
+        logFile.find("<dry-run: false>").size() == 2
+        logFile.find("<dry-run: true>").size() == 6
+        logFile.find("<tasks: [help]>").size() == 2
+        logFile.find("<tasks: [assemble]>").size() == 4
+        logFile.find("<tasks: [clean, assemble]>").size() == 2
 
-        resultFile.isFile()
-        List<String> lines = resultFile.text.readLines()
+        def lines = resultFile.lines
         lines.size() == 12
         lines.get(0) == "scenario,s1,s1,s2"
         lines.get(1) == "version,3.0,${minimalSupportedGradleVersion},${minimalSupportedGradleVersion}"
@@ -727,19 +723,18 @@ assemble.doFirst {
 
         then:
         def e = thrown(Main.ScenarioFailedException)
-        logFile.contains(e.cause.message)
+        logFile.containsOne(e.cause.message)
         output.contains(e.cause.message)
-        logFile.contains("java.lang.RuntimeException: broken!")
+        logFile.containsOne("java.lang.RuntimeException: broken!")
         output.contains("java.lang.RuntimeException: broken!")
 
         // Probe version, 5 warm up, 10 builds
-        logFile.grep("<gradle-version: $minimalSupportedGradleVersion>").size() == 5
-        logFile.grep("<gradle-version: 3.0>").size() == 17
-        logFile.grep("<tasks: [help]>").size() == 2
-        logFile.grep("<tasks: [assemble]>").size() == 4 + 16
+        logFile.find("<gradle-version: $minimalSupportedGradleVersion>").size() == 5
+        logFile.find("<gradle-version: 3.0>").size() == 17
+        logFile.find("<tasks: [help]>").size() == 2
+        logFile.find("<tasks: [assemble]>").size() == 4 + 16
 
-        resultFile.isFile()
-        List<String> lines = resultFile.text.readLines()
+        def lines = resultFile.lines
         lines.size() == 26 // 3 headers, 16 executions, 7 stats
         lines.get(0) == "scenario,default,default"
         lines.get(1) == "version,${minimalSupportedGradleVersion},3.0"
@@ -782,19 +777,18 @@ assemble.doFirst {
 
         then:
         def e = thrown(Main.ScenarioFailedException)
-        logFile.contains(e.cause.message)
+        logFile.containsOne(e.cause.message)
         output.contains(e.cause.message)
-        logFile.contains("java.lang.RuntimeException: broken!")
+        logFile.containsOne("java.lang.RuntimeException: broken!")
         output.contains("java.lang.RuntimeException: broken!")
 
         // Probe version, 6 warm up, 10 builds
-        logFile.grep("<gradle-version: $minimalSupportedGradleVersion>").size() == 10
-        logFile.grep("<gradle-version: 3.0>").size() == 17
-        logFile.grep("<tasks: [help]>").size() == 2
-        logFile.grep("<tasks: [assemble]>").size() == 9 + 16
+        logFile.find("<gradle-version: $minimalSupportedGradleVersion>").size() == 10
+        logFile.find("<gradle-version: 3.0>").size() == 17
+        logFile.find("<tasks: [help]>").size() == 2
+        logFile.find("<tasks: [assemble]>").size() == 9 + 16
 
-        resultFile.isFile()
-        List<String> lines = resultFile.text.readLines()
+        def lines = resultFile.lines
         lines.size() == 26 // 3 headers, 16 executions, 7 stats
         lines.get(0) == "scenario,default,default"
         lines.get(1) == "version,${minimalSupportedGradleVersion},3.0"
@@ -823,8 +817,8 @@ println "<sys-prop: " + System.getProperty("org.gradle.test") + ">"
 
         then:
         // Probe version, 6 warm up, 10 builds
-        logFile.grep("<sys-prop: null>").size() == 1
-        logFile.grep("<sys-prop: value>").size() == 16
+        logFile.find("<sys-prop: null>").size() == 1
+        logFile.find("<sys-prop: value>").size() == 16
     }
 
     def "can define system property in gradle properties"() {
@@ -840,7 +834,7 @@ println "<sys-prop: " + System.getProperty("org.gradle.test") + ">"
 
         then:
         // Probe version, 6 warm up, 10 builds
-        logFile.grep("<sys-prop: value>").size() == 17
+        logFile.find("<sys-prop: value>").size() == 17
     }
 
     def "can define gradle property in gradle properties"() {
@@ -856,7 +850,7 @@ println "<gradle-prop: " + getProperty("org.gradle.test") + ">"
 
         then:
         // Probe version, 6 warm up, 10 builds
-        logFile.grep("<gradle-prop: value>").size() == 17
+        logFile.find("<gradle-prop: value>").size() == 17
     }
 
     def "can define system property when benchmarking using no-daemon"() {
@@ -872,8 +866,8 @@ println "<sys-prop: " + System.getProperty("org.gradle.test") + ">"
 
         then:
         // Probe version, 6 warm up, 10 builds
-        logFile.grep("<sys-prop: null>").size() == 1
-        logFile.grep("<sys-prop: value>").size() == 16
+        logFile.find("<sys-prop: null>").size() == 1
+        logFile.find("<sys-prop: value>").size() == 16
     }
 
     def "can define system property using scenario file"() {
@@ -906,9 +900,9 @@ println "<sys-prop: " + System.getProperty("org.gradle.test") + ">"
 
         then:
         // Probe version, 6 warm up, 10 builds
-        logFile.grep("<sys-prop: null>").size() == 1
-        logFile.grep("<sys-prop: value-1>").size() == 16
-        logFile.grep("<sys-prop: value-2>").size() == 16
+        logFile.find("<sys-prop: null>").size() == 1
+        logFile.find("<sys-prop: value-1>").size() == 16
+        logFile.find("<sys-prop: value-2>").size() == 16
     }
 
     def "uses default version if none are defined in scenario file"() {
@@ -932,8 +926,8 @@ println "Running \$gradle.gradleVersion"
             "--benchmark")
 
         then:
-        logFile.contains("* Running scenario a using Gradle $minimalSupportedGradleVersion (scenario 1/1)")
-        logFile.grep("Running $minimalSupportedGradleVersion")
+        logFile.containsOne("* Running scenario a using Gradle $minimalSupportedGradleVersion (scenario 1/1)")
+        logFile.find("Running $minimalSupportedGradleVersion")
     }
 
     def "can define Gradle args using scenario file"() {
@@ -962,9 +956,9 @@ println "<sys-prop: " + System.getProperty("org.gradle.test") + ">"
 
         then:
         // Probe version, 6 warm up, 10 builds
-        logFile.grep("<sys-prop: null>").size() == 1
-        logFile.grep("<sys-prop: value-1>").size() == 16
-        logFile.grep("<sys-prop: value-2>").size() == 16
+        logFile.find("<sys-prop: null>").size() == 1
+        logFile.find("<sys-prop: value-1>").size() == 16
+        logFile.find("<sys-prop: value-2>").size() == 16
     }
 
     @Unroll
@@ -989,11 +983,11 @@ println "<parallel: " + gradle.startParameter.parallelProjectExecutionEnabled + 
         then:
         // Probe version, 6 warm up, 10 builds
         if (isParallel) {
-            logFile.grep("<parallel: ${isParallel}>").size() >= 16
-            logFile.grep("Parallel execution is an incubating feature").size() >= 16
+            logFile.find("<parallel: ${isParallel}>").size() >= 16
+            logFile.find("Parallel execution is an incubating feature").size() >= 16
         } else {
-            logFile.grep("<parallel: ${isParallel}>").size() <= 1
-            logFile.grep("Parallel execution is an incubating feature").size() <= 1
+            logFile.find("<parallel: ${isParallel}>").size() <= 1
+            logFile.find("Parallel execution is an incubating feature").size() <= 1
         }
 
         where:
@@ -1031,9 +1025,9 @@ classes {
 
         then:
         // Probe version, 6 warm up, 10 builds
-        logFile.grep("<src-length: ${srcFile.length()}>").size() == 1
-        logFile.grep("<src-length: ${srcFile.length() + (OperatingSystem.windows ? 96 : 87)}>").size() == 9
-        logFile.grep("<src-length: ${srcFile.length() + (OperatingSystem.windows ? 98 : 89)}>").size() == 7
+        logFile.find("<src-length: ${srcFile.length()}>").size() == 1
+        logFile.find("<src-length: ${srcFile.length() + (OperatingSystem.windows ? 96 : 87)}>").size() == 9
+        logFile.find("<src-length: ${srcFile.length() + (OperatingSystem.windows ? 98 : 89)}>").size() == 7
         srcFile.text == originalText
     }
 
@@ -1066,9 +1060,9 @@ classes {
 
         then:
         // Probe version, 6 warm up, 10 builds
-        logFile.grep("<src-length: ${srcFile.length()}>").size() == 1
-        logFile.grep("<src-length: ${srcFile.length() + 53}>").size() == 9
-        logFile.grep("<src-length: ${srcFile.length() + 54}>").size() == 7
+        logFile.find("<src-length: ${srcFile.length()}>").size() == 1
+        logFile.find("<src-length: ${srcFile.length() + 53}>").size() == 9
+        logFile.find("<src-length: ${srcFile.length() + 54}>").size() == 7
         srcFile.text == originalText
     }
 
@@ -1101,9 +1095,9 @@ classes {
 
         then:
         // Probe version, 6 warm up, 10 builds
-        logFile.grep("<src-length: ${srcFile.length()}>").size() == 1
-        logFile.grep("<src-length: ${srcFile.length() + 16}>").size() == 9
-        logFile.grep("<src-length: ${srcFile.length() + 17}>").size() == 7
+        logFile.find("<src-length: ${srcFile.length()}>").size() == 1
+        logFile.find("<src-length: ${srcFile.length() + 16}>").size() == 9
+        logFile.find("<src-length: ${srcFile.length() + 17}>").size() == 7
         srcFile.text == originalText
     }
 
@@ -1153,7 +1147,7 @@ println "User home: \$gradle.gradleUserHomeDir"
             "--benchmark", "help")
 
         then:
-        logFile.grep("User home: " + new File("gradle-user-home").absolutePath)
+        logFile.find("User home: " + new File("gradle-user-home").absolutePath)
     }
 
     def "Can specify user home"() {
@@ -1168,7 +1162,7 @@ println "User home: \$gradle.gradleUserHomeDir"
             "--benchmark", "--gradle-user-home", "foobar", "help")
 
         then:
-        logFile.grep("User home: " + new File("foobar").absolutePath)
+        logFile.find("User home: " + new File("foobar").absolutePath)
     }
 
     @Requires({ !OperatingSystem.windows })
@@ -1204,15 +1198,14 @@ help {
         new Main().run("--project-dir", projectDir.absolutePath, "--output-dir", outputDir.absolutePath, "--benchmark", "--scenario-file", scenarios.absolutePath, "--buck")
 
         then:
-        logFile.contains("* Running scenario buildAll using buck (scenario 1/3)")
-        logFile.contains("* Buck targets: [//target:android_binary, //target:java_library, //target:cpp_library, //target/child:android_library, //target/child:cpp_library]")
-        logFile.contains("* Running scenario buildTarget using buck (scenario 2/3)")
-        logFile.contains("* Buck targets: [//some/target]")
-        logFile.contains("* Running scenario buildType using buck (scenario 3/3)")
-        logFile.contains("* Buck targets: [//target:android_binary_1, //target:android_binary_2, //target/child:android_binary_3, //target/child:android_binary_4]")
+        logFile.containsOne("* Running scenario buildAll using buck (scenario 1/3)")
+        logFile.containsOne("* Buck targets: [//target:android_binary, //target:java_library, //target:cpp_library, //target/child:android_library, //target/child:cpp_library]")
+        logFile.containsOne("* Running scenario buildTarget using buck (scenario 2/3)")
+        logFile.containsOne("* Buck targets: [//some/target]")
+        logFile.containsOne("* Running scenario buildType using buck (scenario 3/3)")
+        logFile.containsOne("* Buck targets: [//target:android_binary_1, //target:android_binary_2, //target/child:android_binary_3, //target/child:android_binary_4]")
 
-        resultFile.isFile()
-        List<String> lines = resultFile.text.readLines()
+        def lines = resultFile.lines
         lines.size() == 26 // 3 headers, 16 executions, 7 stats
         lines.get(0) == "scenario,buildAll,buildTarget,buildType"
         lines.get(1) == "version,buck,buck,buck"
@@ -1269,7 +1262,7 @@ buildTarget {
         new Main().run("--project-dir", projectDir.absolutePath, "--output-dir", outputDir.absolutePath, "--profile", "jfr", "--scenario-file", scenarios.absolutePath, "--gradle-version", minimalSupportedGradleVersion, "buildTarget")
 
         then:
-        logFile.grep("* Running scenario buildTarget using Gradle $minimalSupportedGradleVersion (scenario 1/1)")
+        logFile.find("* Running scenario buildTarget using Gradle $minimalSupportedGradleVersion (scenario 1/1)")
     }
 
     def "ignores buck build instructions when benchmarking using Gradle"() {
@@ -1290,7 +1283,7 @@ buildTarget {
         new Main().run("--project-dir", projectDir.absolutePath, "--output-dir", outputDir.absolutePath, "--benchmark", "--scenario-file", scenarios.absolutePath, "--gradle-version", minimalSupportedGradleVersion, "buildTarget")
 
         then:
-        logFile.grep("* Running scenario buildTarget using Gradle $minimalSupportedGradleVersion (scenario 1/1)")
+        logFile.find("* Running scenario buildTarget using Gradle $minimalSupportedGradleVersion (scenario 1/1)")
     }
 
     @Requires({ !OperatingSystem.windows && System.getenv("BAZEL_HOME") })
@@ -1311,11 +1304,10 @@ buildTarget {
         new Main().run("--project-dir", projectDir.absolutePath, "--output-dir", outputDir.absolutePath, "--benchmark", "--scenario-file", scenarios.absolutePath, "--bazel")
 
         then:
-        logFile.contains("* Running scenario buildTarget using bazel (scenario 1/1)")
-        logFile.contains("* Bazel targets: [:hello]")
+        logFile.containsOne("* Running scenario buildTarget using bazel (scenario 1/1)")
+        logFile.containsOne("* Bazel targets: [:hello]")
 
-        resultFile.isFile()
-        List<String> lines =resultFile.text.readLines()
+        def lines = resultFile.lines
         lines.size() == 26 // 3 headers, 16 executions, 7 stats
         lines.get(0) == "scenario,buildTarget"
         lines.get(1) == "version,bazel"
@@ -1370,7 +1362,7 @@ buildTarget {
         new Main().run("--project-dir", projectDir.absolutePath, "--output-dir", outputDir.absolutePath, "--profile", "jfr", "--scenario-file", scenarios.absolutePath, "--gradle-version", minimalSupportedGradleVersion, "buildTarget")
 
         then:
-        logFile.grep("* Running scenario buildTarget using Gradle $minimalSupportedGradleVersion (scenario 1/1)")
+        logFile.find("* Running scenario buildTarget using Gradle $minimalSupportedGradleVersion (scenario 1/1)")
     }
 
     def "ignores bazel build instructions when benchmarking using Gradle"() {
@@ -1390,7 +1382,7 @@ buildTarget {
         new Main().run("--project-dir", projectDir.absolutePath, "--output-dir", outputDir.absolutePath, "--benchmark", "--scenario-file", scenarios.absolutePath, "--gradle-version", minimalSupportedGradleVersion, "buildTarget")
 
         then:
-        logFile.grep("* Running scenario buildTarget using Gradle $minimalSupportedGradleVersion (scenario 1/1)")
+        logFile.find("* Running scenario buildTarget using Gradle $minimalSupportedGradleVersion (scenario 1/1)")
     }
 
     @Requires({ System.getenv("MAVEN_HOME") })
@@ -1409,11 +1401,10 @@ buildGoal {
         new Main().run("--project-dir", projectDir.absolutePath, "--output-dir", outputDir.absolutePath, "--benchmark", "--scenario-file", scenarios.absolutePath, "--maven")
 
         then:
-        logFile.contains("* Running scenario buildGoal using maven (scenario 1/1)")
-        logFile.contains("* Maven targets: [-v]")
+        logFile.containsOne("* Running scenario buildGoal using maven (scenario 1/1)")
+        logFile.containsOne("* Maven targets: [-v]")
 
-        resultFile.isFile()
-        List<String> lines =resultFile.text.readLines()
+        def lines = resultFile.lines
         lines.size() == 26 // 3 headers, 16 executions, 7 stats
         lines.get(0) == "scenario,buildGoal"
         lines.get(1) == "version,maven"
@@ -1705,12 +1696,12 @@ buildTarget {
             run("--project-dir", projectDir.absolutePath, "--output-dir", outputDir.absolutePath, "--gradle-version", minimalSupportedGradleVersion, "--benchmark", "--scenario-file", scenarios.absolutePath, "--warmups", "2", "--iterations", "2")
 
         then:
-        logFile.grep("> org.gradle.profiler.scenario = buildTarget").size() == 8
-        logFile.grep("> org.gradle.profiler.phase = WARM_UP").size() == 4
-        logFile.grep("> org.gradle.profiler.phase = MEASURE").size() == 4
-        logFile.grep("> org.gradle.profiler.step = CLEANUP").size() == 4
-        logFile.grep("> org.gradle.profiler.step = BUILD").size() == 4
-        logFile.grep("> org.gradle.profiler.number = 1").size() == 4
-        logFile.grep("> org.gradle.profiler.number = 2").size() == 4
+        logFile.find("> org.gradle.profiler.scenario = buildTarget").size() == 8
+        logFile.find("> org.gradle.profiler.phase = WARM_UP").size() == 4
+        logFile.find("> org.gradle.profiler.phase = MEASURE").size() == 4
+        logFile.find("> org.gradle.profiler.step = CLEANUP").size() == 4
+        logFile.find("> org.gradle.profiler.step = BUILD").size() == 4
+        logFile.find("> org.gradle.profiler.number = 1").size() == 4
+        logFile.find("> org.gradle.profiler.number = 2").size() == 4
     }
 }

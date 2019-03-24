@@ -5,6 +5,7 @@ import org.junit.Rule
 import org.junit.rules.TemporaryFolder
 import spock.lang.Shared
 import spock.lang.Specification
+import com.google.common.collect.ImmutableList
 
 abstract class AbstractProfilerIntegrationTest extends Specification {
 
@@ -33,8 +34,11 @@ abstract class AbstractProfilerIntegrationTest extends Specification {
         return new LogFile(f)
     }
 
-    File getResultFile() {
-        new File(outputDir, "benchmark.csv")
+    ReportFile getResultFile() {
+        def f = new File(outputDir, "benchmark.csv")
+        assert f.isFile()
+
+        return new ReportFile(f)
     }
 
     File getBuildFile() {
@@ -59,11 +63,11 @@ abstract class AbstractProfilerIntegrationTest extends Specification {
 
     void assertBuildScanPublished(String buildScanPluginVersion) {
         if (buildScanPluginVersion) {
-            assert logFile.grep("Using build scan plugin " + buildScanPluginVersion).size() == 1
+            assert logFile.find("Using build scan plugin " + buildScanPluginVersion).size() == 1
         } else {
-            assert logFile.grep("Using build scan plugin specified in the build").size() == 1
+            assert logFile.find("Using build scan plugin specified in the build").size() == 1
         }
-        assert logFile.grep("Publishing build").size() == 1: ("LOG FILE:" + logFile.text)
+        assert logFile.find("Publishing build").size() == 1: ("LOG FILE:" + logFile.text)
     }
 
     def instrumentedBuildScript() {
@@ -118,11 +122,11 @@ genrule(
 )'''
     }
 
-    static class LogFile {
+    static class FileFixture {
         final List<String> lines
 
-        LogFile(File logFile) {
-            lines = logFile.readLines()
+        FileFixture(File logFile) {
+            lines = ImmutableList.copyOf(logFile.readLines())
         }
 
         @Override
@@ -130,19 +134,34 @@ genrule(
             return lines.join("\n")
         }
 
-        boolean contains(String str) {
-            return grep(str).size() == 1
+        /**
+         * Contains a single line with the given text.
+         */
+        boolean containsOne(String str) {
+            return find(str).size() == 1
         }
 
         /**
          * Locates the lines containing the given string
          */
-        List<String> grep(String str) {
+        List<String> find(String str) {
             lines.findAll { it.contains(str) }
         }
 
         String getText() {
             lines.join("\n")
+        }
+    }
+
+    static class ReportFile extends FileFixture {
+        ReportFile(File logFile) {
+            super(logFile)
+        }
+    }
+
+    static class LogFile extends FileFixture {
+        LogFile(File logFile) {
+            super(logFile)
         }
     }
 }

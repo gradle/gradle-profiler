@@ -1,4 +1,4 @@
-package org.gradle.profiler;
+package org.gradle.profiler.report;
 
 import java.util.List;
 

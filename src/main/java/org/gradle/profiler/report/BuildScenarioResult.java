@@ -1,6 +1,8 @@
-package org.gradle.profiler;
+package org.gradle.profiler.report;
 
 import org.apache.commons.math3.stat.descriptive.DescriptiveStatistics;
+import org.gradle.profiler.BuildInvocationResult;
+import org.gradle.profiler.ScenarioDefinition;
 
 import java.util.List;
 import java.util.Optional;
@@ -12,6 +14,11 @@ public interface BuildScenarioResult {
      * Returns the baseline for this scenario, if any.
      */
     Optional<BuildScenarioResult> getBaseline();
+
+    /**
+     * Returns the number of metrics collected for each build invocation in this scenario.
+     */
+    int getMetricsCount();
 
     /**
      * Returns all results, including warm-up builds.

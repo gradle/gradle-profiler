@@ -14,8 +14,8 @@ class JProfilerIntegrationTest extends AbstractProfilerIntegrationTest {
         new Main().run("--project-dir", projectDir.absolutePath, "--output-dir", outputDir.absolutePath, "--gradle-version", minimalSupportedGradleVersion, "--profile", "jprofiler", "assemble")
 
         then:
-        logFile.grep("<daemon: true").size() == 4
-        logFile.contains("<invocations: 3>")
+        logFile.find("<daemon: true").size() == 4
+        logFile.containsOne("<invocations: 3>")
 
         and:
         outputDir.listFiles().find { it.name.matches("${minimalSupportedGradleVersion}.jps") }
@@ -37,10 +37,10 @@ class JProfilerIntegrationTest extends AbstractProfilerIntegrationTest {
         new Main().run("--project-dir", projectDir.absolutePath, "--output-dir", outputDir.absolutePath, "--scenario-file", scenarioFile.absolutePath, "--gradle-version", minimalSupportedGradleVersion, "--profile", "jprofiler", "--iterations", "2", "assemble")
 
         then:
-        logFile.grep("<daemon: true").size() == 9
-        logFile.grep("<tasks: [clean]").size() == 4
-        logFile.grep("<tasks: []").size() == 4
-        logFile.contains("<invocations: 8>")
+        logFile.find("<daemon: true").size() == 9
+        logFile.find("<tasks: [clean]").size() == 4
+        logFile.find("<tasks: []").size() == 4
+        logFile.containsOne("<invocations: 8>")
 
         and:
         new File(outputDir, "assemble").listFiles().find { it.name.matches("assemble-${minimalSupportedGradleVersion}.jps") }
@@ -55,8 +55,8 @@ class JProfilerIntegrationTest extends AbstractProfilerIntegrationTest {
         new Main().run("--project-dir", projectDir.absolutePath, "--output-dir", outputDir.absolutePath, "--gradle-version", minimalSupportedGradleVersion, "--profile", "jprofiler", "--cold-daemon", "assemble")
 
         then:
-        logFile.grep("<daemon: true").size() == 3
-        logFile.grep("<invocations: 1>").size() == 3
+        logFile.find("<daemon: true").size() == 3
+        logFile.find("<invocations: 1>").size() == 3
 
         and:
         outputDir.listFiles().find { it.name.matches("${minimalSupportedGradleVersion}.jps") }
@@ -71,9 +71,9 @@ class JProfilerIntegrationTest extends AbstractProfilerIntegrationTest {
         new Main().run("--project-dir", projectDir.absolutePath, "--output-dir", outputDir.absolutePath, "--gradle-version", minimalSupportedGradleVersion, "--profile", "jprofiler", "--no-daemon", "assemble")
 
         then:
-        logFile.grep("<daemon: true").size() == 1
-        logFile.grep("<daemon: false").size() == 2
-        logFile.grep("<invocations: 1>").size() == 3
+        logFile.find("<daemon: true").size() == 1
+        logFile.find("<daemon: false").size() == 2
+        logFile.find("<invocations: 1>").size() == 3
 
         and:
         outputDir.listFiles().find { it.name.matches("${minimalSupportedGradleVersion}.jps") }
