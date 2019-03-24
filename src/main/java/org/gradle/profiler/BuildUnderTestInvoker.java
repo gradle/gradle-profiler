@@ -6,6 +6,7 @@ import org.gradle.profiler.instrument.PidInstrumentation;
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
 /**
  * Runs a single invocation of a Gradle build and collects the result.
@@ -43,10 +44,10 @@ public class BuildUnderTestInvoker {
         String pid = pidInstrumentation.getPidForLastBuild();
         Logging.detailed().println("Used daemon with pid " + pid);
 
-        Duration timeToTaskExecution = buildOperationInstrumentation.getTimeToTaskExecution();
-        Logging.detailed().println("Time to task execution " + timeToTaskExecution);
+        Optional<Duration> timeToTaskExecution = buildOperationInstrumentation.getTimeToTaskExecution();
+        Logging.detailed().println("Time to task execution " + timeToTaskExecution.map(duration -> duration.toMillis() + " ms").orElse(""));
 
-        return new GradleBuildInvocationResult(displayName, executionTime, timeToTaskExecution, pid);
+        return new GradleBuildInvocationResult(displayName, executionTime, timeToTaskExecution.orElse(null), pid);
     }
 
     public BuildUnderTestInvoker withJvmArgs(List<String> jvmArgs) {

@@ -3,6 +3,8 @@ package org.gradle.profiler;
 import org.apache.commons.math3.stat.descriptive.DescriptiveStatistics;
 import org.apache.commons.math3.stat.inference.MannWhitneyUTest;
 import org.gradle.profiler.report.AbstractGenerator;
+import org.gradle.profiler.report.BenchmarkResult;
+import org.gradle.profiler.report.BuildScenarioResult;
 
 import java.io.IOException;
 import java.util.*;
@@ -17,14 +19,13 @@ public class BenchmarkResultCollector {
     }
 
     public Consumer<BuildInvocationResult> version(ScenarioDefinition scenario) {
-        List<BuildInvocationResult> results = getResultsForScenario(scenario);
-        return results::add;
+        return getResultsForScenario(scenario);
     }
 
-    private List<BuildInvocationResult> getResultsForScenario(ScenarioDefinition scenario) {
+    private BuildScenario getResultsForScenario(ScenarioDefinition scenario) {
         BuildScenario buildScenario = new BuildScenario(scenario, baseLineFor(scenario));
         allBuilds.add(buildScenario);
-        return buildScenario.results;
+        return buildScenario;
     }
 
     private BuildScenario baseLineFor(ScenarioDefinition scenario) {
@@ -39,7 +40,7 @@ public class BenchmarkResultCollector {
         }
         if (allBuilds.size() >= 2) {
             if (allBuilds.get(allBuilds.size() - 1).getScenarioDefinition().getName().equals(allBuilds.get(allBuilds.size() - 2)
-                    .getScenarioDefinition().getName())) {
+                .getScenarioDefinition().getName())) {
                 return null;
             }
         }
@@ -57,6 +58,7 @@ public class BenchmarkResultCollector {
         private final BuildScenarioResult baseline;
         private final List<BuildInvocationResult> results = new ArrayList<>();
         private DescriptiveStatistics statistics;
+        private int metricsCount;
 
         BuildScenario(ScenarioDefinition scenario, BuildScenarioResult baseline) {
             this.scenario = scenario;
@@ -65,6 +67,11 @@ public class BenchmarkResultCollector {
 
         @Override
         public void accept(BuildInvocationResult buildInvocationResult) {
+            if (results.isEmpty()) {
+                metricsCount = buildInvocationResult.getMetrics().size();
+            } else if (buildInvocationResult.getMetrics().size() != metricsCount) {
+                throw new IllegalArgumentException("Results do not contain the same number of metrics.");
+            }
             results.add(buildInvocationResult);
             statistics = null;
         }
@@ -72,6 +79,11 @@ public class BenchmarkResultCollector {
         @Override
         public ScenarioDefinition getScenarioDefinition() {
             return scenario;
+        }
+
+        @Override
+        public int getMetricsCount() {
+            return metricsCount;
         }
 
         @Override

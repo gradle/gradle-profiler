@@ -1,13 +1,12 @@
 package org.gradle.profiler.report;
 
 import org.apache.commons.math3.stat.descriptive.DescriptiveStatistics;
-import org.gradle.profiler.BenchmarkResult;
 import org.gradle.profiler.BuildInvocationResult;
-import org.gradle.profiler.BuildScenarioResult;
 
 import java.io.BufferedWriter;
 import java.io.File;
 import java.io.IOException;
+import java.time.Duration;
 import java.util.List;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -24,18 +23,27 @@ public class CsvGenerator extends AbstractGenerator {
         for (BuildScenarioResult result : allScenarios) {
             writer.write(",");
             writer.write(result.getScenarioDefinition().getName());
+            for (int i = 1; i < result.getMetricsCount(); i++) {
+                writer.write(",");
+            }
         }
         writer.newLine();
         writer.write("version");
         for (BuildScenarioResult result : allScenarios) {
             writer.write(",");
             writer.write(result.getScenarioDefinition().getBuildToolDisplayName());
+            for (int i = 1; i < result.getMetricsCount(); i++) {
+                writer.write(",");
+            }
         }
         writer.newLine();
         writer.write("tasks");
         for (BuildScenarioResult result : allScenarios) {
             writer.write(",");
             writer.write(result.getScenarioDefinition().getTasksDisplayName());
+            for (int i = 1; i < result.getMetricsCount(); i++) {
+                writer.write(",");
+            }
         }
         writer.newLine();
         int maxRows = allScenarios.stream().mapToInt(v -> v.getResults().size()).max().orElse(0);
@@ -56,7 +64,13 @@ public class CsvGenerator extends AbstractGenerator {
                     continue;
                 }
                 BuildInvocationResult buildResult = results.get(row);
-                writer.write(String.valueOf(buildResult.getExecutionTime().toMillis()));
+                for (int i = 0; i < buildResult.getMetrics().size(); i++) {
+                    Duration duration = buildResult.getMetrics().get(i);
+                    if (i > 0) {
+                        writer.write(",");
+                    }
+                    writer.write(String.valueOf(duration.toMillis()));
+                }
             }
             writer.newLine();
         }

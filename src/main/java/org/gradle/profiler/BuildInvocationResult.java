@@ -1,6 +1,9 @@
 package org.gradle.profiler;
 
+import com.google.common.collect.ImmutableList;
+
 import java.time.Duration;
+import java.util.List;
 
 public class BuildInvocationResult {
     private final String displayName;
@@ -17,5 +20,9 @@ public class BuildInvocationResult {
 
     public Duration getExecutionTime() {
         return executionTime;
+    }
+
+    public List<Duration> getMetrics() {
+        return ImmutableList.of(executionTime);
     }
 }

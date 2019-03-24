@@ -1,8 +1,6 @@
 package org.gradle.profiler.report;
 
-import org.gradle.profiler.BenchmarkResult;
 import org.gradle.profiler.BuildInvocationResult;
-import org.gradle.profiler.BuildScenarioResult;
 
 import java.io.BufferedWriter;
 import java.io.File;

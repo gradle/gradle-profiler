@@ -155,10 +155,6 @@ public class GradleScenarioInvoker extends ScenarioInvoker<GradleScenarioDefinit
 
                     GradleBuildInvocationResult result = instrumentedBuildInvoker.runBuild(MEASURE, counter, BUILD, scenario.getAction());
 
-                    if (settings.isMeasureConfigTime()) {
-                        System.out.println("-> config time = " + result.getTimeToTaskExecution().toMillis() + " ms");
-                    }
-
                     if ((counter == scenario.getBuildCount() || beforeBuildAction.isDoesSomething())) {
                         try {
                             control.stopRecording(result.getDaemonPid());

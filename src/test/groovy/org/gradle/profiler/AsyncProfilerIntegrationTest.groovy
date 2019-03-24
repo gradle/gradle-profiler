@@ -13,8 +13,8 @@ class AsyncProfilerIntegrationTest extends AbstractProfilerIntegrationTest {
         new Main().run("--project-dir", projectDir.absolutePath, "--output-dir", outputDir.absolutePath, "--gradle-version", minimalSupportedGradleVersion, "--profile", "async-profiler",  "assemble")
 
         then:
-        logFile.grep("<daemon: true").size() == 4
-        logFile.contains("<invocations: 3>")
+        logFile.find("<daemon: true").size() == 4
+        logFile.containsOne("<invocations: 3>")
 
         and:
         new File(outputDir, "${minimalSupportedGradleVersion}-flames.svg").file
@@ -30,8 +30,8 @@ class AsyncProfilerIntegrationTest extends AbstractProfilerIntegrationTest {
         new Main().run("--project-dir", projectDir.absolutePath, "--output-dir", outputDir.absolutePath, "--gradle-version", minimalSupportedGradleVersion, "--profile", "async-profiler", "--iterations", "2", "assemble")
 
         then:
-        logFile.grep("<daemon: true").size() == 5
-        logFile.contains("<invocations: 4>")
+        logFile.find("<daemon: true").size() == 5
+        logFile.containsOne("<invocations: 4>")
 
         and:
         new File(outputDir, "${minimalSupportedGradleVersion}-flames.svg").file
@@ -47,8 +47,8 @@ class AsyncProfilerIntegrationTest extends AbstractProfilerIntegrationTest {
         new Main().run("--project-dir", projectDir.absolutePath, "--output-dir", outputDir.absolutePath, "--gradle-version", minimalSupportedGradleVersion, "--profile", "async-profiler", "--cold-daemon", "assemble")
 
         then:
-        logFile.grep("<daemon: true").size() == 3
-        logFile.grep("<invocations: 1>").size() == 3
+        logFile.find("<daemon: true").size() == 3
+        logFile.find("<invocations: 1>").size() == 3
 
         and:
         new File(outputDir, "${minimalSupportedGradleVersion}-flames.svg").file
@@ -64,9 +64,9 @@ class AsyncProfilerIntegrationTest extends AbstractProfilerIntegrationTest {
         new Main().run("--project-dir", projectDir.absolutePath, "--output-dir", outputDir.absolutePath, "--gradle-version", minimalSupportedGradleVersion, "--profile", "async-profiler", "--no-daemon", "assemble")
 
         then:
-        logFile.grep("<daemon: true").size() == 1
-        logFile.grep("<daemon: false").size() == 2
-        logFile.grep("<invocations: 1>").size() == 3
+        logFile.find("<daemon: true").size() == 1
+        logFile.find("<daemon: false").size() == 2
+        logFile.find("<invocations: 1>").size() == 3
 
         and:
         new File(outputDir, "${minimalSupportedGradleVersion}-flames.svg").file

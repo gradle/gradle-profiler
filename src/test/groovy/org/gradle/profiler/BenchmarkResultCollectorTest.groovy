@@ -1,6 +1,7 @@
 package org.gradle.profiler
 
 import org.gradle.profiler.report.AbstractGenerator
+import org.gradle.profiler.report.BenchmarkResult
 import spock.lang.Specification
 
 class BenchmarkResultCollectorTest extends Specification {

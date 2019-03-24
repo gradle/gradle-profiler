@@ -1,8 +1,5 @@
 package org.gradle.profiler
 
-import groovy.transform.NotYetImplemented
-
-
 class GradleInvocationIntegrationTest extends AbstractProfilerIntegrationTest {
     def "can benchmark using tooling API and warm daemon"() {
         given:
@@ -13,17 +10,16 @@ class GradleInvocationIntegrationTest extends AbstractProfilerIntegrationTest {
 
         then:
         // Probe version, 6 warm up, 10 builds
-        logFile.contains("* Running scenario using Gradle $minimalSupportedGradleVersion (scenario 1/1)")
-        logFile.grep("* Running warm-up build").size() == 6
-        logFile.grep("* Running measured build").size() == 10
-        logFile.grep("<gradle-version: $minimalSupportedGradleVersion>").size() == 17
-        logFile.grep("<daemon: true").size() == 17
-        logFile.grep("<tasks: [help]>").size() == 1
-        logFile.grep("<tasks: [assemble]>").size() == 16
-        logFile.contains("<invocations: 16>")
+        logFile.containsOne("* Running scenario using Gradle $minimalSupportedGradleVersion (scenario 1/1)")
+        logFile.find("* Running warm-up build").size() == 6
+        logFile.find("* Running measured build").size() == 10
+        logFile.find("<gradle-version: $minimalSupportedGradleVersion>").size() == 17
+        logFile.find("<daemon: true").size() == 17
+        logFile.find("<tasks: [help]>").size() == 1
+        logFile.find("<tasks: [assemble]>").size() == 16
+        logFile.containsOne("<invocations: 16>")
 
-        resultFile.isFile()
-        List<String> lines = resultFile.text.readLines()
+        def lines = resultFile.lines
         lines.size() == 26 // 3 headers, 16 executions, 7 stats
         lines.get(0) == "scenario,default"
         lines.get(1) == "version,${minimalSupportedGradleVersion}"
@@ -48,17 +44,16 @@ class GradleInvocationIntegrationTest extends AbstractProfilerIntegrationTest {
 
         then:
         // Probe version, 6 warm up, 10 builds
-        logFile.contains("* Running scenario using Gradle $minimalSupportedGradleVersion (scenario 1/1)")
-        logFile.grep("* Running warm-up build").size() == 6
-        logFile.grep("* Running measured build").size() == 10
-        logFile.grep("<gradle-version: $minimalSupportedGradleVersion>").size() == 17
-        logFile.grep("<daemon: true").size() == 17
-        logFile.grep("<tasks: [help]>").size() == 1
-        logFile.grep("<tasks: [assemble]>").size() == 16
-        logFile.contains("<invocations: 16>")
+        logFile.containsOne("* Running scenario using Gradle $minimalSupportedGradleVersion (scenario 1/1)")
+        logFile.find("* Running warm-up build").size() == 6
+        logFile.find("* Running measured build").size() == 10
+        logFile.find("<gradle-version: $minimalSupportedGradleVersion>").size() == 17
+        logFile.find("<daemon: true").size() == 17
+        logFile.find("<tasks: [help]>").size() == 1
+        logFile.find("<tasks: [assemble]>").size() == 16
+        logFile.containsOne("<invocations: 16>")
 
-        resultFile.isFile()
-        List<String> lines = resultFile.text.readLines()
+        def lines = resultFile.lines
         lines.size() == 26 // 3 headers, 16 executions, 7 stats
         lines.get(0) == "scenario,default"
         lines.get(1) == "version,${minimalSupportedGradleVersion}"
@@ -82,17 +77,16 @@ class GradleInvocationIntegrationTest extends AbstractProfilerIntegrationTest {
 
         then:
         // Probe version, 1 warm up, 10 builds
-        logFile.contains("* Running scenario using Gradle $minimalSupportedGradleVersion (scenario 1/1)")
-        logFile.grep("* Running warm-up build").size() == 1
-        logFile.grep("* Running measured build").size() == 10
-        logFile.grep("<gradle-version: $minimalSupportedGradleVersion>").size() == 12
-        logFile.grep("<daemon: true").size() == 12
-        logFile.grep("<tasks: [help]>").size() == 1
-        logFile.grep("<tasks: [assemble]>").size() == 11
-        logFile.grep("<invocations: 1>").size() == 12
+        logFile.containsOne("* Running scenario using Gradle $minimalSupportedGradleVersion (scenario 1/1)")
+        logFile.find("* Running warm-up build").size() == 1
+        logFile.find("* Running measured build").size() == 10
+        logFile.find("<gradle-version: $minimalSupportedGradleVersion>").size() == 12
+        logFile.find("<daemon: true").size() == 12
+        logFile.find("<tasks: [help]>").size() == 1
+        logFile.find("<tasks: [assemble]>").size() == 11
+        logFile.find("<invocations: 1>").size() == 12
 
-        resultFile.isFile()
-        List<String> lines = resultFile.text.readLines()
+        def lines = resultFile.lines
         lines.size() == 21 // 3 headers, 11 executions, 7 stats
         lines.get(0) == "scenario,default"
         lines.get(1) == "version,${minimalSupportedGradleVersion}"
@@ -115,17 +109,16 @@ class GradleInvocationIntegrationTest extends AbstractProfilerIntegrationTest {
 
         then:
         // Probe version, 1 warm up, 10 builds
-        logFile.contains("* Running scenario using Gradle $minimalSupportedGradleVersion (scenario 1/1)")
-        logFile.grep("* Running warm-up build").size() == 1
-        logFile.grep("* Running measured build").size() == 10
-        logFile.grep("<gradle-version: $minimalSupportedGradleVersion>").size() == 12
-        logFile.grep("<daemon: true").size() == 12
-        logFile.grep("<tasks: [help]>").size() == 1
-        logFile.grep("<tasks: [assemble]>").size() == 11
-        logFile.grep("<invocations: 1>").size() == 12
+        logFile.containsOne("* Running scenario using Gradle $minimalSupportedGradleVersion (scenario 1/1)")
+        logFile.find("* Running warm-up build").size() == 1
+        logFile.find("* Running measured build").size() == 10
+        logFile.find("<gradle-version: $minimalSupportedGradleVersion>").size() == 12
+        logFile.find("<daemon: true").size() == 12
+        logFile.find("<tasks: [help]>").size() == 1
+        logFile.find("<tasks: [assemble]>").size() == 11
+        logFile.find("<invocations: 1>").size() == 12
 
-        resultFile.isFile()
-        List<String> lines = resultFile.text.readLines()
+        def lines = resultFile.lines
         lines.size() == 21 // 3 headers, 11 executions, 7 stats
         lines.get(0) == "scenario,default"
         lines.get(1) == "version,${minimalSupportedGradleVersion}"
@@ -148,18 +141,17 @@ class GradleInvocationIntegrationTest extends AbstractProfilerIntegrationTest {
 
         then:
         // Probe version, 1 warm up, 10 builds
-        logFile.contains("* Running scenario using Gradle $minimalSupportedGradleVersion (scenario 1/1)")
-        logFile.grep("* Running warm-up build").size() == 1
-        logFile.grep("* Running measured build").size() == 10
-        logFile.grep("<gradle-version: $minimalSupportedGradleVersion>").size() == 12
-        logFile.grep("<daemon: true").size() == 1
-        logFile.grep("<daemon: false").size() == 11
-        logFile.grep("<tasks: [help]>").size() == 1
-        logFile.grep("<tasks: [assemble]>").size() == 11
-        logFile.grep("<invocations: 1>").size() == 12
+        logFile.containsOne("* Running scenario using Gradle $minimalSupportedGradleVersion (scenario 1/1)")
+        logFile.find("* Running warm-up build").size() == 1
+        logFile.find("* Running measured build").size() == 10
+        logFile.find("<gradle-version: $minimalSupportedGradleVersion>").size() == 12
+        logFile.find("<daemon: true").size() == 1
+        logFile.find("<daemon: false").size() == 11
+        logFile.find("<tasks: [help]>").size() == 1
+        logFile.find("<tasks: [assemble]>").size() == 11
+        logFile.find("<invocations: 1>").size() == 12
 
-        resultFile.isFile()
-        List<String> lines = resultFile.text.readLines()
+        def lines = resultFile.lines
         lines.size() == 21 // 3 headers, 11 executions, 7 stats
         lines.get(0) == "scenario,default"
         lines.get(1) == "version,${minimalSupportedGradleVersion}"
