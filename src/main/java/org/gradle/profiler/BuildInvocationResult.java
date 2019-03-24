@@ -5,12 +5,10 @@ import java.time.Duration;
 public class BuildInvocationResult {
     private final String displayName;
     private final Duration executionTime;
-    private final String daemonPid;
 
-    public BuildInvocationResult(String displayName, Duration executionTime, String daemonPid) {
+    public BuildInvocationResult(String displayName, Duration executionTime) {
         this.displayName = displayName;
         this.executionTime = executionTime;
-        this.daemonPid = daemonPid;
     }
 
     public String getDisplayName() {
@@ -19,9 +17,5 @@ public class BuildInvocationResult {
 
     public Duration getExecutionTime() {
         return executionTime;
-    }
-
-    public String getDaemonPid() {
-        return daemonPid;
     }
 }

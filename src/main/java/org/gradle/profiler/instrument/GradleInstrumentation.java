@@ -1,6 +1,8 @@
-package org.gradle.profiler;
+package org.gradle.profiler.instrument;
 
 import org.gradle.internal.UncheckedException;
+import org.gradle.profiler.GeneratedInitScript;
+import org.gradle.profiler.GradleArgsCalculator;
 
 import java.io.File;
 import java.io.IOException;

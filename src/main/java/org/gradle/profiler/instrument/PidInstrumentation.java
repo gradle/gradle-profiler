@@ -1,11 +1,11 @@
-package org.gradle.profiler;
+package org.gradle.profiler.instrument;
 
 import java.io.*;
 
-class PidInstrumentation extends GradleInstrumentation {
+public class PidInstrumentation extends GradleInstrumentation {
     private final File pidFile;
 
-    PidInstrumentation() throws IOException {
+    public PidInstrumentation() throws IOException {
         pidFile = File.createTempFile("gradle-profiler", "pid");
         pidFile.deleteOnExit();
     }

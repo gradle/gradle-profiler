@@ -9,14 +9,11 @@ import static org.gradle.profiler.Phase.WARM_UP;
 
 public class BazelScenarioInvoker extends ScenarioInvoker<BazelScenarioDefinition> {
     @Override
-    void run(BazelScenarioDefinition scenario, InvocationSettings settings, BenchmarkResultCollector benchmarkResults) {
+    void run(BazelScenarioDefinition scenario, InvocationSettings settings, Consumer<BuildInvocationResult> resultConsumer) {
         String bazelHome = System.getenv("BAZEL_HOME");
         String bazelExe = bazelHome == null ? "bazel" : bazelHome + "/bin/bazel";
 
-        List<String> targets = new ArrayList<>(scenario.getTargets());
-
-        System.out.println();
-        System.out.println("* Bazel targets: " + targets);
+        List<String> targets = scenario.getTargets();
 
         List<String> commandLine = new ArrayList<>();
         commandLine.add(bazelExe);
@@ -26,7 +23,6 @@ public class BazelScenarioInvoker extends ScenarioInvoker<BazelScenarioDefinitio
         BuildMutator mutator = scenario.getBuildMutator().get();
         mutator.beforeScenario();
         try {
-            Consumer<BuildInvocationResult> resultConsumer = benchmarkResults.version(scenario);
             for (int i = 0; i < scenario.getWarmUpCount(); i++) {
                 String displayName = WARM_UP.displayBuildNumber(i + 1);
                 runMeasured(displayName, mutator, measureCommandLineExecution(displayName, commandLine, settings.getProjectDir()), resultConsumer);
