@@ -623,11 +623,11 @@ println "<daemon: " + gradle.services.get(org.gradle.internal.environment.Gradle
         lines.get(1) == "version,${minimalSupportedGradleVersion}"
         lines.get(2) == "tasks,help"
         lines.get(3) == "value,execution"
-        lines.get(3).matches("warm-up build #1,\\d+")
-        lines.get(8).matches("warm-up build #6,\\d+")
-        lines.get(9).matches("measured build #1,\\d+")
-        lines.get(10).matches("measured build #2,\\d+")
-        lines.get(18).matches("measured build #10,\\d+")
+        lines.get(4).matches("warm-up build #1,\\d+")
+        lines.get(9).matches("warm-up build #6,\\d+")
+        lines.get(10).matches("measured build #1,\\d+")
+        lines.get(11).matches("measured build #2,\\d+")
+        lines.get(19).matches("measured build #10,\\d+")
     }
 
     def "runs benchmarks using single scenario defined in scenario file"() {

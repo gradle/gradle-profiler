@@ -25,53 +25,64 @@ public class HtmlGenerator extends AbstractGenerator {
         writer.write("<html>\n");
         writer.write("<head>\n");
         writer.write("<title>Benchmark Results</title>\n");
+        writer.write("<link rel=\"stylesheet\" href=\"https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css\" integrity=\"sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T\" crossorigin=\"anonymous\">");
         writer.write("<style>\n");
-        writer.write("html, table { margin: 0; padding: 0 }\n");
-        writer.write("body { padding: 20px; font-family: sans-serif; font-size: 11pt; color: #211F2D; }\n");
-        writer.write("h1 { font-size: 16pt; }\n");
-        writer.write("canvas { margin-top: 30px; margin-bottom: 30px; }\n");
-        writer.write("table { border-collapse: collapse; margin-top: 30px; margin-bottom: 30px; }\n");
-        writer.write("td { padding: 5px 10px 5px 10px; margin: 0; white-space: nowrap; }\n");
-        writer.write("thead td { background-color: #6ea5ce; color: white; }\n");
-        writer.write("tbody tr:nth-child(even) { background-color: #f0f0f0; }\n");
-        writer.write("tfoot { border-top: 3px solid #8B899A; }\n");
-        writer.write(".diff { font-size: 9pt; color: #d0d0d0; }\n");
+        writer.write(".diff { font-size: 9pt; color: #c0c0c0; }\n");
         writer.write(".numeric { text-align: right; }\n");
         writer.write(".summary { vertical-align: top; }\n");
         writer.write("</style>\n");
         writer.write("<script src='https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.7.2/Chart.bundle.min.js'></script>\n");
         writer.write("</head>\n");
         writer.write("<body>\n");
+        writer.write("<div class='container mt-5 mb-5'>\n");
         writer.write("<h1>Benchmark results</h1>\n");
-        writer.write("<canvas id='samples' width='900' height='400'></canvas>");
-        writer.write("<table>\n");
-        writer.write("<thead>\n");
-        writer.write("<tr><td>Scenario</td>");
 
+        writer.write("<div class='row mt-5'>\n");
+        writer.write("<div class='col ml-auto mr-auto'>\n");
+        writer.write("<canvas id='samples' width='900' height='400'></canvas>");
+        writer.write("</div>\n");
+        writer.write("</div>\n");
+
+        writer.write("<div class='row mt-5'>\n");
+        writer.write("<div class='col'>\n");
+        writer.write("<table class='table table-sm table-hover'>\n");
+
+        writer.write("<thead>\n");
+        writer.write("<tr><th>Scenario</th>");
         List<? extends BuildScenarioResult> allScenarios = benchmarkResult.getScenarios();
         for (BuildScenarioResult scenario : allScenarios) {
-            writer.write("<td>");
+            writer.write("<th colspan='" + scenario.getSamples().size() + "'>");
             writer.write(scenario.getScenarioDefinition().getName());
-            writer.write("</td>");
+            writer.write("</th>");
         }
         writer.write("</tr>\n");
-        writer.write("<tr><td>Version</td>");
+        writer.write("<tr><th>Version</th>");
         for (BuildScenarioResult scenario : allScenarios) {
-            writer.write("<td>");
+            writer.write("<th colspan='" + scenario.getSamples().size() + "'>");
             writer.write(scenario.getScenarioDefinition().getBuildToolDisplayName());
-            writer.write("</td>");
+            writer.write("</th>");
         }
         writer.write("</tr>\n");
-        writer.write("<tr><td>Tasks</td>");
+        writer.write("<tr><th>Tasks</th>");
         for (BuildScenarioResult scenario : allScenarios) {
-            writer.write("<td>");
+            writer.write("<th colspan='" + scenario.getSamples().size() + "'>");
             writer.write(scenario.getScenarioDefinition().getTasksDisplayName());
-            writer.write("</td>");
+            writer.write("</th>");
+        }
+        writer.write("</tr>\n");
+        writer.write("<tr><th>Sample</th>");
+        for (BuildScenarioResult scenario : allScenarios) {
+            for (String sample : scenario.getSamples()) {
+                writer.write("<th>");
+                writer.write(sample);
+                writer.write("</th>");
+            }
         }
         writer.write("</tr>\n");
         writer.write("</thead>\n");
 
         writer.write("<tbody>\n");
+
         int maxRows = allScenarios.stream().mapToInt(v -> v.getResults().size()).max().orElse(0);
         for (int row = 0; row < maxRows; row++) {
             writer.write("<tr>");
@@ -92,26 +103,30 @@ public class HtmlGenerator extends AbstractGenerator {
                     continue;
                 }
                 BuildInvocationResult buildResult = results.get(row);
-                writer.write("<td class='numeric'>");
-                writer.write(String.valueOf(buildResult.getExecutionTime().getDuration().toMillis()));
-                writer.write("</td>");
+                for (BuildInvocationResult.Sample sample : buildResult.getSamples()) {
+                    writer.write("<td class='numeric'>");
+                    writer.write(String.valueOf(sample.getDuration().toMillis()));
+                    writer.write("</td>");
+                }
             }
             writer.write("</tr>\n");
         }
+
+        statistic(writer, "mean", allScenarios, s -> s.getMean(), true);
+        statistic(writer, "min", allScenarios, s -> s.getMin(), true);
+        statistic(writer, "25th percentile", allScenarios, s -> s.getPercentile(25), true);
+        statistic(writer, "median", allScenarios, s -> s.getMedian(), true);
+        statistic(writer, "75th percentile", allScenarios, s -> s.getPercentile(75), true);
+        statistic(writer, "max", allScenarios, s -> s.getMax(), true);
+        statistic(writer, "stddev", allScenarios, s -> s.getStandardDeviation(), false);
+        statistic(writer, "p-value (Mann Whitney U test)", allScenarios, s -> s.getPValue(), false);
+
         writer.write("</tbody>\n");
 
-        writer.write("<tfoot>\n");
-        statistic(writer, "mean", allScenarios, v -> v.getStatistics().get(0).getMean(), true);
-        statistic(writer, "min", allScenarios, v -> v.getStatistics().get(0).getMin(), true);
-        statistic(writer, "25th percentile", allScenarios, v -> v.getStatistics().get(0).getPercentile(25), true);
-        statistic(writer, "median", allScenarios, v -> v.getStatistics().get(0).getPercentile(50), true);
-        statistic(writer, "75th percentile", allScenarios, v -> v.getStatistics().get(0).getPercentile(75), true);
-        statistic(writer, "max", allScenarios, v -> v.getStatistics().get(0).getMax(), true);
-        statistic(writer, "stddev", allScenarios, v -> v.getStatistics().get(0).getStandardDeviation(), false);
-        statistic(writer, "p-value (Mann Whitney U test)", allScenarios, v -> v.getBaseline().isPresent() ? v.getPValue() : 0d, false);
-        writer.write("</tfoot>\n");
-
         writer.write("</table>\n");
+        writer.write("</div>\n");
+        writer.write("</div>\n");
+        writer.write("</div>\n");
 
         writer.write("<script>\n");
         writer.write("var ctx = document.getElementById('samples').getContext('2d');\n");
@@ -158,24 +173,27 @@ public class HtmlGenerator extends AbstractGenerator {
         writer.write("</html>\n");
     }
 
-    private void statistic(BufferedWriter writer, String name, List<? extends BuildScenarioResult> scenarios, Function<BuildScenarioResult, Double> value, boolean time) throws IOException {
-        writer.write("<tr><td class='summary'>");
+    private void statistic(BufferedWriter writer, String name, List<? extends BuildScenarioResult> scenarios, Function<BuildScenarioResult.Statistics, Double> value, boolean time) throws IOException {
+        writer.write("<tr><td class='summary font-weight-bold'>");
         writer.write(name);
         writer.write("</td>");
         for (BuildScenarioResult scenario : scenarios) {
-            writer.write("<td class='numeric summary'>");
-            double stat = value.apply(scenario);
-            writer.write(numberFormat.format(stat));
-            if (time && scenario.getBaseline().isPresent()) {
-                writer.write("<br><span class='diff'>(");
-                double baseLineStat = value.apply(scenario.getBaseline().get());
-                double diff = stat - baseLineStat;
-                writer.write(diffFormat.format(diff));
-                writer.write(" ");
-                writer.write(numberFormat.format((diff) / baseLineStat * 100));
-                writer.write("%)</span>");
+            for (int i = 0; i < scenario.getStatistics().size(); i++) {
+                BuildScenarioResult.Statistics statistics = scenario.getStatistics().get(i);
+                writer.write("<td class='numeric summary'>");
+                double stat = value.apply(statistics);
+                writer.write(numberFormat.format(stat));
+                if (time && scenario.getBaseline().isPresent()) {
+                    writer.write("<br><span class='diff'>(");
+                    double baseLineStat = value.apply(scenario.getBaseline().get().getStatistics().get(i));
+                    double diff = stat - baseLineStat;
+                    writer.write(diffFormat.format(diff));
+                    writer.write(" ");
+                    writer.write(numberFormat.format((diff) / baseLineStat * 100));
+                    writer.write("%)</span>");
+                }
+                writer.write("</td>");
             }
-            writer.write("</td>");
         }
         writer.write("</tr>");
         writer.newLine();

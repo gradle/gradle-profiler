@@ -34,8 +34,7 @@ public class BenchmarkResultCollector {
         if (allBuilds.isEmpty()) {
             return null;
         }
-        for (int i = 0; i < allBuilds.size(); i++) {
-            BuildScenario candidate = allBuilds.get(i);
+        for (BuildScenario candidate : allBuilds) {
             if (candidate.getScenarioDefinition().getName().equals(scenario.getName())) {
                 return candidate;
             }
@@ -59,7 +58,7 @@ public class BenchmarkResultCollector {
         private final ScenarioDefinition scenario;
         private final BuildScenarioResult baseline;
         private final List<BuildInvocationResult> results = new ArrayList<>();
-        private List<DescriptiveStatistics> statistics;
+        private List<StatisticsImpl> statistics;
         private List<String> samples;
 
         BuildScenario(ScenarioDefinition scenario, BuildScenarioResult baseline) {
@@ -108,40 +107,88 @@ public class BenchmarkResultCollector {
         }
 
         @Override
-        public List<DescriptiveStatistics> getStatistics() {
+        public List<? extends Statistics> getStatistics() {
             if (statistics == null) {
-                ImmutableList.Builder<DescriptiveStatistics> builder = ImmutableList.builderWithExpectedSize(samples.size());
-                for (String sample : samples) {
-                    builder.add(new DescriptiveStatistics());
+                ImmutableList.Builder<StatisticsImpl> builder = ImmutableList.builderWithExpectedSize(samples.size());
+                for (int i = 0; i < samples.size(); i++) {
+                    double pvalue = getPValue(i);
+                    builder.add(new StatisticsImpl(new DescriptiveStatistics(), pvalue));
                 }
                 statistics = builder.build();
                 for (BuildInvocationResult result : getMeasuredResults()) {
                     for (int i = 0; i < result.getSamples().size(); i++) {
                         BuildInvocationResult.Sample sample = result.getSamples().get(i);
-                        statistics.get(i).addValue(sample.getDuration().toMillis());
+                        statistics.get(i).statistics.addValue(sample.getDuration().toMillis());
                     }
                 }
             }
             return statistics;
         }
 
-        @Override
-        public double getPValue() {
-            double[] a = toArray(getBaseline().get().getMeasuredResults());
-            double[] b = toArray(getMeasuredResults());
+        private double getPValue(int sample) {
+            if (!getBaseline().isPresent()) {
+                return 0;
+            }
+            double[] a = toArray(getBaseline().get().getMeasuredResults(), sample);
+            double[] b = toArray(getMeasuredResults(), sample);
             if (a.length == 0 || b.length == 0) {
                 return 1;
             }
             return new MannWhitneyUTest().mannWhitneyUTest(a, b);
         }
 
-        private double[] toArray(List<? extends BuildInvocationResult> results) {
+        private double[] toArray(List<? extends BuildInvocationResult> results, int sample) {
             double[] values = new double[results.size()];
             for (int i = 0; i < results.size(); i++) {
                 BuildInvocationResult buildInvocationResult = results.get(i);
-                values[i] = buildInvocationResult.getExecutionTime().getDuration().toMillis();
+                values[i] = buildInvocationResult.getSamples().get(sample).getDuration().toMillis();
             }
             return values;
+        }
+    }
+
+    private static class StatisticsImpl implements BuildScenarioResult.Statistics {
+        private final DescriptiveStatistics statistics;
+        private final double pvalue;
+
+        StatisticsImpl(DescriptiveStatistics statistics, double pvalue) {
+            this.statistics = statistics;
+            this.pvalue = pvalue;
+        }
+
+        @Override
+        public double getMin() {
+            return statistics.getMin();
+        }
+
+        @Override
+        public double getMax() {
+            return statistics.getMax();
+        }
+
+        @Override
+        public double getMean() {
+            return statistics.getMean();
+        }
+
+        @Override
+        public double getMedian() {
+            return statistics.getPercentile(50);
+        }
+
+        @Override
+        public double getPercentile(int p) {
+            return statistics.getPercentile(p);
+        }
+
+        @Override
+        public double getStandardDeviation() {
+            return statistics.getStandardDeviation();
+        }
+
+        @Override
+        public double getPValue() {
+            return pvalue;
         }
     }
 
