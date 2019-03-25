@@ -33,7 +33,22 @@ public interface BuildScenarioResult {
     /**
      * Returns some statistics of each sample.
      */
-    List<DescriptiveStatistics> getStatistics();
+    List<? extends Statistics> getStatistics();
 
-    double getPValue();
+    interface Statistics {
+        double getMin();
+
+        double getMax();
+
+        double getMean();
+
+        double getMedian();
+
+        double getPercentile(int p);
+
+        double getStandardDeviation();
+
+        // Relative to base-line
+        double getPValue();
+    }
 }

@@ -160,6 +160,6 @@ class GradleInvocationIntegrationTest extends AbstractProfilerIntegrationTest {
         lines.get(0) == "scenario,default"
         lines.get(1) == "version,${minimalSupportedGradleVersion}"
         lines.get(2) == "tasks,assemble"
-        lines.get(4) == "value,execution"
+        lines.get(3) == "value,execution"
     }
 }

@@ -1,6 +1,5 @@
 package org.gradle.profiler.report;
 
-import org.apache.commons.math3.stat.descriptive.DescriptiveStatistics;
 import org.gradle.profiler.BuildInvocationResult;
 
 import java.io.BufferedWriter;
@@ -84,19 +83,19 @@ public class CsvGenerator extends AbstractGenerator {
             writer.newLine();
         }
 
-        List<DescriptiveStatistics> statistics = allScenarios.stream().flatMap(s -> s.getStatistics().stream()).collect(Collectors.toList());
-        statistic(writer, "mean", statistics, DescriptiveStatistics::getMean);
-        statistic(writer, "min", statistics, DescriptiveStatistics::getMin);
+        List<BuildScenarioResult.Statistics> statistics = allScenarios.stream().flatMap(s -> s.getStatistics().stream()).collect(Collectors.toList());
+        statistic(writer, "mean", statistics, BuildScenarioResult.Statistics::getMean);
+        statistic(writer, "min", statistics, BuildScenarioResult.Statistics::getMin);
         statistic(writer, "25th percentile", statistics, v -> v.getPercentile(25));
-        statistic(writer, "median", statistics, v -> v.getPercentile(50));
+        statistic(writer, "median", statistics, v -> v.getMedian());
         statistic(writer, "75th percentile", statistics, v -> v.getPercentile(75));
-        statistic(writer, "max", statistics, DescriptiveStatistics::getMax);
-        statistic(writer, "stddev", statistics, DescriptiveStatistics::getStandardDeviation);
+        statistic(writer, "max", statistics, BuildScenarioResult.Statistics::getMax);
+        statistic(writer, "stddev", statistics, BuildScenarioResult.Statistics::getStandardDeviation);
     }
 
-    private void statistic(BufferedWriter writer, String name, List<DescriptiveStatistics> statistics, Function<DescriptiveStatistics, Double> value) throws IOException {
+    private void statistic(BufferedWriter writer, String name, List<BuildScenarioResult.Statistics> statistics, Function<BuildScenarioResult.Statistics, Double> value) throws IOException {
         writer.write(name);
-        for (DescriptiveStatistics statistic : statistics) {
+        for (BuildScenarioResult.Statistics statistic : statistics) {
             writer.write(",");
             writer.write(String.valueOf(value.apply(statistic)));
         }
