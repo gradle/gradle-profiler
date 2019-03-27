@@ -11,7 +11,7 @@ import static org.gradle.profiler.Phase.WARM_UP;
 
 public class BuckScenarioInvoker extends ScenarioInvoker<BuckScenarioDefinition> {
     @Override
-    void run(BuckScenarioDefinition scenario, InvocationSettings settings, Consumer<BuildInvocationResult> resultConsumer) {
+    void doRun(BuckScenarioDefinition scenario, InvocationSettings settings, Consumer<BuildInvocationResult> resultConsumer) {
         String buckwExe = settings.getProjectDir() + "/buckw";
         List<String> targets = new ArrayList<>(scenario.getTargets());
         if (scenario.getType() != null) {

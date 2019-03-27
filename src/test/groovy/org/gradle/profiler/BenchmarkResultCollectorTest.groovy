@@ -4,6 +4,8 @@ import org.gradle.profiler.report.AbstractGenerator
 import org.gradle.profiler.report.BenchmarkResult
 import spock.lang.Specification
 
+import java.time.Duration
+
 class BenchmarkResultCollectorTest extends Specification {
     def generator = Mock(AbstractGenerator)
     def collector = new BenchmarkResultCollector(generator)
@@ -15,7 +17,7 @@ class BenchmarkResultCollectorTest extends Specification {
         BenchmarkResult result
 
         when:
-        def consumer = collector.version(scenario)
+        def consumer = collector.scenario(scenario, ["execution"])
         consumer.accept(result1)
         consumer.accept(result2)
         collector.write()
@@ -41,10 +43,10 @@ class BenchmarkResultCollectorTest extends Specification {
         BenchmarkResult result
 
         when:
-        collector.version(scenario1)
-        collector.version(scenario2)
-        collector.version(scenario3)
-        collector.version(scenario4)
+        collector.scenario(scenario1, ["execution"])
+        collector.scenario(scenario2, ["execution"])
+        collector.scenario(scenario3, ["execution"])
+        collector.scenario(scenario4, ["execution"])
         collector.write()
 
         then:
@@ -67,9 +69,9 @@ class BenchmarkResultCollectorTest extends Specification {
         BenchmarkResult result
 
         when:
-        collector.version(scenario1)
-        collector.version(scenario2)
-        collector.version(scenario3)
+        collector.scenario(scenario1, ["execution"])
+        collector.scenario(scenario2, ["execution"])
+        collector.scenario(scenario3, ["execution"])
         collector.write()
 
         then:
@@ -85,7 +87,9 @@ class BenchmarkResultCollectorTest extends Specification {
     }
 
     def result() {
-        return Stub(BuildInvocationResult)
+        def result = Stub(BuildInvocationResult)
+        _ * result.samples >> [new BuildInvocationResult.Sample("execution", Duration.ofMillis(12))]
+        return result
     }
 
     def scenario(String name = "one", String version = "4.6") {

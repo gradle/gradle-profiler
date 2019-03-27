@@ -184,13 +184,16 @@ public class HtmlGenerator extends AbstractGenerator {
                 double stat = value.apply(statistics);
                 writer.write(numberFormat.format(stat));
                 if (time && scenario.getBaseline().isPresent()) {
-                    writer.write("<br><span class='diff'>(");
-                    double baseLineStat = value.apply(scenario.getBaseline().get().getStatistics().get(i));
-                    double diff = stat - baseLineStat;
-                    writer.write(diffFormat.format(diff));
-                    writer.write(" ");
-                    writer.write(numberFormat.format((diff) / baseLineStat * 100));
-                    writer.write("%)</span>");
+                    List<? extends BuildScenarioResult.Statistics> baselineStats = scenario.getBaseline().get().getStatistics();
+                    if (!baselineStats.isEmpty()) {
+                        writer.write("<br><span class='diff'>(");
+                        double baseLineStat = value.apply(baselineStats.get(i));
+                        double diff = stat - baseLineStat;
+                        writer.write(diffFormat.format(diff));
+                        writer.write(" ");
+                        writer.write(numberFormat.format((diff) / baseLineStat * 100));
+                        writer.write("%)</span>");
+                    }
                 }
                 writer.write("</td>");
             }

@@ -3,6 +3,7 @@ package org.gradle.profiler;
 import java.io.File;
 import java.io.IOException;
 import java.time.Duration;
+import java.util.Collections;
 import java.util.List;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
@@ -13,7 +14,21 @@ public abstract class ScenarioInvoker<T extends ScenarioDefinition> {
     /**
      * Runs a scenario and collects the results.
      */
-    abstract void run(T scenario, InvocationSettings settings, Consumer<BuildInvocationResult> resultConsumer) throws IOException, InterruptedException;
+    public final void run(ScenarioDefinition scenario, InvocationSettings settings, Consumer<BuildInvocationResult> resultConsumer) throws IOException, InterruptedException {
+        doRun((T) scenario, settings, resultConsumer);
+    }
+
+    /**
+     * Runs a scenario and collects the results.
+     */
+    abstract void doRun(T scenario, InvocationSettings settings, Consumer<BuildInvocationResult> resultConsumer) throws IOException, InterruptedException;
+
+    /**
+     * What samples will this invoker generate for the given settings?
+     */
+    public List<String> samplesFor(InvocationSettings settings) {
+        return Collections.singletonList("execution");
+    }
 
     /**
      * Runs a single measured build and collects the result.

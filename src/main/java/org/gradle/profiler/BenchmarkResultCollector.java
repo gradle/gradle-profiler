@@ -20,12 +20,8 @@ public class BenchmarkResultCollector {
         this.generators = Arrays.asList(generators);
     }
 
-    public Consumer<BuildInvocationResult> version(ScenarioDefinition scenario) {
-        return getResultsForScenario(scenario);
-    }
-
-    private BuildScenario getResultsForScenario(ScenarioDefinition scenario) {
-        BuildScenario buildScenario = new BuildScenario(scenario, baseLineFor(scenario));
+    public Consumer<BuildInvocationResult> scenario(ScenarioDefinition scenario, List<String> samples) {
+        BuildScenario buildScenario = new BuildScenario(scenario, baseLineFor(scenario), samples);
         allBuilds.add(buildScenario);
         return buildScenario;
     }
@@ -58,21 +54,20 @@ public class BenchmarkResultCollector {
         private final ScenarioDefinition scenario;
         private final BuildScenarioResult baseline;
         private final List<BuildInvocationResult> results = new ArrayList<>();
+        private final List<String> samples;
         private List<StatisticsImpl> statistics;
-        private List<String> samples;
 
-        BuildScenario(ScenarioDefinition scenario, BuildScenarioResult baseline) {
+        BuildScenario(ScenarioDefinition scenario, BuildScenarioResult baseline, List<String> sampleNames) {
             this.scenario = scenario;
             this.baseline = baseline;
+            this.samples = sampleNames;
         }
 
         @Override
         public void accept(BuildInvocationResult buildInvocationResult) {
             List<String> sampleNames = buildInvocationResult.getSamples().stream().map(BuildInvocationResult.Sample::getName).collect(Collectors.toList());
-            if (results.isEmpty()) {
-                samples = sampleNames;
-            } else if (!samples.equals(sampleNames)) {
-                throw new IllegalArgumentException("Results do not contain the same samples.");
+            if (!samples.equals(sampleNames)) {
+                throw new IllegalArgumentException("Result does not contain the expected samples.");
             }
             results.add(buildInvocationResult);
             statistics = null;

@@ -9,7 +9,7 @@ import static org.gradle.profiler.Phase.WARM_UP;
 
 public class BazelScenarioInvoker extends ScenarioInvoker<BazelScenarioDefinition> {
     @Override
-    void run(BazelScenarioDefinition scenario, InvocationSettings settings, Consumer<BuildInvocationResult> resultConsumer) {
+    void doRun(BazelScenarioDefinition scenario, InvocationSettings settings, Consumer<BuildInvocationResult> resultConsumer) {
         String bazelHome = System.getenv("BAZEL_HOME");
         String bazelExe = bazelHome == null ? "bazel" : bazelHome + "/bin/bazel";
 
