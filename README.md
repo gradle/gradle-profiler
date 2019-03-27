@@ -41,6 +41,8 @@ from your Gradle wrapper properties file, if present, to determine which Gradle 
 You can use the `--gradle-version` option to specify a Gradle version or installation to use to benchmark the build. You can specify multiple versions
 and each of these is used to benchmark the build, allowing you to compare the behaviour of several different Gradle versions.
 
+You can also use the `--measure-config-time` option to measure some additional details about configuration time.
+
 ## Profiling a build
 
 Profiling allows you to get deeper insight into the performance of your build.
@@ -137,20 +139,23 @@ Add the `--profile chrome-trace` option and open the result in Google Chrome.
 ## Command line options
 
 - `--project-dir`: Directory containing the build to run (required).
-- `--gradle-user-home`: The Gradle user home. Defaults to `<project-dir>/gradle-user-home` to isolated performance tests from your other builds.
 - `--benchmark`: Benchmark the build. Runs the builds more times and writes the results to a CSV file.
 - `--profile <profiler>`: Profile the build using the specified profiler. See above for details on each profiler.
-- `--gradle-version <version>`: Specifies a Gradle version or installation to use to run the builds, overriding the default for the build. You can specify multiple versions.
 - `--output-dir <dir>`: Directory to write results to.
-- `--no-daemon`: Uses the gradle command-line client with the `--no-daemon` option to run the builds. The default is to use the Gradle tooling API and Gradle daemon.
-- `--cold-daemon`: Use a cold daemon (one that has just started) rather than a warm daemon (one that has already run some builds). The default is to use a warm daemon.
-- `--cli`: Uses the gradle command-line client to run the builds. The default is to use the Gradle tooling API.
-- `-D<key>=<value>`: Defines a system property when running the build, overriding the default for the build.
 - `--warmups`: Specifies the number of warm-up builds to run for each scenario. Defaults to 2 for profiling, 6 for benchmarking.
 - `--iterations`: Specifies the number of builds to run for each scenario. Defaults to 1 for profiling, 10 for benchmarking.
 - `--bazel`: Benchmark scenarios using Bazel instead of Gradle. By default, only Gradle scenarios are run. You cannot `--profile` a Bazel build using this tool.
 - `--buck`: Benchmark scenarios using Buck instead of Gradle. By default, only Gradle scenarios are run. You cannot `--profile` a Buck build using this tool.
 - `--maven`: Benchmark scenarios using Maven instead of Gradle. By default, only Gradle scenarios are run. You cannot `--profile` a Maven build using this tool.
+
+The following command line options only apply when measuring Gradle builds:
+
+- `--gradle-user-home`: The Gradle user home. Defaults to `<project-dir>/gradle-user-home` to isolated performance tests from your other builds.
+- `--gradle-version <version>`: Specifies a Gradle version or installation to use to run the builds, overriding the default for the build. You can specify multiple versions.
+- `--no-daemon`: Uses the gradle command-line client with the `--no-daemon` option to run the builds. The default is to use the Gradle tooling API and Gradle daemon.
+- `--cold-daemon`: Use a cold daemon (one that has just started) rather than a warm daemon (one that has already run some builds). The default is to use a warm daemon.
+- `--cli`: Uses the gradle command-line client to run the builds. The default is to use the Gradle tooling API.
+- `-D<key>=<value>`: Defines a system property when running the build, overriding the default for the build.
 
 ## Advanced profiling scenarios
 
