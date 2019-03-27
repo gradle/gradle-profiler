@@ -62,17 +62,21 @@ public class Main {
             for (ScenarioDefinition scenario : scenarios) {
                 scenarioCount++;
                 Logging.startOperation("Running scenario " + scenario.getDisplayName() + " (scenario " + scenarioCount + "/" + totalScenarios + ")");
-                Consumer<BuildInvocationResult> resultConsumer = benchmarkResults.version(scenario);
+                ScenarioInvoker<? extends ScenarioDefinition> invoker;
+                if (scenario instanceof BazelScenarioDefinition) {
+                    invoker = bazelScenarioInvoker;
+                } else if (scenario instanceof BuckScenarioDefinition) {
+                    invoker = buckScenarioInvoker;
+                } else if (scenario instanceof MavenScenarioDefinition) {
+                    invoker = mavenScenarioInvoker;
+                } else if (scenario instanceof GradleScenarioDefinition) {
+                    invoker = gradleScenarioInvoker;
+                } else {
+                    throw new IllegalArgumentException("Don't know how to run scenario.");
+                }
+                Consumer<BuildInvocationResult> resultConsumer = benchmarkResults.scenario(scenario, invoker.samplesFor(settings));
                 try {
-                    if (scenario instanceof BazelScenarioDefinition) {
-                        bazelScenarioInvoker.run((BazelScenarioDefinition) scenario, settings, resultConsumer);
-                    } else if (scenario instanceof BuckScenarioDefinition) {
-                        buckScenarioInvoker.run((BuckScenarioDefinition) scenario, settings, resultConsumer);
-                    } else if (scenario instanceof MavenScenarioDefinition) {
-                        mavenScenarioInvoker.run((MavenScenarioDefinition) scenario, settings, resultConsumer);
-                    } else {
-                        gradleScenarioInvoker.run((GradleScenarioDefinition) scenario, settings, resultConsumer);
-                    }
+                    invoker.run(scenario, settings, resultConsumer);
                 } catch (Throwable t) {
                     t.printStackTrace();
                     failures.add(t);

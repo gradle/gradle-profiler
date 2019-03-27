@@ -1,5 +1,6 @@
 package org.gradle.profiler;
 
+import com.google.common.collect.ImmutableList;
 import org.apache.commons.io.FileUtils;
 import org.gradle.profiler.buildops.BuildOperationInstrumentation;
 import org.gradle.profiler.instrument.PidInstrumentation;
@@ -28,7 +29,16 @@ public class GradleScenarioInvoker extends ScenarioInvoker<GradleScenarioDefinit
     }
 
     @Override
-    public void run(GradleScenarioDefinition scenario, InvocationSettings settings, Consumer<BuildInvocationResult> resultConsumer) throws IOException, InterruptedException {
+    public List<String> samplesFor(InvocationSettings settings) {
+        if (settings.isMeasureConfigTime()) {
+            return ImmutableList.of("execution", "task start");
+        } else {
+            return ImmutableList.of("execution");
+        }
+    }
+
+    @Override
+    public void doRun(GradleScenarioDefinition scenario, InvocationSettings settings, Consumer<BuildInvocationResult> resultConsumer) throws IOException, InterruptedException {
         if (settings.isProfile() && scenario.getWarmUpCount() == 0) {
             throw new IllegalStateException("Using the --profile option requires at least one warm-up");
         }

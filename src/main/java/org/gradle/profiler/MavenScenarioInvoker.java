@@ -9,7 +9,7 @@ import static org.gradle.profiler.Phase.WARM_UP;
 
 public class MavenScenarioInvoker extends ScenarioInvoker<MavenScenarioDefinition> {
     @Override
-    void run(MavenScenarioDefinition scenario, InvocationSettings settings, Consumer<BuildInvocationResult> resultConsumer) {
+    void doRun(MavenScenarioDefinition scenario, InvocationSettings settings, Consumer<BuildInvocationResult> resultConsumer) {
         String mavenHome = System.getenv("MAVEN_HOME");
         String mvn = mavenHome == null ? "mvn" : mavenHome + "/bin/mvn";
 
