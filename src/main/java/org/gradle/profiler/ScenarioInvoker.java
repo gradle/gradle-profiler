@@ -1,5 +1,8 @@
 package org.gradle.profiler;
 
+import org.gradle.profiler.result.BuildInvocationResult;
+import org.gradle.profiler.result.Sample;
+
 import java.io.File;
 import java.io.IOException;
 import java.time.Duration;
@@ -10,35 +13,36 @@ import java.util.function.Supplier;
 
 import static org.gradle.profiler.Logging.startOperation;
 
-public abstract class ScenarioInvoker<T extends ScenarioDefinition> {
+public abstract class ScenarioInvoker<T extends ScenarioDefinition, R extends BuildInvocationResult> {
     /**
      * Runs a scenario and collects the results.
      */
-    public final void run(ScenarioDefinition scenario, InvocationSettings settings, Consumer<BuildInvocationResult> resultConsumer) throws IOException, InterruptedException {
+    public final void run(ScenarioDefinition scenario, InvocationSettings settings, BenchmarkResultCollector collector) throws IOException, InterruptedException {
+        Consumer<R> resultConsumer = collector.scenario(scenario, samplesFor(settings));
         doRun((T) scenario, settings, resultConsumer);
     }
 
     /**
      * Runs a scenario and collects the results.
      */
-    abstract void doRun(T scenario, InvocationSettings settings, Consumer<BuildInvocationResult> resultConsumer) throws IOException, InterruptedException;
+    abstract void doRun(T scenario, InvocationSettings settings, Consumer<R> resultConsumer) throws IOException, InterruptedException;
 
     /**
-     * What samples will this invoker generate for the given settings?
+     * Which samples will this invoker generate for the given settings?
      */
-    public List<String> samplesFor(InvocationSettings settings) {
-        return Collections.singletonList("execution");
+    public List<Sample<? super R>> samplesFor(InvocationSettings settings) {
+        return Collections.singletonList(BuildInvocationResult.EXECUTION_TIME);
     }
 
     /**
      * Runs a single measured build and collects the result.
      */
-    protected <R extends BuildInvocationResult> R runMeasured(String displayName, BuildMutator mutator, Supplier<? extends R> action, Consumer<? super BuildInvocationResult> consumer) {
+    protected <R extends BuildInvocationResult> R runMeasured(String displayName, BuildMutator mutator, Supplier<? extends R> action, Consumer<? super R> consumer) {
         startOperation("Running " + displayName);
         mutator.beforeBuild();
         R result = tryRun(() -> {
             R result1 = action.get();
-            printExecutionTime(result1.getExecutionTime().getDuration());
+            printExecutionTime(result1.getExecutionTime());
             return result1;
         }, mutator::afterBuild);
         consumer.accept(result);

@@ -1,18 +1,29 @@
 package org.gradle.profiler;
 
-import com.google.common.collect.ImmutableList;
+import org.gradle.profiler.result.BuildInvocationResult;
+import org.gradle.profiler.result.Sample;
 
 import javax.annotation.Nullable;
 import java.time.Duration;
-import java.util.List;
 
 public class GradleBuildInvocationResult extends BuildInvocationResult {
-    private final Sample timeToTaskExecution;
+    private final Duration timeToTaskExecution;
     private final String daemonPid;
+    public static final Sample<GradleBuildInvocationResult> TIME_TO_TASK_EXECUTION = new Sample<GradleBuildInvocationResult>() {
+        @Override
+        public String getName() {
+            return "task start";
+        }
+
+        @Override
+        public Duration extractFrom(GradleBuildInvocationResult result) {
+            return result.timeToTaskExecution;
+        }
+    };
 
     public GradleBuildInvocationResult(String displayName, Duration executionTime, @Nullable Duration timeToTaskExecution, String daemonPid) {
         super(displayName, executionTime);
-        this.timeToTaskExecution = timeToTaskExecution == null ? null : new Sample("task start", timeToTaskExecution);
+        this.timeToTaskExecution = timeToTaskExecution;
         this.daemonPid = daemonPid;
     }
 
@@ -20,11 +31,8 @@ public class GradleBuildInvocationResult extends BuildInvocationResult {
         return daemonPid;
     }
 
-    @Override
-    public List<Sample> getSamples() {
-        if (timeToTaskExecution == null) {
-            return super.getSamples();
-        }
-        return ImmutableList.of(getExecutionTime(), timeToTaskExecution);
+    @Nullable
+    public Duration getTimeToTaskExecution() {
+        return timeToTaskExecution;
     }
 }

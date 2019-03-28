@@ -6,11 +6,12 @@ import org.apache.commons.math3.stat.inference.MannWhitneyUTest;
 import org.gradle.profiler.report.AbstractGenerator;
 import org.gradle.profiler.report.BenchmarkResult;
 import org.gradle.profiler.report.BuildScenarioResult;
+import org.gradle.profiler.result.BuildInvocationResult;
+import org.gradle.profiler.result.Sample;
 
 import java.io.IOException;
 import java.util.*;
 import java.util.function.Consumer;
-import java.util.stream.Collectors;
 
 public class BenchmarkResultCollector {
     private final List<BuildScenario> allBuilds = new ArrayList<>();
@@ -20,8 +21,8 @@ public class BenchmarkResultCollector {
         this.generators = Arrays.asList(generators);
     }
 
-    public Consumer<BuildInvocationResult> scenario(ScenarioDefinition scenario, List<String> samples) {
-        BuildScenario buildScenario = new BuildScenario(scenario, baseLineFor(scenario), samples);
+    public <T extends BuildInvocationResult> Consumer<T> scenario(ScenarioDefinition scenario, List<Sample<? super T>> samples) {
+        BuildScenario<T> buildScenario = new BuildScenario<>(scenario, baseLineFor(scenario), samples);
         allBuilds.add(buildScenario);
         return buildScenario;
     }
@@ -50,25 +51,21 @@ public class BenchmarkResultCollector {
         }
     }
 
-    private static class BuildScenario implements BuildScenarioResult, Consumer<BuildInvocationResult> {
+    private static class BuildScenario<T extends BuildInvocationResult> implements BuildScenarioResult, Consumer<T> {
         private final ScenarioDefinition scenario;
         private final BuildScenarioResult baseline;
+        private final List<Sample<? super BuildInvocationResult>> samples;
         private final List<BuildInvocationResult> results = new ArrayList<>();
-        private final List<String> samples;
         private List<StatisticsImpl> statistics;
 
-        BuildScenario(ScenarioDefinition scenario, BuildScenarioResult baseline, List<String> sampleNames) {
+        BuildScenario(ScenarioDefinition scenario, BuildScenarioResult baseline, List<Sample<? super T>> samples) {
             this.scenario = scenario;
             this.baseline = baseline;
-            this.samples = sampleNames;
+            this.samples = new ArrayList(samples);
         }
 
         @Override
         public void accept(BuildInvocationResult buildInvocationResult) {
-            List<String> sampleNames = buildInvocationResult.getSamples().stream().map(BuildInvocationResult.Sample::getName).collect(Collectors.toList());
-            if (!samples.equals(sampleNames)) {
-                throw new IllegalArgumentException("Result does not contain the expected samples.");
-            }
             results.add(buildInvocationResult);
             statistics = null;
         }
@@ -79,7 +76,7 @@ public class BenchmarkResultCollector {
         }
 
         @Override
-        public List<String> getSamples() {
+        public List<Sample<? super BuildInvocationResult>> getSamples() {
             return samples;
         }
 
@@ -111,9 +108,9 @@ public class BenchmarkResultCollector {
                 }
                 statistics = builder.build();
                 for (BuildInvocationResult result : getMeasuredResults()) {
-                    for (int i = 0; i < result.getSamples().size(); i++) {
-                        BuildInvocationResult.Sample sample = result.getSamples().get(i);
-                        statistics.get(i).statistics.addValue(sample.getDuration().toMillis());
+                    for (int i = 0; i < getSamples().size(); i++) {
+                        Sample<? super BuildInvocationResult> sample = getSamples().get(i);
+                        statistics.get(i).statistics.addValue(sample.extractFrom(result).toMillis());
                     }
                 }
             }
@@ -136,7 +133,7 @@ public class BenchmarkResultCollector {
             double[] values = new double[results.size()];
             for (int i = 0; i < results.size(); i++) {
                 BuildInvocationResult buildInvocationResult = results.get(i);
-                values[i] = buildInvocationResult.getSamples().get(sample).getDuration().toMillis();
+                values[i] = getSamples().get(sample).extractFrom(buildInvocationResult).toMillis();
             }
             return values;
         }
