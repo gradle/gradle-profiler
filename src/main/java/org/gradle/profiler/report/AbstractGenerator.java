@@ -4,6 +4,7 @@ import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.util.function.Consumer;
 
 public abstract class AbstractGenerator {
     private final File outputFile;
@@ -19,4 +20,8 @@ public abstract class AbstractGenerator {
     }
 
     protected abstract void write(BenchmarkResult result, BufferedWriter writer) throws IOException;
+
+    public void summarizeResults(Consumer<String> consumer) {
+        consumer.accept(outputFile.getAbsolutePath());
+    }
 }

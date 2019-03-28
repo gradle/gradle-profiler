@@ -3,13 +3,11 @@ package org.gradle.profiler;
 import org.gradle.profiler.instrument.PidInstrumentation;
 import org.gradle.profiler.report.CsvGenerator;
 import org.gradle.profiler.report.HtmlGenerator;
-import org.gradle.profiler.result.BuildInvocationResult;
 
 import java.io.File;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.function.Consumer;
 
 public class Main {
     public static void main(String[] args) {
@@ -81,7 +79,9 @@ public class Main {
                     t.printStackTrace();
                     failures.add(t);
                 } finally {
-                    // write the results up to this point
+                    // Write the current results and generate the reports, so that if this process crashes the results (which may have taken quite some time to collect) are not lost.
+                    // This overwrites the existing reports, so may leave them in a corrupted state if this process crashes during the generation.
+                    // This is just intended to be a simple best effort solution
                     if (settings.isBenchmark()) {
                         benchmarkResults.write();
                     }
@@ -89,12 +89,15 @@ public class Main {
             }
 
             if (settings.isBenchmark()) {
+                // Write the final results and generate the reports
+                // This overwrites the existing reports, so may leave them in a corrupted state if this process crashes during the generation.
                 benchmarkResults.write();
             }
 
             System.out.println();
             System.out.println("* Results written to " + settings.getOutputDir().getAbsolutePath());
             printResultFileSummaries(settings.getOutputDir(), settings.getProfiler());
+            printReportSummary(settings, benchmarkResults);
 
             if (!failures.isEmpty()) {
                 throw new ScenarioFailedException(failures.get(0));
@@ -111,6 +114,12 @@ public class Main {
         }
     }
 
+    private void printReportSummary(InvocationSettings settings, BenchmarkResultCollector benchmarkResults) {
+        if (settings.isBenchmark()) {
+            benchmarkResults.summarizeResults(line -> System.out.println("  " + line));
+        }
+    }
+
     private void logScenarios(List<ScenarioDefinition> scenarios) {
         Logging.startOperation("Scenarios");
         for (ScenarioDefinition scenario : scenarios) {
@@ -124,10 +133,7 @@ public class Main {
             return;
         }
         for (File file : outputDir.listFiles()) {
-            List<String> summary = profiler.summarizeResultFile(file);
-            if (summary != null) {
-                summary.forEach(line -> System.out.println("  " + line));
-            }
+            profiler.summarizeResultFile(file, line -> System.out.println("  " + line));
         }
         for (File file : outputDir.listFiles()) {
             if (file.isDirectory()) {

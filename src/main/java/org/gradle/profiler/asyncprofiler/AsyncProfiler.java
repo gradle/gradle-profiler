@@ -7,9 +7,8 @@ import joptsimple.ValueConverter;
 import org.gradle.profiler.*;
 
 import java.io.File;
-import java.util.Collections;
-import java.util.List;
 import java.util.Locale;
+import java.util.function.Consumer;
 
 import static org.gradle.profiler.asyncprofiler.AsyncProfilerConfig.Counter;
 
@@ -117,11 +116,10 @@ public class AsyncProfiler extends InstrumentingProfiler {
     }
 
     @Override
-    public List<String> summarizeResultFile(File resultFile) {
+    public void summarizeResultFile(File resultFile, Consumer<String> consumer) {
         if (resultFile.getName().endsWith(".svg")) {
-            return Collections.singletonList(resultFile.getAbsolutePath());
+            consumer.accept(resultFile.getAbsolutePath());
         }
-        return null;
     }
 
     @Override

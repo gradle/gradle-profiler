@@ -51,6 +51,15 @@ public class BenchmarkResultCollector {
         }
     }
 
+    /**
+     * Summarize the results for the user.
+     */
+    public void summarizeResults(Consumer<String> consumer) {
+        for (AbstractGenerator generator : generators) {
+            generator.summarizeResults(consumer);
+        }
+    }
+
     private static class BuildScenario<T extends BuildInvocationResult> implements BuildScenarioResult, Consumer<T> {
         private final ScenarioDefinition scenario;
         private final BuildScenarioResult baseline;

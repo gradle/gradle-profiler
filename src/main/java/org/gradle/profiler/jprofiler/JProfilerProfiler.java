@@ -10,8 +10,7 @@ import org.gradle.profiler.Profiler;
 import org.gradle.profiler.ScenarioSettings;
 
 import java.io.File;
-import java.util.Collections;
-import java.util.List;
+import java.util.function.Consumer;
 
 public class JProfilerProfiler extends InstrumentingProfiler {
     private final JProfilerConfig jProfilerConfig;
@@ -38,11 +37,10 @@ public class JProfilerProfiler extends InstrumentingProfiler {
     }
 
     @Override
-    public List<String> summarizeResultFile(File resultFile) {
+    public void summarizeResultFile(File resultFile, Consumer<String> consumer) {
         if (resultFile.getName().endsWith(".jps")) {
-            return Collections.singletonList(resultFile.getAbsolutePath());
+            consumer.accept(resultFile.getAbsolutePath());
         }
-        return null;
     }
 
     @Override
