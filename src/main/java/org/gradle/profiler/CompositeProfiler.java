@@ -5,6 +5,7 @@ import joptsimple.OptionSet;
 import java.io.File;
 import java.io.IOException;
 import java.util.List;
+import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
 class CompositeProfiler extends Profiler {
@@ -20,14 +21,10 @@ class CompositeProfiler extends Profiler {
     }
 
     @Override
-    public List<String> summarizeResultFile(File resultFile) {
+    public void summarizeResultFile(File resultFile, Consumer<String> consumer) {
         for (Profiler delegate : delegates) {
-            List<String> summary = delegate.summarizeResultFile(resultFile);
-            if (summary != null && !summary.isEmpty()) {
-                return summary;
-            }
+            delegate.summarizeResultFile(resultFile, consumer);
         }
-        return null;
     }
 
     @Override

@@ -3,7 +3,10 @@ package org.gradle.profiler.jfr;
 import joptsimple.OptionParser;
 import joptsimple.OptionSet;
 import org.gradle.api.JavaVersion;
-import org.gradle.profiler.*;
+import org.gradle.profiler.InstrumentingProfiler;
+import org.gradle.profiler.JvmArgsCalculator;
+import org.gradle.profiler.Profiler;
+import org.gradle.profiler.ScenarioSettings;
 
 import java.io.File;
 import java.io.IOException;
@@ -11,8 +14,7 @@ import java.io.InputStream;
 import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.StandardCopyOption;
-import java.util.Collections;
-import java.util.List;
+import java.util.function.Consumer;
 
 public class JfrProfiler extends InstrumentingProfiler {
     private static final String PROFILE_JFR_SUFFIX = ".jfr";
@@ -50,14 +52,12 @@ public class JfrProfiler extends InstrumentingProfiler {
     }
 
     @Override
-    public List<String> summarizeResultFile(File resultFile) {
+    public void summarizeResultFile(File resultFile, Consumer<String> consumer) {
         if (resultFile.getName().endsWith(".jfr")) {
-            return Collections.singletonList("JFR recording: " + resultFile.getAbsolutePath());
+            consumer.accept("JFR recording: " + resultFile.getAbsolutePath());
+        } else if (resultFile.getName().endsWith(".jfr-flamegraphs")) {
+            consumer.accept("JFR Flame Graphs: " + resultFile.getAbsolutePath());
         }
-        if (resultFile.getName().endsWith(".jfr-flamegraphs")) {
-            return Collections.singletonList("JFR Flame Graphs: " + resultFile.getAbsolutePath());
-        }
-        return null;
     }
 
     @Override

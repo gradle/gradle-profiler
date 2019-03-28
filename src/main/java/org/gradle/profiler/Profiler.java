@@ -25,11 +25,8 @@ import org.gradle.profiler.jprofiler.JProfilerProfiler;
 import org.gradle.profiler.yourkit.YourKitProfiler;
 
 import java.io.File;
-import java.util.Collections;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
+import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
 public class Profiler {
@@ -91,8 +88,10 @@ public class Profiler {
     public void addOptions(OptionParser parser) {
     }
 
-    public List<String> summarizeResultFile(File resultFile) {
-        return null;
+    /**
+     * Describe the given file, if recognized and should be reported to the user.
+     */
+    public void summarizeResultFile(File resultFile, Consumer<String> consumer) {
     }
 
     public static Set<String> getAvailableProfilers() {

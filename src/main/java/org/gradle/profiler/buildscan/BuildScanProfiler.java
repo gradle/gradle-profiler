@@ -11,8 +11,6 @@ import org.gradle.util.GradleVersion;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.function.Consumer;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -52,16 +50,16 @@ public class BuildScanProfiler extends Profiler {
         private String build = "UNKNOWN";
         private String step = "UNKNOWN";
         private String tasks = "UNKNOWN";
-        private final List<String> results;
+        private final Consumer<String> results;
 
-        public LogParser(List<String> results) {
+        public LogParser(Consumer<String> results) {
             this.results = results;
         }
 
         @Override
         public void accept(String line) {
             if (nextLineIsBuildScanUrl) {
-                results.add(String.format("- Build scan for '%s' %s [%s]: %s", build, step, tasks, line));
+                results.accept(String.format("- Build scan for '%s' %s [%s]: %s", build, step, tasks, line));
                 nextLineIsBuildScanUrl = false;
             } else {
                 Matcher tasksMatcher = RUNNING_TASKS.matcher(line);
@@ -75,10 +73,7 @@ public class BuildScanProfiler extends Profiler {
                     Matcher scenarioMatcher = RUNNING_SCENARIO.matcher(line);
                     if (scenarioMatcher.matches()) {
                         String scenario = scenarioMatcher.group(1);
-                        if (!results.isEmpty()) {
-                            results.add("");
-                        }
-                        results.add(String.format("Scenario %s", scenario));
+                        results.accept(String.format("Scenario %s", scenario));
                     }
                 }
             }
@@ -86,17 +81,15 @@ public class BuildScanProfiler extends Profiler {
     }
 
     @Override
-    public List<String> summarizeResultFile(File resultFile) {
-        List<String> results = new ArrayList<>();
+    public void summarizeResultFile(File resultFile, Consumer<String> consumer) {
         if (resultFile.getName().equals("profile.log")) {
-            LogParser logParser = new LogParser(results);
+            LogParser logParser = new LogParser(consumer);
             try (Stream<String> logStream = Files.lines(resultFile.toPath())) {
                 logStream.forEach(logParser);
             } catch (IOException e) {
                 throw new RuntimeException(e);
             }
         }
-        return results;
     }
 
     @Override
