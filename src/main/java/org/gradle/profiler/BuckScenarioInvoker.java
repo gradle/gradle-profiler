@@ -1,5 +1,7 @@
 package org.gradle.profiler;
 
+import org.gradle.profiler.result.BuildInvocationResult;
+
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -9,7 +11,7 @@ import java.util.stream.Collectors;
 import static org.gradle.profiler.Phase.MEASURE;
 import static org.gradle.profiler.Phase.WARM_UP;
 
-public class BuckScenarioInvoker extends ScenarioInvoker<BuckScenarioDefinition> {
+public class BuckScenarioInvoker extends ScenarioInvoker<BuckScenarioDefinition, BuildInvocationResult> {
     @Override
     void doRun(BuckScenarioDefinition scenario, InvocationSettings settings, Consumer<BuildInvocationResult> resultConsumer) {
         String buckwExe = settings.getProjectDir() + "/buckw";

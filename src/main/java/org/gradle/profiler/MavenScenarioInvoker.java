@@ -1,5 +1,7 @@
 package org.gradle.profiler;
 
+import org.gradle.profiler.result.BuildInvocationResult;
+
 import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Consumer;
@@ -7,7 +9,7 @@ import java.util.function.Consumer;
 import static org.gradle.profiler.Phase.MEASURE;
 import static org.gradle.profiler.Phase.WARM_UP;
 
-public class MavenScenarioInvoker extends ScenarioInvoker<MavenScenarioDefinition> {
+public class MavenScenarioInvoker extends ScenarioInvoker<MavenScenarioDefinition, BuildInvocationResult> {
     @Override
     void doRun(MavenScenarioDefinition scenario, InvocationSettings settings, Consumer<BuildInvocationResult> resultConsumer) {
         String mavenHome = System.getenv("MAVEN_HOME");

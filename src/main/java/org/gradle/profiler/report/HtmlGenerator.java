@@ -1,6 +1,7 @@
 package org.gradle.profiler.report;
 
-import org.gradle.profiler.BuildInvocationResult;
+import org.gradle.profiler.result.BuildInvocationResult;
+import org.gradle.profiler.result.Sample;
 
 import java.io.BufferedWriter;
 import java.io.File;
@@ -72,9 +73,9 @@ public class HtmlGenerator extends AbstractGenerator {
         writer.write("</tr>\n");
         writer.write("<tr><th>Sample</th>");
         for (BuildScenarioResult scenario : allScenarios) {
-            for (String sample : scenario.getSamples()) {
+            for (Sample<?> sample : scenario.getSamples()) {
                 writer.write("<th>");
-                writer.write(sample);
+                writer.write(sample.getName());
                 writer.write("</th>");
             }
         }
@@ -86,8 +87,8 @@ public class HtmlGenerator extends AbstractGenerator {
         int maxRows = allScenarios.stream().mapToInt(v -> v.getResults().size()).max().orElse(0);
         for (int row = 0; row < maxRows; row++) {
             writer.write("<tr>");
-            for (BuildScenarioResult result : allScenarios) {
-                List<? extends BuildInvocationResult> results = result.getResults();
+            for (BuildScenarioResult scenario : allScenarios) {
+                List<? extends BuildInvocationResult> results = scenario.getResults();
                 if (row >= results.size()) {
                     continue;
                 }
@@ -97,15 +98,15 @@ public class HtmlGenerator extends AbstractGenerator {
                 writer.write("</td>");
                 break;
             }
-            for (BuildScenarioResult result : allScenarios) {
-                List<? extends BuildInvocationResult> results = result.getResults();
+            for (BuildScenarioResult scenario : allScenarios) {
+                List<? extends BuildInvocationResult> results = scenario.getResults();
                 if (row >= results.size()) {
                     continue;
                 }
                 BuildInvocationResult buildResult = results.get(row);
-                for (BuildInvocationResult.Sample sample : buildResult.getSamples()) {
+                for (Sample<? super BuildInvocationResult> sample : scenario.getSamples()) {
                     writer.write("<td class='numeric'>");
-                    writer.write(String.valueOf(sample.getDuration().toMillis()));
+                    writer.write(String.valueOf(sample.extractFrom(buildResult).toMillis()));
                     writer.write("</td>");
                 }
             }
@@ -157,7 +158,7 @@ public class HtmlGenerator extends AbstractGenerator {
             writer.write("',\n");
             writer.write("            data: [");
             for (BuildInvocationResult buildResult : scenario.getMeasuredResults()) {
-                writer.write(String.valueOf(buildResult.getExecutionTime().getDuration().toMillis()));
+                writer.write(String.valueOf(buildResult.getExecutionTime().toMillis()));
                 writer.write(",");
             }
             writer.write("]\n");

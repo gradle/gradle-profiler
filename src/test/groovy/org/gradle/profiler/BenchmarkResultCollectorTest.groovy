@@ -2,9 +2,9 @@ package org.gradle.profiler
 
 import org.gradle.profiler.report.AbstractGenerator
 import org.gradle.profiler.report.BenchmarkResult
+import org.gradle.profiler.result.BuildInvocationResult
+import org.gradle.profiler.result.Sample
 import spock.lang.Specification
-
-import java.time.Duration
 
 class BenchmarkResultCollectorTest extends Specification {
     def generator = Mock(AbstractGenerator)
@@ -17,7 +17,7 @@ class BenchmarkResultCollectorTest extends Specification {
         BenchmarkResult result
 
         when:
-        def consumer = collector.scenario(scenario, ["execution"])
+        def consumer = collector.scenario(scenario, [sample()])
         consumer.accept(result1)
         consumer.accept(result2)
         collector.write()
@@ -43,10 +43,10 @@ class BenchmarkResultCollectorTest extends Specification {
         BenchmarkResult result
 
         when:
-        collector.scenario(scenario1, ["execution"])
-        collector.scenario(scenario2, ["execution"])
-        collector.scenario(scenario3, ["execution"])
-        collector.scenario(scenario4, ["execution"])
+        collector.scenario(scenario1, [sample()])
+        collector.scenario(scenario2, [sample()])
+        collector.scenario(scenario3, [sample()])
+        collector.scenario(scenario4, [sample()])
         collector.write()
 
         then:
@@ -69,9 +69,9 @@ class BenchmarkResultCollectorTest extends Specification {
         BenchmarkResult result
 
         when:
-        collector.scenario(scenario1, ["execution"])
-        collector.scenario(scenario2, ["execution"])
-        collector.scenario(scenario3, ["execution"])
+        collector.scenario(scenario1, [sample()])
+        collector.scenario(scenario2, [sample()])
+        collector.scenario(scenario3, [sample()])
         collector.write()
 
         then:
@@ -86,10 +86,12 @@ class BenchmarkResultCollectorTest extends Specification {
         result.scenarios[2].baseline.get() == result.scenarios[0]
     }
 
+    def sample() {
+        return Stub(Sample)
+    }
+
     def result() {
-        def result = Stub(BuildInvocationResult)
-        _ * result.samples >> [new BuildInvocationResult.Sample("execution", Duration.ofMillis(12))]
-        return result
+        return Stub(BuildInvocationResult)
     }
 
     def scenario(String name = "one", String version = "4.6") {

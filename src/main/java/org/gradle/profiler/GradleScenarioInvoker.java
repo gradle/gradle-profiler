@@ -4,6 +4,8 @@ import com.google.common.collect.ImmutableList;
 import org.apache.commons.io.FileUtils;
 import org.gradle.profiler.buildops.BuildOperationInstrumentation;
 import org.gradle.profiler.instrument.PidInstrumentation;
+import org.gradle.profiler.result.BuildInvocationResult;
+import org.gradle.profiler.result.Sample;
 import org.gradle.tooling.GradleConnector;
 import org.gradle.tooling.ProjectConnection;
 
@@ -19,7 +21,7 @@ import static org.gradle.profiler.BuildStep.CLEANUP;
 import static org.gradle.profiler.Phase.MEASURE;
 import static org.gradle.profiler.Phase.WARM_UP;
 
-public class GradleScenarioInvoker extends ScenarioInvoker<GradleScenarioDefinition> {
+public class GradleScenarioInvoker extends ScenarioInvoker<GradleScenarioDefinition, GradleBuildInvocationResult> {
     private final DaemonControl daemonControl;
     private final PidInstrumentation pidInstrumentation;
 
@@ -29,16 +31,16 @@ public class GradleScenarioInvoker extends ScenarioInvoker<GradleScenarioDefinit
     }
 
     @Override
-    public List<String> samplesFor(InvocationSettings settings) {
+    public List<Sample<? super GradleBuildInvocationResult>> samplesFor(InvocationSettings settings) {
         if (settings.isMeasureConfigTime()) {
-            return ImmutableList.of("execution", "task start");
+            return ImmutableList.of(BuildInvocationResult.EXECUTION_TIME, GradleBuildInvocationResult.TIME_TO_TASK_EXECUTION);
         } else {
-            return ImmutableList.of("execution");
+            return ImmutableList.of(BuildInvocationResult.EXECUTION_TIME);
         }
     }
 
     @Override
-    public void doRun(GradleScenarioDefinition scenario, InvocationSettings settings, Consumer<BuildInvocationResult> resultConsumer) throws IOException, InterruptedException {
+    public void doRun(GradleScenarioDefinition scenario, InvocationSettings settings, Consumer<GradleBuildInvocationResult> resultConsumer) throws IOException, InterruptedException {
         if (settings.isProfile() && scenario.getWarmUpCount() == 0) {
             throw new IllegalStateException("Using the --profile option requires at least one warm-up");
         }

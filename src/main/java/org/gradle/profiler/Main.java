@@ -3,6 +3,7 @@ package org.gradle.profiler;
 import org.gradle.profiler.instrument.PidInstrumentation;
 import org.gradle.profiler.report.CsvGenerator;
 import org.gradle.profiler.report.HtmlGenerator;
+import org.gradle.profiler.result.BuildInvocationResult;
 
 import java.io.File;
 import java.time.Instant;
@@ -62,7 +63,7 @@ public class Main {
             for (ScenarioDefinition scenario : scenarios) {
                 scenarioCount++;
                 Logging.startOperation("Running scenario " + scenario.getDisplayName() + " (scenario " + scenarioCount + "/" + totalScenarios + ")");
-                ScenarioInvoker<? extends ScenarioDefinition> invoker;
+                ScenarioInvoker invoker;
                 if (scenario instanceof BazelScenarioDefinition) {
                     invoker = bazelScenarioInvoker;
                 } else if (scenario instanceof BuckScenarioDefinition) {
@@ -74,9 +75,8 @@ public class Main {
                 } else {
                     throw new IllegalArgumentException("Don't know how to run scenario.");
                 }
-                Consumer<BuildInvocationResult> resultConsumer = benchmarkResults.scenario(scenario, invoker.samplesFor(settings));
                 try {
-                    invoker.run(scenario, settings, resultConsumer);
+                    invoker.run(scenario, settings, benchmarkResults);
                 } catch (Throwable t) {
                     t.printStackTrace();
                     failures.add(t);

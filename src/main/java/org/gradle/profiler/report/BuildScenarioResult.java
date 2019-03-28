@@ -1,8 +1,8 @@
 package org.gradle.profiler.report;
 
-import org.apache.commons.math3.stat.descriptive.DescriptiveStatistics;
-import org.gradle.profiler.BuildInvocationResult;
 import org.gradle.profiler.ScenarioDefinition;
+import org.gradle.profiler.result.BuildInvocationResult;
+import org.gradle.profiler.result.Sample;
 
 import java.util.List;
 import java.util.Optional;
@@ -18,7 +18,7 @@ public interface BuildScenarioResult {
     /**
      * Returns the names of the samples collected for each build invocation in this scenario.
      */
-    List<String> getSamples();
+    List<Sample<? super BuildInvocationResult>> getSamples();
 
     /**
      * Returns all results, including warm-up builds.

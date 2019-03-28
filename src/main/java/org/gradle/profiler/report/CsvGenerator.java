@@ -1,6 +1,7 @@
 package org.gradle.profiler.report;
 
-import org.gradle.profiler.BuildInvocationResult;
+import org.gradle.profiler.result.BuildInvocationResult;
+import org.gradle.profiler.result.Sample;
 
 import java.io.BufferedWriter;
 import java.io.File;
@@ -19,45 +20,45 @@ public class CsvGenerator extends AbstractGenerator {
     protected void write(BenchmarkResult benchmarkResult, BufferedWriter writer) throws IOException {
         List<? extends BuildScenarioResult> allScenarios = benchmarkResult.getScenarios();
         writer.write("scenario");
-        for (BuildScenarioResult result : allScenarios) {
-            for (int i = 0; i < result.getSamples().size(); i++) {
+        for (BuildScenarioResult scenario : allScenarios) {
+            for (int i = 0; i < scenario.getSamples().size(); i++) {
                 writer.write(",");
-                writer.write(result.getScenarioDefinition().getName());
+                writer.write(scenario.getScenarioDefinition().getName());
             }
         }
         writer.newLine();
 
         writer.write("version");
-        for (BuildScenarioResult result : allScenarios) {
-            for (int i = 0; i < result.getSamples().size(); i++) {
+        for (BuildScenarioResult scenario : allScenarios) {
+            for (int i = 0; i < scenario.getSamples().size(); i++) {
                 writer.write(",");
-                writer.write(result.getScenarioDefinition().getBuildToolDisplayName());
+                writer.write(scenario.getScenarioDefinition().getBuildToolDisplayName());
             }
         }
         writer.newLine();
 
         writer.write("tasks");
-        for (BuildScenarioResult result : allScenarios) {
-            for (int i = 0; i < result.getSamples().size(); i++) {
+        for (BuildScenarioResult scenario : allScenarios) {
+            for (int i = 0; i < scenario.getSamples().size(); i++) {
                 writer.write(",");
-                writer.write(result.getScenarioDefinition().getTasksDisplayName());
+                writer.write(scenario.getScenarioDefinition().getTasksDisplayName());
             }
         }
         writer.newLine();
 
         writer.write("value");
-        for (BuildScenarioResult result : allScenarios) {
-            for (String sample : result.getSamples()) {
+        for (BuildScenarioResult scenario : allScenarios) {
+            for (Sample<? super BuildInvocationResult> sample : scenario.getSamples()) {
                 writer.write(",");
-                writer.write(sample);
+                writer.write(sample.getName());
             }
         }
         writer.newLine();
 
         int maxRows = allScenarios.stream().mapToInt(v -> v.getResults().size()).max().orElse(0);
         for (int row = 0; row < maxRows; row++) {
-            for (BuildScenarioResult result : allScenarios) {
-                List<? extends BuildInvocationResult> results = result.getResults();
+            for (BuildScenarioResult scenario : allScenarios) {
+                List<? extends BuildInvocationResult> results = scenario.getResults();
                 if (row >= results.size()) {
                     continue;
                 }
@@ -65,15 +66,16 @@ public class CsvGenerator extends AbstractGenerator {
                 writer.write(buildResult.getDisplayName());
                 break;
             }
-            for (BuildScenarioResult result : allScenarios) {
-                List<? extends BuildInvocationResult> results = result.getResults();
+            for (BuildScenarioResult scenario : allScenarios) {
+                List<? extends BuildInvocationResult> results = scenario.getResults();
                 writer.write(",");
                 if (row >= results.size()) {
                     continue;
                 }
                 BuildInvocationResult buildResult = results.get(row);
-                for (int i = 0; i < buildResult.getSamples().size(); i++) {
-                    Duration duration = buildResult.getSamples().get(i).getDuration();
+                for (int i = 0; i < scenario.getSamples().size(); i++) {
+                    Sample<? super BuildInvocationResult> sample = scenario.getSamples().get(i);
+                    Duration duration = sample.extractFrom(buildResult);
                     if (i > 0) {
                         writer.write(",");
                     }
@@ -87,7 +89,7 @@ public class CsvGenerator extends AbstractGenerator {
         statistic(writer, "mean", statistics, BuildScenarioResult.Statistics::getMean);
         statistic(writer, "min", statistics, BuildScenarioResult.Statistics::getMin);
         statistic(writer, "25th percentile", statistics, v -> v.getPercentile(25));
-        statistic(writer, "median", statistics, v -> v.getMedian());
+        statistic(writer, "median", statistics, BuildScenarioResult.Statistics::getMedian);
         statistic(writer, "75th percentile", statistics, v -> v.getPercentile(75));
         statistic(writer, "max", statistics, BuildScenarioResult.Statistics::getMax);
         statistic(writer, "stddev", statistics, BuildScenarioResult.Statistics::getStandardDeviation);
