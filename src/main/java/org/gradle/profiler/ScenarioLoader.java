@@ -54,6 +54,24 @@ class ScenarioLoader {
     }
 
     public List<ScenarioDefinition> loadScenarios(InvocationSettings settings) {
+        List<ScenarioDefinition> scenarios = doLoadScenarios(settings);
+        List<String> problems = new ArrayList<>();
+        for (ScenarioDefinition scenario : scenarios) {
+            scenario.visitProblems(settings, message -> problems.add("- Scenario " + scenario.getDisplayName() + ": " + message));
+        }
+        if (!problems.isEmpty()) {
+            System.out.println();
+            System.out.println("There were some problems with the profiler configuration:");
+            for (String problem : problems) {
+                System.out.println(problem);
+            }
+            System.out.println();
+            throw new IllegalArgumentException("There were some problems with the profiler configuration. Please see the log output for details.");
+        }
+        return scenarios;
+    }
+
+    private List<ScenarioDefinition> doLoadScenarios(InvocationSettings settings) {
         if (settings.getScenarioFile() != null) {
             return loadScenarios(settings.getScenarioFile(), settings, gradleBuildConfigurationReader);
         } else {
@@ -69,9 +87,6 @@ class ScenarioLoader {
         }
         if (versions.isEmpty()) {
             versions.add(gradleBuildConfigurationReader.readConfiguration());
-        }
-        if (settings.getWarmUpCount() < 1) {
-            throw new IllegalArgumentException("You can not skip warm-ups when profiling or benchmarking. Use --no-daemon or --cold-daemon if you want to profile or benchmark JVM startup");
         }
 
         for (GradleBuildConfiguration version : versions) {
@@ -167,10 +182,6 @@ class ScenarioLoader {
                 File outputDir = new File(settings.getOutputDir(), scenarioName + "-maven");
                 definitions.add(new MavenScenarioDefinition(scenarioName, targets, buildMutatorFactory, warmUpCount, settings.getBuildCount(), outputDir));
             } else if (!settings.isBazel() && !settings.isBuck() && !settings.isMaven()) {
-                if (warmUpCount < 1) {
-                    throw new IllegalArgumentException("You can not skip warm-ups when profiling or benchmarking scenario " + scenarioName + ". Use --no-daemon or --cold-daemon if you want to profile or benchmark JVM startup");
-                }
-
                 List<GradleBuildConfiguration> versions = ConfigUtil.strings(scenario, VERSIONS, settings.getVersions()).stream().map(inspector::readConfiguration).collect(
                     Collectors.toList());
                 if (versions.isEmpty()) {

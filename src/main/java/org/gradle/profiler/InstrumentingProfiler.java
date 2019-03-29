@@ -1,6 +1,7 @@
 package org.gradle.profiler;
 
 import java.io.IOException;
+import java.util.function.Consumer;
 
 /**
  * A profiler that can:
@@ -28,7 +29,6 @@ public abstract class InstrumentingProfiler extends Profiler {
      */
     @Override
     public JvmArgsCalculator newJvmArgsCalculator(ScenarioSettings settings) {
-        validate(settings);
         if (!settings.getScenario().getInvoker().isReuseDaemon()) {
             return JvmArgsCalculator.DEFAULT;
         }
@@ -77,12 +77,14 @@ public abstract class InstrumentingProfiler extends Profiler {
         return new RecordingAlreadyStartedController(pid, controller);
     }
 
-    private void validate(ScenarioSettings settings) {
-        if (settings.getScenario().getBuildCount() > 1 && !canRestartRecording() && settings.getScenario().getCleanupAction().isDoesSomething()) {
-            throw new IllegalArgumentException("Profiler " + toString() + " does not support profiling multiple iterations with cleanup steps in between.");
+    @Override
+    public void validate(ScenarioSettings settings, Consumer<String> reporter) {
+        GradleScenarioDefinition scenario = settings.getScenario();
+        if (scenario.getBuildCount() > 1 && !canRestartRecording() && scenario.getCleanupAction().isDoesSomething()) {
+            reporter.accept("Profiler " + toString() + " does not support profiling multiple iterations with cleanup steps in between.");
         }
-        if (settings.getScenario().getBuildCount() > 1 && !settings.getScenario().getInvoker().isReuseDaemon()) {
-            throw new IllegalArgumentException("Profiler " + toString() + " does not support profiling multiple daemons.");
+        if (scenario.getBuildCount() > 1 && !scenario.getInvoker().isReuseDaemon()) {
+            reporter.accept("Profiler " + toString() + " does not support profiling multiple daemons.");
         }
     }
 

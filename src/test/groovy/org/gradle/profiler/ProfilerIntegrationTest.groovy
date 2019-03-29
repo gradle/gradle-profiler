@@ -67,14 +67,13 @@ println "<tasks: " + gradle.startParameter.taskNames + ">"
 
         when:
         new Main().
-            run("--project-dir", projectDir.absolutePath, "--output-dir", outputDir.absolutePath, "--gradle-version", minimalSupportedGradleVersion, "--profile", "jfr",
-                "--warmups", "0", "--iterations", "2", "assemble")
+            run("--project-dir", projectDir.absolutePath, "--output-dir", outputDir.absolutePath, "--gradle-version", minimalSupportedGradleVersion, "--profile", "jfr", "--warmups", "0", "--iterations", "2", "assemble")
 
         then:
         thrown(IllegalArgumentException)
 
         and:
-        output.contains("You can not skip warm-ups when profiling or benchmarking. Use --no-daemon or --cold-daemon if you want to profile or benchmark JVM startup")
+        output.contains("Scenario using Gradle ${minimalSupportedGradleVersion}: You can not skip warm-ups when profiling or benchmarking a Gradle build. Use --no-daemon or --cold-daemon if you want to profile or benchmark JVM startup")
     }
 
     def "complains when benchmarking scenario and skipping warm-up builds"() {
@@ -97,14 +96,13 @@ println "<tasks: " + gradle.startParameter.taskNames + ">"
 
         when:
         new Main().
-            run("--project-dir", projectDir.absolutePath, "--output-dir", outputDir.absolutePath, "--gradle-version", minimalSupportedGradleVersion, "--benchmark",
-                "--iterations", "2", "--scenario-file", scenarioFile.absolutePath)
+            run("--project-dir", projectDir.absolutePath, "--output-dir", outputDir.absolutePath, "--gradle-version", minimalSupportedGradleVersion, "--benchmark", "--iterations", "2", "--scenario-file", scenarioFile.absolutePath)
 
         then:
         thrown(IllegalArgumentException)
 
         and:
-        output.contains("You can not skip warm-ups when profiling or benchmarking scenario help. Use --no-daemon or --cold-daemon if you want to profile or benchmark JVM startup")
+        output.contains("Scenario help using Gradle ${minimalSupportedGradleVersion}: You can not skip warm-ups when profiling or benchmarking a Gradle build. Use --no-daemon or --cold-daemon if you want to profile or benchmark JVM startup")
     }
 
     def "reports build failures"() {

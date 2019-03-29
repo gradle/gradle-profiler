@@ -49,6 +49,9 @@ public class Profiler {
             }}
     );
 
+    public void validate(ScenarioSettings settings, Consumer<String> reporter) {
+    }
+
     public ProfilerController newController(String pid, ScenarioSettings settings) {
         return ProfilerController.EMPTY;
     }
