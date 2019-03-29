@@ -21,6 +21,13 @@ class CompositeProfiler extends Profiler {
     }
 
     @Override
+    public void validate(ScenarioSettings settings, Consumer<String> reporter) {
+        for (Profiler delegate : delegates) {
+            delegate.validate(settings, reporter);
+        }
+    }
+
+    @Override
     public void summarizeResultFile(File resultFile, Consumer<String> consumer) {
         for (Profiler delegate : delegates) {
             delegate.summarizeResultFile(resultFile, consumer);

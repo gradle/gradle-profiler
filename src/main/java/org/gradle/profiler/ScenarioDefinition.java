@@ -2,6 +2,7 @@ package org.gradle.profiler;
 
 import java.io.File;
 import java.io.PrintStream;
+import java.util.function.Consumer;
 import java.util.function.Supplier;
 
 public abstract class ScenarioDefinition {
@@ -65,6 +66,9 @@ public abstract class ScenarioDefinition {
         out.println("  Build changes: " + getBuildMutator());
         out.println("  Warm-ups: " + getWarmUpCount());
         out.println("  Builds: " + getBuildCount());
+    }
+
+    public void visitProblems(InvocationSettings settings, Consumer<String> reporter) {
     }
 
     protected void printDetail(PrintStream out) {

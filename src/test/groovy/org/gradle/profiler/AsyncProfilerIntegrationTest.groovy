@@ -82,10 +82,10 @@ class AsyncProfilerIntegrationTest extends AbstractProfilerIntegrationTest {
         new Main().run("--project-dir", projectDir.absolutePath, "--output-dir", outputDir.absolutePath, "--gradle-version", minimalSupportedGradleVersion, "--profile", "async-profiler", "--iterations", "2", "--cold-daemon", "assemble")
 
         then:
-        thrown(Main.ScenarioFailedException)
+        thrown(IllegalArgumentException)
 
         and:
-        output.contains("Profiler async profiler does not support profiling multiple daemons.")
+        output.contains("Scenario using Gradle ${minimalSupportedGradleVersion}: Profiler async profiler does not support profiling multiple daemons.")
     }
 
     @Requires({ OperatingSystem.isMacOS() })
@@ -97,9 +97,9 @@ class AsyncProfilerIntegrationTest extends AbstractProfilerIntegrationTest {
         new Main().run("--project-dir", projectDir.absolutePath, "--output-dir", outputDir.absolutePath, "--gradle-version", minimalSupportedGradleVersion, "--profile", "async-profiler", "--iterations", "2", "--no-daemon", "assemble")
 
         then:
-        thrown(Main.ScenarioFailedException)
+        thrown(IllegalArgumentException)
 
         and:
-        output.contains("Profiler async profiler does not support profiling multiple daemons.")
+        output.contains("Scenario using Gradle ${minimalSupportedGradleVersion}: Profiler async profiler does not support profiling multiple daemons.")
     }
 }

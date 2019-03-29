@@ -215,10 +215,10 @@ class YourKitProfilerIntegrationTest extends AbstractProfilerIntegrationTest {
         new Main().run("--project-dir", projectDir.absolutePath, "--output-dir", outputDir.absolutePath, "--scenario-file", scenarioFile.absolutePath, "--gradle-version", minimalSupportedGradleVersion, "--profile", "yourkit", "--iterations", "2", "assemble")
 
         then:
-        thrown(Main.ScenarioFailedException)
+        thrown(IllegalArgumentException)
 
         and:
-        output.contains("Profiler YourKit does not support profiling multiple iterations with cleanup steps in between.")
+        output.contains("Scenario assemble using Gradle ${minimalSupportedGradleVersion}: Profiler YourKit does not support profiling multiple iterations with cleanup steps in between.")
     }
 
     def "cannot profile using YourKit with multiple iterations and cold daemon"() {
@@ -229,10 +229,10 @@ class YourKitProfilerIntegrationTest extends AbstractProfilerIntegrationTest {
         new Main().run("--project-dir", projectDir.absolutePath, "--output-dir", outputDir.absolutePath, "--gradle-version", minimalSupportedGradleVersion, "--profile", "yourkit", "--iterations", "2", "--cold-daemon", "assemble")
 
         then:
-        thrown(Main.ScenarioFailedException)
+        thrown(IllegalArgumentException)
 
         and:
-        output.contains("Profiler YourKit does not support profiling multiple daemons.")
+        output.contains("Scenario using Gradle ${minimalSupportedGradleVersion}: Profiler YourKit does not support profiling multiple daemons.")
     }
 
     def "cannot profile using YourKit with multiple iterations and no daemon"() {
@@ -243,9 +243,9 @@ class YourKitProfilerIntegrationTest extends AbstractProfilerIntegrationTest {
         new Main().run("--project-dir", projectDir.absolutePath, "--output-dir", outputDir.absolutePath, "--gradle-version", minimalSupportedGradleVersion, "--profile", "yourkit", "--iterations", "2", "--no-daemon", "assemble")
 
         then:
-        thrown(Main.ScenarioFailedException)
+        thrown(IllegalArgumentException)
 
         and:
-        output.contains("Profiler YourKit does not support profiling multiple daemons.")
+        output.contains("Scenario using Gradle ${minimalSupportedGradleVersion}: Profiler YourKit does not support profiling multiple daemons.")
     }
 }
