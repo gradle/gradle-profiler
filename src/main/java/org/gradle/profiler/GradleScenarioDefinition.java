@@ -11,14 +11,14 @@ import java.util.function.Supplier;
 
 public class GradleScenarioDefinition extends ScenarioDefinition {
 
-    private final Invoker invoker;
+    private final GradleBuildInvoker invoker;
     private final GradleBuildConfiguration buildConfiguration;
     private final BuildAction buildAction;
     private final BuildAction cleanupAction;
     private final List<String> gradleArgs;
     private final Map<String, String> systemProperties;
 
-    public GradleScenarioDefinition(String name, Invoker invoker, GradleBuildConfiguration buildConfiguration, BuildAction buildAction, BuildAction cleanupAction, List<String> gradleArgs, Map<String, String> systemProperties, Supplier<BuildMutator> buildMutator, int warmUpCount, int buildCount, File outputDir) {
+    public GradleScenarioDefinition(String name, GradleBuildInvoker invoker, GradleBuildConfiguration buildConfiguration, BuildAction buildAction, BuildAction cleanupAction, List<String> gradleArgs, Map<String, String> systemProperties, Supplier<BuildMutator> buildMutator, int warmUpCount, int buildCount, File outputDir) {
         super(name, buildMutator, warmUpCount, buildCount, outputDir);
         this.invoker = invoker;
         this.buildAction = buildAction;
@@ -52,7 +52,7 @@ public class GradleScenarioDefinition extends ScenarioDefinition {
         return gradleArgs;
     }
 
-    public Invoker getInvoker() {
+    public GradleBuildInvoker getInvoker() {
         return invoker;
     }
 

@@ -92,7 +92,7 @@ class ScenarioLoader {
 
         for (GradleBuildConfiguration version : versions) {
             File outputDir = versions.size() == 1 ? settings.getOutputDir() : new File(settings.getOutputDir(), version.getGradleVersion().getVersion());
-            scenarios.add(new AdhocGradleScenarioDefinition(version, settings.getInvoker(), new RunTasksAction(settings.getTargets()), settings.getSystemProperties(), new BuildMutatorFactory(Collections.emptyList()), getWarmUpCount(settings, settings.getInvoker(), settings.getWarmUpCount()), getBuildCount(settings), outputDir));
+            scenarios.add(new AdhocGradleScenarioDefinition(version, (GradleBuildInvoker) settings.getInvoker(), new RunTasksAction(settings.getTargets()), settings.getSystemProperties(), new BuildMutatorFactory(Collections.emptyList()), getWarmUpCount(settings, settings.getInvoker(), settings.getWarmUpCount()), getBuildCount(settings), outputDir));
         }
         return scenarios;
     }
@@ -193,7 +193,7 @@ class ScenarioLoader {
                 }
 
                 List<String> gradleArgs = ConfigUtil.strings(scenario, GRADLE_ARGS);
-                Invoker invoker = invoker(scenario, settings.getInvoker());
+                GradleBuildInvoker invoker = invoker(scenario, (GradleBuildInvoker) settings.getInvoker());
                 int warmUpCount = getWarmUpCount(settings, invoker, scenario);
                 BuildAction buildAction = getBuildAction(scenario, scenarioFile);
                 BuildAction cleanupAction = getCleanupAction(scenario);
@@ -227,11 +227,11 @@ class ScenarioLoader {
         return getWarmUpCount(settings, settings.getInvoker(), ConfigUtil.optionalInteger(scenario, WARM_UP_COUNT));
     }
 
-    private static int getWarmUpCount(InvocationSettings settings, Invoker invoker, Config scenario) {
+    private static int getWarmUpCount(InvocationSettings settings, BuildInvoker invoker, Config scenario) {
         return getWarmUpCount(settings, invoker, ConfigUtil.optionalInteger(scenario, WARM_UP_COUNT));
     }
 
-    private static int getWarmUpCount(InvocationSettings settings, Invoker invoker, Integer providedValue) {
+    private static int getWarmUpCount(InvocationSettings settings, BuildInvoker invoker, Integer providedValue) {
         if (settings.isDryRun()) {
             return 1;
         }
@@ -248,30 +248,30 @@ class ScenarioLoader {
         }
     }
 
-    public static Invoker invoker(Config config, Invoker defaultValue) {
-        Invoker invoker = defaultValue;
-   		if (config.hasPath(RUN_USING)) {
-   			String value = ConfigUtil.string(config, RUN_USING, null);
-   			if (value.equals("cli")) {
-   				invoker = Invoker.Cli;
-   			} else if (value.equals("tooling-api")) {
-   				invoker = Invoker.ToolingApi;
-   			} else {
+    public static GradleBuildInvoker invoker(Config config, GradleBuildInvoker defaultValue) {
+        GradleBuildInvoker invoker = defaultValue;
+        if (config.hasPath(RUN_USING)) {
+            String value = ConfigUtil.string(config, RUN_USING, null);
+            if (value.equals("cli")) {
+                invoker = GradleBuildInvoker.Cli;
+            } else if (value.equals("tooling-api")) {
+                invoker = GradleBuildInvoker.ToolingApi;
+            } else {
                 throw new IllegalArgumentException("Unexpected value for '" + RUN_USING + "' provided: " + value);
             }
-   		}
+        }
         if (config.hasPath(DAEMON)) {
             String value = ConfigUtil.string(config, DAEMON, null);
             if (value.equals("none")) {
-                invoker = Invoker.CliNoDaemon;
+                invoker = GradleBuildInvoker.CliNoDaemon;
             } else if (value.equals("cold")) {
-                invoker = invoker == Invoker.Cli ? Invoker.CliColdDaemon : Invoker.ToolingApiColdDaemon;
+                invoker = invoker.withColdDaemon();
             } else if (!value.equals("warm")) {
                 throw new IllegalArgumentException("Unexpected value for '" + DAEMON + "' provided: " + value);
             } // else, already warm
         }
         return invoker;
-   	}
+    }
 
     private static BuildAction getCleanupAction(Config scenario) {
         List<String> tasks = ConfigUtil.strings(scenario, CLEANUP_TASKS);
