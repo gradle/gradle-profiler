@@ -1,10 +1,6 @@
 package org.gradle.profiler;
 
-import joptsimple.ArgumentAcceptingOptionSpec;
-import joptsimple.OptionException;
-import joptsimple.OptionParser;
-import joptsimple.OptionSet;
-import joptsimple.OptionSpecBuilder;
+import joptsimple.*;
 
 import java.io.File;
 import java.io.IOException;
@@ -83,28 +79,25 @@ class CommandLineParser {
         File scenarioFile = parsedOptions.valueOf(scenarioFileOption);
 
         // TODO - should validate the various combinations of invocation options
-        Invoker invoker = Invoker.ToolingApi;
+        GradleBuildInvoker gradleInvoker = GradleBuildInvoker.ToolingApi;
         if (parsedOptions.has(cliOption)) {
-            invoker = Invoker.Cli;
+            gradleInvoker = GradleBuildInvoker.Cli;
         }
         if (parsedOptions.has(coldDaemonOption)) {
-            if (invoker == Invoker.ToolingApi) {
-                invoker = Invoker.ToolingApiColdDaemon;
-            } else {
-                invoker = Invoker.CliColdDaemon;
-            }
+            gradleInvoker = gradleInvoker.withColdDaemon();
         }
         if (parsedOptions.has(noDaemonOption)) {
-            invoker = Invoker.CliNoDaemon;
+            gradleInvoker = GradleBuildInvoker.CliNoDaemon;
         }
+        BuildInvoker invoker = gradleInvoker;
         if (parsedOptions.has(bazelOption)) {
-            invoker = Invoker.Bazel;
+            invoker = BuildInvoker.Bazel;
         }
         if (parsedOptions.has(buckOption)) {
-            invoker = Invoker.Buck;
+            invoker = BuildInvoker.Buck;
         }
         if (parsedOptions.has(mavenOption)) {
-            invoker = Invoker.Maven;
+            invoker = BuildInvoker.Maven;
         }
 
         boolean dryRun = parsedOptions.has(dryRunOption);
@@ -114,7 +107,7 @@ class CommandLineParser {
             if (sep < 0) {
                 sysProperties.put(value, "true");
             } else {
-                sysProperties.put(value.substring(0, sep), value.substring(sep + 1, value.length()));
+                sysProperties.put(value.substring(0, sep), value.substring(sep + 1));
             }
         }
         return new InvocationSettings(projectDir, profiler, benchmark, outputDir, invoker, dryRun, scenarioFile, versions, targetNames, sysProperties, gradleUserHome, warmups, iterations, measureConfig);

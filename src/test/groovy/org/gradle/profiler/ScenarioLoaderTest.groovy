@@ -22,7 +22,7 @@ class ScenarioLoaderTest extends Specification {
         scenarioFile = tmpDir.newFile()
     }
 
-    private settings(Invoker invoker = Invoker.Cli, boolean benchmark = true, Integer warmups = null, Integer iterations = null) {
+    private settings(BuildInvoker invoker = GradleBuildInvoker.Cli, boolean benchmark = true, Integer warmups = null, Integer iterations = null) {
         new InvocationSettings(projectDir, Profiler.NONE, benchmark, outputDir, invoker, false, scenarioFile, [], [], [:], gradleUserHomeDir, warmups, iterations, false)
     }
 
@@ -64,17 +64,17 @@ class ScenarioLoaderTest extends Specification {
                 run-using = tooling-api
             }
         """
-        def settings1 = settings(Invoker.ToolingApi)
-        def settings2 = settings(Invoker.CliColdDaemon)
+        def settings1 = settings(GradleBuildInvoker.ToolingApi)
+        def settings2 = settings(GradleBuildInvoker.CliColdDaemon)
 
         expect:
         def scenarios1 = loadScenarios(scenarioFile, settings1, Mock(GradleBuildConfigurationReader))
-        (scenarios1[0] as GradleScenarioDefinition).invoker == Invoker.ToolingApi
-        (scenarios1[1] as GradleScenarioDefinition).invoker == Invoker.ToolingApi
+        (scenarios1[0] as GradleScenarioDefinition).invoker == GradleBuildInvoker.ToolingApi
+        (scenarios1[1] as GradleScenarioDefinition).invoker == GradleBuildInvoker.ToolingApi
 
         def scenarios2 = loadScenarios(scenarioFile, settings2, Mock(GradleBuildConfigurationReader))
-        (scenarios2[0] as GradleScenarioDefinition).invoker == Invoker.CliColdDaemon
-        (scenarios2[1] as GradleScenarioDefinition).invoker == Invoker.ToolingApi
+        (scenarios2[0] as GradleScenarioDefinition).invoker == GradleBuildInvoker.CliColdDaemon
+        (scenarios2[1] as GradleScenarioDefinition).invoker == GradleBuildInvoker.ToolingApi
     }
 
     def "scenario can define how to invoke Gradle"() {
@@ -91,13 +91,13 @@ class ScenarioLoaderTest extends Specification {
 
         expect:
         def cli = scenarios[0] as GradleScenarioDefinition
-        cli.invoker == Invoker.Cli
+        cli.invoker == GradleBuildInvoker.Cli
         def toolingApi = scenarios[1] as GradleScenarioDefinition
-        toolingApi.invoker == Invoker.ToolingApi
+        toolingApi.invoker == GradleBuildInvoker.ToolingApi
     }
 
     def "scenario can define what state the daemon should be in for each measured build"() {
-        def settings = settings(Invoker.ToolingApi)
+        def settings = settings(GradleBuildInvoker.ToolingApi)
         scenarioFile << """
             cliCold {
                 run-using = cli
@@ -117,18 +117,18 @@ class ScenarioLoaderTest extends Specification {
 
         expect:
         def cliCold = scenarios[0] as GradleScenarioDefinition
-        cliCold.invoker == Invoker.CliColdDaemon
+        cliCold.invoker == GradleBuildInvoker.CliColdDaemon
         def cold = scenarios[1] as GradleScenarioDefinition
-        cold.invoker == Invoker.ToolingApiColdDaemon
+        cold.invoker == GradleBuildInvoker.ToolingApiColdDaemon
         def none = scenarios[2] as GradleScenarioDefinition
-        none.invoker == Invoker.CliNoDaemon
+        none.invoker == GradleBuildInvoker.CliNoDaemon
         def warm = scenarios[3] as GradleScenarioDefinition
-        warm.invoker == Invoker.ToolingApi
+        warm.invoker == GradleBuildInvoker.ToolingApi
     }
 
     def "uses warm-up and iteration counts based on command-line options when Gradle invocation defined by scenario"() {
-        def benchmarkSettings = settings(Invoker.ToolingApi, true, 123, 509)
-        def profileSettings = settings(Invoker.ToolingApi, false, 25, 44)
+        def benchmarkSettings = settings(GradleBuildInvoker.ToolingApi, true, 123, 509)
+        def profileSettings = settings(GradleBuildInvoker.ToolingApi, false, 25, 44)
 
         scenarioFile << """
             default {
@@ -151,7 +151,7 @@ class ScenarioLoaderTest extends Specification {
 
     def "uses warm-up and iteration counts based on Gradle invocation defined by scenario"() {
         def benchmarkSettings = settings()
-        def profileSettings = settings(Invoker.ToolingApi, false)
+        def profileSettings = settings(GradleBuildInvoker.ToolingApi, false)
 
         scenarioFile << """
             default {
@@ -270,7 +270,7 @@ class ScenarioLoaderTest extends Specification {
     }
 
     def "can load Bazel scenario"() {
-        def settings = settings(Invoker.Bazel)
+        def settings = settings(BuildInvoker.Bazel)
 
         scenarioFile << """
             default {
@@ -286,7 +286,7 @@ class ScenarioLoaderTest extends Specification {
     }
 
     def "can load Buck scenario"() {
-        def settings = settings(Invoker.Buck)
+        def settings = settings(BuildInvoker.Buck)
 
         scenarioFile << """
             default {
@@ -302,7 +302,7 @@ class ScenarioLoaderTest extends Specification {
     }
 
     def "can load Maven scenario"() {
-        def settings = settings(Invoker.Maven)
+        def settings = settings(BuildInvoker.Maven)
 
         scenarioFile << """
             default {

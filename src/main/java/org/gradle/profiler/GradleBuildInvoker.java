@@ -1,84 +1,73 @@
 package org.gradle.profiler;
 
-public enum Invoker {
-    ToolingApi() {
+public class GradleBuildInvoker extends BuildInvoker {
+    static final GradleBuildInvoker ToolingApi = new GradleBuildInvoker() {
         @Override
         public String toString() {
             return "Tooling API";
         }
 
         @Override
-        public boolean isGradle() {
+        public boolean isReuseDaemon() {
             return true;
         }
 
         @Override
-        public boolean isReuseDaemon() {
-            return true;
+        public GradleBuildInvoker withColdDaemon() {
+            return ToolingApiColdDaemon;
         }
-    },
-    ToolingApiColdDaemon() {
+    };
+    static final GradleBuildInvoker ToolingApiColdDaemon = new GradleBuildInvoker() {
         @Override
         public String toString() {
             return "Tooling API with cold daemon";
         }
 
         @Override
-        public boolean isGradle() {
-            return true;
-        }
-
-        @Override
         public boolean isColdDaemon() {
             return true;
         }
-    },
-    Cli() {
+    };
+    static final GradleBuildInvoker Cli = new GradleBuildInvoker() {
         @Override
         public String toString() {
             return "`gradle` command";
         }
 
         @Override
-        public boolean isGradle() {
+        public boolean isReuseDaemon() {
             return true;
         }
 
         @Override
-        public boolean isReuseDaemon() {
-            return true;
+        public GradleBuildInvoker withColdDaemon() {
+            return CliColdDaemon;
         }
-    },
-    CliNoDaemon() {
+    };
+    static final GradleBuildInvoker CliNoDaemon = new GradleBuildInvoker() {
         @Override
         public String toString() {
             return "`gradle` command with --no-daemon";
         }
 
-        @Override
-        public boolean isGradle() {
-            return true;
-        }
-    },
-    CliColdDaemon() {
+    };
+    static final GradleBuildInvoker CliColdDaemon = new GradleBuildInvoker() {
         @Override
         public String toString() {
             return "`gradle` command with cold daemon";
         }
 
         @Override
-        public boolean isGradle() {
-            return true;
-        }
-
-        @Override
         public boolean isColdDaemon() {
             return true;
         }
-    }, Bazel, Buck, Maven;
+    };
 
-    public boolean isGradle() {
-        return false;
+    public GradleBuildInvoker withColdDaemon() {
+        if (isColdDaemon()) {
+            return this;
+        }
+        throw new UnsupportedOperationException();
     }
 
     public boolean isReuseDaemon() {
@@ -89,19 +78,21 @@ public enum Invoker {
         return false;
     }
 
+    @Override
     public int benchmarkWarmUps() {
-        if (isGradle() && !isReuseDaemon()) {
+        if (!isReuseDaemon()) {
             // Do not warm up the daemon if it is not being reused
             return 1;
         }
-        return 6;
+        return super.benchmarkWarmUps();
     }
 
+    @Override
     public int profileWarmUps() {
-        if (isGradle() && !isReuseDaemon()) {
+        if (!isReuseDaemon()) {
             // Do not warm up the daemon if it is not being reused
             return 1;
         }
-        return 2;
+        return super.profileWarmUps();
     }
 }

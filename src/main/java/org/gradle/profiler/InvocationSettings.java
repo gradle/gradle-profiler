@@ -12,7 +12,7 @@ public class InvocationSettings {
     private final boolean dryRun;
     private final File scenarioFile;
     private final File outputDir;
-    private final Invoker invoker;
+    private final BuildInvoker invoker;
     private final List<String> versions;
     private final List<String> targets;
     private final Map<String, String> sysProperties;
@@ -21,7 +21,7 @@ public class InvocationSettings {
     private final Integer iterations;
     private final boolean measureConfigTime;
 
-    public InvocationSettings(File projectDir, Profiler profiler, boolean benchmark, File outputDir, Invoker invoker,
+    public InvocationSettings(File projectDir, Profiler profiler, boolean benchmark, File outputDir, BuildInvoker invoker,
                               boolean dryRun, File scenarioFile, List<String> versions, List<String> getTargets, Map<String, String> sysProperties,
                               File gradleUserHome, Integer warmupCount, Integer iterations, boolean measureConfigTime) {
         this.benchmark = benchmark;
@@ -44,7 +44,7 @@ public class InvocationSettings {
         return outputDir;
     }
 
-    public Invoker getInvoker() {
+    public BuildInvoker getInvoker() {
         return invoker;
     }
 
@@ -61,15 +61,15 @@ public class InvocationSettings {
     }
 
     public boolean isBazel() {
-        return invoker == Invoker.Bazel;
+        return invoker == BuildInvoker.Bazel;
     }
 
     public boolean isBuck() {
-        return invoker == Invoker.Buck;
+        return invoker == BuildInvoker.Buck;
     }
 
     public boolean isMaven() {
-        return invoker == Invoker.Maven;
+        return invoker == BuildInvoker.Maven;
     }
 
     public Profiler getProfiler() {

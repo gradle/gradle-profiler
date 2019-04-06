@@ -91,20 +91,14 @@ public class GradleScenarioInvoker extends ScenarioInvoker<GradleScenarioDefinit
             logGradleArgs(allBuildsGradleArgs);
 
             GradleInvoker buildInvoker;
-            switch (scenario.getInvoker()) {
-                case CliNoDaemon:
-                    buildInvoker = new CliInvoker(buildConfiguration, buildConfiguration.getJavaHome(), settings.getProjectDir(), false);
-                    break;
-                case ToolingApi:
-                case ToolingApiColdDaemon:
-                    buildInvoker = new ToolingApiInvoker(projectConnection);
-                    break;
-                case Cli:
-                case CliColdDaemon:
-                    buildInvoker = new CliInvoker(buildConfiguration, buildConfiguration.getJavaHome(), settings.getProjectDir(), true);
-                    break;
-                default:
-                    throw new IllegalArgumentException();
+            if (scenario.getInvoker() == GradleBuildInvoker.CliNoDaemon) {
+                buildInvoker = new CliInvoker(buildConfiguration, buildConfiguration.getJavaHome(), settings.getProjectDir(), false);
+            } else if (scenario.getInvoker() == GradleBuildInvoker.ToolingApi || scenario.getInvoker() == GradleBuildInvoker.ToolingApiColdDaemon) {
+                buildInvoker = new ToolingApiInvoker(projectConnection);
+            } else if (scenario.getInvoker() == GradleBuildInvoker.Cli || scenario.getInvoker() == GradleBuildInvoker.CliColdDaemon) {
+                buildInvoker = new CliInvoker(buildConfiguration, buildConfiguration.getJavaHome(), settings.getProjectDir(), true);
+            } else {
+                throw new IllegalArgumentException();
             }
             BuildAction beforeBuildAction;
             if (scenario.getInvoker().isColdDaemon()) {
@@ -210,7 +204,7 @@ public class GradleScenarioInvoker extends ScenarioInvoker<GradleScenarioDefinit
         }
     }
 
-    private static void checkPid(String expected, String actual, Invoker invoker) {
+    private static void checkPid(String expected, String actual, GradleBuildInvoker invoker) {
         if (invoker.isReuseDaemon()) {
             if (!expected.equals(actual)) {
                 throw new RuntimeException("Multiple Gradle daemons were used.");
