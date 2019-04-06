@@ -4,12 +4,12 @@ A tool to automate the gathering of profiling and benchmarking information for G
 
 Profiling information can be captured using several different tools:
 
-- Using a [Gradle build scan](https://gradle.com)
+- Using [Gradle build scans](https://gradle.com)
 - Using [Async Profiler](https://github.com/jvm-profiling-tools/async-profiler)
-- Using [JProfiler](https://www.ej-technologies.com/products/jprofiler/overview.html).
-- Using [YourKit](https://www.yourkit.com) profiler.
+- Using [JProfiler](https://www.ej-technologies.com/products/jprofiler/overview.html)
+- Using [YourKit](https://www.yourkit.com) profiler
 - Using [Java flight recorder](https://docs.oracle.com/javacomponents/jmc-5-4/jfr-runtime-guide/about.htm#JFRUH170)
-- Producing [Chrome Trace](https://www.chromium.org/developers/how-tos/trace-event-profiling-tool) output.
+- Producing [Chrome Trace](https://www.chromium.org/developers/how-tos/trace-event-profiling-tool) output
 
 ## Installing
 
@@ -21,10 +21,10 @@ This will install the executable into `./build/install/gradle-profiler/bin`. The
 
 ## Benchmarking a build
 
-Benchmarking simply records the time it takes to execute your build several times and calculates a mean and standard error for it. It has zero impact on the execution time, so it
-is ideal for making before/after comparisons for new Gradle versions or changes to your build.
+Benchmarking simply records the time it takes to execute your build several times and calculates a mean and standard error for it.
+It has zero impact on the execution time, so it is ideal for making before/after comparisons for new Gradle versions or changes to your build.
 
-Run the app using:
+Run the `gradle-profiler` app using:
 
     > gradle-profiler --benchmark --project-dir <root-dir-of-build> <task>...
 
@@ -38,8 +38,8 @@ Gradle version, Java installation and JVM args that have been specified for your
 This generally works the same way as if you were using the Gradle wrapper. For example, the profiler will use the values
 from your Gradle wrapper properties file, if present, to determine which Gradle version to run.
 
-You can use the `--gradle-version` option to specify a Gradle version or installation to use to benchmark the build. You can specify multiple versions
-and each of these is used to benchmark the build, allowing you to compare the behaviour of several different Gradle versions.
+You can use the `--gradle-version` option to specify a Gradle version or installation to use to benchmark the build.
+You can specify multiple versions and each of these is used to benchmark the build, allowing you to compare the behaviour of several different Gradle versions.
 
 You can also use the `--measure-config-time` option to measure some additional details about configuration time.
 
@@ -52,7 +52,7 @@ To run the `gradle-profiler` app to profile a build use:
     > gradle-profiler --profile <name-of-profiler> --project-dir <root-dir-of-build> <task>...
 
 The app will run the build several times to warm up a daemon, then enable the profiler and run the build.
-Once complete, the results are available under `profile-out`
+Once complete, the results are available under `profile-out/`.
 
 ### Gradle build scans
 
@@ -60,28 +60,28 @@ Once complete, the results are available under `profile-out`
 You can use the timeline view to see which tasks ran, how long they took, whether they were cached, how well your build parallelized etc. 
 The performance tab will show you details about configuration time and other hints on how to make your build faster.
 
-In order to create a build scan of your build, use `--profile buildscan`. The build scan URL is available in `profile-out/profile.log`. 
+In order to create a build scan of your build, use `--profile buildscan`. The build scan URL is reported on the console and is also available in `profile-out/profile.log`. 
 
 ### Async Profiler
 
 Async profiler provides low-overhead CPU, allocation and perf event sampling on Linux and MacOS. 
 It also correctly handles native method calls, making it preferable to JFR on these operating systems. 
 
-You can use async profiler to profile a Gradle build using `--profiler async-profiler`. By default, this will download an async profiler 
+You can use async profiler to profile a Gradle build using `--profiler async-profiler`. By default, this will download an Async profiler 
 release from [Github](https://github.com/jvm-profiling-tools/async-profiler/releases) and install it, if not already available.
 
 The output are flame and icicle graphs which show you the call tree and hotspots of your code.
 
-The following options are supported and closely mimic the options of async-profiler. Have a look at its readme to find out more about each option:
+The following options are supported and closely mimic the options of Async profiler. Have a look at its readme to find out more about each option:
 
-- `--async-profiler-event`: The event to sample, e.g. `cpu` or `alloc`. Defaults to `cpu`. 
-- `--async-profiler-count`: The count to use when aggregating event data. Either `samples` or `total`. `total` is especially useful for allocation profiling. Defaults to `samples`.
+- `--async-profiler-event`: The event to sample, e.g. `cpu` or `alloc`. Defaults to `cpu`
+- `--async-profiler-count`: The count to use when aggregating event data. Either `samples` or `total`. `total` is especially useful for allocation profiling. Defaults to `samples`
 - `--async-profiler-interval`: The sampling interval in ns, defaults to 10_000_000 (10ms)
 - `--async-profiler-stackdepth`: The maximum stack depth. Lower this if profiles with deep recursion get too large. Defaults to 2048.
 - `--async-profiler-framebuffer`: The size of the frame buffer in bytes. Defaults to 10_000_000 (~10MB)
 - `--async-profiler-system-threads`: Whether to show system threads like GC and JIT compilation in the profile. Usually makes them harder to read, but can be useful if you suspect problems in that area. Defaults to `false` 
 
-You can also use either the `ASYNC_PROFILER_HOME` environment variable or the `--async-profiler-home` command line option points to the async-profiler install directory.
+You can also use either the `ASYNC_PROFILER_HOME` environment variable or the `--async-profiler-home` command line option to point to the Async profiler install directory.
 
 ### JProfiler
 
@@ -142,19 +142,19 @@ Add the `--profile chrome-trace` option and open the result in Google Chrome.
 - `--benchmark`: Benchmark the build. Runs the builds more times and writes the results to a CSV file.
 - `--profile <profiler>`: Profile the build using the specified profiler. See above for details on each profiler.
 - `--output-dir <dir>`: Directory to write results to.
-- `--warmups`: Specifies the number of warm-up builds to run for each scenario. Defaults to 2 for profiling, 6 for benchmarking.
+- `--warmups`: Specifies the number of warm-up builds to run for each scenario. Defaults to 2 for profiling, 6 for benchmarking, and 1 when not using a warm daemon.
 - `--iterations`: Specifies the number of builds to run for each scenario. Defaults to 1 for profiling, 10 for benchmarking.
-- `--bazel`: Benchmark scenarios using Bazel instead of Gradle. By default, only Gradle scenarios are run. You cannot `--profile` a Bazel build using this tool.
-- `--buck`: Benchmark scenarios using Buck instead of Gradle. By default, only Gradle scenarios are run. You cannot `--profile` a Buck build using this tool.
-- `--maven`: Benchmark scenarios using Maven instead of Gradle. By default, only Gradle scenarios are run. You cannot `--profile` a Maven build using this tool.
+- `--bazel`: Benchmark scenarios using Bazel instead of Gradle. By default, only Gradle scenarios are run. You cannot profile a Bazel build using this tool.
+- `--buck`: Benchmark scenarios using Buck instead of Gradle. By default, only Gradle scenarios are run. You cannot profile a Buck build using this tool.
+- `--maven`: Benchmark scenarios using Maven instead of Gradle. By default, only Gradle scenarios are run. You cannot profile a Maven build using this tool.
 
 The following command line options only apply when measuring Gradle builds:
 
-- `--gradle-user-home`: The Gradle user home. Defaults to `<project-dir>/gradle-user-home` to isolated performance tests from your other builds.
-- `--gradle-version <version>`: Specifies a Gradle version or installation to use to run the builds, overriding the default for the build. You can specify multiple versions.
-- `--no-daemon`: Uses the gradle command-line client with the `--no-daemon` option to run the builds. The default is to use the Gradle tooling API and Gradle daemon.
+- `--gradle-user-home`: The Gradle user home. Defaults to `<project-dir>/gradle-user-home` to isolate performance tests from your other builds.
+- `--gradle-version <version>`: Specifies a Gradle version or installation to use to run the builds, overriding the default for the build. You can specify multiple versions by using this option once for each version.
+- `--no-daemon`: Uses the `gradle` command-line client with the `--no-daemon` option to run the builds. The default is to use the Gradle tooling API and Gradle daemon.
 - `--cold-daemon`: Use a cold daemon (one that has just started) rather than a warm daemon (one that has already run some builds). The default is to use a warm daemon.
-- `--cli`: Uses the gradle command-line client to run the builds. The default is to use the Gradle tooling API.
+- `--cli`: Uses the `gradle` command-line client to run the builds. The default is to use the Gradle tooling API and Gradle daemon.
 - `-D<key>=<value>`: Defines a system property when running the build, overriding the default for the build.
 
 ## Advanced profiling scenarios
@@ -163,7 +163,7 @@ A scenario file can be provided to define more complex scenarios to benchmark or
 
 The scenario file defines one or more scenarios. You can select which scenarios to run by specifying its name on the command-line when running `gradle-profiler`, e.g.
 
-    > gradle-profiler --benchmark --project-dir <root-dir-of-build> --scenario-file performance.scenarios clean_build
+    > gradle-profiler --benchmark --scenario-file performance.scenarios clean_build
 
 Here is an example:
 
