@@ -96,34 +96,12 @@ public class InvocationSettings {
         return sysProperties;
     }
 
-    public int getWarmUpCount() {
-        if (isDryRun()) {
-            return 1;
-        }
-        if (warmupCount != null) {
-            return warmupCount;
-        }
-        if (invoker.isGradle() && !invoker.isReuseDaemon()) {
-            // Do not warm up the daemon if it is not being reused
-            return 1;
-        }
-        if (benchmark) {
-            return 6;
-        }
-        return 2;
+    public Integer getWarmUpCount() {
+        return warmupCount;
     }
 
-    public int getBuildCount() {
-        if (isDryRun()) {
-            return 1;
-        }
-        if (iterations != null) {
-            return iterations;
-        }
-        if (benchmark) {
-            return 10;
-        }
-        return 1;
+    public Integer getBuildCount() {
+        return iterations;
     }
 
     public File getGradleUserHome() {
@@ -142,8 +120,12 @@ public class InvocationSettings {
         out.println("Versions: " + getVersions());
         out.println("Gradle User Home: " + getGradleUserHome());
         out.println("Targets: " + getTargets());
-        out.println("Warm-ups: " + getWarmUpCount());
-        out.println("Builds: " + getBuildCount());
+        if (warmupCount != null) {
+            out.println("Warm-ups: " + warmupCount);
+        }
+        if (iterations != null) {
+            out.println("Builds: " + iterations);
+        }
         if (!getSystemProperties().isEmpty()) {
             out.println("System properties:");
             for (Map.Entry<String, String> entry : getSystemProperties().entrySet()) {

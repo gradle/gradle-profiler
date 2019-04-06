@@ -1,11 +1,10 @@
 package org.gradle.profiler
 
-
+import com.google.common.collect.ImmutableList
 import org.junit.Rule
 import org.junit.rules.TemporaryFolder
 import spock.lang.Shared
 import spock.lang.Specification
-import com.google.common.collect.ImmutableList
 
 abstract class AbstractProfilerIntegrationTest extends Specification {
 
@@ -157,11 +156,122 @@ genrule(
         ReportFile(File logFile) {
             super(logFile)
         }
+
+        /**
+         * Asserts that this report file contains a single benchmarking scenario that uses a warm daemon.
+         */
+        void containsWarmDaemonScenario(String gradleVersion, String name = "default", List<String> tasks) {
+            def lines = this.lines
+            assert lines.size() == 27 // 4 headers, 16 executions, 7 stats
+            assert lines.get(0) == "scenario,${name}"
+            assert lines.get(1) == "version,${gradleVersion}"
+            assert lines.get(2) == "tasks,${tasks.join(", ")}"
+            assert lines.get(3) == "value,execution"
+            assert lines.get(4).matches("warm-up build #1,\\d+")
+            assert lines.get(9).matches("warm-up build #6,\\d+")
+            assert lines.get(10).matches("measured build #1,\\d+")
+            assert lines.get(11).matches("measured build #2,\\d+")
+            assert lines.get(19).matches("measured build #10,\\d+")
+            assert lines.get(20).matches("mean,\\d+\\.\\d+")
+            assert lines.get(23).matches("median,\\d+\\.\\d+")
+            assert lines.get(26).matches("stddev,\\d+\\.\\d+")
+        }
+
+        /**
+         * Asserts that this report file contains a single benchmarking scenario that uses a cold daemon.
+         */
+        void containsColdDaemonScenario(String gradleVersion, String name = "default", List<String> tasks) {
+            def lines = this.lines
+            assert lines.size() == 22 // 4 headers, 11 executions, 7 stats
+            assert lines.get(0) == "scenario,${name}"
+            assert lines.get(1) == "version,${gradleVersion}"
+            assert lines.get(2) == "tasks,${tasks.join(", ")}"
+            assert lines.get(3) == "value,execution"
+            assert lines.get(4).matches("warm-up build #1,\\d+")
+            assert lines.get(5).matches("measured build #1,\\d+")
+            assert lines.get(6).matches("measured build #2,\\d+")
+            assert lines.get(14).matches("measured build #10,\\d+")
+            assert lines.get(15).matches("mean,\\d+\\.\\d+")
+            assert lines.get(18).matches("median,\\d+\\.\\d+")
+            assert lines.get(21).matches("stddev,\\d+\\.\\d+")
+        }
+
+        /**
+         * Asserts that this report file contains a single benchmarking scenario that uses no daemon.
+         */
+        void containsNoDaemonScenario(String gradleVersion, String name = "default", List<String> tasks) {
+            def lines = this.lines
+            assert lines.size() == 22 // 4 headers, 11 executions, 7 stats
+            assert lines.get(0) == "scenario,${name}"
+            assert lines.get(1) == "version,${gradleVersion}"
+            assert lines.get(2) == "tasks,${tasks.join(", ")}"
+            assert lines.get(3) == "value,execution"
+            assert lines.get(4).matches("warm-up build #1,\\d+")
+            assert lines.get(5).matches("measured build #1,\\d+")
+            assert lines.get(6).matches("measured build #2,\\d+")
+            assert lines.get(14).matches("measured build #10,\\d+")
+            assert lines.get(15).matches("mean,\\d+\\.\\d+")
+            assert lines.get(18).matches("median,\\d+\\.\\d+")
+            assert lines.get(21).matches("stddev,\\d+\\.\\d+")
+        }
     }
 
     static class LogFile extends FileFixture {
         LogFile(File logFile) {
             super(logFile)
+        }
+
+        /**
+         * Asserts that this log file contains a single benchmarking scenario that uses a warm daemon.
+         */
+        void containsWarmDaemonScenario(String gradleVersion, String name = null, List<String> tasks) {
+            // Probe version, 6 warm up, 10 builds
+            containsScenario(name, gradleVersion)
+            assert find("* Running warm-up build").size() == 6
+            assert find("* Running measured build").size() == 10
+            assert find("<gradle-version: $gradleVersion>").size() == 17
+            assert find("<daemon: true").size() == 17
+            assert find("<daemon: false").size() == 0
+            assert find("<tasks: [help]>").size() == 1
+            assert find("<tasks: [${tasks.join(", ")}]>").size() == 16
+            assert containsOne("<invocations: 16>")
+        }
+
+        /**
+         * Asserts that this log file contains a single benchmarking scenario that uses a cold daemon.
+         */
+        void containsColdDaemonScenario(String gradleVersion, String name = null, List<String> tasks) {
+            // Probe version, 1 warm up, 10 builds
+            containsScenario(name, gradleVersion)
+            assert find("* Running warm-up build").size() == 1
+            assert find("* Running measured build").size() == 10
+            assert find("<gradle-version: $gradleVersion>").size() == 12
+            assert find("<daemon: true").size() == 12
+            assert find("<daemon: false").size() == 0
+            assert find("<tasks: [help]>").size() == 1
+            assert find("<tasks: [${tasks.join(", ")}]>").size() == 11
+            assert find("<invocations: 1>").size() == 12
+        }
+
+        /**
+         * Asserts that this log file contains a single benchmarking scenario that uses no daemon.
+         */
+        void containsNoDaemonScenario(String gradleVersion, String name = null, List<String> tasks) {
+            // Probe version, 1 warm up, 10 builds
+            containsScenario(name, gradleVersion)
+            assert find("* Running warm-up build").size() == 1
+            assert find("* Running measured build").size() == 10
+            assert find("<gradle-version: $gradleVersion>").size() == 12
+            assert find("<daemon: true").size() == 1
+            assert find("<daemon: false").size() == 11
+            assert find("<tasks: [help]>").size() == 1
+            assert find("<tasks: [${tasks.join(", ")}]>").size() == 11
+            assert find("<invocations: 1>").size() == 12
+        }
+
+        private containsScenario(String name, String gradleVersion) {
+            def display = name == null ? "scenario" : "scenario ${name}"
+            assert containsOne("* Running $display using Gradle $gradleVersion (scenario 1/1)")
         }
     }
 }

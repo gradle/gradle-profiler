@@ -167,6 +167,9 @@ The scenario file defines one or more scenarios. You can select which scenarios 
 
 Here is an example:
 
+    # Can specify scenarios to use when none are specified on the command line
+    default-scenarios = ["assemble"]
+    
     # Scenarios are run in alphabetical order
     assemble {
         # Run the 'assemble' task
@@ -180,7 +183,8 @@ Here is an example:
             key = "value"
         }
         cleanup-tasks = ["clean"]
-        run-using = tooling-api // value can be "cli", "no-daemon" or "tooling-api"
+        run-using = tooling-api // value can be "cli" or "tooling-api"
+        daemon = warm // value can be "warm", "cold", or "none"
 
         buck {
             targets = ["//thing/res_debug"]
@@ -192,7 +196,7 @@ Here is an example:
     ideaModel {
         # Fetch the IDEA tooling model
         model = "org.gradle.tooling.model.idea.IdeaProject"
-        # Can also runs tasks
+        # Can also run tasks
         # tasks = ["assemble"]
     }
     androidStudioSync {

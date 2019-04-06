@@ -308,7 +308,7 @@ assemble {
 help {
     versions = "$minimalSupportedGradleVersion"
     tasks = [help]
-    run-using = no-daemon
+    daemon = none
 }
 """
 
@@ -324,12 +324,12 @@ println "<daemon: " + gradle.services.get(org.gradle.internal.environment.Gradle
             "--benchmark")
 
         then:
-        // Probe version, 6 warm up, 10 builds
-        logFile.find("<gradle-version: $minimalSupportedGradleVersion>").size() == 1 + 16 * 2
+        // Probe version, 2 scenarios have 6 warm up, 10 builds, 1 scenario has 1 warm up, 10 builds
+        logFile.find("<gradle-version: $minimalSupportedGradleVersion>").size() == 1 + 16 + 11
         logFile.find("<gradle-version: 3.0").size() == 17
         logFile.find("<daemon: true").size() == 2 + 16 * 2
-        logFile.find("<daemon: false").size() == 16
-        logFile.find("<tasks: [help]>").size() == 2 + 16
+        logFile.find("<daemon: false").size() == 11
+        logFile.find("<tasks: [help]>").size() == 2 + 11
         logFile.find("<tasks: [assemble]>").size() == 16 * 2
 
         logFile.containsOne("* Running scenario assemble using Gradle 3.0 (scenario 1/3)")

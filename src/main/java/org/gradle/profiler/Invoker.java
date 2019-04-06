@@ -88,4 +88,20 @@ public enum Invoker {
     public boolean isColdDaemon() {
         return false;
     }
+
+    public int benchmarkWarmUps() {
+        if (isGradle() && !isReuseDaemon()) {
+            // Do not warm up the daemon if it is not being reused
+            return 1;
+        }
+        return 6;
+    }
+
+    public int profileWarmUps() {
+        if (isGradle() && !isReuseDaemon()) {
+            // Do not warm up the daemon if it is not being reused
+            return 1;
+        }
+        return 2;
+    }
 }
