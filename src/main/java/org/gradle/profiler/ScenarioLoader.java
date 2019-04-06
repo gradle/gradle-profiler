@@ -16,6 +16,7 @@ class ScenarioLoader {
     private static final String CLEANUP_TASKS = "cleanup-tasks";
     private static final String GRADLE_ARGS = "gradle-args";
     private static final String RUN_USING = "run-using";
+    private static final String DAEMON = "daemon";
     private static final String SYSTEM_PROPERTIES = "system-properties";
     private static final String BAZEL = "bazel";
     private static final String BUCK = "buck";
@@ -41,7 +42,7 @@ class ScenarioLoader {
     private static final String ANDROID_STUDIO_SYNC = "android-studio-sync";
 
     private static final List<String> ALL_SCENARIO_KEYS = Arrays.asList(
-        VERSIONS, TASKS, CLEANUP_TASKS, GRADLE_ARGS, RUN_USING, SYSTEM_PROPERTIES, WARM_UP_COUNT, APPLY_ABI_CHANGE_TO, APPLY_NON_ABI_CHANGE_TO, APPLY_ANDROID_RESOURCE_CHANGE_TO, APPLY_ANDROID_RESOURCE_VALUE_CHANGE_TO, APPLY_ANDROID_MANIFEST_CHANGE_TO, APPLY_ANDROID_LAYOUT_CHANGE_TO, APPLY_PROPERTY_RESOURCE_CHANGE_TO, APPLY_CPP_SOURCE_CHANGE_TO, APPLY_H_SOURCE_CHANGE_TO, CLEAR_BUILD_CACHE_BEFORE, CLEAR_TRANSFORM_CACHE_BEFORE, SHOW_BUILD_CACHE_SIZE, GIT_CHECKOUT, GIT_REVERT, BAZEL, BUCK, MAVEN, MODEL, ANDROID_STUDIO_SYNC
+        VERSIONS, TASKS, CLEANUP_TASKS, GRADLE_ARGS, RUN_USING, SYSTEM_PROPERTIES, WARM_UP_COUNT, APPLY_ABI_CHANGE_TO, APPLY_NON_ABI_CHANGE_TO, APPLY_ANDROID_RESOURCE_CHANGE_TO, APPLY_ANDROID_RESOURCE_VALUE_CHANGE_TO, APPLY_ANDROID_MANIFEST_CHANGE_TO, APPLY_ANDROID_LAYOUT_CHANGE_TO, APPLY_PROPERTY_RESOURCE_CHANGE_TO, APPLY_CPP_SOURCE_CHANGE_TO, APPLY_H_SOURCE_CHANGE_TO, CLEAR_BUILD_CACHE_BEFORE, CLEAR_TRANSFORM_CACHE_BEFORE, SHOW_BUILD_CACHE_SIZE, GIT_CHECKOUT, GIT_REVERT, BAZEL, BUCK, MAVEN, MODEL, ANDROID_STUDIO_SYNC, DAEMON
     );
     private static final List<String> BAZEL_KEYS = Arrays.asList(TARGETS);
     private static final List<String> BUCK_KEYS = Arrays.asList(TARGETS, TYPE);
@@ -91,7 +92,7 @@ class ScenarioLoader {
 
         for (GradleBuildConfiguration version : versions) {
             File outputDir = versions.size() == 1 ? settings.getOutputDir() : new File(settings.getOutputDir(), version.getGradleVersion().getVersion());
-            scenarios.add(new AdhocGradleScenarioDefinition(version, settings.getInvoker(), new RunTasksAction(settings.getTargets()), settings.getSystemProperties(), new BuildMutatorFactory(Collections.emptyList()), settings.getWarmUpCount(), settings.getBuildCount(), outputDir));
+            scenarios.add(new AdhocGradleScenarioDefinition(version, settings.getInvoker(), new RunTasksAction(settings.getTargets()), settings.getSystemProperties(), new BuildMutatorFactory(Collections.emptyList()), getWarmUpCount(settings, settings.getInvoker(), settings.getWarmUpCount()), getBuildCount(settings), outputDir));
         }
         return scenarios;
     }
@@ -121,8 +122,6 @@ class ScenarioLoader {
                 }
             }
 
-            int warmUpCount = ConfigUtil.integer(scenario, WARM_UP_COUNT, settings.getWarmUpCount());
-
             List<Supplier<BuildMutator>> mutators = new ArrayList<>();
             maybeAddMutator(scenario, scenarioName, settings.getProjectDir(), APPLY_ABI_CHANGE_TO, ApplyAbiChangeToSourceFileMutator.class, mutators);
             maybeAddMutator(scenario, scenarioName, settings.getProjectDir(), APPLY_NON_ABI_CHANGE_TO, ApplyNonAbiChangeToSourceFileMutator.class, mutators);
@@ -141,6 +140,8 @@ class ScenarioLoader {
 
             BuildMutatorFactory buildMutatorFactory = new BuildMutatorFactory(mutators);
 
+            int buildCount = getBuildCount(settings);
+
             if (scenario.hasPath(BAZEL) && settings.isBazel()) {
                 if (settings.isProfile()) {
                     throw new IllegalArgumentException("Can only profile scenario '" + scenarioName + "' when building using Gradle.");
@@ -153,7 +154,8 @@ class ScenarioLoader {
                 }
                 List<String> targets = ConfigUtil.strings(executionInstructions, TARGETS);
                 File outputDir = new File(settings.getOutputDir(), scenarioName + "-bazel");
-                definitions.add(new BazelScenarioDefinition(scenarioName, targets, buildMutatorFactory, warmUpCount, settings.getBuildCount(), outputDir));
+                int warmUpCount = getWarmUpCount(settings, scenario);
+                definitions.add(new BazelScenarioDefinition(scenarioName, targets, buildMutatorFactory, warmUpCount, buildCount, outputDir));
             } else if (scenario.hasPath(BUCK) && settings.isBuck()) {
                 if (settings.isProfile()) {
                     throw new IllegalArgumentException("Can only profile scenario '" + scenarioName + "' when building using Gradle.");
@@ -167,7 +169,8 @@ class ScenarioLoader {
                 List<String> targets = ConfigUtil.strings(executionInstructions, TARGETS);
                 String type = ConfigUtil.string(executionInstructions, TYPE, null);
                 File outputDir = new File(settings.getOutputDir(), scenarioName + "-buck");
-                definitions.add(new BuckScenarioDefinition(scenarioName, targets, type, buildMutatorFactory, warmUpCount, settings.getBuildCount(), outputDir));
+                int warmUpCount = getWarmUpCount(settings, scenario);
+                definitions.add(new BuckScenarioDefinition(scenarioName, targets, type, buildMutatorFactory, warmUpCount, buildCount, outputDir));
             } else if (scenario.hasPath(MAVEN) && settings.isMaven()) {
                 if (settings.isProfile()) {
                     throw new IllegalArgumentException("Can only profile scenario '" + scenarioName + "' when building using Gradle.");
@@ -180,7 +183,8 @@ class ScenarioLoader {
                 }
                 List<String> targets = ConfigUtil.strings(executionInstructions, TARGETS);
                 File outputDir = new File(settings.getOutputDir(), scenarioName + "-maven");
-                definitions.add(new MavenScenarioDefinition(scenarioName, targets, buildMutatorFactory, warmUpCount, settings.getBuildCount(), outputDir));
+                int warmUpCount = getWarmUpCount(settings, scenario);
+                definitions.add(new MavenScenarioDefinition(scenarioName, targets, buildMutatorFactory, warmUpCount, buildCount, outputDir));
             } else if (!settings.isBazel() && !settings.isBuck() && !settings.isMaven()) {
                 List<GradleBuildConfiguration> versions = ConfigUtil.strings(scenario, VERSIONS, settings.getVersions()).stream().map(inspector::readConfiguration).collect(
                     Collectors.toList());
@@ -189,20 +193,85 @@ class ScenarioLoader {
                 }
 
                 List<String> gradleArgs = ConfigUtil.strings(scenario, GRADLE_ARGS);
-                Invoker invoker = ConfigUtil.invoker(scenario, RUN_USING, settings.getInvoker());
+                Invoker invoker = invoker(scenario, settings.getInvoker());
+                int warmUpCount = getWarmUpCount(settings, invoker, scenario);
                 BuildAction buildAction = getBuildAction(scenario, scenarioFile);
                 BuildAction cleanupAction = getCleanupAction(scenario);
                 Map<String, String> systemProperties = ConfigUtil.map(scenario, SYSTEM_PROPERTIES, settings.getSystemProperties());
                 for (GradleBuildConfiguration version : versions) {
                     File outputDir = versions.size() == 1 ? new File(settings.getOutputDir(), scenarioName) : new File(settings.getOutputDir(), scenarioName + "/" + version.getGradleVersion().getVersion());
                     definitions.add(new GradleScenarioDefinition(scenarioName, invoker, version, buildAction, cleanupAction, gradleArgs, systemProperties,
-                        buildMutatorFactory, warmUpCount, settings.getBuildCount(), outputDir));
+                        buildMutatorFactory, warmUpCount, buildCount, outputDir));
                 }
             }
         }
 
         return definitions;
     }
+
+    private static int getBuildCount(InvocationSettings settings) {
+        if (settings.isDryRun()) {
+            return 1;
+        }
+        if (settings.getBuildCount() != null) {
+            return settings.getBuildCount();
+        }
+        if (settings.isBenchmark()) {
+            return 10;
+        } else {
+            return 1;
+        }
+    }
+
+    private static int getWarmUpCount(InvocationSettings settings, Config scenario) {
+        return getWarmUpCount(settings, settings.getInvoker(), ConfigUtil.optionalInteger(scenario, WARM_UP_COUNT));
+    }
+
+    private static int getWarmUpCount(InvocationSettings settings, Invoker invoker, Config scenario) {
+        return getWarmUpCount(settings, invoker, ConfigUtil.optionalInteger(scenario, WARM_UP_COUNT));
+    }
+
+    private static int getWarmUpCount(InvocationSettings settings, Invoker invoker, Integer providedValue) {
+        if (settings.isDryRun()) {
+            return 1;
+        }
+        if (providedValue != null) {
+            return providedValue;
+        }
+        if (settings.getWarmUpCount() != null) {
+            return settings.getWarmUpCount();
+        }
+        if (settings.isBenchmark()) {
+            return invoker.benchmarkWarmUps();
+        } else {
+            return invoker.profileWarmUps();
+        }
+    }
+
+    public static Invoker invoker(Config config, Invoker defaultValue) {
+        Invoker invoker = defaultValue;
+   		if (config.hasPath(RUN_USING)) {
+   			String value = ConfigUtil.string(config, RUN_USING, null);
+   			if (value.equals("cli")) {
+   				invoker = Invoker.Cli;
+   			} else if (value.equals("tooling-api")) {
+   				invoker = Invoker.ToolingApi;
+   			} else {
+                throw new IllegalArgumentException("Unexpected value for '" + RUN_USING + "' provided: " + value);
+            }
+   		}
+        if (config.hasPath(DAEMON)) {
+            String value = ConfigUtil.string(config, DAEMON, null);
+            if (value.equals("none")) {
+                invoker = Invoker.CliNoDaemon;
+            } else if (value.equals("cold")) {
+                invoker = invoker == Invoker.Cli ? Invoker.CliColdDaemon : Invoker.ToolingApiColdDaemon;
+            } else if (!value.equals("warm")) {
+                throw new IllegalArgumentException("Unexpected value for '" + DAEMON + "' provided: " + value);
+            } // else, already warm
+        }
+        return invoker;
+   	}
 
     private static BuildAction getCleanupAction(Config scenario) {
         List<String> tasks = ConfigUtil.strings(scenario, CLEANUP_TASKS);

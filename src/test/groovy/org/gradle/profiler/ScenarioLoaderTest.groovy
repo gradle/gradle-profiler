@@ -8,7 +8,8 @@ import spock.lang.Specification
 import static org.gradle.profiler.ScenarioLoader.loadScenarios
 
 class ScenarioLoaderTest extends Specification {
-    @Rule TemporaryFolder tmpDir = new TemporaryFolder()
+    @Rule
+    TemporaryFolder tmpDir = new TemporaryFolder()
 
     File projectDir
     File gradleUserHomeDir
@@ -21,8 +22,8 @@ class ScenarioLoaderTest extends Specification {
         scenarioFile = tmpDir.newFile()
     }
 
-    private settings(Invoker invoker = Invoker.Cli) {
-        new InvocationSettings(projectDir, Profiler.NONE, true, outputDir, invoker, false, scenarioFile, [], [], [:], gradleUserHomeDir, 1, 1, false)
+    private settings(Invoker invoker = Invoker.Cli, boolean benchmark = true, Integer warmups = null, Integer iterations = null) {
+        new InvocationSettings(projectDir, Profiler.NONE, benchmark, outputDir, invoker, false, scenarioFile, [], [], [:], gradleUserHomeDir, warmups, iterations, false)
     }
 
     def "can load single scenario"() {
@@ -53,6 +54,130 @@ class ScenarioLoaderTest extends Specification {
         expect:
         def scenario = scenarios[0] as GradleScenarioDefinition
         scenario.action.tasks.empty
+    }
+
+    def "scenario uses invoker specified on command-line when none is specified"() {
+        scenarioFile << """
+            default {
+            }
+            withInvoker {
+                run-using = tooling-api
+            }
+        """
+        def settings1 = settings(Invoker.ToolingApi)
+        def settings2 = settings(Invoker.CliColdDaemon)
+
+        expect:
+        def scenarios1 = loadScenarios(scenarioFile, settings1, Mock(GradleBuildConfigurationReader))
+        (scenarios1[0] as GradleScenarioDefinition).invoker == Invoker.ToolingApi
+        (scenarios1[1] as GradleScenarioDefinition).invoker == Invoker.ToolingApi
+
+        def scenarios2 = loadScenarios(scenarioFile, settings2, Mock(GradleBuildConfigurationReader))
+        (scenarios2[0] as GradleScenarioDefinition).invoker == Invoker.CliColdDaemon
+        (scenarios2[1] as GradleScenarioDefinition).invoker == Invoker.ToolingApi
+    }
+
+    def "scenario can define how to invoke Gradle"() {
+        def settings = settings()
+        scenarioFile << """
+            cli {
+                run-using = cli
+            }
+            toolingApi {
+                run-using = tooling-api
+            }
+        """
+        def scenarios = loadScenarios(scenarioFile, settings, Mock(GradleBuildConfigurationReader))
+
+        expect:
+        def cli = scenarios[0] as GradleScenarioDefinition
+        cli.invoker == Invoker.Cli
+        def toolingApi = scenarios[1] as GradleScenarioDefinition
+        toolingApi.invoker == Invoker.ToolingApi
+    }
+
+    def "scenario can define what state the daemon should be in for each measured build"() {
+        def settings = settings(Invoker.ToolingApi)
+        scenarioFile << """
+            cliCold {
+                run-using = cli
+                daemon = cold
+            }
+            none {
+                daemon = none
+            }
+            cold {
+                daemon = cold
+            }
+            warm {
+                daemon = warm
+            }
+        """
+        def scenarios = loadScenarios(scenarioFile, settings, Mock(GradleBuildConfigurationReader))
+
+        expect:
+        def cliCold = scenarios[0] as GradleScenarioDefinition
+        cliCold.invoker == Invoker.CliColdDaemon
+        def cold = scenarios[1] as GradleScenarioDefinition
+        cold.invoker == Invoker.ToolingApiColdDaemon
+        def none = scenarios[2] as GradleScenarioDefinition
+        none.invoker == Invoker.CliNoDaemon
+        def warm = scenarios[3] as GradleScenarioDefinition
+        warm.invoker == Invoker.ToolingApi
+    }
+
+    def "uses warm-up and iteration counts based on command-line options when Gradle invocation defined by scenario"() {
+        def benchmarkSettings = settings(Invoker.ToolingApi, true, 123, 509)
+        def profileSettings = settings(Invoker.ToolingApi, false, 25, 44)
+
+        scenarioFile << """
+            default {
+                run-using = tooling-api
+                daemon = warm
+            }
+        """
+        def benchmarkScenarios = loadScenarios(scenarioFile, benchmarkSettings, Mock(GradleBuildConfigurationReader))
+        def profileScenarios = loadScenarios(scenarioFile, profileSettings, Mock(GradleBuildConfigurationReader))
+
+        expect:
+        def benchmarkScenario = benchmarkScenarios[0] as GradleScenarioDefinition
+        benchmarkScenario.warmUpCount == 123
+        benchmarkScenario.buildCount == 509
+
+        def profileScenario = profileScenarios[0] as GradleScenarioDefinition
+        profileScenario.warmUpCount == 25
+        profileScenario.buildCount == 44
+    }
+
+    def "uses warm-up and iteration counts based on Gradle invocation defined by scenario"() {
+        def benchmarkSettings = settings()
+        def profileSettings = settings(Invoker.ToolingApi, false)
+
+        scenarioFile << """
+            default {
+                run-using = ${runUsing}
+                daemon = ${daemon}
+            }
+        """
+        def benchmarkScenarios = loadScenarios(scenarioFile, benchmarkSettings, Mock(GradleBuildConfigurationReader))
+        def profileScenarios = loadScenarios(scenarioFile, profileSettings, Mock(GradleBuildConfigurationReader))
+
+        expect:
+        def benchmarkScenario = benchmarkScenarios[0] as GradleScenarioDefinition
+        benchmarkScenario.warmUpCount == warmups
+        benchmarkScenario.buildCount == 10
+
+        def profileScenario = profileScenarios[0] as GradleScenarioDefinition
+        profileScenario.warmUpCount == profileWarmups
+        profileScenario.buildCount == 1
+
+        where:
+        runUsing      | daemon | warmups | profileWarmups
+        "tooling-api" | "warm" | 6       | 2
+        "tooling-api" | "cold" | 1       | 1
+        "cli"         | "warm" | 6       | 2
+        "cli"         | "cold" | 1       | 1
+        "cli"         | "none" | 1       | 1
     }
 
     def "can load tooling model scenarios"() {
@@ -136,7 +261,7 @@ class ScenarioLoaderTest extends Specification {
                 tasks = ["bela"]
             }
             
-            include file("${otherConf.absolutePath.replace((char)'\\', (char) '/')}")
+            include file("${otherConf.absolutePath.replace((char) '\\', (char) '/')}")
         """
         def scenarios = loadScenarios(scenarioFile, settings, Mock(GradleBuildConfigurationReader))
         expect:

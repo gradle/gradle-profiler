@@ -23,29 +23,11 @@ public class ConfigUtil {
 		}
 	}
 
-	public static Invoker invoker(Config config, String key, Invoker defaultValue) {
-		if (config.hasPath(key)) {
-			String value = config.getAnyRef(key).toString();
-			if (value.equals("no-daemon")) {
-				return Invoker.CliNoDaemon;
-			}
-			if (value.equals("cli")) {
-				return Invoker.Cli;
-			}
-			if (value.equals("tooling-api")) {
-				return Invoker.ToolingApi;
-			}
-			throw new IllegalArgumentException("Unexpected value for '" + key + "' provided: " + value);
-		} else {
-			return defaultValue;
-		}
-	}
-
-	public static int integer(Config config, String key, int defaultValue) {
+	public static Integer optionalInteger(Config config, String key) {
 		if (config.hasPath(key)) {
 			return Integer.valueOf(config.getString(key));
 		} else {
-			return defaultValue;
+			return null;
 		}
 	}
 
@@ -54,6 +36,14 @@ public class ConfigUtil {
 			return config.getEnum(type, key);
 		} else {
 			return defaultValue;
+		}
+	}
+
+	public static String string(Config config, String key) {
+		if (config.hasPath(key)) {
+			return config.getString(key);
+		} else {
+            throw new IllegalArgumentException("Key '" + key + "' is missing.");
 		}
 	}
 
