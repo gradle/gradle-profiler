@@ -1,10 +1,13 @@
 package org.gradle.profiler.mutations;
 
 import com.typesafe.config.Config;
+import org.apache.commons.io.FileUtils;
 import org.gradle.profiler.BuildMutator;
 import org.gradle.profiler.ConfigUtil;
 
 import java.io.File;
+import java.io.IOException;
+import java.nio.file.Files;
 import java.util.function.Supplier;
 
 public abstract class AbstractCleanupMutator implements BuildMutator {
@@ -49,12 +52,26 @@ public abstract class AbstractCleanupMutator implements BuildMutator {
                 throw new IllegalStateException("Cannot find cache directories in " + gradleUserHome);
             }
             for (File cacheDir : cacheDirs) {
-                cleanupCacheDir(cacheDir);
+                if (cacheDir.isDirectory()) {
+                    cleanupCacheDir(cacheDir);
+                }
             }
         }
     }
 
     protected abstract void cleanupCacheDir(File cacheDir);
+
+    protected static void delete(File f) {
+        try {
+            if (f.isFile()) {
+                Files.delete(f.toPath());
+            } else {
+                FileUtils.deleteDirectory(f);
+            }
+        } catch (IOException e) {
+            throw new IllegalStateException("Could not delete " + f, e);
+        }
+    }
 
     public static abstract class Configurator implements BuildMutatorConfigurator {
         private final File gradleUserHome;

@@ -1,6 +1,5 @@
 package org.gradle.profiler.mutations;
 
-import org.apache.commons.io.FileUtils;
 import org.gradle.profiler.BuildMutator;
 
 import java.io.File;
@@ -15,7 +14,7 @@ public class ClearBuildCacheMutator extends AbstractCleanupMutator {
 
     @Override
     protected void cleanupCacheDir(File cacheDir) {
-        Arrays.stream(Objects.requireNonNull(cacheDir.listFiles((file) -> file.getName().length() == 32))).forEach(FileUtils::deleteQuietly);
+        Arrays.stream(Objects.requireNonNull(cacheDir.listFiles((file) -> file.getName().length() == 32))).forEach(AbstractCleanupMutator::delete);
     }
 
     public static class Configurator extends AbstractCleanupMutator.Configurator {

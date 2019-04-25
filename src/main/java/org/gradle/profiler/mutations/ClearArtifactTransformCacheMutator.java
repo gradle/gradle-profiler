@@ -1,6 +1,5 @@
 package org.gradle.profiler.mutations;
 
-import org.apache.commons.io.FileUtils;
 import org.gradle.profiler.BuildMutator;
 
 import java.io.File;
@@ -21,7 +20,7 @@ public class ClearArtifactTransformCacheMutator extends AbstractCleanupMutator {
             cacheDir,
             (dir, name) -> name.startsWith("files-")
         ).flatMap(file -> filesAsStream(file, (dir, name) -> !name.endsWith(".lock")))
-            .forEach(FileUtils::deleteQuietly);
+            .forEach(AbstractCleanupMutator::delete);
     }
 
     private Stream<File> filesAsStream(File dir, FilenameFilter filter) {
