@@ -3,6 +3,9 @@
   <name>MacOS - Java 1.8</name>
   <description />
   <settings>
+    <disabled-settings>
+      <setting-ref ref="vcsTrigger" />
+    </disabled-settings>
     <parameters>
       <param name="env.JAVA_HOME" value="%macos.java8.oracle.64bit%" />
     </parameters>
