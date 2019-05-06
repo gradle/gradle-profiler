@@ -262,7 +262,7 @@ You can compare Gradle against Bazel, Buck, and Maven by specifying their equiva
         tasks = ["build"]
         cleanup-tasks = ["clean"]
         maven {
-            targets = ["clean build"]
+            targets = ["clean", "build"]
         }
     }
 
