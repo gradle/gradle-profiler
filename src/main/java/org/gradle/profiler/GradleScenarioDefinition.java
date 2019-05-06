@@ -17,8 +17,9 @@ public class GradleScenarioDefinition extends ScenarioDefinition {
     private final BuildAction cleanupAction;
     private final List<String> gradleArgs;
     private final Map<String, String> systemProperties;
+    private final List<String> jvmArgs;
 
-    public GradleScenarioDefinition(String name, GradleBuildInvoker invoker, GradleBuildConfiguration buildConfiguration, BuildAction buildAction, BuildAction cleanupAction, List<String> gradleArgs, Map<String, String> systemProperties, Supplier<BuildMutator> buildMutator, int warmUpCount, int buildCount, File outputDir) {
+    public GradleScenarioDefinition(String name, GradleBuildInvoker invoker, GradleBuildConfiguration buildConfiguration, BuildAction buildAction, BuildAction cleanupAction, List<String> gradleArgs, Map<String, String> systemProperties, Supplier<BuildMutator> buildMutator, int warmUpCount, int buildCount, File outputDir, List<String> jvmArgs) {
         super(name, buildMutator, warmUpCount, buildCount, outputDir);
         this.invoker = invoker;
         this.buildAction = buildAction;
@@ -26,6 +27,7 @@ public class GradleScenarioDefinition extends ScenarioDefinition {
         this.cleanupAction = cleanupAction;
         this.gradleArgs = gradleArgs;
         this.systemProperties = systemProperties;
+        this.jvmArgs = jvmArgs;
     }
 
     @Override
@@ -72,6 +74,10 @@ public class GradleScenarioDefinition extends ScenarioDefinition {
         return systemProperties;
     }
 
+    public List<String> getJvmArgs() {
+        return jvmArgs;
+    }
+
     @Override
     public void visitProblems(InvocationSettings settings, Consumer<String> reporter) {
         if (getWarmUpCount() < 1) {
@@ -95,6 +101,9 @@ public class GradleScenarioDefinition extends ScenarioDefinition {
             for (Map.Entry<String, String> entry : getSystemProperties().entrySet()) {
                 out.println("    " + entry.getKey() + "=" + entry.getValue());
             }
+        }
+        if (!jvmArgs.isEmpty()) {
+            out.println("  Jvm args: " + getJvmArgs());
         }
     }
 }

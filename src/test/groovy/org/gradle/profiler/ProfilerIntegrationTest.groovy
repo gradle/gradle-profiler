@@ -1605,4 +1605,33 @@ buildTarget {
         logFile.find("> org.gradle.profiler.number = 1").size() == 4
         logFile.find("> org.gradle.profiler.number = 2").size() == 4
     }
+
+    def "override jvm args"() {
+        given:
+        def scenarios = file('performance.scenario')
+        scenarios.text = """
+            help {
+                tasks = ["jvmArgs"]
+                jvm-args = ["-Xmx2G", "-Xms1G"]
+            }
+        """
+
+        getBuildFile() << """
+            import java.lang.management.ManagementFactory
+
+            task jvmArgs {
+                doFirst {
+                    def jvmArgs = ManagementFactory.runtimeMXBean.inputArguments
+                    assert jvmArgs.contains("-Xmx2G")
+                    assert jvmArgs.contains("-Xms1G")
+                }
+            }
+        """
+
+        when:
+        new Main().run("--project-dir", projectDir.absolutePath, "--output-dir", outputDir.absolutePath, "--gradle-version", minimalSupportedGradleVersion, "--benchmark", "--scenario-file", scenarios.absolutePath)
+
+        then:
+        noExceptionThrown()
+    }
 }

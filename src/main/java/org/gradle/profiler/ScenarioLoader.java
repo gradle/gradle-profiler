@@ -40,9 +40,10 @@ class ScenarioLoader {
     private static final String TYPE = "type";
     private static final String MODEL = "model";
     private static final String ANDROID_STUDIO_SYNC = "android-studio-sync";
+    private static final String JVM_ARGS = "jvm-args";
 
     private static final List<String> ALL_SCENARIO_KEYS = Arrays.asList(
-        VERSIONS, TASKS, CLEANUP_TASKS, GRADLE_ARGS, RUN_USING, SYSTEM_PROPERTIES, WARM_UP_COUNT, APPLY_ABI_CHANGE_TO, APPLY_NON_ABI_CHANGE_TO, APPLY_ANDROID_RESOURCE_CHANGE_TO, APPLY_ANDROID_RESOURCE_VALUE_CHANGE_TO, APPLY_ANDROID_MANIFEST_CHANGE_TO, APPLY_ANDROID_LAYOUT_CHANGE_TO, APPLY_PROPERTY_RESOURCE_CHANGE_TO, APPLY_CPP_SOURCE_CHANGE_TO, APPLY_H_SOURCE_CHANGE_TO, CLEAR_BUILD_CACHE_BEFORE, CLEAR_TRANSFORM_CACHE_BEFORE, SHOW_BUILD_CACHE_SIZE, GIT_CHECKOUT, GIT_REVERT, BAZEL, BUCK, MAVEN, MODEL, ANDROID_STUDIO_SYNC, DAEMON
+        VERSIONS, TASKS, CLEANUP_TASKS, GRADLE_ARGS, RUN_USING, SYSTEM_PROPERTIES, WARM_UP_COUNT, APPLY_ABI_CHANGE_TO, APPLY_NON_ABI_CHANGE_TO, APPLY_ANDROID_RESOURCE_CHANGE_TO, APPLY_ANDROID_RESOURCE_VALUE_CHANGE_TO, APPLY_ANDROID_MANIFEST_CHANGE_TO, APPLY_ANDROID_LAYOUT_CHANGE_TO, APPLY_PROPERTY_RESOURCE_CHANGE_TO, APPLY_CPP_SOURCE_CHANGE_TO, APPLY_H_SOURCE_CHANGE_TO, CLEAR_BUILD_CACHE_BEFORE, CLEAR_TRANSFORM_CACHE_BEFORE, SHOW_BUILD_CACHE_SIZE, GIT_CHECKOUT, GIT_REVERT, BAZEL, BUCK, MAVEN, MODEL, ANDROID_STUDIO_SYNC, DAEMON, JVM_ARGS
     );
     private static final List<String> BAZEL_KEYS = Arrays.asList(TARGETS);
     private static final List<String> BUCK_KEYS = Arrays.asList(TARGETS, TYPE);
@@ -198,10 +199,11 @@ class ScenarioLoader {
                 BuildAction buildAction = getBuildAction(scenario, scenarioFile);
                 BuildAction cleanupAction = getCleanupAction(scenario);
                 Map<String, String> systemProperties = ConfigUtil.map(scenario, SYSTEM_PROPERTIES, settings.getSystemProperties());
+                List<String> jvmArgs = ConfigUtil.strings(scenario, JVM_ARGS);
                 for (GradleBuildConfiguration version : versions) {
                     File outputDir = versions.size() == 1 ? new File(settings.getOutputDir(), scenarioName) : new File(settings.getOutputDir(), scenarioName + "/" + version.getGradleVersion().getVersion());
                     definitions.add(new GradleScenarioDefinition(scenarioName, invoker, version, buildAction, cleanupAction, gradleArgs, systemProperties,
-                        buildMutatorFactory, warmUpCount, buildCount, outputDir));
+                        buildMutatorFactory, warmUpCount, buildCount, outputDir, jvmArgs));
                 }
             }
         }

@@ -70,6 +70,8 @@ public class GradleScenarioInvoker extends ScenarioInvoker<GradleScenarioDefinit
             buildConfiguration.printVersionInfo();
 
             List<String> allBuildsJvmArgs = new ArrayList<>(buildConfiguration.getJvmArguments());
+            allBuildsJvmArgs.addAll(scenario.getJvmArgs());
+
             for (Map.Entry<String, String> entry : scenario.getSystemProperties().entrySet()) {
                 allBuildsJvmArgs.add("-D" + entry.getKey() + "=" + entry.getValue());
             }
