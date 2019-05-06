@@ -224,6 +224,7 @@ A scenario can define changes that should be applied to the source before each b
 - `show-build-cache-size`: Shows the number of files and their size in the build cache before scenario execution, and after each cleanup and build round..
 - `git-checkout`: Checks out a specific commit for the build step, and a different one for the cleanup step.
 - `git-revert`: Reverts a given set of commits before the build and resets it afterward.
+- `git-commit`: Checks out a commit and runs the profiler on that commit.
 - `jvm-args`: Sets or overrides the jvm arguments set by `org.gradle.jvmargs` in gradle.properties.
 
 They can be added to a scenario file like this:
@@ -247,6 +248,7 @@ They can be added to a scenario file like this:
             build = "master"
         }
         git-revert = ["efb43a1"]
+        git-commit = "efb43a1"
         jvm-args = ["-Xmx2500m", "-XX:MaxMetaspaceSize=512m"]
     }
 

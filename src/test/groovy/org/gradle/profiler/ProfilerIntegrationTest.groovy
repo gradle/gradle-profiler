@@ -1606,6 +1606,37 @@ buildTarget {
         logFile.find("> org.gradle.profiler.number = 2").size() == 4
     }
 
+    def "does git commit when asked"() {
+        given:
+        def repoDir = new File(projectDir, "repo")
+        def repo = new TestGitRepo(repoDir)
+
+        new File(repo.directory, "file.txt").text = "Final"
+
+        new File(repoDir, "build.gradle") << """
+            task test {
+                doFirst {
+                    assert file("file.txt").text == "Original"
+                }
+            }
+        """
+
+        def scenarios = file("performance.scenario")
+        scenarios.text = """
+buildTarget {
+    git-commit = \"${repo.originalCommit}\"
+    tasks = ["test"]
+}
+"""
+
+        when:
+        new Main().run("--project-dir", repoDir.absolutePath, "--output-dir", outputDir.absolutePath, "--gradle-version", minimalSupportedGradleVersion, "--benchmark", "--scenario-file", scenarios.absolutePath, "--warmups", "1", "--iterations", "1")
+
+        then:
+        repo.atFinalCommit()
+        repo.hasFinalContent()
+    }
+
     def "override jvm args"() {
         given:
         def scenarios = file('performance.scenario')
