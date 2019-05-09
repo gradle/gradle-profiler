@@ -47,4 +47,45 @@ class GitCheckoutMutatorTest extends Specification {
         then:
         repo.atFinalCommit()
     }
+
+    def "checks out target commit and has no cleanup commit"() {
+        given:
+        def repo = new TestGitRepo(tmpDir.newFolder())
+        def mutator = new GitCheckoutMutator(repo.directory, null, repo.getOriginalCommit())
+
+        when:
+        mutator.beforeScenario()
+        then:
+        repo.atFinalCommit()
+
+        when:
+        mutator.beforeCleanup()
+        then:
+        repo.atFinalCommit()
+
+        when:
+        mutator.afterCleanup()
+        then:
+        repo.atFinalCommit()
+
+        when:
+        mutator.beforeBuild()
+        then:
+        repo.atOriginalCommit()
+
+        when:
+        mutator.afterBuild(new RuntimeException("Error"))
+        then:
+        repo.atOriginalCommit()
+
+        when:
+        mutator.afterBuild(null)
+        then:
+        repo.atFinalCommit()
+
+        when:
+        mutator.afterScenario()
+        then:
+        repo.atFinalCommit()
+    }
 }
