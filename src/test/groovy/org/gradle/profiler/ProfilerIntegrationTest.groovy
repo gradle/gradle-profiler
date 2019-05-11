@@ -1574,6 +1574,43 @@ buildTarget {
         repo.hasFinalContent()
     }
 
+    def "does Git checkout when asked with null cleanup"() {
+        given:
+        def repoDir = new File(projectDir, "repo")
+        def repo = new TestGitRepo(repoDir)
+
+        new File(repoDir, "build.gradle") << """
+            task cleanTest {
+                doFirst {
+                    assert file("file.txt").text == "Final"
+                }
+            }
+            task test {
+                doFirst {
+                    assert file("file.txt").text == "Modified"
+                }
+            }
+        """
+
+        def scenarios = file("performance.scenario")
+        scenarios.text = """
+buildTarget {
+    git-checkout = {
+        build = ${repo.modifiedCommit}
+    }
+    cleanup-tasks = ["cleanTest"]
+    tasks = ["test"]
+}
+"""
+
+        when:
+        new Main().run("--project-dir", repoDir.absolutePath, "--output-dir", outputDir.absolutePath, "--benchmark", "--scenario-file", scenarios.absolutePath, "--gradle-version", minimalSupportedGradleVersion, "buildTarget", "--warmups", "1", "--iterations", "1")
+
+        then:
+        repo.atFinalCommit()
+        repo.hasFinalContent()
+    }
+
     def "sets system properties with profile parameters"() {
         given:
         buildFile << """
