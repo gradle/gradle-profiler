@@ -297,5 +297,3 @@ You can compare Gradle against Bazel, Buck, and Maven by specifying their equiva
         }
     }
 
-
-broken!
