@@ -67,8 +67,8 @@ In order to create a build scan of your build, use `--profile buildscan`. The bu
 Async profiler provides low-overhead CPU, allocation and perf event sampling on Linux and MacOS. 
 It also correctly handles native method calls, making it preferable to JFR on these operating systems. 
 
-You can use async profiler to profile a Gradle build using `--profiler async-profiler`. By default, this will download an Async profiler 
-release from [Github](https://github.com/jvm-profiling-tools/async-profiler/releases) and install it, if not already available.
+You can use async profiler to profile a Gradle build using `--profile async-profiler`.
+By default, this will download an Async profiler release from [Github](https://github.com/jvm-profiling-tools/async-profiler/releases) and install it, if not already available.
 
 The output are flame and icicle graphs which show you the call tree and hotspots of your code.
 
