@@ -118,10 +118,11 @@ All probes are disabled when using sampling or memory allocation profiling.
 
 ### Java Flight Recorder
 
-JFR provides low overhead CPU, allocation, IO wait and lock profiling and runs on all major operating systems. It is available on Oracle JDK since Java 7 and on OpenJDK since Java 11 (make sure you have at least [11.0.3](https://bugs.openjdk.java.net/browse/JDK-8219347)).
+JFR provides low overhead CPU, allocation, IO wait and lock profiling and runs on all major operating systems.
+It is available on Oracle JDK since Java 7 and on OpenJDK since Java 11 (make sure you have at least [11.0.3](https://bugs.openjdk.java.net/browse/JDK-8219347)).
 
 To our knowledge, it is the only low-overhead allocation profiler for Windows.
-However, it has several shortcomings: It will not sample native method calls, so you will get misleading CPU results if your code does a lot of system calls (like reading files). 
+However, be aware of its shortcomings, e.g. it will not sample native method calls, so you will get misleading CPU results if your code does a lot of system calls (like reading files). 
 
 You will get both the JFR file and flame graph visualizations of the data, which are much easier to understand than the Java Mission Control UI. 
 
