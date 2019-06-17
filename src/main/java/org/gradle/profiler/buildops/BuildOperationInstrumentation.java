@@ -26,7 +26,14 @@ public class BuildOperationInstrumentation extends GradleInstrumentation {
         }
         try {
             try (BufferedReader reader = new BufferedReader(new FileReader(dataFile))) {
-                return Optional.of(Duration.ofMillis(Long.parseLong(reader.readLine())));
+                String last = null, line;
+                while ((line = reader.readLine()) != null) {
+                    last = line;
+                }
+                if (last == null) {
+                    return Optional.empty();
+                }
+                return Optional.of(Duration.ofMillis(Long.parseLong(last)));
             }
         } catch (IOException e) {
             throw new RuntimeException("Could not read result from file.", e);
