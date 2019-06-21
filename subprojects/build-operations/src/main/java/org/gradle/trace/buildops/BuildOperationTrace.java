@@ -12,28 +12,36 @@ public class BuildOperationTrace {
     public static void start(GradleInternal gradle, File outFile) {
         BuildOperationListenerManager manager = gradle.getServices().get(BuildOperationListenerManager.class);
         BuildRequestMetaData requestMetaData = gradle.getServices().get(BuildRequestMetaData.class);
-        AsyncWriter<Long> writer = new AsyncWriter<>(outFile, (l, w) -> w.print(l));
-        RecordingListener buildOperationListener = new RecordingListener(writer, requestMetaData.getStartTime());
+        RecordingListener buildOperationListener = new RecordingListener(manager, requestMetaData, outFile);
         manager.addListener(buildOperationListener);
-        gradle.buildFinished((g) -> {
-            manager.removeListener(buildOperationListener);
-            writer.stop();
-        });
     }
 
     private static class RecordingListener implements BuildOperationListener {
-        private final AsyncWriter<Long> writer;
-        private final long startTime;
 
-        RecordingListener(AsyncWriter<Long> writer, long startTime) {
-            this.writer = writer;
-            this.startTime = startTime;
+        private final BuildOperationListenerManager manager;
+        private final BuildRequestMetaData buildRequestMetaData;
+        private final File outFile;
+
+        private AsyncWriter<Long> writer;
+
+        RecordingListener(BuildOperationListenerManager manager, BuildRequestMetaData buildRequestMetaData, File outFile) {
+            this.manager = manager;
+            this.buildRequestMetaData = buildRequestMetaData;
+            this.outFile = outFile;
+        }
+
+        private AsyncWriter<Long> ensureWriter() {
+            if (writer == null) {
+                writer = new AsyncWriter<>(outFile, (l, w) -> w.print(l));
+            }
+            return writer;
         }
 
         @Override
         public void started(BuildOperationDescriptor buildOperationDescriptor, OperationStartEvent operationStartEvent) {
             if (buildOperationDescriptor.getOperationType() == BuildOperationCategory.RUN_WORK_ROOT_BUILD) {
-                long duration = operationStartEvent.getStartTime() - startTime;
+                long duration = operationStartEvent.getStartTime() - buildRequestMetaData.getStartTime();
+                AsyncWriter<Long> writer = ensureWriter();
                 writer.append(duration);
                 writer.finished();
             }
@@ -45,6 +53,12 @@ public class BuildOperationTrace {
 
         @Override
         public void finished(BuildOperationDescriptor buildOperationDescriptor, OperationFinishEvent operationFinishEvent) {
+            if (buildOperationDescriptor.getOperationType() == BuildOperationCategory.RUN_WORK_ROOT_BUILD) {
+                if (writer != null) {
+                    writer.stop();
+                }
+                manager.removeListener(this);
+            }
         }
     }
 }
