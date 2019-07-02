@@ -63,9 +63,9 @@ public class BuildScanProfiler extends Profiler {
                 }
                 nextLineIsBuildScanUrl = false;
             } else {
-                Matcher tasksMatcher = RUNNING_BUILD.matcher(line);
-                if (tasksMatcher.matches()) {
-                    measuredBuildNumber = tasksMatcher.group(1);
+                Matcher buildMatcher = RUNNING_BUILD.matcher(line);
+                if (buildMatcher.matches()) {
+                    measuredBuildNumber = buildMatcher.group(1);
                 } else if (line.equals("Publishing build scan...")) {
                     nextLineIsBuildScanUrl = true;
                 } else {
