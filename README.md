@@ -41,7 +41,7 @@ from your Gradle wrapper properties file, if present, to determine which Gradle 
 You can use the `--gradle-version` option to specify a Gradle version or installation to use to benchmark the build.
 You can specify multiple versions and each of these is used to benchmark the build, allowing you to compare the behaviour of several different Gradle versions.
 
-You can also use the `--measure-config-time` option to measure some additional details about configuration time.
+You can also use the `--benchmark-config-time` option to measure some additional details about configuration time.
 
 ## Profiling a build
 
