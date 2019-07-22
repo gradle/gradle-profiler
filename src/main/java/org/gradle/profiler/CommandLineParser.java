@@ -38,13 +38,15 @@ class CommandLineParser {
         ArgumentAcceptingOptionSpec<Integer> warmupsOption = parser.accepts("warmups", "Number of warm-up build to run for each scenario").withRequiredArg().ofType(Integer.class);
         ArgumentAcceptingOptionSpec<Integer> iterationsOption = parser.accepts("iterations", "Number of builds to run for each scenario").withRequiredArg().ofType(Integer.class);
         ArgumentAcceptingOptionSpec<String> profilerOption = parser.accepts("profile",
-            "Collect profiling information using profiler (" + Profiler.getAvailableProfilers().stream().collect(Collectors.joining(", ")) + ")")
+            "Collect profiling information using profiler (" + String.join(", ", Profiler.getAvailableProfilers()) + ")")
             .withRequiredArg()
             .defaultsTo("jfr");
         Profiler.configureParser(parser);
         OptionSpecBuilder benchmarkOption = parser.accepts("benchmark", "Collect benchmark metrics");
-        ArgumentAcceptingOptionSpec<String> benchmarkBuildOperation = parser.accepts("benchmark-build-op", "Collect benchmark metrics for build operation")
-            .withRequiredArg();
+        ArgumentAcceptingOptionSpec<String> benchmarkBuildOperation = parser.accepts(
+            "benchmark-build-op",
+            "Collect benchmark metrics for build operation"
+        ).withRequiredArg();
         OptionSpecBuilder noDaemonOption = parser.accepts("no-daemon", "Do not use the Gradle daemon");
         OptionSpecBuilder coldDaemonOption = parser.accepts("cold-daemon", "Use a cold Gradle daemon");
         OptionSpecBuilder cliOption = parser.accepts("cli", "Uses the command-line client to connect to the daemon");

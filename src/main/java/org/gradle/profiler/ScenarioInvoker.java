@@ -1,5 +1,7 @@
 package org.gradle.profiler;
 
+import static org.gradle.profiler.Logging.startOperation;
+
 import org.gradle.profiler.result.BuildInvocationResult;
 import org.gradle.profiler.result.Sample;
 
@@ -11,15 +13,15 @@ import java.util.List;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
 
-import static org.gradle.profiler.Logging.startOperation;
-
 public abstract class ScenarioInvoker<T extends ScenarioDefinition, R extends BuildInvocationResult> {
     /**
      * Runs a scenario and collects the results.
      */
     public final void run(ScenarioDefinition scenario, InvocationSettings settings, BenchmarkResultCollector collector) throws IOException, InterruptedException {
-        Consumer<R> resultConsumer = collector.scenario(scenario, samplesFor(settings));
-        doRun((T) scenario, settings, resultConsumer);
+        @SuppressWarnings("unchecked")
+        T castScenario = (T) scenario;
+        Consumer<R> resultConsumer = collector.scenario(castScenario, samplesFor(settings, castScenario));
+        doRun(castScenario, settings, resultConsumer);
     }
 
     /**
@@ -30,7 +32,7 @@ public abstract class ScenarioInvoker<T extends ScenarioDefinition, R extends Bu
     /**
      * Which samples will this invoker generate for the given settings?
      */
-    public List<Sample<? super R>> samplesFor(InvocationSettings settings) {
+    public List<Sample<? super R>> samplesFor(InvocationSettings settings, T scenario) {
         return Collections.singletonList(BuildInvocationResult.EXECUTION_TIME);
     }
 

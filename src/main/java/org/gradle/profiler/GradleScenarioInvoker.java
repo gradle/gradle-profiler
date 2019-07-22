@@ -31,13 +31,13 @@ public class GradleScenarioInvoker extends ScenarioInvoker<GradleScenarioDefinit
     }
 
     @Override
-    public List<Sample<? super GradleBuildInvocationResult>> samplesFor(InvocationSettings settings) {
+    public List<Sample<? super GradleBuildInvocationResult>> samplesFor(InvocationSettings settings, GradleScenarioDefinition scenario) {
         ImmutableList.Builder<Sample<? super GradleBuildInvocationResult>> builder = ImmutableList.builder();
         builder.add(BuildInvocationResult.EXECUTION_TIME);
         if (settings.isMeasureConfigTime()) {
             builder.add(GradleBuildInvocationResult.TIME_TO_TASK_EXECUTION);
         }
-        settings.getMeasuredBuildOperations().stream()
+        scenario.getMeasuredBuildOperations().stream()
             .map(GradleBuildInvocationResult::sampleBuildOperation)
             .forEach(builder::add);
         return builder.build();
@@ -57,7 +57,7 @@ public class GradleScenarioInvoker extends ScenarioInvoker<GradleScenarioDefinit
 
         BuildOperationInstrumentation buildOperationInstrumentation = new BuildOperationInstrumentation(
             settings.isMeasureConfigTime(),
-            settings.getMeasuredBuildOperations()
+            scenario.getMeasuredBuildOperations()
         );
         if (buildOperationInstrumentation.requiresInitScript()) {
             allBuildsGradleArgsCalculator = allBuildsGradleArgsCalculator.plus(buildOperationInstrumentation);

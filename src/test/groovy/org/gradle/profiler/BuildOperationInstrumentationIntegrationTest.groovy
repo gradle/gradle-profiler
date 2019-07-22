@@ -30,7 +30,8 @@ class BuildOperationInstrumentationIntegrationTest extends AbstractProfilerInteg
         gradleVersion << ["5.0", latestSupportedGradleVersion]
     }
 
-    def "can benchmark snapshotting build operation time for build using 5.5.1"() {
+    @Unroll
+    def "can benchmark snapshotting build operation time via #via for build using 5.5.1"() {
         given:
         instrumentedBuildScript()
         buildFile << """
@@ -47,7 +48,22 @@ class BuildOperationInstrumentationIntegrationTest extends AbstractProfilerInteg
         def gradleVersion = "5.5.1"
 
         when:
-        new Main().run("--project-dir", projectDir.absolutePath, "--output-dir", outputDir.absolutePath, "--gradle-version", gradleVersion, "--benchmark", "--benchmark-build-op", "org.gradle.api.internal.tasks.SnapshotTaskInputsBuildOperationType", "assemble")
+        def extraArgs = []
+        if (scenarioConfiguration) {
+            def scenarioFile = new File(projectDir, "performance.scenarios")
+            scenarioFile.text = """
+            default {
+                tasks = ["assemble"]
+                ${scenarioConfiguration}
+            }
+            """
+            extraArgs.addAll("--scenario-file", scenarioFile.absolutePath)
+        }
+        extraArgs.addAll(commandLine)
+        new Main().run("--project-dir", projectDir.absolutePath, "--output-dir", outputDir.absolutePath, "--gradle-version", gradleVersion, "--benchmark",
+            *extraArgs,
+            scenarioConfiguration ? "default" : "assemble"
+        )
 
         then:
         def lines = resultFile.lines
@@ -67,6 +83,12 @@ class BuildOperationInstrumentationIntegrationTest extends AbstractProfilerInteg
         lines.get(20).matches("mean,\\d+\\.\\d+,\\d+\\.\\d+")
         lines.get(23).matches("median,\\d+\\.\\d+,\\d+\\.\\d+")
         lines.get(26).matches("stddev,\\d+\\.\\d+,\\d+\\.\\d+")
+
+        where:
+        via                              | commandLine                                                                                    | scenarioConfiguration
+        'command line'                   | ["--benchmark-build-op", "org.gradle.api.internal.tasks.SnapshotTaskInputsBuildOperationType"] | null
+        'scenario file'                  | []                                                                                             | 'measured-build-ops = ["org.gradle.api.internal.tasks.SnapshotTaskInputsBuildOperationType"]'
+        'command line and scenario file' | ["--benchmark-build-op", "org.gradle.api.internal.tasks.SnapshotTaskInputsBuildOperationType"] | 'measured-build-ops = ["org.gradle.api.internal.tasks.SnapshotTaskInputsBuildOperationType"]'
     }
 
     @Unroll

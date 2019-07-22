@@ -1,6 +1,5 @@
 package org.gradle.profiler.buildops;
 
-import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import org.gradle.profiler.instrument.GradleInstrumentation;
 
@@ -12,6 +11,7 @@ import java.io.PrintWriter;
 import java.io.UncheckedIOException;
 import java.nio.file.Files;
 import java.time.Duration;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.function.Function;
@@ -22,7 +22,7 @@ public class BuildOperationInstrumentation extends GradleInstrumentation {
     private final ImmutableMap<String, File> buildOperationDataFiles;
     private final boolean measureConfigTime;
 
-    public BuildOperationInstrumentation(boolean measureConfigTime, ImmutableList<String> measuredBuildOperations) throws IOException {
+    public BuildOperationInstrumentation(boolean measureConfigTime, List<String> measuredBuildOperations) throws IOException {
         this.measureConfigTime = measureConfigTime;
         this.configurationTimeDataFile = File.createTempFile("gradle-profiler", "build-ops-config-time");
         this.configurationTimeDataFile.deleteOnExit();
@@ -50,9 +50,9 @@ public class BuildOperationInstrumentation extends GradleInstrumentation {
         if (measureConfigTime) {
             writer.print(".measureConfigurationTime(" + newFile(configurationTimeDataFile) + ")");
         }
-        buildOperationDataFiles.forEach((opName, dataFile) -> {
-            writer.print(String.format(".measureBuildOperation('%s', %s)", opName, newFile(dataFile)));
-        });
+        buildOperationDataFiles.forEach((opName, dataFile) ->
+            writer.print(String.format(".measureBuildOperation('%s', %s)", opName, newFile(dataFile)))
+        );
     }
 
     private String newFile(File dataFile) {

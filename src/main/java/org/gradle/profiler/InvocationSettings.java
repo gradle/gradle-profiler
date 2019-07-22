@@ -1,7 +1,5 @@
 package org.gradle.profiler;
 
-import com.google.common.collect.ImmutableList;
-
 import java.io.File;
 import java.io.PrintStream;
 import java.util.List;
@@ -22,7 +20,7 @@ public class InvocationSettings {
     private final Integer warmupCount;
     private final Integer iterations;
     private final boolean measureConfigTime;
-    private final ImmutableList<String> measuredBuildOperations;
+    private final List<String> measuredBuildOperations;
 
     public InvocationSettings(
         File projectDir,
@@ -56,7 +54,7 @@ public class InvocationSettings {
         this.warmupCount = warmupCount;
         this.iterations = iterations;
         this.measureConfigTime = measureConfigTime;
-        this.measuredBuildOperations = ImmutableList.copyOf(measuredBuildOperations);
+        this.measuredBuildOperations = measuredBuildOperations;
     }
 
     public File getOutputDir() {
@@ -131,7 +129,7 @@ public class InvocationSettings {
         return measureConfigTime;
     }
 
-    public ImmutableList<String> getMeasuredBuildOperations() {
+    public List<String> getMeasuredBuildOperations() {
         return measuredBuildOperations;
     }
 

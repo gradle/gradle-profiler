@@ -1,12 +1,36 @@
 package org.gradle.profiler;
 
+import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableSet;
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
 import com.typesafe.config.ConfigParseOptions;
-import org.gradle.profiler.mutations.*;
+import org.gradle.profiler.mutations.AbstractFileChangeMutator;
+import org.gradle.profiler.mutations.ApplyAbiChangeToSourceFileMutator;
+import org.gradle.profiler.mutations.ApplyChangeToAndroidLayoutFileMutator;
+import org.gradle.profiler.mutations.ApplyChangeToAndroidManifestFileMutator;
+import org.gradle.profiler.mutations.ApplyChangeToAndroidResourceFileMutator;
+import org.gradle.profiler.mutations.ApplyChangeToNativeSourceFileMutator;
+import org.gradle.profiler.mutations.ApplyChangeToPropertyResourceFileMutator;
+import org.gradle.profiler.mutations.ApplyNonAbiChangeToSourceFileMutator;
+import org.gradle.profiler.mutations.ApplyValueChangeToAndroidResourceFileMutator;
+import org.gradle.profiler.mutations.BuildMutatorConfigurator;
+import org.gradle.profiler.mutations.ClearArtifactTransformCacheMutator;
+import org.gradle.profiler.mutations.ClearBuildCacheMutator;
+import org.gradle.profiler.mutations.FileChangeMutatorConfigurator;
+import org.gradle.profiler.mutations.GitCheckoutMutator;
+import org.gradle.profiler.mutations.GitRevertMutator;
+import org.gradle.profiler.mutations.ShowBuildCacheSizeMutator;
 
 import java.io.File;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.TreeSet;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
@@ -22,6 +46,7 @@ class ScenarioLoader {
     private static final String BUCK = "buck";
     private static final String MAVEN = "maven";
     private static final String WARM_UP_COUNT = "warm-ups";
+    private static final String MEASURED_BUILD_OPERATIONS = "measured-build-ops";
     private static final String APPLY_ABI_CHANGE_TO = "apply-abi-change-to";
     private static final String APPLY_NON_ABI_CHANGE_TO = "apply-non-abi-change-to";
     private static final String APPLY_ANDROID_RESOURCE_CHANGE_TO = "apply-android-resource-change-to";
@@ -43,9 +68,37 @@ class ScenarioLoader {
     private static final String JVM_ARGS = "jvm-args";
 
     private static final List<String> ALL_SCENARIO_KEYS = Arrays.asList(
-        VERSIONS, TASKS, CLEANUP_TASKS, GRADLE_ARGS, RUN_USING, SYSTEM_PROPERTIES, WARM_UP_COUNT, APPLY_ABI_CHANGE_TO, APPLY_NON_ABI_CHANGE_TO, APPLY_ANDROID_RESOURCE_CHANGE_TO, APPLY_ANDROID_RESOURCE_VALUE_CHANGE_TO, APPLY_ANDROID_MANIFEST_CHANGE_TO, APPLY_ANDROID_LAYOUT_CHANGE_TO, APPLY_PROPERTY_RESOURCE_CHANGE_TO, APPLY_CPP_SOURCE_CHANGE_TO, APPLY_H_SOURCE_CHANGE_TO, CLEAR_BUILD_CACHE_BEFORE, CLEAR_TRANSFORM_CACHE_BEFORE, SHOW_BUILD_CACHE_SIZE, GIT_CHECKOUT, GIT_REVERT, BAZEL, BUCK, MAVEN, MODEL, ANDROID_STUDIO_SYNC, DAEMON, JVM_ARGS
+        VERSIONS,
+        TASKS,
+        CLEANUP_TASKS,
+        GRADLE_ARGS,
+        RUN_USING,
+        SYSTEM_PROPERTIES,
+        WARM_UP_COUNT,
+        MEASURED_BUILD_OPERATIONS,
+        APPLY_ABI_CHANGE_TO,
+        APPLY_NON_ABI_CHANGE_TO,
+        APPLY_ANDROID_RESOURCE_CHANGE_TO,
+        APPLY_ANDROID_RESOURCE_VALUE_CHANGE_TO,
+        APPLY_ANDROID_MANIFEST_CHANGE_TO,
+        APPLY_ANDROID_LAYOUT_CHANGE_TO,
+        APPLY_PROPERTY_RESOURCE_CHANGE_TO,
+        APPLY_CPP_SOURCE_CHANGE_TO,
+        APPLY_H_SOURCE_CHANGE_TO,
+        CLEAR_BUILD_CACHE_BEFORE,
+        CLEAR_TRANSFORM_CACHE_BEFORE,
+        SHOW_BUILD_CACHE_SIZE,
+        GIT_CHECKOUT,
+        GIT_REVERT,
+        BAZEL,
+        BUCK,
+        MAVEN,
+        MODEL,
+        ANDROID_STUDIO_SYNC,
+        DAEMON,
+        JVM_ARGS
     );
-    private static final List<String> BAZEL_KEYS = Arrays.asList(TARGETS);
+    private static final List<String> BAZEL_KEYS = Collections.singletonList(TARGETS);
     private static final List<String> BUCK_KEYS = Arrays.asList(TARGETS, TYPE);
     private static final List<String> MAVEN_KEYS = Collections.singletonList(TARGETS);
 
@@ -93,7 +146,17 @@ class ScenarioLoader {
 
         for (GradleBuildConfiguration version : versions) {
             File outputDir = versions.size() == 1 ? settings.getOutputDir() : new File(settings.getOutputDir(), version.getGradleVersion().getVersion());
-            scenarios.add(new AdhocGradleScenarioDefinition(version, (GradleBuildInvoker) settings.getInvoker(), new RunTasksAction(settings.getTargets()), settings.getSystemProperties(), new BuildMutatorFactory(Collections.emptyList()), getWarmUpCount(settings, settings.getInvoker(), settings.getWarmUpCount()), getBuildCount(settings), outputDir));
+            scenarios.add(new AdhocGradleScenarioDefinition(
+                version,
+                (GradleBuildInvoker) settings.getInvoker(),
+                new RunTasksAction(settings.getTargets()),
+                settings.getSystemProperties(),
+                new BuildMutatorFactory(Collections.emptyList()),
+                getWarmUpCount(settings, settings.getInvoker(), settings.getWarmUpCount()),
+                getBuildCount(settings),
+                outputDir,
+                settings.getMeasuredBuildOperations()
+            ));
         }
         return scenarios;
     }
@@ -196,19 +259,41 @@ class ScenarioLoader {
                 List<String> gradleArgs = ConfigUtil.strings(scenario, GRADLE_ARGS);
                 GradleBuildInvoker invoker = invoker(scenario, (GradleBuildInvoker) settings.getInvoker());
                 int warmUpCount = getWarmUpCount(settings, invoker, scenario);
+                List<String> measuredBuildOperations = getMeasuredBuildOperations(settings, scenario);
                 BuildAction buildAction = getBuildAction(scenario, scenarioFile);
                 BuildAction cleanupAction = getCleanupAction(scenario);
                 Map<String, String> systemProperties = ConfigUtil.map(scenario, SYSTEM_PROPERTIES, settings.getSystemProperties());
                 List<String> jvmArgs = ConfigUtil.strings(scenario, JVM_ARGS);
                 for (GradleBuildConfiguration version : versions) {
                     File outputDir = versions.size() == 1 ? new File(settings.getOutputDir(), scenarioName) : new File(settings.getOutputDir(), scenarioName + "/" + version.getGradleVersion().getVersion());
-                    definitions.add(new GradleScenarioDefinition(scenarioName, invoker, version, buildAction, cleanupAction, gradleArgs, systemProperties,
-                        buildMutatorFactory, warmUpCount, buildCount, outputDir, jvmArgs));
+                    definitions.add(new GradleScenarioDefinition(
+                        scenarioName,
+                        invoker,
+                        version,
+                        buildAction,
+                        cleanupAction,
+                        gradleArgs,
+                        systemProperties,
+                        buildMutatorFactory,
+                        warmUpCount,
+                        buildCount,
+                        outputDir,
+                        jvmArgs,
+                        measuredBuildOperations
+                    ));
                 }
             }
         }
 
         return definitions;
+    }
+
+    private static ImmutableList<String> getMeasuredBuildOperations(InvocationSettings settings, Config scenario) {
+        return ImmutableSet.<String>builder()
+            .addAll(settings.getMeasuredBuildOperations())
+            .addAll(ConfigUtil.strings(scenario, MEASURED_BUILD_OPERATIONS))
+            .build()
+            .asList();
     }
 
     private static int getBuildCount(InvocationSettings settings) {
