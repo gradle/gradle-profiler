@@ -1,5 +1,7 @@
 package org.gradle.profiler;
 
+import com.google.common.collect.ImmutableList;
+
 import java.io.File;
 import java.io.PrintStream;
 import java.util.List;
@@ -20,10 +22,26 @@ public class InvocationSettings {
     private final Integer warmupCount;
     private final Integer iterations;
     private final boolean measureConfigTime;
+    private final ImmutableList<String> measuredBuildOperations;
 
-    public InvocationSettings(File projectDir, Profiler profiler, boolean benchmark, File outputDir, BuildInvoker invoker,
-                              boolean dryRun, File scenarioFile, List<String> versions, List<String> getTargets, Map<String, String> sysProperties,
-                              File gradleUserHome, Integer warmupCount, Integer iterations, boolean measureConfigTime) {
+    public InvocationSettings(
+        File projectDir,
+        Profiler profiler,
+        boolean benchmark,
+        File outputDir,
+        BuildInvoker invoker,
+        boolean dryRun,
+        File scenarioFile,
+        List<String> versions,
+        List<String> getTargets,
+        Map<String,
+        String> sysProperties,
+        File gradleUserHome,
+        Integer warmupCount,
+        Integer iterations,
+        boolean measureConfigTime,
+        List<String> measuredBuildOperations
+    ) {
         this.benchmark = benchmark;
         this.projectDir = projectDir;
         this.profiler = profiler;
@@ -38,6 +56,7 @@ public class InvocationSettings {
         this.warmupCount = warmupCount;
         this.iterations = iterations;
         this.measureConfigTime = measureConfigTime;
+        this.measuredBuildOperations = ImmutableList.copyOf(measuredBuildOperations);
     }
 
     public File getOutputDir() {
@@ -110,6 +129,10 @@ public class InvocationSettings {
 
     public boolean isMeasureConfigTime() {
         return measureConfigTime;
+    }
+
+    public ImmutableList<String> getMeasuredBuildOperations() {
+        return measuredBuildOperations;
     }
 
     public void printTo(PrintStream out) {

@@ -5,9 +5,12 @@ import org.gradle.profiler.result.Sample;
 
 import javax.annotation.Nullable;
 import java.time.Duration;
+import java.util.Map;
+import java.util.Optional;
 
 public class GradleBuildInvocationResult extends BuildInvocationResult {
     private final Duration timeToTaskExecution;
+    private final Map<String, Duration> cumulativeBuildOperationTimes;
     private final String daemonPid;
     public static final Sample<GradleBuildInvocationResult> TIME_TO_TASK_EXECUTION = new Sample<GradleBuildInvocationResult>() {
         @Override
@@ -21,9 +24,24 @@ public class GradleBuildInvocationResult extends BuildInvocationResult {
         }
     };
 
-    public GradleBuildInvocationResult(String displayName, Duration executionTime, @Nullable Duration timeToTaskExecution, String daemonPid) {
+    public static Sample<GradleBuildInvocationResult> sampleBuildOperation(String buildOperationDetailsClass) {
+        return new Sample<GradleBuildInvocationResult>() {
+            @Override
+            public String getName() {
+                return buildOperationDetailsClass;
+            }
+
+            @Override
+            public Duration extractFrom(GradleBuildInvocationResult result) {
+                return Optional.ofNullable(result.cumulativeBuildOperationTimes.get(buildOperationDetailsClass)).orElse(Duration.ofMillis(0));
+            }
+        };
+    }
+
+    public GradleBuildInvocationResult(String displayName, Duration executionTime, @Nullable Duration timeToTaskExecution, Map<String, Duration> cumulativeBuildOperationTimes, String daemonPid) {
         super(displayName, executionTime);
         this.timeToTaskExecution = timeToTaskExecution;
+        this.cumulativeBuildOperationTimes = cumulativeBuildOperationTimes;
         this.daemonPid = daemonPid;
     }
 

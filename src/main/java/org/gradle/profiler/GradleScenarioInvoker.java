@@ -1,5 +1,10 @@
 package org.gradle.profiler;
 
+import static org.gradle.profiler.BuildStep.BUILD;
+import static org.gradle.profiler.BuildStep.CLEANUP;
+import static org.gradle.profiler.Phase.MEASURE;
+import static org.gradle.profiler.Phase.WARM_UP;
+
 import com.google.common.collect.ImmutableList;
 import org.apache.commons.io.FileUtils;
 import org.gradle.profiler.buildops.BuildOperationInstrumentation;
@@ -16,11 +21,6 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.function.Consumer;
 
-import static org.gradle.profiler.BuildStep.BUILD;
-import static org.gradle.profiler.BuildStep.CLEANUP;
-import static org.gradle.profiler.Phase.MEASURE;
-import static org.gradle.profiler.Phase.WARM_UP;
-
 public class GradleScenarioInvoker extends ScenarioInvoker<GradleScenarioDefinition, GradleBuildInvocationResult> {
     private final DaemonControl daemonControl;
     private final PidInstrumentation pidInstrumentation;
@@ -32,11 +32,15 @@ public class GradleScenarioInvoker extends ScenarioInvoker<GradleScenarioDefinit
 
     @Override
     public List<Sample<? super GradleBuildInvocationResult>> samplesFor(InvocationSettings settings) {
+        ImmutableList.Builder<Sample<? super GradleBuildInvocationResult>> builder = ImmutableList.builder();
+        builder.add(BuildInvocationResult.EXECUTION_TIME);
         if (settings.isMeasureConfigTime()) {
-            return ImmutableList.of(BuildInvocationResult.EXECUTION_TIME, GradleBuildInvocationResult.TIME_TO_TASK_EXECUTION);
-        } else {
-            return ImmutableList.of(BuildInvocationResult.EXECUTION_TIME);
+            builder.add(GradleBuildInvocationResult.TIME_TO_TASK_EXECUTION);
         }
+        settings.getMeasuredBuildOperations().stream()
+            .map(GradleBuildInvocationResult::sampleBuildOperation)
+            .forEach(builder::add);
+        return builder.build();
     }
 
     @Override
@@ -51,8 +55,11 @@ public class GradleScenarioInvoker extends ScenarioInvoker<GradleScenarioDefinit
         GradleArgsCalculator allBuildsGradleArgsCalculator = pidInstrumentation;
         allBuildsGradleArgsCalculator = allBuildsGradleArgsCalculator.plus(settings.getProfiler().newGradleArgsCalculator(scenarioSettings));
 
-        BuildOperationInstrumentation buildOperationInstrumentation = new BuildOperationInstrumentation();
-        if (settings.isMeasureConfigTime()) {
+        BuildOperationInstrumentation buildOperationInstrumentation = new BuildOperationInstrumentation(
+            settings.isMeasureConfigTime(),
+            settings.getMeasuredBuildOperations()
+        );
+        if (buildOperationInstrumentation.requiresInitScript()) {
             allBuildsGradleArgsCalculator = allBuildsGradleArgsCalculator.plus(buildOperationInstrumentation);
         }
 

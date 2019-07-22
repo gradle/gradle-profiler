@@ -1,11 +1,12 @@
 package org.gradle.profiler
 
+import static org.gradle.profiler.ScenarioLoader.loadScenarios
+
+import com.google.common.collect.ImmutableList
 import org.gradle.tooling.model.idea.IdeaProject
 import org.junit.Rule
 import org.junit.rules.TemporaryFolder
 import spock.lang.Specification
-
-import static org.gradle.profiler.ScenarioLoader.loadScenarios
 
 class ScenarioLoaderTest extends Specification {
     @Rule
@@ -23,7 +24,23 @@ class ScenarioLoaderTest extends Specification {
     }
 
     private settings(BuildInvoker invoker = GradleBuildInvoker.Cli, boolean benchmark = true, Integer warmups = null, Integer iterations = null) {
-        new InvocationSettings(projectDir, Profiler.NONE, benchmark, outputDir, invoker, false, scenarioFile, [], [], [:], gradleUserHomeDir, warmups, iterations, false)
+        new InvocationSettings(
+            projectDir,
+            Profiler.NONE,
+            benchmark,
+            outputDir,
+            invoker,
+            false,
+            scenarioFile,
+            [],
+            [],
+            [:],
+            gradleUserHomeDir,
+            warmups,
+            iterations,
+            false,
+            ImmutableList.of()
+        )
     }
 
     def "can load single scenario"() {
