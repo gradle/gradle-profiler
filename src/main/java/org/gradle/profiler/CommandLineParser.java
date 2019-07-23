@@ -50,7 +50,7 @@ class CommandLineParser {
         OptionSpecBuilder noDaemonOption = parser.accepts("no-daemon", "Do not use the Gradle daemon");
         OptionSpecBuilder coldDaemonOption = parser.accepts("cold-daemon", "Use a cold Gradle daemon");
         OptionSpecBuilder cliOption = parser.accepts("cli", "Uses the command-line client to connect to the daemon");
-        OptionSpecBuilder measureConfigOption = parser.accepts("benchmark-config-time", "Include a breakdown of configuration time in benchmark results");
+        OptionSpecBuilder measureConfigOption = parser.accepts("measure-config-time", "Include a breakdown of configuration time in benchmark results");
         OptionSpecBuilder dryRunOption = parser.accepts("dry-run", "Verify configuration");
         OptionSpecBuilder bazelOption = parser.accepts("bazel", "Benchmark scenarios using Bazel");
         OptionSpecBuilder buckOption = parser.accepts("buck", "Benchmark scenarios using buck");

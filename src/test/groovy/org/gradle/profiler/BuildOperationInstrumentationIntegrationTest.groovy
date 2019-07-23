@@ -10,7 +10,7 @@ class BuildOperationInstrumentationIntegrationTest extends AbstractProfilerInteg
         instrumentedBuildScript()
 
         when:
-        new Main().run("--project-dir", projectDir.absolutePath, "--output-dir", outputDir.absolutePath, "--gradle-version", gradleVersion, "--benchmark", "--benchmark-config-time", "assemble")
+        new Main().run("--project-dir", projectDir.absolutePath, "--output-dir", outputDir.absolutePath, "--gradle-version", gradleVersion, "--benchmark", "--measure-config-time", "assemble")
 
         then:
         def lines = resultFile.lines
@@ -97,7 +97,7 @@ class BuildOperationInstrumentationIntegrationTest extends AbstractProfilerInteg
         instrumentedBuildScript()
 
         when:
-        new Main().run("--project-dir", projectDir.absolutePath, "--output-dir", outputDir.absolutePath, "--gradle-version", gradleVersion, "--benchmark", "--benchmark-config-time", "assemble")
+        new Main().run("--project-dir", projectDir.absolutePath, "--output-dir", outputDir.absolutePath, "--gradle-version", gradleVersion, "--benchmark", "--measure-config-time", "assemble")
 
         then:
         thrown(IllegalArgumentException)
@@ -120,7 +120,7 @@ class BuildOperationInstrumentationIntegrationTest extends AbstractProfilerInteg
         """
 
         when:
-        new Main().run("--project-dir", projectDir.absolutePath, "--output-dir", outputDir.absolutePath, "--scenario-file", scenarioFile.absolutePath, "--benchmark", "--benchmark-config-time", "assemble")
+        new Main().run("--project-dir", projectDir.absolutePath, "--output-dir", outputDir.absolutePath, "--scenario-file", scenarioFile.absolutePath, "--benchmark", "--measure-config-time", "assemble")
 
         then:
         thrown(IllegalArgumentException)
