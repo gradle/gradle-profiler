@@ -42,7 +42,7 @@ dependencies {
 }
 
 allprojects {
-    plugins.withId('java') {
+    pluginManager.withPlugin('java') {
         java {
             sourceCompatibility = JavaVersion.VERSION_1_8
             targetCompatibility = JavaVersion.VERSION_1_8

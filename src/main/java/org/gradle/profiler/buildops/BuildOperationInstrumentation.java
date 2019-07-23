@@ -27,14 +27,14 @@ public class BuildOperationInstrumentation extends GradleInstrumentation {
         this.configurationTimeDataFile = File.createTempFile("gradle-profiler", "build-ops-config-time");
         this.configurationTimeDataFile.deleteOnExit();
         this.buildOperationDataFiles = measuredBuildOperations.stream()
-            .collect(ImmutableMap.toImmutableMap(Function.identity(), BuildOperationInstrumentation::createOpTmpFile));
+            .collect(ImmutableMap.toImmutableMap(Function.identity(), BuildOperationInstrumentation::createBuildOperationTempFile));
     }
 
     public boolean requiresInitScript() {
         return measureConfigTime || !buildOperationDataFiles.isEmpty();
     }
 
-    private static File createOpTmpFile(String op) {
+    private static File createBuildOperationTempFile(String op) {
         try {
             File tempFile = Files.createTempFile("gradle-profiler", "build-ops-" + op).toFile();
             tempFile.deleteOnExit();

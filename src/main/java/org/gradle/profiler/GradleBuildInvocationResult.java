@@ -6,7 +6,6 @@ import org.gradle.profiler.result.Sample;
 import javax.annotation.Nullable;
 import java.time.Duration;
 import java.util.Map;
-import java.util.Optional;
 
 public class GradleBuildInvocationResult extends BuildInvocationResult {
     private final Duration timeToTaskExecution;
@@ -33,7 +32,7 @@ public class GradleBuildInvocationResult extends BuildInvocationResult {
 
             @Override
             public Duration extractFrom(GradleBuildInvocationResult result) {
-                return Optional.ofNullable(result.cumulativeBuildOperationTimes.get(buildOperationDetailsClass)).orElse(Duration.ofMillis(0));
+                return result.cumulativeBuildOperationTimes.getOrDefault(buildOperationDetailsClass, Duration.ZERO);
             }
         };
     }
