@@ -41,6 +41,6 @@ public class Gradle47BuildOperationListenerInvocationHandler extends BuildOperat
     }
 
     protected boolean isTaskCacheable(TaskInternal task) {
-        return task.getState().getTaskOutputCaching().isEnabled();
+        return (boolean) call(call(task.getState(), "getTaskOutputCaching"), "isEnabled");
     }
 }

@@ -61,8 +61,16 @@ public class GradleTracingPlugin {
             try {
                 return buildRequestMetaData.getStartTime();
             } catch (NoSuchMethodError e) {
-                return buildRequestMetaData.getBuildTimeClock().getStartTime();
+                return (long) call(call(buildRequestMetaData, "getBuildTimeClock"), "getStartTime");
             }
+        }
+    }
+
+    private Object call(Object object, String method) {
+        try {
+            return object.getClass().getMethod(method).invoke(object);
+        } catch (Exception e) {
+            throw new RuntimeException(e);
         }
     }
 }
