@@ -43,7 +43,7 @@ You can specify multiple versions and each of these is used to benchmark the bui
 
 You can also use the `--benchmark-config-time` option to measure some additional details about configuration time.
 
-You can use `--benchmark-build-op` together with the fully qualified class name of the enveloping type of the `Details` interface to benchmark cumulative build operation time.
+You can use `--measure-build-op` together with the fully qualified class name of the enveloping type of the `Details` interface to benchmark cumulative build operation time.
 For example, for Gradle 5.x there is a [`org.gradle.api.internal.tasks.SnapshotTaskInputsBuildOperationType`](https://github.com/gradle/gradle/blob/c671360a3f1729b406c5b8b5b0d22c7b81296993/subprojects/core/src/main/java/org/gradle/api/internal/tasks/SnapshotTaskInputsBuildOperationType.java) which can be used to capture snapshotting time.
 The time recorded is cumulative time, so the wall clock time spent on executing the measured build operations is probably smaller.
 
@@ -161,7 +161,7 @@ The following command line options only apply when measuring Gradle builds:
 - `--cold-daemon`: Use a cold daemon (one that has just started) rather than a warm daemon (one that has already run some builds). The default is to use a warm daemon.
 - `--cli`: Uses the `gradle` command-line client to run the builds. The default is to use the Gradle tooling API and Gradle daemon.
 - `--benchmark-config-time`: Measure some additional details about configuration time.
-- `--benchmark-build-op`: Additionally measure the cumulative time spent in the given build operation.
+- `--measure-build-op`: Additionally measure the cumulative time spent in the given build operation.
 - `-D<key>=<value>`: Defines a system property when running the build, overriding the default for the build.
 
 ## Advanced profiling scenarios
@@ -192,7 +192,7 @@ Here is an example:
         cleanup-tasks = ["clean"]
         run-using = tooling-api // value can be "cli" or "tooling-api"
         daemon = warm // value can be "warm", "cold", or "none"
-        measured-build-ops = ["org.gradle.api.internal.tasks.SnapshotTaskInputsBuildOperationType"] // see --benchmark-build-op
+        measured-build-ops = ["org.gradle.api.internal.tasks.SnapshotTaskInputsBuildOperationType"] // see --measure-build-op
 
         buck {
             targets = ["//thing/res_debug"]

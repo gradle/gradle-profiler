@@ -44,7 +44,7 @@ class CommandLineParser {
         Profiler.configureParser(parser);
         OptionSpecBuilder benchmarkOption = parser.accepts("benchmark", "Collect benchmark metrics");
         ArgumentAcceptingOptionSpec<String> benchmarkBuildOperation = parser.accepts(
-            "benchmark-build-op",
+            "measure-build-op",
             "Collect benchmark metrics for build operation"
         ).withRequiredArg();
         OptionSpecBuilder noDaemonOption = parser.accepts("no-daemon", "Do not use the Gradle daemon");

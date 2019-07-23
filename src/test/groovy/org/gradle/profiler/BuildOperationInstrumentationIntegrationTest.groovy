@@ -85,10 +85,10 @@ class BuildOperationInstrumentationIntegrationTest extends AbstractProfilerInteg
         lines.get(26).matches("stddev,\\d+\\.\\d+,\\d+\\.\\d+")
 
         where:
-        via                              | commandLine                                                                                    | scenarioConfiguration
-        'command line'                   | ["--benchmark-build-op", "org.gradle.api.internal.tasks.SnapshotTaskInputsBuildOperationType"] | null
-        'scenario file'                  | []                                                                                             | 'measured-build-ops = ["org.gradle.api.internal.tasks.SnapshotTaskInputsBuildOperationType"]'
-        'command line and scenario file' | ["--benchmark-build-op", "org.gradle.api.internal.tasks.SnapshotTaskInputsBuildOperationType"] | 'measured-build-ops = ["org.gradle.api.internal.tasks.SnapshotTaskInputsBuildOperationType"]'
+        via                              | commandLine                                                                                  | scenarioConfiguration
+        'command line'                   | ["--measure-build-op", "org.gradle.api.internal.tasks.SnapshotTaskInputsBuildOperationType"] | null
+        'scenario file'                  | []                                                                                           | 'measured-build-ops = ["org.gradle.api.internal.tasks.SnapshotTaskInputsBuildOperationType"]'
+        'command line and scenario file' | ["--measure-build-op", "org.gradle.api.internal.tasks.SnapshotTaskInputsBuildOperationType"] | 'measured-build-ops = ["org.gradle.api.internal.tasks.SnapshotTaskInputsBuildOperationType"]'
     }
 
     @Unroll
