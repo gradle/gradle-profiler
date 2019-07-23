@@ -41,9 +41,7 @@ dependencies {
     testRuntime 'org.objenesis:objenesis:2.6'
 }
 
-allprojects {
-    sourceCompatibility = 1.8
-}
+sourceCompatibility = 1.8
 mainClassName = "org.gradle.profiler.Main"
 
 processResources {

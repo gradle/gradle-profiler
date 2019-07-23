@@ -5,3 +5,4 @@ plugins {
 dependencies {
     implementation project(':build-operations')
 }
+sourceCompatibility = 1.8

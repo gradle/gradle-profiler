@@ -5,3 +5,4 @@ plugins {
 dependencies {
     api gradleApi()
 }
+sourceCompatibility = 1.8
