@@ -1,14 +1,14 @@
 package org.gradle.profiler.buildops;
 
 import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.Streams;
 import org.gradle.profiler.instrument.GradleInstrumentation;
 
-import java.io.BufferedReader;
 import java.io.File;
-import java.io.FileReader;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.io.UncheckedIOException;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.time.Duration;
 import java.util.List;
@@ -16,6 +16,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.function.Function;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 public class BuildOperationInstrumentation extends GradleInstrumentation {
     private final File configurationTimeDataFile;
@@ -65,15 +66,9 @@ public class BuildOperationInstrumentation extends GradleInstrumentation {
             return Optional.empty();
         }
         try {
-            try (BufferedReader reader = new BufferedReader(new FileReader(configurationTimeDataFile))) {
-                String last = null, line;
-                while ((line = reader.readLine()) != null) {
-                    last = line;
-                }
-                if (last == null) {
-                    return Optional.empty();
-                }
-                return Optional.of(Duration.ofMillis(Long.parseLong(last)));
+            try (Stream<String> lines = Files.lines(configurationTimeDataFile.toPath(), StandardCharsets.UTF_8)) {
+                return Streams.findLast(lines)
+                    .map(line -> Duration.ofMillis(Long.parseLong(line)));
             }
         } catch (IOException e) {
             throw new RuntimeException("Could not read result from file.", e);
@@ -91,13 +86,8 @@ public class BuildOperationInstrumentation extends GradleInstrumentation {
 
     private static Duration readCumulativeTimeFromDataFile(File dataFile) {
         try {
-            try (BufferedReader reader = new BufferedReader(new FileReader(dataFile))) {
-                int totalTime = 0;
-                String line;
-                while ((line = reader.readLine()) != null) {
-                    totalTime += Long.parseLong(line);
-                }
-                return Duration.ofMillis(totalTime);
+            try (Stream<String> lines = Files.lines(dataFile.toPath(), StandardCharsets.UTF_8)) {
+                return Duration.ofMillis(lines.mapToLong(Long::parseLong).sum());
             }
         } catch (IOException e) {
             throw new RuntimeException("Could not read result from file.", e);

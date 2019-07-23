@@ -1,8 +1,10 @@
 package org.gradle.trace.stream;
 
 import java.io.File;
-import java.io.FileOutputStream;
 import java.io.PrintWriter;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 
@@ -12,15 +14,19 @@ import java.util.concurrent.LinkedBlockingQueue;
 public class AsyncWriter<T> {
     private final Object EOS = new Object();
     private final BlockingQueue<Object> eventQueue = new LinkedBlockingQueue<>();
-    private final File outFile;
+    private final Path outPath;
     private final Renderer<T> renderer;
     private final Thread thread;
 
-    public AsyncWriter(File outFile, Renderer<T> renderer) {
-        this.outFile = outFile;
+    public AsyncWriter(Path outPath, Renderer<T> renderer) {
+        this.outPath = outPath;
         this.renderer = renderer;
         thread = new Thread(this::run);
         thread.start();
+    }
+
+    public AsyncWriter(File outPath, Renderer<T> renderer) {
+        this(outPath.toPath(), renderer);
     }
 
     public void append(T value) {
@@ -42,8 +48,7 @@ public class AsyncWriter<T> {
 
     private void run() {
         try {
-            PrintWriter writer = new PrintWriter(new FileOutputStream(outFile));
-            try {
+            try (PrintWriter writer = new PrintWriter(Files.newBufferedWriter(outPath, StandardCharsets.UTF_8))) {
                 renderer.header(writer);
                 while (true) {
                     Object next = eventQueue.take();
@@ -54,8 +59,6 @@ public class AsyncWriter<T> {
                     renderer.write(value, writer);
                 }
                 renderer.footer(writer);
-            } finally {
-                writer.close();
             }
         } catch (Exception e) {
             e.printStackTrace();
