@@ -18,8 +18,23 @@ public class GradleScenarioDefinition extends ScenarioDefinition {
     private final List<String> gradleArgs;
     private final Map<String, String> systemProperties;
     private final List<String> jvmArgs;
+    private final List<String> measuredBuildOperations;
 
-    public GradleScenarioDefinition(String name, GradleBuildInvoker invoker, GradleBuildConfiguration buildConfiguration, BuildAction buildAction, BuildAction cleanupAction, List<String> gradleArgs, Map<String, String> systemProperties, Supplier<BuildMutator> buildMutator, int warmUpCount, int buildCount, File outputDir, List<String> jvmArgs) {
+    public GradleScenarioDefinition(
+        String name,
+        GradleBuildInvoker invoker,
+        GradleBuildConfiguration buildConfiguration,
+        BuildAction buildAction,
+        BuildAction cleanupAction,
+        List<String> gradleArgs,
+        Map<String, String> systemProperties,
+        Supplier<BuildMutator> buildMutator,
+        int warmUpCount,
+        int buildCount,
+        File outputDir,
+        List<String> jvmArgs,
+        List<String> measuredBuildOperations
+    ) {
         super(name, buildMutator, warmUpCount, buildCount, outputDir);
         this.invoker = invoker;
         this.buildAction = buildAction;
@@ -28,6 +43,7 @@ public class GradleScenarioDefinition extends ScenarioDefinition {
         this.gradleArgs = gradleArgs;
         this.systemProperties = systemProperties;
         this.jvmArgs = jvmArgs;
+        this.measuredBuildOperations = measuredBuildOperations;
     }
 
     @Override
@@ -78,6 +94,10 @@ public class GradleScenarioDefinition extends ScenarioDefinition {
         return jvmArgs;
     }
 
+    public List<String> getMeasuredBuildOperations() {
+        return measuredBuildOperations;
+    }
+
     @Override
     public void visitProblems(InvocationSettings settings, Consumer<String> reporter) {
         if (getWarmUpCount() < 1) {
@@ -104,6 +124,9 @@ public class GradleScenarioDefinition extends ScenarioDefinition {
         }
         if (!jvmArgs.isEmpty()) {
             out.println("  Jvm args: " + getJvmArgs());
+        }
+        if (!measuredBuildOperations.isEmpty()) {
+            out.println("  Measured build operations: " + String.join(", ", measuredBuildOperations));
         }
     }
 }

@@ -1,11 +1,12 @@
 package org.gradle.profiler
 
+import static org.gradle.profiler.ScenarioLoader.loadScenarios
+
+import com.google.common.collect.ImmutableList
 import org.gradle.tooling.model.idea.IdeaProject
 import org.junit.Rule
 import org.junit.rules.TemporaryFolder
 import spock.lang.Specification
-
-import static org.gradle.profiler.ScenarioLoader.loadScenarios
 
 class ScenarioLoaderTest extends Specification {
     @Rule
@@ -22,8 +23,30 @@ class ScenarioLoaderTest extends Specification {
         scenarioFile = tmpDir.newFile()
     }
 
-    private settings(BuildInvoker invoker = GradleBuildInvoker.Cli, boolean benchmark = true, Integer warmups = null, Integer iterations = null) {
-        new InvocationSettings(projectDir, Profiler.NONE, benchmark, outputDir, invoker, false, scenarioFile, [], [], [:], gradleUserHomeDir, warmups, iterations, false)
+    private settings(
+        BuildInvoker invoker = GradleBuildInvoker.Cli,
+        boolean benchmark = true,
+        Integer warmups = null,
+        Integer iterations = null,
+        List<String> measuredBuildOperations = ImmutableList.of()
+    ) {
+        new InvocationSettings(
+            projectDir,
+            Profiler.NONE,
+            benchmark,
+            outputDir,
+            invoker,
+            false,
+            scenarioFile,
+            [],
+            [],
+            [:],
+            gradleUserHomeDir,
+            warmups,
+            iterations,
+            false,
+            measuredBuildOperations
+        )
     }
 
     def "can load single scenario"() {
@@ -178,6 +201,22 @@ class ScenarioLoaderTest extends Specification {
         "cli"         | "warm" | 6       | 2
         "cli"         | "cold" | 1       | 1
         "cli"         | "none" | 1       | 1
+    }
+
+    def "can load build operations to benchmark"() {
+        def benchmarkSettings = settings(GradleBuildInvoker.ToolingApi, true, null, null, ["BuildOpCmdLine"])
+
+        scenarioFile << """
+            default {
+                measured-build-ops = ["BuildOp1", "BuildOp2"]
+            }
+        """
+
+        def benchmarkScenarios = loadScenarios(scenarioFile, benchmarkSettings, Mock(GradleBuildConfigurationReader))
+
+        expect:
+        def benchmarkScenario = benchmarkScenarios[0] as GradleScenarioDefinition
+        benchmarkScenario.measuredBuildOperations == ["BuildOpCmdLine", "BuildOp1", "BuildOp2"]
     }
 
     def "can load tooling model scenarios"() {

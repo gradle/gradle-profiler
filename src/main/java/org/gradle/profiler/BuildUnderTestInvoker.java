@@ -6,6 +6,7 @@ import org.gradle.profiler.instrument.PidInstrumentation;
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 /**
@@ -45,9 +46,14 @@ public class BuildUnderTestInvoker {
         Logging.detailed().println("Used daemon with pid " + pid);
 
         Optional<Duration> timeToTaskExecution = buildOperationInstrumentation.getTimeToTaskExecution();
+
+        Map<String, Duration> cumulativeBuildOperationTimes = buildOperationInstrumentation.getCumulativeBuildOperationTimes();
+        cumulativeBuildOperationTimes.forEach((opName, duration) -> {
+            Logging.detailed().println(String.format("Cumulative build operation time %s ms for %s", duration.toMillis(), opName));
+        });
         Logging.detailed().println("Time to task execution " + timeToTaskExecution.map(duration -> duration.toMillis() + " ms").orElse(""));
 
-        return new GradleBuildInvocationResult(displayName, executionTime, timeToTaskExecution.orElse(null), pid);
+        return new GradleBuildInvocationResult(displayName, executionTime, timeToTaskExecution.orElse(null), cumulativeBuildOperationTimes, pid);
     }
 
     public BuildUnderTestInvoker withJvmArgs(List<String> jvmArgs) {
