@@ -1,5 +1,7 @@
 package org.gradle.trace.listener;
 
+import static org.gradle.trace.util.ReflectionUtil.invokerGetter;
+
 import org.gradle.api.internal.TaskInternal;
 import org.gradle.trace.TraceResult;
 
@@ -10,22 +12,22 @@ public class Gradle33BuildOperationListenerInvocationHandler extends BuildOperat
     }
 
     protected String getName(Object operation) {
-        Object details = call(operation, "getOperationDescriptor");
+        Object details = invokerGetter(operation, "getOperationDescriptor");
         if (details != null && details.getClass().getSimpleName().equals("TaskOperationDescriptor")) {
-            return (String) call(call(details, "getTask"), "getPath");
+            return (String) invokerGetter(invokerGetter(details, "getTask"), "getPath");
         }
-        return call(operation, "getDisplayName") + " (" + call(operation, "getId") + ")";
+        return invokerGetter(operation, "getDisplayName") + " (" + invokerGetter(operation, "getId") + ")";
     }
 
     protected TaskInternal getTask(Object operation) {
-        Object details = call(operation, "getOperationDescriptor");
+        Object details = invokerGetter(operation, "getOperationDescriptor");
         if (details != null && details.getClass().getSimpleName().equals("TaskOperationDescriptor")) {
-            return  (TaskInternal) call(details, "getTask");
+            return  (TaskInternal) invokerGetter(details, "getTask");
         }
         return null;
     }
 
     protected boolean isTaskCacheable(TaskInternal task, Object finishedEvent) {
-        return (boolean) call(task.getState(), "isCacheable");
+        return (boolean) invokerGetter(task.getState(), "isCacheable");
     }
 }

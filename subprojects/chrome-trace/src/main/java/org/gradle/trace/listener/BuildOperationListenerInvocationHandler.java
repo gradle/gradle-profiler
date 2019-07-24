@@ -1,5 +1,7 @@
 package org.gradle.trace.listener;
 
+import static org.gradle.trace.util.ReflectionUtil.invokerGetter;
+
 import org.gradle.api.internal.TaskInternal;
 import org.gradle.trace.TraceResult;
 import org.gradle.trace.util.TimeUtil;
@@ -60,11 +62,11 @@ public abstract class BuildOperationListenerInvocationHandler implements Invocat
     }
 
     protected long getStartTime(Object startEvent) {
-        return (long) call(startEvent, "getStartTime");
+        return (long) invokerGetter(startEvent, "getStartTime");
     }
 
     protected long getEndTime(Object result) {
-        return (long) call(result, "getEndTime");
+        return (long) invokerGetter(result, "getEndTime");
     }
 
     protected abstract String getName(Object operation);
@@ -82,14 +84,4 @@ public abstract class BuildOperationListenerInvocationHandler implements Invocat
     }
 
     protected abstract boolean isTaskCacheable(TaskInternal task, Object finishedEvent);
-
-    protected Object call(Object object, String method) {
-        try {
-            Method methodHandle = object.getClass().getMethod(method);
-            methodHandle.setAccessible(true);
-            return methodHandle.invoke(object);
-        } catch (Exception e) {
-            throw new RuntimeException(e);
-        }
-    }
 }

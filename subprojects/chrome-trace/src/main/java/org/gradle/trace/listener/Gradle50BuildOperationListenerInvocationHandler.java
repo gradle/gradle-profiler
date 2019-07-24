@@ -1,5 +1,7 @@
 package org.gradle.trace.listener;
 
+import static org.gradle.trace.util.ReflectionUtil.invokerGetter;
+
 import org.gradle.api.internal.TaskInternal;
 import org.gradle.api.internal.tasks.execution.ExecuteTaskBuildOperationDetails;
 import org.gradle.api.internal.tasks.execution.ExecuteTaskBuildOperationType;
@@ -25,7 +27,7 @@ public class Gradle50BuildOperationListenerInvocationHandler extends BuildOperat
     }
 
     protected TaskInternal getTask(Object operation) {
-        Object details = call(operation, "getDetails");
+        Object details = invokerGetter(operation, "getDetails");
         if (details instanceof ExecuteTaskBuildOperationDetails) {
             return ((ExecuteTaskBuildOperationDetails) details).getTask();
         }

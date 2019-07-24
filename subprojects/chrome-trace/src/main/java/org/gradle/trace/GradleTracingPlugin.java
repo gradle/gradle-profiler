@@ -1,5 +1,7 @@
 package org.gradle.trace;
 
+import static org.gradle.trace.util.ReflectionUtil.invokerGetter;
+
 import org.gradle.BuildAdapter;
 import org.gradle.BuildResult;
 import org.gradle.api.internal.GradleInternal;
@@ -61,16 +63,8 @@ public class GradleTracingPlugin {
             try {
                 return buildRequestMetaData.getStartTime();
             } catch (NoSuchMethodError e) {
-                return (long) call(call(buildRequestMetaData, "getBuildTimeClock"), "getStartTime");
+                return (long) invokerGetter(invokerGetter(buildRequestMetaData, "getBuildTimeClock"), "getStartTime");
             }
-        }
-    }
-
-    private Object call(Object object, String method) {
-        try {
-            return object.getClass().getMethod(method).invoke(object);
-        } catch (Exception e) {
-            throw new RuntimeException(e);
         }
     }
 }
