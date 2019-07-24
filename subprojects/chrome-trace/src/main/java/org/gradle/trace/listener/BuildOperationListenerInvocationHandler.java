@@ -30,10 +30,10 @@ public abstract class BuildOperationListenerInvocationHandler implements Invocat
             }
             case "finished": {
                 Object operation = args[0];
-                Object result = args[1];
+                Object finishedEvent = args[1];
                 Map<String, String> info = new HashMap<>();
-                withTaskInfo(info, getTask(operation));
-                traceResult.finish(getName(operation), TimeUtil.toNanoTime(getEndTime(result)), info);
+                withTaskInfo(info, getTask(operation), finishedEvent);
+                traceResult.finish(getName(operation), TimeUtil.toNanoTime(getEndTime(finishedEvent)), info);
                 return null;
             }
             case "hashCode":
@@ -71,18 +71,17 @@ public abstract class BuildOperationListenerInvocationHandler implements Invocat
 
     protected abstract TaskInternal getTask(Object operation);
 
-    private void withTaskInfo(Map<String, String> info, TaskInternal task) {
+    private void withTaskInfo(Map<String, String> info, TaskInternal task, Object finishedEvent) {
         if (task == null) {
             return;
         }
         info.put("type", task.getClass().getSimpleName().replace("_Decorated", ""));
         info.put("enabled", String.valueOf(task.getEnabled()));
-        info.put("cacheable", String.valueOf(isTaskCacheable(task)));
-        info.put("parallelizeable", String.valueOf(false));
+        info.put("cacheable", String.valueOf(isTaskCacheable(task, finishedEvent)));
         info.put("outcome", task.getState().getOutcome().name());
     }
 
-    protected abstract boolean isTaskCacheable(TaskInternal task);
+    protected abstract boolean isTaskCacheable(TaskInternal task, Object finishedEvent);
 
     protected Object call(Object object, String method) {
         try {

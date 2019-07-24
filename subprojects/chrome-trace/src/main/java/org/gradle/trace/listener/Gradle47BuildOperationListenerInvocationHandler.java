@@ -40,7 +40,7 @@ public class Gradle47BuildOperationListenerInvocationHandler extends BuildOperat
         return ((OperationFinishEvent) result).getEndTime();
     }
 
-    protected boolean isTaskCacheable(TaskInternal task) {
+    protected boolean isTaskCacheable(TaskInternal task, Object finishedEvent) {
         return (boolean) call(call(task.getState(), "getTaskOutputCaching"), "isEnabled");
     }
 }

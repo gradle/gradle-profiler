@@ -25,7 +25,7 @@ public class Gradle33BuildOperationListenerInvocationHandler extends BuildOperat
         return null;
     }
 
-    protected boolean isTaskCacheable(TaskInternal task) {
+    protected boolean isTaskCacheable(TaskInternal task, Object finishedEvent) {
         return (boolean) call(task.getState(), "isCacheable");
     }
 }
