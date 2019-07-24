@@ -1,5 +1,7 @@
 package org.gradle.trace.listener;
 
+import static org.gradle.trace.util.ReflectionUtil.invokerGetter;
+
 import org.gradle.api.internal.TaskInternal;
 import org.gradle.internal.operations.BuildOperationDescriptor;
 import org.gradle.internal.operations.OperationFinishEvent;
@@ -23,9 +25,9 @@ public class Gradle47BuildOperationListenerInvocationHandler extends BuildOperat
     }
 
     protected TaskInternal getTask(Object operation) {
-        Object details = call(operation, "getDetails");
+        Object details = invokerGetter(operation, "getDetails");
         if (details != null && details.getClass().getName().equals("org.gradle.api.execution.internal.ExecuteTaskBuildOperationDetails")) {
-            return (TaskInternal) call(details, "getTask");
+            return (TaskInternal) invokerGetter(details, "getTask");
         }
         return null;
     }
@@ -40,7 +42,7 @@ public class Gradle47BuildOperationListenerInvocationHandler extends BuildOperat
         return ((OperationFinishEvent) result).getEndTime();
     }
 
-    protected boolean isTaskCacheable(TaskInternal task) {
-        return task.getState().getTaskOutputCaching().isEnabled();
+    protected boolean isTaskCacheable(TaskInternal task, Object finishedEvent) {
+        return (boolean) invokerGetter(invokerGetter(task.getState(), "getTaskOutputCaching"), "isEnabled");
     }
 }

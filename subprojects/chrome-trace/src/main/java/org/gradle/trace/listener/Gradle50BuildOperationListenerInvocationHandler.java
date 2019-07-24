@@ -1,7 +1,10 @@
 package org.gradle.trace.listener;
 
+import static org.gradle.trace.util.ReflectionUtil.invokerGetter;
+
 import org.gradle.api.internal.TaskInternal;
 import org.gradle.api.internal.tasks.execution.ExecuteTaskBuildOperationDetails;
+import org.gradle.api.internal.tasks.execution.ExecuteTaskBuildOperationType;
 import org.gradle.internal.operations.BuildOperationDescriptor;
 import org.gradle.internal.operations.OperationFinishEvent;
 import org.gradle.internal.operations.OperationStartEvent;
@@ -24,7 +27,7 @@ public class Gradle50BuildOperationListenerInvocationHandler extends BuildOperat
     }
 
     protected TaskInternal getTask(Object operation) {
-        Object details = call(operation, "getDetails");
+        Object details = invokerGetter(operation, "getDetails");
         if (details instanceof ExecuteTaskBuildOperationDetails) {
             return ((ExecuteTaskBuildOperationDetails) details).getTask();
         }
@@ -41,7 +44,12 @@ public class Gradle50BuildOperationListenerInvocationHandler extends BuildOperat
         return ((OperationFinishEvent) result).getEndTime();
     }
 
-    protected boolean isTaskCacheable(TaskInternal task) {
-        return task.getState().getTaskOutputCaching().isEnabled();
+    @Override
+    protected boolean isTaskCacheable(TaskInternal task, Object finishedEvent) {
+        Object result = ((OperationFinishEvent) finishedEvent).getResult();
+        if (result instanceof ExecuteTaskBuildOperationType.Result) {
+            return ((ExecuteTaskBuildOperationType.Result) result).getCachingDisabledReasonCategory() == null;
+        }
+        throw new UnsupportedOperationException();
     }
 }

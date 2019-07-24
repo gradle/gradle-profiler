@@ -21,7 +21,7 @@ public interface BuildOperationListenerAdapter {
         if (inVersionRange(gradleVersion, "4.0", "4.7")) {
             return new Gradle40BuildOperationListenerAdapter(gradle, new Gradle40BuildOperationListenerInvocationHandler(traceResult));
         }
-        if (gradleVersion.compareTo(version("4.7")) >= 0) {
+        if (inVersionRange(gradleVersion, "4.7", "5.0")) {
             return new Gradle47BuildOperationListenerAdapter(gradle, new Gradle47BuildOperationListenerInvocationHandler(traceResult));
         }
         if (gradleVersion.compareTo(version("5.0")) >= 0) {
