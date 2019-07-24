@@ -86,7 +86,9 @@ public abstract class BuildOperationListenerInvocationHandler implements Invocat
 
     protected Object call(Object object, String method) {
         try {
-            return object.getClass().getMethod(method).invoke(object);
+            Method methodHandle = object.getClass().getMethod(method);
+            methodHandle.setAccessible(true);
+            return methodHandle.invoke(object);
         } catch (Exception e) {
             throw new RuntimeException(e);
         }

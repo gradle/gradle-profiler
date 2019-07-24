@@ -17,7 +17,7 @@ class ChromeTraceIntegrationTest extends AbstractProfilerIntegrationTest {
         new File(outputDir, "${versionUnderTest}-trace.html").isFile()
 
         where:
-        versionUnderTest << supportedGradleVersions
+        versionUnderTest << ["4.7"]
     }
 
     @Unroll
