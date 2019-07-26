@@ -5,3 +5,5 @@ include 'build-operations'
 rootProject.children.each {
     it.projectDir = new File(rootDir, "subprojects/${it.name}")
 }
+
+enableFeaturePreview("GRADLE_METADATA")

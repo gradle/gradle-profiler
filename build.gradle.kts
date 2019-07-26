@@ -5,6 +5,9 @@ plugins {
     `maven-publish`
 }
 
+group = "org.gradle.profiler"
+version = property("profiler.version") as String
+
 repositories {
     jcenter()
     maven {
@@ -12,6 +15,19 @@ repositories {
     }
     maven {
         url = uri("https://oss.sonatype.org/content/repositories/snapshots")
+    }
+}
+
+val profilerDistribution = artifacts.add("archives", tasks.distZip.flatMap { it.archiveFile }) {
+    type = "zip"
+}
+
+publishing {
+    publications {
+        register<MavenPublication>("mavenJava") {
+            from(components["java"])
+            artifact(profilerDistribution)
+        }
     }
 }
 
