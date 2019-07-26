@@ -11,7 +11,7 @@
 +:refs/(pull/*)/head
 -:refs/heads/teamcity-versioned-settings]]></param>
   <param name="teamcitySshKey" value="id_rsa_gradlewaregitbot" />
-  <param name="url" value="git@github.com/gradle/gradle-profiler.git" />
+  <param name="url" value="git@github.com:gradle/gradle-profiler.git" />
   <param name="usernameStyle" value="USERID" />
 </vcs-root>
 
