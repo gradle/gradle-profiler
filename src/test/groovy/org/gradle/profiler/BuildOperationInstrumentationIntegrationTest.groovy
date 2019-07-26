@@ -71,7 +71,7 @@ class BuildOperationInstrumentationIntegrationTest extends AbstractProfilerInteg
         lines.get(0) == "scenario,default,default"
         lines.get(1) == "version,${gradleVersion},${gradleVersion}"
         lines.get(2) == "tasks,assemble,assemble"
-        lines.get(3) == "value,execution,org.gradle.api.internal.tasks.SnapshotTaskInputsBuildOperationType"
+        lines.get(3) == "value,execution,SnapshotTaskInputsBuildOperationType"
 
         def firstWarmup = lines.get(4)
         def snapshottingDuration = firstWarmup =~ /warm-up build #1,\d+,(\d+)/
