@@ -4,9 +4,11 @@ import jetbrains.buildServer.configs.kotlin.v2018_2.buildFeatures.commitStatusPu
 import jetbrains.buildServer.configs.kotlin.v2018_2.buildSteps.gradle
 import jetbrains.buildServer.configs.kotlin.v2018_2.triggers.vcs
 
-open class GradleProfilerBuild() : BuildType({
-    vcs {
-        root(DslContext.settingsRoot)
+open class GradleProfilerTest(os: Os) : BuildType({
+    gradleProfilerVcs()
+
+    params {
+        java8Home(os)
     }
 
     steps {
@@ -38,44 +40,22 @@ open class GradleProfilerBuild() : BuildType({
             }
         }
     }
+
+    agentRequirement(os)
 }) {
-    constructor(init: GradleProfilerBuild.() -> Unit) : this() {
+    constructor(os: Os, init: GradleProfilerTest.() -> Unit) : this(os) {
         init()
     }
 }
 
-object LinuxJava18 : GradleProfilerBuild({
+object LinuxJava18 : GradleProfilerTest(Os.linux, {
     name = "Linux - Java 1.8"
-
-    params {
-        param("env.JAVA_HOME", "%linux.java8.oracle.64bit%")
-    }
-
-    requirements {
-        contains("teamcity.agent.jvm.os.name", "Linux")
-    }
 })
 
-object MacOSJava18 : GradleProfilerBuild({
+object MacOSJava18 : GradleProfilerTest(Os.macos, {
     name = "MacOS - Java 1.8"
-
-    params {
-        param("env.JAVA_HOME", "%macos.java8.oracle.64bit%")
-    }
-
-    requirements {
-        contains("teamcity.agent.jvm.os.name", "Mac OS X")
-    }
 })
 
-object WindowsJava18 : GradleProfilerBuild({
+object WindowsJava18 : GradleProfilerTest(Os.windows, {
     name = "Windows - Java 1.8"
-
-    params {
-        param("env.JAVA_HOME", "%windows.java8.oracle.64bit%")
-    }
-
-    requirements {
-        contains("teamcity.agent.jvm.os.name", "Windows")
-    }
 })

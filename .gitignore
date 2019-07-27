@@ -2,6 +2,7 @@ build
 classes
 /.gradle
 /.idea
+*.iml
 /profile-out
 /profile-out-*
 /foobar
