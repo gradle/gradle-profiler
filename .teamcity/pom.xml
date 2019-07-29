@@ -37,7 +37,7 @@
   </pluginRepositories>
 
   <build>
-    <sourceDirectory>settings</sourceDirectory>
+    <sourceDirectory>.</sourceDirectory>
     <plugins>
       <plugin>
         <artifactId>kotlin-maven-plugin</artifactId>
