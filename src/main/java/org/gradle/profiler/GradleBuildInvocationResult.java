@@ -53,6 +53,10 @@ public class GradleBuildInvocationResult extends BuildInvocationResult {
         return timeToTaskExecution;
     }
 
+    public Map<String, Duration> getCumulativeBuildOperationTimes() {
+        return cumulativeBuildOperationTimes;
+    }
+
     private static String getSimpleBuildOperationName(String buildOperationDetailsClass) {
         int lastDot = buildOperationDetailsClass.lastIndexOf('.');
         return lastDot == -1
