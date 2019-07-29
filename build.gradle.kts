@@ -63,6 +63,12 @@ tasks.processResources {
     }
 }
 
+allprojects {
+    tasks.withType<Jar>().configureEach {
+        archiveVersion.set(null as String?)
+    }
+}
+
 val profilerDistribution = artifacts.add("archives", tasks.distZip.flatMap { it.archiveFile }) {
     type = "zip"
 }
