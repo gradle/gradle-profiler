@@ -1,3 +1,5 @@
+import java.net.URI
+
 plugins {
     java
     groovy
@@ -5,8 +7,10 @@ plugins {
     `maven-publish`
 }
 
-group = "org.gradle.profiler"
-version = property("profiler.version") as String
+allprojects {
+    group = "org.gradle.profiler"
+    version = property("profiler.version") as String
+}
 
 repositories {
     jcenter()
@@ -15,19 +19,6 @@ repositories {
     }
     maven {
         url = uri("https://oss.sonatype.org/content/repositories/snapshots")
-    }
-}
-
-val profilerDistribution = artifacts.add("archives", tasks.distZip.flatMap { it.archiveFile }) {
-    type = "zip"
-}
-
-publishing {
-    publications {
-        register<MavenPublication>("mavenJava") {
-            from(components["java"])
-            artifact(profilerDistribution)
-        }
     }
 }
 
@@ -70,4 +61,53 @@ tasks.processResources {
     into("META-INF/jars") {
         from(profilerPlugins)
     }
+}
+
+val profilerDistribution = artifacts.add("archives", tasks.distZip.flatMap { it.archiveFile }) {
+    type = "zip"
+}
+
+publishing {
+    publications {
+        register<MavenPublication>("mavenJava") {
+            from(components["java"])
+            artifact(profilerDistribution)
+        }
+    }
+}
+
+subprojects {
+    apply(plugin = "maven-publish")
+    pluginManager.withPlugin("java") {
+        publishing {
+            publications {
+                register<MavenPublication>("mavenJava") {
+                    from(components["java"])
+                }
+            }
+        }
+    }
+}
+
+allprojects {
+    pluginManager.withPlugin("maven-publish") {
+        publishing {
+            repositories {
+                maven {
+                    name = "GradleBuildInternal"
+                    url = gradleInternalRepositoryUrl()
+                    credentials {
+                        username = project.findProperty("artifactoryUsername") as String?
+                        password = project.findProperty("artifactoryPassword") as String?
+                    }
+                }
+            }
+        }
+    }
+}
+
+fun Project.gradleInternalRepositoryUrl(): URI {
+    val isSnapshot = version.toString().endsWith("-SNAPSHOT")
+    val repositoryQualifier = if (isSnapshot) "snapshots" else "releases"
+    return uri("https://repo.gradle.org/gradle/ext-$repositoryQualifier-local")
 }
