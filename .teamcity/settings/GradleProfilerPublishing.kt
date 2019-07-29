@@ -21,6 +21,7 @@ object GradleProfilerPublishing : BuildType({
             tasks = "clean publishToGradleBuildInternal"
             gradleParams = "-PartifactoryUsername=%ARTIFACTORY_USERNAME% -PartifactoryPassword=%ARTIFACTORY_PASSWORD%"
             param("org.jfrog.artifactory.selectedDeployableServer.defaultModuleVersionConfiguration", "GLOBAL")
+            buildFile = ""
         }
     }
 
