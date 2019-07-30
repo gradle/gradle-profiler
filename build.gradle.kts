@@ -65,6 +65,8 @@ tasks.processResources {
 
 allprojects {
     tasks.withType<Jar>().configureEach {
+        // Removing the version from the JARs here, since JARs in `profilerPlugins` are referenced by name in production code.
+        // They need to end up without the version in the `gradle-profiler.jar` and are copied by `processResources`.
         archiveFileName.set(archiveBaseName.map { "$it.jar" })
     }
 }
