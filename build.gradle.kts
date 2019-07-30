@@ -65,7 +65,7 @@ tasks.processResources {
 
 allprojects {
     tasks.withType<Jar>().configureEach {
-        archiveFileName.set(provider { "${this@configureEach.archiveBaseName.get()}.jar" })
+        archiveFileName.set(archiveBaseName.map { "$it.jar" })
     }
 }
 
