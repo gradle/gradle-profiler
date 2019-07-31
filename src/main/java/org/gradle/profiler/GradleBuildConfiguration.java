@@ -15,7 +15,7 @@ public class GradleBuildConfiguration {
     private final List<String> jvmArguments;
     private final boolean usesScanPlugin;
 
-    GradleBuildConfiguration(GradleVersion gradleVersion, File gradleHome, File javaHome, List<String> jvmArguments, boolean usesScanPlugin) {
+    public GradleBuildConfiguration(GradleVersion gradleVersion, File gradleHome, File javaHome, List<String> jvmArguments, boolean usesScanPlugin) {
         this.gradleVersion = gradleVersion;
         this.gradleHome = gradleHome;
         this.javaHome = javaHome;

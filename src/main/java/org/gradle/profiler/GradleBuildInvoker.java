@@ -1,7 +1,7 @@
 package org.gradle.profiler;
 
 public class GradleBuildInvoker extends BuildInvoker {
-    static final GradleBuildInvoker ToolingApi = new GradleBuildInvoker() {
+    public static final GradleBuildInvoker ToolingApi = new GradleBuildInvoker() {
         @Override
         public String toString() {
             return "Tooling API";
@@ -28,7 +28,7 @@ public class GradleBuildInvoker extends BuildInvoker {
             return true;
         }
     };
-    static final GradleBuildInvoker Cli = new GradleBuildInvoker() {
+    public static final GradleBuildInvoker Cli = new GradleBuildInvoker() {
         @Override
         public String toString() {
             return "`gradle` command";
@@ -44,7 +44,7 @@ public class GradleBuildInvoker extends BuildInvoker {
             return CliColdDaemon;
         }
     };
-    static final GradleBuildInvoker CliNoDaemon = new GradleBuildInvoker() {
+    public static final GradleBuildInvoker CliNoDaemon = new GradleBuildInvoker() {
         @Override
         public String toString() {
             return "`gradle` command with --no-daemon";
