@@ -59,15 +59,10 @@ application.mainClassName = "org.gradle.profiler.Main"
 
 tasks.processResources {
     into("META-INF/jars") {
-        from(profilerPlugins)
-    }
-}
-
-allprojects {
-    tasks.withType<Jar>().configureEach {
-        // Removing the version from the JARs here, since JARs in `profilerPlugins` are referenced by name in production code.
-        // They need to end up without the version in the `gradle-profiler.jar` and are copied by `processResources`.
-        archiveFileName.set(archiveBaseName.map { "$it.jar" })
+        from(profilerPlugins) {
+            // Removing the version from the JARs here, since they are referenced by name in production code.
+            rename("""(.*)-\d\.\d.*\.jar""", "${'$'}1.jar")
+        }
     }
 }
 
