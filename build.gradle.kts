@@ -37,8 +37,12 @@ dependencies {
     implementation("org.openjdk.jmc:flightrecorder:7.0.0-SNAPSHOT")
     implementation("com.android.tools.build:builder-model:3.0.0")
 
-    profilerPlugins(project(":chrome-trace"))
-    profilerPlugins(project(":build-operations"))
+    profilerPlugins(project(":chrome-trace")) {
+        isTransitive = false
+    }
+    profilerPlugins(project(":build-operations")) {
+        isTransitive = false
+    }
 
     runtimeOnly("org.slf4j:slf4j-simple:1.7.10")
     testCompile("org.codehaus.groovy:groovy:2.4.7")
