@@ -13,12 +13,12 @@ object GradleProfilerPublishing : BuildType({
     params {
         java8Home(Os.linux)
         text("ARTIFACTORY_USERNAME", "bot-build-tool", allowEmpty = true)
-        password("ARTIFACTORY_PASSWORD", "credentialsJSON:2b7529cd-77cd-49f4-9416-9461f6ac9018", display = ParameterDisplay.HIDDEN)
+        password("ARTIFACTORY_PASSWORD", "credentialsJSON:d94612fb-3291-41f5-b043-e2b3994aeeb4", display = ParameterDisplay.HIDDEN)
     }
 
     steps {
         gradle {
-            tasks = "clean publishToGradleBuildInternal"
+            tasks = "clean publishAllPublicationsToGradleBuildInternalRepository"
             gradleParams = "-PartifactoryUsername=%ARTIFACTORY_USERNAME% -PartifactoryPassword=%ARTIFACTORY_PASSWORD%"
             param("org.jfrog.artifactory.selectedDeployableServer.defaultModuleVersionConfiguration", "GLOBAL")
             buildFile = ""

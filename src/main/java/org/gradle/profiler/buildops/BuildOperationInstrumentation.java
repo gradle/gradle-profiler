@@ -1,6 +1,5 @@
 package org.gradle.profiler.buildops;
 
-import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Streams;
 import org.gradle.profiler.instrument.GradleInstrumentation;
 
@@ -20,7 +19,7 @@ import java.util.stream.Stream;
 
 public class BuildOperationInstrumentation extends GradleInstrumentation {
     private final File configurationTimeDataFile;
-    private final ImmutableMap<String, File> buildOperationDataFiles;
+    private final Map<String, File> buildOperationDataFiles;
     private final boolean measureConfigTime;
 
     public BuildOperationInstrumentation(boolean measureConfigTime, List<String> measuredBuildOperations) throws IOException {
@@ -28,7 +27,7 @@ public class BuildOperationInstrumentation extends GradleInstrumentation {
         this.configurationTimeDataFile = File.createTempFile("gradle-profiler", "build-ops-config-time");
         this.configurationTimeDataFile.deleteOnExit();
         this.buildOperationDataFiles = measuredBuildOperations.stream()
-            .collect(ImmutableMap.toImmutableMap(Function.identity(), BuildOperationInstrumentation::createBuildOperationTempFile));
+            .collect(Collectors.toMap(Function.identity(), BuildOperationInstrumentation::createBuildOperationTempFile));
     }
 
     public boolean requiresInitScript() {

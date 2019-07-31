@@ -1,7 +1,0 @@
-rootProject.name = 'gradle-profiler'
-
-include 'chrome-trace'
-include 'build-operations'
-rootProject.children.each {
-    it.projectDir = new File(rootDir, "subprojects/${it.name}")
-}
