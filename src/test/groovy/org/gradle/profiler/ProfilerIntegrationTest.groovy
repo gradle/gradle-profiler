@@ -1048,7 +1048,7 @@ println "User home: \$gradle.gradleUserHomeDir"
         logFile.find("User home: " + new File("gradle-user-home").absolutePath)
     }
 
-    def "Can specify user home"() {
+    def "can specify user home"() {
         given:
         buildFile.text = """
 apply plugin: 'base'
@@ -1057,10 +1057,10 @@ println "User home: \$gradle.gradleUserHomeDir"
 
         when:
         new Main().run("--project-dir", projectDir.absolutePath, "--output-dir", outputDir.absolutePath, "--gradle-version", minimalSupportedGradleVersion,
-            "--benchmark", "--gradle-user-home", "foobar", "help")
+            "--benchmark", "--gradle-user-home", "home with spaces", "help")
 
         then:
-        logFile.find("User home: " + new File("foobar").absolutePath)
+        logFile.find("User home: " + new File("home with spaces").absolutePath)
     }
 
     @Requires({ !OperatingSystem.windows })
