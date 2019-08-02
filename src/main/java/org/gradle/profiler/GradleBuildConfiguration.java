@@ -60,10 +60,9 @@ public class GradleBuildConfiguration {
     }
 
     public void addGradleCommand(List<String> commandLine) {
-        if (OperatingSystem.isWindows()) {
-            commandLine.add("cmd.exe");
-            commandLine.add("/C");
-        }
-        commandLine.add(new File(gradleHome, "bin/gradle").getAbsolutePath());
+        String gradleScriptName = OperatingSystem.isWindows()
+            ? "gradle.bat"
+            : "gradle";
+        commandLine.add(new File(gradleHome, "bin/" + gradleScriptName).getAbsolutePath());
     }
 }
