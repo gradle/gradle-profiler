@@ -1,5 +1,6 @@
 package org.gradle.profiler;
 
+import org.gradle.profiler.buildops.BuildOperationUtil;
 import org.gradle.util.GradleVersion;
 
 import java.io.File;
@@ -8,6 +9,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
+import java.util.stream.Collectors;
 
 public class GradleScenarioDefinition extends ScenarioDefinition {
 
@@ -126,7 +128,9 @@ public class GradleScenarioDefinition extends ScenarioDefinition {
             out.println("  Jvm args: " + getJvmArgs());
         }
         if (!measuredBuildOperations.isEmpty()) {
-            out.println("  Measured build operations: " + String.join(", ", measuredBuildOperations));
+            out.println("  Measured build operations: " + measuredBuildOperations.stream()
+                .map(BuildOperationUtil::getSimpleBuildOperationName)
+                .collect(Collectors.joining(", ")));
         }
     }
 }
