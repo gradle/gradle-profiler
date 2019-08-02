@@ -130,6 +130,7 @@ public class GradleScenarioDefinition extends ScenarioDefinition {
         if (!measuredBuildOperations.isEmpty()) {
             out.println("  Measured build operations: " + measuredBuildOperations.stream()
                 .map(BuildOperationUtil::getSimpleBuildOperationName)
+                .sorted()
                 .collect(Collectors.joining(", ")));
         }
     }
