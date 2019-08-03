@@ -23,7 +23,7 @@ class BenchmarkIntegrationTest extends AbstractProfilerIntegrationTest {
         logFile.find("<tasks: [assemble]>").size() == 9 + 16
 
         def lines = resultFile.lines
-        lines.size() == 27 // 4 headers, 16 executions, 7 stats
+        lines.size() == 28 // 4 headers, 16 executions, 8 stats
         lines.get(0) == "scenario,default,default"
         lines.get(1) == "version,${minimalSupportedGradleVersion},5.0"
         lines.get(2) == "tasks,assemble,assemble"
@@ -60,7 +60,7 @@ class BenchmarkIntegrationTest extends AbstractProfilerIntegrationTest {
         logFile.find("<tasks: [assemble]>").size() == 4 + 16
 
         def lines = resultFile.lines
-        lines.size() == 27 // 4 headers, 16 executions, 7 stats
+        lines.size() == 28 // 4 headers, 16 executions, 8 stats
         lines.get(0) == "scenario,default,default"
         lines.get(1) == "version,${minimalSupportedGradleVersion},5.0"
         lines.get(2) == "tasks,assemble,assemble"
@@ -100,7 +100,7 @@ class BenchmarkIntegrationTest extends AbstractProfilerIntegrationTest {
         logFile.find("<tasks: [assemble]>").size() == 1 + 16
 
         def lines = resultFile.lines
-        lines.size() == 27 // 4 headers, 16 executions, 7 stats
+        lines.size() == 28 // 4 headers, 16 executions, 8 stats
         lines.get(0) == "scenario,default,default"
         lines.get(1) == "version,${minimalSupportedGradleVersion},5.0"
         lines.get(2) == "tasks,assemble,assemble"

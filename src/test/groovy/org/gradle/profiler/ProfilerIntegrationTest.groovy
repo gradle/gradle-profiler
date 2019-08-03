@@ -337,7 +337,7 @@ println "<daemon: " + gradle.services.get(org.gradle.internal.environment.Gradle
         logFile.containsOne("* Running scenario help using Gradle $minimalSupportedGradleVersion (scenario 3/3)")
 
         def lines = resultFile.lines
-        lines.size() == 27 // 4 headers, 16 executions, 7 stats
+        lines.size() == 28 // 4 headers, 16 executions, 8 stats
         lines.get(0) == "scenario,assemble,assemble,help"
         lines.get(1) == "version,3.0,${minimalSupportedGradleVersion},${minimalSupportedGradleVersion}"
         lines.get(2) == "tasks,assemble,assemble,help"
@@ -378,7 +378,7 @@ println "<daemon: " + gradle.services.get(org.gradle.internal.environment.Gradle
         logFile.containsOne("* Running scenario xyz using Gradle $minimalSupportedGradleVersion (scenario 1/1)")
 
         def lines = resultFile.lines
-        lines.size() == 27 // 4 headers, 16 executions, 7 stats
+        lines.size() == 28 // 4 headers, 16 executions, 8 stats
         lines.get(0) == "scenario,xyz"
         lines.get(1) == "version,${minimalSupportedGradleVersion}"
         lines.get(2) == "tasks,default tasks"
@@ -456,7 +456,7 @@ plugins.withId("idea") {
         logFile.containsOne("* Running scenario ideaModel using Gradle $latestSupportedGradleVersion (scenario 2/2)")
 
         def lines = resultFile.lines
-        lines.size() == 27 // 4 headers, 16 executions, 7 stats
+        lines.size() == 28 // 4 headers, 16 executions, 8 stats
         lines.get(0) == "scenario,ideaModel,ideaModel"
         lines.get(1) == "version,$minimalSupportedGradleVersion,$latestSupportedGradleVersion"
         lines.get(2) == "tasks,model IdeaProject,model IdeaProject"
@@ -616,7 +616,7 @@ println "<daemon: " + gradle.services.get(org.gradle.internal.environment.Gradle
         logFile.find("<tasks: [help]>").size() == 17
 
         def lines = resultFile.lines
-        lines.size() == 27 // 4 headers, 16 executions, 7 stats
+        lines.size() == 28 // 4 headers, 16 executions, 8 stats
         lines.get(0) == "scenario,help"
         lines.get(1) == "version,${minimalSupportedGradleVersion}"
         lines.get(2) == "tasks,help"
@@ -693,7 +693,7 @@ println "<dry-run: " + gradle.startParameter.dryRun + ">"
         logFile.find("<tasks: [clean, assemble]>").size() == 2
 
         def lines = resultFile.lines
-        lines.size() == 13
+        lines.size() == 14
         lines.get(0) == "scenario,s1,s1,s2"
         lines.get(1) == "version,3.0,${minimalSupportedGradleVersion},${minimalSupportedGradleVersion}"
         lines.get(2) == "tasks,assemble,assemble,clean assemble"
@@ -1104,7 +1104,7 @@ help {
         logFile.containsOne("* Buck targets: [//target:android_binary_1, //target:android_binary_2, //target/child:android_binary_3, //target/child:android_binary_4]")
 
         def lines = resultFile.lines
-        lines.size() == 27 // 4 headers, 16 executions, 7 stats
+        lines.size() == 28 // 4 headers, 16 executions, 8 stats
         lines.get(0) == "scenario,buildAll,buildTarget,buildType"
         lines.get(1) == "version,buck,buck,buck"
         lines.get(2) == "tasks,,//some/target,"
@@ -1207,7 +1207,7 @@ buildTarget {
         logFile.containsOne("* Bazel targets: [:hello]")
 
         def lines = resultFile.lines
-        lines.size() == 27 // 4 headers, 16 executions, 7 stats
+        lines.size() == 28 // 4 headers, 16 executions, 8 stats
         lines.get(0) == "scenario,buildTarget"
         lines.get(1) == "version,bazel"
         lines.get(2) == "tasks,some:assemble"
@@ -1305,7 +1305,7 @@ buildGoal {
         logFile.containsOne("* Maven targets: [-v]")
 
         def lines = resultFile.lines
-        lines.size() == 27 // 4 headers, 16 executions, 7 stats
+        lines.size() == 28 // 4 headers, 16 executions, 8 stats
         lines.get(0) == "scenario,buildGoal"
         lines.get(1) == "version,maven"
         lines.get(2) == "tasks,-v"

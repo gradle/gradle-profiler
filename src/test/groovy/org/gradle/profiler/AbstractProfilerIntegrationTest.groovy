@@ -162,7 +162,7 @@ genrule(
          */
         void containsWarmDaemonScenario(String gradleVersion, String name = "default", List<String> tasks) {
             def lines = this.lines
-            assert lines.size() == 27 // 4 headers, 16 executions, 7 stats
+            assert lines.size() == 28 // 4 headers, 16 executions, 8 stats
             assert lines.get(0) == "scenario,${name}"
             assert lines.get(1) == "version,${gradleVersion}"
             assert lines.get(2) == "tasks,${tasks.join(", ")}"
@@ -182,7 +182,7 @@ genrule(
          */
         void containsColdDaemonScenario(String gradleVersion, String name = "default", List<String> tasks) {
             def lines = this.lines
-            assert lines.size() == 22 // 4 headers, 11 executions, 7 stats
+            assert lines.size() == 23 // 4 headers, 11 executions, 8 stats
             assert lines.get(0) == "scenario,${name}"
             assert lines.get(1) == "version,${gradleVersion}"
             assert lines.get(2) == "tasks,${tasks.join(", ")}"
@@ -201,7 +201,7 @@ genrule(
          */
         void containsNoDaemonScenario(String gradleVersion, String name = "default", List<String> tasks) {
             def lines = this.lines
-            assert lines.size() == 22 // 4 headers, 11 executions, 7 stats
+            assert lines.size() == 23 // 4 headers, 11 executions, 8 stats
             assert lines.get(0) == "scenario,${name}"
             assert lines.get(1) == "version,${gradleVersion}"
             assert lines.get(2) == "tasks,${tasks.join(", ")}"
@@ -213,6 +213,7 @@ genrule(
             assert lines.get(15).matches("mean,\\d+\\.\\d+")
             assert lines.get(18).matches("median,\\d+\\.\\d+")
             assert lines.get(21).matches("stddev,\\d+\\.\\d+")
+            assert lines.get(22).matches("p-value \\(Mann Whitney U test\\),\\d+\\.\\d+")
         }
     }
 

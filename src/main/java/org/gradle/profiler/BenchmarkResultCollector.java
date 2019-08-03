@@ -10,7 +10,11 @@ import org.gradle.profiler.result.BuildInvocationResult;
 import org.gradle.profiler.result.Sample;
 
 import java.io.IOException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
+import java.util.Optional;
 import java.util.function.Consumer;
 
 public class BenchmarkResultCollector {
@@ -135,7 +139,7 @@ public class BenchmarkResultCollector {
             if (a.length == 0 || b.length == 0) {
                 return 1;
             }
-            return new MannWhitneyUTest().mannWhitneyUTest(a, b);
+            return (1 - new MannWhitneyUTest().mannWhitneyUTest(a, b)) * 100;
         }
 
         private double[] toArray(List<? extends BuildInvocationResult> results, int sample) {
