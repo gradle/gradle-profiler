@@ -27,7 +27,7 @@ val profilerPlugins by configurations.creating
 dependencies {
     implementation("org.gradle:gradle-tooling-api:5.2.1")
     implementation("com.google.code.findbugs:annotations:3.0.1")
-    implementation("com.google.guava:guava:27.1-jre")
+    implementation("com.google.guava:guava:27.1-android")
     implementation("net.sf.jopt-simple:jopt-simple:5.0.4")
     implementation("com.typesafe:config:1.3.3")
     implementation("org.apache.commons:commons-math3:3.6.1")
