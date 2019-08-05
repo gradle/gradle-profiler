@@ -7,6 +7,8 @@ import javax.annotation.Nullable;
 import java.time.Duration;
 import java.util.Map;
 
+import static org.gradle.profiler.buildops.BuildOperationUtil.getSimpleBuildOperationName;
+
 public class GradleBuildInvocationResult extends BuildInvocationResult {
     private final Duration timeToTaskExecution;
     private final Map<String, Duration> cumulativeBuildOperationTimes;
@@ -55,12 +57,5 @@ public class GradleBuildInvocationResult extends BuildInvocationResult {
 
     public Map<String, Duration> getCumulativeBuildOperationTimes() {
         return cumulativeBuildOperationTimes;
-    }
-
-    private static String getSimpleBuildOperationName(String buildOperationDetailsClass) {
-        int lastDot = buildOperationDetailsClass.lastIndexOf('.');
-        return lastDot == -1
-            ? buildOperationDetailsClass
-            : buildOperationDetailsClass.substring(lastDot + 1);
     }
 }
