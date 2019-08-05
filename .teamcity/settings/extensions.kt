@@ -19,3 +19,5 @@ fun BuildType.gradleProfilerVcs() {
         checkoutMode = CheckoutMode.ON_SERVER
     }
 }
+
+val useBuildScanInitScript = "-I gradle/init-scripts/build-scan.init.gradle.kts"

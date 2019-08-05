@@ -15,7 +15,7 @@ open class GradleProfilerTest(os: Os) : BuildType({
         gradle {
             tasks = "clean build"
             buildFile = ""
-            gradleParams = "-s"
+            gradleParams = "-s $useBuildScanInitScript"
             param("org.jfrog.artifactory.selectedDeployableServer.defaultModuleVersionConfiguration", "GLOBAL")
         }
     }
