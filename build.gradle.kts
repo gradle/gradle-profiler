@@ -85,31 +85,14 @@ publishing {
     }
 }
 
-subprojects {
-    apply(plugin = "maven-publish")
-    pluginManager.withPlugin("java") {
-        publishing {
-            publications {
-                register<MavenPublication>("mavenJava") {
-                    from(components["java"])
-                }
-            }
-        }
-    }
-}
-
-allprojects {
-    pluginManager.withPlugin("maven-publish") {
-        publishing {
-            repositories {
-                maven {
-                    name = "GradleBuildInternal"
-                    url = gradleInternalRepositoryUrl()
-                    credentials {
-                        username = project.findProperty("artifactoryUsername") as String?
-                        password = project.findProperty("artifactoryPassword") as String?
-                    }
-                }
+publishing {
+    repositories {
+        maven {
+            name = "GradleBuildInternal"
+            url = gradleInternalRepositoryUrl()
+            credentials {
+                username = project.findProperty("artifactoryUsername") as String?
+                password = project.findProperty("artifactoryPassword") as String?
             }
         }
     }
