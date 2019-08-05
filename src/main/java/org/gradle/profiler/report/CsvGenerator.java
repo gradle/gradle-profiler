@@ -93,7 +93,7 @@ public class CsvGenerator extends AbstractGenerator {
         statistic(writer, "75th percentile", statistics, v -> v.getPercentile(75));
         statistic(writer, "max", statistics, BuildScenarioResult.Statistics::getMax);
         statistic(writer, "stddev", statistics, BuildScenarioResult.Statistics::getStandardDeviation);
-        statistic(writer, "p-value (Mann Whitney U test)", statistics, BuildScenarioResult.Statistics::getPValue);
+        statistic(writer, "confidence", statistics, BuildScenarioResult.Statistics::getConfidencePercent);
     }
 
     private void statistic(BufferedWriter writer, String name, List<BuildScenarioResult.Statistics> statistics, Function<BuildScenarioResult.Statistics, Double> value) throws IOException {

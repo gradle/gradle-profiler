@@ -120,7 +120,7 @@ public class HtmlGenerator extends AbstractGenerator {
         statistic(writer, "75th percentile", allScenarios, s -> s.getPercentile(75), true);
         statistic(writer, "max", allScenarios, BuildScenarioResult.Statistics::getMax, true);
         statistic(writer, "stddev", allScenarios, BuildScenarioResult.Statistics::getStandardDeviation, false);
-        statistic(writer, "p-value (Mann Whitney U test)", allScenarios, BuildScenarioResult.Statistics::getPValue, false);
+        statistic(writer, "confidence", allScenarios, BuildScenarioResult.Statistics::getConfidencePercent, false);
 
         writer.write("</tbody>\n");
 
