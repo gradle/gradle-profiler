@@ -10,7 +10,6 @@ import java.text.DecimalFormat;
 import java.text.NumberFormat;
 import java.util.Arrays;
 import java.util.List;
-import java.util.function.Consumer;
 import java.util.function.Function;
 
 public class HtmlGenerator extends AbstractGenerator {
@@ -114,14 +113,14 @@ public class HtmlGenerator extends AbstractGenerator {
             writer.write("</tr>\n");
         }
 
-        statistic(writer, "mean", allScenarios, s -> s.getMean(), true);
-        statistic(writer, "min", allScenarios, s -> s.getMin(), true);
+        statistic(writer, "mean", allScenarios, BuildScenarioResult.Statistics::getMean, true);
+        statistic(writer, "min", allScenarios, BuildScenarioResult.Statistics::getMin, true);
         statistic(writer, "25th percentile", allScenarios, s -> s.getPercentile(25), true);
-        statistic(writer, "median", allScenarios, s -> s.getMedian(), true);
+        statistic(writer, "median", allScenarios, BuildScenarioResult.Statistics::getMedian, true);
         statistic(writer, "75th percentile", allScenarios, s -> s.getPercentile(75), true);
-        statistic(writer, "max", allScenarios, s -> s.getMax(), true);
-        statistic(writer, "stddev", allScenarios, s -> s.getStandardDeviation(), false);
-        statistic(writer, "p-value (Mann Whitney U test)", allScenarios, s -> s.getPValue(), false);
+        statistic(writer, "max", allScenarios, BuildScenarioResult.Statistics::getMax, true);
+        statistic(writer, "stddev", allScenarios, BuildScenarioResult.Statistics::getStandardDeviation, false);
+        statistic(writer, "confidence", allScenarios, BuildScenarioResult.Statistics::getConfidencePercent, false);
 
         writer.write("</tbody>\n");
 

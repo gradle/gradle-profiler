@@ -8,6 +8,9 @@ import spock.lang.Specification
 
 abstract class AbstractProfilerIntegrationTest extends Specification {
 
+    private static int NUMBER_OF_HEADERS = 4;
+    private static int NUMBER_OF_STATS = 8;
+
     @Shared
     List<String> supportedGradleVersions = ["3.3", "3.4.1", "3.5", "4.0", "4.1", "4.2.1", "4.7", "5.2.1", "5.5.1"]
     @Shared
@@ -162,7 +165,7 @@ genrule(
          */
         void containsWarmDaemonScenario(String gradleVersion, String name = "default", List<String> tasks) {
             def lines = this.lines
-            assert lines.size() == 27 // 4 headers, 16 executions, 7 stats
+            assert lines.size() == totalLinesForExecutions(16)
             assert lines.get(0) == "scenario,${name}"
             assert lines.get(1) == "version,${gradleVersion}"
             assert lines.get(2) == "tasks,${tasks.join(", ")}"
@@ -182,7 +185,7 @@ genrule(
          */
         void containsColdDaemonScenario(String gradleVersion, String name = "default", List<String> tasks) {
             def lines = this.lines
-            assert lines.size() == 22 // 4 headers, 11 executions, 7 stats
+            assert lines.size() == totalLinesForExecutions(11)
             assert lines.get(0) == "scenario,${name}"
             assert lines.get(1) == "version,${gradleVersion}"
             assert lines.get(2) == "tasks,${tasks.join(", ")}"
@@ -201,7 +204,7 @@ genrule(
          */
         void containsNoDaemonScenario(String gradleVersion, String name = "default", List<String> tasks) {
             def lines = this.lines
-            assert lines.size() == 22 // 4 headers, 11 executions, 7 stats
+            assert lines.size() == totalLinesForExecutions(11)
             assert lines.get(0) == "scenario,${name}"
             assert lines.get(1) == "version,${gradleVersion}"
             assert lines.get(2) == "tasks,${tasks.join(", ")}"
@@ -213,6 +216,7 @@ genrule(
             assert lines.get(15).matches("mean,\\d+\\.\\d+")
             assert lines.get(18).matches("median,\\d+\\.\\d+")
             assert lines.get(21).matches("stddev,\\d+\\.\\d+")
+            assert lines.get(22).matches("confidence,\\d+\\.\\d+")
         }
     }
 
@@ -273,5 +277,9 @@ genrule(
             def display = name == null ? "scenario" : "scenario ${name}"
             assert containsOne("* Running $display using Gradle $gradleVersion (scenario 1/1)")
         }
+    }
+
+    static int totalLinesForExecutions(int numberOfExecutions) {
+        return NUMBER_OF_HEADERS + numberOfExecutions + NUMBER_OF_STATS;
     }
 }

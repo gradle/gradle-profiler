@@ -14,7 +14,7 @@ class BuildOperationInstrumentationIntegrationTest extends AbstractProfilerInteg
 
         then:
         def lines = resultFile.lines
-        lines.size() == 27 // 4 headers, 16 executions, 7 stats
+        lines.size() == totalLinesForExecutions(16)
         lines.get(0) == "scenario,default,default"
         lines.get(1) == "version,${gradleVersion},${gradleVersion}"
         lines.get(2) == "tasks,assemble,assemble"
@@ -25,6 +25,7 @@ class BuildOperationInstrumentationIntegrationTest extends AbstractProfilerInteg
         lines.get(20).matches("mean,\\d+\\.\\d+,\\d+\\.\\d+")
         lines.get(23).matches("median,\\d+\\.\\d+,\\d+\\.\\d+")
         lines.get(26).matches("stddev,\\d+\\.\\d+,\\d+\\.\\d+")
+        lines.get(27).matches("confidence,\\d+\\.\\d+,\\d+\\.\\d+")
 
         where:
         gradleVersion << ["5.0", latestSupportedGradleVersion]
@@ -67,7 +68,7 @@ class BuildOperationInstrumentationIntegrationTest extends AbstractProfilerInteg
 
         then:
         def lines = resultFile.lines
-        lines.size() == 27 // 4 headers, 16 executions, 7 stats
+        lines.size() == totalLinesForExecutions(16)
         lines.get(0) == "scenario,default,default"
         lines.get(1) == "version,${gradleVersion},${gradleVersion}"
         lines.get(2) == "tasks,assemble,assemble"

@@ -47,6 +47,11 @@ You can use `--measure-build-op` together with the fully qualified class name of
 For example, for Gradle 5.x there is a [`org.gradle.api.internal.tasks.SnapshotTaskInputsBuildOperationType`](https://github.com/gradle/gradle/blob/c671360a3f1729b406c5b8b5b0d22c7b81296993/subprojects/core/src/main/java/org/gradle/api/internal/tasks/SnapshotTaskInputsBuildOperationType.java) which can be used to capture snapshotting time.
 The time recorded is cumulative time, so the wall clock time spent on executing the measured build operations is probably smaller.
 
+### Regression detection
+
+If multiple versions are tested, then Gradle profiler determines whether there is an statistically significant difference in the run times by using a [Mann-Whitney U-Test](https://de.wikipedia.org/wiki/Wilcoxon-Mann-Whitney-Test).
+The result files contain the confidence if a sample has a different performance behavior - i.e. it is faster or slower - than the baseline.
+
 ## Profiling a build
 
 Profiling allows you to get deeper insight into the performance of your build.

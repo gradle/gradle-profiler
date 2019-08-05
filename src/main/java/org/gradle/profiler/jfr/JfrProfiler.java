@@ -76,13 +76,13 @@ public class JfrProfiler extends InstrumentingProfiler {
     @Override
     protected SnapshotCapturingProfilerController doNewController(ScenarioSettings settings) {
         File jfrFile = getJfrFile(settings);
-        return new JFRControl(jfrArgs, jfrFile);
+        return new JFRControl(getJfrArgs(), jfrFile);
     }
 
     @Override
     protected JvmArgsCalculator jvmArgsWithInstrumentation(ScenarioSettings settings, boolean startRecordingOnProcessStart, boolean captureSnapshotOnProcessExit) {
         File jfrFile = getJfrFile(settings);
-        return new JFRJvmArgsCalculator(jfrArgs, startRecordingOnProcessStart, captureSnapshotOnProcessExit, jfrFile);
+        return new JFRJvmArgsCalculator(getJfrArgs(), startRecordingOnProcessStart, captureSnapshotOnProcessExit, jfrFile);
     }
 
     @Override
@@ -91,6 +91,12 @@ public class JfrProfiler extends InstrumentingProfiler {
                 .availableIf("profile")
                 .withOptionalArg()
                 .defaultsTo(defaultConfig.getAbsolutePath());
+    }
+
+    private JFRArgs getJfrArgs() {
+        return jfrArgs == null
+            ? new JFRArgs(defaultConfig.getAbsolutePath())
+            : jfrArgs;
     }
 
     private File getJfrFile(ScenarioSettings settings) {

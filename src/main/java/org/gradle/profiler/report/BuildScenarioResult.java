@@ -49,6 +49,6 @@ public interface BuildScenarioResult {
         double getStandardDeviation();
 
         // Relative to base-line
-        double getPValue();
+        double getConfidencePercent();
     }
 }

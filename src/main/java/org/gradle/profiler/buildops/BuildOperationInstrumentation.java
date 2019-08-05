@@ -1,6 +1,5 @@
 package org.gradle.profiler.buildops;
 
-import com.google.common.collect.Streams;
 import org.gradle.profiler.instrument.GradleInstrumentation;
 
 import java.io.File;
@@ -66,7 +65,8 @@ public class BuildOperationInstrumentation extends GradleInstrumentation {
         }
         try {
             try (Stream<String> lines = Files.lines(configurationTimeDataFile.toPath(), StandardCharsets.UTF_8)) {
-                return Streams.findLast(lines)
+                return lines
+                    .reduce((first, second) -> second)
                     .map(line -> Duration.ofMillis(Long.parseLong(line)));
             }
         } catch (IOException e) {

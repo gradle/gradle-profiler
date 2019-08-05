@@ -10,7 +10,11 @@ import org.gradle.profiler.result.BuildInvocationResult;
 import org.gradle.profiler.result.Sample;
 
 import java.io.IOException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
+import java.util.Optional;
 import java.util.function.Consumer;
 
 public class BenchmarkResultCollector {
@@ -112,8 +116,8 @@ public class BenchmarkResultCollector {
             if (statistics == null) {
                 ImmutableList.Builder<StatisticsImpl> builder = ImmutableList.builderWithExpectedSize(samples.size());
                 for (int i = 0; i < samples.size(); i++) {
-                    double pvalue = getPValue(i);
-                    builder.add(new StatisticsImpl(new DescriptiveStatistics(), pvalue));
+                    double confidencePercent = getConfidencePercent(i);
+                    builder.add(new StatisticsImpl(new DescriptiveStatistics(), confidencePercent));
                 }
                 statistics = builder.build();
                 for (BuildInvocationResult result : getMeasuredResults()) {
@@ -126,7 +130,7 @@ public class BenchmarkResultCollector {
             return statistics;
         }
 
-        private double getPValue(int sample) {
+        private double getConfidencePercent(int sample) {
             if (!getBaseline().isPresent()) {
                 return 0;
             }
@@ -135,7 +139,7 @@ public class BenchmarkResultCollector {
             if (a.length == 0 || b.length == 0) {
                 return 1;
             }
-            return new MannWhitneyUTest().mannWhitneyUTest(a, b);
+            return (1 - new MannWhitneyUTest().mannWhitneyUTest(a, b)) * 100;
         }
 
         private double[] toArray(List<? extends BuildInvocationResult> results, int sample) {
@@ -150,11 +154,11 @@ public class BenchmarkResultCollector {
 
     private static class StatisticsImpl implements BuildScenarioResult.Statistics {
         private final DescriptiveStatistics statistics;
-        private final double pvalue;
+        private final double confidencePercent;
 
-        StatisticsImpl(DescriptiveStatistics statistics, double pvalue) {
+        StatisticsImpl(DescriptiveStatistics statistics, double confidencePercent) {
             this.statistics = statistics;
-            this.pvalue = pvalue;
+            this.confidencePercent = confidencePercent;
         }
 
         @Override
@@ -188,8 +192,8 @@ public class BenchmarkResultCollector {
         }
 
         @Override
-        public double getPValue() {
-            return pvalue;
+        public double getConfidencePercent() {
+            return confidencePercent;
         }
     }
 
