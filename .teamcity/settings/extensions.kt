@@ -20,4 +20,4 @@ fun BuildType.gradleProfilerVcs() {
     }
 }
 
-val useBuildScanInitScript = "-I gradle/init-scripts/build-scan.init.gradle.kts"
+const val useGradleInternalScansServer = "-I gradle/init-scripts/build-scan-gradle-internal-server.init.gradle.kts"
