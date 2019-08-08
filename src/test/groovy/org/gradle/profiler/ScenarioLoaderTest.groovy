@@ -157,6 +157,7 @@ class ScenarioLoaderTest extends Specification {
             default {
                 run-using = tooling-api
                 daemon = warm
+                warm-ups = 5
             }
         """
         def benchmarkScenarios = loadScenarios(scenarioFile, benchmarkSettings, Mock(GradleBuildConfigurationReader))

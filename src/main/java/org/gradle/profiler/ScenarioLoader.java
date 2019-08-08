@@ -322,11 +322,11 @@ class ScenarioLoader {
         if (settings.isDryRun()) {
             return 1;
         }
-        if (providedValue != null) {
-            return providedValue;
-        }
         if (settings.getWarmUpCount() != null) {
             return settings.getWarmUpCount();
+        }
+        if (providedValue != null) {
+            return providedValue;
         }
         if (settings.isBenchmark()) {
             return invoker.benchmarkWarmUps();
