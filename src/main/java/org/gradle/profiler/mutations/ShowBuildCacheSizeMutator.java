@@ -10,11 +10,9 @@ import java.util.function.Supplier;
 public class ShowBuildCacheSizeMutator implements BuildMutator {
 
 	private final File gradleUserHome;
-	private boolean enabled;
 
-	public ShowBuildCacheSizeMutator(File gradleUserHome, boolean enabled) {
+	public ShowBuildCacheSizeMutator(File gradleUserHome) {
 		this.gradleUserHome = gradleUserHome;
-		this.enabled = enabled;
 	}
 
 	@Override
@@ -33,9 +31,6 @@ public class ShowBuildCacheSizeMutator implements BuildMutator {
 	}
 
 	private void showCacheSize() {
-		if (!enabled) {
-			return;
-		}
 		File cacheDir = new File(new File(gradleUserHome, "caches"), "build-cache-1");
 		File[] cacheFiles = cacheDir.listFiles((file) -> file.getName().length() == 32);
 		if (cacheFiles == null) {
@@ -51,7 +46,7 @@ public class ShowBuildCacheSizeMutator implements BuildMutator {
 
 	@Override
 	public String toString() {
-		return getClass().getSimpleName() + "(enabled = " + enabled + ")";
+		return getClass().getSimpleName();
 	}
 
 	public static class Configurator implements BuildMutatorConfigurator {
@@ -65,7 +60,9 @@ public class ShowBuildCacheSizeMutator implements BuildMutator {
 		@Override
 		public Supplier<BuildMutator> configure(Config scenario, String scenarioName, File projectDir, String key) {
 			boolean enabled = scenario.getBoolean(key);
-			return () -> new ShowBuildCacheSizeMutator(gradleUserHome, enabled);
+            return () -> enabled
+                ? new ShowBuildCacheSizeMutator(gradleUserHome)
+                : NOOP;
 		}
 	}
 }

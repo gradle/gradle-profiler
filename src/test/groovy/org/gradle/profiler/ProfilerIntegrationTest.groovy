@@ -5,6 +5,7 @@ import org.gradle.util.GradleVersion
 import spock.lang.Requires
 import spock.lang.Unroll
 
+@Unroll
 class ProfilerIntegrationTest extends AbstractProfilerIntegrationTest {
 
     def "complains when neither profile or benchmark requested"() {
@@ -1500,6 +1501,45 @@ buildTarget {
 
         then:
         output.count("> Build cache size:") == 5
+    }
+
+    def "clean project cache when configured (buildSrc: #buildSrc)"() {
+        given:
+        buildFile << """
+            plugins {
+                id 'java'
+            }
+        """
+        file("src/main/java").mkdirs()
+        file("src/main/java/Main.java") << """
+            public class Main {
+                public static void main(String... args) {
+                    System.out.println("Hello, World!");
+                }
+            }
+        """
+        if (buildSrc) {
+            file("buildSrc/src/main/java").mkdirs()
+            file("buildSrc/src/main/java/A.java").text = "class A {}"
+        }
+        def scenarios = file("performance.scenario")
+        scenarios.text = """
+buildTarget {
+    versions = ["${latestSupportedGradleVersion}"]
+    clear-project-cache = true
+    tasks = ["compileJava"]
+}
+"""
+
+        when:
+        new Main().run("--project-dir", projectDir.absolutePath, "--output-dir", outputDir.absolutePath, "--benchmark", "--scenario-file", scenarios.absolutePath, "buildTarget", "--warmups", "1", "--iterations", "1")
+
+        then:
+        output.count("> Cleaning project .gradle cache:") == 2
+        output.count("> Cleaning buildSrc .gradle cache:") == (buildSrc ? 2 : 0)
+
+        where:
+        buildSrc << [false, true]
     }
 
     def "does Git revert when asked"() {

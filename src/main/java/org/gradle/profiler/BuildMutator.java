@@ -30,4 +30,11 @@ public interface BuildMutator {
      * Runs after the last iteration of the scenario has finished.
      */
     default void afterScenario() {};
+
+    BuildMutator NOOP = new BuildMutator() {
+        @Override
+        public String toString() {
+            return "none";
+        }
+    };
 }
