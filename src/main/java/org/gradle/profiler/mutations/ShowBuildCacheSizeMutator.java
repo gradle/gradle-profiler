@@ -7,7 +7,7 @@ import java.io.File;
 import java.text.MessageFormat;
 import java.util.function.Supplier;
 
-public class ShowBuildCacheSizeMutator implements BuildMutator {
+public class ShowBuildCacheSizeMutator extends AbstractBuildMutator {
 
 	private final File gradleUserHome;
 
@@ -42,11 +42,6 @@ public class ShowBuildCacheSizeMutator implements BuildMutator {
 			}
 			System.out.println(MessageFormat.format("> Build cache size: {0,number} bytes in {1,number} file(s)", size, cacheFiles.length));
 		}
-	}
-
-	@Override
-	public String toString() {
-		return getClass().getSimpleName();
 	}
 
 	public static class Configurator implements BuildMutatorConfigurator {

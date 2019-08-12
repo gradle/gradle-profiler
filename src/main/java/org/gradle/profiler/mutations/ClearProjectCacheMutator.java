@@ -9,7 +9,7 @@ import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.util.function.Supplier;
 
-public class ClearProjectCacheMutator implements BuildMutator {
+public class ClearProjectCacheMutator extends AbstractBuildMutator {
     private final File projectDir;
 
     public ClearProjectCacheMutator(File projectDir) {
@@ -40,11 +40,6 @@ public class ClearProjectCacheMutator implements BuildMutator {
         } catch (IOException e) {
             throw new UncheckedIOException(e);
         }
-    }
-
-    @Override
-    public String toString() {
-        return getClass().getSimpleName();
     }
 
     public static class Configurator implements BuildMutatorConfigurator {

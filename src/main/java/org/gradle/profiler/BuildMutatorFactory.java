@@ -17,13 +17,14 @@ public class BuildMutatorFactory implements Supplier<BuildMutator> {
             .map(Supplier::get)
             .filter(it -> it != BuildMutator.NOOP)
             .collect(Collectors.toList());
-        if (mutators.isEmpty()) {
-            return BuildMutator.NOOP;
+        switch (mutators.size()) {
+            case 0:
+                return BuildMutator.NOOP;
+            case 1:
+                return mutators.get(0);
+            default:
+                return new CompositeBuildMutator(mutators);
         }
-        if (mutators.size() == 1) {
-            return mutators.get(0);
-        }
-        return new CompositeBuildMutator(mutators);
     }
 
     @Override

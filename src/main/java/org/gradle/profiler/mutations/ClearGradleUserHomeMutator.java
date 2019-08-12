@@ -10,7 +10,7 @@ import java.io.UncheckedIOException;
 import java.nio.file.Files;
 import java.util.function.Supplier;
 
-public class ClearGradleUserHomeMutator implements BuildMutator {
+public class ClearGradleUserHomeMutator extends AbstractBuildMutator {
     private final File gradleUserHome;
 
     public ClearGradleUserHomeMutator(File gradleUserHome) {
