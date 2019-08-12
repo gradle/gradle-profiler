@@ -1,11 +1,9 @@
 package org.gradle.profiler.mutations;
 
-import com.typesafe.config.Config;
 import org.gradle.profiler.BuildMutator;
 
 import java.io.File;
 import java.text.MessageFormat;
-import java.util.function.Supplier;
 
 public class ShowBuildCacheSizeMutator extends AbstractBuildMutator {
 
@@ -44,7 +42,7 @@ public class ShowBuildCacheSizeMutator extends AbstractBuildMutator {
 		}
 	}
 
-	public static class Configurator implements BuildMutatorConfigurator {
+	public static class Configurator extends AbstractBuildMutatorWithoutOptionsConfigurator {
 
 		private final File gradleUserHome;
 
@@ -52,12 +50,9 @@ public class ShowBuildCacheSizeMutator extends AbstractBuildMutator {
 			this.gradleUserHome = gradleUserHome;
 		}
 
-		@Override
-		public Supplier<BuildMutator> configure(Config scenario, String scenarioName, File projectDir, String key) {
-			boolean enabled = scenario.getBoolean(key);
-            return () -> enabled
-                ? new ShowBuildCacheSizeMutator(gradleUserHome)
-                : NOOP;
-		}
+        @Override
+        BuildMutator createBuildMutator(File projectDir) {
+            return new ShowBuildCacheSizeMutator(gradleUserHome);
+        }
 	}
 }

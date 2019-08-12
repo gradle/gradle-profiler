@@ -1,6 +1,5 @@
 package org.gradle.profiler.mutations;
 
-import com.typesafe.config.Config;
 import org.apache.commons.io.FileUtils;
 import org.gradle.profiler.BuildMutator;
 
@@ -8,7 +7,6 @@ import java.io.File;
 import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.nio.file.Files;
-import java.util.function.Supplier;
 
 public class ClearGradleUserHomeMutator extends AbstractBuildMutator {
     private final File gradleUserHome;
@@ -42,7 +40,7 @@ public class ClearGradleUserHomeMutator extends AbstractBuildMutator {
         }
     }
 
-    public static class Configurator implements BuildMutatorConfigurator {
+    public static class Configurator extends AbstractBuildMutatorWithoutOptionsConfigurator {
 
         private final File gradleUserHome;
 
@@ -51,9 +49,8 @@ public class ClearGradleUserHomeMutator extends AbstractBuildMutator {
         }
 
         @Override
-        public Supplier<BuildMutator> configure(Config scenario, String scenarioName, File projectDir, String key) {
-            boolean enabled = scenario.getBoolean(key);
-            return () -> enabled ? new ClearGradleUserHomeMutator(gradleUserHome) : BuildMutator.NOOP;
+        BuildMutator createBuildMutator(File projectDir) {
+            return new ClearGradleUserHomeMutator(gradleUserHome);
         }
     }
 }

@@ -1572,9 +1572,6 @@ buildTarget {
 
         then:
         output.count("> Cleaning Gradle user home: ") == 2
-
-        where:
-        daemon << ['cold', 'none']
     }
 
     def "does Git revert when asked"() {

@@ -1,13 +1,11 @@
 package org.gradle.profiler.mutations;
 
-import com.typesafe.config.Config;
 import org.apache.commons.io.FileUtils;
 import org.gradle.profiler.BuildMutator;
 
 import java.io.File;
 import java.io.IOException;
 import java.io.UncheckedIOException;
-import java.util.function.Supplier;
 
 public class ClearProjectCacheMutator extends AbstractBuildMutator {
     private final File projectDir;
@@ -42,11 +40,10 @@ public class ClearProjectCacheMutator extends AbstractBuildMutator {
         }
     }
 
-    public static class Configurator implements BuildMutatorConfigurator {
+    public static class Configurator extends AbstractBuildMutatorWithoutOptionsConfigurator {
         @Override
-        public Supplier<BuildMutator> configure(Config scenario, String scenarioName, File projectDir, String key) {
-            boolean enabled = scenario.getBoolean(key);
-            return () -> enabled ? new ClearProjectCacheMutator(projectDir) : BuildMutator.NOOP;
+        BuildMutator createBuildMutator(File projectDir) {
+            return new ClearProjectCacheMutator(projectDir);
         }
     }
 }
