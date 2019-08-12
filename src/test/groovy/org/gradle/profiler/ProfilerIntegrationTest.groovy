@@ -1542,6 +1542,41 @@ buildTarget {
         buildSrc << [false, true]
     }
 
+    def "clean Gradle user home cache when configured"() {
+        given:
+        buildFile << """
+            plugins {
+                id 'java'
+            }
+        """
+        file("src/main/java").mkdirs()
+        file("src/main/java/Main.java") << """
+            public class Main {
+                public static void main(String... args) {
+                    System.out.println("Hello, World!");
+                }
+            }
+        """
+        def scenarios = file("performance.scenario")
+        scenarios.text = """
+buildTarget {
+    versions = ["${latestSupportedGradleVersion}"]
+    clear-gradle-user-home = true
+    daemon = none
+    tasks = ["compileJava"]
+}
+"""
+
+        when:
+        new Main().run("--project-dir", projectDir.absolutePath, "--output-dir", outputDir.absolutePath, "--benchmark", "--scenario-file", scenarios.absolutePath, "buildTarget", "--warmups", "1", "--iterations", "1")
+
+        then:
+        output.count("> Cleaning Gradle user home: ") == 2
+
+        where:
+        daemon << ['cold', 'none']
+    }
+
     def "does Git revert when asked"() {
         given:
         def repoDir = new File(projectDir, "repo")

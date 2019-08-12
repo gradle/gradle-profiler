@@ -236,6 +236,7 @@ A scenario can define changes that should be applied to the source before each b
 - `clear-transform-cache-before`: Deletes the contents of the transform cache before the scenario is executed (`SCENARIO`), before cleanup (`CLEANUP`) or before the build is executed (`BUILD`).
 - `show-build-cache-size`: Shows the number of files and their size in the build cache before scenario execution, and after each cleanup and build round..
 - `clear-project-cache`: Deletes the contents of the `.gradle` and `buildSrc/.gradle` project cache directories.
+- `clear-gradle-user-home`: Deletes the contents of the Gradle user home directory. Requires to use the `none` daemon option.
 - `git-checkout`: Checks out a specific commit for the build step, and a different one for the cleanup step.
 - `git-revert`: Reverts a given set of commits before the build and resets it afterward.
 - `jvm-args`: Sets or overrides the jvm arguments set by `org.gradle.jvmargs` in gradle.properties.
