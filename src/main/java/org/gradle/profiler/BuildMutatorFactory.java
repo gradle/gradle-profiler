@@ -13,14 +13,18 @@ public class BuildMutatorFactory implements Supplier<BuildMutator> {
 
     @Override
     public BuildMutator get() {
-        if (factories.isEmpty()) {
-            return new NoOpMutator();
+        List<BuildMutator> mutators = factories.stream()
+            .map(Supplier::get)
+            .filter(it -> it != BuildMutator.NOOP)
+            .collect(Collectors.toList());
+        switch (mutators.size()) {
+            case 0:
+                return BuildMutator.NOOP;
+            case 1:
+                return mutators.get(0);
+            default:
+                return new CompositeBuildMutator(mutators);
         }
-        if (factories.size() == 1) {
-            return factories.get(0).get();
-        }
-        List<BuildMutator> mutators = factories.stream().map(Supplier::get).collect(Collectors.toList());
-        return new CompositeBuildMutator(mutators);
     }
 
     @Override
@@ -28,12 +32,4 @@ public class BuildMutatorFactory implements Supplier<BuildMutator> {
     {
         return get().toString();
     }
-
-    private static class NoOpMutator implements BuildMutator {
-        @Override
-        public String toString() {
-            return "none";
-        }
-    }
-
 }

@@ -5,6 +5,7 @@ import org.gradle.util.GradleVersion
 import spock.lang.Requires
 import spock.lang.Unroll
 
+@Unroll
 class ProfilerIntegrationTest extends AbstractProfilerIntegrationTest {
 
     def "complains when neither profile or benchmark requested"() {
@@ -1365,7 +1366,7 @@ buildTarget {
 """
 
         when:
-        new Main().run("--project-dir", projectDir.absolutePath, "--output-dir", outputDir.absolutePath, "--benchmark", "--scenario-file", scenarios.absolutePath, "buildTarget", "--warmups", "1", "--iterations", "1")
+        benchmarkScenario(scenarios)
 
         then:
         noExceptionThrown()
@@ -1462,7 +1463,7 @@ buildTarget {
 """
 
         when:
-        new Main().run("--project-dir", projectDir.absolutePath, "--output-dir", outputDir.absolutePath, "--benchmark", "--scenario-file", scenarios.absolutePath, "buildTarget", "--warmups", "1", "--iterations", "1")
+        benchmarkScenario(scenarios)
 
         then:
         noExceptionThrown()
@@ -1496,10 +1497,81 @@ buildTarget {
 """
 
         when:
-        new Main().run("--project-dir", projectDir.absolutePath, "--output-dir", outputDir.absolutePath, "--benchmark", "--scenario-file", scenarios.absolutePath, "--gradle-version", minimalSupportedGradleVersion, "buildTarget", "--warmups", "1", "--iterations", "1")
+        benchmarkScenario(scenarios)
 
         then:
         output.count("> Build cache size:") == 5
+    }
+
+    def "clean project cache when configured (buildSrc: #buildSrc)"() {
+        given:
+        buildFile << """
+            plugins {
+                id 'java'
+            }
+        """
+        file("src/main/java").mkdirs()
+        file("src/main/java/Main.java") << """
+            public class Main {
+                public static void main(String... args) {
+                    System.out.println("Hello, World!");
+                }
+            }
+        """
+        if (buildSrc) {
+            file("buildSrc/src/main/java").mkdirs()
+            file("buildSrc/src/main/java/A.java").text = "class A {}"
+        }
+        def scenarios = file("performance.scenario")
+        scenarios.text = """
+buildTarget {
+    versions = ["${latestSupportedGradleVersion}"]
+    clear-project-cache = true
+    tasks = ["compileJava"]
+}
+"""
+
+        when:
+        benchmarkScenario(scenarios)
+
+        then:
+        output.count("> Cleaning project .gradle cache:") == 2
+        output.count("> Cleaning buildSrc .gradle cache:") == (buildSrc ? 2 : 0)
+
+        where:
+        buildSrc << [false, true]
+    }
+
+    def "clean Gradle user home cache when configured"() {
+        given:
+        buildFile << """
+            plugins {
+                id 'java'
+            }
+        """
+        file("src/main/java").mkdirs()
+        file("src/main/java/Main.java") << """
+            public class Main {
+                public static void main(String... args) {
+                    System.out.println("Hello, World!");
+                }
+            }
+        """
+        def scenarios = file("performance.scenario")
+        scenarios.text = """
+buildTarget {
+    versions = ["${latestSupportedGradleVersion}"]
+    clear-gradle-user-home = true
+    daemon = none
+    tasks = ["compileJava"]
+}
+"""
+
+        when:
+        benchmarkScenario(scenarios)
+
+        then:
+        output.count("> Cleaning Gradle user home: ") == 2
     }
 
     def "does Git revert when asked"() {
@@ -1529,7 +1601,7 @@ buildTarget {
 """
 
         when:
-        new Main().run("--project-dir", repoDir.absolutePath, "--output-dir", outputDir.absolutePath, "--benchmark", "--scenario-file", scenarios.absolutePath, "--gradle-version", minimalSupportedGradleVersion, "buildTarget", "--warmups", "1", "--iterations", "1")
+        benchmarkScenario(repoDir, scenarios)
 
         then:
         repo.atFinalCommit()
@@ -1567,7 +1639,7 @@ buildTarget {
 """
 
         when:
-        new Main().run("--project-dir", repoDir.absolutePath, "--output-dir", outputDir.absolutePath, "--benchmark", "--scenario-file", scenarios.absolutePath, "--gradle-version", minimalSupportedGradleVersion, "buildTarget", "--warmups", "1", "--iterations", "1")
+        benchmarkScenario(repoDir, scenarios)
 
         then:
         repo.atFinalCommit()
@@ -1604,7 +1676,7 @@ buildTarget {
 """
 
         when:
-        new Main().run("--project-dir", repoDir.absolutePath, "--output-dir", outputDir.absolutePath, "--benchmark", "--scenario-file", scenarios.absolutePath, "--gradle-version", minimalSupportedGradleVersion, "buildTarget", "--warmups", "1", "--iterations", "1")
+        benchmarkScenario(repoDir, scenarios)
 
         then:
         repo.atFinalCommit()
@@ -1647,7 +1719,7 @@ buildTarget {
         given:
         def scenarios = file('performance.scenario')
         scenarios.text = """
-            help {
+            buildTarget {
                 tasks = ["jvmArgs"]
                 jvm-args = ["-Xmx2G", "-Xms1G"]
             }
@@ -1666,9 +1738,26 @@ buildTarget {
         """
 
         when:
-        new Main().run("--project-dir", projectDir.absolutePath, "--output-dir", outputDir.absolutePath, "--gradle-version", minimalSupportedGradleVersion, "--benchmark", "--scenario-file", scenarios.absolutePath)
+        benchmarkScenario(scenarios)
 
         then:
         noExceptionThrown()
+    }
+
+    private benchmarkScenario(File scenarioFile) {
+        benchmarkScenario(projectDir, scenarioFile)
+    }
+
+    private benchmarkScenario(File projectDir, File scenarioFile) {
+        new Main().run(
+            "--project-dir", projectDir.absolutePath,
+            "--output-dir", outputDir.absolutePath,
+            "--benchmark",
+            "--scenario-file", scenarioFile.absolutePath,
+            "--gradle-version", minimalSupportedGradleVersion,
+            "--warmups", "1",
+            "--iterations", "1",
+            "buildTarget"
+        )
     }
 }
