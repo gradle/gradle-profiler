@@ -18,9 +18,6 @@ repositories {
     maven {
         url = uri("https://repo.gradle.org/gradle/repo")
     }
-    maven {
-        url = uri("https://oss.sonatype.org/content/repositories/snapshots")
-    }
 }
 
 val profilerPlugins by configurations.creating
@@ -37,7 +34,7 @@ dependencies {
     implementation("com.github.javaparser:javaparser-core:3.1.3")
     implementation("org.apache.ant:ant-compress:1.5")
     implementation("commons-io:commons-io:2.6")
-    implementation("org.openjdk.jmc:flightrecorder:7.0.0-SNAPSHOT")
+    implementation("org.gradle.org.openjdk.jmc:flightrecorder:7.0.0-alpha01")
     implementation("com.android.tools.build:builder-model:3.0.0")
 
     profilerPlugins(project(":chrome-trace")) {
