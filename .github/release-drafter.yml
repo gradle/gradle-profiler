@@ -1,0 +1,24 @@
+name-template: v$NEXT_MINOR_VERSION
+tag-template: v$NEXT_MINOR_VERSION
+
+categories:
+  - title: 🚀 New features and improvements
+    labels:
+      - enhancement
+  - title: 🐛 Bug Fixes
+    labels:
+      - bug
+  - title: 🚦 Internal changes
+    labels:
+      - internal
+
+exclude-labels:
+  - no-changelog
+  - duplicate
+  - invalid
+
+template: |
+    <!-- Optional: add a release summary here -->
+    $CHANGES
+
+    Prebuilt version available from [here](https://repo.gradle.org/gradle/ext-releases-local/org/gradle/profiler/gradle-profiler/$NEXT_MINOR_VERSION/gradle-profiler-$NEXT_MINOR_VERSION.zip)
