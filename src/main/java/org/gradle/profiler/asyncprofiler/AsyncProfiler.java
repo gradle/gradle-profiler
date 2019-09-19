@@ -96,7 +96,7 @@ public class AsyncProfiler extends InstrumentingProfiler {
             profilerHome = AsyncProfilerDownload.defaultHome();
         }
         if (profilerHome == null) {
-            throw new IllegalStateException("Async profiler not supported on " + System.getProperty("os.name"));
+            throw new IllegalStateException("Async profiler not supported on " + OperatingSystem.getId());
         }
         return profilerHome;
     }

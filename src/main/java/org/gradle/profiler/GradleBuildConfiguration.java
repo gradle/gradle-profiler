@@ -49,7 +49,7 @@ public class GradleBuildConfiguration {
         Logging.detailed().println("Gradle version: " + gradleVersion);
 
         Logging.detailed().println("Java home: " + javaHome);
-        Logging.detailed().println("OS name: " + System.getProperty("os.name") + " " + System.getProperty("os.version"));
+        Logging.detailed().println("OS: " + OperatingSystem.getId());
     }
 
     public void runGradle(String... arguments) {
