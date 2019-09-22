@@ -245,7 +245,7 @@ class ScenarioLoaderTest extends Specification {
         scenario2.action.tasks == ["help"]
     }
 
-    def "can load single Android studio sync scenario"() {
+    def "can load default Android studio sync scenario"() {
         def settings = settings()
 
         scenarioFile << """
@@ -258,6 +258,28 @@ class ScenarioLoaderTest extends Specification {
         scenarios*.name == ["default"]
         def scenarioDefinition = scenarios[0] as GradleScenarioDefinition
         scenarioDefinition.action instanceof AndroidStudioSyncAction
+        scenarioDefinition.action.skipSourceGeneration == false
+        scenarioDefinition.action.buildFlavor == "debug"
+    }
+
+    def "loads Android studio sync included config"() {
+        def settings = settings()
+
+        scenarioFile << """
+            default {
+                android-studio-sync {
+                    build-variant = "developmentDebug"
+                    skip-source-generation = true
+                }               
+            }
+        """
+        def scenarios = loadScenarios(scenarioFile, settings, Mock(GradleBuildConfigurationReader))
+        expect:
+        scenarios*.name == ["default"]
+        def scenarioDefinition = scenarios[0] as GradleScenarioDefinition
+        scenarioDefinition.action instanceof AndroidStudioSyncAction
+        scenarioDefinition.action.skipSourceGeneration == true
+        scenarioDefinition.action.buildFlavor == "developmentDebug"
     }
 
     def "loads default scenarios only"() {

@@ -214,7 +214,13 @@ Here is an example:
     }
     androidStudioSync {
         # Simulate an Android studio sync
-        android-studio-sync { }
+        android-studio-sync {
+            # Skip source generation on sync
+            skip-source-generation = true // if not specified defaults to "false"
+            # If the above flag is set to "false", the Android studio sync simulation runs "generateDebugSources" tasks by default
+            # This behavior can be overridden in case if the project has different product flavors (e.g. "development", "production", etc.) 
+            build-variant = "developmentDebug" // if not specified defaults to "debug"
+        }
     }
 
 Values are optional and default to the values provided on the command-line or defined in the build.
