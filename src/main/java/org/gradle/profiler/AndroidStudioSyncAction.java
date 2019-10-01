@@ -1,6 +1,8 @@
 package org.gradle.profiler;
 
 import com.android.builder.model.AndroidProject;
+
+import org.gradle.internal.impldep.org.apache.commons.lang.StringUtils;
 import org.gradle.tooling.BuildController;
 import org.gradle.tooling.events.ProgressListener;
 import org.gradle.tooling.model.gradle.BasicGradleProject;
@@ -13,6 +15,15 @@ import java.util.*;
  * A mock-up of Android studio sync.
  */
 public class AndroidStudioSyncAction implements BuildAction {
+
+    private final String buildFlavor;
+    private final boolean skipSourceGeneration;
+
+    public AndroidStudioSyncAction(String buildFlavor, boolean skipSourceGeneration) {
+        this.buildFlavor = buildFlavor;
+        this.skipSourceGeneration = skipSourceGeneration;
+    }
+
     @Override
     public String getShortDisplayName() {
         return "AS sync";
@@ -35,10 +46,15 @@ public class AndroidStudioSyncAction implements BuildAction {
         gradleArgs.add("-Pandroid.injected.build.model.only=true");
         gradleArgs.add("-Pandroid.injected.build.model.only.versioned=3");
         gradleArgs.add("-Pandroid.builder.sdkDownload=true");
-        List<String> tasks = Collections.singletonList("generateDebugSources");
-        buildInvoker.runToolingAction(tasks, gradleArgs, jvmArgs, new GetModel(), (builder) -> {
-            builder.addProgressListener(noOpListener());
-        });
+
+        List<String> tasks;
+        if (skipSourceGeneration) {
+            tasks = Collections.emptyList();
+        } else {
+            String taskName = String.join("", "generate", StringUtils.capitalize(buildFlavor), "Sources");
+            tasks = Collections.singletonList(taskName);
+        }
+        buildInvoker.runToolingAction(tasks, gradleArgs, jvmArgs, new GetModel(), (builder) -> builder.addProgressListener(noOpListener()));
     }
 
     private static ProgressListener noOpListener() {

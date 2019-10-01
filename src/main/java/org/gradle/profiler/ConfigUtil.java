@@ -71,4 +71,12 @@ public class ConfigUtil {
 		}
 		return defaults;
 	}
+
+    public static boolean bool(Config config, String key, boolean defaultValue) {
+        if (config.hasPath(key)) {
+            return config.getBoolean(key);
+        } else {
+            return defaultValue;
+        }
+    }
 }
