@@ -72064,6 +72064,10 @@ tr.exportTo('tr.e.importer', function() {
           eventData = eventData + ']';
       }
 
+      // Issue #159 removing backslash on Windows path
+      eventData = eventData.replace(/\\/g, "/");
+
+
       this.events_ = JSON.parse(eventData);
       this.eventsWereFromString_ = true;
     } else {
