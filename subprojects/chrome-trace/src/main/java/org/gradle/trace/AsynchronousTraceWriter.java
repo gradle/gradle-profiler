@@ -88,7 +88,7 @@ public class AsynchronousTraceWriter {
             } else {
                 hasEvents = true;
             }
-            writer.print(value.toString());
+            writer.print(value.toString().replaceAll("/\\\\/g", "/\""));
         }
 
         @Override
