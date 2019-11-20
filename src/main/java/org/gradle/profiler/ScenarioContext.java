@@ -16,7 +16,7 @@ public class ScenarioContext {
     }
 
     public String getUniqueScenarioId() {
-        return String.format("%s-%s", invocationId, scenarioName);
+        return String.format("_%s_%s", invocationId.toString().replaceAll("-", "_"), scenarioName);
     }
 
     public BuildContext withBuild(Phase phase, int count) {

@@ -1,5 +1,7 @@
 package org.gradle.profiler.mutations;
 
+import org.gradle.profiler.BuildContext;
+
 import java.io.File;
 
 public class ApplyChangeToPropertyResourceFileMutator extends AbstractFileChangeMutator {
@@ -8,7 +10,7 @@ public class ApplyChangeToPropertyResourceFileMutator extends AbstractFileChange
     }
 
     @Override
-    protected void applyChangeTo(StringBuilder text) {
-        text.append("\norg.acme.some=").append(getUniqueText()).append("\n");
+    protected void applyChangeTo(BuildContext context, StringBuilder text) {
+        text.append("\norg.acme.some=").append(context.getUniqueBuildId()).append("\n");
     }
 }

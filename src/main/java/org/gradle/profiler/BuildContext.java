@@ -13,7 +13,7 @@ public class BuildContext extends ScenarioContext {
     }
 
     public String getUniqueBuildId() {
-        return String.format("%s-%s-%d", getUniqueScenarioId(), phase.name(), iteration);
+        return String.format("%s_%s_%d", getUniqueScenarioId(), phase.name(), iteration);
     }
 
     public Phase getPhase() {

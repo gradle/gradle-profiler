@@ -16,8 +16,8 @@ public abstract class AbstractDelegateFileMutator extends AbstractFileChangeMuta
     protected abstract AbstractFileChangeMutator getFileChangeMutator(File sourceFile);
 
     @Override
-    protected void applyChangeTo(StringBuilder text) {
-        fileChangeMutator.applyChangeTo(text);
+    protected void applyChangeTo(BuildContext context, StringBuilder text) {
+        fileChangeMutator.applyChangeTo(context, text);
     }
 
     @Override
@@ -48,10 +48,5 @@ public abstract class AbstractDelegateFileMutator extends AbstractFileChangeMuta
     @Override
     public void afterScenario(ScenarioContext context) {
         fileChangeMutator.afterScenario(context);
-    }
-
-    @Override
-    protected void setTimestamp(long timestamp) {
-        fileChangeMutator.setTimestamp(timestamp);
     }
 }

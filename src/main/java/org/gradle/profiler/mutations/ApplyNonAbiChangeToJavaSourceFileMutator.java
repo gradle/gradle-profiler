@@ -5,6 +5,7 @@ import com.github.javaparser.ast.CompilationUnit;
 import com.github.javaparser.ast.NodeList;
 import com.github.javaparser.ast.body.MethodDeclaration;
 import com.github.javaparser.ast.body.TypeDeclaration;
+import org.gradle.profiler.BuildContext;
 
 import java.io.File;
 import java.util.List;
@@ -15,9 +16,10 @@ public class ApplyNonAbiChangeToJavaSourceFileMutator extends AbstractJavaSource
     }
 
     @Override
-    protected void applyChangeTo(CompilationUnit compilationUnit) {
+    protected void applyChangeTo(BuildContext context, CompilationUnit compilationUnit) {
         MethodDeclaration existingMethod = getExistingMethod(compilationUnit);
-        existingMethod.getBody().get().addStatement(0, JavaParser.parseStatement("System.out.println(\"" + getUniqueText() + "\");"));
+        existingMethod.getBody()
+            .ifPresent(body -> body.addStatement(0, JavaParser.parseStatement("System.out.println(\"" + context.getUniqueBuildId() + "\");")));
     }
 
     private MethodDeclaration getExistingMethod(CompilationUnit compilationUnit) {

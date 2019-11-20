@@ -6,25 +6,14 @@ class ApplyValueChangeToAndroidResourceFileMutatorTest extends AbstractMutatorTe
         def sourceFile = tmpDir.newFile("strings.xml")
         sourceFile.text = '<resources><string name="foo">bar</string></resources>'
         def mutator = new ApplyValueChangeToAndroidResourceFileMutator(sourceFile)
-        mutator.timestamp = 1234
 
         when:
         mutator.beforeBuild(buildContext)
 
         then:
-        sourceFile.text == '<resources><string name="foo">bar_1234_1</string></resources>'
-
-        when:
-        mutator.beforeBuild(buildContext)
-
-        then:
-        sourceFile.text == '<resources><string name="foo">bar_1234_2</string></resources>'
-
-        when:
-        mutator.beforeBuild(buildContext)
-
-        then:
-        sourceFile.text == '<resources><string name="foo">bar_1234_3</string></resources>'
+        sourceFile.text == '<resources><string name="foo">barUNIQUE_ID</string></resources>'
+        1 * buildContext.uniqueBuildId >> "UNIQUE_ID"
+        0 * _
     }
 
     def "reverts changes when nothing has been applied"() {

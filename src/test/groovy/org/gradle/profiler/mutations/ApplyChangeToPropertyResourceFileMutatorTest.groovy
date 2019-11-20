@@ -7,25 +7,14 @@ class ApplyChangeToPropertyResourceFileMutatorTest extends AbstractMutatorTest {
         def sourceFile = tmpDir.newFile("test.properties")
         sourceFile.text = ORIGINAL_CONTENTS
         def mutator = new ApplyChangeToPropertyResourceFileMutator(sourceFile)
-        mutator.timestamp = 1234
 
         when:
         mutator.beforeBuild(buildContext)
 
         then:
-        sourceFile.text == 'org.foo=bar\norg.acme.some=_1234_1\n'
-
-        when:
-        mutator.beforeBuild(buildContext)
-
-        then:
-        sourceFile.text == 'org.foo=bar\norg.acme.some=_1234_2\n'
-
-        when:
-        mutator.beforeBuild(buildContext)
-
-        then:
-        sourceFile.text == 'org.foo=bar\norg.acme.some=_1234_3\n'
+        sourceFile.text == 'org.foo=bar\norg.acme.some=UNIQUE_ID\n'
+        1 * buildContext.uniqueBuildId >> "UNIQUE_ID"
+        0 * _
     }
 
     def "reverts changes when nothing has been applied"() {

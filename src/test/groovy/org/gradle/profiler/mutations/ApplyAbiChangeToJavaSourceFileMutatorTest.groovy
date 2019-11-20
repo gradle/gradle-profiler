@@ -9,25 +9,14 @@ class ApplyAbiChangeToJavaSourceFileMutatorTest extends AbstractMutatorTest {
         def sourceFile = tmpDir.newFile("Thing.java")
         sourceFile.text = "class Thing { public void existingMethod() { }}"
         def mutator = new ApplyAbiChangeToJavaSourceFileMutator(sourceFile)
-        mutator.timestamp = 1234
 
         when:
         mutator.beforeBuild(buildContext)
 
         then:
-        parse(sourceFile) == parse("class Thing { public void existingMethod() { _m_1234_1();}public static void _m_1234_1() { }}")
-
-        when:
-        mutator.beforeBuild(buildContext)
-
-        then:
-        parse(sourceFile) == parse("class Thing { public void existingMethod() { _m_1234_2();}public static void _m_1234_2() { }}")
-
-        when:
-        mutator.beforeBuild(buildContext)
-
-        then:
-        parse(sourceFile) == parse("class Thing { public void existingMethod() { _m_1234_3();}public static void _m_1234_3() { }}")
+        parse(sourceFile) == parse("class Thing { public void existingMethod() { _mUNIQUE_ID();}public static void _mUNIQUE_ID() { }}")
+        1 * buildContext.uniqueBuildId >> "UNIQUE_ID"
+        0 * _
     }
 
     def "reverts changes when nothing has been applied"() {
