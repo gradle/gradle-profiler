@@ -11,9 +11,7 @@ class ApplyChangeToAndroidManifestFileMutatorTest extends AbstractMutatorTest {
         mutator.beforeBuild(buildContext)
 
         then:
-        sourceFile.text == '<manifest><!-- UNIQUE_ID --><permission android:name="com.acme.SOME_PERMISSION"/></manifest>'
-        1 * buildContext.uniqueBuildId >> "UNIQUE_ID"
-        0 * _
+        sourceFile.text == '<manifest><!-- _276d92f3_16ac_4064_9a18_5f1dfd67992f_testScenario_MEASURE_7 --><permission android:name="com.acme.SOME_PERMISSION"/></manifest>'
     }
 
     def "reverts changes when nothing has been applied"() {

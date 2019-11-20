@@ -1,5 +1,7 @@
 package org.gradle.profiler;
 
+import com.google.common.annotations.VisibleForTesting;
+
 import java.util.UUID;
 
 public class ScenarioContext {
@@ -10,7 +12,8 @@ public class ScenarioContext {
         return new ScenarioContext(invocationSettings.getInvocationId(), scenarioDefinition.getName());
     };
 
-    protected ScenarioContext(UUID invocationId, String scenarioName) {
+    @VisibleForTesting
+    public ScenarioContext(UUID invocationId, String scenarioName) {
         this.invocationId = invocationId;
         this.scenarioName = scenarioName;
     }

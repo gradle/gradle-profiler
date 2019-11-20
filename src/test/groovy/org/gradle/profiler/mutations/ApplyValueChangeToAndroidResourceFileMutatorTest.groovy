@@ -11,9 +11,7 @@ class ApplyValueChangeToAndroidResourceFileMutatorTest extends AbstractMutatorTe
         mutator.beforeBuild(buildContext)
 
         then:
-        sourceFile.text == '<resources><string name="foo">barUNIQUE_ID</string></resources>'
-        1 * buildContext.uniqueBuildId >> "UNIQUE_ID"
-        0 * _
+        sourceFile.text == '<resources><string name="foo">bar_276d92f3_16ac_4064_9a18_5f1dfd67992f_testScenario_MEASURE_7</string></resources>'
     }
 
     def "reverts changes when nothing has been applied"() {

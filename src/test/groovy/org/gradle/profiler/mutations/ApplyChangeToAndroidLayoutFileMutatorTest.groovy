@@ -13,14 +13,12 @@ class ApplyChangeToAndroidLayoutFileMutatorTest extends AbstractMutatorTest {
         then:
         sourceFile.text == """\
         <LinearLayout><View 
-            android:id="@+id/viewUNIQUE_ID"
+            android:id="@+id/view_276d92f3_16ac_4064_9a18_5f1dfd67992f_testScenario_MEASURE_7"
             android:visibility="gone"
             android:layout_width="5dp"
             android:layout_height="5dp"/>
 
         </LinearLayout>""".stripIndent()
-        1 * buildContext.uniqueBuildId >> "UNIQUE_ID"
-        0 * _
     }
 
 
@@ -35,14 +33,12 @@ class ApplyChangeToAndroidLayoutFileMutatorTest extends AbstractMutatorTest {
         then:
         sourceFile.text == """\
         <layout><LinearLayout><View 
-            android:id="@+id/viewUNIQUE_ID"
+            android:id="@+id/view_276d92f3_16ac_4064_9a18_5f1dfd67992f_testScenario_MEASURE_7"
             android:visibility="gone"
             android:layout_width="5dp"
             android:layout_height="5dp"/>
 
         </LinearLayout></layout>""".stripIndent()
-        1 * buildContext.uniqueBuildId >> "UNIQUE_ID"
-        0 * _
     }
 
     def "reverts changes when nothing has been applied"() {

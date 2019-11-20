@@ -12,9 +12,7 @@ class ApplyChangeToPropertyResourceFileMutatorTest extends AbstractMutatorTest {
         mutator.beforeBuild(buildContext)
 
         then:
-        sourceFile.text == 'org.foo=bar\norg.acme.some=UNIQUE_ID\n'
-        1 * buildContext.uniqueBuildId >> "UNIQUE_ID"
-        0 * _
+        sourceFile.text == 'org.foo=bar\norg.acme.some=_276d92f3_16ac_4064_9a18_5f1dfd67992f_testScenario_MEASURE_7\n'
     }
 
     def "reverts changes when nothing has been applied"() {
