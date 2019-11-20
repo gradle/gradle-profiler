@@ -5,7 +5,6 @@ plugins {
     groovy
     application
     `maven-publish`
-    `build-scan`
 }
 
 allprojects {
