@@ -1,6 +1,8 @@
 package org.gradle.profiler.mutations;
 
+import org.gradle.profiler.BuildContext;
 import org.gradle.profiler.BuildMutator;
+import org.gradle.profiler.ScenarioContext;
 
 import java.io.File;
 import java.text.MessageFormat;
@@ -14,17 +16,17 @@ public class ShowBuildCacheSizeMutator extends AbstractBuildMutator {
 	}
 
 	@Override
-	public void beforeScenario() {
+	public void beforeScenario(ScenarioContext context) {
 		showCacheSize();
 	}
 
 	@Override
-	public void afterCleanup(Throwable error) {
+	public void afterCleanup(BuildContext context, Throwable error) {
 		showCacheSize();
 	}
 
 	@Override
-	public void afterBuild(Throwable error) {
+	public void afterBuild(BuildContext context, Throwable error) {
 		showCacheSize();
 	}
 

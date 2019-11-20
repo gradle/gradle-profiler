@@ -1,11 +1,6 @@
 package org.gradle.profiler.mutations
 
-import org.junit.Rule
-import org.junit.rules.TemporaryFolder
-import spock.lang.Specification
-
-class ApplyChangeToAndroidLayoutFileMutatorTest extends Specification {
-    @Rule TemporaryFolder tmpDir = new TemporaryFolder()
+class ApplyChangeToAndroidLayoutFileMutatorTest extends AbstractMutatorTest {
 
     def "adds new view at bottom of top level layout"() {
         def sourceFile = tmpDir.newFile("strings.xml")
@@ -14,7 +9,7 @@ class ApplyChangeToAndroidLayoutFileMutatorTest extends Specification {
         mutator.timestamp = 1234
 
         when:
-        mutator.beforeBuild()
+        mutator.beforeBuild(buildContext)
 
         then:
         sourceFile.text == """\
@@ -27,7 +22,7 @@ class ApplyChangeToAndroidLayoutFileMutatorTest extends Specification {
         </LinearLayout>""".stripIndent()
 
         when:
-        mutator.beforeBuild()
+        mutator.beforeBuild(buildContext)
 
         then:
         sourceFile.text == """\
@@ -40,7 +35,7 @@ class ApplyChangeToAndroidLayoutFileMutatorTest extends Specification {
         </LinearLayout>""".stripIndent()
 
         when:
-        mutator.beforeBuild()
+        mutator.beforeBuild(buildContext)
 
         then:
         sourceFile.text == """\
@@ -61,7 +56,7 @@ class ApplyChangeToAndroidLayoutFileMutatorTest extends Specification {
         mutator.timestamp = 1234
 
         when:
-        mutator.beforeBuild()
+        mutator.beforeBuild(buildContext)
 
         then:
         sourceFile.text == """\
@@ -74,7 +69,7 @@ class ApplyChangeToAndroidLayoutFileMutatorTest extends Specification {
         </LinearLayout></layout>""".stripIndent()
 
         when:
-        mutator.beforeBuild()
+        mutator.beforeBuild(buildContext)
 
         then:
         sourceFile.text == """\
@@ -87,7 +82,7 @@ class ApplyChangeToAndroidLayoutFileMutatorTest extends Specification {
         </LinearLayout></layout>""".stripIndent()
 
         when:
-        mutator.beforeBuild()
+        mutator.beforeBuild(buildContext)
 
         then:
         sourceFile.text == """\
@@ -106,7 +101,7 @@ class ApplyChangeToAndroidLayoutFileMutatorTest extends Specification {
         def mutator = new ApplyChangeToAndroidLayoutFileMutator(sourceFile)
 
         when:
-        mutator.afterScenario()
+        mutator.afterScenario(scenarioContext)
 
         then:
         sourceFile.text == "<LinearLayout></LinearLayout>"
@@ -118,8 +113,8 @@ class ApplyChangeToAndroidLayoutFileMutatorTest extends Specification {
         def mutator = new ApplyChangeToAndroidLayoutFileMutator(sourceFile)
 
         when:
-        mutator.beforeBuild()
-        mutator.afterScenario()
+        mutator.beforeBuild(buildContext)
+        mutator.afterScenario(scenarioContext)
 
         then:
         sourceFile.text == "<LinearLayout></LinearLayout>"

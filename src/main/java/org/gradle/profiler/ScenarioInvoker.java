@@ -1,7 +1,5 @@
 package org.gradle.profiler;
 
-import static org.gradle.profiler.Logging.startOperation;
-
 import org.gradle.profiler.result.BuildInvocationResult;
 import org.gradle.profiler.result.Sample;
 
@@ -12,6 +10,8 @@ import java.util.Collections;
 import java.util.List;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
+
+import static org.gradle.profiler.Logging.startOperation;
 
 public abstract class ScenarioInvoker<T extends ScenarioDefinition, R extends BuildInvocationResult> {
     /**
@@ -39,14 +39,14 @@ public abstract class ScenarioInvoker<T extends ScenarioDefinition, R extends Bu
     /**
      * Runs a single measured build and collects the result.
      */
-    protected <R extends BuildInvocationResult> R runMeasured(String displayName, BuildMutator mutator, Supplier<? extends R> action, Consumer<? super R> consumer) {
-        startOperation("Running " + displayName);
-        mutator.beforeBuild();
+    protected <R extends BuildInvocationResult> R runMeasured(BuildContext buildContext, BuildMutator mutator, Supplier<? extends R> action, Consumer<? super R> consumer) {
+        startOperation("Running " + buildContext.getDisplayName());
+        mutator.beforeBuild(buildContext);
         R result = tryRun(() -> {
             R result1 = action.get();
             printExecutionTime(result1.getExecutionTime());
             return result1;
-        }, mutator::afterBuild);
+        }, error -> mutator.afterBuild(buildContext, error));
         consumer.accept(result);
         return result;
     }
@@ -58,21 +58,21 @@ public abstract class ScenarioInvoker<T extends ScenarioDefinition, R extends Bu
     /**
      * Runs a single clean-up build.
      */
-    protected void runCleanup(String displayName, BuildMutator mutator, Runnable action) {
-        startOperation("Running cleanup for " + displayName);
-        mutator.beforeCleanup();
-        tryRun(() -> action.run(), mutator::afterCleanup);
+    protected void runCleanup(BuildContext buildContext, BuildMutator mutator, Runnable action) {
+        startOperation("Running cleanup for " + buildContext.getDisplayName());
+        mutator.beforeCleanup(buildContext);
+        tryRun(action, error -> mutator.afterCleanup(buildContext, error));
     }
 
     /**
      * Returns a {@link Supplier} that returns the result of the given command.
      */
-    protected Supplier<BuildInvocationResult> measureCommandLineExecution(String displayName, List<String> commandLine, File workingDir) {
+    protected Supplier<BuildInvocationResult> measureCommandLineExecution(BuildContext buildContext, List<String> commandLine, File workingDir) {
         return () -> {
             Timer timer = new Timer();
             new CommandExec().inDir(workingDir).run(commandLine);
             Duration executionTime = timer.elapsed();
-            return new BuildInvocationResult(displayName, executionTime);
+            return new BuildInvocationResult(buildContext.getDisplayName(), executionTime);
         };
     }
 

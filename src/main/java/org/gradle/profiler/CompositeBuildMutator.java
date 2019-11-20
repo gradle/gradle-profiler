@@ -11,44 +11,44 @@ public class CompositeBuildMutator implements BuildMutator {
 	}
 
 	@Override
-	public void beforeScenario() {
+	public void beforeScenario(ScenarioContext context) {
 		for (BuildMutator mutator : mutators) {
-			mutator.beforeScenario();
+			mutator.beforeScenario(context);
 		}
 	}
 
 	@Override
-	public void beforeCleanup() {
+	public void beforeCleanup(BuildContext context) {
 		for (BuildMutator mutator : mutators) {
-			mutator.beforeCleanup();
+			mutator.beforeCleanup(context);
 		}
 	}
 
 	@Override
-	public void afterCleanup(Throwable error) {
+	public void afterCleanup(BuildContext context, Throwable error) {
 		for (BuildMutator mutator : mutators) {
-			mutator.afterCleanup(error);
+			mutator.afterCleanup(context, error);
 		}
 	}
 
 	@Override
-	public void beforeBuild() {
+	public void beforeBuild(BuildContext context) {
 		for (BuildMutator mutator : mutators) {
-			mutator.beforeBuild();
+			mutator.beforeBuild(context);
 		}
 	}
 
 	@Override
-	public void afterBuild(Throwable error) {
+	public void afterBuild(BuildContext context, Throwable error) {
 		for (BuildMutator mutator : mutators) {
-			mutator.afterBuild(error);
+			mutator.afterBuild(context, error);
 		}
 	}
 
 	@Override
-	public void afterScenario() {
+	public void afterScenario(ScenarioContext context) {
 		for (BuildMutator mutator : mutators) {
-			mutator.afterScenario();
+			mutator.afterScenario(context);
 		}
 	}
 

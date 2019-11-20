@@ -1,49 +1,46 @@
 package org.gradle.profiler.mutations
 
-import org.gradle.profiler.TestGitRepo
-import org.junit.Rule
-import org.junit.rules.TemporaryFolder
-import spock.lang.Specification
 
-class GitCheckoutMutatorTest extends Specification {
-    @Rule TemporaryFolder tmpDir = new TemporaryFolder()
+import org.gradle.profiler.TestGitRepo
+
+class GitCheckoutMutatorTest extends AbstractMutatorTest {
 
     def "checks out target commit"() {
         def repo = new TestGitRepo(tmpDir.newFolder())
         def mutator = new GitCheckoutMutator(repo.directory, repo.modifiedCommit, repo.originalCommit)
 
         when:
-        mutator.beforeScenario()
+        mutator.beforeScenario(scenarioContext)
         then:
         repo.atFinalCommit()
 
         when:
-        mutator.beforeCleanup()
+        mutator.beforeCleanup(buildContext)
         then:
         repo.atModifiedCommit()
 
         when:
-        mutator.afterCleanup()
+        mutator.afterCleanup(buildContext, null)
         then:
         repo.atModifiedCommit()
 
         when:
-        mutator.beforeBuild()
+        mutator.beforeBuild(buildContext)
         then:
         repo.atOriginalCommit()
 
         when:
-        mutator.afterBuild(new RuntimeException("Error"))
+        mutator.afterBuild(buildContext, new RuntimeException("Error"))
         then:
         repo.atOriginalCommit()
 
         when:
-        mutator.afterBuild(null)
+        mutator.afterBuild(buildContext, null)
         then:
         repo.atFinalCommit()
 
         when:
-        mutator.afterScenario()
+        mutator.afterScenario(scenarioContext)
         then:
         repo.atFinalCommit()
     }
@@ -54,37 +51,37 @@ class GitCheckoutMutatorTest extends Specification {
         def mutator = new GitCheckoutMutator(repo.directory, null, repo.getOriginalCommit())
 
         when:
-        mutator.beforeScenario()
+        mutator.beforeScenario(scenarioContext)
         then:
         repo.atFinalCommit()
 
         when:
-        mutator.beforeCleanup()
+        mutator.beforeCleanup(buildContext)
         then:
         repo.atFinalCommit()
 
         when:
-        mutator.afterCleanup()
+        mutator.afterCleanup(buildContext, null)
         then:
         repo.atFinalCommit()
 
         when:
-        mutator.beforeBuild()
+        mutator.beforeBuild(buildContext)
         then:
         repo.atOriginalCommit()
 
         when:
-        mutator.afterBuild(new RuntimeException("Error"))
+        mutator.afterBuild(buildContext, new RuntimeException("Error"))
         then:
         repo.atOriginalCommit()
 
         when:
-        mutator.afterBuild(null)
+        mutator.afterBuild(buildContext, null)
         then:
         repo.atFinalCommit()
 
         when:
-        mutator.afterScenario()
+        mutator.afterScenario(scenarioContext)
         then:
         repo.atFinalCommit()
     }

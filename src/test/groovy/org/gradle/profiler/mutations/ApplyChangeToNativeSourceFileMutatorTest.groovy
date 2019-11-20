@@ -1,11 +1,6 @@
 package org.gradle.profiler.mutations
 
-import org.junit.Rule
-import org.junit.rules.TemporaryFolder
-import spock.lang.Specification
-
-class ApplyChangeToNativeSourceFileMutatorTest extends Specification {
-    @Rule TemporaryFolder tmpDir = new TemporaryFolder()
+class ApplyChangeToNativeSourceFileMutatorTest extends AbstractMutatorTest {
 
     def "adds and replaces method to end of cpp source file"() {
         def sourceFile = tmpDir.newFile("Thing.cpp")
@@ -14,19 +9,19 @@ class ApplyChangeToNativeSourceFileMutatorTest extends Specification {
         ApplyChangeToNativeSourceFileMutator.classCreationTime = 1234
 
         when:
-        mutator.beforeBuild()
+        mutator.beforeBuild(buildContext)
 
         then:
         sourceFile.text == " \nint _m_1234_1 () { }"
 
         when:
-        mutator.beforeBuild()
+        mutator.beforeBuild(buildContext)
 
         then:
         sourceFile.text == " \nint _m_1234_2 () { }"
 
         when:
-        mutator.beforeBuild()
+        mutator.beforeBuild(buildContext)
 
         then:
         sourceFile.text == " \nint _m_1234_3 () { }"
@@ -40,19 +35,19 @@ class ApplyChangeToNativeSourceFileMutatorTest extends Specification {
         ApplyChangeToNativeSourceFileMutator.classCreationTime = 1234
 
         when:
-        mutator.beforeBuild()
+        mutator.beforeBuild(buildContext)
 
         then:
         sourceFile.text == "#ifndef ABC\n\nint _m_1234_1();\n#endif"
 
         when:
-        mutator.beforeBuild()
+        mutator.beforeBuild(buildContext)
 
         then:
         sourceFile.text == "#ifndef ABC\n\nint _m_1234_2();\n#endif"
 
         when:
-        mutator.beforeBuild()
+        mutator.beforeBuild(buildContext)
 
         then:
         sourceFile.text == "#ifndef ABC\n\nint _m_1234_3();\n#endif"
@@ -70,16 +65,16 @@ class ApplyChangeToNativeSourceFileMutatorTest extends Specification {
         ApplyChangeToNativeSourceFileMutator.classCreationTime = 1234
 
         when:
-        mutatorCPP.beforeBuild()
-        mutatorH.beforeBuild()
+        mutatorCPP.beforeBuild(buildContext)
+        mutatorH.beforeBuild(buildContext)
 
         then:
         sourceFileCPP.text == " \nint _m_1234_1 () { }"
         sourceFileH.text == "#ifndef ABC\n\nint _m_1234_1();\n#endif"
 
         when:
-        mutatorCPP.beforeBuild()
-        mutatorH.beforeBuild()
+        mutatorCPP.beforeBuild(buildContext)
+        mutatorH.beforeBuild(buildContext)
 
         then:
         sourceFileCPP.text == " \nint _m_1234_2 () { }"

@@ -1,18 +1,9 @@
 package org.gradle.profiler.mutations
 
-import org.junit.Rule
-import org.junit.rules.TemporaryFolder
-import spock.lang.Specification
 
 import static com.github.javaparser.JavaParser.parse
-import static com.github.javaparser.JavaParser.parse
-import static com.github.javaparser.JavaParser.parse
-import static com.github.javaparser.JavaParser.parse
-import static com.github.javaparser.JavaParser.parse
-import static com.github.javaparser.JavaParser.parse
 
-class ApplyAbiChangeToSourceFileMutatorTest extends Specification {
-    @Rule TemporaryFolder tmpDir = new TemporaryFolder()
+class ApplyAbiChangeToSourceFileMutatorTest extends AbstractMutatorTest {
 
     def "adds and replaces public method at end of Kotlin source file"() {
         def sourceFile = tmpDir.newFile("Thing.kt")
@@ -21,7 +12,7 @@ class ApplyAbiChangeToSourceFileMutatorTest extends Specification {
         mutator.timestamp = 1234
 
         when:
-        mutator.beforeBuild()
+        mutator.beforeBuild(buildContext)
 
         then:
         sourceFile.text == "class Thing { fun existingMethod() { }}fun _m_1234_1() {}"
@@ -34,7 +25,7 @@ class ApplyAbiChangeToSourceFileMutatorTest extends Specification {
         mutator.timestamp = 1234
 
         when:
-        mutator.beforeBuild()
+        mutator.beforeBuild(buildContext)
 
         then:
         parse(sourceFile) == parse("class Thing { public void existingMethod() { _m_1234_1();}public static void _m_1234_1() { }}")

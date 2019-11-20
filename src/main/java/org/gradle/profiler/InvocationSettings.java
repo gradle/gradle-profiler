@@ -4,6 +4,7 @@ import java.io.File;
 import java.io.PrintStream;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 
 public class InvocationSettings {
     private final File projectDir;
@@ -21,6 +22,7 @@ public class InvocationSettings {
     private final Integer iterations;
     private final boolean measureConfigTime;
     private final List<String> measuredBuildOperations;
+    private final UUID invocationId = UUID.randomUUID();
 
     public InvocationSettings(
         File projectDir,
@@ -131,6 +133,10 @@ public class InvocationSettings {
 
     public List<String> getMeasuredBuildOperations() {
         return measuredBuildOperations;
+    }
+
+    public UUID getInvocationId() {
+        return invocationId;
     }
 
     public void printTo(PrintStream out) {

@@ -1,12 +1,6 @@
 package org.gradle.profiler.mutations
 
-import org.junit.Rule
-import org.junit.rules.TemporaryFolder
-import spock.lang.Specification
-
-class ApplyChangeToAndroidManifestFileMutatorTest extends Specification {
-    @Rule
-    TemporaryFolder tmpDir = new TemporaryFolder()
+class ApplyChangeToAndroidManifestFileMutatorTest extends AbstractMutatorTest {
 
     def "adds fake permission to end of android manifest file"() {
         def sourceFile = tmpDir.newFile("AndroidManifest.xml")
@@ -15,19 +9,19 @@ class ApplyChangeToAndroidManifestFileMutatorTest extends Specification {
         mutator.timestamp = 1234
 
         when:
-        mutator.beforeBuild()
+        mutator.beforeBuild(buildContext)
 
         then:
         sourceFile.text == '<manifest><!-- _1234_1 --><permission android:name="com.acme.SOME_PERMISSION"/></manifest>'
 
         when:
-        mutator.beforeBuild()
+        mutator.beforeBuild(buildContext)
 
         then:
         sourceFile.text == '<manifest><!-- _1234_2 --><permission android:name="com.acme.SOME_PERMISSION"/></manifest>'
 
         when:
-        mutator.beforeBuild()
+        mutator.beforeBuild(buildContext)
 
         then:
         sourceFile.text == '<manifest><!-- _1234_3 --><permission android:name="com.acme.SOME_PERMISSION"/></manifest>'
@@ -39,7 +33,7 @@ class ApplyChangeToAndroidManifestFileMutatorTest extends Specification {
         def mutator = new ApplyChangeToAndroidManifestFileMutator(sourceFile)
 
         when:
-        mutator.afterScenario()
+        mutator.afterScenario(scenarioContext)
 
         then:
         sourceFile.text == "<manifest></manifest>"
@@ -51,8 +45,8 @@ class ApplyChangeToAndroidManifestFileMutatorTest extends Specification {
         def mutator = new ApplyChangeToAndroidManifestFileMutator(sourceFile)
 
         when:
-        mutator.beforeBuild()
-        mutator.afterScenario()
+        mutator.beforeBuild(buildContext)
+        mutator.afterScenario(scenarioContext)
 
         then:
         sourceFile.text == "<manifest></manifest>"

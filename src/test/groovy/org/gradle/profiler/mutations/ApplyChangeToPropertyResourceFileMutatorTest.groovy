@@ -1,12 +1,7 @@
 package org.gradle.profiler.mutations
 
-import org.junit.Rule
-import org.junit.rules.TemporaryFolder
-import spock.lang.Specification
-
-class ApplyChangeToPropertyResourceFileMutatorTest extends Specification {
+class ApplyChangeToPropertyResourceFileMutatorTest extends AbstractMutatorTest {
     public static final String ORIGINAL_CONTENTS = "org.foo=bar"
-    @Rule TemporaryFolder tmpDir = new TemporaryFolder()
 
     def "adds and removes property to end of source file"() {
         def sourceFile = tmpDir.newFile("test.properties")
@@ -15,19 +10,19 @@ class ApplyChangeToPropertyResourceFileMutatorTest extends Specification {
         mutator.timestamp = 1234
 
         when:
-        mutator.beforeBuild()
+        mutator.beforeBuild(buildContext)
 
         then:
         sourceFile.text == 'org.foo=bar\norg.acme.some=_1234_1\n'
 
         when:
-        mutator.beforeBuild()
+        mutator.beforeBuild(buildContext)
 
         then:
         sourceFile.text == 'org.foo=bar\norg.acme.some=_1234_2\n'
 
         when:
-        mutator.beforeBuild()
+        mutator.beforeBuild(buildContext)
 
         then:
         sourceFile.text == 'org.foo=bar\norg.acme.some=_1234_3\n'
@@ -39,7 +34,7 @@ class ApplyChangeToPropertyResourceFileMutatorTest extends Specification {
         def mutator = new ApplyChangeToPropertyResourceFileMutator(sourceFile)
 
         when:
-        mutator.afterScenario()
+        mutator.afterScenario(scenarioContext)
 
         then:
         sourceFile.text == ORIGINAL_CONTENTS
@@ -51,8 +46,8 @@ class ApplyChangeToPropertyResourceFileMutatorTest extends Specification {
         def mutator = new ApplyChangeToPropertyResourceFileMutator(sourceFile)
 
         when:
-        mutator.beforeBuild()
-        mutator.afterScenario()
+        mutator.beforeBuild(buildContext)
+        mutator.afterScenario(scenarioContext)
 
         then:
         sourceFile.text == ORIGINAL_CONTENTS

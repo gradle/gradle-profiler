@@ -1,13 +1,6 @@
 package org.gradle.profiler.mutations
 
-import org.junit.Rule
-import org.junit.rules.TemporaryFolder
-import spock.lang.Specification
-
-
-class ClearArtifactTransformCacheMutatorTest extends Specification {
-    @Rule
-    TemporaryFolder tmpDir = new TemporaryFolder()
+class ClearArtifactTransformCacheMutatorTest extends AbstractMutatorTest {
 
     def "removes directories with transforms prefix"() {
         def userHome = tmpDir.newFolder()
@@ -24,7 +17,7 @@ class ClearArtifactTransformCacheMutatorTest extends Specification {
 
         when:
         def mutator = new ClearArtifactTransformCacheMutator(userHome, AbstractCleanupMutator.CleanupSchedule.BUILD)
-        mutator.beforeBuild()
+        mutator.beforeBuild(buildContext)
 
         then:
         file.file

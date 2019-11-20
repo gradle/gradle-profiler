@@ -1,13 +1,9 @@
 package org.gradle.profiler.mutations
 
-import org.junit.Rule
-import org.junit.rules.TemporaryFolder
-import spock.lang.Specification
 
 import static com.github.javaparser.JavaParser.parse
 
-class ApplyAbiChangeToJavaSourceFileMutatorTest extends Specification {
-    @Rule TemporaryFolder tmpDir = new TemporaryFolder()
+class ApplyAbiChangeToJavaSourceFileMutatorTest extends AbstractMutatorTest {
 
     def "adds and replaces public method at end of source file"() {
         def sourceFile = tmpDir.newFile("Thing.java")
@@ -16,19 +12,19 @@ class ApplyAbiChangeToJavaSourceFileMutatorTest extends Specification {
         mutator.timestamp = 1234
 
         when:
-        mutator.beforeBuild()
+        mutator.beforeBuild(buildContext)
 
         then:
         parse(sourceFile) == parse("class Thing { public void existingMethod() { _m_1234_1();}public static void _m_1234_1() { }}")
 
         when:
-        mutator.beforeBuild()
+        mutator.beforeBuild(buildContext)
 
         then:
         parse(sourceFile) == parse("class Thing { public void existingMethod() { _m_1234_2();}public static void _m_1234_2() { }}")
 
         when:
-        mutator.beforeBuild()
+        mutator.beforeBuild(buildContext)
 
         then:
         parse(sourceFile) == parse("class Thing { public void existingMethod() { _m_1234_3();}public static void _m_1234_3() { }}")
@@ -40,13 +36,13 @@ class ApplyAbiChangeToJavaSourceFileMutatorTest extends Specification {
         def mutator = new ApplyAbiChangeToJavaSourceFileMutator(sourceFile)
 
         when:
-        mutator.afterScenario()
+        mutator.afterScenario(scenarioContext)
 
         then:
         sourceFile.text == "class Thing { public void existingMethod() { }}"
 
         when:
-        mutator.afterScenario()
+        mutator.afterScenario(scenarioContext)
 
         then:
         sourceFile.text == "class Thing { public void existingMethod() { }}"
@@ -58,14 +54,14 @@ class ApplyAbiChangeToJavaSourceFileMutatorTest extends Specification {
         def mutator = new ApplyAbiChangeToJavaSourceFileMutator(sourceFile)
 
         when:
-        mutator.beforeBuild()
-        mutator.afterScenario()
+        mutator.beforeBuild(buildContext)
+        mutator.afterScenario(scenarioContext)
 
         then:
         sourceFile.text == "class Thing { public void existingMethod() { }}"
 
         when:
-        mutator.afterScenario()
+        mutator.afterScenario(scenarioContext)
 
         then:
         sourceFile.text == "class Thing { public void existingMethod() { }}"

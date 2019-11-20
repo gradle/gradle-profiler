@@ -1,13 +1,9 @@
 package org.gradle.profiler.mutations
 
-import org.junit.Rule
-import org.junit.rules.TemporaryFolder
-import spock.lang.Specification
 
 import static com.github.javaparser.JavaParser.parse
 
-class ApplyNonAbiChangeToJavaSourceFileMutatorTest extends Specification {
-    @Rule TemporaryFolder tmpDir = new TemporaryFolder()
+class ApplyNonAbiChangeToJavaSourceFileMutatorTest extends AbstractMutatorTest {
 
     def "changes the first method in the source file"() {
         def sourceFile = tmpDir.newFile("Thing.java")
@@ -16,19 +12,19 @@ class ApplyNonAbiChangeToJavaSourceFileMutatorTest extends Specification {
         mutator.timestamp = 1234
 
         when:
-        mutator.beforeBuild()
+        mutator.beforeBuild(buildContext)
 
         then:
         parse(sourceFile) == parse('class Thing { public void existingMethod() { System.out.println("_1234_1");}}')
 
         when:
-        mutator.beforeBuild()
+        mutator.beforeBuild(buildContext)
 
         then:
         parse(sourceFile) == parse('class Thing { public void existingMethod() { System.out.println("_1234_2");}}')
 
         when:
-        mutator.beforeBuild()
+        mutator.beforeBuild(buildContext)
 
         then:
         parse(sourceFile) == parse('class Thing { public void existingMethod() { System.out.println("_1234_3");}}')
@@ -41,7 +37,7 @@ class ApplyNonAbiChangeToJavaSourceFileMutatorTest extends Specification {
         mutator.timestamp = 1234
 
         when:
-        mutator.beforeBuild()
+        mutator.beforeBuild(buildContext)
 
         then:
         IllegalArgumentException t = thrown()

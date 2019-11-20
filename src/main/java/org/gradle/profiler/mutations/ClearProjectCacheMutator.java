@@ -1,6 +1,7 @@
 package org.gradle.profiler.mutations;
 
 import org.apache.commons.io.FileUtils;
+import org.gradle.profiler.BuildContext;
 import org.gradle.profiler.BuildMutator;
 
 import java.io.File;
@@ -15,7 +16,7 @@ public class ClearProjectCacheMutator extends AbstractBuildMutator {
     }
 
     @Override
-    public void afterBuild(Throwable error) {
+    public void afterBuild(BuildContext context, Throwable error) {
         deleteGradleCache("project", projectDir);
         File buildSrc = new File(projectDir, "buildSrc");
         if (buildSrc.exists()) {

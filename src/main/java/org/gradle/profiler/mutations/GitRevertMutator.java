@@ -1,9 +1,11 @@
 package org.gradle.profiler.mutations;
 
 import com.typesafe.config.Config;
+import org.gradle.profiler.BuildContext;
 import org.gradle.profiler.BuildMutator;
 import org.gradle.profiler.CommandExec;
 import org.gradle.profiler.ConfigUtil;
+import org.gradle.profiler.ScenarioContext;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -22,17 +24,17 @@ public class GitRevertMutator extends AbstractGitMutator {
 	}
 
 	@Override
-	public void beforeScenario() {
+	public void beforeScenario(ScenarioContext context) {
 		resetGit();
 	}
 
 	@Override
-	public void beforeBuild() {
+	public void beforeBuild(BuildContext context) {
         revertCommits();
 	}
 
 	@Override
-	public void afterBuild(Throwable error) {
+	public void afterBuild(BuildContext context, Throwable error) {
 		if (error == null) {
 			abortRevert();
 			resetGit();

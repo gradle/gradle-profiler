@@ -1,6 +1,8 @@
 package org.gradle.profiler.mutations;
 
+import org.gradle.profiler.BuildContext;
 import org.gradle.profiler.BuildMutator;
+import org.gradle.profiler.ScenarioContext;
 
 import java.io.File;
 import java.io.IOException;
@@ -35,7 +37,7 @@ public abstract class AbstractFileChangeMutator implements BuildMutator {
     }
 
     @Override
-    public void beforeBuild() {
+    public void beforeBuild(BuildContext context) {
         counter++;
         StringBuilder modifiedText = new StringBuilder(originalText);
         applyChangeTo(modifiedText);
@@ -57,7 +59,7 @@ public abstract class AbstractFileChangeMutator implements BuildMutator {
     }
 
     @Override
-    public void afterScenario() {
+    public void afterScenario(ScenarioContext context) {
         if (counter > 0) {
             revert();
             counter = 0;

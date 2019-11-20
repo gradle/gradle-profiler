@@ -1,11 +1,6 @@
 package org.gradle.profiler.mutations
 
-import org.junit.Rule
-import org.junit.rules.TemporaryFolder
-import spock.lang.Specification
-
-class ApplyAbiChangeToKotlinSourceFileMutatorTest extends Specification {
-    @Rule TemporaryFolder tmpDir = new TemporaryFolder()
+class ApplyAbiChangeToKotlinSourceFileMutatorTest extends AbstractMutatorTest {
 
     def "adds and replaces public method at end of source file"() {
         def sourceFile = tmpDir.newFile("Thing.kt")
@@ -14,19 +9,19 @@ class ApplyAbiChangeToKotlinSourceFileMutatorTest extends Specification {
         mutator.timestamp = 1234
 
         when:
-        mutator.beforeBuild()
+        mutator.beforeBuild(buildContext)
 
         then:
         sourceFile.text == "class Thing { fun existingMethod() { }}fun _m_1234_1() {}"
 
         when:
-        mutator.beforeBuild()
+        mutator.beforeBuild(buildContext)
 
         then:
         sourceFile.text == "class Thing { fun existingMethod() { }}fun _m_1234_2() {}"
 
         when:
-        mutator.beforeBuild()
+        mutator.beforeBuild(buildContext)
 
         then:
         sourceFile.text == "class Thing { fun existingMethod() { }}fun _m_1234_3() {}"
@@ -38,13 +33,13 @@ class ApplyAbiChangeToKotlinSourceFileMutatorTest extends Specification {
         def mutator = new ApplyAbiChangeToKotlinSourceFileMutator(sourceFile)
 
         when:
-        mutator.afterScenario()
+        mutator.afterScenario(scenarioContext)
 
         then:
         sourceFile.text == "class Thing { fun existingMethod() { }}"
 
         when:
-        mutator.afterScenario()
+        mutator.afterScenario(scenarioContext)
 
         then:
         sourceFile.text == "class Thing { fun existingMethod() { }}"
@@ -56,14 +51,14 @@ class ApplyAbiChangeToKotlinSourceFileMutatorTest extends Specification {
         def mutator = new ApplyAbiChangeToKotlinSourceFileMutator(sourceFile)
 
         when:
-        mutator.beforeBuild()
-        mutator.afterScenario()
+        mutator.beforeBuild(buildContext)
+        mutator.afterScenario(scenarioContext)
 
         then:
         sourceFile.text == "class Thing { fun existingMethod() { }}"
 
         when:
-        mutator.afterScenario()
+        mutator.afterScenario(scenarioContext)
 
         then:
         sourceFile.text == "class Thing { fun existingMethod() { }}"
