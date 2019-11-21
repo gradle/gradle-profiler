@@ -19,7 +19,8 @@ public class ApplyNonAbiChangeToJavaSourceFileMutator extends AbstractJavaSource
     protected void applyChangeTo(BuildContext context, CompilationUnit compilationUnit) {
         MethodDeclaration existingMethod = getExistingMethod(compilationUnit);
         existingMethod.getBody()
-            .ifPresent(body -> body.addStatement(0, JavaParser.parseStatement("System.out.println(\"" + context.getUniqueBuildId() + "\");")));
+            .orElseThrow(() -> new RuntimeException("Method body not found"))
+            .addStatement(0, JavaParser.parseStatement("System.out.println(\"" + context.getUniqueBuildId() + "\");"));
     }
 
     private MethodDeclaration getExistingMethod(CompilationUnit compilationUnit) {
