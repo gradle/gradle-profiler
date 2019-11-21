@@ -37,5 +37,4 @@ public interface BuildMutator {
             return "none";
         }
     };
-
 }

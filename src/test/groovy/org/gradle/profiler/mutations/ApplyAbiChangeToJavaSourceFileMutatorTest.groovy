@@ -1,6 +1,5 @@
 package org.gradle.profiler.mutations
 
-
 import static com.github.javaparser.JavaParser.parse
 
 class ApplyAbiChangeToJavaSourceFileMutatorTest extends AbstractMutatorTest {

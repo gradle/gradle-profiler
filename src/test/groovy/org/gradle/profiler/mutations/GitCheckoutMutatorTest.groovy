@@ -1,6 +1,5 @@
 package org.gradle.profiler.mutations
 
-
 import org.gradle.profiler.TestGitRepo
 
 class GitCheckoutMutatorTest extends AbstractMutatorTest {

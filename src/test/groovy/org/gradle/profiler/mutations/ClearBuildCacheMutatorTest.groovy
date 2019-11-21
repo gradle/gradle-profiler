@@ -1,6 +1,5 @@
 package org.gradle.profiler.mutations
 
-
 import static org.gradle.profiler.mutations.AbstractCleanupMutator.CleanupSchedule.BUILD
 import static org.gradle.profiler.mutations.AbstractCleanupMutator.CleanupSchedule.CLEANUP
 import static org.gradle.profiler.mutations.AbstractCleanupMutator.CleanupSchedule.SCENARIO
