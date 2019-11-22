@@ -1,55 +1,51 @@
 package org.gradle.profiler.mutations
 
 import org.gradle.profiler.TestGitRepo
-import org.junit.Rule
-import org.junit.rules.TemporaryFolder
-import spock.lang.Specification
 
-class GitRevertMutatorTest extends Specification {
-    @Rule TemporaryFolder tmpDir = new TemporaryFolder()
+class GitRevertMutatorTest extends AbstractMutatorTest {
 
     def "reverts things properly"() {
         def repo = new TestGitRepo(tmpDir.newFolder())
         def mutator = new GitRevertMutator(repo.directory, [repo.finalCommit, repo.modifiedCommit])
 
         when:
-        mutator.beforeScenario()
+        mutator.beforeScenario(scenarioContext)
         then:
         repo.atFinalCommit()
         repo.hasFinalContent()
 
         when:
-        mutator.beforeCleanup()
+        mutator.beforeCleanup(buildContext)
         then:
         repo.atFinalCommit()
         repo.hasFinalContent()
 
         when:
-        mutator.afterCleanup()
+        mutator.afterCleanup(buildContext, null)
         then:
         repo.atFinalCommit()
         repo.hasFinalContent()
 
         when:
-        mutator.beforeBuild()
+        mutator.beforeBuild(buildContext)
         then:
         repo.atFinalCommit()
         repo.hasOriginalContent()
 
         when:
-        mutator.afterBuild(new RuntimeException("Error"))
+        mutator.afterBuild(buildContext, new RuntimeException("Error"))
         then:
         repo.atFinalCommit()
         repo.hasOriginalContent()
 
         when:
-        mutator.afterBuild(null)
+        mutator.afterBuild(buildContext, null)
         then:
         repo.atFinalCommit()
         repo.hasFinalContent()
 
         when:
-        mutator.afterScenario()
+        mutator.afterScenario(scenarioContext)
         then:
         repo.atFinalCommit()
         repo.hasFinalContent()

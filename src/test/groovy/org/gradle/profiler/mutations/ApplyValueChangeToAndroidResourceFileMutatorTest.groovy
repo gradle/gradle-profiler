@@ -1,35 +1,17 @@
 package org.gradle.profiler.mutations
 
-import org.junit.Rule
-import org.junit.rules.TemporaryFolder
-import spock.lang.Specification
-
-class ApplyValueChangeToAndroidResourceFileMutatorTest extends Specification {
-    @Rule TemporaryFolder tmpDir = new TemporaryFolder()
+class ApplyValueChangeToAndroidResourceFileMutatorTest extends AbstractMutatorTest {
 
     def "changes string resource at the end of source file"() {
         def sourceFile = tmpDir.newFile("strings.xml")
         sourceFile.text = '<resources><string name="foo">bar</string></resources>'
         def mutator = new ApplyValueChangeToAndroidResourceFileMutator(sourceFile)
-        mutator.timestamp = 1234
 
         when:
-        mutator.beforeBuild()
+        mutator.beforeBuild(buildContext)
 
         then:
-        sourceFile.text == '<resources><string name="foo">bar_1234_1</string></resources>'
-
-        when:
-        mutator.beforeBuild()
-
-        then:
-        sourceFile.text == '<resources><string name="foo">bar_1234_2</string></resources>'
-
-        when:
-        mutator.beforeBuild()
-
-        then:
-        sourceFile.text == '<resources><string name="foo">bar_1234_3</string></resources>'
+        sourceFile.text == '<resources><string name="foo">bar_276d92f3_16ac_4064_9a18_5f1dfd67992f_testScenario_3c4925d7_MEASURE_7</string></resources>'
     }
 
     def "reverts changes when nothing has been applied"() {
@@ -38,7 +20,7 @@ class ApplyValueChangeToAndroidResourceFileMutatorTest extends Specification {
         def mutator = new ApplyValueChangeToAndroidResourceFileMutator(sourceFile)
 
         when:
-        mutator.afterScenario()
+        mutator.afterScenario(scenarioContext)
 
         then:
         sourceFile.text == '<resources><string name="foo">bar</string></resources>'
@@ -50,8 +32,8 @@ class ApplyValueChangeToAndroidResourceFileMutatorTest extends Specification {
         def mutator = new ApplyChangeToAndroidResourceFileMutator(sourceFile)
 
         when:
-        mutator.beforeBuild()
-        mutator.afterScenario()
+        mutator.beforeBuild(buildContext)
+        mutator.afterScenario(scenarioContext)
 
         then:
         sourceFile.text == '<resources><string name="foo">bar</string></resources>'

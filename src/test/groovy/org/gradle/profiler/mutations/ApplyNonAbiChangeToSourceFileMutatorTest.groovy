@@ -1,38 +1,30 @@
 package org.gradle.profiler.mutations
 
-import org.junit.Rule
-import org.junit.rules.TemporaryFolder
-import spock.lang.Specification
-
 import static com.github.javaparser.JavaParser.parse
 
-class ApplyNonAbiChangeToSourceFileMutatorTest extends Specification {
-    @Rule TemporaryFolder tmpDir = new TemporaryFolder()
+class ApplyNonAbiChangeToSourceFileMutatorTest extends AbstractMutatorTest {
 
     def "adds and replaces public method at end of Kotlin source file"() {
         def sourceFile = tmpDir.newFile("Thing.kt")
         sourceFile.text = "class Thing { fun existingMethod() { }}"
         def mutator = new ApplyNonAbiChangeToSourceFileMutator(sourceFile)
-        mutator.timestamp = 1234
 
         when:
-        mutator.beforeBuild()
+        mutator.beforeBuild(buildContext)
 
         then:
-        sourceFile.text == "class Thing { fun existingMethod() { }}private fun _m_1234_1() {}"
+        sourceFile.text == "class Thing { fun existingMethod() { }}private fun _m_276d92f3_16ac_4064_9a18_5f1dfd67992f_testScenario_3c4925d7_MEASURE_7() {}"
     }
 
     def "adds and replaces public method at end of Java source file"() {
         def sourceFile = tmpDir.newFile("Thing.java")
         sourceFile.text = "class Thing { public void existingMethod() { }}"
         def mutator = new ApplyNonAbiChangeToSourceFileMutator(sourceFile)
-        mutator.timestamp = 1234
 
         when:
-        mutator.beforeBuild()
+        mutator.beforeBuild(buildContext)
 
         then:
-        parse(sourceFile) == parse('class Thing { public void existingMethod() { System.out.println("_1234_1");}}')
+        parse(sourceFile) == parse('class Thing { public void existingMethod() { System.out.println("_276d92f3_16ac_4064_9a18_5f1dfd67992f_testScenario_3c4925d7_MEASURE_7");}}')
     }
-
 }

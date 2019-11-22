@@ -1,5 +1,7 @@
 package org.gradle.profiler.mutations;
 
+import org.gradle.profiler.BuildContext;
+
 import java.io.File;
 
 public class ApplyNonAbiChangeToKotlinSourceFileMutator extends AbstractKotlinSourceFileMutator {
@@ -9,9 +11,9 @@ public class ApplyNonAbiChangeToKotlinSourceFileMutator extends AbstractKotlinSo
     }
 
     @Override
-    protected void applyChangeTo(StringBuilder text) {
+    protected void applyChangeTo(BuildContext context, StringBuilder text) {
         text.append("private fun _m")
-                .append(getUniqueText())
+                .append(context.getUniqueBuildId())
                 .append("() {}");
     }
 }

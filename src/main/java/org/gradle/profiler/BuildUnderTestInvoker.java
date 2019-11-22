@@ -30,12 +30,12 @@ public class BuildUnderTestInvoker {
     /**
      * Runs a single invocation of a Gradle build.
      */
-    public GradleBuildInvocationResult runBuild(Phase phase, int buildNumber, BuildStep buildStep, BuildAction buildAction) {
-        String displayName = phase.displayBuildNumber(buildNumber);
+    public GradleBuildInvocationResult runBuild(BuildContext buildContext, BuildStep buildStep, BuildAction buildAction) {
+        String displayName = buildContext.getDisplayName();
 
         List<String> jvmArgs = new ArrayList<>(this.jvmArgs);
-        jvmArgs.add("-Dorg.gradle.profiler.phase=" + phase);
-        jvmArgs.add("-Dorg.gradle.profiler.number=" + buildNumber);
+        jvmArgs.add("-Dorg.gradle.profiler.phase=" + buildContext.getPhase());
+        jvmArgs.add("-Dorg.gradle.profiler.number=" + buildContext.getIteration());
         jvmArgs.add("-Dorg.gradle.profiler.step=" + buildStep);
 
         Timer timer = new Timer();

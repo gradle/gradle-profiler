@@ -1,51 +1,19 @@
 package org.gradle.profiler.mutations
 
-import org.junit.Rule
-import org.junit.rules.TemporaryFolder
-import spock.lang.Specification
-
-class ApplyChangeToAndroidLayoutFileMutatorTest extends Specification {
-    @Rule TemporaryFolder tmpDir = new TemporaryFolder()
+class ApplyChangeToAndroidLayoutFileMutatorTest extends AbstractMutatorTest {
 
     def "adds new view at bottom of top level layout"() {
         def sourceFile = tmpDir.newFile("strings.xml")
         sourceFile.text = "<LinearLayout></LinearLayout>"
         def mutator = new ApplyChangeToAndroidLayoutFileMutator(sourceFile)
-        mutator.timestamp = 1234
 
         when:
-        mutator.beforeBuild()
+        mutator.beforeBuild(buildContext)
 
         then:
         sourceFile.text == """\
         <LinearLayout><View 
-            android:id="@+id/view_1234_1"
-            android:visibility="gone"
-            android:layout_width="5dp"
-            android:layout_height="5dp"/>
-
-        </LinearLayout>""".stripIndent()
-
-        when:
-        mutator.beforeBuild()
-
-        then:
-        sourceFile.text == """\
-        <LinearLayout><View 
-            android:id="@+id/view_1234_2"
-            android:visibility="gone"
-            android:layout_width="5dp"
-            android:layout_height="5dp"/>
-
-        </LinearLayout>""".stripIndent()
-
-        when:
-        mutator.beforeBuild()
-
-        then:
-        sourceFile.text == """\
-        <LinearLayout><View 
-            android:id="@+id/view_1234_3"
+            android:id="@+id/view_276d92f3_16ac_4064_9a18_5f1dfd67992f_testScenario_3c4925d7_MEASURE_7"
             android:visibility="gone"
             android:layout_width="5dp"
             android:layout_height="5dp"/>
@@ -58,41 +26,14 @@ class ApplyChangeToAndroidLayoutFileMutatorTest extends Specification {
         def sourceFile = tmpDir.newFile("strings.xml")
         sourceFile.text = '<layout><LinearLayout></LinearLayout></layout>'
         def mutator = new ApplyChangeToAndroidLayoutFileMutator(sourceFile)
-        mutator.timestamp = 1234
 
         when:
-        mutator.beforeBuild()
+        mutator.beforeBuild(buildContext)
 
         then:
         sourceFile.text == """\
         <layout><LinearLayout><View 
-            android:id="@+id/view_1234_1"
-            android:visibility="gone"
-            android:layout_width="5dp"
-            android:layout_height="5dp"/>
-
-        </LinearLayout></layout>""".stripIndent()
-
-        when:
-        mutator.beforeBuild()
-
-        then:
-        sourceFile.text == """\
-        <layout><LinearLayout><View 
-            android:id="@+id/view_1234_2"
-            android:visibility="gone"
-            android:layout_width="5dp"
-            android:layout_height="5dp"/>
-
-        </LinearLayout></layout>""".stripIndent()
-
-        when:
-        mutator.beforeBuild()
-
-        then:
-        sourceFile.text == """\
-        <layout><LinearLayout><View 
-            android:id="@+id/view_1234_3"
+            android:id="@+id/view_276d92f3_16ac_4064_9a18_5f1dfd67992f_testScenario_3c4925d7_MEASURE_7"
             android:visibility="gone"
             android:layout_width="5dp"
             android:layout_height="5dp"/>
@@ -106,7 +47,7 @@ class ApplyChangeToAndroidLayoutFileMutatorTest extends Specification {
         def mutator = new ApplyChangeToAndroidLayoutFileMutator(sourceFile)
 
         when:
-        mutator.afterScenario()
+        mutator.afterScenario(scenarioContext)
 
         then:
         sourceFile.text == "<LinearLayout></LinearLayout>"
@@ -118,8 +59,8 @@ class ApplyChangeToAndroidLayoutFileMutatorTest extends Specification {
         def mutator = new ApplyChangeToAndroidLayoutFileMutator(sourceFile)
 
         when:
-        mutator.beforeBuild()
-        mutator.afterScenario()
+        mutator.beforeBuild(buildContext)
+        mutator.afterScenario(scenarioContext)
 
         then:
         sourceFile.text == "<LinearLayout></LinearLayout>"

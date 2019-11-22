@@ -1,9 +1,11 @@
 package org.gradle.profiler.mutations;
 
 import com.typesafe.config.Config;
+import org.gradle.profiler.BuildContext;
 import org.gradle.profiler.BuildMutator;
 import org.gradle.profiler.CommandExec;
 import org.gradle.profiler.ConfigUtil;
+import org.gradle.profiler.ScenarioContext;
 
 import java.io.File;
 import java.util.function.Supplier;
@@ -21,27 +23,27 @@ public class GitCheckoutMutator extends AbstractGitMutator {
 	}
 
 	@Override
-	public void beforeScenario() {
+	public void beforeScenario(ScenarioContext context) {
 		resetGit();
 		original = getCurrentCommit();
 	}
 
 	@Override
-	public void beforeCleanup() {
+	public void beforeCleanup(BuildContext context) {
 		if (cleanup != null) {
 			checkout(cleanup);
 		}
 	}
 
 	@Override
-	public void beforeBuild() {
+	public void beforeBuild(BuildContext context) {
 		if (build != null) {
 			checkout(build);
 		}
 	}
 
 	@Override
-	public void afterBuild(Throwable error) {
+	public void afterBuild(BuildContext context, Throwable error) {
 		if (error == null) {
 			checkout(original);
 		} else {

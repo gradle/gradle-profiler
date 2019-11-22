@@ -1,6 +1,7 @@
 package org.gradle.profiler.mutations;
 
 import org.apache.commons.io.FileUtils;
+import org.gradle.profiler.BuildContext;
 import org.gradle.profiler.BuildMutator;
 
 import java.io.File;
@@ -16,7 +17,7 @@ public class ClearGradleUserHomeMutator extends AbstractBuildMutator {
     }
 
     @Override
-    public void beforeBuild() {
+    public void beforeBuild(BuildContext context) {
         System.out.println(String.format("> Cleaning Gradle user home: %s", gradleUserHome.getAbsolutePath()));
         if (!gradleUserHome.exists()) {
             throw new IllegalArgumentException(String.format(

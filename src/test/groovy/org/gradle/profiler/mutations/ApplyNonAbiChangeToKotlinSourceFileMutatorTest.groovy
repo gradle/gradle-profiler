@@ -1,35 +1,17 @@
 package org.gradle.profiler.mutations
 
-import org.junit.Rule
-import org.junit.rules.TemporaryFolder
-import spock.lang.Specification
-
-class ApplyNonAbiChangeToKotlinSourceFileMutatorTest extends Specification {
-    @Rule TemporaryFolder tmpDir = new TemporaryFolder()
+class ApplyNonAbiChangeToKotlinSourceFileMutatorTest extends AbstractMutatorTest {
 
     def "adds and replaces public method at end of source file"() {
         def sourceFile = tmpDir.newFile("Thing.kt")
         sourceFile.text = "class Thing { fun existingMethod() { }}"
         def mutator = new ApplyNonAbiChangeToKotlinSourceFileMutator(sourceFile)
-        mutator.timestamp = 1234
 
         when:
-        mutator.beforeBuild()
+        mutator.beforeBuild(buildContext)
 
         then:
-        sourceFile.text == "class Thing { fun existingMethod() { }}private fun _m_1234_1() {}"
-
-        when:
-        mutator.beforeBuild()
-
-        then:
-        sourceFile.text == "class Thing { fun existingMethod() { }}private fun _m_1234_2() {}"
-
-        when:
-        mutator.beforeBuild()
-
-        then:
-        sourceFile.text == "class Thing { fun existingMethod() { }}private fun _m_1234_3() {}"
+        sourceFile.text == "class Thing { fun existingMethod() { }}private fun _m_276d92f3_16ac_4064_9a18_5f1dfd67992f_testScenario_3c4925d7_MEASURE_7() {}"
     }
 
     def "reverts changes when nothing has been applied"() {
@@ -38,13 +20,13 @@ class ApplyNonAbiChangeToKotlinSourceFileMutatorTest extends Specification {
         def mutator = new ApplyNonAbiChangeToKotlinSourceFileMutator(sourceFile)
 
         when:
-        mutator.afterScenario()
+        mutator.afterScenario(scenarioContext)
 
         then:
         sourceFile.text == "class Thing { fun existingMethod() { }}"
 
         when:
-        mutator.afterScenario()
+        mutator.afterScenario(scenarioContext)
 
         then:
         sourceFile.text == "class Thing { fun existingMethod() { }}"
@@ -56,14 +38,14 @@ class ApplyNonAbiChangeToKotlinSourceFileMutatorTest extends Specification {
         def mutator = new ApplyNonAbiChangeToKotlinSourceFileMutator(sourceFile)
 
         when:
-        mutator.beforeBuild()
-        mutator.afterScenario()
+        mutator.beforeBuild(buildContext)
+        mutator.afterScenario(scenarioContext)
 
         then:
         sourceFile.text == "class Thing { fun existingMethod() { }}"
 
         when:
-        mutator.afterScenario()
+        mutator.afterScenario(scenarioContext)
 
         then:
         sourceFile.text == "class Thing { fun existingMethod() { }}"

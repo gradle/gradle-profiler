@@ -2,8 +2,10 @@ package org.gradle.profiler.mutations;
 
 import com.typesafe.config.Config;
 import org.apache.commons.io.FileUtils;
+import org.gradle.profiler.BuildContext;
 import org.gradle.profiler.BuildMutator;
 import org.gradle.profiler.ConfigUtil;
+import org.gradle.profiler.ScenarioContext;
 
 import java.io.File;
 import java.io.IOException;
@@ -23,21 +25,21 @@ public abstract class AbstractCleanupMutator implements BuildMutator {
     }
 
     @Override
-    public void beforeBuild() {
+    public void beforeBuild(BuildContext context) {
         if (schedule == CleanupSchedule.BUILD) {
             doCleanup();
         }
     }
 
     @Override
-    public void beforeScenario() {
+    public void beforeScenario(ScenarioContext context) {
         if (schedule == CleanupSchedule.SCENARIO) {
             doCleanup();
         }
     }
 
     @Override
-    public void beforeCleanup() {
+    public void beforeCleanup(BuildContext context) {
         if (schedule == CleanupSchedule.CLEANUP) {
             doCleanup();
         }

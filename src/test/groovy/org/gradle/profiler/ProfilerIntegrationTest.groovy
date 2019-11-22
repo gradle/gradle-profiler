@@ -929,8 +929,8 @@ classes {
         then:
         // Probe version, 6 warm up, 10 builds
         logFile.find("<src-length: ${srcFile.length()}>").size() == 1
-        logFile.find("<src-length: ${srcFile.length() + (OperatingSystem.windows ? 96 : 87)}>").size() == 9
-        logFile.find("<src-length: ${srcFile.length() + (OperatingSystem.windows ? 98 : 89)}>").size() == 7
+        logFile.find("<src-length: ${srcFile.length() + (OperatingSystem.windows ? 192 : 183)}>").size() == 6 /* WARM_UP #1..6 */ + 9 /* MEASURE #1..9*/
+        logFile.find("<src-length: ${srcFile.length() + (OperatingSystem.windows ? 194 : 185)}>").size() == 1 /* MEASURE #10 */
         srcFile.text == originalText
     }
 
@@ -964,8 +964,8 @@ classes {
         then:
         // Probe version, 6 warm up, 10 builds
         logFile.find("<src-length: ${srcFile.length()}>").size() == 1
-        logFile.find("<src-length: ${srcFile.length() + 53}>").size() == 9
-        logFile.find("<src-length: ${srcFile.length() + 54}>").size() == 7
+        logFile.find("<src-length: ${srcFile.length() + 101}>").size() == 6 /* WARM_UP #1..6 */ + 9 /* MEASURE #1..9*/
+        logFile.find("<src-length: ${srcFile.length() + 102}>").size() == 1 /* MEASURE #10 */
         srcFile.text == originalText
     }
 
@@ -999,8 +999,8 @@ classes {
         then:
         // Probe version, 6 warm up, 10 builds
         logFile.find("<src-length: ${srcFile.length()}>").size() == 1
-        logFile.find("<src-length: ${srcFile.length() + 16}>").size() == 9
-        logFile.find("<src-length: ${srcFile.length() + 17}>").size() == 7
+        logFile.find("<src-length: ${srcFile.length() + 64}>").size() == 6 /* WARM_UP #1..6 */ + 9 /* MEASURE #1..9*/
+        logFile.find("<src-length: ${srcFile.length() + 65}>").size() == 1 /* MEASURE #10 */
         srcFile.text == originalText
     }
 

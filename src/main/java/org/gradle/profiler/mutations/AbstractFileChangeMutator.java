@@ -1,6 +1,8 @@
 package org.gradle.profiler.mutations;
 
+import org.gradle.profiler.BuildContext;
 import org.gradle.profiler.BuildMutator;
+import org.gradle.profiler.ScenarioContext;
 
 import java.io.File;
 import java.io.IOException;
@@ -8,13 +10,10 @@ import java.nio.file.Files;
 
 public abstract class AbstractFileChangeMutator implements BuildMutator {
     protected final File sourceFile;
-    private String originalText;
-    private long timestamp;
-    protected int counter;
+    private final String originalText;
 
     protected AbstractFileChangeMutator(File sourceFile) {
         this.sourceFile = sourceFile;
-        this.timestamp = System.currentTimeMillis();
         try {
             originalText = new String(Files.readAllBytes(sourceFile.toPath()));
         } catch (IOException e) {
@@ -22,23 +21,10 @@ public abstract class AbstractFileChangeMutator implements BuildMutator {
         }
     }
 
-    protected void setTimestamp(long timestamp) {
-        this.timestamp = timestamp;
-    }
-
-    /**
-     * Returns some text that is unlikely to have been included in any previous version of the target source file.
-     * The string can be used as a Java identifier.
-     */
-    protected String getUniqueText() {
-        return "_" + String.valueOf(timestamp) + "_" + counter;
-    }
-
     @Override
-    public void beforeBuild() {
-        counter++;
+    public void beforeBuild(BuildContext context) {
         StringBuilder modifiedText = new StringBuilder(originalText);
-        applyChangeTo(modifiedText);
+        applyChangeTo(context, modifiedText);
         try {
             Files.write(sourceFile.toPath(), modifiedText.toString().getBytes());
         } catch (IOException e) {
@@ -46,7 +32,7 @@ public abstract class AbstractFileChangeMutator implements BuildMutator {
         }
     }
 
-    protected abstract void applyChangeTo(StringBuilder text);
+    protected abstract void applyChangeTo(BuildContext context, StringBuilder text);
 
     private void revert() {
         try {
@@ -57,11 +43,8 @@ public abstract class AbstractFileChangeMutator implements BuildMutator {
     }
 
     @Override
-    public void afterScenario() {
-        if (counter > 0) {
-            revert();
-            counter = 0;
-        }
+    public void afterScenario(ScenarioContext context) {
+        revert();
     }
 
     @Override

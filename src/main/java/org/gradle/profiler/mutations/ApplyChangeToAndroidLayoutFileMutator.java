@@ -1,5 +1,7 @@
 package org.gradle.profiler.mutations;
 
+import org.gradle.profiler.BuildContext;
+
 import java.io.File;
 
 /**
@@ -16,37 +18,37 @@ public class ApplyChangeToAndroidLayoutFileMutator extends AbstractFileChangeMut
     }
 
     @Override
-    protected void applyChangeTo(StringBuilder text) {
+    protected void applyChangeTo(BuildContext context, StringBuilder text) {
         int insertPos = text.lastIndexOf("</layout>");
         if (insertPos < 0) {
-            applyChangeToNonDataBindingLayout(text);
+            applyChangeToNonDataBindingLayout(context, text);
         } else {
-            applyChangeToDataBindingLayout(text, insertPos);
+            applyChangeToDataBindingLayout(context, text, insertPos);
         }
     }
 
-    private void applyChangeToDataBindingLayout(StringBuilder text, int tagEndPosition) {
+    private void applyChangeToDataBindingLayout(BuildContext context, StringBuilder text, int tagEndPosition) {
         String substring = text.substring(0, tagEndPosition);
         int insertPos = substring.lastIndexOf("</");
         if (insertPos < 0) {
             throw new IllegalArgumentException("Cannot parse android layout file " + sourceFile + " to apply changes position " + insertPos);
         }
 
-        text.insert(insertPos, generateUniqueViewItem());
+        text.insert(insertPos, generateUniqueViewItem(context));
     }
 
-    private void applyChangeToNonDataBindingLayout(StringBuilder text) {
+    private void applyChangeToNonDataBindingLayout(BuildContext context, StringBuilder text) {
         int insertPos = text.lastIndexOf("</");
         if (insertPos < 0) {
             throw new IllegalArgumentException("Cannot parse android layout file " + sourceFile + " to apply changes");
         }
 
-        text.insert(insertPos, generateUniqueViewItem());
+        text.insert(insertPos, generateUniqueViewItem(context));
     }
 
-    private String generateUniqueViewItem() {
+    private String generateUniqueViewItem(BuildContext context) {
         return "<View \n" +
-               "    android:id=\"@+id/view" + getUniqueText() + "\"\n" +
+               "    android:id=\"@+id/view" + context.getUniqueBuildId() + "\"\n" +
                "    android:visibility=\"gone\"\n" +
                "    android:layout_width=\"5dp\"\n" +
                "    android:layout_height=\"5dp\"/>\n" +

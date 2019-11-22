@@ -1,9 +1,10 @@
 package org.gradle.profiler.mutations;
 
+import org.gradle.profiler.BuildContext;
+
 import java.io.File;
 
 public class ApplyChangeToNativeSourceFileMutator extends AbstractFileChangeMutator {
-    private static long classCreationTime = System.currentTimeMillis();
 
     public ApplyChangeToNativeSourceFileMutator(File file) {
         super(file);
@@ -13,29 +14,29 @@ public class ApplyChangeToNativeSourceFileMutator extends AbstractFileChangeMuta
     }
 
     @Override
-    protected void applyChangeTo(StringBuilder text) {
+    protected void applyChangeTo(BuildContext context, StringBuilder text) {
         int insertPos;
         if (sourceFile.getName().endsWith(".cpp")) {
             insertPos = text.length();
-            applyChangeAt(text, insertPos);
+            applyChangeAt(context, text, insertPos);
         } else {
             insertPos = text.lastIndexOf("#endif");
             if (insertPos < 0) {
                 throw new IllegalArgumentException("Cannot parse header file " + sourceFile + " to apply changes");
             }
-            applyHeaderChangeAt(text, insertPos);
+            applyHeaderChangeAt(context, text, insertPos);
         }
     }
 
-    protected String getSharedUniqueText() {
-        return "_" + String.valueOf(classCreationTime) + "_" + counter;
+    protected String getFieldName(BuildContext context) {
+        return "_m" + context.getUniqueBuildId();
     }
 
-    protected void applyChangeAt(StringBuilder text, int insertPos) {
-        text.insert(insertPos, "\nint _m" + getSharedUniqueText() + " () { }");
+    private void applyChangeAt(BuildContext context, StringBuilder text, int insertPos) {
+        text.insert(insertPos, "\nint " + getFieldName(context) + " () { }");
     }
 
-    protected void applyHeaderChangeAt(StringBuilder text, int insertPos) {
-        text.insert(insertPos, "int _m" + getSharedUniqueText() + "();\n");
+    private void applyHeaderChangeAt(BuildContext context, StringBuilder text, int insertPos) {
+        text.insert(insertPos, "int " + getFieldName(context) + "();\n");
     }
 }

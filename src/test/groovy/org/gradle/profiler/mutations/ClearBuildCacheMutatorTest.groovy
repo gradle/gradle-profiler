@@ -1,16 +1,10 @@
 package org.gradle.profiler.mutations
 
-import org.junit.Rule
-import org.junit.rules.TemporaryFolder
-import spock.lang.Specification
-
 import static org.gradle.profiler.mutations.AbstractCleanupMutator.CleanupSchedule.BUILD
 import static org.gradle.profiler.mutations.AbstractCleanupMutator.CleanupSchedule.CLEANUP
 import static org.gradle.profiler.mutations.AbstractCleanupMutator.CleanupSchedule.SCENARIO
 
-class ClearBuildCacheMutatorTest extends Specification {
-    @Rule
-    TemporaryFolder tmpDir = new TemporaryFolder()
+class ClearBuildCacheMutatorTest extends AbstractMutatorTest {
 
     File gradleUserHome
     File buildCache1Entry
@@ -34,42 +28,42 @@ class ClearBuildCacheMutatorTest extends Specification {
 
         when:
         remakeCacheEntries()
-        mutator.beforeScenario()
+        mutator.beforeScenario(scenarioContext)
         then:
         !buildCache1Entry.exists()
         !buildCache2Entry.exists()
 
         when:
         remakeCacheEntries()
-        mutator.beforeCleanup()
+        mutator.beforeCleanup(buildContext)
         then:
         buildCache1Entry.exists()
         buildCache2Entry.exists()
 
         when:
         remakeCacheEntries()
-        mutator.afterCleanup(null)
+        mutator.afterCleanup(buildContext, null)
         then:
         buildCache1Entry.exists()
         buildCache2Entry.exists()
 
         when:
         remakeCacheEntries()
-        mutator.beforeBuild()
+        mutator.beforeBuild(buildContext)
         then:
         buildCache1Entry.exists()
         buildCache2Entry.exists()
 
         when:
         remakeCacheEntries()
-        mutator.afterBuild(null)
+        mutator.afterBuild(buildContext, null)
         then:
         buildCache1Entry.exists()
         buildCache2Entry.exists()
 
         when:
         remakeCacheEntries()
-        mutator.afterScenario()
+        mutator.afterScenario(scenarioContext)
         then:
         buildCache1Entry.exists()
         buildCache2Entry.exists()
@@ -80,42 +74,42 @@ class ClearBuildCacheMutatorTest extends Specification {
 
         when:
         remakeCacheEntries()
-        mutator.beforeScenario()
+        mutator.beforeScenario(scenarioContext)
         then:
         buildCache1Entry.exists()
         buildCache2Entry.exists()
 
         when:
         remakeCacheEntries()
-        mutator.beforeCleanup()
+        mutator.beforeCleanup(buildContext)
         then:
         !buildCache1Entry.exists()
         !buildCache2Entry.exists()
 
         when:
         remakeCacheEntries()
-        mutator.afterCleanup(null)
+        mutator.afterCleanup(buildContext, null)
         then:
         buildCache1Entry.exists()
         buildCache2Entry.exists()
 
         when:
         remakeCacheEntries()
-        mutator.beforeBuild()
+        mutator.beforeBuild(buildContext)
         then:
         buildCache1Entry.exists()
         buildCache2Entry.exists()
 
         when:
         remakeCacheEntries()
-        mutator.afterBuild(null)
+        mutator.afterBuild(buildContext, null)
         then:
         buildCache1Entry.exists()
         buildCache2Entry.exists()
 
         when:
         remakeCacheEntries()
-        mutator.afterScenario()
+        mutator.afterScenario(scenarioContext)
         then:
         buildCache1Entry.exists()
         buildCache2Entry.exists()
@@ -126,42 +120,42 @@ class ClearBuildCacheMutatorTest extends Specification {
 
         when:
         remakeCacheEntries()
-        mutator.beforeScenario()
+        mutator.beforeScenario(scenarioContext)
         then:
         buildCache1Entry.exists()
         buildCache2Entry.exists()
 
         when:
         remakeCacheEntries()
-        mutator.beforeCleanup()
+        mutator.beforeCleanup(buildContext)
         then:
         buildCache1Entry.exists()
         buildCache2Entry.exists()
 
         when:
         remakeCacheEntries()
-        mutator.afterCleanup(null)
+        mutator.afterCleanup(buildContext, null)
         then:
         buildCache1Entry.exists()
         buildCache2Entry.exists()
 
         when:
         remakeCacheEntries()
-        mutator.beforeBuild()
+        mutator.beforeBuild(buildContext)
         then:
         !buildCache1Entry.exists()
         !buildCache2Entry.exists()
 
         when:
         remakeCacheEntries()
-        mutator.afterBuild(null)
+        mutator.afterBuild(buildContext, null)
         then:
         buildCache1Entry.exists()
         buildCache2Entry.exists()
 
         when:
         remakeCacheEntries()
-        mutator.afterScenario()
+        mutator.afterScenario(scenarioContext)
         then:
         buildCache1Entry.exists()
         buildCache2Entry.exists()
