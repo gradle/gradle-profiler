@@ -32,7 +32,7 @@ class BuildOperationInstrumentationIntegrationTest extends AbstractProfilerInteg
     }
 
     @Unroll
-    def "can benchmark snapshotting build operation time via #via for build using 5.5.1"() {
+    def "can benchmark snapshotting build operation time via #via for build using #gradleVersion"() {
         given:
         instrumentedBuildScript()
         buildFile << """
@@ -45,8 +45,6 @@ class BuildOperationInstrumentationIntegrationTest extends AbstractProfilerInteg
         def sourceFile = new File(projectDir, "src/main/java/A.java")
         sourceFile.parentFile.mkdirs()
         sourceFile.text = "class A {}"
-
-        def gradleVersion = "5.5.1"
 
         when:
         def extraArgs = []
@@ -86,10 +84,26 @@ class BuildOperationInstrumentationIntegrationTest extends AbstractProfilerInteg
         lines.get(26).matches("stddev,\\d+\\.\\d+,\\d+\\.\\d+")
 
         where:
-        via                              | commandLine                                                                                  | scenarioConfiguration
-        'command line'                   | ["--measure-build-op", "org.gradle.api.internal.tasks.SnapshotTaskInputsBuildOperationType"] | null
-        'scenario file'                  | []                                                                                           | 'measured-build-ops = ["org.gradle.api.internal.tasks.SnapshotTaskInputsBuildOperationType"]'
-        'command line and scenario file' | ["--measure-build-op", "org.gradle.api.internal.tasks.SnapshotTaskInputsBuildOperationType"] | 'measured-build-ops = ["org.gradle.api.internal.tasks.SnapshotTaskInputsBuildOperationType"]'
+        [via, commandLine, scenarioConfiguration, gradleVersion] << [
+            [
+                [
+                    'command line',
+                    ["--measure-build-op", "org.gradle.api.internal.tasks.SnapshotTaskInputsBuildOperationType"],
+                    null
+                ],
+                [
+                    'scenario file',
+                    [],
+                    'measured-build-ops = ["org.gradle.api.internal.tasks.SnapshotTaskInputsBuildOperationType"]'
+                ],
+                [
+                    'command line and scenario file',
+                    ["--measure-build-op", "org.gradle.api.internal.tasks.SnapshotTaskInputsBuildOperationType"],
+                    'measured-build-ops = ["org.gradle.api.internal.tasks.SnapshotTaskInputsBuildOperationType"]'
+                ]
+            ],
+            ["5.5.1", latestSupportedGradleVersion]
+        ].combinations().collect { it[0] + it[1] }
     }
 
     @Unroll
