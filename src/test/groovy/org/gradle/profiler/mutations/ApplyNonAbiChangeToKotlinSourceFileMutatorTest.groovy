@@ -11,7 +11,7 @@ class ApplyNonAbiChangeToKotlinSourceFileMutatorTest extends AbstractMutatorTest
         mutator.beforeBuild(buildContext)
 
         then:
-        sourceFile.text == "class Thing { fun existingMethod() { }}private fun _m_276d92f3_16ac_4064_9a18_5f1dfd67992f_testScenario_MEASURE_7() {}"
+        sourceFile.text == "class Thing { fun existingMethod() { }}private fun _m_276d92f3_16ac_4064_9a18_5f1dfd67992f_testScenario_3c4925d7_MEASURE_7() {}"
     }
 
     def "reverts changes when nothing has been applied"() {

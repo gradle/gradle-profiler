@@ -11,7 +11,7 @@ class ApplyChangeToNativeSourceFileMutatorTest extends AbstractMutatorTest {
         mutator.beforeBuild(buildContext)
 
         then:
-        sourceFile.text == " \nint _m_276d92f3_16ac_4064_9a18_5f1dfd67992f_testScenario_MEASURE_7 () { }"
+        sourceFile.text == " \nint _m_276d92f3_16ac_4064_9a18_5f1dfd67992f_testScenario_3c4925d7_MEASURE_7 () { }"
     }
 
     def "adds and replaces method to end of h source file"() {
@@ -24,7 +24,7 @@ class ApplyChangeToNativeSourceFileMutatorTest extends AbstractMutatorTest {
         mutator.beforeBuild(buildContext)
 
         then:
-        sourceFile.text == "#ifndef ABC\n\nint _m_276d92f3_16ac_4064_9a18_5f1dfd67992f_testScenario_MEASURE_7();\n#endif"
+        sourceFile.text == "#ifndef ABC\n\nint _m_276d92f3_16ac_4064_9a18_5f1dfd67992f_testScenario_3c4925d7_MEASURE_7();\n#endif"
     }
 
     def "uses same name for method in CPP and H files"() {
@@ -40,13 +40,13 @@ class ApplyChangeToNativeSourceFileMutatorTest extends AbstractMutatorTest {
         mutatorCPP.beforeBuild(buildContext)
 
         then:
-        sourceFileCPP.text == " \nint _m_276d92f3_16ac_4064_9a18_5f1dfd67992f_testScenario_MEASURE_7 () { }"
+        sourceFileCPP.text == " \nint _m_276d92f3_16ac_4064_9a18_5f1dfd67992f_testScenario_3c4925d7_MEASURE_7 () { }"
 
         when:
         mutatorH.beforeBuild(buildContext)
 
         then:
-        sourceFileH.text == "#ifndef ABC\n\nint _m_276d92f3_16ac_4064_9a18_5f1dfd67992f_testScenario_MEASURE_7();\n#endif"
+        sourceFileH.text == "#ifndef ABC\n\nint _m_276d92f3_16ac_4064_9a18_5f1dfd67992f_testScenario_3c4925d7_MEASURE_7();\n#endif"
     }
 
 }

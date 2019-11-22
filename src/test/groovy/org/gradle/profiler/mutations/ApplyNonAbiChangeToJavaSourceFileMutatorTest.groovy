@@ -13,7 +13,7 @@ class ApplyNonAbiChangeToJavaSourceFileMutatorTest extends AbstractMutatorTest {
         mutator.beforeBuild(buildContext)
 
         then:
-        parse(sourceFile) == parse('class Thing { public void existingMethod() { System.out.println("_276d92f3_16ac_4064_9a18_5f1dfd67992f_testScenario_MEASURE_7");}}')
+        parse(sourceFile) == parse('class Thing { public void existingMethod() { System.out.println("_276d92f3_16ac_4064_9a18_5f1dfd67992f_testScenario_3c4925d7_MEASURE_7");}}')
     }
 
     def "does not work with Java files that do not contain a method"() {
