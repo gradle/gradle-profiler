@@ -5,12 +5,25 @@ import spock.lang.Unroll
 
 class BuildOperationInstrumentationIntegrationTest extends AbstractProfilerIntegrationTest {
     @Unroll
-    def "can benchmark configuration time for build using #gradleVersion"() {
+    def "can benchmark configuration time for build using #gradleVersion (instant-execution: #instantExecution)"() {
         given:
         instrumentedBuildScript()
 
+        and:
+        String[] args = [
+            "--project-dir", projectDir.absolutePath,
+            "--output-dir", outputDir.absolutePath,
+            "--gradle-version", gradleVersion,
+            "--benchmark",
+            "--measure-config-time",
+            "assemble"
+        ]
+        if (instantExecution) {
+            args += "-Dorg.gradle.unsafe.instant-execution=true"
+        }
+
         when:
-        new Main().run("--project-dir", projectDir.absolutePath, "--output-dir", outputDir.absolutePath, "--gradle-version", gradleVersion, "--benchmark", "--measure-config-time", "assemble")
+        new Main().run(*args)
 
         then:
         def lines = resultFile.lines
@@ -28,11 +41,14 @@ class BuildOperationInstrumentationIntegrationTest extends AbstractProfilerInteg
         lines.get(27).matches("confidence,\\d+\\.\\d+,\\d+\\.\\d+")
 
         where:
-        gradleVersion << ["5.0", latestSupportedGradleVersion]
+        gradleVersion                | instantExecution
+        "5.0"                        | false
+        latestSupportedGradleVersion | false
+        latestSupportedGradleVersion | true
     }
 
     @Unroll
-    def "can benchmark snapshotting build operation time via #via for build using #gradleVersion"() {
+    def "can benchmark snapshotting build operation time via #via for build using #gradleVersion (instant-execution: #instantExecution)"() {
         given:
         instrumentedBuildScript()
         buildFile << """
@@ -59,6 +75,9 @@ class BuildOperationInstrumentationIntegrationTest extends AbstractProfilerInteg
             extraArgs.addAll("--scenario-file", scenarioFile.absolutePath)
         }
         extraArgs.addAll(commandLine)
+        if (instantExecution) {
+            extraArgs << "-Dorg.gradle.unsafe.instant-execution=true"
+        }
         new Main().run("--project-dir", projectDir.absolutePath, "--output-dir", outputDir.absolutePath, "--gradle-version", gradleVersion, "--benchmark",
             *extraArgs,
             scenarioConfiguration ? "default" : "assemble"
@@ -84,7 +103,7 @@ class BuildOperationInstrumentationIntegrationTest extends AbstractProfilerInteg
         lines.get(26).matches("stddev,\\d+\\.\\d+,\\d+\\.\\d+")
 
         where:
-        [via, commandLine, scenarioConfiguration, gradleVersion] << [
+        [via, commandLine, scenarioConfiguration, gradleVersion, instantExecution] << [
             [
                 [
                     'command line',
@@ -103,7 +122,12 @@ class BuildOperationInstrumentationIntegrationTest extends AbstractProfilerInteg
                 ]
             ],
             ["5.5.1", latestSupportedGradleVersion]
-        ].combinations().collect { it[0] + it[1] }
+        ].combinations().collect {
+            def scenario = it[0]
+            def gradleVersion = it[1]
+            def instantExecution = gradleVersion == latestSupportedGradleVersion
+            scenario + gradleVersion + instantExecution
+        }
     }
 
     @Unroll
