@@ -3,10 +3,14 @@ package org.gradle.profiler
 import org.gradle.profiler.buildscan.BuildScanProfiler
 import org.gradle.util.GradleVersion
 import spock.lang.Requires
+import spock.lang.Shared
 import spock.lang.Unroll
 
 @Unroll
 class ProfilerIntegrationTest extends AbstractProfilerIntegrationTest {
+
+    @Shared
+    String latestSupportedGradle5Version = supportedGradleVersions.reverse().find { it.startsWith("5.") }
 
     def "complains when neither profile or benchmark requested"() {
         when:
@@ -212,12 +216,12 @@ println "<gradle-version: " + gradle.gradleVersion + ">"
 
         when:
         new Main().
-                run("--project-dir", projectDir.absolutePath, "--output-dir", outputDir.absolutePath, "--gradle-version", latestSupportedGradleVersion, "--profile", "buildscan",
+                run("--project-dir", projectDir.absolutePath, "--output-dir", outputDir.absolutePath, "--gradle-version", latestSupportedGradle5Version, "--profile", "buildscan",
                         "assemble")
 
         then:
-        logFile.find("<gradle-version: $latestSupportedGradleVersion>").size() == 4
-        assertBuildScanPublished(BuildScanProfiler.defaultBuildScanVersion(GradleVersion.version(latestSupportedGradleVersion)))
+        logFile.find("<gradle-version: $latestSupportedGradle5Version>").size() == 4
+        assertBuildScanPublished(BuildScanProfiler.defaultBuildScanVersion(GradleVersion.version(latestSupportedGradle5Version)))
     }
 
     def "uses build scan version used by the build if present"() {
