@@ -1,5 +1,7 @@
 package org.gradle.profiler;
 
+import org.gradle.profiler.report.CsvGenerator;
+
 import java.io.File;
 import java.io.PrintStream;
 import java.util.List;
@@ -22,6 +24,8 @@ public class InvocationSettings {
     private final Integer iterations;
     private final boolean measureConfigTime;
     private final List<String> measuredBuildOperations;
+    private final CsvGenerator.Format csvFormat;
+
     private final UUID invocationId = UUID.randomUUID();
 
     public InvocationSettings(
@@ -40,7 +44,8 @@ public class InvocationSettings {
         Integer warmupCount,
         Integer iterations,
         boolean measureConfigTime,
-        List<String> measuredBuildOperations
+        List<String> measuredBuildOperations,
+        CsvGenerator.Format csvFormat
     ) {
         this.benchmark = benchmark;
         this.projectDir = projectDir;
@@ -57,6 +62,7 @@ public class InvocationSettings {
         this.iterations = iterations;
         this.measureConfigTime = measureConfigTime;
         this.measuredBuildOperations = measuredBuildOperations;
+        this.csvFormat = csvFormat;
     }
 
     public File getOutputDir() {
@@ -133,6 +139,10 @@ public class InvocationSettings {
 
     public List<String> getMeasuredBuildOperations() {
         return measuredBuildOperations;
+    }
+
+    public CsvGenerator.Format getCsvFormat() {
+        return csvFormat;
     }
 
     public UUID getInvocationId() {

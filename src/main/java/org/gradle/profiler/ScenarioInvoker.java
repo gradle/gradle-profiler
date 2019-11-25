@@ -72,7 +72,7 @@ public abstract class ScenarioInvoker<T extends ScenarioDefinition, R extends Bu
             Timer timer = new Timer();
             new CommandExec().inDir(workingDir).run(commandLine);
             Duration executionTime = timer.elapsed();
-            return new BuildInvocationResult(buildContext.getDisplayName(), executionTime);
+            return new BuildInvocationResult(buildContext, executionTime);
         };
     }
 

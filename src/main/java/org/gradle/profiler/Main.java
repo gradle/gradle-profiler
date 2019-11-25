@@ -48,7 +48,7 @@ public class Main {
 
             File cvsFile = new File(settings.getOutputDir(), "benchmark.csv");
             File htmlFile = new File(settings.getOutputDir(), "benchmark.html");
-            BenchmarkResultCollector benchmarkResults = new BenchmarkResultCollector(new CsvGenerator(cvsFile), new HtmlGenerator(htmlFile));
+            BenchmarkResultCollector benchmarkResults = new BenchmarkResultCollector(new CsvGenerator(cvsFile, settings.getCsvFormat()), new HtmlGenerator(htmlFile));
             PidInstrumentation pidInstrumentation = new PidInstrumentation();
             GradleScenarioInvoker gradleScenarioInvoker = new GradleScenarioInvoker(daemonControl, pidInstrumentation);
             BazelScenarioInvoker bazelScenarioInvoker = new BazelScenarioInvoker();

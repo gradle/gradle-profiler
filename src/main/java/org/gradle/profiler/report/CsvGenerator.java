@@ -12,13 +12,42 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 
 public class CsvGenerator extends AbstractGenerator {
-    public CsvGenerator(File outputFile) {
+    private final Format format;
+
+    public enum Format {
+        LONG, WIDE;
+
+        public static Format parse(String name) {
+            for (Format format : values()) {
+                if (format.name().toLowerCase().equals(name)) {
+                    return format;
+                }
+            }
+            throw new IllegalArgumentException("Unknown CSV format: " + name);
+        }
+    }
+
+    public CsvGenerator(File outputFile, Format format) {
         super(outputFile);
+        this.format = format;
     }
 
     @Override
     protected void write(BenchmarkResult benchmarkResult, BufferedWriter writer) throws IOException {
         List<? extends BuildScenarioResult> allScenarios = benchmarkResult.getScenarios();
+        switch (format) {
+            case WIDE:
+                writeWide(writer, allScenarios);
+                break;
+            case LONG:
+                writeLong(writer, allScenarios);
+                break;
+            default:
+                throw new AssertionError();
+        }
+    }
+
+    private void writeWide(BufferedWriter writer, List<? extends BuildScenarioResult> allScenarios) throws IOException {
         writer.write("scenario");
         for (BuildScenarioResult scenario : allScenarios) {
             for (int i = 0; i < scenario.getSamples().size(); i++) {
@@ -63,7 +92,7 @@ public class CsvGenerator extends AbstractGenerator {
                     continue;
                 }
                 BuildInvocationResult buildResult = results.get(row);
-                writer.write(buildResult.getDisplayName());
+                writer.write(buildResult.getBuildContext().getDisplayName());
                 break;
             }
             for (BuildScenarioResult scenario : allScenarios) {
@@ -94,6 +123,31 @@ public class CsvGenerator extends AbstractGenerator {
         statistic(writer, "max", statistics, BuildScenarioResult.Statistics::getMax);
         statistic(writer, "stddev", statistics, BuildScenarioResult.Statistics::getStandardDeviation);
         statistic(writer, "confidence", statistics, BuildScenarioResult.Statistics::getConfidencePercent);
+    }
+
+    private void writeLong(BufferedWriter writer, List<? extends BuildScenarioResult> allScenarios) throws IOException {
+        writer.write("Scenario,Tool,Tasks,Phase,Iteration,Sample,Duration");
+        writer.newLine();
+        for (BuildScenarioResult scenario : allScenarios) {
+            for (BuildInvocationResult result : scenario.getResults()) {
+                for (Sample<? super BuildInvocationResult> sample : scenario.getSamples()) {
+                    writer.write(scenario.getScenarioDefinition().getName());
+                    writer.write(",");
+                    writer.write(scenario.getScenarioDefinition().getBuildToolDisplayName());
+                    writer.write(",");
+                    writer.write(scenario.getScenarioDefinition().getTasksDisplayName());
+                    writer.write(",");
+                    writer.write(result.getBuildContext().getPhase().name());
+                    writer.write(",");
+                    writer.write(String.valueOf(result.getBuildContext().getIteration()));
+                    writer.write(",");
+                    writer.write(sample.getName());
+                    writer.write(",");
+                    writer.write(String.valueOf(sample.extractFrom(result).toMillis()));
+                    writer.newLine();
+                }
+            }
+        }
     }
 
     private void statistic(BufferedWriter writer, String name, List<BuildScenarioResult.Statistics> statistics, Function<BuildScenarioResult.Statistics, Double> value) throws IOException {

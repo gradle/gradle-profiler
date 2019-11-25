@@ -31,8 +31,6 @@ public class BuildUnderTestInvoker {
      * Runs a single invocation of a Gradle build.
      */
     public GradleBuildInvocationResult runBuild(BuildContext buildContext, BuildStep buildStep, BuildAction buildAction) {
-        String displayName = buildContext.getDisplayName();
-
         List<String> jvmArgs = new ArrayList<>(this.jvmArgs);
         jvmArgs.add("-Dorg.gradle.profiler.phase=" + buildContext.getPhase());
         jvmArgs.add("-Dorg.gradle.profiler.number=" + buildContext.getIteration());
@@ -53,7 +51,7 @@ public class BuildUnderTestInvoker {
         });
         Logging.detailed().println("Time to task execution " + timeToTaskExecution.map(duration -> duration.toMillis() + " ms").orElse(""));
 
-        return new GradleBuildInvocationResult(displayName, executionTime, timeToTaskExecution.orElse(null), cumulativeBuildOperationTimes, pid);
+        return new GradleBuildInvocationResult(buildContext, executionTime, timeToTaskExecution.orElse(null), cumulativeBuildOperationTimes, pid);
     }
 
     public BuildUnderTestInvoker withJvmArgs(List<String> jvmArgs) {

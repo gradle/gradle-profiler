@@ -5,6 +5,8 @@ import joptsimple.OptionException;
 import joptsimple.OptionParser;
 import joptsimple.OptionSet;
 import joptsimple.OptionSpecBuilder;
+import org.gradle.profiler.report.CsvGenerator;
+import org.gradle.profiler.report.CsvGenerator.Format;
 
 import java.io.File;
 import java.io.IOException;
@@ -12,6 +14,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 class CommandLineParser {
     public static class SettingsNotAvailableException extends RuntimeException {
@@ -55,6 +58,10 @@ class CommandLineParser {
         OptionSpecBuilder bazelOption = parser.accepts("bazel", "Benchmark scenarios using Bazel");
         OptionSpecBuilder buckOption = parser.accepts("buck", "Benchmark scenarios using buck");
         OptionSpecBuilder mavenOption = parser.accepts("maven", "Benchmark scenarios using Maven");
+        ArgumentAcceptingOptionSpec<String> csvFormatOption = parser.accepts("csv-format",
+            "The CSV format produced (" + Stream.of(Format.values()).map(Format::toString).collect(Collectors.joining(", ")) + ")")
+            .withRequiredArg()
+            .defaultsTo("wide");
 
         OptionSet parsedOptions;
         try {
@@ -119,6 +126,8 @@ class CommandLineParser {
                 sysProperties.put(value.substring(0, sep), value.substring(sep + 1));
             }
         }
+        CsvGenerator.Format csvFormat = CsvGenerator.Format.parse(parsedOptions.valueOf(csvFormatOption));
+
         return new InvocationSettings(
             projectDir,
             profiler,
@@ -134,7 +143,8 @@ class CommandLineParser {
             warmups,
             iterations,
             measureConfig,
-            benchmarkedBuildOperations
+            benchmarkedBuildOperations,
+            csvFormat
         );
     }
 
