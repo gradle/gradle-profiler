@@ -28,13 +28,6 @@ public class ClearProjectCacheMutator extends AbstractCleanupMutator {
     private void deleteGradleCache(String name, File baseDir) {
         File gradleCache = new File(baseDir, ".gradle");
         System.out.println(String.format("> Cleaning %s .gradle cache: %s", name, gradleCache));
-        if (!gradleCache.exists()) {
-            throw new IllegalArgumentException(String.format(
-                "Cannot delete .gradle %s directory (%s) since it does not exist",
-                name,
-                gradleCache
-            ));
-        }
         try {
             FileUtils.deleteDirectory(gradleCache);
         } catch (IOException e) {
