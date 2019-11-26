@@ -1,7 +1,6 @@
 package org.gradle.profiler.mutations;
 
-import org.apache.commons.io.FileUtils;
-import org.gradle.profiler.BuildContext;
+import com.typesafe.config.Config;
 import org.gradle.profiler.BuildMutator;
 
 import java.io.File;
@@ -9,15 +8,16 @@ import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.nio.file.Files;
 
-public class ClearGradleUserHomeMutator extends AbstractBuildMutator {
+public class ClearGradleUserHomeMutator extends AbstractCleanupMutator {
     private final File gradleUserHome;
 
-    public ClearGradleUserHomeMutator(File gradleUserHome) {
+    public ClearGradleUserHomeMutator(File gradleUserHome, CleanupSchedule schedule) {
+        super(schedule);
         this.gradleUserHome = gradleUserHome;
     }
 
     @Override
-    public void beforeBuild(BuildContext context) {
+    protected void cleanup() {
         System.out.println(String.format("> Cleaning Gradle user home: %s", gradleUserHome.getAbsolutePath()));
         if (!gradleUserHome.exists()) {
             throw new IllegalArgumentException(String.format(
@@ -28,21 +28,14 @@ public class ClearGradleUserHomeMutator extends AbstractBuildMutator {
         try {
             Files.list(gradleUserHome.toPath())
                 // Don't delete the wrapper dir, since this is where the Gradle distribution we are going to run is located
-                .filter(it -> !it.getFileName().toString().equals("wrapper"))
-                .forEach(file -> {
-                    try {
-                        FileUtils.forceDelete(file.toFile());
-                    } catch (IOException e) {
-                        throw new UncheckedIOException(e);
-                    }
-                });
+                .filter(path -> !path.getFileName().toString().equals("wrapper"))
+                .forEach(path -> delete(path.toFile()));
         } catch (IOException e) {
             throw new UncheckedIOException(e);
         }
     }
 
-    public static class Configurator extends AbstractBuildMutatorWithoutOptionsConfigurator {
-
+    public static class Configurator extends AbstractCleanupMutator.Configurator {
         private final File gradleUserHome;
 
         public Configurator(File gradleUserHome) {
@@ -50,8 +43,8 @@ public class ClearGradleUserHomeMutator extends AbstractBuildMutator {
         }
 
         @Override
-        BuildMutator createBuildMutator(File projectDir) {
-            return new ClearGradleUserHomeMutator(gradleUserHome);
+        protected BuildMutator newInstance(Config scenario, String scenarioName, File projectDir, String key, CleanupSchedule schedule) {
+            return new ClearGradleUserHomeMutator(gradleUserHome, schedule);
         }
     }
 }

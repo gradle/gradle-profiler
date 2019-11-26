@@ -1,12 +1,13 @@
 package org.gradle.profiler.mutations;
 
+import com.typesafe.config.Config;
 import org.gradle.profiler.BuildMutator;
 
 import java.io.File;
 import java.util.Arrays;
 import java.util.Objects;
 
-public class ClearBuildCacheMutator extends AbstractCleanupMutator {
+public class ClearBuildCacheMutator extends AbstractCacheCleanupMutator {
 
     public ClearBuildCacheMutator(File gradleUserHome, CleanupSchedule schedule) {
         super(gradleUserHome, schedule, "build-cache-");
@@ -18,13 +19,14 @@ public class ClearBuildCacheMutator extends AbstractCleanupMutator {
     }
 
     public static class Configurator extends AbstractCleanupMutator.Configurator {
+        private final File gradleUserHome;
 
         public Configurator(File gradleUserHome) {
-            super(gradleUserHome);
+            this.gradleUserHome = gradleUserHome;
         }
 
         @Override
-        protected BuildMutator newInstance(File gradleUserHome, CleanupSchedule schedule) {
+        protected BuildMutator newInstance(Config scenario, String scenarioName, File projectDir, String key, CleanupSchedule schedule) {
             return new ClearBuildCacheMutator(gradleUserHome, schedule);
         }
     }
