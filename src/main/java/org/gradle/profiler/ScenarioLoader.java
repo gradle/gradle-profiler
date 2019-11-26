@@ -60,8 +60,8 @@ class ScenarioLoader {
     private static final String APPLY_H_SOURCE_CHANGE_TO = "apply-h-change-to";
     private static final String CLEAR_BUILD_CACHE_BEFORE = "clear-build-cache-before";
     private static final String CLEAR_TRANSFORM_CACHE_BEFORE = "clear-transform-cache-before";
-    private static final String CLEAR_PROJECT_CACHE = "clear-project-cache";
-    private static final String CLEAR_GRADLE_USER_HOME = "clear-gradle-user-home";
+    private static final String CLEAR_PROJECT_CACHE_BEFORE = "clear-project-cache-before";
+    private static final String CLEAR_GRADLE_USER_HOME_BEFORE = "clear-gradle-user-home-before";
     private static final String SHOW_BUILD_CACHE_SIZE = "show-build-cache-size";
     private static final String GIT_CHECKOUT = "git-checkout";
     private static final String GIT_REVERT = "git-revert";
@@ -93,8 +93,8 @@ class ScenarioLoader {
         APPLY_H_SOURCE_CHANGE_TO,
         CLEAR_BUILD_CACHE_BEFORE,
         CLEAR_TRANSFORM_CACHE_BEFORE,
-        CLEAR_PROJECT_CACHE,
-        CLEAR_GRADLE_USER_HOME,
+        CLEAR_PROJECT_CACHE_BEFORE,
+        CLEAR_GRADLE_USER_HOME_BEFORE,
         SHOW_BUILD_CACHE_SIZE,
         GIT_CHECKOUT,
         GIT_REVERT,
@@ -206,8 +206,8 @@ class ScenarioLoader {
             maybeAddMutator(scenario, scenarioName, settings.getProjectDir(), APPLY_H_SOURCE_CHANGE_TO, ApplyChangeToNativeSourceFileMutator.class, mutators);
             maybeAddMutator(scenario, scenarioName, settings.getProjectDir(), CLEAR_BUILD_CACHE_BEFORE, new ClearBuildCacheMutator.Configurator(settings.getGradleUserHome()), mutators);
             maybeAddMutator(scenario, scenarioName, settings.getProjectDir(), CLEAR_TRANSFORM_CACHE_BEFORE, new ClearArtifactTransformCacheMutator.Configurator(settings.getGradleUserHome()), mutators);
-            maybeAddMutator(scenario, scenarioName, settings.getProjectDir(), CLEAR_PROJECT_CACHE, new ClearProjectCacheMutator.Configurator(), mutators);
-            maybeAddMutator(scenario, scenarioName, settings.getProjectDir(), CLEAR_GRADLE_USER_HOME, new ClearGradleUserHomeMutator.Configurator(settings.getGradleUserHome()), mutators);
+            maybeAddMutator(scenario, scenarioName, settings.getProjectDir(), CLEAR_PROJECT_CACHE_BEFORE, new ClearProjectCacheMutator.Configurator(), mutators);
+            maybeAddMutator(scenario, scenarioName, settings.getProjectDir(), CLEAR_GRADLE_USER_HOME_BEFORE, new ClearGradleUserHomeMutator.Configurator(settings.getGradleUserHome()), mutators);
             maybeAddMutator(scenario, scenarioName, settings.getProjectDir(), SHOW_BUILD_CACHE_SIZE, new ShowBuildCacheSizeMutator.Configurator(settings.getGradleUserHome()), mutators);
             maybeAddMutator(scenario, scenarioName, settings.getProjectDir(), GIT_CHECKOUT, new GitCheckoutMutator.Configurator(), mutators);
             maybeAddMutator(scenario, scenarioName, settings.getProjectDir(), GIT_REVERT, new GitRevertMutator.Configurator(), mutators);

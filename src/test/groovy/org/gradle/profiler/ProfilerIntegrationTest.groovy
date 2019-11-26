@@ -1530,7 +1530,7 @@ buildTarget {
         scenarios.text = """
 buildTarget {
     versions = ["${latestSupportedGradleVersion}"]
-    clear-project-cache = true
+    clear-project-cache-before = BUILD
     tasks = ["compileJava"]
 }
 """
@@ -1565,7 +1565,7 @@ buildTarget {
         scenarios.text = """
 buildTarget {
     versions = ["${latestSupportedGradleVersion}"]
-    clear-gradle-user-home = true
+    clear-gradle-user-home-before = BUILD
     daemon = none
     tasks = ["compileJava"]
 }

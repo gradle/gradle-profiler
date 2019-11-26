@@ -1,22 +1,23 @@
 package org.gradle.profiler.mutations;
 
+import com.typesafe.config.Config;
 import org.apache.commons.io.FileUtils;
-import org.gradle.profiler.BuildContext;
 import org.gradle.profiler.BuildMutator;
 
 import java.io.File;
 import java.io.IOException;
 import java.io.UncheckedIOException;
 
-public class ClearProjectCacheMutator extends AbstractBuildMutator {
+public class ClearProjectCacheMutator extends AbstractCleanupMutator {
     private final File projectDir;
 
-    public ClearProjectCacheMutator(File projectDir) {
+    public ClearProjectCacheMutator(File projectDir, CleanupSchedule schedule) {
+        super(schedule);
         this.projectDir = projectDir;
     }
 
     @Override
-    public void afterBuild(BuildContext context, Throwable error) {
+    protected void cleanup() {
         deleteGradleCache("project", projectDir);
         File buildSrc = new File(projectDir, "buildSrc");
         if (buildSrc.exists()) {
@@ -41,10 +42,10 @@ public class ClearProjectCacheMutator extends AbstractBuildMutator {
         }
     }
 
-    public static class Configurator extends AbstractBuildMutatorWithoutOptionsConfigurator {
+    public static class Configurator extends AbstractCleanupMutator.Configurator {
         @Override
-        BuildMutator createBuildMutator(File projectDir) {
-            return new ClearProjectCacheMutator(projectDir);
+        protected BuildMutator newInstance(Config scenario, String scenarioName, File projectDir, String key, CleanupSchedule schedule) {
+            return new ClearProjectCacheMutator(projectDir, schedule);
         }
     }
 }
