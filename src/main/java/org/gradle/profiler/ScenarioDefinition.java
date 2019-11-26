@@ -1,5 +1,6 @@
 package org.gradle.profiler;
 
+import javax.annotation.Nullable;
 import java.io.File;
 import java.io.PrintStream;
 import java.util.function.Consumer;
@@ -7,21 +8,30 @@ import java.util.function.Supplier;
 
 public abstract class ScenarioDefinition {
     private final String name;
+    private final String title;
     private final Supplier<BuildMutator> buildMutator;
     private final int warmUpCount;
     private final int buildCount;
-    private final File outpuDir;
+    private final File outputDir;
 
-    public ScenarioDefinition(String name, Supplier<BuildMutator> buildMutator, int warmUpCount, int buildCount, File outputDir) {
+    public ScenarioDefinition(String name, @Nullable String title, Supplier<BuildMutator> buildMutator, int warmUpCount, int buildCount, File outputDir) {
         this.name = name;
+        this.title = title;
         this.buildMutator = buildMutator;
         this.warmUpCount = warmUpCount;
         this.buildCount = buildCount;
-        this.outpuDir = outputDir;
+        this.outputDir = outputDir;
     }
 
     /**
-     * A human consumable and unique display name for this scenario.
+     * A specific title defined for the scenario to be used in reports (defaults to {@link #getName()}.
+     */
+    public String getTitle() {
+        return title != null ? title : name;
+    }
+
+    /**
+     * A human consumable and unique display name for this scenario using {@link #getTitle()}.
      */
     public abstract String getDisplayName();
 
@@ -45,7 +55,7 @@ public abstract class ScenarioDefinition {
     }
 
     public File getOutputDir() {
-        return outpuDir;
+        return outputDir;
     }
 
     public Supplier<BuildMutator> getBuildMutator() {

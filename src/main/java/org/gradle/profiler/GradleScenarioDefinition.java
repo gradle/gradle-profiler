@@ -24,6 +24,7 @@ public class GradleScenarioDefinition extends ScenarioDefinition {
 
     public GradleScenarioDefinition(
         String name,
+        String title,
         GradleBuildInvoker invoker,
         GradleBuildConfiguration buildConfiguration,
         BuildAction buildAction,
@@ -37,7 +38,7 @@ public class GradleScenarioDefinition extends ScenarioDefinition {
         List<String> jvmArgs,
         List<String> measuredBuildOperations
     ) {
-        super(name, buildMutator, warmUpCount, buildCount, outputDir);
+        super(name, title, buildMutator, warmUpCount, buildCount, outputDir);
         this.invoker = invoker;
         this.buildAction = buildAction;
         this.buildConfiguration = buildConfiguration;
@@ -50,7 +51,7 @@ public class GradleScenarioDefinition extends ScenarioDefinition {
 
     @Override
     public String getDisplayName() {
-        return getName() + " using " + buildConfiguration.getGradleVersion();
+        return getTitle() + " using " + buildConfiguration.getGradleVersion();
     }
 
     @Override

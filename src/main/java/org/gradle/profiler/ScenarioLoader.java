@@ -38,6 +38,7 @@ import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
 class ScenarioLoader {
+    private static final String TITLE = "title";
     private static final String VERSIONS = "versions";
     private static final String TASKS = "tasks";
     private static final String CLEANUP_TASKS = "cleanup-tasks";
@@ -76,6 +77,7 @@ class ScenarioLoader {
     private static final String JVM_ARGS = "jvm-args";
 
     private static final List<String> ALL_SCENARIO_KEYS = Arrays.asList(
+        TITLE,
         VERSIONS,
         TASKS,
         CLEANUP_TASKS,
@@ -196,6 +198,7 @@ class ScenarioLoader {
                     throw new IllegalArgumentException("Unrecognized key '" + scenarioName + "." + key + "' defined in scenario file " + scenarioFile);
                 }
             }
+            String title = config.hasPath(TITLE) ? config.getString(TITLE) : null;
 
             List<Supplier<BuildMutator>> mutators = new ArrayList<>();
             maybeAddMutator(scenario, scenarioName, settings.getProjectDir(), APPLY_ABI_CHANGE_TO, ApplyAbiChangeToSourceFileMutator.class, mutators);
@@ -233,7 +236,7 @@ class ScenarioLoader {
                 List<String> targets = ConfigUtil.strings(executionInstructions, TARGETS);
                 File outputDir = new File(settings.getOutputDir(), scenarioName + "-bazel");
                 int warmUpCount = getWarmUpCount(settings, scenario);
-                definitions.add(new BazelScenarioDefinition(scenarioName, targets, buildMutatorFactory, warmUpCount, buildCount, outputDir));
+                definitions.add(new BazelScenarioDefinition(scenarioName, title, targets, buildMutatorFactory, warmUpCount, buildCount, outputDir));
             } else if (scenario.hasPath(BUCK) && settings.isBuck()) {
                 if (settings.isProfile()) {
                     throw new IllegalArgumentException("Can only profile scenario '" + scenarioName + "' when building using Gradle.");
@@ -248,7 +251,7 @@ class ScenarioLoader {
                 String type = ConfigUtil.string(executionInstructions, TYPE, null);
                 File outputDir = new File(settings.getOutputDir(), scenarioName + "-buck");
                 int warmUpCount = getWarmUpCount(settings, scenario);
-                definitions.add(new BuckScenarioDefinition(scenarioName, targets, type, buildMutatorFactory, warmUpCount, buildCount, outputDir));
+                definitions.add(new BuckScenarioDefinition(scenarioName, title, targets, type, buildMutatorFactory, warmUpCount, buildCount, outputDir));
             } else if (scenario.hasPath(MAVEN) && settings.isMaven()) {
                 if (settings.isProfile()) {
                     throw new IllegalArgumentException("Can only profile scenario '" + scenarioName + "' when building using Gradle.");
@@ -262,7 +265,7 @@ class ScenarioLoader {
                 List<String> targets = ConfigUtil.strings(executionInstructions, TARGETS);
                 File outputDir = new File(settings.getOutputDir(), scenarioName + "-maven");
                 int warmUpCount = getWarmUpCount(settings, scenario);
-                definitions.add(new MavenScenarioDefinition(scenarioName, targets, buildMutatorFactory, warmUpCount, buildCount, outputDir));
+                definitions.add(new MavenScenarioDefinition(scenarioName, title, targets, buildMutatorFactory, warmUpCount, buildCount, outputDir));
             } else if (!settings.isBazel() && !settings.isBuck() && !settings.isMaven()) {
                 List<GradleBuildConfiguration> versions = ConfigUtil.strings(scenario, VERSIONS, settings.getVersions()).stream().map(inspector::readConfiguration).collect(
                     Collectors.toList());
@@ -282,6 +285,7 @@ class ScenarioLoader {
                     File outputDir = versions.size() == 1 ? new File(settings.getOutputDir(), scenarioName) : new File(settings.getOutputDir(), scenarioName + "/" + version.getGradleVersion().getVersion());
                     definitions.add(new GradleScenarioDefinition(
                         scenarioName,
+                        title,
                         invoker,
                         version,
                         buildAction,

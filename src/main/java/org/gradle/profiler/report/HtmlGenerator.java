@@ -53,7 +53,7 @@ public class HtmlGenerator extends AbstractGenerator {
         List<? extends BuildScenarioResult> allScenarios = benchmarkResult.getScenarios();
         for (BuildScenarioResult scenario : allScenarios) {
             writer.write("<th colspan='" + scenario.getSamples().size() + "'>");
-            writer.write(scenario.getScenarioDefinition().getName());
+            writer.write(scenario.getScenarioDefinition().getTitle());
             writer.write("</th>");
         }
         writer.write("</tr>\n");

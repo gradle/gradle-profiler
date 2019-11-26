@@ -10,15 +10,15 @@ public class BuckScenarioDefinition extends ScenarioDefinition {
     private final List<String> targets;
     private final String type;
 
-    public BuckScenarioDefinition(String scenarioName, List<String> targets, String type, Supplier<BuildMutator> buildMutator, int warmUpCount, int buildCount, File outputDir) {
-        super(scenarioName, buildMutator, warmUpCount, buildCount, outputDir);
+    public BuckScenarioDefinition(String scenarioName, String title, List<String> targets, String type, Supplier<BuildMutator> buildMutator, int warmUpCount, int buildCount, File outputDir) {
+        super(scenarioName, title, buildMutator, warmUpCount, buildCount, outputDir);
         this.targets = targets;
         this.type = type;
     }
 
     @Override
     public String getDisplayName() {
-        return getName() + " using buck";
+        return getTitle() + " using buck";
     }
 
     @Override

@@ -9,14 +9,14 @@ import java.util.stream.Collectors;
 public class BazelScenarioDefinition extends ScenarioDefinition {
     private final List<String> targets;
 
-    public BazelScenarioDefinition(String scenarioName, List<String> targets, Supplier<BuildMutator> buildMutator, int warmUpCount, int buildCount, File outputDir) {
-        super(scenarioName, buildMutator, warmUpCount, buildCount, outputDir);
+    public BazelScenarioDefinition(String scenarioName, String title, List<String> targets, Supplier<BuildMutator> buildMutator, int warmUpCount, int buildCount, File outputDir) {
+        super(scenarioName, title, buildMutator, warmUpCount, buildCount, outputDir);
         this.targets = targets;
     }
 
     @Override
     public String getDisplayName() {
-        return getName() + " using bazel";
+        return getTitle() + " using bazel";
     }
 
     @Override

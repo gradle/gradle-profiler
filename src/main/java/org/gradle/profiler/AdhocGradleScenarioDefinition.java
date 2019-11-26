@@ -20,6 +20,7 @@ public class AdhocGradleScenarioDefinition extends GradleScenarioDefinition {
     ) {
         super(
             "default",
+            null,
             invoker,
             version,
             buildAction,
