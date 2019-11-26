@@ -88,7 +88,8 @@ class CompositeProfiler extends Profiler {
             settings.getWarmUpCount(),
             settings.getBuildCount(),
             settings.isMeasureConfigTime(),
-            settings.getMeasuredBuildOperations()
+            settings.getMeasuredBuildOperations(),
+            settings.getCsvFormat()
         );
         return new ScenarioSettings(newSettings, scenarioSettings.getScenario());
     }

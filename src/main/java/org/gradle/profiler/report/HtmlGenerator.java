@@ -94,7 +94,7 @@ public class HtmlGenerator extends AbstractGenerator {
                 }
                 BuildInvocationResult buildResult = results.get(row);
                 writer.write("<td>");
-                writer.write(buildResult.getDisplayName());
+                writer.write(buildResult.getBuildContext().getDisplayName());
                 writer.write("</td>");
                 break;
             }

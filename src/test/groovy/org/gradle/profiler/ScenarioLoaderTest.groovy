@@ -1,12 +1,13 @@
 package org.gradle.profiler
 
-import static org.gradle.profiler.ScenarioLoader.loadScenarios
-
 import com.google.common.collect.ImmutableList
+import org.gradle.profiler.report.CsvGenerator
 import org.gradle.tooling.model.idea.IdeaProject
 import org.junit.Rule
 import org.junit.rules.TemporaryFolder
 import spock.lang.Specification
+
+import static org.gradle.profiler.ScenarioLoader.loadScenarios
 
 class ScenarioLoaderTest extends Specification {
     @Rule
@@ -45,7 +46,8 @@ class ScenarioLoaderTest extends Specification {
             warmups,
             iterations,
             false,
-            measuredBuildOperations
+            measuredBuildOperations,
+            CsvGenerator.Format.WIDE
         )
     }
 

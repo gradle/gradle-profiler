@@ -39,8 +39,8 @@ public class GradleBuildInvocationResult extends BuildInvocationResult {
         };
     }
 
-    public GradleBuildInvocationResult(String displayName, Duration executionTime, @Nullable Duration timeToTaskExecution, Map<String, Duration> cumulativeBuildOperationTimes, String daemonPid) {
-        super(displayName, executionTime);
+    public GradleBuildInvocationResult(BuildContext buildContext, Duration executionTime, @Nullable Duration timeToTaskExecution, Map<String, Duration> cumulativeBuildOperationTimes, String daemonPid) {
+        super(buildContext, executionTime);
         this.timeToTaskExecution = timeToTaskExecution;
         this.cumulativeBuildOperationTimes = cumulativeBuildOperationTimes;
         this.daemonPid = daemonPid;
