@@ -41,6 +41,11 @@ public class BuildOperationTrace {
         return this;
     }
 
+    /**
+     * ATTENTION do not rename!
+     * See <code>BuildOperationListenersCodec</code> in <code>gradle/gradle</code>.
+     * TODO:instant-execution replace with event handling when available
+     */
     private static class TimeToFirstTaskRecordingListener extends DetachingBuildOperationListener {
 
         private final Path outPath;
@@ -79,6 +84,11 @@ public class BuildOperationTrace {
         }
     }
 
+    /**
+     * ATTENTION do not rename!
+     * See <code>BuildOperationListenersCodec</code> in <code>gradle/gradle</code>.
+     * TODO:instant-execution replace with event handling when available
+     */
     private static class BuildOperationDurationRecordingListener extends DetachingBuildOperationListener {
 
         private final Class<?> capturedBuildOperation;
