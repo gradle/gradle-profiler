@@ -52,7 +52,7 @@ public class CsvGenerator extends AbstractGenerator {
         for (BuildScenarioResult scenario : allScenarios) {
             for (int i = 0; i < scenario.getSamples().size(); i++) {
                 writer.write(",");
-                writer.write(scenario.getScenarioDefinition().getName());
+                writer.write(scenario.getScenarioDefinition().getTitle());
             }
         }
         writer.newLine();
@@ -131,7 +131,7 @@ public class CsvGenerator extends AbstractGenerator {
         for (BuildScenarioResult scenario : allScenarios) {
             for (BuildInvocationResult result : scenario.getResults()) {
                 for (Sample<? super BuildInvocationResult> sample : scenario.getSamples()) {
-                    writer.write(scenario.getScenarioDefinition().getName());
+                    writer.write(scenario.getScenarioDefinition().getTitle());
                     writer.write(",");
                     writer.write(scenario.getScenarioDefinition().getBuildToolDisplayName());
                     writer.write(",");

@@ -81,6 +81,28 @@ class ScenarioLoaderTest extends Specification {
         scenario.action.tasks.empty
     }
 
+    def "can load single scenarios with and without title"() {
+        def settings = settings()
+        settings.targets.addAll("entitled", "untitled") // don't use the target as the default tasks
+
+        scenarioFile << """
+            entitled {
+                title = "This is a scenario with a title"
+            }
+            
+            untitled {
+            }
+        """
+        def scenarios = loadScenarios(scenarioFile, settings, Mock(GradleBuildConfigurationReader))
+        expect:
+        def entitled = scenarios[0] as GradleScenarioDefinition
+        def untitled = scenarios[1] as GradleScenarioDefinition
+        entitled.name == "entitled"
+        entitled.title == "This is a scenario with a title"
+        untitled.name == "untitled"
+        untitled.title == "untitled"
+    }
+
     def "scenario uses invoker specified on command-line when none is specified"() {
         scenarioFile << """
             default {

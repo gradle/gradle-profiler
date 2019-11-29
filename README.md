@@ -184,10 +184,13 @@ Here is an example:
     
     # Scenarios are run in alphabetical order
     assemble {
+        # Show a slightly more human-readable title in reports
+        title = "Assemble"
         # Run the 'assemble' task
         tasks = ["assemble"]
     }
     clean_build {
+        title = "Clean Build"
         versions = ["3.1", "/Users/me/gradle"]
         tasks = ["build"]
         gradle-args = ["--parallel"]
@@ -207,12 +210,14 @@ Here is an example:
         warm-ups = 10
     }
     ideaModel {
+        title = "IDEA model"
         # Fetch the IDEA tooling model
         model = "org.gradle.tooling.model.idea.IdeaProject"
         # Can also run tasks
         # tasks = ["assemble"]
     }
     androidStudioSync {
+        title = "Android Studio Sync"
         # Simulate an Android studio sync
         android-studio-sync {
             # Skip source generation on sync
