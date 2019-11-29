@@ -198,7 +198,7 @@ class ScenarioLoader {
                     throw new IllegalArgumentException("Unrecognized key '" + scenarioName + "." + key + "' defined in scenario file " + scenarioFile);
                 }
             }
-            String title = config.hasPath(TITLE) ? config.getString(TITLE) : null;
+            String title = scenario.hasPath(TITLE) ? scenario.getString(TITLE) : null;
 
             List<Supplier<BuildMutator>> mutators = new ArrayList<>();
             maybeAddMutator(scenario, scenarioName, settings.getProjectDir(), APPLY_ABI_CHANGE_TO, ApplyAbiChangeToSourceFileMutator.class, mutators);
