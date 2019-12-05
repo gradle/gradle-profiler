@@ -1,128 +1,94 @@
 package org.gradle.trace.buildops;
 
+import org.gradle.api.file.RegularFileProperty;
 import org.gradle.api.internal.GradleInternal;
-import org.gradle.initialization.BuildRequestMetaData;
-import org.gradle.internal.operations.BuildOperationCategory;
-import org.gradle.internal.operations.BuildOperationDescriptor;
-import org.gradle.internal.operations.BuildOperationListener;
-import org.gradle.internal.operations.BuildOperationListenerManager;
-import org.gradle.internal.operations.OperationFinishEvent;
-import org.gradle.internal.operations.OperationIdentifier;
-import org.gradle.internal.operations.OperationProgressEvent;
-import org.gradle.internal.operations.OperationStartEvent;
-import org.gradle.trace.stream.AsyncWriter;
+import org.gradle.api.provider.Property;
+import org.gradle.api.provider.Provider;
+import org.gradle.api.services.BuildService;
+import org.gradle.api.services.BuildServiceParameters;
+import org.gradle.api.services.BuildServiceRegistry;
+import org.gradle.execution.RunRootBuildWorkBuildOperationType;
+import org.gradle.internal.build.event.BuildEventListenerRegistryInternal;
+import org.gradle.internal.operations.*;
 
 import java.io.File;
+import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
-import java.nio.file.Path;
 import java.util.concurrent.atomic.AtomicLong;
 
 @SuppressWarnings("unused")
 public class BuildOperationTrace {
 
-    private final BuildOperationListenerManager manager;
-    private final BuildRequestMetaData requestMetaData;
+    private final BuildEventListenerRegistryInternal registry;
+    private final BuildServiceRegistry sharedServices;
 
     public BuildOperationTrace(GradleInternal gradle) {
-        manager = gradle.getServices().get(BuildOperationListenerManager.class);
-        requestMetaData = gradle.getServices().get(BuildRequestMetaData.class);
+        registry = gradle.getServices().get(BuildEventListenerRegistryInternal.class);
+        sharedServices = gradle.getSharedServices();
     }
 
     public BuildOperationTrace measureConfigurationTime(File outFile) {
-        TimeToFirstTaskRecordingListener buildOperationListener = new TimeToFirstTaskRecordingListener(manager, requestMetaData, outFile.toPath());
-        manager.addListener(buildOperationListener);
+        Provider<TimeToFirstTaskRecordingListener> listenerProvider = sharedServices.registerIfAbsent("time-to-first-task", TimeToFirstTaskRecordingListener.class, spec -> {
+            spec.getParameters().getOutputFile().set(outFile);
+        });
+        registry.onOperationCompletion(listenerProvider);
         return this;
     }
 
-    public BuildOperationTrace measureBuildOperation(String buildOperationName, File outFile) throws ClassNotFoundException {
-        BuildOperationDurationRecordingListener buildOperationListener = new BuildOperationDurationRecordingListener(buildOperationName, outFile.toPath(), manager);
-        manager.addListener(buildOperationListener);
+    public BuildOperationTrace measureBuildOperation(String buildOperationName, File outFile) {
+        Provider<BuildOperationDurationRecordingListener> listenerProvider = sharedServices.registerIfAbsent("build-op-" + buildOperationName, BuildOperationDurationRecordingListener.class, spec -> {
+            spec.getParameters().getCapturedBuildOperation().set(buildOperationName);
+            spec.getParameters().getOutputFile().set(outFile);
+        });
+        registry.onOperationCompletion(listenerProvider);
         return this;
     }
 
-    /**
-     * ATTENTION do not rename!
-     * See <code>BuildOperationListenersCodec</code> in <code>gradle/gradle</code>.
-     * TODO:instant-execution replace with event handling when available
-     */
-    private static class TimeToFirstTaskRecordingListener extends DetachingBuildOperationListener {
-
-        private final Path outPath;
-        private final BuildRequestMetaData buildRequestMetaData;
-
-        private AsyncWriter<Long> writer;
-
-        TimeToFirstTaskRecordingListener(BuildOperationListenerManager manager, BuildRequestMetaData buildRequestMetaData, Path outPath) {
-            super(manager);
-            this.outPath = outPath;
-            this.buildRequestMetaData = buildRequestMetaData;
+    public static abstract class TimeToFirstTaskRecordingListener implements BuildService<TimeToFirstTaskRecordingListener.Params>, BuildOperationListener, AutoCloseable {
+        interface Params extends BuildServiceParameters {
+            RegularFileProperty getOutputFile();
         }
 
-        private AsyncWriter<Long> ensureWriter() {
-            if (writer == null) {
-                writer = new AsyncWriter<>(outPath, (l, w) -> w.println(l));
-            }
-            return writer;
-        }
+        private final AtomicLong timeToFirstTask = new AtomicLong(0);
 
         @Override
         public void started(BuildOperationDescriptor buildOperationDescriptor, OperationStartEvent operationStartEvent) {
-            if (buildOperationDescriptor.getOperationType() == BuildOperationCategory.RUN_WORK_ROOT_BUILD) {
-                long duration = operationStartEvent.getStartTime() - buildRequestMetaData.getStartTime();
-                AsyncWriter<Long> writer = ensureWriter();
-                writer.append(duration);
-                writer.finished();
-            }
         }
 
         @Override
-        public void close() {
-            if (writer != null) {
-                writer.stop();
-            }
-        }
-    }
-
-    /**
-     * ATTENTION do not rename!
-     * See <code>BuildOperationListenersCodec</code> in <code>gradle/gradle</code>.
-     * TODO:instant-execution replace with event handling when available
-     */
-    private static class BuildOperationDurationRecordingListener extends DetachingBuildOperationListener {
-
-        private final Class<?> capturedBuildOperation;
-        private final Path outPath;
-        private final AtomicLong buildOperationTime = new AtomicLong(0);
-
-        private AsyncWriter<Long> writer;
-
-        BuildOperationDurationRecordingListener(String capturedBuildOperation, Path outPath, BuildOperationListenerManager manager) throws ClassNotFoundException {
-            super(manager);
-            this.capturedBuildOperation = Class.forName(capturedBuildOperation + "$Details");
-            this.outPath = outPath;
+        public void progress(OperationIdentifier operationIdentifier, OperationProgressEvent operationProgressEvent) {
         }
 
         @Override
         public void finished(BuildOperationDescriptor buildOperationDescriptor, OperationFinishEvent operationFinishEvent) {
-            Object details = buildOperationDescriptor.getDetails();
-            if (buildOperationDescriptor.getDetails() != null && capturedBuildOperation.isAssignableFrom(details.getClass())) {
-                buildOperationTime.addAndGet(operationFinishEvent.getEndTime() - operationFinishEvent.getStartTime());
+            if (buildOperationDescriptor.getDetails() instanceof RunRootBuildWorkBuildOperationType.Details) {
+                RunRootBuildWorkBuildOperationType.Details details = (RunRootBuildWorkBuildOperationType.Details) buildOperationDescriptor.getDetails();
+                long duration = operationFinishEvent.getStartTime() - details.getBuildStartTime();
+                timeToFirstTask.set(duration);
             }
-            super.finished(buildOperationDescriptor, operationFinishEvent);
         }
 
         @Override
-        public void close() throws Exception {
-            Files.write(outPath, String.valueOf(buildOperationTime.longValue()).getBytes(StandardCharsets.UTF_8));
+        public void close() throws IOException {
+            Files.write(getParameters().getOutputFile().get().getAsFile().toPath(), String.valueOf(timeToFirstTask.longValue()).getBytes(StandardCharsets.UTF_8));
         }
     }
 
-    private abstract static class DetachingBuildOperationListener implements BuildOperationListener, AutoCloseable {
-        private final BuildOperationListenerManager manager;
+    public static abstract class BuildOperationDurationRecordingListener implements BuildService<BuildOperationDurationRecordingListener.Params>, BuildOperationListener, AutoCloseable {
+        interface Params extends BuildServiceParameters {
+            RegularFileProperty getOutputFile();
 
-        DetachingBuildOperationListener(BuildOperationListenerManager manager) {
-            this.manager = manager;
+            Property<String> getCapturedBuildOperation();
+        }
+
+        private final AtomicLong buildOperationTime = new AtomicLong(0);
+        private final AtomicLong operationCount = new AtomicLong(0);
+
+        private final Class<?> capturedBuildOperation;
+
+        public BuildOperationDurationRecordingListener() throws ClassNotFoundException {
+            capturedBuildOperation = Class.forName(getParameters().getCapturedBuildOperation().get() + "$Details");
         }
 
         @Override
@@ -135,15 +101,16 @@ public class BuildOperationTrace {
 
         @Override
         public void finished(BuildOperationDescriptor buildOperationDescriptor, OperationFinishEvent operationFinishEvent) {
-            if (buildOperationDescriptor.getOperationType() == BuildOperationCategory.RUN_WORK_ROOT_BUILD) {
-                try {
-                    close();
-                } catch (Exception e) {
-                    throw new RuntimeException(e);
-                } finally {
-                    manager.removeListener(this);
-                }
+            Object details = buildOperationDescriptor.getDetails();
+            if (buildOperationDescriptor.getDetails() != null && capturedBuildOperation.isAssignableFrom(details.getClass())) {
+                operationCount.incrementAndGet();
+                buildOperationTime.addAndGet(operationFinishEvent.getEndTime() - operationFinishEvent.getStartTime());
             }
+        }
+
+        @Override
+        public void close() throws IOException {
+            Files.write(getParameters().getOutputFile().get().getAsFile().toPath(), String.valueOf(buildOperationTime.longValue()).getBytes(StandardCharsets.UTF_8));
         }
     }
 }
