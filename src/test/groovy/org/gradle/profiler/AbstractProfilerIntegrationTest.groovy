@@ -1,6 +1,6 @@
 package org.gradle.profiler
 
-import com.google.common.collect.ImmutableList
+
 import org.junit.Rule
 import org.junit.rules.TemporaryFolder
 import spock.lang.Shared
@@ -16,7 +16,7 @@ abstract class AbstractProfilerIntegrationTest extends Specification {
         "3.3", "3.4.1", "3.5",
         "4.0", "4.1", "4.2.1", "4.7",
         "5.2.1", "5.5.1", "5.6.3",
-        "6.0.1", "6.1-milestone-2"
+        "6.0.1", "6.1-milestone-3"
     ]
     @Shared
     String minimalSupportedGradleVersion = supportedGradleVersions.first()
@@ -133,7 +133,7 @@ genrule(
         final List<String> lines
 
         FileFixture(File logFile) {
-            lines = ImmutableList.copyOf(logFile.readLines())
+            lines = logFile.readLines()
         }
 
         @Override

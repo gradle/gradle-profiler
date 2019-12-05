@@ -2,12 +2,9 @@ package org.gradle.profiler
 
 import spock.lang.Unroll
 
-import static org.hamcrest.CoreMatchers.equalTo
-import static org.hamcrest.CoreMatchers.hasItem
-import static org.hamcrest.CoreMatchers.not
+import static org.hamcrest.CoreMatchers.*
 import static org.junit.Assert.assertThat
 import static org.junit.Assert.assertTrue
-
 
 class BuildOperationInstrumentationIntegrationTest extends AbstractProfilerIntegrationTest {
 
@@ -53,10 +50,10 @@ class BuildOperationInstrumentationIntegrationTest extends AbstractProfilerInteg
         Long.valueOf(taskStart[0][1]) > 0
 
         where:
-        gradleVersion                | instantExecution
-        "5.0"                        | false
-        latestSupportedGradleVersion | false
-        latestSupportedGradleVersion | true
+        [gradleVersion, instantExecution] << [
+            ["6.1-milestone-3", latestSupportedGradleVersion] as Set, // simplify this once the latest version is > 6.1-milestone-3
+            [true, false]
+        ].combinations()
     }
 
     @Unroll
@@ -128,7 +125,7 @@ class BuildOperationInstrumentationIntegrationTest extends AbstractProfilerInteg
                     'measured-build-ops = ["org.gradle.api.internal.tasks.SnapshotTaskInputsBuildOperationType"]'
                 ]
             ],
-            ["5.5.1", latestSupportedGradleVersion]
+            ["6.1-milestone-3", latestSupportedGradleVersion] as Set
         ].combinations().collectMany {
             def scenario = it[0]
             def gradleVersion = it[1]
@@ -191,9 +188,8 @@ class BuildOperationInstrumentationIntegrationTest extends AbstractProfilerInteg
 
         where:
         gradleVersion                | instantExecution
-        "5.6.3"                      | false
-        latestSupportedGradleVersion | false
-        latestSupportedGradleVersion | true
+        "6.1-milestone-3"            | false
+        "6.1-milestone-3"            | true
     }
 
     private void instrumentedBuildForSnapshottingBenchmark() {
@@ -222,10 +218,10 @@ class BuildOperationInstrumentationIntegrationTest extends AbstractProfilerInteg
         thrown(IllegalArgumentException)
 
         and:
-        output.contains("Scenario using Gradle ${gradleVersion}: Measuring build configuration is only supported for Gradle 5.0 and later")
+        output.contains("Scenario using Gradle ${gradleVersion}: Measuring build configuration is only supported for Gradle 6.1-milestone-3 and later")
 
         where:
-        gradleVersion << [minimalSupportedGradleVersion, "4.0", "4.10"]
+        gradleVersion << [minimalSupportedGradleVersion, "4.0", "4.10", "6.0"]
     }
 
     def "complains when attempting to benchmark configuration time for build using unsupported Gradle version from scenario file"() {
@@ -234,7 +230,7 @@ class BuildOperationInstrumentationIntegrationTest extends AbstractProfilerInteg
         def scenarioFile = file("performance.scenarios")
         scenarioFile.text = """
             assemble { 
-                versions = ["${minimalSupportedGradleVersion}", "4.0", "4.10", "${latestSupportedGradleVersion}"]
+                versions = ["${minimalSupportedGradleVersion}", "4.0", "4.10", "6.0", "${latestSupportedGradleVersion}"]
             }
         """
 
@@ -245,8 +241,8 @@ class BuildOperationInstrumentationIntegrationTest extends AbstractProfilerInteg
         thrown(IllegalArgumentException)
 
         and:
-        output.contains("Scenario assemble using Gradle ${minimalSupportedGradleVersion}: Measuring build configuration is only supported for Gradle 5.0 and later")
-        output.contains("Scenario assemble using Gradle 4.0: Measuring build configuration is only supported for Gradle 5.0 and later")
-        output.contains("Scenario assemble using Gradle 4.10: Measuring build configuration is only supported for Gradle 5.0 and later")
+        output.contains("Scenario assemble using Gradle ${minimalSupportedGradleVersion}: Measuring build configuration is only supported for Gradle 6.1-milestone-3 and later")
+        output.contains("Scenario assemble using Gradle 4.0: Measuring build configuration is only supported for Gradle 6.1-milestone-3 and later")
+        output.contains("Scenario assemble using Gradle 4.10: Measuring build configuration is only supported for Gradle 6.1-milestone-3 and later")
     }
 }
