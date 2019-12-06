@@ -1,27 +1,34 @@
 package org.gradle.trace;
 
-import org.gradle.api.invocation.Gradle;
+import java.io.File;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.io.PrintWriter;
+import java.io.Reader;
 import org.gradle.api.logging.Logging;
 import org.gradle.internal.UncheckedException;
 import org.gradle.trace.stream.AsyncWriter;
 
-import java.io.*;
-import java.nio.file.Files;
-
 public class AsynchronousTraceWriter {
 
     private final AsyncWriter<TraceEvent> eventQueue;
-    private final File tempTraceFile;
     private final File traceFile;
 
     public AsynchronousTraceWriter(File traceFile) {
         this.traceFile = traceFile;
         try {
-            tempTraceFile = Files.createTempFile("gradle-trace", ".html").toFile();
+            if (traceFile.exists()) {
+                if (!traceFile.delete()) {
+                    throw new RuntimeException("Unable to delete the old file " + traceFile.getAbsolutePath());
+                }
+            }
+            if (!traceFile.createNewFile()) {
+                throw new RuntimeException("Unable to create a file " + traceFile.getAbsolutePath());
+            }
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
-        eventQueue = new AsyncWriter<>(tempTraceFile, new TraceEventRenderer());
+        eventQueue = new AsyncWriter<>(traceFile, new TraceEventRenderer());
     }
 
     public void add(TraceEvent event) {
@@ -32,12 +39,6 @@ public class AsynchronousTraceWriter {
         eventQueue.stop();
         if (System.getProperty("trace") == null) {
             return;
-        }
-
-        boolean success = tempTraceFile.renameTo(traceFile);
-        if (!success) {
-            throw new RuntimeException("Failed to move the trace file from a temporary location (" +
-                tempTraceFile.getAbsolutePath() + ") to the final location (" + traceFile.getAbsolutePath() + ")");
         }
         Logging.getLogger(AsynchronousTraceWriter.class).lifecycle("Trace written to file://" + traceFile.getAbsolutePath());
     }
@@ -55,20 +56,6 @@ public class AsynchronousTraceWriter {
         } catch (IOException e) {
             throw UncheckedException.throwAsUncheckedException(e);
         }
-    }
-
-    private File traceFile(Gradle gradle) {
-        File traceFile = (File) gradle.getRootProject().findProperty("chromeTraceFile");
-        if (traceFile == null) {
-            traceFile = defaultTraceFile(gradle);
-        }
-        traceFile.getParentFile().mkdirs();
-        return traceFile;
-    }
-
-    private File defaultTraceFile(Gradle gradle) {
-        File buildDir = gradle.getRootProject().getBuildDir();
-        return new File(buildDir, "trace/task-trace.html");
     }
 
     private class TraceEventRenderer implements AsyncWriter.Renderer<TraceEvent> {
