@@ -49,7 +49,7 @@ The time recorded is cumulative time, so the wall clock time spent on executing 
 
 ### Regression detection
 
-If multiple versions are tested, then Gradle profiler determines whether there is an statistically significant difference in the run times by using a [Mann-Whitney U-Test](https://de.wikipedia.org/wiki/Wilcoxon-Mann-Whitney-Test).
+If multiple versions are tested, then Gradle profiler determines whether there is an statistically significant difference in the run times by using a [Mann-Whitney U-Test](https://en.wikipedia.org/wiki/Mann%E2%80%93Whitney_U_test).
 The result files contain the confidence if a sample has a different performance behavior - i.e. it is faster or slower - than the baseline.
 
 ## Profiling a build
