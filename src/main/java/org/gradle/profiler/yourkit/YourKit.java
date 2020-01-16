@@ -35,7 +35,8 @@ public class YourKit {
 
     public static File findJniLib() {
         File yourKitHome = findYourKitHome();
-        return tryLocations(yourKitHome, "Contents/Resources/bin/mac/libyjpagent.jnilib", "bin/linux-x86-64/libyjpagent.so");
+        String macLibLocationPrefix = "Contents/Resources/bin/mac/libyjpagent.";
+        return tryLocations(yourKitHome, macLibLocationPrefix + "jnilib", macLibLocationPrefix + "dylib", "bin/linux-x86-64/libyjpagent.so");
     }
 
     private static File tryLocations(File baseDir, String... candidates) {
