@@ -44,10 +44,10 @@ dependencies {
     }
 
     runtimeOnly("org.slf4j:slf4j-simple:1.7.10")
-    testCompile("org.codehaus.groovy:groovy:2.4.7")
-    testCompile("org.spockframework:spock-core:1.1-groovy-2.4")
-    testRuntime("cglib:cglib:3.2.6")
-    testRuntime("org.objenesis:objenesis:2.6")
+    testImplementation("org.codehaus.groovy:groovy:2.4.7")
+    testImplementation("org.spockframework:spock-core:1.1-groovy-2.4")
+    testRuntimeOnly("cglib:cglib:3.2.6")
+    testRuntimeOnly("org.objenesis:objenesis:2.6")
 }
 
 allprojects {
