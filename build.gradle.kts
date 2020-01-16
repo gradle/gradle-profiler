@@ -58,6 +58,11 @@ allprojects {
         }
     }
 }
+
+java {
+    withSourcesJar()
+}
+
 application.mainClassName = "org.gradle.profiler.Main"
 
 tasks.processResources {
