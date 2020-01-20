@@ -2,6 +2,7 @@ package org.gradle.profiler.buildscan;
 
 import joptsimple.OptionParser;
 import joptsimple.OptionSet;
+import org.gradle.profiler.GeneratedInitScript;
 import org.gradle.profiler.GradleArgsCalculator;
 import org.gradle.profiler.GradleBuildConfiguration;
 import org.gradle.profiler.Profiler;
@@ -19,12 +20,15 @@ import java.util.stream.Stream;
 public class BuildScanProfiler extends Profiler {
 
     private static final GradleVersion GRADLE_5 = GradleVersion.version("5.0");
+    private static final GradleVersion GRADLE_6 = GradleVersion.version("6.0");
 
     public static String defaultBuildScanVersion(GradleVersion gradleVersion) {
         if (gradleVersion.compareTo(GRADLE_5) < 0) {
             return "1.16";
+        } else if (gradleVersion.compareTo(GRADLE_6) < 0) {
+            return "2.4.2";
         } else {
-            return "2.0.2";
+            return "3.1.1";
         }
     }
 
@@ -96,7 +100,11 @@ public class BuildScanProfiler extends Profiler {
         return gradleArgs -> {
             GradleBuildConfiguration buildConfiguration = settings.getScenario().getBuildConfiguration();
             if (!buildConfiguration.isUsesScanPlugin()) {
-                new BuildScanInitScript(getEffectiveBuildScanVersion(buildConfiguration)).calculateGradleArgs(gradleArgs);
+                String effectiveBuildScanVersion = getEffectiveBuildScanVersion(buildConfiguration);
+                GeneratedInitScript buildScanInitScript = (buildConfiguration.getGradleVersion().compareTo(GRADLE_6) < 0)
+                    ? new BuildScanInitScript(effectiveBuildScanVersion)
+                    : new GradleEnterpriseInitScript(effectiveBuildScanVersion);
+                buildScanInitScript.calculateGradleArgs(gradleArgs);
             }
         };
     }

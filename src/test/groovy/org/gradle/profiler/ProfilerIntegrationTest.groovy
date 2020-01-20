@@ -3,14 +3,10 @@ package org.gradle.profiler
 import org.gradle.profiler.buildscan.BuildScanProfiler
 import org.gradle.util.GradleVersion
 import spock.lang.Requires
-import spock.lang.Shared
 import spock.lang.Unroll
 
 @Unroll
 class ProfilerIntegrationTest extends AbstractProfilerIntegrationTest {
-
-    @Shared
-    String latestSupportedGradle5Version = supportedGradleVersions.reverse().find { it.startsWith("5.") }
 
     def "complains when neither profile or benchmark requested"() {
         when:
@@ -216,12 +212,12 @@ println "<gradle-version: " + gradle.gradleVersion + ">"
 
         when:
         new Main().
-                run("--project-dir", projectDir.absolutePath, "--output-dir", outputDir.absolutePath, "--gradle-version", latestSupportedGradle5Version, "--profile", "buildscan",
+                run("--project-dir", projectDir.absolutePath, "--output-dir", outputDir.absolutePath, "--gradle-version", latestSupportedGradleVersion, "--profile", "buildscan",
                         "assemble")
 
         then:
-        logFile.find("<gradle-version: $latestSupportedGradle5Version>").size() == 4
-        assertBuildScanPublished(BuildScanProfiler.defaultBuildScanVersion(GradleVersion.version(latestSupportedGradle5Version)))
+        logFile.find("<gradle-version: $latestSupportedGradleVersion>").size() == 4
+        assertBuildScanPublished(BuildScanProfiler.defaultBuildScanVersion(GradleVersion.version(latestSupportedGradleVersion)))
     }
 
     def "uses build scan version used by the build if present"() {
@@ -440,7 +436,7 @@ println "<gradle-version: " + gradle.gradleVersion + ">"
 println "<tasks: " + gradle.startParameter.taskNames + ">"
 println "<daemon: " + gradle.services.get(org.gradle.internal.environment.GradleBuildEnvironment).longLivingProcess + ">"
 plugins.withId("idea") {
-    // most likely due to IDEA model builder 
+    // most likely due to IDEA model builder
     println("<idea>")
 }
 """
@@ -484,7 +480,7 @@ println "<gradle-version: " + gradle.gradleVersion + ">"
 println "<tasks: " + gradle.startParameter.taskNames + ">"
 println "<daemon: " + gradle.services.get(org.gradle.internal.environment.GradleBuildEnvironment).longLivingProcess + ">"
 plugins.withId("idea") {
-    // most likely due to IDEA model builder 
+    // most likely due to IDEA model builder
     println("<idea>")
 }
 """
@@ -1333,7 +1329,7 @@ buildGoal {
             def cacheFiles(File gradleHome) {
                 file("\${gradleHome}/caches/build-cache-1").listFiles().findAll { it.name.length() == 32 }
             }
-            
+
             task checkNoCacheBefore {
                 doFirst {
                     def files = cacheFiles(gradle.gradleUserHomeDir)
@@ -1341,7 +1337,7 @@ buildGoal {
                 }
             }
             compileJava.mustRunAfter checkNoCacheBefore
-            
+
             task checkHasCacheAfter {
                 mustRunAfter compileJava
                 doFirst {
@@ -1385,7 +1381,7 @@ buildTarget {
 
             def usage = Attribute.of('usage', String)
             def artifactType = Attribute.of('artifactType', String)
-                
+
             repositories {
                 mavenCentral()
             }
@@ -1407,12 +1403,12 @@ buildTarget {
                     attributes { attribute usage, 'api' }
                 }
             }
-            
+
             class FileSizer extends ArtifactTransform {
                 FileSizer() {
                     println "Creating FileSizer"
                 }
-                
+
                 List<File> transform(File input) {
                     assert outputDirectory.directory && outputDirectory.list().length == 0
                     def output = new File(outputDirectory, input.name + ".txt")
@@ -1421,7 +1417,7 @@ buildTarget {
                     return [output]
                 }
             }
-                        
+
             task resolve(type: Copy) {
                 def artifacts = configurations.compile.incoming.artifactView {
                     attributes { it.attribute(artifactType, 'size') }
@@ -1436,21 +1432,21 @@ buildTarget {
             def cacheFiles(File gradleHome) {
                 file("\${gradleHome}/caches/transforms-1/files-1.1").listFiles().findAll { it.name.endsWith(".jar") }
             }
-            
+
             def checkNoCacheBefore() {
                 def files = cacheFiles(gradle.gradleUserHomeDir)
                 assert (files == null || files.empty)
             }
-            
+
             gradle.taskGraph.whenReady {
                 if (it.hasTask(resolve)) {
-                    checkNoCacheBefore()   
+                    checkNoCacheBefore()
                 }
-            }     
+            }
 
             task checkHasCacheAfter {
                 mustRunAfter resolve
-                doFirst {          
+                doFirst {
                     def files = cacheFiles(gradle.gradleUserHomeDir)
                     assert !files.empty
                 }
@@ -1691,7 +1687,7 @@ buildTarget {
         given:
         buildFile << """
             apply plugin: "java"
-            
+
             System.getProperties().each { key, value ->
                 println "> \$key = \$value"
             }
