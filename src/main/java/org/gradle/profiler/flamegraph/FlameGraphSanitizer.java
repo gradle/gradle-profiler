@@ -1,19 +1,29 @@
 package org.gradle.profiler.flamegraph;
 
+import static java.util.Arrays.asList;
+import static java.util.Collections.singletonList;
+
 import com.google.common.base.CharMatcher;
 import com.google.common.base.Joiner;
 import com.google.common.base.Splitter;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.Lists;
 
-import java.io.*;
-import java.util.*;
+import java.io.BufferedReader;
+import java.io.BufferedWriter;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.List;
+import java.util.ListIterator;
+import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-
-import static java.util.Arrays.asList;
-import static java.util.Collections.singletonList;
 
 /**
  * Simplifies stacks to make flame graphs more readable.
@@ -112,7 +122,7 @@ public class FlameGraphSanitizer {
     private static abstract class FrameWiseSanitizeFunction implements SanitizeFunction {
         @Override
         public final List<String> map(List<String> stack) {
-            List<String> result = Lists.newArrayListWithCapacity(stack.size());
+            List<String> result = new ArrayList<>(stack.size());
             for (String frame : stack) {
                 result.add(mapFrame(frame));
             }
@@ -170,7 +180,7 @@ public class FlameGraphSanitizer {
     private static class CollapseDuplicateFrames implements SanitizeFunction {
         @Override
         public List<String> map(List<String> stack) {
-            List<String> result = Lists.newArrayList(stack);
+            List<String> result = new ArrayList<>(stack);
             ListIterator<String> iterator = result.listIterator();
             String previous = null;
             while (iterator.hasNext()) {

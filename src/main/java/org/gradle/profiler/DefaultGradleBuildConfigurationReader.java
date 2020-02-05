@@ -1,8 +1,6 @@
 package org.gradle.profiler;
 
-import com.google.common.base.Charsets;
 import com.google.common.collect.ImmutableList;
-import com.google.common.io.Files;
 import org.gradle.tooling.GradleConnector;
 import org.gradle.tooling.ProjectConnection;
 import org.gradle.tooling.model.build.BuildEnvironment;
@@ -14,6 +12,8 @@ import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.PrintWriter;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -97,7 +97,7 @@ public class DefaultGradleBuildConfigurationReader implements GradleBuildConfigu
 
     private List<String> readBuildDetails() {
         try {
-            return Files.readLines(buildDetails, Charsets.UTF_8);
+            return Files.readAllLines(buildDetails.toPath(), StandardCharsets.UTF_8);
         } catch (IOException e) {
             throw new RuntimeException("Could not read the build's configuration.", e);
         }

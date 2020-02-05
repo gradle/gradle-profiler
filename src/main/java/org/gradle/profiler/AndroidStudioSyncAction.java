@@ -1,15 +1,17 @@
 package org.gradle.profiler;
 
 import com.android.builder.model.AndroidProject;
-
-import org.gradle.internal.impldep.org.apache.commons.lang.StringUtils;
 import org.gradle.tooling.BuildController;
 import org.gradle.tooling.events.ProgressListener;
 import org.gradle.tooling.model.gradle.BasicGradleProject;
 import org.gradle.tooling.model.gradle.GradleBuild;
 
 import java.io.Serializable;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
+import java.util.TreeMap;
 
 /**
  * A mock-up of Android studio sync.
@@ -51,10 +53,16 @@ public class AndroidStudioSyncAction implements BuildAction {
         if (skipSourceGeneration) {
             tasks = Collections.emptyList();
         } else {
-            String taskName = String.join("", "generate", StringUtils.capitalize(buildFlavor), "Sources");
+            String taskName = String.join("", "generate", capitalize(buildFlavor), "Sources");
             tasks = Collections.singletonList(taskName);
         }
         buildInvoker.runToolingAction(tasks, gradleArgs, jvmArgs, new GetModel(), (builder) -> builder.addProgressListener(noOpListener()));
+    }
+
+    private static String capitalize(String input) {
+        return input.isEmpty()
+            ? input
+            : Character.toUpperCase(input.charAt(0)) + input.substring(1);
     }
 
     private static ProgressListener noOpListener() {
