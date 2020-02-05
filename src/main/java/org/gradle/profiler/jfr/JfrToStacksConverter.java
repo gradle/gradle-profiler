@@ -1,7 +1,6 @@
 package org.gradle.profiler.jfr;
 
 import com.google.common.collect.ImmutableSet;
-import com.google.common.io.Files;
 import org.openjdk.jmc.common.IMCFrame;
 import org.openjdk.jmc.common.IMCStackTrace;
 import org.openjdk.jmc.common.item.IItem;
@@ -23,6 +22,7 @@ import java.io.BufferedWriter;
 import java.io.File;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.LinkedHashMap;
@@ -54,7 +54,7 @@ class JfrToStacksConverter {
 
     private void writeFoldedStacks(Map<String, Long> foldedStacks, File targetFile) {
         targetFile.getParentFile().mkdirs();
-        try (BufferedWriter writer = Files.newWriter(targetFile, StandardCharsets.UTF_8)) {
+        try (BufferedWriter writer = Files.newBufferedWriter(targetFile.toPath(), StandardCharsets.UTF_8)) {
             for (Map.Entry<String, Long> entry : foldedStacks.entrySet()) {
                 writer.write(String.format("%s %d%n", entry.getKey(), entry.getValue()));
             }
