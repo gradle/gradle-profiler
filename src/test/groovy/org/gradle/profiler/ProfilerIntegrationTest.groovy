@@ -1195,7 +1195,7 @@ buildTarget {
 buildTarget {
     tasks = ["some:assemble"]
     bazel {
-        targets = [":hello"]
+        targets = ["build", ":hello"]
     }
 }
 """
@@ -1254,7 +1254,7 @@ help {
 buildTarget {
     tasks = ["help"]
     bazel {
-        targets = "//some/target"
+        targets = ["build", "//some/target"]
     }
 }
 """
@@ -1274,7 +1274,7 @@ buildTarget {
 buildTarget {
     tasks = ["help"]
     bazel {
-        targets = "//some/target"
+        targets = ["build", "//some/target"]
     }
 }
 """

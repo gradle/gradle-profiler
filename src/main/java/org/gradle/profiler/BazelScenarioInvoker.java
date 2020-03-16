@@ -19,7 +19,6 @@ public class BazelScenarioInvoker extends ScenarioInvoker<BazelScenarioDefinitio
 
         List<String> commandLine = new ArrayList<>();
         commandLine.add(bazelExe);
-        commandLine.add("build");
         commandLine.addAll(targets);
 
         ScenarioContext scenarioContext = ScenarioContext.from(settings, scenario);

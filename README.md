@@ -303,7 +303,7 @@ You can compare Gradle against Bazel, Buck, and Maven by specifying their equiva
         tasks = ["assemble"]
 
         bazel {
-            targets = ["//some/target"]
+            targets = ["build" "//some/target"]
         }
     }
     
