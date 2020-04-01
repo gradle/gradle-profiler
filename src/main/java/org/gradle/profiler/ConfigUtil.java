@@ -14,7 +14,7 @@ public class ConfigUtil {
 	public static Map<String, String> map(Config config, String key, Map<String, String> defaultValues) {
 		if (config.hasPath(key)) {
 			Map<String, String> props = new LinkedHashMap<>();
-			for (Map.Entry<String, ConfigValue> entry : config.getConfig(key).entrySet()) {
+			for (Map.Entry<String, ConfigValue> entry : config.getObject(key).entrySet()) {
 				props.put(entry.getKey(), entry.getValue().unwrapped().toString());
 			}
 			return props;

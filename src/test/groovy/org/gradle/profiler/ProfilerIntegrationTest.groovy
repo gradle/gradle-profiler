@@ -777,14 +777,14 @@ a {
     versions = "$minimalSupportedGradleVersion"
     tasks = assemble
     system-properties {
-        org.gradle.test = "value-1"
+        "org.gradle.test" = "value-1"
     }
 }
 b {
     versions = "$minimalSupportedGradleVersion"
     tasks = assemble
     system-properties {
-        org.gradle.test = "value-2"
+        "org.gradle.test" = "value-2"
     }
 }
 """

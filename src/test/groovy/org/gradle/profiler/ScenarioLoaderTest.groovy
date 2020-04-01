@@ -158,8 +158,8 @@ class ScenarioLoaderTest extends Specification {
         expect:
         def instantExecution = scenarios[0] as GradleScenarioDefinition
         instantExecution.systemProperties == [
-            '"org.gradle.unsafe.instant-execution"': "true",
-            '"org.gradle.unsafe.instant-execution.fail-on-problems"': "false"
+            "org.gradle.unsafe.instant-execution": "true",
+            "org.gradle.unsafe.instant-execution.fail-on-problems": "false"
         ]
     }
 
