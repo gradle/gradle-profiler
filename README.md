@@ -195,7 +195,7 @@ Here is an example:
         tasks = ["build"]
         gradle-args = ["--parallel"]
         system-properties {
-            key = "value"
+            "key" = "value"
         }
         cleanup-tasks = ["clean"]
         run-using = tooling-api // value can be "cli" or "tooling-api"

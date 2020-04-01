@@ -143,6 +143,26 @@ class ScenarioLoaderTest extends Specification {
         toolingApi.invoker == GradleBuildInvoker.ToolingApi
     }
 
+    def "scenario can define system properties"() {
+        def settings = settings()
+        scenarioFile << """
+            instantExecution {
+                system-properties {
+                    "org.gradle.unsafe.instant-execution" = true
+                    "org.gradle.unsafe.instant-execution.fail-on-problems" = false
+                }
+            }
+        """
+        def scenarios = loadScenarios(scenarioFile, settings, Mock(GradleBuildConfigurationReader))
+
+        expect:
+        def instantExecution = scenarios[0] as GradleScenarioDefinition
+        instantExecution.systemProperties == [
+            "org.gradle.unsafe.instant-execution": "true",
+            "org.gradle.unsafe.instant-execution.fail-on-problems": "false"
+        ]
+    }
+
     def "scenario can define what state the daemon should be in for each measured build"() {
         def settings = settings(GradleBuildInvoker.ToolingApi)
         scenarioFile << """
