@@ -24,7 +24,7 @@ class BuildOperationInstrumentationIntegrationTest extends AbstractProfilerInteg
         ]
         if (configurationCache) {
             file("gradle.properties") << """
-                org.gradle.unsafe.configuration-cache=warn
+                org.gradle.unsafe.configuration-cache=on
             """
         }
 
@@ -83,7 +83,7 @@ class BuildOperationInstrumentationIntegrationTest extends AbstractProfilerInteg
         args += commandLine
         if (configurationCache) {
             file("gradle.properties") << """
-                org.gradle.unsafe.configuration-cache=warn
+                org.gradle.unsafe.configuration-cache=on
             """
         }
         args += scenarioConfiguration ? "default" : "assemble"
@@ -158,7 +158,7 @@ class BuildOperationInstrumentationIntegrationTest extends AbstractProfilerInteg
         ]
         if (configurationCache) {
             file("gradle.properties") << """
-                org.gradle.unsafe.configuration-cache=warn
+                org.gradle.unsafe.configuration-cache=on
             """
         }
 
