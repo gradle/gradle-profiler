@@ -8,20 +8,24 @@ import java.io.File;
 import java.io.IOException;
 import java.io.UncheckedIOException;
 
-public class ClearInstantExecutionStateMutator extends AbstractCleanupMutator {
+public class ClearConfigurationCacheStateMutator extends AbstractCleanupMutator {
     private final File projectDir;
 
-    public ClearInstantExecutionStateMutator(File projectDir, CleanupSchedule schedule) {
+    public ClearConfigurationCacheStateMutator(File projectDir, CleanupSchedule schedule) {
         super(schedule);
         this.projectDir = projectDir;
     }
 
     @Override
     protected void cleanup() {
-        File gradleCache = new File(projectDir, ".instant-execution-state");
-        System.out.println(String.format("> Cleaning instant execution state: %s", gradleCache));
+        System.out.println("> Cleaning configuration cache state");
+        cleanup(new File(projectDir, ".gradle/configuration-cache"));
+        cleanup(new File(projectDir, ".instant-execution-state"));
+    }
+
+    private void cleanup(File dir) {
         try {
-            FileUtils.deleteDirectory(gradleCache);
+            FileUtils.deleteDirectory(dir);
         } catch (IOException e) {
             throw new UncheckedIOException(e);
         }
@@ -30,7 +34,7 @@ public class ClearInstantExecutionStateMutator extends AbstractCleanupMutator {
     public static class Configurator extends AbstractCleanupMutator.Configurator {
         @Override
         protected BuildMutator newInstance(Config scenario, String scenarioName, File projectDir, String key, CleanupSchedule schedule) {
-            return new ClearInstantExecutionStateMutator(projectDir, schedule);
+            return new ClearConfigurationCacheStateMutator(projectDir, schedule);
         }
     }
 }

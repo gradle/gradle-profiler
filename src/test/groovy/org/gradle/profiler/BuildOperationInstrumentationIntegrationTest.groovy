@@ -9,7 +9,7 @@ import static org.junit.Assert.assertTrue
 class BuildOperationInstrumentationIntegrationTest extends AbstractProfilerIntegrationTest {
 
     @Unroll
-    def "can benchmark configuration time for build using #gradleVersion (instant-execution: #instantExecution)"() {
+    def "can benchmark configuration time for build using #gradleVersion (configuration-cache: #configurationCache)"() {
         given:
         instrumentedBuildScript()
 
@@ -22,8 +22,10 @@ class BuildOperationInstrumentationIntegrationTest extends AbstractProfilerInteg
             "--measure-config-time",
             "assemble"
         ]
-        if (instantExecution) {
-            args += "-Dorg.gradle.unsafe.instant-execution=true"
+        if (configurationCache) {
+            file("gradle.properties") << """
+                org.gradle.unsafe.configuration-cache=on
+            """
         }
 
         when:
@@ -50,14 +52,14 @@ class BuildOperationInstrumentationIntegrationTest extends AbstractProfilerInteg
         Long.valueOf(taskStart[0][1]) > 0
 
         where:
-        [gradleVersion, instantExecution] << [
-            ["6.1-milestone-3", latestSupportedGradleVersion] as Set, // simplify this once the latest version is > 6.1-milestone-3
-            [true, false]
-        ].combinations()
+        gradleVersion                | configurationCache
+        "6.1"                        | false
+        latestSupportedGradleVersion | false
+        latestSupportedGradleVersion | true
     }
 
     @Unroll
-    def "can benchmark snapshotting build operation time via #via for build using #gradleVersion (instant-execution: #instantExecution)"() {
+    def "can benchmark snapshotting build operation time via #via for build using #gradleVersion (configuration-cache: #configurationCache)"() {
         given:
         instrumentedBuildForSnapshottingBenchmark()
 
@@ -79,8 +81,10 @@ class BuildOperationInstrumentationIntegrationTest extends AbstractProfilerInteg
             args += ["--scenario-file", scenarioFile.absolutePath]
         }
         args += commandLine
-        if (instantExecution) {
-            args += "-Dorg.gradle.unsafe.instant-execution=true"
+        if (configurationCache) {
+            file("gradle.properties") << """
+                org.gradle.unsafe.configuration-cache=on
+            """
         }
         args += scenarioConfiguration ? "default" : "assemble"
 
@@ -107,7 +111,7 @@ class BuildOperationInstrumentationIntegrationTest extends AbstractProfilerInteg
         lines.get(26).matches("stddev,\\d+\\.\\d+,\\d+\\.\\d+")
 
         where:
-        [via, commandLine, scenarioConfiguration, gradleVersion, instantExecution] << [
+        [via, commandLine, scenarioConfiguration, gradleVersion, configurationCache] << [
             [
                 [
                     'command line',
@@ -125,7 +129,7 @@ class BuildOperationInstrumentationIntegrationTest extends AbstractProfilerInteg
                     'measured-build-ops = ["org.gradle.api.internal.tasks.SnapshotTaskInputsBuildOperationType"]'
                 ]
             ],
-            ["6.1-milestone-3", latestSupportedGradleVersion] as Set
+            ["6.1", latestSupportedGradleVersion] as Set
         ].combinations().collectMany {
             def scenario = it[0]
             def gradleVersion = it[1]
@@ -138,7 +142,7 @@ class BuildOperationInstrumentationIntegrationTest extends AbstractProfilerInteg
     }
 
     @Unroll
-    def "can combine measuring configuration time and build operation using #gradleVersion (instant-execution: #instantExecution)"() {
+    def "can combine measuring configuration time and build operation using #gradleVersion (configuration-cache: #configurationCache)"() {
         given:
         instrumentedBuildForSnapshottingBenchmark()
 
@@ -152,8 +156,10 @@ class BuildOperationInstrumentationIntegrationTest extends AbstractProfilerInteg
             "--measure-build-op", "org.gradle.api.internal.tasks.SnapshotTaskInputsBuildOperationType",
             "assemble"
         ]
-        if (instantExecution) {
-            args += "-Dorg.gradle.unsafe.instant-execution=true"
+        if (configurationCache) {
+            file("gradle.properties") << """
+                org.gradle.unsafe.configuration-cache=on
+            """
         }
 
         when:
@@ -187,9 +193,10 @@ class BuildOperationInstrumentationIntegrationTest extends AbstractProfilerInteg
         assertTrue("different build-op times", buildOps.size() > 1)
 
         where:
-        gradleVersion                | instantExecution
-        "6.1-milestone-3"            | false
-        "6.1-milestone-3"            | true
+        gradleVersion                | configurationCache
+        "6.1"                        | false
+        latestSupportedGradleVersion | false
+        latestSupportedGradleVersion | true
     }
 
     private void instrumentedBuildForSnapshottingBenchmark() {
@@ -229,7 +236,7 @@ class BuildOperationInstrumentationIntegrationTest extends AbstractProfilerInteg
         instrumentedBuildScript()
         def scenarioFile = file("performance.scenarios")
         scenarioFile.text = """
-            assemble { 
+            assemble {
                 versions = ["${minimalSupportedGradleVersion}", "4.0", "4.10", "6.0", "${latestSupportedGradleVersion}"]
             }
         """
