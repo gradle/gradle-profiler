@@ -202,6 +202,7 @@ class ScenarioLoaderTest extends Specification {
                 run-using = tooling-api
                 daemon = warm
                 warm-ups = 5
+                iterations = 2
             }
         """
         def benchmarkScenarios = loadScenarios(scenarioFile, benchmarkSettings, Mock(GradleBuildConfigurationReader))
@@ -238,6 +239,39 @@ class ScenarioLoaderTest extends Specification {
         def profileScenario = profileScenarios[0] as GradleScenarioDefinition
         profileScenario.warmUpCount == profileWarmups
         profileScenario.buildCount == 1
+
+        where:
+        runUsing      | daemon | warmups | profileWarmups
+        "tooling-api" | "warm" | 6       | 2
+        "tooling-api" | "cold" | 1       | 1
+        "cli"         | "warm" | 6       | 2
+        "cli"         | "cold" | 1       | 1
+        "cli"         | "none" | 1       | 1
+    }
+
+    def "uses warm-up and iteration counts defined by scenario"() {
+        def benchmarkSettings = settings()
+        def profileSettings = settings(GradleBuildInvoker.ToolingApi, false)
+
+        scenarioFile << """
+            default {
+                run-using = ${runUsing}
+                daemon = ${daemon}
+                warm-ups = 5
+                iterations = 2
+            }
+        """
+        def benchmarkScenarios = loadScenarios(scenarioFile, benchmarkSettings, Mock(GradleBuildConfigurationReader))
+        def profileScenarios = loadScenarios(scenarioFile, profileSettings, Mock(GradleBuildConfigurationReader))
+
+        expect:
+        def benchmarkScenario = benchmarkScenarios[0] as GradleScenarioDefinition
+        benchmarkScenario.warmUpCount == 5
+        benchmarkScenario.buildCount == 2
+
+        def profileScenario = profileScenarios[0] as GradleScenarioDefinition
+        profileScenario.warmUpCount == 5
+        profileScenario.buildCount == 2
 
         where:
         runUsing      | daemon | warmups | profileWarmups

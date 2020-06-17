@@ -254,6 +254,8 @@ A scenario can define changes that should be applied to the source before each b
 - `git-checkout`: Checks out a specific commit for the build step, and a different one for the cleanup step.
 - `git-revert`: Reverts a given set of commits before the build and resets it afterward.
 - `jvm-args`: Sets or overrides the jvm arguments set by `org.gradle.jvmargs` in gradle.properties.
+- `warm-ups`: Number of warmups to perform before measurement
+- `iterations`: Number of builds to actually measure
 
 They can be added to a scenario file like this:
 

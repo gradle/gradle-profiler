@@ -50,7 +50,7 @@ class ScenarioLoader {
     private static final String BUCK = "buck";
     private static final String MAVEN = "maven";
     private static final String WARM_UP_COUNT = "warm-ups";
-    private static final String BUILD_COUNT = "builds";
+    private static final String ITERATIONS = "iterations";
     private static final String MEASURED_BUILD_OPERATIONS = "measured-build-ops";
     private static final String APPLY_ABI_CHANGE_TO = "apply-abi-change-to";
     private static final String APPLY_NON_ABI_CHANGE_TO = "apply-non-abi-change-to";
@@ -87,7 +87,7 @@ class ScenarioLoader {
         RUN_USING,
         SYSTEM_PROPERTIES,
         WARM_UP_COUNT,
-        BUILD_COUNT,
+        ITERATIONS,
         MEASURED_BUILD_OPERATIONS,
         APPLY_ABI_CHANGE_TO,
         APPLY_NON_ABI_CHANGE_TO,
@@ -324,7 +324,7 @@ class ScenarioLoader {
     }
 
     private static int getBuildCount(InvocationSettings settings, Config scenario) {
-        return getBuildCount(settings, ConfigUtil.optionalInteger(scenario, BUILD_COUNT));
+        return getBuildCount(settings, ConfigUtil.optionalInteger(scenario, ITERATIONS));
     }
 
     private static int getBuildCount(InvocationSettings settings, Integer providedValue) {
