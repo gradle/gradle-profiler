@@ -89,7 +89,7 @@ class ScenarioLoaderTest extends Specification {
             entitled {
                 title = "This is a scenario with a title"
             }
-            
+
             untitled {
             }
         """
@@ -274,12 +274,12 @@ class ScenarioLoaderTest extends Specification {
         profileScenario.buildCount == 2
 
         where:
-        runUsing      | daemon | warmups | profileWarmups
-        "tooling-api" | "warm" | 6       | 2
-        "tooling-api" | "cold" | 1       | 1
-        "cli"         | "warm" | 6       | 2
-        "cli"         | "cold" | 1       | 1
-        "cli"         | "none" | 1       | 1
+        runUsing      | daemon
+        "tooling-api" | "warm"
+        "tooling-api" | "cold"
+        "cli"         | "warm"
+        "cli"         | "cold"
+        "cli"         | "none"
     }
 
     def "can load build operations to benchmark"() {
@@ -328,7 +328,7 @@ class ScenarioLoaderTest extends Specification {
 
         scenarioFile << """
             default {
-                android-studio-sync { }               
+                android-studio-sync { }
             }
         """
         def scenarios = loadScenarios(scenarioFile, settings, Mock(GradleBuildConfigurationReader))
@@ -348,7 +348,7 @@ class ScenarioLoaderTest extends Specification {
                 android-studio-sync {
                     build-variant = "developmentDebug"
                     skip-source-generation = true
-                }               
+                }
             }
         """
         def scenarios = loadScenarios(scenarioFile, settings, Mock(GradleBuildConfigurationReader))
@@ -400,7 +400,7 @@ class ScenarioLoaderTest extends Specification {
             bela {
                 tasks = ["bela"]
             }
-            
+
             include file("${otherConf.absolutePath.replace((char) '\\', (char) '/')}")
         """
         def scenarios = loadScenarios(scenarioFile, settings, Mock(GradleBuildConfigurationReader))
@@ -469,7 +469,7 @@ class ScenarioLoaderTest extends Specification {
         scenarioFile << """
             default {
                 tasks = ["help"]
-                
+
                 apply-abi-change-to = ["${fileForMutation1.name}", "${fileForMutation2.name}"]
             }
         """
