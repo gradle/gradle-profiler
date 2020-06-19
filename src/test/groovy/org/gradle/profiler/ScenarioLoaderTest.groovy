@@ -89,7 +89,7 @@ class ScenarioLoaderTest extends Specification {
             entitled {
                 title = "This is a scenario with a title"
             }
-            
+
             untitled {
             }
         """
@@ -202,6 +202,7 @@ class ScenarioLoaderTest extends Specification {
                 run-using = tooling-api
                 daemon = warm
                 warm-ups = 5
+                iterations = 2
             }
         """
         def benchmarkScenarios = loadScenarios(scenarioFile, benchmarkSettings, Mock(GradleBuildConfigurationReader))
@@ -246,6 +247,39 @@ class ScenarioLoaderTest extends Specification {
         "cli"         | "warm" | 6       | 2
         "cli"         | "cold" | 1       | 1
         "cli"         | "none" | 1       | 1
+    }
+
+    def "uses warm-up and iteration counts defined by scenario"() {
+        def benchmarkSettings = settings()
+        def profileSettings = settings(GradleBuildInvoker.ToolingApi, false)
+
+        scenarioFile << """
+            default {
+                run-using = ${runUsing}
+                daemon = ${daemon}
+                warm-ups = 5
+                iterations = 2
+            }
+        """
+        def benchmarkScenarios = loadScenarios(scenarioFile, benchmarkSettings, Mock(GradleBuildConfigurationReader))
+        def profileScenarios = loadScenarios(scenarioFile, profileSettings, Mock(GradleBuildConfigurationReader))
+
+        expect:
+        def benchmarkScenario = benchmarkScenarios[0] as GradleScenarioDefinition
+        benchmarkScenario.warmUpCount == 5
+        benchmarkScenario.buildCount == 2
+
+        def profileScenario = profileScenarios[0] as GradleScenarioDefinition
+        profileScenario.warmUpCount == 5
+        profileScenario.buildCount == 2
+
+        where:
+        runUsing      | daemon
+        "tooling-api" | "warm"
+        "tooling-api" | "cold"
+        "cli"         | "warm"
+        "cli"         | "cold"
+        "cli"         | "none"
     }
 
     def "can load build operations to benchmark"() {
@@ -294,7 +328,7 @@ class ScenarioLoaderTest extends Specification {
 
         scenarioFile << """
             default {
-                android-studio-sync { }               
+                android-studio-sync { }
             }
         """
         def scenarios = loadScenarios(scenarioFile, settings, Mock(GradleBuildConfigurationReader))
@@ -314,7 +348,7 @@ class ScenarioLoaderTest extends Specification {
                 android-studio-sync {
                     build-variant = "developmentDebug"
                     skip-source-generation = true
-                }               
+                }
             }
         """
         def scenarios = loadScenarios(scenarioFile, settings, Mock(GradleBuildConfigurationReader))
@@ -366,7 +400,7 @@ class ScenarioLoaderTest extends Specification {
             bela {
                 tasks = ["bela"]
             }
-            
+
             include file("${otherConf.absolutePath.replace((char) '\\', (char) '/')}")
         """
         def scenarios = loadScenarios(scenarioFile, settings, Mock(GradleBuildConfigurationReader))
@@ -435,7 +469,7 @@ class ScenarioLoaderTest extends Specification {
         scenarioFile << """
             default {
                 tasks = ["help"]
-                
+
                 apply-abi-change-to = ["${fileForMutation1.name}", "${fileForMutation2.name}"]
             }
         """
