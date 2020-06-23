@@ -1,4 +1,4 @@
-import jetbrains.buildServer.configs.kotlin.v2018_2.vcs.GitVcsRoot
+import jetbrains.buildServer.configs.kotlin.v2019_2.vcs.GitVcsRoot
 
 object VersionedSettings_1 : GitVcsRoot({
     id("VersionedSettings")

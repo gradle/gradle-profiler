@@ -1,7 +1,7 @@
-import jetbrains.buildServer.configs.kotlin.v2018_2.BuildType
-import jetbrains.buildServer.configs.kotlin.v2018_2.CheckoutMode
-import jetbrains.buildServer.configs.kotlin.v2018_2.DslContext
-import jetbrains.buildServer.configs.kotlin.v2018_2.ParametrizedWithType
+import jetbrains.buildServer.configs.kotlin.v2019_2.BuildType
+import jetbrains.buildServer.configs.kotlin.v2019_2.CheckoutMode
+import jetbrains.buildServer.configs.kotlin.v2019_2.DslContext
+import jetbrains.buildServer.configs.kotlin.v2019_2.ParametrizedWithType
 
 fun BuildType.agentRequirement(os: Os) {
     requirements {
