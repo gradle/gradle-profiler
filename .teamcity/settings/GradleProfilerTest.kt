@@ -35,7 +35,7 @@ open class GradleProfilerTest(os: Os) : BuildType({
             publisher = github {
                 githubUrl = "https://api.github.com"
                 authType = personalToken {
-                    token = "credentialsJSON:7c8c64ad-776d-4469-8400-5618da5de337"
+                    token = "%github.bot-teamcity.token%"
                 }
             }
         }
