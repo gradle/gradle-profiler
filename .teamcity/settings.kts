@@ -28,8 +28,6 @@ version = "2020.1"
 project {
     description = "Runs tests and integration tests of the Gradle Profiler (https://github.com/gradle/gradle-profiler)"
 
-    vcsRoot(VersionedSettings_1)
-
     buildType(MacOSJava18)
     buildType(WindowsJava18)
     buildType(LinuxJava18)
