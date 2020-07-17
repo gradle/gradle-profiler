@@ -12,8 +12,11 @@ public class ApplyNonAbiChangeToKotlinSourceFileMutator extends AbstractKotlinSo
 
     @Override
     protected void applyChangeTo(BuildContext context, StringBuilder text) {
-        text.append("private fun _m")
-                .append(context.getUniqueBuildId())
-                .append("() {}");
+        text.append('\n')
+            .append("private fun _m")
+            .append(context.getUniqueScenarioId())
+            .append("() {requireNotNull(\"")
+            .append(context.getUniqueBuildId())
+            .append("\")}");
     }
 }
