@@ -1,17 +1,35 @@
 package org.gradle.profiler.mutations
 
+import org.gradle.profiler.Phase
+
+import java.util.function.Function
+
 class ApplyNonAbiChangeToKotlinSourceFileMutatorTest extends AbstractMutatorTest {
 
-    def "adds and replaces public method at end of source file"() {
+    static Function<String, String> FUNCTION_TEXT = { qualifier ->
+        "class Thing { fun existingMethod() { }}\n" +
+            "private fun _m_276d92f3_16ac_4064_9a18_5f1dfd67992f_testScenario_3c4925d7() {" +
+            "requireNotNull(\"_276d92f3_16ac_4064_9a18_5f1dfd67992f_testScenario_3c4925d7_$qualifier\")" +
+            "}"
+    }
+
+    def "adds public function at end of source file replacing its body"() {
         def sourceFile = tmpDir.newFile("Thing.kt")
         sourceFile.text = "class Thing { fun existingMethod() { }}"
         def mutator = new ApplyNonAbiChangeToKotlinSourceFileMutator(sourceFile)
 
         when:
+        mutator.beforeScenario(scenarioContext)
         mutator.beforeBuild(buildContext)
 
         then:
-        sourceFile.text == "class Thing { fun existingMethod() { }}private fun _m_276d92f3_16ac_4064_9a18_5f1dfd67992f_testScenario_3c4925d7_MEASURE_7() {}"
+        sourceFile.text == FUNCTION_TEXT.apply("MEASURE_7")
+
+        when:
+        mutator.beforeBuild(buildContext.withBuild(Phase.MEASURE, 8))
+
+        then:
+        sourceFile.text == FUNCTION_TEXT.apply("MEASURE_8")
     }
 
     def "reverts changes when nothing has been applied"() {
@@ -38,6 +56,7 @@ class ApplyNonAbiChangeToKotlinSourceFileMutatorTest extends AbstractMutatorTest
         def mutator = new ApplyNonAbiChangeToKotlinSourceFileMutator(sourceFile)
 
         when:
+        mutator.beforeScenario(scenarioContext)
         mutator.beforeBuild(buildContext)
         mutator.afterScenario(scenarioContext)
 
