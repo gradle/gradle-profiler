@@ -14,10 +14,7 @@ class ApplyNonAbiChangeToSourceFileMutatorTest extends AbstractMutatorTest {
         mutator.beforeBuild(buildContext)
 
         then:
-        sourceFile.text == "class Thing { fun existingMethod() { }}\n" +
-            "private fun _m_276d92f3_16ac_4064_9a18_5f1dfd67992f_testScenario_3c4925d7() {" +
-            "requireNotNull(\"_276d92f3_16ac_4064_9a18_5f1dfd67992f_testScenario_3c4925d7_MEASURE_7\")" +
-            "}"
+        sourceFile.text == ApplyNonAbiChangeToKotlinSourceFileMutatorTest.FUNCTION_TEXT.apply("MEASURE_7")
     }
 
     def "adds and replaces public method at end of Java source file"() {
