@@ -5,25 +5,7 @@ import com.google.common.collect.ImmutableSet;
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
 import com.typesafe.config.ConfigParseOptions;
-import org.gradle.profiler.mutations.AbstractFileChangeMutator;
-import org.gradle.profiler.mutations.ApplyAbiChangeToSourceFileMutator;
-import org.gradle.profiler.mutations.ApplyChangeToAndroidLayoutFileMutator;
-import org.gradle.profiler.mutations.ApplyChangeToAndroidManifestFileMutator;
-import org.gradle.profiler.mutations.ApplyChangeToAndroidResourceFileMutator;
-import org.gradle.profiler.mutations.ApplyChangeToNativeSourceFileMutator;
-import org.gradle.profiler.mutations.ApplyChangeToPropertyResourceFileMutator;
-import org.gradle.profiler.mutations.ApplyNonAbiChangeToSourceFileMutator;
-import org.gradle.profiler.mutations.ApplyValueChangeToAndroidResourceFileMutator;
-import org.gradle.profiler.mutations.BuildMutatorConfigurator;
-import org.gradle.profiler.mutations.ClearArtifactTransformCacheMutator;
-import org.gradle.profiler.mutations.ClearBuildCacheMutator;
-import org.gradle.profiler.mutations.ClearConfigurationCacheStateMutator;
-import org.gradle.profiler.mutations.ClearGradleUserHomeMutator;
-import org.gradle.profiler.mutations.ClearProjectCacheMutator;
-import org.gradle.profiler.mutations.FileChangeMutatorConfigurator;
-import org.gradle.profiler.mutations.GitCheckoutMutator;
-import org.gradle.profiler.mutations.GitRevertMutator;
-import org.gradle.profiler.mutations.ShowBuildCacheSizeMutator;
+import org.gradle.profiler.mutations.*;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -67,6 +49,7 @@ class ScenarioLoader {
     private static final String CLEAR_CONFIGURATION_CACHE_STATE_BEFORE = "clear-configuration-cache-state-before";
     private static final String CLEAR_PROJECT_CACHE_BEFORE = "clear-project-cache-before";
     private static final String CLEAR_TRANSFORM_CACHE_BEFORE = "clear-transform-cache-before";
+    private static final String CLEAR_JARS_CACHE_BEFORE = "clear-jars-cache-before";
     private static final String SHOW_BUILD_CACHE_SIZE = "show-build-cache-size";
     private static final String GIT_CHECKOUT = "git-checkout";
     private static final String GIT_REVERT = "git-revert";
@@ -104,6 +87,7 @@ class ScenarioLoader {
         CLEAR_CONFIGURATION_CACHE_STATE_BEFORE,
         CLEAR_PROJECT_CACHE_BEFORE,
         CLEAR_TRANSFORM_CACHE_BEFORE,
+        CLEAR_JARS_CACHE_BEFORE,
         SHOW_BUILD_CACHE_SIZE,
         GIT_CHECKOUT,
         GIT_REVERT,
@@ -220,6 +204,7 @@ class ScenarioLoader {
             maybeAddMutator(scenario, scenarioName, settings.getProjectDir(), CLEAR_CONFIGURATION_CACHE_STATE_BEFORE, new ClearConfigurationCacheStateMutator.Configurator(), mutators);
             maybeAddMutator(scenario, scenarioName, settings.getProjectDir(), CLEAR_PROJECT_CACHE_BEFORE, new ClearProjectCacheMutator.Configurator(), mutators);
             maybeAddMutator(scenario, scenarioName, settings.getProjectDir(), CLEAR_TRANSFORM_CACHE_BEFORE, new ClearArtifactTransformCacheMutator.Configurator(settings.getGradleUserHome()), mutators);
+            maybeAddMutator(scenario, scenarioName, settings.getProjectDir(), CLEAR_JARS_CACHE_BEFORE, new ClearJarsCacheMutator.Configurator(settings.getGradleUserHome()), mutators);
             maybeAddMutator(scenario, scenarioName, settings.getProjectDir(), SHOW_BUILD_CACHE_SIZE, new ShowBuildCacheSizeMutator.Configurator(settings.getGradleUserHome()), mutators);
             maybeAddMutator(scenario, scenarioName, settings.getProjectDir(), GIT_CHECKOUT, new GitCheckoutMutator.Configurator(), mutators);
             maybeAddMutator(scenario, scenarioName, settings.getProjectDir(), GIT_REVERT, new GitRevertMutator.Configurator(), mutators);
