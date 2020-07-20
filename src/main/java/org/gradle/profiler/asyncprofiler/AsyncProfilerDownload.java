@@ -25,7 +25,7 @@ import static java.nio.file.StandardCopyOption.REPLACE_EXISTING;
  * Downloads a version of async profiler and installs into ~/.gradle-profiler-dist.
  */
 public class AsyncProfilerDownload {
-    private static final String ASYNC_PROFILER_VERSION = "1.5";
+    private static final String ASYNC_PROFILER_VERSION = "1.7.1";
 
     /**
      * Attempts to locate a default install of async profiler. Uses a previously downloaded installation, or downloads if not available.
