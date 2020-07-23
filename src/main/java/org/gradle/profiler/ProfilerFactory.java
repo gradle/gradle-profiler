@@ -3,6 +3,7 @@ package org.gradle.profiler;
 import joptsimple.OptionParser;
 import joptsimple.OptionSet;
 import org.gradle.profiler.asyncprofiler.AsyncProfilerFactory;
+import org.gradle.profiler.asyncprofiler.AsyncProfilerHeapAllocationProfilerFactory;
 import org.gradle.profiler.buildscan.BuildScanProfilerFactory;
 import org.gradle.profiler.chrometrace.ChromeTraceProfilerFactory;
 import org.gradle.profiler.jfr.JfrProfilerFactory;
@@ -29,7 +30,8 @@ public abstract class ProfilerFactory {
             put("jfr", new JfrProfilerFactory());
             put("jprofiler", new JProfilerProfilerFactory());
             put("yourkit", new YourKitProfilerFactory());
-            put("async-profiler", new AsyncProfilerFactory());
+            put("async-profiler", AsyncProfilerFactory.INSTANCE);
+            put("async-profiler-heap", AsyncProfilerHeapAllocationProfilerFactory.INSTANCE);
             put("chrome-trace", new ChromeTraceProfilerFactory());
         }}
     );

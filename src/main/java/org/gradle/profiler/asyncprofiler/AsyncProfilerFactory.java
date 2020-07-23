@@ -13,6 +13,7 @@ import java.util.Locale;
 
 public class AsyncProfilerFactory extends ProfilerFactory {
     static final String ASYNC_PROFILER_HOME = "ASYNC_PROFILER_HOME";
+    public static final AsyncProfilerFactory INSTANCE = new AsyncProfilerFactory();
 
     private ArgumentAcceptingOptionSpec<File> profilerHomeOption;
     private ArgumentAcceptingOptionSpec<String> eventOption;
@@ -61,6 +62,11 @@ public class AsyncProfilerFactory extends ProfilerFactory {
 
     @Override
     public Profiler createFromOptions(OptionSet parsedOptions) {
+        AsyncProfilerConfig config = createConfig(parsedOptions);
+        return new AsyncProfiler(config);
+    }
+
+    AsyncProfilerConfig createConfig(OptionSet parsedOptions) {
         File profilerHome = getProfilerHome(parsedOptions);
         String event = eventOption.value(parsedOptions);
         AsyncProfilerConfig.Counter counter = counterOption.value(parsedOptions);
@@ -69,7 +75,7 @@ public class AsyncProfilerFactory extends ProfilerFactory {
         int frameBuffer = frameBufferOption.value(parsedOptions);
         Boolean showSystemThreads = systemThreadOption.value(parsedOptions);
         AsyncProfilerConfig config = new AsyncProfilerConfig(profilerHome, event, counter, interval, stackDepth, frameBuffer, showSystemThreads);
-        return new AsyncProfiler(config);
+        return config;
     }
 
     private File getProfilerHome(OptionSet parsedOptions) {
