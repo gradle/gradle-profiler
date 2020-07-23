@@ -19,5 +19,3 @@ fun BuildType.gradleProfilerVcs() {
         checkoutMode = CheckoutMode.ON_SERVER
     }
 }
-
-const val useGradleInternalScansServer = "-I gradle/init-scripts/build-scan-gradle-internal-server.init.gradle.kts"

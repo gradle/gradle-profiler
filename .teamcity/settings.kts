@@ -33,4 +33,8 @@ project {
     buildType(LinuxJava18)
 
     buildType(GradleProfilerPublishing)
+
+    params {
+        param("env.GRADLE_ENTERPRISE_ACCESS_KEY", "%ge.gradle.org.access.key%")
+    }
 }
