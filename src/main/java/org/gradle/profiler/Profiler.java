@@ -15,19 +15,8 @@
  */
 package org.gradle.profiler;
 
-import joptsimple.OptionParser;
-import joptsimple.OptionSet;
-import org.gradle.profiler.asyncprofiler.AsyncProfiler;
-import org.gradle.profiler.buildscan.BuildScanProfiler;
-import org.gradle.profiler.chrometrace.ChromeTraceProfiler;
-import org.gradle.profiler.jfr.JfrProfiler;
-import org.gradle.profiler.jprofiler.JProfilerProfiler;
-import org.gradle.profiler.yourkit.YourKitProfiler;
-
 import java.io.File;
-import java.util.*;
 import java.util.function.Consumer;
-import java.util.stream.Collectors;
 
 public class Profiler {
 
@@ -37,17 +26,6 @@ public class Profiler {
             return "none";
         }
     };
-
-    private final static Map<String, Profiler> AVAILABLE_PROFILERS = Collections.unmodifiableMap(
-            new LinkedHashMap<String, Profiler>() {{
-                put("buildscan", new BuildScanProfiler());
-                put("jfr", new JfrProfiler());
-                put("jprofiler", new JProfilerProfiler());
-                put("yourkit", new YourKitProfiler());
-                put("async-profiler", new AsyncProfiler());
-                put("chrome-trace", new ChromeTraceProfiler());
-            }}
-    );
 
     public void validate(ScenarioSettings settings, Consumer<String> reporter) {
     }
@@ -84,42 +62,9 @@ public class Profiler {
         return GradleArgsCalculator.DEFAULT;
     }
 
-    public Profiler withConfig(OptionSet parsedOptions) {
-        return this;
-    }
-
-    public void addOptions(OptionParser parser) {
-    }
-
     /**
      * Describe the given file, if recognized and should be reported to the user.
      */
     public void summarizeResultFile(File resultFile, Consumer<String> consumer) {
-    }
-
-    public static Set<String> getAvailableProfilers() {
-        return AVAILABLE_PROFILERS.keySet();
-    }
-
-    static void configureParser(OptionParser parser) {
-        for (Profiler profiler : AVAILABLE_PROFILERS.values()) {
-            profiler.addOptions(parser);
-        }
-    }
-
-    private static Profiler of(String name) {
-        Profiler profiler = AVAILABLE_PROFILERS.get(name.toLowerCase());
-        if (profiler == null) {
-            throw new IllegalArgumentException("Unknown profiler : " + name);
-        }
-        return profiler;
-    }
-
-    public static Profiler of(List<String> profilersList) {
-        if (profilersList.size() == 1) {
-            String first = profilersList.get(0);
-            return of(first);
-        }
-        return new CompositeProfiler(profilersList.stream().map(Profiler::of).collect(Collectors.toList()));
     }
 }
