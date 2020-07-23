@@ -13,6 +13,19 @@ Profiling information can be captured using several different tools:
 
 ## Installing
 
+### SDKMAN!
+
+[SDKMAN!](http://sdkman.io/) is a tool for managing parallel versions of multiple Software Development Kits on most Unix-based systems.
+
+    > sdk install gradleprofiler
+    > gradle-profiler --benchmark help
+
+### Download binaries
+
+Binaries are available and linked from the [releases](https://github.com/gradle/gradle-profiler/releases) page.
+
+### Build from source
+
 First, build and install the `gradle-profiler` app using:
 
     > ./gradlew installDist
