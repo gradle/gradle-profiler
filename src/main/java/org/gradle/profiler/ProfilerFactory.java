@@ -8,7 +8,9 @@ import org.gradle.profiler.buildscan.BuildScanProfilerFactory;
 import org.gradle.profiler.chrometrace.ChromeTraceProfilerFactory;
 import org.gradle.profiler.jfr.JfrProfilerFactory;
 import org.gradle.profiler.jprofiler.JProfilerProfilerFactory;
-import org.gradle.profiler.yourkit.YourKitProfilerFactory;
+import org.gradle.profiler.yourkit.YourKitHeapAllocationProfilerFactory;
+import org.gradle.profiler.yourkit.YourKitSamplingProfilerFactory;
+import org.gradle.profiler.yourkit.YourKitTracingProfilerFactory;
 
 import java.util.*;
 import java.util.stream.Collectors;
@@ -29,7 +31,9 @@ public abstract class ProfilerFactory {
             put("buildscan", new BuildScanProfilerFactory());
             put("jfr", new JfrProfilerFactory());
             put("jprofiler", new JProfilerProfilerFactory());
-            put("yourkit", new YourKitProfilerFactory());
+            put("yourkit", new YourKitSamplingProfilerFactory());
+            put("yourkit-tracing", new YourKitTracingProfilerFactory());
+            put("yourkit-heap", new YourKitHeapAllocationProfilerFactory());
             put("async-profiler", AsyncProfilerFactory.INSTANCE);
             put("async-profiler-heap", AsyncProfilerHeapAllocationProfilerFactory.INSTANCE);
             put("chrome-trace", new ChromeTraceProfilerFactory());
