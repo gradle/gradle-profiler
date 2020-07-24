@@ -34,7 +34,7 @@ public class DefaultGradleBuildConfigurationReader implements GradleBuildConfigu
         this.projectDir = projectDir;
         this.gradleUserHome = gradleUserHome;
         this.daemonControl = daemonControl;
-        initScript = File.createTempFile("gradle-profiler", ".gradle");
+        initScript = File.createTempFile("gradle-profiler", ".gradle").getCanonicalFile();
         initScript.deleteOnExit();
         buildDetails = File.createTempFile("gradle-profiler", "build-details");
         buildDetails.deleteOnExit();
