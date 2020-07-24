@@ -14,7 +14,6 @@ object GradleProfilerPublishing : BuildType({
         java8Home(Os.linux)
         text("ARTIFACTORY_USERNAME", "bot-build-tool", allowEmpty = true)
         password("ARTIFACTORY_PASSWORD", "credentialsJSON:d94612fb-3291-41f5-b043-e2b3994aeeb4", display = ParameterDisplay.HIDDEN)
-        gradleEnterpriseAccessKey()
     }
 
     steps {

@@ -9,10 +9,6 @@ fun BuildType.agentRequirement(os: Os) {
     }
 }
 
-fun ParametrizedWithType.gradleEnterpriseAccessKey() {
-    param("env.GRADLE_ENTERPRISE_ACCESS_KEY", "%ge.gradle.org.access.key%")
-}
-
 fun ParametrizedWithType.java8Home(os: Os) {
     param("env.JAVA_HOME", "%${os.name}.java8.oracle.64bit%")
 }

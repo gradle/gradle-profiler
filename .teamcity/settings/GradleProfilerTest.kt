@@ -9,7 +9,6 @@ open class GradleProfilerTest(os: Os) : BuildType({
 
     params {
         java8Home(os)
-        gradleEnterpriseAccessKey()
     }
 
     steps {
