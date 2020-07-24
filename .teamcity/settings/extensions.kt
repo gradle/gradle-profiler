@@ -9,6 +9,10 @@ fun BuildType.agentRequirement(os: Os) {
     }
 }
 
+fun buildCacheConfigurations() = listOf("-Dgradle.cache.remote.push=true",
+    "-Dgradle.cache.remote.username=%gradle.cache.remote.username%",
+    "-Dgradle.cache.remote.password=%gradle.cache.remote.password%").joinToString(" ")
+
 fun ParametrizedWithType.java8Home(os: Os) {
     param("env.JAVA_HOME", "%${os.name}.java8.oracle.64bit%")
 }
