@@ -8,14 +8,7 @@ import com.typesafe.config.ConfigParseOptions;
 import org.gradle.profiler.mutations.*;
 
 import java.io.File;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.LinkedHashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.TreeSet;
+import java.util.*;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
@@ -212,6 +205,7 @@ class ScenarioLoader {
             BuildMutatorFactory buildMutatorFactory = new BuildMutatorFactory(mutators);
 
             int buildCount = getBuildCount(settings, scenario);
+            File scenarioBaseDir = new File(settings.getOutputDir(), GradleScenarioDefinition.safeFileName(scenarioName));
 
             if (scenario.hasPath(BAZEL) && settings.isBazel()) {
                 if (settings.isProfile()) {
@@ -224,7 +218,7 @@ class ScenarioLoader {
                     }
                 }
                 List<String> targets = ConfigUtil.strings(executionInstructions, TARGETS);
-                File outputDir = new File(settings.getOutputDir(), scenarioName + "-bazel");
+                File outputDir = new File(scenarioBaseDir, "bazel");
                 int warmUpCount = getWarmUpCount(settings, scenario);
                 definitions.add(new BazelScenarioDefinition(scenarioName, title, targets, buildMutatorFactory, warmUpCount, buildCount, outputDir));
             } else if (scenario.hasPath(BUCK) && settings.isBuck()) {
@@ -239,7 +233,7 @@ class ScenarioLoader {
                 }
                 List<String> targets = ConfigUtil.strings(executionInstructions, TARGETS);
                 String type = ConfigUtil.string(executionInstructions, TYPE, null);
-                File outputDir = new File(settings.getOutputDir(), scenarioName + "-buck");
+                File outputDir = new File(scenarioBaseDir, "buck");
                 int warmUpCount = getWarmUpCount(settings, scenario);
                 definitions.add(new BuckScenarioDefinition(scenarioName, title, targets, type, buildMutatorFactory, warmUpCount, buildCount, outputDir));
             } else if (scenario.hasPath(MAVEN) && settings.isMaven()) {
@@ -253,7 +247,7 @@ class ScenarioLoader {
                     }
                 }
                 List<String> targets = ConfigUtil.strings(executionInstructions, TARGETS);
-                File outputDir = new File(settings.getOutputDir(), scenarioName + "-maven");
+                File outputDir = new File(scenarioBaseDir, "maven");
                 int warmUpCount = getWarmUpCount(settings, scenario);
                 definitions.add(new MavenScenarioDefinition(scenarioName, title, targets, buildMutatorFactory, warmUpCount, buildCount, outputDir));
             } else if (!settings.isBazel() && !settings.isBuck() && !settings.isMaven()) {
@@ -272,7 +266,7 @@ class ScenarioLoader {
                 Map<String, String> systemProperties = ConfigUtil.map(scenario, SYSTEM_PROPERTIES, settings.getSystemProperties());
                 List<String> jvmArgs = ConfigUtil.strings(scenario, JVM_ARGS);
                 for (GradleBuildConfiguration version : versions) {
-                    File outputDir = versions.size() == 1 ? new File(settings.getOutputDir(), scenarioName) : new File(settings.getOutputDir(), scenarioName + "/" + version.getGradleVersion().getVersion());
+                    File outputDir = versions.size() == 1 ? scenarioBaseDir : new File(scenarioBaseDir, version.getGradleVersion().getVersion());
                     definitions.add(new GradleScenarioDefinition(
                         scenarioName,
                         title,
