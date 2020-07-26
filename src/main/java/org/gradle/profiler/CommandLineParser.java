@@ -1,10 +1,6 @@
 package org.gradle.profiler;
 
-import joptsimple.ArgumentAcceptingOptionSpec;
-import joptsimple.OptionException;
-import joptsimple.OptionParser;
-import joptsimple.OptionSet;
-import joptsimple.OptionSpecBuilder;
+import joptsimple.*;
 import org.gradle.profiler.report.CsvGenerator;
 import org.gradle.profiler.report.CsvGenerator.Format;
 
@@ -41,10 +37,10 @@ class CommandLineParser {
         ArgumentAcceptingOptionSpec<Integer> warmupsOption = parser.accepts("warmups", "Number of warm-up build to run for each scenario").withRequiredArg().ofType(Integer.class);
         ArgumentAcceptingOptionSpec<Integer> iterationsOption = parser.accepts("iterations", "Number of builds to run for each scenario").withRequiredArg().ofType(Integer.class);
         ArgumentAcceptingOptionSpec<String> profilerOption = parser.accepts("profile",
-            "Collect profiling information using profiler (" + String.join(", ", Profiler.getAvailableProfilers()) + ")")
+            "Collect profiling information using profiler (" + String.join(", ", ProfilerFactory.getAvailableProfilers()) + ")")
             .withRequiredArg()
             .defaultsTo("jfr");
-        Profiler.configureParser(parser);
+        ProfilerFactory.configureParser(parser);
         OptionSpecBuilder benchmarkOption = parser.accepts("benchmark", "Collect benchmark metrics");
         ArgumentAcceptingOptionSpec<String> benchmarkBuildOperation = parser.accepts(
             "measure-build-op",
@@ -72,12 +68,12 @@ class CommandLineParser {
 
         File projectDir = parsedOptions.valueOf(projectOption);
         boolean hasProfiler = parsedOptions.has(profilerOption);
-        Profiler profiler = Profiler.NONE;
+        ProfilerFactory profilerFactory = ProfilerFactory.NONE;
         if (hasProfiler) {
             List<String> profilersList = parsedOptions.valuesOf(profilerOption);
-            profiler = Profiler.of(profilersList);
+            profilerFactory = ProfilerFactory.of(profilersList);
         }
-        profiler = profiler.withConfig(parsedOptions);
+        Profiler profiler = profilerFactory.createFromOptions(parsedOptions);
         boolean benchmark = parsedOptions.has(benchmarkOption);
         if (!benchmark && !hasProfiler) {
             return fail(parser, "Neither --profile or --benchmark specified.");

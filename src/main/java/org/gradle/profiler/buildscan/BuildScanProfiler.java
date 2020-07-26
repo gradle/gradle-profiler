@@ -1,12 +1,6 @@
 package org.gradle.profiler.buildscan;
 
-import joptsimple.OptionParser;
-import joptsimple.OptionSet;
-import org.gradle.profiler.GeneratedInitScript;
-import org.gradle.profiler.GradleArgsCalculator;
-import org.gradle.profiler.GradleBuildConfiguration;
-import org.gradle.profiler.Profiler;
-import org.gradle.profiler.ScenarioSettings;
+import org.gradle.profiler.*;
 import org.gradle.util.GradleVersion;
 
 import java.io.File;
@@ -34,11 +28,7 @@ public class BuildScanProfiler extends Profiler {
 
     private final String buildScanVersion;
 
-    public BuildScanProfiler() {
-        this(null);
-    }
-
-    private BuildScanProfiler(String buildScanVersion) {
+    BuildScanProfiler(String buildScanVersion) {
         this.buildScanVersion = buildScanVersion;
     }
 
@@ -128,17 +118,5 @@ public class BuildScanProfiler extends Profiler {
 
     private String getEffectiveBuildScanVersion(GradleBuildConfiguration buildConfiguration) {
         return buildScanVersion != null ? buildScanVersion : defaultBuildScanVersion(buildConfiguration.getGradleVersion());
-    }
-
-    @Override
-    public Profiler withConfig(OptionSet parsedOptions) {
-        return new BuildScanProfiler((String) parsedOptions.valueOf("buildscan-version"));
-    }
-
-    @Override
-    public void addOptions(final OptionParser parser) {
-        parser.accepts("buildscan-version", "Version of the Build Scan plugin")
-            .availableIf("profile")
-            .withOptionalArg();
     }
 }

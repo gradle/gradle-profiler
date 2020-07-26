@@ -56,7 +56,11 @@ public class GradleScenarioDefinition extends ScenarioDefinition {
 
     @Override
     public String getProfileName() {
-        return getName() + "-" + buildConfiguration.getGradleVersion().getVersion();
+        return safeFileName(getName()) + "-" + buildConfiguration.getGradleVersion().getVersion();
+    }
+
+    public static String safeFileName(String name) {
+        return name.replace("/", "-");
     }
 
     @Override

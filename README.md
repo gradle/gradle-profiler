@@ -89,8 +89,11 @@ In order to create a build scan of your build, use `--profile buildscan`. The bu
 Async profiler provides low-overhead CPU, allocation and perf event sampling on Linux and MacOS. 
 It also correctly handles native method calls, making it preferable to JFR on these operating systems. 
 
-You can use async profiler to profile a Gradle build using `--profile async-profiler`.
-By default, this will download an Async profiler release from [Github](https://github.com/jvm-profiling-tools/async-profiler/releases) and install it, if not already available.
+You can use async profiler to profile a Gradle build using `--profile async-profiler`. By default, this will profile CPU usage, with some reasonable default settings. These settings can be configured using various command-line options, listed below.
+
+Alternatively, you can also use `--profile async-profiler-heap` to profile heap allocations, with some reasonable default settings.
+
+By default, an Async profiler release will be downloaded from [Github](https://github.com/jvm-profiling-tools/async-profiler/releases) and installed, if not already available.
 
 The output are flame and icicle graphs which show you the call tree and hotspots of your code.
 
@@ -131,11 +134,10 @@ YourKit is a powerful commercial profiler, which provides both sampling and inst
 Its integration in the Gradle profiler is currently limited, e.g. support for probes and other custom settings
 is missing. If you are using YourKit and would like to see better support, pull requests are welcome.
 
-In order to work with YourKit, make sure the `YOURKIT_HOME` environment variable is set and then use the `--profile yourkit` option.
+In order to work with YourKit, make sure the `YOURKIT_HOME` environment variable is set and then use the `--profile yourkit` option. This will use YourKit's CPU sampling instrumentation by default. 
 
-This will use YourKit's CPU instrumentation by default. 
-You can switch to CPU sampling by adding the `--yourkit-sampling` option. 
-You can switch to memory allocation profiling by adding the `--yourkit-memory` option. 
+You can switch to CPU tracing using the `--profile yourkit-tracing` option. 
+You can switch to memory allocation profiling by using the `--profile yourkit-memory` option. 
 All probes are disabled when using sampling or memory allocation profiling.
 
 ### Java Flight Recorder
@@ -263,6 +265,7 @@ A scenario can define changes that should be applied to the source before each b
 - `clear-instant-execution-state-before`: Deletes the contents of the `.instant-execution-state` directory before the scenario is executed (`SCENARIO`), before cleanup (`CLEANUP`) or before the build is executed (`BUILD`).
 - `clear-project-cache-before`: Deletes the contents of the `.gradle` and `buildSrc/.gradle` project cache directories before the scenario is executed (`SCENARIO`), before cleanup (`CLEANUP`) or before the build is executed (`BUILD`).
 - `clear-transform-cache-before`: Deletes the contents of the transform cache before the scenario is executed (`SCENARIO`), before cleanup (`CLEANUP`) or before the build is executed (`BUILD`).
+- `clear-jars-cache-before`: Deletes the contents of the instrumented jars cache before the scenario is executed (`SCENARIO`), before cleanup (`CLEANUP`) or before the build is executed (`BUILD`).
 - `git-checkout`: Checks out a specific commit for the build step, and a different one for the cleanup step.
 - `git-revert`: Reverts a given set of commits before the build and resets it afterward.
 - `iterations`: Number of builds to actually measure
