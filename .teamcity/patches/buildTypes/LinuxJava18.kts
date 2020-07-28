@@ -13,6 +13,12 @@ To apply the patch, change the buildType with id = 'LinuxJava18'
 accordingly, and delete the patch script.
 */
 changeBuildType(RelativeId("LinuxJava18")) {
+    params {
+        add {
+            param("fakeCredentialsConfigParam", "obviouslyNotCredentialValue")
+        }
+    }
+
     failureConditions {
         add {
             failOnText {
