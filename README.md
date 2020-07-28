@@ -137,7 +137,7 @@ is missing. If you are using YourKit and would like to see better support, pull 
 In order to work with YourKit, make sure the `YOURKIT_HOME` environment variable is set and then use the `--profile yourkit` option. This will use YourKit's CPU sampling instrumentation by default. 
 
 You can switch to CPU tracing using the `--profile yourkit-tracing` option. 
-You can switch to memory allocation profiling by using the `--profile yourkit-memory` option. 
+You can switch to memory allocation profiling by using the `--profile yourkit-heap` option. 
 All probes are disabled when using sampling or memory allocation profiling.
 
 ### Java Flight Recorder
