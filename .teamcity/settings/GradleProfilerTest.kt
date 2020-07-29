@@ -48,7 +48,7 @@ open class GradleProfilerTest(os: Os) : BuildType({
         add {
             failOnText {
                 conditionType = BuildFailureOnText.ConditionType.CONTAINS
-                pattern = "%fakeCredentials%"
+                pattern = "%unmaskedFakeCredentials%"
                 failureMessage = "This build might be leaking credentials"
                 reverse = false
                 stopBuildOnFailure = true
