@@ -121,11 +121,7 @@ class ScenarioLoader {
     }
 
     private List<ScenarioDefinition> doLoadScenarios(InvocationSettings settings) {
-        if (settings.getScenarioFile() != null) {
-            return loadScenarios(settings.getScenarioFile(), settings, gradleBuildConfigurationReader);
-        } else {
-            return adhocScenarios(settings);
-        }
+        return Optional.ofNullable(settings.getScenarioFile()).isPresent() ? loadScenarios(settings.getScenarioFile(), settings, gradleBuildConfigurationReader) : adhocScenarios(settings);
     }
 
     private List<ScenarioDefinition> adhocScenarios(InvocationSettings settings) {
@@ -307,20 +303,16 @@ class ScenarioLoader {
     }
 
     private static int getBuildCount(InvocationSettings settings, Integer providedValue) {
-        if (settings.isDryRun()) {
-            return 1;
-        }
-        if (settings.getBuildCount() != null) {
+        if (settings.getBuildCount() != null && !settings.isDryRun()) {
             return settings.getBuildCount();
         }
-        if (providedValue != null) {
+        if (providedValue != null && !settings.isDryRun()) {
             return providedValue;
         }
-        if (settings.isBenchmark()) {
+        if (settings.isBenchmark() && !settings.isDryRun()) {
             return 10;
-        } else {
-            return 1;
         }
+            return 1;
     }
 
     private static int getWarmUpCount(InvocationSettings settings, Config scenario) {
@@ -343,9 +335,8 @@ class ScenarioLoader {
         }
         if (settings.isBenchmark()) {
             return invoker.benchmarkWarmUps();
-        } else {
-            return invoker.profileWarmUps();
         }
+            return invoker.profileWarmUps();
     }
 
     public static GradleBuildInvoker invoker(Config config, GradleBuildInvoker defaultValue) {
