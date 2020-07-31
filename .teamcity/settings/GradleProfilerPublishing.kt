@@ -6,7 +6,7 @@ object GradleProfilerPublishing : BuildType({
     name = "Gradle profiler Publishing"
     description = "Publish Gradle profiler Gradle's Artifactory repository"
 
-    artifactRules = "build/reports/** => reports"
+    artifactRules = "build/reports/** => .teamcity/reports"
 
     gradleProfilerVcs()
 
