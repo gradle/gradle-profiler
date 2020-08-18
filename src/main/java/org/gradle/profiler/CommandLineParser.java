@@ -12,6 +12,8 @@ import java.util.Map;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import static java.util.Arrays.asList;
+
 class CommandLineParser {
     public static class SettingsNotAvailableException extends RuntimeException {
     }
@@ -58,6 +60,8 @@ class CommandLineParser {
             "The CSV format produced (" + Stream.of(Format.values()).map(Format::toString).collect(Collectors.joining(", ")) + ")")
             .withRequiredArg()
             .defaultsTo("wide");
+        parser.acceptsAll(asList("h", "help")).forHelp();
+
 
         OptionSet parsedOptions;
         try {
