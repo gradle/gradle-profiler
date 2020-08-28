@@ -23,7 +23,7 @@ public class DefaultScenarioContext implements ScenarioContext {
 
     @Override
     public BuildContext withBuild(Phase phase, int count) {
-        return new DefaultBuildContext(invocationId, scenarioName, phase, count);
+        return new DefaultBuildContext(this, phase, count);
     }
 
     /**
