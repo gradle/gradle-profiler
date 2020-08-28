@@ -1,5 +1,7 @@
 package org.gradle.profiler;
 
+import java.io.File;
+
 public class DefaultBuildContext implements BuildContext {
     private final ScenarioContext scenarioContext;
     private final Phase phase;
@@ -14,6 +16,11 @@ public class DefaultBuildContext implements BuildContext {
     @Override
     public String getUniqueScenarioId() {
         return scenarioContext.getUniqueScenarioId();
+    }
+
+    @Override
+    public File getProjectDir() {
+        return scenarioContext.getProjectDir();
     }
 
     @Override
