@@ -1,30 +1,11 @@
 package org.gradle.profiler;
 
-import java.util.UUID;
+public interface BuildContext extends ScenarioContext {
+    String getUniqueBuildId();
 
-public class BuildContext extends ScenarioContext {
-    private final Phase phase;
-    private final int iteration;
+    Phase getPhase();
 
-    protected BuildContext(UUID invocationId, String scenarioName, Phase phase, int iteration) {
-        super(invocationId, scenarioName);
-        this.phase = phase;
-        this.iteration = iteration;
-    }
+    int getIteration();
 
-    public String getUniqueBuildId() {
-        return String.format("%s_%s_%d", getUniqueScenarioId(), phase.name(), iteration);
-    }
-
-    public Phase getPhase() {
-        return phase;
-    }
-
-    public int getIteration() {
-        return iteration;
-    }
-
-    public String getDisplayName() {
-        return phase.displayBuildNumber(iteration);
-    }
+    String getDisplayName();
 }
