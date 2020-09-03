@@ -262,7 +262,7 @@ A scenario can define changes that should be applied to the source before each b
 - `clear-gradle-user-home-before`: Deletes the contents of the Gradle user home directory before the scenario is executed (`SCENARIO`), before cleanup (`CLEANUP`) or before the build is executed (`BUILD`).
    The mutator retains the `wrapper` cache in the Gradle user home, since the downloaded wrapper in that location is used to run Gradle.
    Requires to use the `none` daemon option to use with `CLEANUP` or `BUILD`.
-- `clear-instant-execution-state-before`: Deletes the contents of the `.instant-execution-state` directory before the scenario is executed (`SCENARIO`), before cleanup (`CLEANUP`) or before the build is executed (`BUILD`).
+- `clear-configuration-cache-state-before`: Deletes the contents of the `.gradle/configuration-cache-state` directory before the scenario is executed (`SCENARIO`), before cleanup (`CLEANUP`) or before the build is executed (`BUILD`).
 - `clear-project-cache-before`: Deletes the contents of the `.gradle` and `buildSrc/.gradle` project cache directories before the scenario is executed (`SCENARIO`), before cleanup (`CLEANUP`) or before the build is executed (`BUILD`).
 - `clear-transform-cache-before`: Deletes the contents of the transform cache before the scenario is executed (`SCENARIO`), before cleanup (`CLEANUP`) or before the build is executed (`BUILD`).
 - `clear-jars-cache-before`: Deletes the contents of the instrumented jars cache before the scenario is executed (`SCENARIO`), before cleanup (`CLEANUP`) or before the build is executed (`BUILD`).
