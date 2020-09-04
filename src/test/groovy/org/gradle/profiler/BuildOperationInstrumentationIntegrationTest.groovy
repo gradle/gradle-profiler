@@ -2,7 +2,9 @@ package org.gradle.profiler
 
 import spock.lang.Unroll
 
-import static org.hamcrest.CoreMatchers.*
+import static org.hamcrest.CoreMatchers.equalTo
+import static org.hamcrest.CoreMatchers.hasItem
+import static org.hamcrest.CoreMatchers.not
 import static org.junit.Assert.assertThat
 import static org.junit.Assert.assertTrue
 
@@ -24,7 +26,7 @@ class BuildOperationInstrumentationIntegrationTest extends AbstractProfilerInteg
         ]
         if (configurationCache) {
             file("gradle.properties") << """
-                org.gradle.unsafe.configuration-cache=on
+                org.gradle.unsafe.configuration-cache=true
             """
         }
 
@@ -83,7 +85,7 @@ class BuildOperationInstrumentationIntegrationTest extends AbstractProfilerInteg
         args += commandLine
         if (configurationCache) {
             file("gradle.properties") << """
-                org.gradle.unsafe.configuration-cache=on
+                org.gradle.unsafe.configuration-cache=true
             """
         }
         args += scenarioConfiguration ? "default" : "assemble"
@@ -158,7 +160,7 @@ class BuildOperationInstrumentationIntegrationTest extends AbstractProfilerInteg
         ]
         if (configurationCache) {
             file("gradle.properties") << """
-                org.gradle.unsafe.configuration-cache=on
+                org.gradle.unsafe.configuration-cache=true
             """
         }
 
