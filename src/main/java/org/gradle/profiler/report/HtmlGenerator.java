@@ -150,9 +150,11 @@ public class HtmlGenerator extends AbstractGenerator {
             writer.write(" ");
             writer.write(scenario.getScenarioDefinition().getBuildToolDisplayName());
             writer.write("',\n");
-            writer.write("            showLine: false,\n");
+            writer.write("            showLine: true,\n");
+            writer.write("            steppedLine: true,\n");
+            writer.write("            pointRadius: 0,\n");
             writer.write("            fill: false,\n");
-            writer.write("            borderWidth: 2,\n");
+            writer.write("            borderWidth: 3,\n");
             writer.write("            borderColor: '");
             writer.write(generator.nextColor());
             writer.write("',\n");
