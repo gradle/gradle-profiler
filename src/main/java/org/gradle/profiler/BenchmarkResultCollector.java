@@ -1,6 +1,7 @@
 package org.gradle.profiler;
 
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableMap;
 import org.apache.commons.math3.stat.descriptive.DescriptiveStatistics;
 import org.apache.commons.math3.stat.inference.MannWhitneyUTest;
 import org.gradle.profiler.report.AbstractGenerator;
@@ -14,6 +15,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.function.Consumer;
 
@@ -70,7 +72,7 @@ public class BenchmarkResultCollector {
         private final BuildScenarioResult<T> baseline;
         private final List<Sample<? super T>> samples;
         private final List<T> results = new ArrayList<>();
-        private List<StatisticsImpl> statistics;
+        private Map<Sample<? super T>, StatisticsImpl> statistics;
 
         BuildScenario(ScenarioDefinition scenario, BuildScenarioResult<T> baseline, List<Sample<? super T>> samples) {
             this.scenario = scenario;
@@ -113,25 +115,24 @@ public class BenchmarkResultCollector {
         }
 
         @Override
-        public List<? extends Statistics> getStatistics() {
+        public Map<Sample<? super T>, ? extends Statistics> getStatistics() {
             if (statistics == null) {
-                ImmutableList.Builder<StatisticsImpl> builder = ImmutableList.builderWithExpectedSize(samples.size());
-                for (int i = 0; i < samples.size(); i++) {
-                    double confidencePercent = getConfidencePercent(i);
-                    builder.add(new StatisticsImpl(new DescriptiveStatistics(), confidencePercent));
+                ImmutableMap.Builder<Sample<? super T>, StatisticsImpl> builder = ImmutableMap.builderWithExpectedSize(samples.size());
+                for (Sample<? super T> sample : samples) {
+                    double confidencePercent = getConfidencePercent(sample);
+                    builder.put(sample, new StatisticsImpl(new DescriptiveStatistics(), confidencePercent));
                 }
                 statistics = builder.build();
                 for (T result : getMeasuredResults()) {
-                    for (int i = 0; i < getSamples().size(); i++) {
-                        Sample<? super T> sample = getSamples().get(i);
-                        statistics.get(i).statistics.addValue(sample.extractFrom(result).toMillis());
+                    for (Sample<? super T> sample : samples) {
+                        statistics.get(sample).statistics.addValue(sample.extractFrom(result).toMillis());
                     }
                 }
             }
             return statistics;
         }
 
-        private double getConfidencePercent(int sample) {
+        private double getConfidencePercent(Sample<? super T> sample) {
             if (!getBaseline().isPresent()) {
                 return 0;
             }
@@ -143,11 +144,11 @@ public class BenchmarkResultCollector {
             return (1 - new MannWhitneyUTest().mannWhitneyUTest(a, b)) * 100;
         }
 
-        private double[] toArray(List<T> results, int sample) {
+        private double[] toArray(List<T> results, Sample<? super T> sample) {
             double[] values = new double[results.size()];
             for (int i = 0; i < results.size(); i++) {
                 T buildInvocationResult = results.get(i);
-                values[i] = getSamples().get(sample).extractFrom(buildInvocationResult).toMillis();
+                values[i] = sample.extractFrom(buildInvocationResult).toMillis();
             }
             return values;
         }

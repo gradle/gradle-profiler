@@ -77,7 +77,10 @@ public class CsvGenerator extends AbstractGenerator {
 
         writer.write("value");
         for (BuildScenarioResult<?> scenario : allScenarios) {
-            writeSamples(writer, scenario);
+            for (Sample<?> sample : scenario.getSamples()) {
+                writer.write(",");
+                writer.write(sample.getName());
+            }
         }
         writer.newLine();
 
@@ -98,7 +101,7 @@ public class CsvGenerator extends AbstractGenerator {
             writer.newLine();
         }
 
-        List<BuildScenarioResult.Statistics> statistics = allScenarios.stream().flatMap(s -> s.getStatistics().stream()).collect(Collectors.toList());
+        List<BuildScenarioResult.Statistics> statistics = allScenarios.stream().flatMap(s -> s.getStatistics().values().stream()).collect(Collectors.toList());
         statistic(writer, "mean", statistics, BuildScenarioResult.Statistics::getMean);
         statistic(writer, "min", statistics, BuildScenarioResult.Statistics::getMin);
         statistic(writer, "25th percentile", statistics, v -> v.getPercentile(25));
@@ -116,21 +119,12 @@ public class CsvGenerator extends AbstractGenerator {
             return;
         }
         T buildResult = results.get(row);
-        for (int i = 0; i < scenario.getSamples().size(); i++) {
-            Sample<? super T> sample = scenario.getSamples().get(i);
-            Duration duration = sample.extractFrom(buildResult);
-            if (i > 0) {
-                writer.write(",");
-            }
-            writer.write(String.valueOf(duration.toMillis()));
-        }
-    }
-
-    private <T extends BuildInvocationResult> void writeSamples(BufferedWriter writer, BuildScenarioResult<T> scenario) throws IOException {
-        for (Sample<? super T> sample : scenario.getSamples()) {
-            writer.write(",");
-            writer.write(sample.getName());
-        }
+        writer.write(scenario.getSamples().stream()
+            .map(sample -> sample.extractFrom(buildResult))
+            .map(Duration::toMillis)
+            .map(Object::toString)
+            .collect(Collectors.joining(","))
+        );
     }
 
     private void writeLong(BufferedWriter writer, List<? extends BuildScenarioResult<?>> allScenarios) throws IOException {

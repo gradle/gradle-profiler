@@ -5,6 +5,7 @@ import org.gradle.profiler.result.BuildInvocationResult;
 import org.gradle.profiler.result.Sample;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 public interface BuildScenarioResult<T extends BuildInvocationResult> {
@@ -23,7 +24,7 @@ public interface BuildScenarioResult<T extends BuildInvocationResult> {
     /**
      * Returns all results, including warm-up builds.
      */
-    List< T> getResults();
+    List<T> getResults();
 
     /**
      * Returns the measured results.
@@ -33,7 +34,7 @@ public interface BuildScenarioResult<T extends BuildInvocationResult> {
     /**
      * Returns some statistics of each sample.
      */
-    List<? extends Statistics> getStatistics();
+    Map<Sample<? super T>, ? extends Statistics> getStatistics();
 
     interface Statistics {
         double getMin();

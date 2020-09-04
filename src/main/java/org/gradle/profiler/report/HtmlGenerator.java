@@ -10,6 +10,7 @@ import java.text.DecimalFormat;
 import java.text.NumberFormat;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
 import java.util.function.Function;
 
 public class HtmlGenerator extends AbstractGenerator {
@@ -204,21 +205,28 @@ public class HtmlGenerator extends AbstractGenerator {
         writer.newLine();
     }
 
-    private <T extends BuildInvocationResult> void writeScenarioTable(BufferedWriter writer, Function<BuildScenarioResult.Statistics, Double> value, boolean time, BuildScenarioResult<T> scenario) throws IOException {
-        for (int i = 0; i < scenario.getStatistics().size(); i++) {
-            BuildScenarioResult.Statistics statistics = scenario.getStatistics().get(i);
+    private <T extends BuildInvocationResult> void writeScenarioTable(BufferedWriter writer, Function<BuildScenarioResult.Statistics, Double> extractor, boolean time, BuildScenarioResult<T> scenario) throws IOException {
+        for (Map.Entry<Sample<? super T>, ? extends BuildScenarioResult.Statistics> entry : scenario.getStatistics().entrySet()) {
+            Sample<? super T> sample = entry.getKey();
+            BuildScenarioResult.Statistics statistics = entry.getValue();
+
             writer.write("<td class='numeric summary'>");
-            double stat = value.apply(statistics);
+            double stat = extractor.apply(statistics);
             writer.write(numberFormat.format(stat));
             if (time && scenario.getBaseline().isPresent()) {
-                List<? extends BuildScenarioResult.Statistics> baselineStats = scenario.getBaseline().get().getStatistics();
+                Map<Sample<? super T>, ? extends BuildScenarioResult.Statistics> baselineStats = scenario.getBaseline().get().getStatistics();
                 if (!baselineStats.isEmpty()) {
+                    BuildScenarioResult.Statistics baselineStatistics = baselineStats.get(sample);
                     writer.write("<br><span class='diff'>(");
-                    double baseLineStat = value.apply(baselineStats.get(i));
-                    double diff = stat - baseLineStat;
-                    writer.write(diffFormat.format(diff));
-                    writer.write(" ");
-                    writer.write(numberFormat.format((diff) / baseLineStat * 100));
+                    if (baselineStatistics != null) {
+                        double baseLineStat = extractor.apply(baselineStatistics);
+                        double diff = stat - baseLineStat;
+                        writer.write(diffFormat.format(diff));
+                        writer.write(" ");
+                        writer.write(numberFormat.format((diff) / baseLineStat * 100));
+                    } else {
+                        writer.write("N/A");
+                    }
                     writer.write("%)</span>");
                 }
             }
