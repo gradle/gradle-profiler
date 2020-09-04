@@ -16,7 +16,7 @@ abstract class AbstractProfilerIntegrationTest extends Specification {
         "3.3", "3.4.1", "3.5",
         "4.0", "4.1", "4.2.1", "4.7",
         "5.2.1", "5.5.1", "5.6.3",
-        "6.0.1", "6.1", "6.6"
+        "6.0.1", "6.1", "6.6.1"
     ]
     @Shared
     String minimalSupportedGradleVersion = supportedGradleVersions.first()
