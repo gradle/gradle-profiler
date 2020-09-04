@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Benchmark Results</title>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css" integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
+    <style>
+        .diff { font-size: 9pt; color: #c0c0c0; }
+        .numeric { text-align: right; }
+        .summary { vertical-align: top; }
+        </style>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/handlebars.js/4.7.6/handlebars.min.js"></script>
+    <script src='https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.9.3/Chart.bundle.min.js'></script>
+    <script>
+const Phase = {
+    WARM_UP: "warm-up",
+    MEASURED: "measured"
+};
+
+let benchmarkResult = {
+    scenarios: [{
+        definition: {
+            id: "only-file-system-watching@1",
+            name: "only-file-system-watching",
+            title: "2 - Only File System Watching",
+            buildTool: "Gradle",
+            task: "assemble",
+            problems: []
+        },
+        samples: [
+            "execution",
+            "ResolveConfigurationDependenciesBuildOperationType",
+            "FingerprintTransformInputsOperation"
+        ],
+        iterations: [
+            {
+                id: "only-file-system-watching@1@1",
+                phase: Phase.WARM_UP,
+                iteration: 1,
+                title: "warm-up build #1",
+                results: {
+                    "execution": 1234.3,
+                    "ResolveConfigurationDependenciesBuildOperationType": 123.4,
+                    "FingerprintTransformInputsOperation": 132.2
+                }
+            },
+            {
+                id: "only-file-system-watching@1@2",
+                phase: Phase.WARM_UP,
+                iteration: 2,
+                title: "warm-up build #2",
+                results: {
+                    "execution": 1224.3,
+                    "ResolveConfigurationDependenciesBuildOperationType": 113.4,
+                    "FingerprintTransformInputsOperation": 142.2
+                }
+            },
+            {
+                id: "only-file-system-watching@1@3",
+                phase: Phase.MEASURED,
+                iteration: 1,
+                title: "measured build #1",
+                results: {
+                    "execution": 924.3,
+                    "ResolveConfigurationDependenciesBuildOperationType": 93.4,
+                    "FingerprintTransformInputsOperation": 92.2
+                }
+            },
+            {
+                id: "only-file-system-watching@1@4",
+                phase: Phase.MEASURED,
+                iteration: 2,
+                title: "measured build #2",
+                results: {
+                    "execution": 824.3,
+                    "ResolveConfigurationDependenciesBuildOperationType": 83.4,
+                    "FingerprintTransformInputsOperation": 82.2
+                }
+            },
+            {
+                id: "only-file-system-watching@1@4",
+                phase: Phase.MEASURED,
+                iteration: 3,
+                title: "measured build #3",
+                results: {
+                    "execution": 724.3,
+                    "ResolveConfigurationDependenciesBuildOperationType": 73.4,
+                    "FingerprintTransformInputsOperation": 72.2
+                }
+            },
+        ]
+    }]
+};
+    </script>
+    <script id="data-table" type="text/x-handlebars-template">
+    <div class='row mt-5'>
+        <div class='col'>
+            <table class='table table-sm table-hover'>
+                <thead>
+                    <tr><th>Scenario</th>
+<!--
+        List<? extends BuildScenarioResult<?>> allScenarios = benchmarkResult.getScenarios();
+        for (BuildScenarioResult<?> scenario : allScenarios) {
+            wxriter.write("<th colspan='" + scenario.getSamples().size() + "'>");
+            wxriter.write(scenario.getScenarioDefinition().getTitle());
+            wxriter.write("</th>");
+        }
+-->
+                    </tr>
+                    <tr><th>Version</th>
+<!--
+                    for (BuildScenarioResult<?> scenario : allScenarios) {
+                    wxriter.write("<th colspan='" + scenario.getSamples().size() + "'>");
+                        writer.write(scenario.getScenarioDefinition().getBuildToolDisplayName());
+                        wxriter.write("</th>");
+                    }
+-->
+                    </tr>
+                    <tr><th>Tasks</th>
+<!--
+                    for (BuildScenarioResult<?> scenario : allScenarios) {
+                    wxriter.write("<th colspan='" + scenario.getSamples().size() + "'>");
+                        writer.write(scenario.getScenarioDefinition().getTasksDisplayName());
+                        wxriter.write("</th>");
+                    }
+-->
+                    </tr>
+                    <tr><th>Sample</th>
+<!--
+                    for (BuildScenarioResult<?> scenario : allScenarios) {
+                    for (Sample<?> sample : scenario.getSamples()) {
+                    wxriter.write("<th>");
+                        writer.write(sample.getName());
+                        wxriter.write("</th>");
+                    }
+                    }
+-->
+                    </tr>
+                </thead>
+                <tbody>
+<!--
+        int maxRows = allScenarios.stream().mapToInt(v -> v.getResults().size()).max().orElse(0);
+        for (int row = 0; row < maxRows; row++) {
+            wxriter.write("<tr>");
+            for (BuildScenarioResult<?> scenario : allScenarios) {
+                List<? extends BuildInvocationResult> results = scenario.getResults();
+                if (row >= results.size()) {
+                    continue;
+                }
+                BuildInvocationResult buildResult = results.get(row);
+                wxriter.write("<td>");
+                    wxriter.write(buildResult.getBuildContext().getDisplayName());
+                    wxriter.write("</td>");
+                break;
+            }
+            for (BuildScenarioResult<?> scenario : allScenarios) {
+                writeRow(writer, scenario, row);
+            }
+            wxriter.write("</tr>\n");
+        }
+
+        statistic(writer, "mean", allScenarios, BuildScenarioResult.Statistics::getMean, true);
+        statistic(writer, "min", allScenarios, BuildScenarioResult.Statistics::getMin, true);
+        statistic(writer, "25th percentile", allScenarios, s -> s.getPercentile(25), true);
+        statistic(writer, "median", allScenarios, BuildScenarioResult.Statistics::getMedian, true);
+        statistic(writer, "75th percentile", allScenarios, s -> s.getPercentile(75), true);
+        statistic(writer, "max", allScenarios, BuildScenarioResult.Statistics::getMax, true);
+        statistic(writer, "stddev", allScenarios, BuildScenarioResult.Statistics::getStandardDeviation, false);
+        statistic(writer, "confidence", allScenarios, BuildScenarioResult.Statistics::getConfidencePercent, false);
+-->
+                </tbody>
+            </table>
+        </div>
+    </div>
+    </script>
+</head>
+<body>
+<div class='container mt-5 mb-5'>
+    <h1>Benchmark results</h1>
+
+    <div class='row mt-5'>
+        <div class='col ml-auto mr-auto'>
+            <canvas id='samples' width='900' height='400'></canvas>
+            </div>
+        </div>
+    </div>
+</div>
+<script>
+const COLORS = ["#527AB3", "#56ac76", "#f44336", "#d49c3e", "#211f2d"];
+class PaletteGenerator {
+    constructor(colors) {
+        this.colors = COLORS.slice();
+    }
+    nextColor() {
+        if (this.colors.length) {
+            return this.colors.shift();
+        } else {
+            return "#8B899A";
+        }
+    }
+};
+
+function convertScenarioToChart(scenario, color) {
+    return {
+        label: `${scenario.definition.title} ${scenario.definition.buildTool}`,
+        showLine: true,
+        steppedLine: "middle",
+        pointRadius: 5,
+        fill: false,
+        borderWidth: 3,
+        pointBackgroundColor: color,
+        borderColor: color,
+        data: scenario.iterations
+            .filter(iteration => iteration.phase == Phase.MEASURED)
+            .map(scenario => scenario.results.execution)
+    };
+}
+
+let ctx = document.getElementById('samples').getContext('2d');
+let maxIterations = Math.max(...(benchmarkResult.scenarios
+    .map(scenario => scenario.iterations
+        .filter(iteration => iteration.phase == Phase.MEASURED)
+        .length
+    )));
+let palette = new PaletteGenerator();
+let chart = new Chart(ctx, {
+    type: 'line',
+    data: {
+        labels: Array.from(Array(maxIterations), (_, i) => (i + 1).toString()),
+        datasets: benchmarkResult.scenarios.map(scenario => convertScenarioToChart(scenario, palette.nextColor()))
+    },
+    options: {
+        responsive: false,
+        scales: {
+            yAxes: [{
+                ticks: {
+                    min: 0
+                }
+            }]
+        }
+    }
+});
+</script>
+
+</body>
+</html>
