@@ -168,8 +168,17 @@ public class HtmlGenerator extends AbstractGenerator {
         }
         writer.write("        ]\n");
         writer.write("    },\n");
-        writer.write("    options: { responsive: false }\n");
-        writer.write("});\n");
+        writer.write("    options: {\n");
+        writer.write("        responsive: false,\n");
+        writer.write("        scales: {\n");
+        writer.write("            yAxes: [{\n");
+        writer.write("                ticks: {\n");
+        writer.write("                    min: 0\n");
+        writer.write("                }\n");
+        writer.write("            }]\n");
+        writer.write("        }\n");
+        writer.write("    }\n");
+        writer.write(");\n");
         writer.write("</script>\n");
 
         writer.write("</body>\n");
