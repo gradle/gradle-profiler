@@ -23,13 +23,16 @@ let benchmarkResult = {
             name: "only-file-system-watching",
             title: "2 - Only File System Watching",
             buildTool: "Gradle",
-            task: "assemble",
+            tasks: "assemble",
             problems: []
         },
-        samples: [
-            "execution",
-            "ResolveConfigurationDependenciesBuildOperationType",
-            "FingerprintTransformInputsOperation"
+        samples: [{
+                name: "execution"
+            },{
+                name: "ResolveConfigurationDependenciesBuildOperationType"
+            },{
+                name: "FingerprintTransformInputsOperation"
+            }
         ],
         iterations: [
             {
@@ -88,89 +91,141 @@ let benchmarkResult = {
                 }
             },
         ]
+    },{
+        definition: {
+            id: "only-configuration-cache@2",
+            name: "only-configuration-cache",
+            title: "5 - Only Configuration Cache",
+            buildTool: "Gradle",
+            tasks: "assemble",
+            problems: []
+        },
+        samples: [{
+                name: "execution"
+            },{
+                name: "ResolveConfigurationDependenciesBuildOperationType"
+            },{
+                name: "FingerprintTransformInputsOperation"
+            }
+        ],
+        iterations: [
+            {
+                id: "only-configuration-cache@2@1",
+                phase: Phase.WARM_UP,
+                iteration: 1,
+                title: "warm-up build #1",
+                results: {
+                    "execution": 2234.3,
+                    "ResolveConfigurationDependenciesBuildOperationType": 123.4,
+                    "FingerprintTransformInputsOperation": 132.2
+                }
+            },
+            {
+                id: "only-configuration-cache@2@2",
+                phase: Phase.WARM_UP,
+                iteration: 2,
+                title: "warm-up build #2",
+                results: {
+                    "execution": 2224.3,
+                    "ResolveConfigurationDependenciesBuildOperationType": 113.4,
+                    "FingerprintTransformInputsOperation": 142.2
+                }
+            },
+            {
+                id: "only-configuration-cache@2@3",
+                phase: Phase.MEASURED,
+                iteration: 1,
+                title: "measured build #1",
+                results: {
+                    "execution": 1924.3,
+                    "ResolveConfigurationDependenciesBuildOperationType": 93.4,
+                    "FingerprintTransformInputsOperation": 92.2
+                }
+            },
+        ]
     }]
 };
     </script>
-    <script id="data-table" type="text/x-handlebars-template">
-    <div class='row mt-5'>
-        <div class='col'>
-            <table class='table table-sm table-hover'>
-                <thead>
-                    <tr><th>Scenario</th>
-<!--
-        List<? extends BuildScenarioResult<?>> allScenarios = benchmarkResult.getScenarios();
-        for (BuildScenarioResult<?> scenario : allScenarios) {
-            wxriter.write("<th colspan='" + scenario.getSamples().size() + "'>");
-            wxriter.write(scenario.getScenarioDefinition().getTitle());
-            wxriter.write("</th>");
-        }
--->
-                    </tr>
-                    <tr><th>Version</th>
-<!--
-                    for (BuildScenarioResult<?> scenario : allScenarios) {
-                    wxriter.write("<th colspan='" + scenario.getSamples().size() + "'>");
-                        writer.write(scenario.getScenarioDefinition().getBuildToolDisplayName());
-                        wxriter.write("</th>");
+    <script id="data-table-template" type="text/x-handlebars-template">
+    {{#with benchmarkResult}}
+        <div class='row mt-5'>
+            <div class='col'>
+                <table class='table table-sm table-hover'>
+                    <thead>
+                        <tr>
+                            <th>Scenario</th>
+                            {{#each scenarios}}
+                                <th colspan="{{ samples.length }}">{{ definition.title }}</th>
+                            {{/each}}
+                        </tr>
+                        <tr>
+                            <th>Version</th>
+                            {{#each scenarios}}
+                                <th colspan="{{ samples.length }}">{{ definition.buildTool }}</th>
+                            {{/each}}
+                        </tr>
+                        <tr>
+                            <th>Tasks</th>
+                            {{#each scenarios}}
+                                <th colspan="{{ samples.length }}">{{ definition.tasks }}</th>
+                            {{/each}}
+                        </tr>
+                        <tr>
+                            <th>Sample</th>
+                            {{#each scenarios}}
+                                {{#each samples}}
+                                    <th>{{ name }}</th>
+                                {{/each}}
+                            {{/each}}
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {{#each ../warmupTitles }}
+                        <tr>
+                            {{#each ../scenarios}}
+                            <td>
+                                {{#each iterations}}
+                                    {{#if title}}
+                                {{/each}}
+                            </td>
+                            {{/each}}
+                        </tr>
+                        {{/each}}
+    <!--
+            int maxRows = allScenarios.stream().mapToInt(v -> v.getResults().size()).max().orElse(0);
+            for (int row = 0; row < maxRows; row++) {
+                wxriter.write("<tr>");
+                for (BuildScenarioResult<?> scenario : allScenarios) {
+                    List<? extends BuildInvocationResult> results = scenario.getResults();
+                    if (row >= results.size()) {
+                        continue;
                     }
--->
-                    </tr>
-                    <tr><th>Tasks</th>
-<!--
-                    for (BuildScenarioResult<?> scenario : allScenarios) {
-                    wxriter.write("<th colspan='" + scenario.getSamples().size() + "'>");
-                        writer.write(scenario.getScenarioDefinition().getTasksDisplayName());
-                        wxriter.write("</th>");
-                    }
--->
-                    </tr>
-                    <tr><th>Sample</th>
-<!--
-                    for (BuildScenarioResult<?> scenario : allScenarios) {
-                    for (Sample<?> sample : scenario.getSamples()) {
-                    wxriter.write("<th>");
-                        writer.write(sample.getName());
-                        wxriter.write("</th>");
-                    }
-                    }
--->
-                    </tr>
-                </thead>
-                <tbody>
-<!--
-        int maxRows = allScenarios.stream().mapToInt(v -> v.getResults().size()).max().orElse(0);
-        for (int row = 0; row < maxRows; row++) {
-            wxriter.write("<tr>");
-            for (BuildScenarioResult<?> scenario : allScenarios) {
-                List<? extends BuildInvocationResult> results = scenario.getResults();
-                if (row >= results.size()) {
-                    continue;
+                    BuildInvocationResult buildResult = results.get(row);
+                    wxriter.write("<td>");
+                        wxriter.write(buildResult.getBuildContext().getDisplayName());
+                        wxriter.write("</td>");
+                    break;
                 }
-                BuildInvocationResult buildResult = results.get(row);
-                wxriter.write("<td>");
-                    wxriter.write(buildResult.getBuildContext().getDisplayName());
-                    wxriter.write("</td>");
-                break;
+                for (BuildScenarioResult<?> scenario : allScenarios) {
+                    writeRow(writer, scenario, row);
+                }
+                wxriter.write("</tr>\n");
             }
-            for (BuildScenarioResult<?> scenario : allScenarios) {
-                writeRow(writer, scenario, row);
-            }
-            wxriter.write("</tr>\n");
-        }
 
-        statistic(writer, "mean", allScenarios, BuildScenarioResult.Statistics::getMean, true);
-        statistic(writer, "min", allScenarios, BuildScenarioResult.Statistics::getMin, true);
-        statistic(writer, "25th percentile", allScenarios, s -> s.getPercentile(25), true);
-        statistic(writer, "median", allScenarios, BuildScenarioResult.Statistics::getMedian, true);
-        statistic(writer, "75th percentile", allScenarios, s -> s.getPercentile(75), true);
-        statistic(writer, "max", allScenarios, BuildScenarioResult.Statistics::getMax, true);
-        statistic(writer, "stddev", allScenarios, BuildScenarioResult.Statistics::getStandardDeviation, false);
-        statistic(writer, "confidence", allScenarios, BuildScenarioResult.Statistics::getConfidencePercent, false);
--->
-                </tbody>
-            </table>
+            statistic(writer, "mean", allScenarios, BuildScenarioResult.Statistics::getMean, true);
+            statistic(writer, "min", allScenarios, BuildScenarioResult.Statistics::getMin, true);
+            statistic(writer, "25th percentile", allScenarios, s -> s.getPercentile(25), true);
+            statistic(writer, "median", allScenarios, BuildScenarioResult.Statistics::getMedian, true);
+            statistic(writer, "75th percentile", allScenarios, s -> s.getPercentile(75), true);
+            statistic(writer, "max", allScenarios, BuildScenarioResult.Statistics::getMax, true);
+            statistic(writer, "stddev", allScenarios, BuildScenarioResult.Statistics::getStandardDeviation, false);
+            statistic(writer, "confidence", allScenarios, BuildScenarioResult.Statistics::getConfidencePercent, false);
+    -->
+                    </tbody>
+                </table>
+            </div>
         </div>
-    </div>
+{{/with}}
     </script>
 </head>
 <body>
@@ -182,8 +237,32 @@ let benchmarkResult = {
             <canvas id='samples' width='900' height='400'></canvas>
             </div>
         </div>
+        <div id="data-table"></div>
     </div>
 </div>
+<script>
+function iterations(scenario, phase) {
+    return scenario.iterations.filter(iteration => iteration.phase === phase);
+}
+function iterationTitles(phase) {
+    return [...new Set(benchmarkResult.scenarios
+        .map(scenario => iterations(scenario, phase)
+            .map(iteration => iteration.title)
+        )
+        .flat()
+    )];
+}
+
+let source = document.getElementById("data-table-template");
+let target = document.getElementById("data-table");
+let template = Handlebars.compile(source.innerHTML);
+let maxIterations = Math.max(...(benchmarkResult.scenarios.map(scenario => scenario.iterations.length)));
+target.innerHTML = template({
+    benchmarkResult: benchmarkResult,
+    warmupTitles: iterationTitles(Phase.WARM_UP),
+    measuredTitles: iterationTitles(Phase.MEASURED),
+});
+</script>
 <script>
 const COLORS = ["#527AB3", "#56ac76", "#f44336", "#d49c3e", "#211f2d"];
 class PaletteGenerator {
@@ -209,23 +288,18 @@ function convertScenarioToChart(scenario, color) {
         borderWidth: 3,
         pointBackgroundColor: color,
         borderColor: color,
-        data: scenario.iterations
-            .filter(iteration => iteration.phase == Phase.MEASURED)
-            .map(scenario => scenario.results.execution)
+        data: iterations(scenario, Phase.MEASURED)
+            .map(iteration => iteration.results.execution)
     };
 }
 
 let ctx = document.getElementById('samples').getContext('2d');
-let maxIterations = Math.max(...(benchmarkResult.scenarios
-    .map(scenario => scenario.iterations
-        .filter(iteration => iteration.phase == Phase.MEASURED)
-        .length
-    )));
+let maxMeasuredIterations = Math.max(...(benchmarkResult.scenarios.map(scenario => iterations(scenario, Phase.MEASURED).length)));
 let palette = new PaletteGenerator();
 let chart = new Chart(ctx, {
     type: 'line',
     data: {
-        labels: Array.from(Array(maxIterations), (_, i) => (i + 1).toString()),
+        labels: Array.from(Array(maxMeasuredIterations), (_, i) => (i + 1).toString()),
         datasets: benchmarkResult.scenarios.map(scenario => convertScenarioToChart(scenario, palette.nextColor()))
     },
     options: {
