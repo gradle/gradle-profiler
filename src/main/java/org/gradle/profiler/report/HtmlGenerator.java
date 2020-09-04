@@ -33,7 +33,7 @@ public class HtmlGenerator extends AbstractGenerator {
         writer.write(".numeric { text-align: right; }\n");
         writer.write(".summary { vertical-align: top; }\n");
         writer.write("</style>\n");
-        writer.write("<script src='https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.7.2/Chart.bundle.min.js'></script>\n");
+        writer.write("<script src='https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.9.3/Chart.bundle.min.js'></script>\n");
         writer.write("</head>\n");
         writer.write("<body>\n");
         writer.write("<div class='container mt-5 mb-5'>\n");
