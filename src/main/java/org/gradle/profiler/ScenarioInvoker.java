@@ -17,11 +17,9 @@ public abstract class ScenarioInvoker<T extends ScenarioDefinition, R extends Bu
     /**
      * Runs a scenario and collects the results.
      */
-    public final void run(ScenarioDefinition scenario, InvocationSettings settings, BenchmarkResultCollector collector) throws IOException, InterruptedException {
-        @SuppressWarnings("unchecked")
-        T castScenario = (T) scenario;
-        Consumer<R> resultConsumer = collector.scenario(castScenario, samplesFor(settings, castScenario));
-        doRun(castScenario, settings, resultConsumer);
+    public final void run(T scenario, InvocationSettings settings, BenchmarkResultCollector collector) throws IOException, InterruptedException {
+        Consumer<R> resultConsumer = collector.scenario(scenario, samplesFor(settings, scenario));
+        doRun(scenario, settings, resultConsumer);
     }
 
     /**
@@ -39,7 +37,7 @@ public abstract class ScenarioInvoker<T extends ScenarioDefinition, R extends Bu
     /**
      * Runs a single measured build and collects the result.
      */
-    protected <R extends BuildInvocationResult> R runMeasured(BuildContext buildContext, BuildMutator mutator, Supplier<? extends R> action, Consumer<? super R> consumer) {
+    protected R runMeasured(BuildContext buildContext, BuildMutator mutator, Supplier<? extends R> action, Consumer<? super R> consumer) {
         startOperation("Running " + buildContext.getDisplayName());
         mutator.beforeBuild(buildContext);
         R result = tryRun(() -> {

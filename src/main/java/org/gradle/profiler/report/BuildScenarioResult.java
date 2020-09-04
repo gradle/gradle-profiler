@@ -7,28 +7,28 @@ import org.gradle.profiler.result.Sample;
 import java.util.List;
 import java.util.Optional;
 
-public interface BuildScenarioResult {
+public interface BuildScenarioResult<T extends BuildInvocationResult> {
     ScenarioDefinition getScenarioDefinition();
 
     /**
      * Returns the baseline for this scenario, if any.
      */
-    Optional<BuildScenarioResult> getBaseline();
+    Optional<BuildScenarioResult<T>> getBaseline();
 
     /**
      * Returns the names of the samples collected for each build invocation in this scenario.
      */
-    List<Sample<? super BuildInvocationResult>> getSamples();
+    List<Sample<? super T>> getSamples();
 
     /**
      * Returns all results, including warm-up builds.
      */
-    List<? extends BuildInvocationResult> getResults();
+    List< T> getResults();
 
     /**
      * Returns the measured results.
      */
-    List<? extends BuildInvocationResult> getMeasuredResults();
+    List<T> getMeasuredResults();
 
     /**
      * Returns some statistics of each sample.
