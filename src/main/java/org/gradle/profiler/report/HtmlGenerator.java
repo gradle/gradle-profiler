@@ -178,7 +178,7 @@ public class HtmlGenerator extends AbstractGenerator {
         writer.write("            }]\n");
         writer.write("        }\n");
         writer.write("    }\n");
-        writer.write(");\n");
+        writer.write("});\n");
         writer.write("</script>\n");
 
         writer.write("</body>\n");
