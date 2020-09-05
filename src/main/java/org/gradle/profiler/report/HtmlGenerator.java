@@ -10,6 +10,7 @@ import java.text.DecimalFormat;
 import java.text.NumberFormat;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
 import java.util.function.Function;
 
 public class HtmlGenerator extends AbstractGenerator {
@@ -50,29 +51,29 @@ public class HtmlGenerator extends AbstractGenerator {
 
         writer.write("<thead>\n");
         writer.write("<tr><th>Scenario</th>");
-        List<? extends BuildScenarioResult> allScenarios = benchmarkResult.getScenarios();
-        for (BuildScenarioResult scenario : allScenarios) {
+        List<? extends BuildScenarioResult<?>> allScenarios = benchmarkResult.getScenarios();
+        for (BuildScenarioResult<?> scenario : allScenarios) {
             writer.write("<th colspan='" + scenario.getSamples().size() + "'>");
             writer.write(scenario.getScenarioDefinition().getTitle());
             writer.write("</th>");
         }
         writer.write("</tr>\n");
         writer.write("<tr><th>Version</th>");
-        for (BuildScenarioResult scenario : allScenarios) {
+        for (BuildScenarioResult<?> scenario : allScenarios) {
             writer.write("<th colspan='" + scenario.getSamples().size() + "'>");
             writer.write(scenario.getScenarioDefinition().getBuildToolDisplayName());
             writer.write("</th>");
         }
         writer.write("</tr>\n");
         writer.write("<tr><th>Tasks</th>");
-        for (BuildScenarioResult scenario : allScenarios) {
+        for (BuildScenarioResult<?> scenario : allScenarios) {
             writer.write("<th colspan='" + scenario.getSamples().size() + "'>");
             writer.write(scenario.getScenarioDefinition().getTasksDisplayName());
             writer.write("</th>");
         }
         writer.write("</tr>\n");
         writer.write("<tr><th>Sample</th>");
-        for (BuildScenarioResult scenario : allScenarios) {
+        for (BuildScenarioResult<?> scenario : allScenarios) {
             for (Sample<?> sample : scenario.getSamples()) {
                 writer.write("<th>");
                 writer.write(sample.getName());
@@ -87,7 +88,7 @@ public class HtmlGenerator extends AbstractGenerator {
         int maxRows = allScenarios.stream().mapToInt(v -> v.getResults().size()).max().orElse(0);
         for (int row = 0; row < maxRows; row++) {
             writer.write("<tr>");
-            for (BuildScenarioResult scenario : allScenarios) {
+            for (BuildScenarioResult<?> scenario : allScenarios) {
                 List<? extends BuildInvocationResult> results = scenario.getResults();
                 if (row >= results.size()) {
                     continue;
@@ -98,17 +99,8 @@ public class HtmlGenerator extends AbstractGenerator {
                 writer.write("</td>");
                 break;
             }
-            for (BuildScenarioResult scenario : allScenarios) {
-                List<? extends BuildInvocationResult> results = scenario.getResults();
-                if (row >= results.size()) {
-                    continue;
-                }
-                BuildInvocationResult buildResult = results.get(row);
-                for (Sample<? super BuildInvocationResult> sample : scenario.getSamples()) {
-                    writer.write("<td class='numeric'>");
-                    writer.write(String.valueOf(sample.extractFrom(buildResult).toMillis()));
-                    writer.write("</td>");
-                }
+            for (BuildScenarioResult<?> scenario : allScenarios) {
+                writeRow(writer, scenario, row);
             }
             writer.write("</tr>\n");
         }
@@ -143,28 +135,8 @@ public class HtmlGenerator extends AbstractGenerator {
         writer.write("],\n");
         writer.write("        datasets: [\n");
         PaletteGenerator generator = new PaletteGenerator();
-        for (BuildScenarioResult scenario : allScenarios) {
-            writer.write("{\n");
-            writer.write("            label: '");
-            writer.write(scenario.getScenarioDefinition().getTitle());
-            writer.write(" ");
-            writer.write(scenario.getScenarioDefinition().getBuildToolDisplayName());
-            writer.write("',\n");
-            writer.write("            showLine: true,\n");
-            writer.write("            steppedLine: true,\n");
-            writer.write("            pointRadius: 0,\n");
-            writer.write("            fill: false,\n");
-            writer.write("            borderWidth: 3,\n");
-            writer.write("            borderColor: '");
-            writer.write(generator.nextColor());
-            writer.write("',\n");
-            writer.write("            data: [");
-            for (BuildInvocationResult buildResult : scenario.getMeasuredResults()) {
-                writer.write(String.valueOf(buildResult.getExecutionTime().toMillis()));
-                writer.write(",");
-            }
-            writer.write("]\n");
-            writer.write("},\n");
+        for (BuildScenarioResult<?> scenario : allScenarios) {
+            writeScenarioData(writer, generator, scenario);
         }
         writer.write("        ]\n");
         writer.write("    },\n");
@@ -185,33 +157,81 @@ public class HtmlGenerator extends AbstractGenerator {
         writer.write("</html>\n");
     }
 
-    private void statistic(BufferedWriter writer, String name, List<? extends BuildScenarioResult> scenarios, Function<BuildScenarioResult.Statistics, Double> value, boolean time) throws IOException {
+    private <T extends BuildInvocationResult> void writeRow(BufferedWriter writer, BuildScenarioResult<T> scenario, int row) throws IOException {
+        List<T> results = scenario.getResults();
+        if (row >= results.size()) {
+            return;
+        }
+        T buildResult = results.get(row);
+        for (Sample<? super T> sample : scenario.getSamples()) {
+            writer.write("<td class='numeric'>");
+            writer.write(String.valueOf(sample.extractFrom(buildResult).toMillis()));
+            writer.write("</td>");
+        }
+    }
+
+    private <T extends BuildInvocationResult> void writeScenarioData(BufferedWriter writer, PaletteGenerator generator, BuildScenarioResult<T> scenario) throws IOException {
+        writer.write("{\n");
+        writer.write("            label: '");
+        writer.write(scenario.getScenarioDefinition().getTitle());
+        writer.write(" ");
+        writer.write(scenario.getScenarioDefinition().getBuildToolDisplayName());
+        writer.write("',\n");
+        writer.write("            showLine: true,\n");
+        writer.write("            steppedLine: true,\n");
+        writer.write("            pointRadius: 0,\n");
+        writer.write("            fill: false,\n");
+        writer.write("            borderWidth: 3,\n");
+        writer.write("            borderColor: '");
+        writer.write(generator.nextColor());
+        writer.write("',\n");
+        writer.write("            data: [");
+        for (T buildResult : scenario.getMeasuredResults()) {
+            writer.write(String.valueOf(buildResult.getExecutionTime().toMillis()));
+            writer.write(",");
+        }
+        writer.write("]\n");
+        writer.write("},\n");
+    }
+
+    private void statistic(BufferedWriter writer, String name, List<? extends BuildScenarioResult<?>> scenarios, Function<BuildScenarioResult.Statistics, Double> value, boolean time) throws IOException {
         writer.write("<tr><td class='summary font-weight-bold'>");
         writer.write(name);
         writer.write("</td>");
-        for (BuildScenarioResult scenario : scenarios) {
-            for (int i = 0; i < scenario.getStatistics().size(); i++) {
-                BuildScenarioResult.Statistics statistics = scenario.getStatistics().get(i);
-                writer.write("<td class='numeric summary'>");
-                double stat = value.apply(statistics);
-                writer.write(numberFormat.format(stat));
-                if (time && scenario.getBaseline().isPresent()) {
-                    List<? extends BuildScenarioResult.Statistics> baselineStats = scenario.getBaseline().get().getStatistics();
-                    if (!baselineStats.isEmpty()) {
-                        writer.write("<br><span class='diff'>(");
-                        double baseLineStat = value.apply(baselineStats.get(i));
+        for (BuildScenarioResult<?> scenario : scenarios) {
+            writeScenarioTable(writer, value, time, scenario);
+        }
+        writer.write("</tr>");
+        writer.newLine();
+    }
+
+    private <T extends BuildInvocationResult> void writeScenarioTable(BufferedWriter writer, Function<BuildScenarioResult.Statistics, Double> extractor, boolean time, BuildScenarioResult<T> scenario) throws IOException {
+        for (Map.Entry<Sample<? super T>, ? extends BuildScenarioResult.Statistics> entry : scenario.getStatistics().entrySet()) {
+            Sample<? super T> sample = entry.getKey();
+            BuildScenarioResult.Statistics statistics = entry.getValue();
+
+            writer.write("<td class='numeric summary'>");
+            double stat = extractor.apply(statistics);
+            writer.write(numberFormat.format(stat));
+            if (time && scenario.getBaseline().isPresent()) {
+                Map<Sample<? super T>, ? extends BuildScenarioResult.Statistics> baselineStats = scenario.getBaseline().get().getStatistics();
+                if (!baselineStats.isEmpty()) {
+                    BuildScenarioResult.Statistics baselineStatistics = baselineStats.get(sample);
+                    writer.write("<br><span class='diff'>(");
+                    if (baselineStatistics != null) {
+                        double baseLineStat = extractor.apply(baselineStatistics);
                         double diff = stat - baseLineStat;
                         writer.write(diffFormat.format(diff));
                         writer.write(" ");
                         writer.write(numberFormat.format((diff) / baseLineStat * 100));
-                        writer.write("%)</span>");
+                    } else {
+                        writer.write("N/A");
                     }
+                    writer.write("%)</span>");
                 }
-                writer.write("</td>");
             }
+            writer.write("</td>");
         }
-        writer.write("</tr>");
-        writer.newLine();
     }
 
     static private class PaletteGenerator {

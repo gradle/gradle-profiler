@@ -34,7 +34,7 @@ public class CsvGenerator extends AbstractGenerator {
 
     @Override
     protected void write(BenchmarkResult benchmarkResult, BufferedWriter writer) throws IOException {
-        List<? extends BuildScenarioResult> allScenarios = benchmarkResult.getScenarios();
+        List<? extends BuildScenarioResult<?>> allScenarios = benchmarkResult.getScenarios();
         switch (format) {
             case WIDE:
                 writeWide(writer, allScenarios);
@@ -47,9 +47,9 @@ public class CsvGenerator extends AbstractGenerator {
         }
     }
 
-    private void writeWide(BufferedWriter writer, List<? extends BuildScenarioResult> allScenarios) throws IOException {
+    private void writeWide(BufferedWriter writer, List<? extends BuildScenarioResult<?>> allScenarios) throws IOException {
         writer.write("scenario");
-        for (BuildScenarioResult scenario : allScenarios) {
+        for (BuildScenarioResult<?> scenario : allScenarios) {
             for (int i = 0; i < scenario.getSamples().size(); i++) {
                 writer.write(",");
                 writer.write(scenario.getScenarioDefinition().getTitle());
@@ -58,7 +58,7 @@ public class CsvGenerator extends AbstractGenerator {
         writer.newLine();
 
         writer.write("version");
-        for (BuildScenarioResult scenario : allScenarios) {
+        for (BuildScenarioResult<?> scenario : allScenarios) {
             for (int i = 0; i < scenario.getSamples().size(); i++) {
                 writer.write(",");
                 writer.write(scenario.getScenarioDefinition().getBuildToolDisplayName());
@@ -67,7 +67,7 @@ public class CsvGenerator extends AbstractGenerator {
         writer.newLine();
 
         writer.write("tasks");
-        for (BuildScenarioResult scenario : allScenarios) {
+        for (BuildScenarioResult<?> scenario : allScenarios) {
             for (int i = 0; i < scenario.getSamples().size(); i++) {
                 writer.write(",");
                 writer.write(scenario.getScenarioDefinition().getTasksDisplayName());
@@ -76,8 +76,8 @@ public class CsvGenerator extends AbstractGenerator {
         writer.newLine();
 
         writer.write("value");
-        for (BuildScenarioResult scenario : allScenarios) {
-            for (Sample<? super BuildInvocationResult> sample : scenario.getSamples()) {
+        for (BuildScenarioResult<?> scenario : allScenarios) {
+            for (Sample<?> sample : scenario.getSamples()) {
                 writer.write(",");
                 writer.write(sample.getName());
             }
@@ -86,7 +86,7 @@ public class CsvGenerator extends AbstractGenerator {
 
         int maxRows = allScenarios.stream().mapToInt(v -> v.getResults().size()).max().orElse(0);
         for (int row = 0; row < maxRows; row++) {
-            for (BuildScenarioResult scenario : allScenarios) {
+            for (BuildScenarioResult<?> scenario : allScenarios) {
                 List<? extends BuildInvocationResult> results = scenario.getResults();
                 if (row >= results.size()) {
                     continue;
@@ -95,26 +95,13 @@ public class CsvGenerator extends AbstractGenerator {
                 writer.write(buildResult.getBuildContext().getDisplayName());
                 break;
             }
-            for (BuildScenarioResult scenario : allScenarios) {
-                List<? extends BuildInvocationResult> results = scenario.getResults();
-                writer.write(",");
-                if (row >= results.size()) {
-                    continue;
-                }
-                BuildInvocationResult buildResult = results.get(row);
-                for (int i = 0; i < scenario.getSamples().size(); i++) {
-                    Sample<? super BuildInvocationResult> sample = scenario.getSamples().get(i);
-                    Duration duration = sample.extractFrom(buildResult);
-                    if (i > 0) {
-                        writer.write(",");
-                    }
-                    writer.write(String.valueOf(duration.toMillis()));
-                }
+            for (BuildScenarioResult<?> scenario : allScenarios) {
+                writeWideRow(writer, row, scenario);
             }
             writer.newLine();
         }
 
-        List<BuildScenarioResult.Statistics> statistics = allScenarios.stream().flatMap(s -> s.getStatistics().stream()).collect(Collectors.toList());
+        List<BuildScenarioResult.Statistics> statistics = allScenarios.stream().flatMap(s -> s.getStatistics().values().stream()).collect(Collectors.toList());
         statistic(writer, "mean", statistics, BuildScenarioResult.Statistics::getMean);
         statistic(writer, "min", statistics, BuildScenarioResult.Statistics::getMin);
         statistic(writer, "25th percentile", statistics, v -> v.getPercentile(25));
@@ -125,27 +112,46 @@ public class CsvGenerator extends AbstractGenerator {
         statistic(writer, "confidence", statistics, BuildScenarioResult.Statistics::getConfidencePercent);
     }
 
-    private void writeLong(BufferedWriter writer, List<? extends BuildScenarioResult> allScenarios) throws IOException {
+    private <T extends BuildInvocationResult> void writeWideRow(BufferedWriter writer, int row, BuildScenarioResult<T> scenario) throws IOException {
+        List<T> results = scenario.getResults();
+        writer.write(",");
+        if (row >= results.size()) {
+            return;
+        }
+        T buildResult = results.get(row);
+        writer.write(scenario.getSamples().stream()
+            .map(sample -> sample.extractFrom(buildResult))
+            .map(Duration::toMillis)
+            .map(Object::toString)
+            .collect(Collectors.joining(","))
+        );
+    }
+
+    private void writeLong(BufferedWriter writer, List<? extends BuildScenarioResult<?>> allScenarios) throws IOException {
         writer.write("Scenario,Tool,Tasks,Phase,Iteration,Sample,Duration");
         writer.newLine();
-        for (BuildScenarioResult scenario : allScenarios) {
-            for (BuildInvocationResult result : scenario.getResults()) {
-                for (Sample<? super BuildInvocationResult> sample : scenario.getSamples()) {
-                    writer.write(scenario.getScenarioDefinition().getTitle());
-                    writer.write(",");
-                    writer.write(scenario.getScenarioDefinition().getBuildToolDisplayName());
-                    writer.write(",");
-                    writer.write(scenario.getScenarioDefinition().getTasksDisplayName());
-                    writer.write(",");
-                    writer.write(result.getBuildContext().getPhase().name());
-                    writer.write(",");
-                    writer.write(String.valueOf(result.getBuildContext().getIteration()));
-                    writer.write(",");
-                    writer.write(sample.getName());
-                    writer.write(",");
-                    writer.write(String.valueOf(sample.extractFrom(result).toMillis()));
-                    writer.newLine();
-                }
+        for (BuildScenarioResult<?> scenario : allScenarios) {
+            writeLongRow(writer, scenario);
+        }
+    }
+
+    private <T extends BuildInvocationResult> void writeLongRow(BufferedWriter writer, BuildScenarioResult<T> scenario) throws IOException {
+        for (T result : scenario.getResults()) {
+            for (Sample<? super T> sample : scenario.getSamples()) {
+                writer.write(scenario.getScenarioDefinition().getTitle());
+                writer.write(",");
+                writer.write(scenario.getScenarioDefinition().getBuildToolDisplayName());
+                writer.write(",");
+                writer.write(scenario.getScenarioDefinition().getTasksDisplayName());
+                writer.write(",");
+                writer.write(result.getBuildContext().getPhase().name());
+                writer.write(",");
+                writer.write(String.valueOf(result.getBuildContext().getIteration()));
+                writer.write(",");
+                writer.write(sample.getName());
+                writer.write(",");
+                writer.write(String.valueOf(sample.extractFrom(result).toMillis()));
+                writer.newLine();
             }
         }
     }

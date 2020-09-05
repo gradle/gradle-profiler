@@ -3,8 +3,10 @@ package org.gradle.profiler;
 import org.gradle.profiler.instrument.PidInstrumentation;
 import org.gradle.profiler.report.CsvGenerator;
 import org.gradle.profiler.report.HtmlGenerator;
+import org.gradle.profiler.result.BuildInvocationResult;
 
 import java.io.File;
+import java.io.IOException;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
@@ -61,30 +63,16 @@ public class Main {
             for (ScenarioDefinition scenario : scenarios) {
                 scenarioCount++;
                 Logging.startOperation("Running scenario " + scenario.getDisplayName() + " (scenario " + scenarioCount + "/" + totalScenarios + ")");
-                ScenarioInvoker invoker;
                 if (scenario instanceof BazelScenarioDefinition) {
-                    invoker = bazelScenarioInvoker;
+                    invoke(bazelScenarioInvoker, (BazelScenarioDefinition) scenario, settings, benchmarkResults, failures);
                 } else if (scenario instanceof BuckScenarioDefinition) {
-                    invoker = buckScenarioInvoker;
+                    invoke(buckScenarioInvoker, (BuckScenarioDefinition) scenario, settings, benchmarkResults, failures);
                 } else if (scenario instanceof MavenScenarioDefinition) {
-                    invoker = mavenScenarioInvoker;
+                    invoke(mavenScenarioInvoker, (MavenScenarioDefinition) scenario, settings, benchmarkResults, failures);
                 } else if (scenario instanceof GradleScenarioDefinition) {
-                    invoker = gradleScenarioInvoker;
+                    invoke(gradleScenarioInvoker, (GradleScenarioDefinition) scenario, settings, benchmarkResults, failures);
                 } else {
                     throw new IllegalArgumentException("Don't know how to run scenario.");
-                }
-                try {
-                    invoker.run(scenario, settings, benchmarkResults);
-                } catch (Throwable t) {
-                    t.printStackTrace();
-                    failures.add(t);
-                } finally {
-                    // Write the current results and generate the reports, so that if this process crashes the results (which may have taken quite some time to collect) are not lost.
-                    // This overwrites the existing reports, so may leave them in a corrupted state if this process crashes during the generation.
-                    // This is just intended to be a simple best effort solution
-                    if (settings.isBenchmark()) {
-                        benchmarkResults.write();
-                    }
                 }
             }
 
@@ -111,6 +99,22 @@ public class Main {
         } finally {
             System.out.println();
             System.out.flush();
+        }
+    }
+
+    private <S extends ScenarioDefinition, R extends BuildInvocationResult> void invoke(ScenarioInvoker<S, R> invoker, S scenario, InvocationSettings settings, BenchmarkResultCollector benchmarkResults, List<Throwable> failures) throws IOException {
+        try {
+            invoker.run(scenario, settings, benchmarkResults);
+        } catch (Throwable t) {
+            t.printStackTrace();
+            failures.add(t);
+        } finally {
+            // Write the current results and generate the reports, so that if this process crashes the results (which may have taken quite some time to collect) are not lost.
+            // This overwrites the existing reports, so may leave them in a corrupted state if this process crashes during the generation.
+            // This is just intended to be a simple best effort solution
+            if (settings.isBenchmark()) {
+                benchmarkResults.write();
+            }
         }
     }
 

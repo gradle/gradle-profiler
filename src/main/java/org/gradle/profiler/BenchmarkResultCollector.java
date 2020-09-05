@@ -1,6 +1,7 @@
 package org.gradle.profiler;
 
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableMap;
 import org.apache.commons.math3.stat.descriptive.DescriptiveStatistics;
 import org.apache.commons.math3.stat.inference.MannWhitneyUTest;
 import org.gradle.profiler.report.AbstractGenerator;
@@ -14,30 +15,32 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.function.Consumer;
 
 public class BenchmarkResultCollector {
-    private final List<BuildScenario> allBuilds = new ArrayList<>();
+    private final List<BuildScenario<?>> allBuilds = new ArrayList<>();
     private final List<AbstractGenerator> generators;
 
     public BenchmarkResultCollector(AbstractGenerator... generators) {
         this.generators = Arrays.asList(generators);
     }
 
-    public <T extends BuildInvocationResult> Consumer<T> scenario(ScenarioDefinition scenario, List<Sample<? super T>> samples) {
+    public <S extends ScenarioDefinition, T extends BuildInvocationResult> Consumer<T> scenario(S scenario, List<Sample<? super T>> samples) {
         BuildScenario<T> buildScenario = new BuildScenario<>(scenario, baseLineFor(scenario), samples);
         allBuilds.add(buildScenario);
         return buildScenario;
     }
 
-    private BuildScenario baseLineFor(ScenarioDefinition scenario) {
+    @SuppressWarnings("unchecked")
+    private <S extends ScenarioDefinition, T extends BuildInvocationResult> BuildScenario<T> baseLineFor(S scenario) {
         if (allBuilds.isEmpty()) {
             return null;
         }
-        for (BuildScenario candidate : allBuilds) {
+        for (BuildScenario<?> candidate : allBuilds) {
             if (candidate.getScenarioDefinition().getName().equals(scenario.getName())) {
-                return candidate;
+                return (BuildScenario<T>) candidate;
             }
         }
         if (allBuilds.size() >= 2) {
@@ -46,7 +49,7 @@ public class BenchmarkResultCollector {
                 return null;
             }
         }
-        return allBuilds.get(0);
+        return (BuildScenario<T>) allBuilds.get(0);
     }
 
     public void write() throws IOException {
@@ -64,21 +67,21 @@ public class BenchmarkResultCollector {
         }
     }
 
-    private static class BuildScenario<T extends BuildInvocationResult> implements BuildScenarioResult, Consumer<T> {
+    private static class BuildScenario<T extends BuildInvocationResult> implements BuildScenarioResult<T>, Consumer<T> {
         private final ScenarioDefinition scenario;
-        private final BuildScenarioResult baseline;
-        private final List<Sample<? super BuildInvocationResult>> samples;
-        private final List<BuildInvocationResult> results = new ArrayList<>();
-        private List<StatisticsImpl> statistics;
+        private final BuildScenarioResult<T> baseline;
+        private final List<Sample<? super T>> samples;
+        private final List<T> results = new ArrayList<>();
+        private Map<Sample<? super T>, StatisticsImpl> statistics;
 
-        BuildScenario(ScenarioDefinition scenario, BuildScenarioResult baseline, List<Sample<? super T>> samples) {
+        BuildScenario(ScenarioDefinition scenario, BuildScenarioResult<T> baseline, List<Sample<? super T>> samples) {
             this.scenario = scenario;
             this.baseline = baseline;
-            this.samples = new ArrayList(samples);
+            this.samples = ImmutableList.copyOf(samples);
         }
 
         @Override
-        public void accept(BuildInvocationResult buildInvocationResult) {
+        public void accept(T buildInvocationResult) {
             results.add(buildInvocationResult);
             statistics = null;
         }
@@ -89,22 +92,22 @@ public class BenchmarkResultCollector {
         }
 
         @Override
-        public List<Sample<? super BuildInvocationResult>> getSamples() {
+        public List<Sample<? super T>> getSamples() {
             return samples;
         }
 
         @Override
-        public Optional<BuildScenarioResult> getBaseline() {
+        public Optional<BuildScenarioResult<T>> getBaseline() {
             return Optional.ofNullable(baseline);
         }
 
         @Override
-        public List<? extends BuildInvocationResult> getResults() {
+        public List<T> getResults() {
             return Collections.unmodifiableList(results);
         }
 
         @Override
-        public List<? extends BuildInvocationResult> getMeasuredResults() {
+        public List<T> getMeasuredResults() {
             if (results.size() > scenario.getWarmUpCount()) {
                 return results.subList(scenario.getWarmUpCount(), results.size());
             }
@@ -112,25 +115,24 @@ public class BenchmarkResultCollector {
         }
 
         @Override
-        public List<? extends Statistics> getStatistics() {
+        public Map<Sample<? super T>, ? extends Statistics> getStatistics() {
             if (statistics == null) {
-                ImmutableList.Builder<StatisticsImpl> builder = ImmutableList.builderWithExpectedSize(samples.size());
-                for (int i = 0; i < samples.size(); i++) {
-                    double confidencePercent = getConfidencePercent(i);
-                    builder.add(new StatisticsImpl(new DescriptiveStatistics(), confidencePercent));
+                ImmutableMap.Builder<Sample<? super T>, StatisticsImpl> builder = ImmutableMap.builderWithExpectedSize(samples.size());
+                for (Sample<? super T> sample : samples) {
+                    double confidencePercent = getConfidencePercent(sample);
+                    builder.put(sample, new StatisticsImpl(new DescriptiveStatistics(), confidencePercent));
                 }
                 statistics = builder.build();
-                for (BuildInvocationResult result : getMeasuredResults()) {
-                    for (int i = 0; i < getSamples().size(); i++) {
-                        Sample<? super BuildInvocationResult> sample = getSamples().get(i);
-                        statistics.get(i).statistics.addValue(sample.extractFrom(result).toMillis());
+                for (T result : getMeasuredResults()) {
+                    for (Sample<? super T> sample : samples) {
+                        statistics.get(sample).statistics.addValue(sample.extractFrom(result).toMillis());
                     }
                 }
             }
             return statistics;
         }
 
-        private double getConfidencePercent(int sample) {
+        private double getConfidencePercent(Sample<? super T> sample) {
             if (!getBaseline().isPresent()) {
                 return 0;
             }
@@ -142,11 +144,11 @@ public class BenchmarkResultCollector {
             return (1 - new MannWhitneyUTest().mannWhitneyUTest(a, b)) * 100;
         }
 
-        private double[] toArray(List<? extends BuildInvocationResult> results, int sample) {
+        private double[] toArray(List<T> results, Sample<? super T> sample) {
             double[] values = new double[results.size()];
             for (int i = 0; i < results.size(); i++) {
-                BuildInvocationResult buildInvocationResult = results.get(i);
-                values[i] = getSamples().get(sample).extractFrom(buildInvocationResult).toMillis();
+                T buildInvocationResult = results.get(i);
+                values[i] = sample.extractFrom(buildInvocationResult).toMillis();
             }
             return values;
         }
@@ -199,7 +201,7 @@ public class BenchmarkResultCollector {
 
     private class BenchmarkResultImpl implements BenchmarkResult {
         @Override
-        public List<? extends BuildScenarioResult> getScenarios() {
+        public List<? extends BuildScenarioResult<?>> getScenarios() {
             return allBuilds;
         }
     }
