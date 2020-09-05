@@ -10,6 +10,32 @@
         </style>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/handlebars.js/4.7.6/handlebars.min.js"></script>
     <script src='https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.9.3/Chart.bundle.min.js'></script>
+    <style type="text/css">
+tr.header {
+    font-weight: bold;
+}
+td.numeric {
+    font-family: monospace;
+}
+td.iteration::before {
+    content: "#";
+}
+td.iteration {
+    text-align: center;
+}
+td.warm-up {
+    background-color: #fee;
+}
+tr:hover td.warm-up {
+    background-color: #fdd;
+}
+td.measured {
+    background-color: #efe;
+}
+tr:hover td.measured {
+    background-color: #dfd;
+}
+    </style>
     <script>
 const Phase = {
     WARM_UP: "warm-up",
@@ -19,9 +45,9 @@ const Phase = {
 let benchmarkResult = {
     scenarios: [{
         definition: {
-            id: "only-file-system-watching@1",
-            name: "only-file-system-watching",
-            title: "2 - Only File System Watching",
+            id: "file-system-watching@1",
+            name: "file-system-watching",
+            title: "File System Watching",
             buildTool: "Gradle",
             tasks: "assemble",
             problems: []
@@ -36,7 +62,7 @@ let benchmarkResult = {
         ],
         iterations: [
             {
-                id: "only-file-system-watching@1@1",
+                id: "file-system-watching@1@1",
                 phase: Phase.WARM_UP,
                 iteration: 1,
                 title: "warm-up build #1",
@@ -47,7 +73,7 @@ let benchmarkResult = {
                 }
             },
             {
-                id: "only-file-system-watching@1@2",
+                id: "file-system-watching@1@2",
                 phase: Phase.WARM_UP,
                 iteration: 2,
                 title: "warm-up build #2",
@@ -58,7 +84,7 @@ let benchmarkResult = {
                 }
             },
             {
-                id: "only-file-system-watching@1@3",
+                id: "file-system-watching@1@3",
                 phase: Phase.MEASURED,
                 iteration: 1,
                 title: "measured build #1",
@@ -69,7 +95,7 @@ let benchmarkResult = {
                 }
             },
             {
-                id: "only-file-system-watching@1@4",
+                id: "file-system-watching@1@4",
                 phase: Phase.MEASURED,
                 iteration: 2,
                 title: "measured build #2",
@@ -80,7 +106,7 @@ let benchmarkResult = {
                 }
             },
             {
-                id: "only-file-system-watching@1@4",
+                id: "file-system-watching@1@4",
                 phase: Phase.MEASURED,
                 iteration: 3,
                 title: "measured build #3",
@@ -93,9 +119,9 @@ let benchmarkResult = {
         ]
     },{
         definition: {
-            id: "only-configuration-cache@2",
-            name: "only-configuration-cache",
-            title: "5 - Only Configuration Cache",
+            id: "configuration-cache@2",
+            name: "configuration-cache",
+            title: "Configuration Cache",
             buildTool: "Gradle",
             tasks: "assemble",
             problems: []
@@ -110,7 +136,7 @@ let benchmarkResult = {
         ],
         iterations: [
             {
-                id: "only-configuration-cache@2@1",
+                id: "configuration-cache@2@1",
                 phase: Phase.WARM_UP,
                 iteration: 1,
                 title: "warm-up build #1",
@@ -121,7 +147,7 @@ let benchmarkResult = {
                 }
             },
             {
-                id: "only-configuration-cache@2@2",
+                id: "configuration-cache@2@2",
                 phase: Phase.WARM_UP,
                 iteration: 2,
                 title: "warm-up build #2",
@@ -132,7 +158,7 @@ let benchmarkResult = {
                 }
             },
             {
-                id: "only-configuration-cache@2@3",
+                id: "configuration-cache@2@3",
                 phase: Phase.MEASURED,
                 iteration: 1,
                 title: "measured build #1",
@@ -154,42 +180,31 @@ let benchmarkResult = {
                     <thead>
                         <tr>
                             <th>Scenario</th>
-                            {{#each scenarios}}
-                                <th colspan="{{ samples.length }}">{{ definition.title }}</th>
-                            {{/each}}
-                        </tr>
-                        <tr>
                             <th>Version</th>
-                            {{#each scenarios}}
-                                <th colspan="{{ samples.length }}">{{ definition.buildTool }}</th>
-                            {{/each}}
-                        </tr>
-                        <tr>
                             <th>Tasks</th>
-                            {{#each scenarios}}
-                                <th colspan="{{ samples.length }}">{{ definition.tasks }}</th>
-                            {{/each}}
-                        </tr>
-                        <tr>
-                            <th>Sample</th>
-                            {{#each scenarios}}
-                                {{#each samples}}
-                                    <th>{{ name }}</th>
-                                {{/each}}
-                            {{/each}}
                         </tr>
                     </thead>
                     <tbody>
-                        {{#each ../warmupTitles }}
-                        <tr>
-                            {{#each ../scenarios}}
-                            <td>
-                                {{#each iterations}}
-                                    {{#if title}}
+                        {{#each scenarios as |scenario|}}
+                            <tr class="header">
+                                {{#with scenario.definition}}
+                                <td rowspan="{{ rows scenario }}">{{ title }}</td>
+                                <td rowspan="{{ rows scenario }}">{{ buildTool }}</td>
+                                <td rowspan="{{ rows scenario }}">{{ tasks }}</td>
+                                {{/with}}
+                                <td>Sample</td>
+                                {{#each scenario.iterations}}
+                                    <td class="iteration {{ phase }}">{{ iteration }}</td>
                                 {{/each}}
-                            </td>
+                            </tr>
+                            {{#each samples as |sample|}}
+                                <tr>
+                                    <td>{{ sample.name }}</td>
+                                    {{#each scenario.iterations}}
+                                        <td class="numeric {{ phase }}">{{lookup results sample.name }}</td>
+                                    {{/each}}
+                                </tr>
                             {{/each}}
-                        </tr>
                         {{/each}}
     <!--
             int maxRows = allScenarios.stream().mapToInt(v -> v.getResults().size()).max().orElse(0);
@@ -244,24 +259,28 @@ let benchmarkResult = {
 function iterations(scenario, phase) {
     return scenario.iterations.filter(iteration => iteration.phase === phase);
 }
-function iterationTitles(phase) {
+function iterationTitles() {
     return [...new Set(benchmarkResult.scenarios
-        .map(scenario => iterations(scenario, phase)
+        .map(scenario => scenario.iterations
             .map(iteration => iteration.title)
         )
         .flat()
     )];
 }
 
+Handlebars.registerHelper("rows", function(scenario) {
+    return scenario.samples.length + 1;
+});
 let source = document.getElementById("data-table-template");
 let target = document.getElementById("data-table");
 let template = Handlebars.compile(source.innerHTML);
 let maxIterations = Math.max(...(benchmarkResult.scenarios.map(scenario => scenario.iterations.length)));
-target.innerHTML = template({
+let html = template({
     benchmarkResult: benchmarkResult,
-    warmupTitles: iterationTitles(Phase.WARM_UP),
-    measuredTitles: iterationTitles(Phase.MEASURED),
+    iterationTitles: iterationTitles(),
 });
+console.log(html);
+target.innerHTML = html;
 </script>
 <script>
 const COLORS = ["#527AB3", "#56ac76", "#f44336", "#d49c3e", "#211f2d"];
