@@ -193,6 +193,8 @@ let benchmarkResult = {
                                 <td rowspan="{{ rows scenario }}">{{ tasks }}</td>
                                 {{/with}}
                                 <td>Sample</td>
+                                <td>Mean</td>
+                                <td>Median</td>
                                 {{#each scenario.iterations}}
                                     <td class="iteration {{ phase }}">{{ iteration }}</td>
                                 {{/each}}
@@ -200,6 +202,8 @@ let benchmarkResult = {
                             {{#each samples as |sample|}}
                                 <tr>
                                     <td>{{ sample.name }}</td>
+                                    <td class="numeric">{{ calc 'mean' sample scenario }}</td>
+                                    <td class="numeric">{{ calc 'median' sample scenario }}</td>
                                     {{#each scenario.iterations}}
                                         <td class="numeric {{ phase }}">{{lookup results sample.name }}</td>
                                     {{/each}}
@@ -267,9 +271,25 @@ function iterationTitles() {
         .flat()
     )];
 }
+function sort(array) {
+    return array.slice().sort((a, b) => a - b);
+}
 
 Handlebars.registerHelper("rows", function(scenario) {
     return scenario.samples.length + 1;
+});
+
+const OPERATIONS = {
+    "mean": (data) => data.reduce((sum, val) => sum += val) / data.length,
+    "median": (data) => {
+        let sorted = sort(data);
+        const mid = Math.ceil(sorted.length / 2);
+        return data.length % 2 == 0 ? (sorted[mid] + sorted[mid - 1]) / 2 : sorted[mid - 1];
+    }
+};
+Handlebars.registerHelper("calc", function(operation, sample, scenario) {
+    let data = iterations(scenario, Phase.MEASURED).map(iteration => iteration.results[sample.name]);
+    return OPERATIONS[operation](data).toFixed(2);
 });
 let source = document.getElementById("data-table-template");
 let target = document.getElementById("data-table");
