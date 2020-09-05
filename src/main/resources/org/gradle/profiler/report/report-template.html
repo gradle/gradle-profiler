@@ -14,6 +14,9 @@
 tr.header {
     font-weight: bold;
 }
+td.measurement {
+    text-align: center;
+}
 td.numeric {
     font-family: monospace;
 }
@@ -53,11 +56,14 @@ let benchmarkResult = {
             problems: []
         },
         samples: [{
-                name: "execution"
+                name: "execution",
+                confidence: 0.9732
             },{
-                name: "ResolveConfigurationDependenciesBuildOperationType"
+                name: "ResolveConfigurationDependenciesBuildOperationType",
+                confidence: 0.9533
             },{
-                name: "FingerprintTransformInputsOperation"
+                name: "FingerprintTransformInputsOperation",
+                confidence: 0.9231
             }
         ],
         iterations: [
@@ -127,11 +133,14 @@ let benchmarkResult = {
             problems: []
         },
         samples: [{
-                name: "execution"
+            name: "execution",
+                confidence: 0.9732
             },{
-                name: "ResolveConfigurationDependenciesBuildOperationType"
+                name: "ResolveConfigurationDependenciesBuildOperationType",
+                confidence: 0.9533
             },{
-                name: "FingerprintTransformInputsOperation"
+                name: "FingerprintTransformInputsOperation",
+                confidence: 0.9231
             }
         ],
         iterations: [
@@ -192,11 +201,15 @@ let benchmarkResult = {
                                 <td rowspan="{{ rows scenario }}">{{ buildTool }}</td>
                                 <td rowspan="{{ rows scenario }}">{{ tasks }}</td>
                                 {{/with}}
-                                <td>Sample</td>
-                                <td>Mean</td>
-                                <td>Min</td>
-                                <td>Median</td>
-                                <td>Max</td>
+                                <td class="measurement">Sample</td>
+                                <td class="measurement">Mean</td>
+                                <td class="measurement">Min</td>
+                                <td class="measurement">P25</td>
+                                <td class="measurement">Median</td>
+                                <td class="measurement">P75</td>
+                                <td class="measurement">Max</td>
+                                <td class="measurement">Std.dev</td>
+                                <td class="measurement">Confidence</td>
                                 {{#each scenario.iterations}}
                                     <td class="iteration {{ phase }}">{{ iteration }}</td>
                                 {{/each}}
@@ -205,45 +218,19 @@ let benchmarkResult = {
                                 <tr>
                                     <td>{{ sample.name }}</td>
                                     <td class="numeric">{{ calc 'mean' sample scenario }}</td>
+                                    <td class="numeric">{{ calc 'p25' sample scenario }}</td>
                                     <td class="numeric">{{ calc 'min' sample scenario }}</td>
                                     <td class="numeric">{{ calc 'median' sample scenario }}</td>
+                                    <td class="numeric">{{ calc 'p75' sample scenario }}</td>
                                     <td class="numeric">{{ calc 'max' sample scenario }}</td>
+                                    <td class="numeric">{{ calc 'stddev' sample scenario }}</td>
+                                    <td class="numeric">{{ percent sample.confidence }}</td>
                                     {{#each scenario.iterations}}
-                                        <td class="numeric {{ phase }}">{{lookup results sample.name }}</td>
+                                        <td class="numeric {{ phase }}">{{number (lookup results sample.name) }}</td>
                                     {{/each}}
                                 </tr>
                             {{/each}}
                         {{/each}}
-    <!--
-            int maxRows = allScenarios.stream().mapToInt(v -> v.getResults().size()).max().orElse(0);
-            for (int row = 0; row < maxRows; row++) {
-                wxriter.write("<tr>");
-                for (BuildScenarioResult<?> scenario : allScenarios) {
-                    List<? extends BuildInvocationResult> results = scenario.getResults();
-                    if (row >= results.size()) {
-                        continue;
-                    }
-                    BuildInvocationResult buildResult = results.get(row);
-                    wxriter.write("<td>");
-                        wxriter.write(buildResult.getBuildContext().getDisplayName());
-                        wxriter.write("</td>");
-                    break;
-                }
-                for (BuildScenarioResult<?> scenario : allScenarios) {
-                    writeRow(writer, scenario, row);
-                }
-                wxriter.write("</tr>\n");
-            }
-
-            statistic(writer, "mean", allScenarios, BuildScenarioResult.Statistics::getMean, true);
-            statistic(writer, "min", allScenarios, BuildScenarioResult.Statistics::getMin, true);
-            statistic(writer, "25th percentile", allScenarios, s -> s.getPercentile(25), true);
-            statistic(writer, "median", allScenarios, BuildScenarioResult.Statistics::getMedian, true);
-            statistic(writer, "75th percentile", allScenarios, s -> s.getPercentile(75), true);
-            statistic(writer, "max", allScenarios, BuildScenarioResult.Statistics::getMax, true);
-            statistic(writer, "stddev", allScenarios, BuildScenarioResult.Statistics::getStandardDeviation, false);
-            statistic(writer, "confidence", allScenarios, BuildScenarioResult.Statistics::getConfidencePercent, false);
-    -->
                     </tbody>
                 </table>
             </div>
@@ -279,24 +266,52 @@ function sort(array) {
     return array.slice().sort((a, b) => a - b);
 }
 
+function quantile(data, q) {
+    const sorted = sort(data);
+    const pos = (sorted.length - 1) * q;
+    const base = Math.floor(pos);
+    const rest = pos - base;
+    if (sorted[base + 1] !== undefined) {
+        return sorted[base] + rest * (sorted[base + 1] - sorted[base]);
+    } else {
+        return sorted[base];
+    }
+};
+
+function mean(data) {
+    return data.reduce((sum, val) => sum += val) / data.length;
+}
+
+const OPERATIONS = {
+    "mean": (data) => mean(data),
+    "min": (data) => Math.min(...data),
+    "max": (data) => Math.max(...data),
+    "p25": (data) => quantile(data, .25),
+    "median": (data) => quantile(data, .50),
+    "p75": (data) => quantile(data, .75),
+    "stddev": (data) => {
+        let dataMean = mean(data);
+        return Math.sqrt(mean(data.map(x => Math.pow(x - dataMean, 2))));
+    }
+};
+
 Handlebars.registerHelper("rows", function(scenario) {
     return scenario.samples.length + 1;
 });
 
-const OPERATIONS = {
-    "mean": (data) => data.reduce((sum, val) => sum += val) / data.length,
-    "min": (data) => Math.min(...data),
-    "max": (data) => Math.max(...data),
-    "median": (data) => {
-        let sorted = sort(data);
-        const mid = Math.ceil(sorted.length / 2);
-        return data.length % 2 == 0 ? (sorted[mid] + sorted[mid - 1]) / 2 : sorted[mid - 1];
-    }
-};
+Handlebars.registerHelper("percent", function(percent) {
+    return (percent * 100).toFixed(2) + "%";
+});
+
+Handlebars.registerHelper("number", function(value) {
+    return value.toFixed(2);
+});
+
 Handlebars.registerHelper("calc", function(operation, sample, scenario) {
     let data = iterations(scenario, Phase.MEASURED).map(iteration => iteration.results[sample.name]);
     return OPERATIONS[operation](data).toFixed(2);
 });
+
 let source = document.getElementById("data-table-template");
 let target = document.getElementById("data-table");
 let template = Handlebars.compile(source.innerHTML);
