@@ -194,7 +194,9 @@ let benchmarkResult = {
                                 {{/with}}
                                 <td>Sample</td>
                                 <td>Mean</td>
+                                <td>Min</td>
                                 <td>Median</td>
+                                <td>Max</td>
                                 {{#each scenario.iterations}}
                                     <td class="iteration {{ phase }}">{{ iteration }}</td>
                                 {{/each}}
@@ -203,7 +205,9 @@ let benchmarkResult = {
                                 <tr>
                                     <td>{{ sample.name }}</td>
                                     <td class="numeric">{{ calc 'mean' sample scenario }}</td>
+                                    <td class="numeric">{{ calc 'min' sample scenario }}</td>
                                     <td class="numeric">{{ calc 'median' sample scenario }}</td>
+                                    <td class="numeric">{{ calc 'max' sample scenario }}</td>
                                     {{#each scenario.iterations}}
                                         <td class="numeric {{ phase }}">{{lookup results sample.name }}</td>
                                     {{/each}}
@@ -281,6 +285,8 @@ Handlebars.registerHelper("rows", function(scenario) {
 
 const OPERATIONS = {
     "mean": (data) => data.reduce((sum, val) => sum += val) / data.length,
+    "min": (data) => Math.min(...data),
+    "max": (data) => Math.max(...data),
     "median": (data) => {
         let sorted = sort(data);
         const mid = Math.ceil(sorted.length / 2);
