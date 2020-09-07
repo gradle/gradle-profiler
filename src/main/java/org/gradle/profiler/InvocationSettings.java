@@ -44,8 +44,7 @@ public class InvocationSettings {
         File scenarioFile,
         List<String> versions,
         List<String> targets,
-        Map<String,
-            String> sysProperties,
+        Map<String, String> sysProperties,
         File gradleUserHome,
         Integer warmupCount,
         Integer iterations,
@@ -184,7 +183,6 @@ public class InvocationSettings {
         }
     }
 
-
     public static final class InvocationSettingsBuilder {
         private File projectDir;
         private Profiler profiler;
@@ -203,9 +201,6 @@ public class InvocationSettings {
         private List<String> measuredBuildOperations;
         private Format csvFormat;
         private File buildLog;
-
-        public InvocationSettingsBuilder() {
-        }
 
         public InvocationSettingsBuilder setProjectDir(File projectDir) {
             this.projectDir = projectDir;

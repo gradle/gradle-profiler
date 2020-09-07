@@ -84,14 +84,18 @@ public class CommandExec {
             executor.execute(() -> {
                 byte[] buffer = new byte[4096];
                 while (true) {
-                    if (readStream(process.getInputStream(), outputStream, diagnosticOutput, command, buffer)) break;
+                    if (readStream(process.getInputStream(), outputStream, diagnosticOutput, command, buffer)) {
+                        break;
+                    }
                 }
             });
             if (errorStream != null) {
                 executor.execute(() -> {
                     byte[] buffer = new byte[4096];
                     while (true) {
-                        if (readStream(process.getErrorStream(), errorStream, diagnosticOutput, command, buffer)) break;
+                        if (readStream(process.getErrorStream(), errorStream, diagnosticOutput, command, buffer)) {
+                            break;
+                        }
                     }
                 });
             }
@@ -135,6 +139,12 @@ public class CommandExec {
             diagnoticStream.write(buffer, 0, nread);
         } catch (IOException e) {
             throw new RuntimeException("Could not write output from child process for command '" + command + "'", e);
+        } finally {
+            try {
+                outputStream.flush();
+            } catch (IOException e) {
+                throw new RuntimeException("Could not write output from child process for command '" + command + "'", e);
+            }
         }
         return false;
     }

@@ -87,8 +87,8 @@ class CompositeProfiler extends Profiler {
             .setIterations(settings.getBuildCount())
             .setMeasureConfigTime(settings.isMeasureConfigTime())
             .setMeasuredBuildOperations(settings.getMeasuredBuildOperations())
-            .setCsvFormat(settings.getCsvFormat()
-        ).build();
+            .setCsvFormat(settings.getCsvFormat())
+            .build();
         return new ScenarioSettings(newSettings, scenarioSettings.getScenario());
     }
 

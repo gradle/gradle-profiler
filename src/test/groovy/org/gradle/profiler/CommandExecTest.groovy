@@ -16,6 +16,6 @@ class CommandExecTest extends Specification {
         new CommandExec(tmpDir.root).runAndCollectOutput(output, "echo", "hello")
 
         then:
-        output.text == 'hello'
+        output.text.trim() == 'hello'
     }
 }
