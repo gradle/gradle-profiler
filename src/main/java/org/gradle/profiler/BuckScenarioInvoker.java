@@ -43,11 +43,11 @@ public class BuckScenarioInvoker extends ScenarioInvoker<BuckScenarioDefinition,
         try {
             for (int iteration = 1; iteration <= scenario.getWarmUpCount(); iteration++) {
                 BuildContext buildContext = scenarioContext.withBuild(WARM_UP, iteration);
-                runMeasured(buildContext, mutator, measureCommandLineExecution(buildContext, commandLine, settings.getProjectDir()), resultConsumer);
+                runMeasured(buildContext, mutator, measureCommandLineExecution(buildContext, commandLine, settings.getProjectDir(), settings.getBuildLog()), resultConsumer);
             }
             for (int iteration = 1; iteration <= scenario.getBuildCount(); iteration++) {
                 BuildContext buildContext = scenarioContext.withBuild(MEASURE, iteration);
-                runMeasured(buildContext, mutator, measureCommandLineExecution(buildContext, commandLine, settings.getProjectDir()), resultConsumer);
+                runMeasured(buildContext, mutator, measureCommandLineExecution(buildContext, commandLine, settings.getProjectDir(), settings.getBuildLog()), resultConsumer);
             }
         } finally {
             mutator.afterScenario(scenarioContext);

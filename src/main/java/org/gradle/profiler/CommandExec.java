@@ -60,7 +60,7 @@ public class CommandExec {
         } catch (FileNotFoundException e) {
             throw new RuntimeException(e);
         }
-        run(new ProcessBuilder(commandLine), outputStream, Logging.detailed(), null).waitForSuccess();
+        run(new ProcessBuilder(commandLine), new BufferedOutputStream(outputStream), Logging.detailed(), null).waitForSuccess();
     }
 
     public void run(ProcessBuilder processBuilder) {
