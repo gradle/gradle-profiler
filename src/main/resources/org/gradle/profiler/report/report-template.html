@@ -290,12 +290,6 @@ let chart = new Chart(ctx, {
 });
 
 $(document).ready(function() {
-    $('#unsorted').on('click', function () {
-        updateData();
-    })
-    $('#sorted').on('click', function () {
-        updateData();
-    })
     let samples = benchmarkResult.scenarios
         .map(scenario => scenario.samples)
         .flat()
@@ -306,6 +300,9 @@ $(document).ready(function() {
     );
     $("#sample").val(samples[0]);
     $("#sample").select2();
+
+    $('#unsorted').on('click', updateData);
+    $('#sorted').on('click', updateData);
     $("#sample").change(updateData);
     updateData();
 });
