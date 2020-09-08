@@ -7,6 +7,9 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/handlebars.js/4.7.6/handlebars.min.js"></script>
     <script src='https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.9.3/Chart.bundle.min.js'></script>
     <style type="text/css">
+#data-table {
+    overflow-x: scroll;
+}
 th {
     font-size: larger;
     text-align: center;
@@ -105,7 +108,7 @@ let benchmarkResult =
 <div class='container-fluid'>
     <div class='row mt-3'>
         <div class='col ml-auto mr-auto'>
-            <canvas id='samples' width='900' height='400'></canvas>
+            <canvas id='samples' style="width: 100%;"></canvas>
         </div>
     </div>
     <div class="row mt-5">
