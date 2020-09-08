@@ -244,6 +244,7 @@ function convertScenarioToChart(scenario, sample, sorted, color) {
         steppedLine: "middle",
         pointRadius: 0,
         pointHitRadius: 10,
+        hoverRadius: 6,
         fill: false,
         borderWidth: 3,
         pointBackgroundColor: color,
@@ -280,7 +281,13 @@ let chart = new Chart(ctx, {
             fullWidth: false
         },
         tooltips: {
-            mode: "index"
+            mode: "index",
+            position: "nearest",
+            itemSort: (a, b) => b.yLabel - a.yLabel,
+            callbacks: {
+                title: (tooltips, data) => `Build #${tooltips[0].label}`,
+                label: (tooltip, data) => tooltip.yLabel.toFixed(2)
+            }
         },
         scales: {
             yAxes: [{
