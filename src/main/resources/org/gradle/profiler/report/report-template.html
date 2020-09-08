@@ -36,6 +36,9 @@ td.MEASURE {
 tr:hover td.MEASURE {
     background-color: #d8ffd8;
 }
+div.controls > div.col-form-label {
+    text-align: right;
+}
     </style>
     <script>
 const Phase = {
@@ -114,7 +117,7 @@ let benchmarkResult =
             <canvas id='samples' style="width: 100%;"></canvas>
         </div>
     </div>
-    <div class="form-group row">
+    <div class="form-group form-row controls">
         <div class="form-group col-md-3">
             <div class="btn-group btn-group-toggle" data-toggle="buttons">
                 <label class="btn btn-secondary active">
@@ -125,10 +128,10 @@ let benchmarkResult =
                 </label>
             </div>
         </div>
-        <div class="form-group col-md-2">
-            <label class="col-form-label" for="sample">Samples:</label>
+        <div class="form-group col-md-1 col-form-label">
+            <label for="sample">Samples:</label>
         </div>
-        <div class="form-group col-md-6">
+        <div class="form-group col-md-8">
             <select multiple class="form-control" id="sample">
             </select>
         </div>
@@ -236,7 +239,7 @@ function convertScenarioToChart(scenario, sample, sorted, color) {
         data = data.sort((a, b) => b - a);
     }
     return {
-        label: `${scenario.definition.title} ${scenario.definition.buildTool}`,
+        label: `${scenario.definition.title} (${sample}) ${scenario.definition.buildTool}`,
         showLine: true,
         steppedLine: "middle",
         pointRadius: 0,
