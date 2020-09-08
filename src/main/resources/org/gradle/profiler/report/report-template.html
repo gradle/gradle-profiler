@@ -3,8 +3,10 @@
 <head>
     <title>Benchmark Results</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/4.5.2/css/bootstrap.min.css" integrity="sha512-MoRNloxbStBcD8z3M/2BmnT+rg4IsMxPkXaGh2zD6LGNNFE80W3onsAhRcMAMrSoyWL9xD7Ert0men7vR8LUZg==" crossorigin="anonymous">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.13/css/select2.min.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/4.5.2/js/bootstrap.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.13/js/select2.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/handlebars.js/4.7.6/handlebars.min.js"></script>
     <script src='https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.9.3/Chart.bundle.min.js'></script>
     <style type="text/css">
@@ -114,7 +116,7 @@ let benchmarkResult =
     </div>
     <div class="form-group row">
         <div class="form-group col-md-3">
-            <div class="btn-group btn-group-toggle mt-2" data-toggle="buttons">
+            <div class="btn-group btn-group-toggle" data-toggle="buttons">
                 <label class="btn btn-secondary active">
                     <input type="radio" name="sorting" value="historical" id="unsorted" autocomplete="off" checked> Historical
                 </label>
@@ -124,9 +126,9 @@ let benchmarkResult =
             </div>
         </div>
         <div class="form-group col-md-2">
-            <label for="sample">Sample</label>
+            <label class="col-form-label" for="sample">Samples:</label>
         </div>
-        <div class="form-group col-md-3">
+        <div class="form-group col-md-6">
             <select multiple class="form-control" id="sample">
             </select>
         </div>
@@ -279,23 +281,26 @@ let chart = new Chart(ctx, {
     }
 });
 
-$('#unsorted').on('click', function () {
+$(document).ready(function() {
+    $('#unsorted').on('click', function () {
+        updateData();
+    })
+    $('#sorted').on('click', function () {
+        updateData();
+    })
+    let samples = benchmarkResult.scenarios
+        .map(scenario => scenario.samples)
+        .flat()
+        .map(sample => sample.name)
+        .unique();
+    samples.forEach(sample =>
+        $("#sample").append(new Option(sample, sample))
+    );
+    $("#sample").val(samples[0]);
+    $("#sample").select2();
+    $("#sample").change(updateData);
     updateData();
-})
-$('#sorted').on('click', function () {
-    updateData();
-})
-let samples = benchmarkResult.scenarios
-    .map(scenario => scenario.samples)
-    .flat()
-    .map(sample => sample.name)
-    .unique();
-samples.forEach(sample =>
-    $("#sample").append(new Option(sample, sample))
-);
-$("#sample").val(samples[0]);
-$("#sample").change(updateData);
-updateData();
+});
 </script>
 
 </body>
