@@ -58,7 +58,6 @@ public class JsonResultWriter {
         json.addProperty("name", scenario.getName());
         json.addProperty("title", scenario.getTitle());
         json.addProperty("displayName", scenario.getDisplayName());
-        json.addProperty("profileName", scenario.getProfileName());
         json.addProperty("buildTool", scenario.getBuildToolDisplayName());
         json.addProperty("tasks", scenario.getTasksDisplayName());
         return json;
