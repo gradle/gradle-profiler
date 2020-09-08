@@ -127,7 +127,7 @@ let benchmarkResult =
             <label for="sample">Sample</label>
         </div>
         <div class="form-group col-md-3">
-            <select class="form-control" id="sample">
+            <select multiple class="form-control" id="sample">
             </select>
         </div>
     </div>
@@ -245,15 +245,15 @@ function convertScenarioToChart(scenario, sample, sorted, color) {
     };
 }
 
-function convertData(sample, sorted) {
+function convertData(samples, sorted) {
     let palette = new PaletteGenerator();
-    return benchmarkResult.scenarios.map(scenario => convertScenarioToChart(scenario, sample, sorted, palette.nextColor()));
+    return samples.map(sample => benchmarkResult.scenarios.map(scenario => convertScenarioToChart(scenario, sample, sorted, palette.nextColor()))).flat();
 }
 
 function updateData() {
     let sorted = $("input[name='sorting']:checked").val() == "sorted";
-    let sample = $("#sample").val();
-    chart.data.datasets = convertData(sample, sorted);
+    let samples = $("#sample").val();
+    chart.data.datasets = convertData(samples, sorted);
     chart.update();
 }
 
@@ -283,9 +283,11 @@ $('#unsorted').on('click', function () {
 $('#sorted').on('click', function () {
     updateData();
 })
-new Set(benchmarkResult.scenarios.map(scenario => scenario.samples).flat().map(sample => sample.name)).forEach(sample =>
+let samples = [...new Set(benchmarkResult.scenarios.map(scenario => scenario.samples).flat().map(sample => sample.name))];
+samples.forEach(sample =>
     $("#sample").append(new Option(sample, sample))
 );
+$("#sample").val(samples[0]);
 $("#sample").change(updateData);
 updateData();
 </script>
