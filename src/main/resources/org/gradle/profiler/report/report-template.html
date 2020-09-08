@@ -138,16 +138,18 @@ let benchmarkResult =
     </div>
 </div>
 <script>
+Array.prototype.unique = function() { return [...new Set(this)]; };
+
 function iterations(scenario, phase) {
     return scenario.iterations.filter(iteration => iteration.phase === phase);
 }
 function iterationTitles() {
-    return [...new Set(benchmarkResult.scenarios
+    return benchmarkResult.scenarios
         .map(scenario => scenario.iterations
             .map(iteration => iteration.title)
         )
         .flat()
-    )];
+        .unique();
 }
 function sort(array) {
     return array.slice().sort((a, b) => a - b);
@@ -283,7 +285,11 @@ $('#unsorted').on('click', function () {
 $('#sorted').on('click', function () {
     updateData();
 })
-let samples = [...new Set(benchmarkResult.scenarios.map(scenario => scenario.samples).flat().map(sample => sample.name))];
+let samples = benchmarkResult.scenarios
+    .map(scenario => scenario.samples)
+    .flat()
+    .map(sample => sample.name)
+    .unique();
 samples.forEach(sample =>
     $("#sample").append(new Option(sample, sample))
 );
