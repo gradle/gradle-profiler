@@ -2,8 +2,10 @@ package org.gradle.profiler
 
 import org.junit.Rule
 import org.junit.rules.TemporaryFolder
+import spock.lang.Requires
 import spock.lang.Specification
 
+@Requires({ !OperatingSystem.windows })
 class CommandExecTest extends Specification {
     @Rule
     TemporaryFolder tmpDir = new TemporaryFolder()
