@@ -67,7 +67,7 @@ let benchmarkResult = {
                 phase: Phase.WARM_UP,
                 iteration: 1,
                 title: "warm-up build #1",
-                results: {
+                values: {
                     "execution": 1234.3,
                     "ResolveConfigurationDependenciesBuildOperationType": 123.4,
                     "FingerprintTransformInputsOperation": 132.2
@@ -78,7 +78,7 @@ let benchmarkResult = {
                 phase: Phase.WARM_UP,
                 iteration: 2,
                 title: "warm-up build #2",
-                results: {
+                values: {
                     "execution": 1224.3,
                     "ResolveConfigurationDependenciesBuildOperationType": 113.4,
                     "FingerprintTransformInputsOperation": 142.2
@@ -89,7 +89,7 @@ let benchmarkResult = {
                 phase: Phase.MEASURED,
                 iteration: 1,
                 title: "measured build #1",
-                results: {
+                values: {
                     "execution": 924.3,
                     "ResolveConfigurationDependenciesBuildOperationType": 93.4,
                     "FingerprintTransformInputsOperation": 92.2
@@ -100,7 +100,7 @@ let benchmarkResult = {
                 phase: Phase.MEASURED,
                 iteration: 2,
                 title: "measured build #2",
-                results: {
+                values: {
                     "execution": 824.3,
                     "ResolveConfigurationDependenciesBuildOperationType": 83.4,
                     "FingerprintTransformInputsOperation": 82.2
@@ -111,7 +111,7 @@ let benchmarkResult = {
                 phase: Phase.MEASURED,
                 iteration: 3,
                 title: "measured build #3",
-                results: {
+                values: {
                     "execution": 724.3,
                     "ResolveConfigurationDependenciesBuildOperationType": 73.4,
                     "FingerprintTransformInputsOperation": 72.2
@@ -144,7 +144,7 @@ let benchmarkResult = {
                 phase: Phase.WARM_UP,
                 iteration: 1,
                 title: "warm-up build #1",
-                results: {
+                values: {
                     "execution": 2234.3,
                     "ResolveConfigurationDependenciesBuildOperationType": 123.4,
                     "FingerprintTransformInputsOperation": 132.2
@@ -155,7 +155,7 @@ let benchmarkResult = {
                 phase: Phase.WARM_UP,
                 iteration: 2,
                 title: "warm-up build #2",
-                results: {
+                values: {
                     "execution": 2224.3,
                     "ResolveConfigurationDependenciesBuildOperationType": 113.4,
                     "FingerprintTransformInputsOperation": 142.2
@@ -166,7 +166,7 @@ let benchmarkResult = {
                 phase: Phase.MEASURED,
                 iteration: 1,
                 title: "measured build #1",
-                results: {
+                values: {
                     "execution": 1924.3,
                     "ResolveConfigurationDependenciesBuildOperationType": 93.4,
                     "FingerprintTransformInputsOperation": 92.2
@@ -177,7 +177,7 @@ let benchmarkResult = {
                 phase: Phase.MEASURED,
                 iteration: 2,
                 title: "measured build #2",
-                results: {
+                values: {
                     "execution": 1824.3,
                     "ResolveConfigurationDependenciesBuildOperationType": 83.4,
                     "FingerprintTransformInputsOperation": 82.2
@@ -231,7 +231,7 @@ let benchmarkResult = {
                                         <td class="numeric">{{ calc 'stddev' sample scenario }}</td>
                                         <td class="numeric">{{ percent sample.confidence }}</td>
                                         {{#each scenario.iterations}}
-                                            <td class="numeric {{ phase }}" title="{{ phase }} #{{ iteration }}">{{number (lookup results sample.name) }}</td>
+                                            <td class="numeric {{ phase }}" title="{{ phase }} #{{ iteration }}">{{number (lookup values sample.name) }}</td>
                                         {{/each}}
                                     </tr>
                             {{/each}}
@@ -313,7 +313,7 @@ Handlebars.registerHelper("number", function(value) {
 });
 
 Handlebars.registerHelper("calc", function(operation, sample, scenario) {
-    let data = iterations(scenario, Phase.MEASURED).map(iteration => iteration.results[sample.name]);
+    let data = iterations(scenario, Phase.MEASURED).map(iteration => iteration.values[sample.name]);
     return OPERATIONS[operation](data).toFixed(2);
 });
 
@@ -354,7 +354,7 @@ function convertScenarioToChart(scenario, color) {
         pointBackgroundColor: color,
         borderColor: color,
         data: iterations(scenario, Phase.MEASURED)
-            .map(iteration => iteration.results.execution)
+            .map(iteration => iteration.values.execution)
     };
 }
 
