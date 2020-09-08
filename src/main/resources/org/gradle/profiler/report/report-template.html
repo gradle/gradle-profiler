@@ -2,12 +2,8 @@
 <html>
 <head>
     <title>Benchmark Results</title>
-    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css" integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
-    <style>
-        .diff { font-size: 9pt; color: #c0c0c0; }
-        .numeric { text-align: right; }
-        .summary { vertical-align: top; }
-        </style>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/4.5.2/css/bootstrap.min.css" integrity="sha512-MoRNloxbStBcD8z3M/2BmnT+rg4IsMxPkXaGh2zD6LGNNFE80W3onsAhRcMAMrSoyWL9xD7Ert0men7vR8LUZg==" crossorigin="anonymous">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/4.5.2/js/bootstrap.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/handlebars.js/4.7.6/handlebars.min.js"></script>
     <script src='https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.9.3/Chart.bundle.min.js'></script>
     <style type="text/css">
@@ -15,11 +11,12 @@ th {
     font-size: larger;
     text-align: center;
 }
-tr.first {
-    font-weight: bold;
-}
 td.numeric {
+    text-align: right;
     font-family: monospace;
+}
+td.diff {
+    font-size: 9pt; color: #c0c0c0;
 }
 td.WARM_UP {
     background-color: #fff8ee;
@@ -43,10 +40,10 @@ const Phase = {
 let benchmarkResult =
 @@BENCHMARK_RESULT_JSON@@
 ;
-    </script>
+</script>
     <script id="data-table-template" type="text/x-handlebars-template">
     {{#with benchmarkResult}}
-        <div class='row mt-5'>
+        <div class='row'>
             <div class='col'>
                 <table class='table table-sm table-hover'>
                     <thead>
@@ -101,15 +98,20 @@ let benchmarkResult =
     </script>
 </head>
 <body>
-<div class='container mt-5 mb-5'>
-    <h1>Benchmark results</h1>
-
-    <div class='row mt-5'>
+<!-- As a heading -->
+<nav class="navbar navbar-dark bg-dark">
+  <span class="navbar-brand mb-0 h1">Benchmark results</span>
+</nav>
+<div class='container-fluid'>
+    <div class='row mt-3'>
         <div class='col ml-auto mr-auto'>
             <canvas id='samples' width='900' height='400'></canvas>
-            </div>
         </div>
-        <div id="data-table"></div>
+    </div>
+    <div class="row mt-5">
+        <div class='col ml-auto mr-auto'>
+          <div id="data-table"></div>
+        </div>
     </div>
 </div>
 <script>
