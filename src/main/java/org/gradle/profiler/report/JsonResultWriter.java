@@ -24,31 +24,33 @@ public class JsonResultWriter {
         this.pretty = pretty;
     }
 
-    public <T extends BuildInvocationResult> void write(List<? extends BuildScenarioResult<T>> scenarios, Writer writer) {
+    public void write(List<? extends BuildScenarioResult<?>> scenarios, Writer writer) {
         GsonBuilder builder = new GsonBuilder();
         if (pretty) {
             builder.setPrettyPrinting();
         }
         Gson gson = builder
-            .registerTypeHierarchyAdapter(BuildScenarioResult.class, (JsonSerializer<? extends BuildScenarioResult<T>>) (scenarioResult, type, context) -> {
-                JsonObject json = new JsonObject();
-                json.add("definition", context.serialize(scenarioResult.getScenarioDefinition()));
-                JsonArray samplesJson = new JsonArray();
-                List<Sample<? super T>> samples = scenarioResult.getSamples();
-                for (Sample<? super T> sample : samples) {
-                    samplesJson.add(serializeSample(scenarioResult, sample));
-                }
-                json.add("samples", samplesJson);
-                JsonArray iterationsJson = new JsonArray();
-                for (T result : scenarioResult.getResults()) {
-                    iterationsJson.add(serializeIteration(result, samples));
-                }
-                json.add("iterations", iterationsJson);
-                return json;
-            })
+            .registerTypeHierarchyAdapter(BuildScenarioResult.class, (JsonSerializer<? extends BuildScenarioResult<?>>) this::serializeScenarioResult)
             .registerTypeHierarchyAdapter(ScenarioDefinition.class, (JsonSerializer<ScenarioDefinition>) this::serializeScenarioDefinition)
             .create();
         gson.toJson(ImmutableMap.of("scenarios", scenarios), writer);
+    }
+
+    private <T extends BuildInvocationResult> JsonObject serializeScenarioResult(BuildScenarioResult<T> scenarioResult, Type type, JsonSerializationContext context) {
+        JsonObject json = new JsonObject();
+        json.add("definition", context.serialize(scenarioResult.getScenarioDefinition()));
+        JsonArray samplesJson = new JsonArray();
+        List<Sample<? super T>> samples = scenarioResult.getSamples();
+        for (Sample<? super T> sample : samples) {
+            samplesJson.add(serializeSample(scenarioResult, sample));
+        }
+        json.add("samples", samplesJson);
+        JsonArray iterationsJson = new JsonArray();
+        for (T result : scenarioResult.getResults()) {
+            iterationsJson.add(serializeIteration(result, samples));
+        }
+        json.add("iterations", iterationsJson);
+        return json;
     }
 
     private JsonObject serializeScenarioDefinition(ScenarioDefinition scenario, Type typeOfSrc, JsonSerializationContext context) {

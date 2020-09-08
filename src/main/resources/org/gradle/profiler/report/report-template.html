@@ -21,171 +21,28 @@ tr.first {
 td.numeric {
     font-family: monospace;
 }
-td.warm-up {
+td.WARM_UP {
     background-color: #fff8ee;
 }
-tr:hover td.warm-up {
+tr:hover td.WARM_UP {
     background-color: #ffe6d4;
 }
-td.measured {
+td.MEASURE {
     background-color: #eeffee;
 }
-tr:hover td.measured {
+tr:hover td.MEASURE {
     background-color: #d8ffd8;
 }
     </style>
     <script>
 const Phase = {
-    WARM_UP: "warm-up",
-    MEASURED: "measured"
+    WARM_UP: "WARM_UP",
+    MEASURE: "MEASURE"
 };
 
-let benchmarkResult = {
-    scenarios: [{
-        definition: {
-            id: "file-system-watching@1",
-            name: "file-system-watching",
-            title: "File System Watching",
-            buildTool: "Gradle",
-            tasks: "assemble",
-            problems: []
-        },
-        samples: [{
-                name: "execution",
-                confidence: 0.9732
-            },{
-                name: "ResolveConfigurationDependenciesBuildOperationType",
-                confidence: 0.9533
-            },{
-                name: "FingerprintTransformInputsOperation",
-                confidence: 0.9231
-            }
-        ],
-        iterations: [
-            {
-                id: "file-system-watching@1@1",
-                phase: Phase.WARM_UP,
-                iteration: 1,
-                title: "warm-up build #1",
-                values: {
-                    "execution": 1234.3,
-                    "ResolveConfigurationDependenciesBuildOperationType": 123.4,
-                    "FingerprintTransformInputsOperation": 132.2
-                }
-            },
-            {
-                id: "file-system-watching@1@2",
-                phase: Phase.WARM_UP,
-                iteration: 2,
-                title: "warm-up build #2",
-                values: {
-                    "execution": 1224.3,
-                    "ResolveConfigurationDependenciesBuildOperationType": 113.4,
-                    "FingerprintTransformInputsOperation": 142.2
-                }
-            },
-            {
-                id: "file-system-watching@1@3",
-                phase: Phase.MEASURED,
-                iteration: 1,
-                title: "measured build #1",
-                values: {
-                    "execution": 924.3,
-                    "ResolveConfigurationDependenciesBuildOperationType": 93.4,
-                    "FingerprintTransformInputsOperation": 92.2
-                }
-            },
-            {
-                id: "file-system-watching@1@4",
-                phase: Phase.MEASURED,
-                iteration: 2,
-                title: "measured build #2",
-                values: {
-                    "execution": 824.3,
-                    "ResolveConfigurationDependenciesBuildOperationType": 83.4,
-                    "FingerprintTransformInputsOperation": 82.2
-                }
-            },
-            {
-                id: "file-system-watching@1@4",
-                phase: Phase.MEASURED,
-                iteration: 3,
-                title: "measured build #3",
-                values: {
-                    "execution": 724.3,
-                    "ResolveConfigurationDependenciesBuildOperationType": 73.4,
-                    "FingerprintTransformInputsOperation": 72.2
-                }
-            },
-        ]
-    },{
-        definition: {
-            id: "configuration-cache@2",
-            name: "configuration-cache",
-            title: "Configuration Cache",
-            buildTool: "Gradle",
-            tasks: "assemble",
-            problems: []
-        },
-        samples: [{
-            name: "execution",
-                confidence: 0.9732
-            },{
-                name: "ResolveConfigurationDependenciesBuildOperationType",
-                confidence: 0.9533
-            },{
-                name: "FingerprintTransformInputsOperation",
-                confidence: 0.9231
-            }
-        ],
-        iterations: [
-            {
-                id: "configuration-cache@2@1",
-                phase: Phase.WARM_UP,
-                iteration: 1,
-                title: "warm-up build #1",
-                values: {
-                    "execution": 2234.3,
-                    "ResolveConfigurationDependenciesBuildOperationType": 123.4,
-                    "FingerprintTransformInputsOperation": 132.2
-                }
-            },
-            {
-                id: "configuration-cache@2@2",
-                phase: Phase.WARM_UP,
-                iteration: 2,
-                title: "warm-up build #2",
-                values: {
-                    "execution": 2224.3,
-                    "ResolveConfigurationDependenciesBuildOperationType": 113.4,
-                    "FingerprintTransformInputsOperation": 142.2
-                }
-            },
-            {
-                id: "configuration-cache@2@3",
-                phase: Phase.MEASURED,
-                iteration: 1,
-                title: "measured build #1",
-                values: {
-                    "execution": 1924.3,
-                    "ResolveConfigurationDependenciesBuildOperationType": 93.4,
-                    "FingerprintTransformInputsOperation": 92.2
-                }
-            },
-            {
-                id: "configuration-cache@2@4",
-                phase: Phase.MEASURED,
-                iteration: 2,
-                title: "measured build #2",
-                values: {
-                    "execution": 1824.3,
-                    "ResolveConfigurationDependenciesBuildOperationType": 83.4,
-                    "FingerprintTransformInputsOperation": 82.2
-                }
-            },
-        ]
-    }]
-};
+let benchmarkResult =
+@@BENCHMARK_RESULT_JSON@@
+;
     </script>
     <script id="data-table-template" type="text/x-handlebars-template">
     {{#with benchmarkResult}}
@@ -313,7 +170,7 @@ Handlebars.registerHelper("number", function(value) {
 });
 
 Handlebars.registerHelper("calc", function(operation, sample, scenario) {
-    let data = iterations(scenario, Phase.MEASURED).map(iteration => iteration.values[sample.name]);
+    let data = iterations(scenario, Phase.MEASURE).map(iteration => iteration.values[sample.name]);
     return OPERATIONS[operation](data).toFixed(2);
 });
 
@@ -353,13 +210,13 @@ function convertScenarioToChart(scenario, color) {
         borderWidth: 3,
         pointBackgroundColor: color,
         borderColor: color,
-        data: iterations(scenario, Phase.MEASURED)
+        data: iterations(scenario, Phase.MEASURE)
             .map(iteration => iteration.values.execution)
     };
 }
 
 let ctx = document.getElementById('samples').getContext('2d');
-let maxMeasuredIterations = Math.max(...(benchmarkResult.scenarios.map(scenario => iterations(scenario, Phase.MEASURED).length)));
+let maxMeasuredIterations = Math.max(...(benchmarkResult.scenarios.map(scenario => iterations(scenario, Phase.MEASURE).length)));
 let palette = new PaletteGenerator();
 let chart = new Chart(ctx, {
     type: 'line',
