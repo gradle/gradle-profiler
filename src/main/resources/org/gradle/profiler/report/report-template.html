@@ -117,7 +117,7 @@ let benchmarkResult =
             <canvas id='samples' style="width: 100%;"></canvas>
         </div>
     </div>
-    <div class="form-group form-row controls">
+    <div class="form-group form-row controls mt-3">
         <div class="form-group col-md-3">
             <div class="btn-group btn-group-toggle" data-toggle="buttons">
                 <label class="btn btn-secondary active">
@@ -136,7 +136,7 @@ let benchmarkResult =
             </select>
         </div>
     </div>
-    <div class="row mt-5">
+    <div class="row mt-3">
         <div class='col ml-auto mr-auto'>
           <div id="data-table"></div>
         </div>
@@ -274,6 +274,11 @@ let chart = new Chart(ctx, {
     },
     options: {
         responsive: false,
+        legend: {
+            position: "bottom",
+            align: "start",
+            fullWidth: false
+        },
         scales: {
             yAxes: [{
                 ticks: {
