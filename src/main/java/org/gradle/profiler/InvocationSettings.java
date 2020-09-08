@@ -282,8 +282,9 @@ public class InvocationSettings {
             return this;
         }
 
-        public void setBuildLog(File buildLog) {
+        public InvocationSettingsBuilder setBuildLog(File buildLog) {
             this.buildLog = buildLog;
+            return this;
         }
 
         public InvocationSettings build() {
