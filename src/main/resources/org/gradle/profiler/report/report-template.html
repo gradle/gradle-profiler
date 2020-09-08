@@ -3,6 +3,7 @@
 <head>
     <title>Benchmark Results</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/4.5.2/css/bootstrap.min.css" integrity="sha512-MoRNloxbStBcD8z3M/2BmnT+rg4IsMxPkXaGh2zD6LGNNFE80W3onsAhRcMAMrSoyWL9xD7Ert0men7vR8LUZg==" crossorigin="anonymous">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/4.5.2/js/bootstrap.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/handlebars.js/4.7.6/handlebars.min.js"></script>
     <script src='https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.9.3/Chart.bundle.min.js'></script>
@@ -109,6 +110,14 @@ let benchmarkResult =
     <div class='row mt-3'>
         <div class='col ml-auto mr-auto'>
             <canvas id='samples' style="width: 100%;"></canvas>
+            <div class="btn-group btn-group-toggle mt-2" data-toggle="buttons">
+                <label class="btn btn-secondary active">
+                  <input type="radio" name="sorting" id="unsorted" autocomplete="off" checked> Historical
+                </label>
+                <label class="btn btn-secondary">
+                  <input type="radio" name="sorting" id="sorted" autocomplete="off"> Sorted
+                </label>
+            </div>
         </div>
     </div>
     <div class="row mt-5">
@@ -205,7 +214,12 @@ class PaletteGenerator {
     }
 };
 
-function convertScenarioToChart(scenario, color) {
+function convertScenarioToChart(scenario, sorted, color) {
+    var data = iterations(scenario, Phase.MEASURE)
+            .map(iteration => iteration.values.execution);
+    if (sorted) {
+        data = data.sort((a, b) => b - a);
+    }
     return {
         label: `${scenario.definition.title} ${scenario.definition.buildTool}`,
         showLine: true,
@@ -216,19 +230,27 @@ function convertScenarioToChart(scenario, color) {
         borderWidth: 3,
         pointBackgroundColor: color,
         borderColor: color,
-        data: iterations(scenario, Phase.MEASURE)
-            .map(iteration => iteration.values.execution)
+        data: data
     };
+}
+
+function convertData(sorted) {
+    let palette = new PaletteGenerator();
+    return benchmarkResult.scenarios.map(scenario => convertScenarioToChart(scenario, sorted, palette.nextColor()));
+}
+
+function updateData(sorted) {
+    chart.data.datasets = convertData(sorted);
+    chart.update();
 }
 
 let ctx = document.getElementById('samples').getContext('2d');
 let maxMeasuredIterations = Math.max(...(benchmarkResult.scenarios.map(scenario => iterations(scenario, Phase.MEASURE).length)));
-let palette = new PaletteGenerator();
 let chart = new Chart(ctx, {
     type: 'line',
     data: {
         labels: Array.from(Array(maxMeasuredIterations), (_, i) => (i + 1).toString()),
-        datasets: benchmarkResult.scenarios.map(scenario => convertScenarioToChart(scenario, palette.nextColor()))
+        datasets: convertData(false)
     },
     options: {
         responsive: false,
@@ -241,6 +263,13 @@ let chart = new Chart(ctx, {
         }
     }
 });
+
+$('#unsorted').on('click', function () {
+    updateData(false);
+})
+$('#sorted').on('click', function () {
+    updateData(true);
+})
 </script>
 
 </body>
