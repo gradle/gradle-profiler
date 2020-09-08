@@ -1,6 +1,10 @@
 package org.gradle.profiler;
 
-import joptsimple.*;
+import joptsimple.ArgumentAcceptingOptionSpec;
+import joptsimple.OptionException;
+import joptsimple.OptionParser;
+import joptsimple.OptionSet;
+import joptsimple.OptionSpecBuilder;
 import org.gradle.profiler.report.CsvGenerator;
 import org.gradle.profiler.report.CsvGenerator.Format;
 
@@ -124,24 +128,24 @@ class CommandLineParser {
         }
         CsvGenerator.Format csvFormat = CsvGenerator.Format.parse(parsedOptions.valueOf(csvFormatOption));
 
-        return new InvocationSettings(
-            projectDir,
-            profiler,
-            benchmark,
-            outputDir,
-            invoker,
-            dryRun,
-            scenarioFile,
-            versions,
-            targetNames,
-            sysProperties,
-            gradleUserHome,
-            warmups,
-            iterations,
-            measureConfig,
-            benchmarkedBuildOperations,
-            csvFormat
-        );
+        return new InvocationSettings.InvocationSettingsBuilder()
+            .setProjectDir(projectDir)
+            .setProfiler(profiler)
+            .setBenchmark(benchmark)
+            .setOutputDir(outputDir)
+            .setInvoker(invoker)
+            .setDryRun(dryRun)
+            .setScenarioFile(scenarioFile)
+            .setVersions(versions)
+            .setTargets(targetNames)
+            .setSysProperties(sysProperties)
+            .setGradleUserHome(gradleUserHome)
+            .setWarmupCount(warmups)
+            .setIterations(iterations)
+            .setMeasureConfigTime(measureConfig)
+            .setMeasuredBuildOperations(benchmarkedBuildOperations)
+            .setCsvFormat(csvFormat)
+            .build();
     }
 
     private File findOutputDir() {

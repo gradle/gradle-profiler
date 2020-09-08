@@ -1,12 +1,13 @@
 package org.gradle.profiler;
 
-import org.gradle.profiler.report.CsvGenerator;
-
+import javax.annotation.Nullable;
 import java.io.File;
 import java.io.PrintStream;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+
+import static org.gradle.profiler.report.CsvGenerator.Format;
 
 public class InvocationSettings {
     private final File projectDir;
@@ -24,11 +25,16 @@ public class InvocationSettings {
     private final Integer iterations;
     private final boolean measureConfigTime;
     private final List<String> measuredBuildOperations;
-    private final CsvGenerator.Format csvFormat;
+    private final Format csvFormat;
+    /**
+     * The log file which the build should write stdout and stderr to.
+     * If {@code null}, the stdout and stderr are stored in memory.
+     */
+    private final File buildLog;
 
     private final UUID invocationId = UUID.randomUUID();
 
-    public InvocationSettings(
+    private InvocationSettings(
         File projectDir,
         Profiler profiler,
         boolean benchmark,
@@ -37,15 +43,15 @@ public class InvocationSettings {
         boolean dryRun,
         File scenarioFile,
         List<String> versions,
-        List<String> getTargets,
-        Map<String,
-        String> sysProperties,
+        List<String> targets,
+        Map<String, String> sysProperties,
         File gradleUserHome,
         Integer warmupCount,
         Integer iterations,
         boolean measureConfigTime,
         List<String> measuredBuildOperations,
-        CsvGenerator.Format csvFormat
+        Format csvFormat,
+        File buildLog
     ) {
         this.benchmark = benchmark;
         this.projectDir = projectDir;
@@ -55,7 +61,7 @@ public class InvocationSettings {
         this.dryRun = dryRun;
         this.scenarioFile = scenarioFile;
         this.versions = versions;
-        this.targets = getTargets;
+        this.targets = targets;
         this.sysProperties = sysProperties;
         this.gradleUserHome = gradleUserHome;
         this.warmupCount = warmupCount;
@@ -63,6 +69,12 @@ public class InvocationSettings {
         this.measureConfigTime = measureConfigTime;
         this.measuredBuildOperations = measuredBuildOperations;
         this.csvFormat = csvFormat;
+        this.buildLog = buildLog;
+    }
+
+    @Nullable
+    public File getBuildLog() {
+        return buildLog;
     }
 
     public File getOutputDir() {
@@ -141,7 +153,7 @@ public class InvocationSettings {
         return measuredBuildOperations;
     }
 
-    public CsvGenerator.Format getCsvFormat() {
+    public Format getCsvFormat() {
         return csvFormat;
     }
 
@@ -168,6 +180,132 @@ public class InvocationSettings {
             for (Map.Entry<String, String> entry : getSystemProperties().entrySet()) {
                 out.println("  " + entry.getKey() + "=" + entry.getValue());
             }
+        }
+    }
+
+    public static final class InvocationSettingsBuilder {
+        private File projectDir;
+        private Profiler profiler;
+        private boolean benchmark;
+        private boolean dryRun;
+        private File scenarioFile;
+        private File outputDir;
+        private BuildInvoker invoker;
+        private List<String> versions;
+        private List<String> targets;
+        private Map<String, String> sysProperties;
+        private File gradleUserHome;
+        private Integer warmupCount;
+        private Integer iterations;
+        private boolean measureConfigTime;
+        private List<String> measuredBuildOperations;
+        private Format csvFormat;
+        private File buildLog;
+
+        public InvocationSettingsBuilder setProjectDir(File projectDir) {
+            this.projectDir = projectDir;
+            return this;
+        }
+
+        public InvocationSettingsBuilder setProfiler(Profiler profiler) {
+            this.profiler = profiler;
+            return this;
+        }
+
+        public InvocationSettingsBuilder setBenchmark(boolean benchmark) {
+            this.benchmark = benchmark;
+            return this;
+        }
+
+        public InvocationSettingsBuilder setDryRun(boolean dryRun) {
+            this.dryRun = dryRun;
+            return this;
+        }
+
+        public InvocationSettingsBuilder setScenarioFile(File scenarioFile) {
+            this.scenarioFile = scenarioFile;
+            return this;
+        }
+
+        public InvocationSettingsBuilder setOutputDir(File outputDir) {
+            this.outputDir = outputDir;
+            return this;
+        }
+
+        public InvocationSettingsBuilder setInvoker(BuildInvoker invoker) {
+            this.invoker = invoker;
+            return this;
+        }
+
+        public InvocationSettingsBuilder setVersions(List<String> versions) {
+            this.versions = versions;
+            return this;
+        }
+
+        public InvocationSettingsBuilder setTargets(List<String> targets) {
+            this.targets = targets;
+            return this;
+        }
+
+        public InvocationSettingsBuilder setSysProperties(Map<String, String> sysProperties) {
+            this.sysProperties = sysProperties;
+            return this;
+        }
+
+        public InvocationSettingsBuilder setGradleUserHome(File gradleUserHome) {
+            this.gradleUserHome = gradleUserHome;
+            return this;
+        }
+
+        public InvocationSettingsBuilder setWarmupCount(Integer warmupCount) {
+            this.warmupCount = warmupCount;
+            return this;
+        }
+
+        public InvocationSettingsBuilder setIterations(Integer iterations) {
+            this.iterations = iterations;
+            return this;
+        }
+
+        public InvocationSettingsBuilder setMeasureConfigTime(boolean measureConfigTime) {
+            this.measureConfigTime = measureConfigTime;
+            return this;
+        }
+
+        public InvocationSettingsBuilder setMeasuredBuildOperations(List<String> measuredBuildOperations) {
+            this.measuredBuildOperations = measuredBuildOperations;
+            return this;
+        }
+
+        public InvocationSettingsBuilder setCsvFormat(Format csvFormat) {
+            this.csvFormat = csvFormat;
+            return this;
+        }
+
+        public void setBuildLog(File buildLog) {
+            this.buildLog = buildLog;
+        }
+
+        public InvocationSettings build() {
+            return new InvocationSettings(
+                projectDir,
+                profiler,
+                benchmark,
+                outputDir,
+                invoker,
+                dryRun,
+                scenarioFile,
+                versions,
+                targets,
+                sysProperties,
+                gradleUserHome,
+                warmupCount,
+                iterations,
+                measureConfigTime,
+                measuredBuildOperations,
+                csvFormat,
+                buildLog
+            );
         }
     }
 }

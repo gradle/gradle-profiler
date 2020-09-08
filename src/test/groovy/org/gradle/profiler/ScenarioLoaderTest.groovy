@@ -31,24 +31,24 @@ class ScenarioLoaderTest extends Specification {
         Integer iterations = null,
         List<String> measuredBuildOperations = ImmutableList.of()
     ) {
-        new InvocationSettings(
-            projectDir,
-            Profiler.NONE,
-            benchmark,
-            outputDir,
-            invoker,
-            false,
-            scenarioFile,
-            [],
-            [],
-            [:],
-            gradleUserHomeDir,
-            warmups,
-            iterations,
-            false,
-            measuredBuildOperations,
-            CsvGenerator.Format.WIDE
-        )
+        new InvocationSettings.InvocationSettingsBuilder()
+            .setProjectDir(projectDir)
+            .setProfiler(Profiler.NONE)
+            .setBenchmark(benchmark)
+            .setOutputDir(outputDir)
+            .setInvoker(invoker)
+            .setDryRun(false)
+            .setScenarioFile(scenarioFile)
+            .setVersions([])
+            .setTargets([])
+            .setSysProperties([:])
+            .setGradleUserHome(gradleUserHomeDir)
+            .setWarmupCount(warmups)
+            .setIterations(iterations)
+            .setMeasureConfigTime(false)
+            .setMeasuredBuildOperations(measuredBuildOperations)
+            .setCsvFormat(CsvGenerator.Format.WIDE
+            ).build()
     }
 
     def "can load single scenario"() {

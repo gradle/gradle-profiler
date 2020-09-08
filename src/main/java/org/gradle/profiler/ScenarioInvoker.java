@@ -65,10 +65,14 @@ public abstract class ScenarioInvoker<T extends ScenarioDefinition, R extends Bu
     /**
      * Returns a {@link Supplier} that returns the result of the given command.
      */
-    protected Supplier<BuildInvocationResult> measureCommandLineExecution(BuildContext buildContext, List<String> commandLine, File workingDir) {
+    Supplier<BuildInvocationResult> measureCommandLineExecution(BuildContext buildContext, List<String> commandLine, File workingDir, File buildLog) {
         return () -> {
             Timer timer = new Timer();
-            new CommandExec().inDir(workingDir).run(commandLine);
+            if (buildLog == null) {
+                new CommandExec().inDir(workingDir).run(commandLine);
+            } else {
+                new CommandExec().inDir(workingDir).runAndCollectOutput(buildLog, commandLine);
+            }
             Duration executionTime = timer.elapsed();
             return new BuildInvocationResult(buildContext, executionTime);
         };
