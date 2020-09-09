@@ -2,7 +2,7 @@ package org.gradle.trace.buildops;
 
 import org.gradle.api.file.RegularFileProperty;
 import org.gradle.api.internal.GradleInternal;
-import org.gradle.api.provider.Property;
+import org.gradle.api.provider.MapProperty;
 import org.gradle.api.provider.Provider;
 import org.gradle.api.services.BuildService;
 import org.gradle.api.services.BuildServiceParameters;
@@ -87,7 +87,7 @@ public class BuildOperationTrace {
 
     public static abstract class BuildOperationDurationRecordingListener implements BuildService<BuildOperationDurationRecordingListener.Params>, BuildOperationListener, AutoCloseable {
         interface Params extends BuildServiceParameters {
-            Property<Map<String, File>> getCapturedBuildOperations();
+            MapProperty<String, File> getCapturedBuildOperations();
         }
 
         private final List<BuildOperationCollector> collectors;
