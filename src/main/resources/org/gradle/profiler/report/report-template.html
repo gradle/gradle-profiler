@@ -121,10 +121,10 @@ let benchmarkResult =
         <div class="form-group col-md-3">
             <div class="btn-group btn-group-toggle" data-toggle="buttons">
                 <label class="btn btn-secondary active">
-                    <input type="radio" name="sorting" value="historical" id="unsorted" autocomplete="off" checked> Historical
+                    <input type="radio" name="sorting" value="historical" autocomplete="off" checked> Historical
                 </label>
                 <label class="btn btn-secondary">
-                    <input type="radio" name="sorting" value="sorted" id="sorted" autocomplete="off"> Sorted
+                    <input type="radio" name="sorting" value="sorted" autocomplete="off"> Sorted
                 </label>
             </div>
         </div>
@@ -314,8 +314,7 @@ $(document).ready(function() {
     $("#sample").val(samples[0]);
     $("#sample").select2();
 
-    $('#unsorted').on('click', updateData);
-    $('#sorted').on('click', updateData);
+    $("input[name=sorting]").change(updateData);
     $("#sample").change(updateData);
     updateData();
 });
