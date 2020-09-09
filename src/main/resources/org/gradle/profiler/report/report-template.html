@@ -9,6 +9,7 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.13/js/select2.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/handlebars.js/4.7.6/handlebars.min.js"></script>
     <script src='https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.9.3/Chart.bundle.min.js'></script>
+    <script src='https://cdn.jsdelivr.net/npm/chartjs-plugin-crosshair@1.1.6'></script>
     <style type="text/css">
 #data-table {
     overflow-x: scroll;
@@ -272,6 +273,16 @@ let chart = new Chart(ctx, {
         datasets: []
     },
     options: {
+        plugins: {
+            crosshair: {
+                zoom: {
+                    enabled: false
+                },
+                snap: {
+		        	enabled: false,
+        		}
+            }
+        },
         responsive: false,
         animation: {
             duration: 0
@@ -289,6 +300,9 @@ let chart = new Chart(ctx, {
                 title: (tooltips, data) => `Build #${tooltips[0].label}`,
                 label: (tooltip, data) => tooltip.yLabel.toFixed(2)
             }
+        },
+        hover: {
+            intersect: false
         },
         scales: {
             yAxes: [{
