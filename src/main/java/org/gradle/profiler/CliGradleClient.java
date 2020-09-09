@@ -14,12 +14,18 @@ public class CliGradleClient implements GradleInvoker, GradleClient {
     private final File javaHome;
     private final File projectDir;
     private final boolean daemon;
+    private final File buildLog;
 
-    public CliGradleClient(GradleBuildConfiguration gradleBuildConfiguration, File javaHome, File projectDir, boolean daemon) {
+    public CliGradleClient(GradleBuildConfiguration gradleBuildConfiguration,
+                      File javaHome,
+                      File projectDir,
+                      boolean daemon,
+                      File buildLog) {
         this.gradleBuildConfiguration = gradleBuildConfiguration;
         this.javaHome = javaHome;
         this.projectDir = projectDir;
         this.daemon = daemon;
+        this.buildLog = buildLog;
     }
 
     @Override
@@ -53,7 +59,9 @@ public class CliGradleClient implements GradleInvoker, GradleClient {
 
         ProcessBuilder builder = new ProcessBuilder(commandLine);
         builder.directory(projectDir);
-        if (!daemon) {
+        if (daemon) {
+            builder.environment().put("GRADLE_OPTS", "-Xmx128m -Xms128m -XX:+HeapDumpOnOutOfMemoryError");
+        } else {
             Logging.detailed().println("GRADLE_OPTS: " + gradleOpts);
             builder.environment().put("GRADLE_OPTS", gradleOpts);
         }
@@ -61,7 +69,11 @@ public class CliGradleClient implements GradleInvoker, GradleClient {
         builder.environment().put("JAVA_HOME", javaHome.getAbsolutePath());
         builder.redirectErrorStream(true);
         try {
-            new CommandExec().run(builder);
+            if (buildLog == null) {
+                new CommandExec().run(builder);
+            } else {
+                new CommandExec().runAndCollectOutput(buildLog, builder);
+            }
         } catch (Exception e) {
             System.out.println();
             System.out.println("ERROR: failed to run build. See log file for details.");
