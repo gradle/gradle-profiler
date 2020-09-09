@@ -173,7 +173,7 @@ function quantile(data, q) {
 };
 
 function mean(data) {
-    return data.reduce((sum, val) => sum += val) / data.length;
+    return data.reduce((sum, val) => sum + val) / data.length;
 }
 
 const OPERATIONS = {
@@ -209,18 +209,16 @@ Handlebars.registerHelper("calc", function(operation, sample, scenario) {
 let source = document.getElementById("data-table-template");
 let target = document.getElementById("data-table");
 let template = Handlebars.compile(source.innerHTML);
-let maxIterations = Math.max(...(benchmarkResult.scenarios.map(scenario => scenario.iterations.length)));
 let html = template({
     benchmarkResult: benchmarkResult,
     iterationTitles: iterationTitles(),
 });
-// console.log(html);
 target.innerHTML = html;
 </script>
 <script>
 const COLORS = ["#527AB3", "#56ac76", "#f44336", "#d49c3e", "#211f2d"];
 class PaletteGenerator {
-    constructor(colors) {
+    constructor() {
         this.colors = COLORS.slice();
     }
     nextColor() {
@@ -259,7 +257,7 @@ function convertData(samples, sorted) {
 }
 
 function updateData() {
-    let sorted = $("input[name='sorting']:checked").val() == "sorted";
+    let sorted = $("input[name='sorting']:checked").val() === "sorted";
     let samples = $("#sample").val();
     chart.data.datasets = convertData(samples, sorted);
     chart.update();
@@ -308,11 +306,10 @@ $(document).ready(function() {
         .flat()
         .map(sample => sample.name)
         .unique();
-    samples.forEach(sample =>
-        $("#sample").append(new Option(sample, sample))
-    );
-    $("#sample").val(samples[0]);
-    $("#sample").select2();
+    $("#sample")
+        .append(samples.map(sample => new Option(sample)))
+        .val(samples[0])
+        .select2();
 
     $("input[name=sorting]").change(updateData);
     $("#sample").change(updateData);
