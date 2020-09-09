@@ -1,0 +1,321 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Benchmark Results</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/4.5.2/css/bootstrap.min.css" integrity="sha512-MoRNloxbStBcD8z3M/2BmnT+rg4IsMxPkXaGh2zD6LGNNFE80W3onsAhRcMAMrSoyWL9xD7Ert0men7vR8LUZg==" crossorigin="anonymous">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.13/css/select2.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/4.5.2/js/bootstrap.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.13/js/select2.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/handlebars.js/4.7.6/handlebars.min.js"></script>
+    <script src='https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.9.3/Chart.bundle.min.js'></script>
+    <style type="text/css">
+#data-table {
+    overflow-x: scroll;
+}
+th {
+    font-size: larger;
+    text-align: center;
+}
+td.numeric {
+    text-align: right;
+    font-family: monospace;
+}
+td.diff {
+    font-size: 9pt; color: #c0c0c0;
+}
+td.WARM_UP {
+    background-color: #fff8ee;
+}
+tr:hover td.WARM_UP {
+    background-color: #ffe6d4;
+}
+td.MEASURE {
+    background-color: #eeffee;
+}
+tr:hover td.MEASURE {
+    background-color: #d8ffd8;
+}
+div.controls > div.col-form-label {
+    text-align: right;
+}
+    </style>
+    <script>
+const Phase = {
+    WARM_UP: "WARM_UP",
+    MEASURE: "MEASURE"
+};
+
+let benchmarkResult =
+@@BENCHMARK_RESULT_JSON@@
+;
+</script>
+    <script id="data-table-template" type="text/x-handlebars-template">
+    {{#with benchmarkResult}}
+        <div class='row'>
+            <div class='col'>
+                <table class='table table-sm table-hover'>
+                    <thead>
+                        <tr>
+                            <th>Scenario</th>
+                            <th>Version</th>
+                            <th>Tasks</th>
+                            <th>Sample</th>
+                            <th>Mean</th>
+                            <th>Min</th>
+                            <th>P25</th>
+                            <th>Median</th>
+                            <th>P75</th>
+                            <th>Max</th>
+                            <th>Std.dev</th>
+                            <th>Confidence</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                        {{#each scenarios as |scenario|}}
+                            {{#each samples as |sample|}}
+                                {{#if @first}}
+                                    <tr class="first">
+                                        {{#with scenario.definition}}
+                                            <td rowspan="{{ sampleCount scenario }}">{{ title }}</td>
+                                            <td rowspan="{{ sampleCount scenario }}">{{ buildTool }}</td>
+                                            <td rowspan="{{ sampleCount scenario }}">{{ tasks }}</td>
+                                        {{/with}}
+                                {{else}}
+                                    <tr>
+                                {{/if}}
+                                        <td>{{ sample.name }}</td>
+                                        <td class="numeric">{{ calc 'mean' sample scenario }}</td>
+                                        <td class="numeric">{{ calc 'p25' sample scenario }}</td>
+                                        <td class="numeric">{{ calc 'min' sample scenario }}</td>
+                                        <td class="numeric">{{ calc 'median' sample scenario }}</td>
+                                        <td class="numeric">{{ calc 'p75' sample scenario }}</td>
+                                        <td class="numeric">{{ calc 'max' sample scenario }}</td>
+                                        <td class="numeric">{{ calc 'stddev' sample scenario }}</td>
+                                        <td class="numeric">{{ percent sample.confidence }}</td>
+                                        {{#each scenario.iterations}}
+                                            <td class="numeric {{ phase }}" title="{{ phase }} #{{ iteration }}">{{number (lookup values sample.name) }}</td>
+                                        {{/each}}
+                                    </tr>
+                            {{/each}}
+                        {{/each}}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+{{/with}}
+    </script>
+</head>
+<body>
+<!-- As a heading -->
+<nav class="navbar navbar-dark bg-dark">
+  <span class="navbar-brand mb-0 h1">Benchmark results</span>
+</nav>
+<div class='container-fluid'>
+    <div class='row mt-3'>
+        <div class='col ml-auto mr-auto'>
+            <canvas id='samples' style="width: 100%; height: 400px;"></canvas>
+        </div>
+    </div>
+    <div class="form-group form-row controls mt-3">
+        <div class="form-group col-md-3">
+            <div class="btn-group btn-group-toggle" data-toggle="buttons">
+                <label class="btn btn-secondary active">
+                    <input type="radio" name="sorting" value="historical" autocomplete="off" checked> Historical
+                </label>
+                <label class="btn btn-secondary">
+                    <input type="radio" name="sorting" value="sorted" autocomplete="off"> Sorted
+                </label>
+            </div>
+        </div>
+        <div class="form-group col-md-1 col-form-label">
+            <label for="sample">Samples:</label>
+        </div>
+        <div class="form-group col-md-8">
+            <select multiple class="form-control" id="sample">
+            </select>
+        </div>
+    </div>
+    <div class="row mt-3">
+        <div class='col ml-auto mr-auto'>
+          <div id="data-table"></div>
+        </div>
+    </div>
+</div>
+<script>
+Array.prototype.unique = function() { return [...new Set(this)]; };
+
+function iterations(scenario, phase) {
+    return scenario.iterations.filter(iteration => iteration.phase === phase);
+}
+function iterationTitles() {
+    return benchmarkResult.scenarios
+        .map(scenario => scenario.iterations
+            .map(iteration => iteration.title)
+        )
+        .flat()
+        .unique();
+}
+function sort(array) {
+    return array.slice().sort((a, b) => a - b);
+}
+
+function quantile(data, q) {
+    const sorted = sort(data);
+    const pos = (sorted.length - 1) * q;
+    const base = Math.floor(pos);
+    const rest = pos - base;
+    if (sorted[base + 1] !== undefined) {
+        return sorted[base] + rest * (sorted[base + 1] - sorted[base]);
+    } else {
+        return sorted[base];
+    }
+};
+
+function mean(data) {
+    return data.reduce((sum, val) => sum + val) / data.length;
+}
+
+const OPERATIONS = {
+    "mean": (data) => mean(data),
+    "min": (data) => Math.min(...data),
+    "max": (data) => Math.max(...data),
+    "p25": (data) => quantile(data, .25),
+    "median": (data) => quantile(data, .50),
+    "p75": (data) => quantile(data, .75),
+    "stddev": (data) => {
+        let dataMean = mean(data);
+        return Math.sqrt(mean(data.map(x => Math.pow(x - dataMean, 2))));
+    }
+};
+
+Handlebars.registerHelper("sampleCount", function(scenario) {
+    return scenario.samples.length;
+});
+
+Handlebars.registerHelper("percent", function(percent) {
+    return (percent * 100).toFixed(2) + "%";
+});
+
+Handlebars.registerHelper("number", function(value) {
+    return value.toFixed(2);
+});
+
+Handlebars.registerHelper("calc", function(operation, sample, scenario) {
+    let data = iterations(scenario, Phase.MEASURE).map(iteration => iteration.values[sample.name]);
+    return OPERATIONS[operation](data).toFixed(2);
+});
+
+let source = document.getElementById("data-table-template");
+let target = document.getElementById("data-table");
+let template = Handlebars.compile(source.innerHTML);
+let html = template({
+    benchmarkResult: benchmarkResult,
+    iterationTitles: iterationTitles(),
+});
+target.innerHTML = html;
+</script>
+<script>
+const COLORS = ["#527AB3", "#56ac76", "#f44336", "#d49c3e", "#211f2d"];
+class PaletteGenerator {
+    constructor() {
+        this.colors = COLORS.slice();
+    }
+    nextColor() {
+        if (this.colors.length) {
+            return this.colors.shift();
+        } else {
+            return "#8B899A";
+        }
+    }
+};
+
+function convertScenarioToChart(scenario, sample, sorted, color) {
+    var data = iterations(scenario, Phase.MEASURE)
+            .map(iteration => iteration.values[sample]);
+    if (sorted) {
+        data = data.sort((a, b) => b - a);
+    }
+    return {
+        label: `${scenario.definition.title} (${sample}) ${scenario.definition.buildTool}`,
+        showLine: true,
+        steppedLine: "middle",
+        pointRadius: 0,
+        pointHitRadius: 10,
+        hoverRadius: 6,
+        fill: false,
+        borderWidth: 3,
+        pointBackgroundColor: color,
+        borderColor: color,
+        data: data
+    };
+}
+
+function convertData(samples, sorted) {
+    let palette = new PaletteGenerator();
+    return samples.map(sample => benchmarkResult.scenarios.map(scenario => convertScenarioToChart(scenario, sample, sorted, palette.nextColor()))).flat();
+}
+
+function updateData() {
+    let sorted = $("input[name='sorting']:checked").val() === "sorted";
+    let samples = $("#sample").val();
+    chart.data.datasets = convertData(samples, sorted);
+    chart.update();
+}
+
+let ctx = document.getElementById('samples').getContext('2d');
+let maxMeasuredIterations = Math.max(...(benchmarkResult.scenarios.map(scenario => iterations(scenario, Phase.MEASURE).length)));
+let chart = new Chart(ctx, {
+    type: 'line',
+    data: {
+        labels: Array.from(Array(maxMeasuredIterations), (_, i) => (i + 1).toString()),
+        datasets: []
+    },
+    options: {
+        responsive: false,
+        animation: {
+            duration: 0
+        },
+        legend: {
+            position: "bottom",
+            align: "start",
+            fullWidth: false
+        },
+        tooltips: {
+            mode: "index",
+            position: "nearest",
+            itemSort: (a, b) => b.yLabel - a.yLabel,
+            callbacks: {
+                title: (tooltips, data) => `Build #${tooltips[0].label}`,
+                label: (tooltip, data) => tooltip.yLabel.toFixed(2)
+            }
+        },
+        scales: {
+            yAxes: [{
+                ticks: {
+                    min: 0
+                }
+            }]
+        }
+    }
+});
+
+$(document).ready(function() {
+    let samples = benchmarkResult.scenarios
+        .map(scenario => scenario.samples)
+        .flat()
+        .map(sample => sample.name)
+        .unique();
+    $("#sample")
+        .append(samples.map(sample => new Option(sample)))
+        .val(samples[0])
+        .select2();
+
+    $("input[name=sorting]").change(updateData);
+    $("#sample").change(updateData);
+    updateData();
+});
+</script>
+
+</body>
+</html>

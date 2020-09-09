@@ -35,6 +35,9 @@ dependencies {
     implementation("commons-io:commons-io:2.6")
     implementation("org.gradle.org.openjdk.jmc:flightrecorder:7.0.0-alpha01")
     implementation("com.android.tools.build:builder-model:3.0.0")
+    implementation("com.google.code.gson:gson:2.8.6") {
+        because("To write JSON output")
+    }
 
     profilerPlugins(project(":chrome-trace")) {
         isTransitive = false

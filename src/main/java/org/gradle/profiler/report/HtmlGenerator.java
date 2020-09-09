@@ -1,21 +1,15 @@
 package org.gradle.profiler.report;
 
-import org.gradle.profiler.result.BuildInvocationResult;
-import org.gradle.profiler.result.Sample;
+import com.google.common.io.LineProcessor;
+import com.google.common.io.Resources;
 
 import java.io.BufferedWriter;
 import java.io.File;
 import java.io.IOException;
-import java.text.DecimalFormat;
-import java.text.NumberFormat;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Map;
-import java.util.function.Function;
+import java.nio.charset.StandardCharsets;
 
 public class HtmlGenerator extends AbstractGenerator {
-    private final NumberFormat numberFormat = new DecimalFormat("0.00");
-    private final NumberFormat diffFormat = new DecimalFormat("+0.00;-0.00");
+    private static final String JSON_PATTERN = "@@BENCHMARK_RESULT_JSON@@";
 
     public HtmlGenerator(File outputFile) {
         super(outputFile);
@@ -23,226 +17,22 @@ public class HtmlGenerator extends AbstractGenerator {
 
     @Override
     protected void write(BenchmarkResult benchmarkResult, BufferedWriter writer) throws IOException {
-        writer.write("<!DOCTYPE html>\n");
-        writer.write("<html>\n");
-        writer.write("<head>\n");
-        writer.write("<title>Benchmark Results</title>\n");
-        writer.write("<link rel=\"stylesheet\" href=\"https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css\" integrity=\"sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T\" crossorigin=\"anonymous\">");
-        writer.write("<style>\n");
-        writer.write(".diff { font-size: 9pt; color: #c0c0c0; }\n");
-        writer.write(".numeric { text-align: right; }\n");
-        writer.write(".summary { vertical-align: top; }\n");
-        writer.write("</style>\n");
-        writer.write("<script src='https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.7.2/Chart.bundle.min.js'></script>\n");
-        writer.write("</head>\n");
-        writer.write("<body>\n");
-        writer.write("<div class='container mt-5 mb-5'>\n");
-        writer.write("<h1>Benchmark results</h1>\n");
-
-        writer.write("<div class='row mt-5'>\n");
-        writer.write("<div class='col ml-auto mr-auto'>\n");
-        writer.write("<canvas id='samples' width='900' height='400'></canvas>");
-        writer.write("</div>\n");
-        writer.write("</div>\n");
-
-        writer.write("<div class='row mt-5'>\n");
-        writer.write("<div class='col'>\n");
-        writer.write("<table class='table table-sm table-hover'>\n");
-
-        writer.write("<thead>\n");
-        writer.write("<tr><th>Scenario</th>");
-        List<? extends BuildScenarioResult<?>> allScenarios = benchmarkResult.getScenarios();
-        for (BuildScenarioResult<?> scenario : allScenarios) {
-            writer.write("<th colspan='" + scenario.getSamples().size() + "'>");
-            writer.write(scenario.getScenarioDefinition().getTitle());
-            writer.write("</th>");
-        }
-        writer.write("</tr>\n");
-        writer.write("<tr><th>Version</th>");
-        for (BuildScenarioResult<?> scenario : allScenarios) {
-            writer.write("<th colspan='" + scenario.getSamples().size() + "'>");
-            writer.write(scenario.getScenarioDefinition().getBuildToolDisplayName());
-            writer.write("</th>");
-        }
-        writer.write("</tr>\n");
-        writer.write("<tr><th>Tasks</th>");
-        for (BuildScenarioResult<?> scenario : allScenarios) {
-            writer.write("<th colspan='" + scenario.getSamples().size() + "'>");
-            writer.write(scenario.getScenarioDefinition().getTasksDisplayName());
-            writer.write("</th>");
-        }
-        writer.write("</tr>\n");
-        writer.write("<tr><th>Sample</th>");
-        for (BuildScenarioResult<?> scenario : allScenarios) {
-            for (Sample<?> sample : scenario.getSamples()) {
-                writer.write("<th>");
-                writer.write(sample.getName());
-                writer.write("</th>");
-            }
-        }
-        writer.write("</tr>\n");
-        writer.write("</thead>\n");
-
-        writer.write("<tbody>\n");
-
-        int maxRows = allScenarios.stream().mapToInt(v -> v.getResults().size()).max().orElse(0);
-        for (int row = 0; row < maxRows; row++) {
-            writer.write("<tr>");
-            for (BuildScenarioResult<?> scenario : allScenarios) {
-                List<? extends BuildInvocationResult> results = scenario.getResults();
-                if (row >= results.size()) {
-                    continue;
+        Resources.readLines(Resources.getResource(HtmlGenerator.class, "report-template.html"), StandardCharsets.UTF_8, new LineProcessor<Void>() {
+            @Override
+            public boolean processLine(String line) throws IOException {
+                if (line.equals(JSON_PATTERN)) {
+                    new JsonResultWriter(true).write(benchmarkResult.getScenarios(), writer);
+                } else {
+                    writer.write(line);
                 }
-                BuildInvocationResult buildResult = results.get(row);
-                writer.write("<td>");
-                writer.write(buildResult.getBuildContext().getDisplayName());
-                writer.write("</td>");
-                break;
+                writer.write("\n");
+                return true;
             }
-            for (BuildScenarioResult<?> scenario : allScenarios) {
-                writeRow(writer, scenario, row);
+
+            @Override
+            public Void getResult() {
+                return null;
             }
-            writer.write("</tr>\n");
-        }
-
-        statistic(writer, "mean", allScenarios, BuildScenarioResult.Statistics::getMean, true);
-        statistic(writer, "min", allScenarios, BuildScenarioResult.Statistics::getMin, true);
-        statistic(writer, "25th percentile", allScenarios, s -> s.getPercentile(25), true);
-        statistic(writer, "median", allScenarios, BuildScenarioResult.Statistics::getMedian, true);
-        statistic(writer, "75th percentile", allScenarios, s -> s.getPercentile(75), true);
-        statistic(writer, "max", allScenarios, BuildScenarioResult.Statistics::getMax, true);
-        statistic(writer, "stddev", allScenarios, BuildScenarioResult.Statistics::getStandardDeviation, false);
-        statistic(writer, "confidence", allScenarios, BuildScenarioResult.Statistics::getConfidencePercent, false);
-
-        writer.write("</tbody>\n");
-
-        writer.write("</table>\n");
-        writer.write("</div>\n");
-        writer.write("</div>\n");
-        writer.write("</div>\n");
-
-        writer.write("<script>\n");
-        writer.write("var ctx = document.getElementById('samples').getContext('2d');\n");
-        writer.write("var chart = new Chart(ctx, {\n");
-        writer.write("    type: 'line',\n");
-        writer.write("    data: {\n");
-        writer.write("        labels: [");
-        int maxIterations = allScenarios.stream().mapToInt(v -> v.getScenarioDefinition().getBuildCount()).max().orElse(0);
-        for (int i = 0; i < maxIterations; i++) {
-            writer.write(String.valueOf(i + 1));
-            writer.write(",");
-        }
-        writer.write("],\n");
-        writer.write("        datasets: [\n");
-        PaletteGenerator generator = new PaletteGenerator();
-        for (BuildScenarioResult<?> scenario : allScenarios) {
-            writeScenarioData(writer, generator, scenario);
-        }
-        writer.write("        ]\n");
-        writer.write("    },\n");
-        writer.write("    options: {\n");
-        writer.write("        responsive: false,\n");
-        writer.write("        scales: {\n");
-        writer.write("            yAxes: [{\n");
-        writer.write("                ticks: {\n");
-        writer.write("                    min: 0\n");
-        writer.write("                }\n");
-        writer.write("            }]\n");
-        writer.write("        }\n");
-        writer.write("    }\n");
-        writer.write("});\n");
-        writer.write("</script>\n");
-
-        writer.write("</body>\n");
-        writer.write("</html>\n");
-    }
-
-    private <T extends BuildInvocationResult> void writeRow(BufferedWriter writer, BuildScenarioResult<T> scenario, int row) throws IOException {
-        List<T> results = scenario.getResults();
-        if (row >= results.size()) {
-            return;
-        }
-        T buildResult = results.get(row);
-        for (Sample<? super T> sample : scenario.getSamples()) {
-            writer.write("<td class='numeric'>");
-            writer.write(String.valueOf(sample.extractFrom(buildResult).toMillis()));
-            writer.write("</td>");
-        }
-    }
-
-    private <T extends BuildInvocationResult> void writeScenarioData(BufferedWriter writer, PaletteGenerator generator, BuildScenarioResult<T> scenario) throws IOException {
-        writer.write("{\n");
-        writer.write("            label: '");
-        writer.write(scenario.getScenarioDefinition().getTitle());
-        writer.write(" ");
-        writer.write(scenario.getScenarioDefinition().getBuildToolDisplayName());
-        writer.write("',\n");
-        writer.write("            showLine: true,\n");
-        writer.write("            steppedLine: true,\n");
-        writer.write("            pointRadius: 0,\n");
-        writer.write("            fill: false,\n");
-        writer.write("            borderWidth: 3,\n");
-        writer.write("            borderColor: '");
-        writer.write(generator.nextColor());
-        writer.write("',\n");
-        writer.write("            data: [");
-        for (T buildResult : scenario.getMeasuredResults()) {
-            writer.write(String.valueOf(buildResult.getExecutionTime().toMillis()));
-            writer.write(",");
-        }
-        writer.write("]\n");
-        writer.write("},\n");
-    }
-
-    private void statistic(BufferedWriter writer, String name, List<? extends BuildScenarioResult<?>> scenarios, Function<BuildScenarioResult.Statistics, Double> value, boolean time) throws IOException {
-        writer.write("<tr><td class='summary font-weight-bold'>");
-        writer.write(name);
-        writer.write("</td>");
-        for (BuildScenarioResult<?> scenario : scenarios) {
-            writeScenarioTable(writer, value, time, scenario);
-        }
-        writer.write("</tr>");
-        writer.newLine();
-    }
-
-    private <T extends BuildInvocationResult> void writeScenarioTable(BufferedWriter writer, Function<BuildScenarioResult.Statistics, Double> extractor, boolean time, BuildScenarioResult<T> scenario) throws IOException {
-        for (Map.Entry<Sample<? super T>, ? extends BuildScenarioResult.Statistics> entry : scenario.getStatistics().entrySet()) {
-            Sample<? super T> sample = entry.getKey();
-            BuildScenarioResult.Statistics statistics = entry.getValue();
-
-            writer.write("<td class='numeric summary'>");
-            double stat = extractor.apply(statistics);
-            writer.write(numberFormat.format(stat));
-            if (time && scenario.getBaseline().isPresent()) {
-                Map<Sample<? super T>, ? extends BuildScenarioResult.Statistics> baselineStats = scenario.getBaseline().get().getStatistics();
-                if (!baselineStats.isEmpty()) {
-                    BuildScenarioResult.Statistics baselineStatistics = baselineStats.get(sample);
-                    writer.write("<br><span class='diff'>(");
-                    if (baselineStatistics != null) {
-                        double baseLineStat = extractor.apply(baselineStatistics);
-                        double diff = stat - baseLineStat;
-                        writer.write(diffFormat.format(diff));
-                        writer.write(" ");
-                        writer.write(numberFormat.format((diff) / baseLineStat * 100));
-                    } else {
-                        writer.write("N/A");
-                    }
-                    writer.write("%)</span>");
-                }
-            }
-            writer.write("</td>");
-        }
-    }
-
-    static private class PaletteGenerator {
-        private static final List<String> COLORS = Arrays.asList("#527AB3", "#56ac76", "#f44336", "#d49c3e", "#211f2d");
-        private int next = 0;
-
-        String nextColor() {
-            if (next < COLORS.size()) {
-                return COLORS.get(next++);
-            }
-            return "#8B899A";
-        }
+        });
     }
 }
