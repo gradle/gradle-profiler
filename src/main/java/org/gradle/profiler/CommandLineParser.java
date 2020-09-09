@@ -1,5 +1,6 @@
 package org.gradle.profiler;
 
+import joptsimple.AbstractOptionSpec;
 import joptsimple.ArgumentAcceptingOptionSpec;
 import joptsimple.OptionException;
 import joptsimple.OptionParser;
@@ -10,6 +11,7 @@ import org.gradle.profiler.report.CsvGenerator.Format;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.Arrays;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -25,6 +27,8 @@ class CommandLineParser {
      */
     public InvocationSettings parseSettings(String[] args) throws IOException, SettingsNotAvailableException {
         OptionParser parser = new OptionParser();
+        AbstractOptionSpec<Void> helpOption = parser.acceptsAll(Arrays.asList("h", "help"), "Show this usage information")
+            .forHelp();
         parser.nonOptions("The scenarios or task names to run");
         ArgumentAcceptingOptionSpec<File> projectOption = parser.accepts("project-dir", "The directory containing the build to run")
             .withRequiredArg().ofType(File.class).defaultsTo(new File("."));
@@ -68,6 +72,10 @@ class CommandLineParser {
             parsedOptions = parser.parse(args);
         } catch (OptionException e) {
             return fail(parser, e.getMessage());
+        }
+
+        if (parsedOptions.has(helpOption)) {
+            return showHelp(parser);
         }
 
         File projectDir = parsedOptions.valueOf(projectOption);
@@ -164,6 +172,10 @@ class CommandLineParser {
     private InvocationSettings fail(OptionParser parser, String message) throws IOException {
         System.out.println(message);
         System.out.println();
+        return showHelp(parser);
+    }
+
+    private InvocationSettings showHelp(OptionParser parser) throws IOException {
         parser.printHelpOn(System.out);
         throw new SettingsNotAvailableException();
     }
