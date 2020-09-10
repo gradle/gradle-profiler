@@ -76,6 +76,15 @@ java {
     withSourcesJar()
 }
 
+tasks.withType<Jar>().configureEach {
+    manifest {
+        attributes(
+            "Implementation-Title" to "Gradle Profiler",
+            "Implementation-Version" to archiveVersion
+        )
+    }
+}
+
 application.mainClassName = "org.gradle.profiler.Main"
 
 tasks.processResources {
