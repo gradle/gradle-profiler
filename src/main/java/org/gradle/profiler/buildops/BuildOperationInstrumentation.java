@@ -49,9 +49,13 @@ public class BuildOperationInstrumentation extends GradleInstrumentation {
         if (measureConfigTime) {
             writer.print(".measureConfigurationTime(" + newFile(configurationTimeDataFile) + ")");
         }
-        buildOperationDataFiles.forEach((opName, dataFile) ->
-            writer.print(String.format(".measureBuildOperation('%s', %s)", opName, newFile(dataFile)))
-        );
+        if (!buildOperationDataFiles.isEmpty()) {
+            writer.print(".measureBuildOperations(");
+            buildOperationDataFiles.forEach((opName, dataFile) ->
+                writer.print(String.format("'%s': %s,", opName, newFile(dataFile)))
+            );
+            writer.print(")");
+        }
     }
 
     private String newFile(File dataFile) {
