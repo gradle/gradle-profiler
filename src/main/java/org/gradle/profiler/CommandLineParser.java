@@ -31,6 +31,7 @@ class CommandLineParser {
         OptionParser parser = new OptionParser();
         AbstractOptionSpec<Void> helpOption = parser.acceptsAll(Arrays.asList("h", "help"), "Show this usage information")
             .forHelp();
+        AbstractOptionSpec<Void> versionOption = parser.acceptsAll(Arrays.asList("v", "version"), "Display version information");
         parser.nonOptions("The scenarios or task names to run");
         ArgumentAcceptingOptionSpec<File> projectOption = parser.accepts("project-dir", "The directory containing the build to run")
             .withRequiredArg().ofType(File.class).defaultsTo(new File("."));
@@ -78,6 +79,11 @@ class CommandLineParser {
 
         if (parsedOptions.has(helpOption)) {
             showHelp(parser);
+            return null;
+        }
+
+        if (parsedOptions.has(versionOption)) {
+            showVersion();
             return null;
         }
 
@@ -181,5 +187,9 @@ class CommandLineParser {
 
     private void showHelp(OptionParser parser) throws IOException {
         parser.printHelpOn(System.out);
+    }
+
+    private void showVersion() {
+        System.out.printf("Gradle Profiler version %s%n", CommandLineParser.class.getPackage().getImplementationVersion());
     }
 }
