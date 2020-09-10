@@ -21,7 +21,7 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.util.ArrayList;
-import java.util.LinkedHashMap;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicLong;
@@ -31,7 +31,6 @@ public class BuildOperationTrace {
 
     private final BuildEventListenerRegistryInternal registry;
     private final BuildServiceRegistry sharedServices;
-    private final Map<String, File> capturedBuildOperations = new LinkedHashMap<>();
 
     public BuildOperationTrace(GradleInternal gradle) {
         registry = gradle.getServices().get(BuildEventListenerRegistryInternal.class);
@@ -46,12 +45,11 @@ public class BuildOperationTrace {
         return this;
     }
 
-    public BuildOperationTrace measureBuildOperation(String buildOperationName, File outFile) {
+    public BuildOperationTrace measureBuildOperations(Map<String, File> capturedBuildOperations) {
         Provider<BuildOperationDurationRecordingListener> listenerProvider = sharedServices.registerIfAbsent("measure-build-operations", BuildOperationDurationRecordingListener.class, spec -> {
-            spec.getParameters().getCapturedBuildOperations().set(capturedBuildOperations);
+            spec.getParameters().getCapturedBuildOperations().set(new HashMap<>(capturedBuildOperations));
         });
         registry.onOperationCompletion(listenerProvider);
-        capturedBuildOperations.put(buildOperationName, outFile);
         return this;
     }
 
