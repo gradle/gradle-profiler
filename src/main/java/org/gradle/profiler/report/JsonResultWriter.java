@@ -56,7 +56,16 @@ public class JsonResultWriter {
 
     private <T extends BuildInvocationResult> JsonObject serializeScenarioResult(BuildScenarioResult<T> scenarioResult, Type type, JsonSerializationContext context) {
         JsonObject json = new JsonObject();
-        json.add("definition", context.serialize(scenarioResult.getScenarioDefinition()));
+        List<T> results = scenarioResult.getResults();
+
+        // TODO Expose this in a less awkward way
+        JsonObject jsonDefinition = (JsonObject) context.serialize(scenarioResult.getScenarioDefinition());
+        String scenarioId = results.isEmpty()
+            ? null
+            : results.get(0).getBuildContext().getUniqueScenarioId();
+        jsonDefinition.addProperty("id", scenarioId);
+        json.add("definition", jsonDefinition);
+
         JsonArray samplesJson = new JsonArray();
         List<Sample<? super T>> samples = scenarioResult.getSamples();
         for (Sample<? super T> sample : samples) {
@@ -64,7 +73,7 @@ public class JsonResultWriter {
         }
         json.add("samples", samplesJson);
         JsonArray iterationsJson = new JsonArray();
-        for (T result : scenarioResult.getResults()) {
+        for (T result : results) {
             iterationsJson.add(serializeIteration(result, samples));
         }
         json.add("iterations", iterationsJson);

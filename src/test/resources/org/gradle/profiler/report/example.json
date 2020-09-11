@@ -9,7 +9,8 @@
         "title": "0 – Baseline",
         "displayName": "0 – Baseline using Gradle 6.7-20200903220111+0000",
         "buildTool": "6.7-20200903220111+0000",
-        "tasks": ":santa-tracker:assembleDebug"
+        "tasks": ":santa-tracker:assembleDebug",
+        "id": "_2268a672_a4bc_42d2_88a9_e5eac94c12e0_no_optimizations_9153a177"
       },
       "samples": [
         {
@@ -432,7 +433,8 @@
         "title": "2 – FS watching",
         "displayName": "2 – FS watching using Gradle 6.7-20200903220111+0000",
         "buildTool": "6.7-20200903220111+0000",
-        "tasks": ":santa-tracker:assembleDebug"
+        "tasks": ":santa-tracker:assembleDebug",
+        "id": "_2268a672_a4bc_42d2_88a9_e5eac94c12e0_only_file_system_watching_c9e0b933"
       },
       "samples": [
         {

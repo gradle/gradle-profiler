@@ -54,7 +54,8 @@ class JsonResultWriterTest extends Specification {
         "title": "Assemble Release",
         "displayName": "Assemble Release",
         "buildTool": "Test Tool",
-        "tasks": ":assemble"
+        "tasks": ":assemble",
+        "id": "release@0"
       },
       "samples": [
         {
@@ -135,7 +136,8 @@ class JsonResultWriterTest extends Specification {
         "title": "Assemble Debug",
         "displayName": "Assemble Debug",
         "buildTool": "Test Tool",
-        "tasks": ":assembleDebug"
+        "tasks": ":assembleDebug",
+        "id": "debug@1"
       },
       "samples": [
         {
