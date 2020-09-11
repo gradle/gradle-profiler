@@ -5,7 +5,6 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/4.5.2/css/bootstrap.min.css" integrity="sha512-MoRNloxbStBcD8z3M/2BmnT+rg4IsMxPkXaGh2zD6LGNNFE80W3onsAhRcMAMrSoyWL9xD7Ert0men7vR8LUZg==" crossorigin="anonymous">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.13/css/select2.min.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/4.5.2/js/bootstrap.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.13/js/select2.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/vue/2.6.12/vue.min.js"></script>
     <script src='https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.9.3/Chart.bundle.min.js'></script>
@@ -75,11 +74,11 @@ let benchmarkResult =
 <div class="form-group form-row controls mt-3">
     <div class="form-group col-md-2">
         <div class="btn-group btn-group-toggle" data-toggle="buttons">
-            <label class="btn btn-secondary active">
-                <input type="radio" name="sorting" value="historical" autocomplete="off" checked> Historical
+            <label class="btn btn-secondary" :class="{ active: options.order === 'historical' }">
+                <input type="radio" name="order" v-model="options.order" value="historical"> Historical
             </label>
-            <label class="btn btn-secondary">
-                <input type="radio" name="sorting" value="sorted" autocomplete="off"> Sorted
+            <label class="btn btn-secondary" :class="{ active: options.order === 'sorted' }">
+                <input type="radio" name="order" v-model="options.order" value="sorted"> Sorted
             </label>
         </div>
     </div>
@@ -121,7 +120,7 @@ let benchmarkResult =
                                         <td v-if="index === 0" :rowspan="scenario.samples.length">{{ scenario.definition.title }}</td>
                                         <td v-if="index === 0" :rowspan="scenario.samples.length">{{ scenario.definition.buildTool }}</td>
                                         <td v-if="index === 0" :rowspan="scenario.samples.length">{{ scenario.definition.tasks }}</td>
-                                        <td>{{ sample.name }}</td>
+                                        <td @click="select(scenario, sample)">{{ sample.name }}</td>
                                         <td class="numeric">{{ calc('mean', sample, scenario) | numeric }}</td>
                                         <td class="numeric">{{ calc('p25', sample, scenario) | numeric }}</td>
                                         <td class="numeric">{{ calc('min', sample, scenario) | numeric }}</td>
@@ -187,15 +186,44 @@ const OPERATIONS = {
     }
 };
 
+function updateData() {
+    let sorted = app.options.order === "sorted";
+    let samples = $("#sample").val();
+    chart.data.datasets = convertData(samples, sorted);
+    chart.update();
+}
+
+function sampleId(scenario, sample) {
+    return scenario.definition.id + "$"+ sample.name;
+}
+
 var app = new Vue({
     el: '#app',
     data: {
+        options: {
+            order: "historical",
+            selected: []
+        },
         benchmarkResult: benchmarkResult
+    },
+    watch: {
+        "options.order": updateData,
+        "options.selected": (val) => console.log("Selected", val)
     },
     methods: {
         calc: (operation, sample, scenario) => {
             let data = iterations(scenario, Phase.MEASURE).map(iteration => iteration.values[sample.name]);
             return OPERATIONS[operation](data);
+        },
+        select: (scenario, sample) => {
+            let id = sampleId(scenario, sample);
+            let selected = app.options.selected;
+            let index = selected.indexOf(id);
+            if (index === -1) {
+                selected.push(id);
+            } else {
+                selected.splice(index, 1);
+            }
         }
     },
     filters: {
@@ -242,13 +270,6 @@ function convertScenarioToChart(scenario, sample, sorted, color) {
 function convertData(samples, sorted) {
     let palette = new PaletteGenerator();
     return samples.map(sample => benchmarkResult.scenarios.map(scenario => convertScenarioToChart(scenario, sample, sorted, palette.nextColor()))).flat();
-}
-
-function updateData() {
-    let sorted = $("input[name='sorting']:checked").val() === "sorted";
-    let samples = $("#sample").val();
-    chart.data.datasets = convertData(samples, sorted);
-    chart.update();
 }
 
 let ctx = document.getElementById('samples').getContext('2d');
@@ -312,7 +333,6 @@ $(document).ready(function() {
         .val(samples[0])
         .select2();
 
-    $("input[name=sorting]").change(updateData);
     $("#sample").change(updateData);
     updateData();
 });
