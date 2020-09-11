@@ -80,7 +80,7 @@ tasks.withType<Jar>().configureEach {
     manifest {
         attributes(
             "Implementation-Title" to "Gradle Profiler",
-            "Implementation-Version" to archiveVersion
+            "Implementation-Version" to project.version
         )
     }
 }
