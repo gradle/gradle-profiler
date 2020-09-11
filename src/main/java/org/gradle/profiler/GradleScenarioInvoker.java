@@ -102,24 +102,20 @@ public class GradleScenarioInvoker extends ScenarioInvoker<GradleScenarioDefinit
 
             GradleClient gradleClient = scenario.getInvoker().getClient().create(buildConfiguration, settings, projectConnection);
 
-            BuildAction beforeBuildAction;
-            if (scenario.getInvoker().isShouldCleanUpDaemon()) {
-                beforeBuildAction = new CleanupThenStopDaemon(cleanupAction, daemonControl, buildConfiguration);
-            } else {
-                beforeBuildAction = cleanupAction;
-            }
+            BuildUnderTestInvoker uninstrumented = new BuildUnderTestInvoker(allBuildsJvmArgs, allBuildsGradleArgs, gradleClient, pidInstrumentation, buildOperationInstrumentation);
 
-            BuildUnderTestInvoker invoker = new BuildUnderTestInvoker(allBuildsJvmArgs, allBuildsGradleArgs, gradleClient, pidInstrumentation, buildOperationInstrumentation);
+            BuildStepAction cleanupStep = beforeBuildStep(uninstrumented, mutator, scenario, buildConfiguration);
 
             mutator.beforeScenario(scenarioContext);
 
             GradleBuildInvocationResult results = null;
             String pid = null;
 
+            BuildStepAction warmupBuildStep = uninstrumented.create(scenario.getAction());
             for (int iteration = 1; iteration <= scenario.getWarmUpCount(); iteration++) {
                 BuildContext buildContext = scenarioContext.withBuild(WARM_UP, iteration);
-                beforeBuild(buildContext, invoker, beforeBuildAction, mutator);
-                results = runMeasured(buildContext, mutator, () -> invoker.runBuild(buildContext, BUILD, scenario.getAction()), resultConsumer);
+                cleanupStep.run(buildContext, CLEANUP);
+                results = runMeasured(buildContext, mutator, () -> warmupBuildStep.run(buildContext, BUILD), resultConsumer);
                 if (pid == null) {
                     pid = results.getDaemonPid();
                 } else {
@@ -144,15 +140,16 @@ public class GradleScenarioInvoker extends ScenarioInvoker<GradleScenarioDefinit
                 logGradleArgs(instrumentedBuildGradleArgs);
             }
 
-            BuildUnderTestInvoker instrumentedBuildInvoker = invoker.withJvmArgs(instrumentedBuildJvmArgs).withGradleArgs(instrumentedBuildGradleArgs);
+            BuildUnderTestInvoker instrumentedBuildInvoker = uninstrumented.withJvmArgs(instrumentedBuildJvmArgs).withGradleArgs(instrumentedBuildGradleArgs);
+            BuildStepAction measuredBuildStep = instrumentedBuildInvoker.create(scenario.getAction());
 
             control.startSession();
             for (int i = 1; i <= scenario.getBuildCount(); i++) {
                 final int iteration = i;
                 BuildContext buildContext = scenarioContext.withBuild(MEASURE, iteration);
-                beforeBuild(buildContext, invoker, beforeBuildAction, mutator);
+                cleanupStep.run(buildContext, CLEANUP);
                 results = runMeasured(buildContext, mutator, () -> {
-                    if ((iteration == 1 || beforeBuildAction.isDoesSomething())) {
+                    if ((iteration == 1 || cleanupAction.isDoesSomething())) {
                         try {
                             control.startRecording();
                         } catch (IOException | InterruptedException e) {
@@ -160,9 +157,9 @@ public class GradleScenarioInvoker extends ScenarioInvoker<GradleScenarioDefinit
                         }
                     }
 
-                    GradleBuildInvocationResult result = instrumentedBuildInvoker.runBuild(buildContext, BUILD, scenario.getAction());
+                    GradleBuildInvocationResult result = measuredBuildStep.run(buildContext, BUILD);
 
-                    if ((iteration == scenario.getBuildCount() || beforeBuildAction.isDoesSomething())) {
+                    if ((iteration == scenario.getBuildCount() || cleanupAction.isDoesSomething())) {
                         try {
                             control.stopRecording(result.getDaemonPid());
                         } catch (IOException | InterruptedException e) {
@@ -199,10 +196,12 @@ public class GradleScenarioInvoker extends ScenarioInvoker<GradleScenarioDefinit
         }
     }
 
-    private void beforeBuild(BuildContext buildContext, BuildUnderTestInvoker invoker, BuildAction cleanupAction, BuildMutator mutator) {
-        if (cleanupAction.isDoesSomething()) {
-            runCleanup(buildContext, mutator, () -> invoker.runBuild(buildContext, CLEANUP, cleanupAction));
+    private BuildStepAction beforeBuildStep(BuildUnderTestInvoker invoker, BuildMutator buildMutator, GradleScenarioDefinition scenario, GradleBuildConfiguration buildConfiguration) {
+        BuildStepAction cleanupStep = invoker.create(scenario.getCleanupAction());
+        if (scenario.getInvoker().isShouldCleanUpDaemon()) {
+            cleanupStep = new StopDaemonAfterAction(cleanupStep, daemonControl, buildConfiguration);
         }
+        return new CleanupStepAction(cleanupStep, buildMutator);
     }
 
     private static void checkPid(String expected, String actual, GradleBuildInvoker invoker) {

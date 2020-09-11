@@ -54,15 +54,6 @@ public abstract class ScenarioInvoker<T extends ScenarioDefinition, R extends Bu
     }
 
     /**
-     * Runs a single clean-up build.
-     */
-    protected void runCleanup(BuildContext buildContext, BuildMutator mutator, Runnable action) {
-        startOperation("Running cleanup for " + buildContext.getDisplayName());
-        mutator.beforeCleanup(buildContext);
-        tryRun(action, error -> mutator.afterCleanup(buildContext, error));
-    }
-
-    /**
      * Returns a {@link Supplier} that returns the result of the given command.
      */
     Supplier<BuildInvocationResult> measureCommandLineExecution(BuildContext buildContext, List<String> commandLine, File workingDir, File buildLog) {
@@ -91,12 +82,5 @@ public abstract class ScenarioInvoker<T extends ScenarioDefinition, R extends Bu
         } finally {
             after.accept(error);
         }
-    }
-
-    private void tryRun(Runnable action, Consumer<Throwable> after) {
-        tryRun(() -> {
-            action.run();
-            return null;
-        }, after);
     }
 }

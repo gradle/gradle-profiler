@@ -27,29 +27,48 @@ public class BuildUnderTestInvoker {
         this.buildOperationInstrumentation = buildOperationInstrumentation;
     }
 
-    /**
-     * Runs a single invocation of a Gradle build.
-     */
-    public GradleBuildInvocationResult runBuild(BuildContext buildContext, BuildStep buildStep, BuildAction buildAction) {
-        List<String> jvmArgs = new ArrayList<>(this.jvmArgs);
-        jvmArgs.add("-Dorg.gradle.profiler.phase=" + buildContext.getPhase());
-        jvmArgs.add("-Dorg.gradle.profiler.number=" + buildContext.getIteration());
-        jvmArgs.add("-Dorg.gradle.profiler.step=" + buildStep);
+    public BuildStepAction create(BuildAction action) {
+        if (action.isDoesSomething()) {
+            return new InvokeAndMeasureAction(action);
+        } else {
+            return BuildStepAction.NO_OP;
+        }
+    }
 
-        Duration executionTime = buildAction.run(gradleClient, gradleArgs, jvmArgs);
+    private class InvokeAndMeasureAction implements BuildStepAction {
+        private final BuildAction action;
 
-        String pid = pidInstrumentation.getPidForLastBuild();
-        Logging.detailed().println("Used daemon with pid " + pid);
+        public InvokeAndMeasureAction(BuildAction action) {
+            this.action = action;
+        }
 
-        Optional<Duration> timeToTaskExecution = buildOperationInstrumentation.getTimeToTaskExecution();
+        @Override
+        public boolean isDoesSomething() {
+            return true;
+        }
 
-        Map<String, Duration> cumulativeBuildOperationTimes = buildOperationInstrumentation.getCumulativeBuildOperationTimes();
-        cumulativeBuildOperationTimes.forEach((opName, duration) -> {
-            Logging.detailed().println(String.format("Cumulative build operation time %s ms for %s", duration.toMillis(), opName));
-        });
-        Logging.detailed().println("Time to task execution " + timeToTaskExecution.map(duration -> duration.toMillis() + " ms").orElse(""));
+        @Override
+        public GradleBuildInvocationResult run(BuildContext buildContext, BuildStep buildStep) {
+            List<String> jvmArgs = new ArrayList<>(BuildUnderTestInvoker.this.jvmArgs);
+            jvmArgs.add("-Dorg.gradle.profiler.phase=" + buildContext.getPhase());
+            jvmArgs.add("-Dorg.gradle.profiler.number=" + buildContext.getIteration());
+            jvmArgs.add("-Dorg.gradle.profiler.step=" + buildStep);
 
-        return new GradleBuildInvocationResult(buildContext, executionTime, timeToTaskExecution.orElse(null), cumulativeBuildOperationTimes, pid);
+            Duration executionTime = action.run(gradleClient, gradleArgs, jvmArgs);
+
+            String pid = pidInstrumentation.getPidForLastBuild();
+            Logging.detailed().println("Used daemon with pid " + pid);
+
+            Optional<Duration> timeToTaskExecution = buildOperationInstrumentation.getTimeToTaskExecution();
+
+            Map<String, Duration> cumulativeBuildOperationTimes = buildOperationInstrumentation.getCumulativeBuildOperationTimes();
+            cumulativeBuildOperationTimes.forEach((opName, duration) -> {
+                Logging.detailed().println(String.format("Cumulative build operation time %s ms for %s", duration.toMillis(), opName));
+            });
+            Logging.detailed().println("Time to task execution " + timeToTaskExecution.map(duration -> duration.toMillis() + " ms").orElse(""));
+
+            return new GradleBuildInvocationResult(buildContext, executionTime, timeToTaskExecution.orElse(null), cumulativeBuildOperationTimes, pid);
+        }
     }
 
     public BuildUnderTestInvoker withJvmArgs(List<String> jvmArgs) {
