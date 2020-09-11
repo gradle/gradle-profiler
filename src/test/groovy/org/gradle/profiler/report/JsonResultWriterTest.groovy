@@ -1,11 +1,13 @@
 package org.gradle.profiler.report
 
+
 import org.gradle.profiler.BuildContext
 import org.gradle.profiler.BuildMutator
 import org.gradle.profiler.BuildScenarioResultImpl
 import org.gradle.profiler.Phase
 import org.gradle.profiler.ScenarioContext
 import org.gradle.profiler.ScenarioDefinition
+import org.gradle.profiler.Version
 import org.gradle.profiler.result.BuildInvocationResult
 import org.gradle.profiler.result.Sample
 import spock.lang.Specification
@@ -42,6 +44,9 @@ class JsonResultWriterTest extends Specification {
         writer.write([result1, result2], stringWriter)
         then:
         stringWriter.toString() == """{
+  "environment": {
+    "profilerVersion": "${Version.version}"
+  },
   "scenarios": [
     {
       "definition": {

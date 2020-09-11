@@ -7,7 +7,7 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/4.5.2/js/bootstrap.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.13/js/select2.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/handlebars.js/4.7.6/handlebars.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/vue/2.6.12/vue.min.js"></script>
     <script src='https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.9.3/Chart.bundle.min.js'></script>
     <script src='https://cdn.jsdelivr.net/npm/chartjs-plugin-crosshair@1.1.6'></script>
     <style type="text/css">
@@ -40,6 +40,15 @@ tr:hover td.MEASURE {
 div.controls > div.col-form-label {
     text-align: right;
 }
+footer {
+    margin-top: 2em;
+    padding: 1em;
+    color: #aaa;
+    background-color: #eee;
+    font-size: smaller;
+    text-align: right;
+    border-top: 1px solid #ddd;
+}
     </style>
     <script>
 const Phase = {
@@ -51,111 +60,102 @@ let benchmarkResult =
 @@BENCHMARK_RESULT_JSON@@
 ;
 </script>
-    <script id="data-table-template" type="text/x-handlebars-template">
-    {{#with benchmarkResult}}
-        <div class='row'>
-            <div class='col'>
-                <table class='table table-sm table-hover'>
-                    <thead>
-                        <tr>
-                            <th>Scenario</th>
-                            <th>Version</th>
-                            <th>Tasks</th>
-                            <th>Sample</th>
-                            <th>Mean</th>
-                            <th>Min</th>
-                            <th>P25</th>
-                            <th>Median</th>
-                            <th>P75</th>
-                            <th>Max</th>
-                            <th>Std.dev</th>
-                            <th>Confidence</th>
-                    </tr>
-                    </thead>
-                    <tbody>
-                        {{#each scenarios as |scenario|}}
-                            {{#each samples as |sample|}}
-                                {{#if @first}}
-                                    <tr class="first">
-                                        {{#with scenario.definition}}
-                                            <td rowspan="{{ sampleCount scenario }}">{{ title }}</td>
-                                            <td rowspan="{{ sampleCount scenario }}">{{ buildTool }}</td>
-                                            <td rowspan="{{ sampleCount scenario }}">{{ tasks }}</td>
-                                        {{/with}}
-                                {{else}}
-                                    <tr>
-                                {{/if}}
-                                        <td>{{ sample.name }}</td>
-                                        <td class="numeric">{{ calc 'mean' sample scenario }}</td>
-                                        <td class="numeric">{{ calc 'p25' sample scenario }}</td>
-                                        <td class="numeric">{{ calc 'min' sample scenario }}</td>
-                                        <td class="numeric">{{ calc 'median' sample scenario }}</td>
-                                        <td class="numeric">{{ calc 'p75' sample scenario }}</td>
-                                        <td class="numeric">{{ calc 'max' sample scenario }}</td>
-                                        <td class="numeric">{{ calc 'stddev' sample scenario }}</td>
-                                        <td class="numeric">{{ percent sample.confidence }}</td>
-                                        {{#each scenario.iterations}}
-                                            <td class="numeric {{ phase }}" title="{{ phase }} #{{ iteration }}">{{number (lookup values sample.name) }}</td>
-                                        {{/each}}
-                                    </tr>
-                            {{/each}}
-                        {{/each}}
-                    </tbody>
-                </table>
-            </div>
-        </div>
-{{/with}}
-    </script>
 </head>
 <body>
-<!-- As a heading -->
+<div id="app">
 <nav class="navbar navbar-dark bg-dark">
-  <span class="navbar-brand mb-0 h1">Benchmark results</span>
+<span class="navbar-brand mb-0 h1">Benchmark results</span>
 </nav>
 <div class='container-fluid'>
-    <div class='row mt-3'>
-        <div class='col ml-auto mr-auto'>
-            <canvas id='samples' style="width: 100%; height: 400px;"></canvas>
+<div class='row mt-3'>
+    <div class='col ml-auto mr-auto'>
+        <canvas id='samples' style="width: 100%; height: 400px;"></canvas>
+    </div>
+</div>
+<div class="form-group form-row controls mt-3">
+    <div class="form-group col-md-2">
+        <div class="btn-group btn-group-toggle" data-toggle="buttons">
+            <label class="btn btn-secondary active">
+                <input type="radio" name="sorting" value="historical" autocomplete="off" checked> Historical
+            </label>
+            <label class="btn btn-secondary">
+                <input type="radio" name="sorting" value="sorted" autocomplete="off"> Sorted
+            </label>
         </div>
     </div>
-    <div class="form-group form-row controls mt-3">
-        <div class="form-group col-md-3">
-            <div class="btn-group btn-group-toggle" data-toggle="buttons">
-                <label class="btn btn-secondary active">
-                    <input type="radio" name="sorting" value="historical" autocomplete="off" checked> Historical
-                </label>
-                <label class="btn btn-secondary">
-                    <input type="radio" name="sorting" value="sorted" autocomplete="off"> Sorted
-                </label>
+    <div class="form-group col-md-1">
+        <button id="reset-zoom" class="btn btn-secondary">Reset Zoom</button>
+    </div>
+    <div class="form-group col-md-1 col-form-label">
+        <label for="sample">Samples:</label>
+    </div>
+    <div class="form-group col-md-8">
+        <select multiple class="form-control" id="sample">
+        </select>
+    </div>
+</div>
+<div class="row mt-3">
+    <div class='col ml-auto mr-auto'>
+        <div id="data-table">
+            <div class='row'>
+                <div class='col'>
+                    <table class='table table-sm table-hover'>
+                        <thead>
+                            <tr>
+                                <th>Scenario</th>
+                                <th>Version</th>
+                                <th>Tasks</th>
+                                <th>Sample</th>
+                                <th>Mean</th>
+                                <th>Min</th>
+                                <th>P25</th>
+                                <th>Median</th>
+                                <th>P75</th>
+                                <th>Max</th>
+                                <th>Std.dev</th>
+                                <th>Confidence</th>
+                                <th :colspan="Math.max(...benchmarkResult.scenarios.map(scenario => scenario.iterations.length))">Builds</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <template v-for="scenario in scenarios">
+                                <template v-for="(sample, index) in scenario.samples">
+                                    <tr>
+                                        <td v-if="index === 0" :rowspan="scenario.samples.length">{{ scenario.definition.title }}</td>
+                                        <td v-if="index === 0" :rowspan="scenario.samples.length">{{ scenario.definition.buildTool }}</td>
+                                        <td v-if="index === 0" :rowspan="scenario.samples.length">{{ scenario.definition.tasks }}</td>
+                                        <td>{{ sample.name }}</td>
+                                        <td class="numeric">{{ calc('mean', sample, scenario) | numeric }}</td>
+                                        <td class="numeric">{{ calc('p25', sample, scenario) | numeric }}</td>
+                                        <td class="numeric">{{ calc('min', sample, scenario) | numeric }}</td>
+                                        <td class="numeric">{{ calc('median', sample, scenario) | numeric }}</td>
+                                        <td class="numeric">{{ calc('p75', sample, scenario) | numeric }}</td>
+                                        <td class="numeric">{{ calc('max', sample, scenario) | numeric }}</td>
+                                        <td class="numeric">{{ calc('stddev', sample, scenario) | numeric }}</td>
+                                        <td class="numeric">{{ sample.confidence | percent }}</td>
+                                        <template v-for="iteration in scenario.iterations">
+                                            <td class="numeric" :class="iteration.phase" :title="iteration.phase + ' #' + iteration.iteration">{{ iteration.values[sample.name] | numeric }}</td>
+                                        </template>
+                                    </tr>
+                                </template>
+                            </template>
+                        </tbody>
+                    </table>
+                </div>
             </div>
         </div>
-        <div class="form-group col-md-1 col-form-label">
-            <label for="sample">Samples:</label>
-        </div>
-        <div class="form-group col-md-8">
-            <select multiple class="form-control" id="sample">
-            </select>
-        </div>
     </div>
-    <div class="row mt-3">
-        <div class='col ml-auto mr-auto'>
-          <div id="data-table"></div>
-        </div>
-    </div>
+</div>
+</div>
+<footer>
+    <span>Gradle Profiler version {{ environment.profilerVersion }}</span>
+</footer>
 </div>
 <script>
 Array.prototype.unique = function() { return [...new Set(this)]; };
 
 function iterations(scenario, phase) {
     return scenario.iterations.filter(iteration => iteration.phase === phase);
-}
-function iterationTitles() {
-    return benchmarkResult.scenarios
-        .map(scenario => scenario.iterations
-            .map(iteration => iteration.title)
-        )
-        .flat()
-        .unique();
 }
 function sort(array) {
     return array.slice().sort((a, b) => a - b);
@@ -190,33 +190,20 @@ const OPERATIONS = {
     }
 };
 
-Handlebars.registerHelper("sampleCount", function(scenario) {
-    return scenario.samples.length;
-});
-
-Handlebars.registerHelper("percent", function(percent) {
-    return (percent * 100).toFixed(2) + "%";
-});
-
-Handlebars.registerHelper("number", function(value) {
-    return value.toFixed(2);
-});
-
-Handlebars.registerHelper("calc", function(operation, sample, scenario) {
+function calc(operation, sample, scenario) {
     let data = iterations(scenario, Phase.MEASURE).map(iteration => iteration.values[sample.name]);
-    return OPERATIONS[operation](data).toFixed(2);
+    return OPERATIONS[operation](data);
+}
+
+var app = new Vue({
+    el: '#app',
+    data: benchmarkResult,
+    filters: {
+        "numeric": (value) => value.toFixed(2),
+        "percent": (value) => (value * 100).toFixed(2) + "%"
+    }
 });
 
-let source = document.getElementById("data-table-template");
-let target = document.getElementById("data-table");
-let template = Handlebars.compile(source.innerHTML);
-let html = template({
-    benchmarkResult: benchmarkResult,
-    iterationTitles: iterationTitles(),
-});
-target.innerHTML = html;
-</script>
-<script>
 const COLORS = ["#527AB3", "#56ac76", "#f44336", "#d49c3e", "#211f2d"];
 class PaletteGenerator {
     constructor() {
@@ -279,8 +266,8 @@ let chart = new Chart(ctx, {
                     enabled: false
                 },
                 snap: {
-		        	enabled: false,
-        		}
+                    enabled: false
+                }
             }
         },
         responsive: false,

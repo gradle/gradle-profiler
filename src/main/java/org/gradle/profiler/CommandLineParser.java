@@ -9,6 +9,7 @@ import joptsimple.OptionSpecBuilder;
 import org.gradle.profiler.report.CsvGenerator;
 import org.gradle.profiler.report.CsvGenerator.Format;
 
+import javax.annotation.Nullable;
 import java.io.File;
 import java.io.IOException;
 import java.util.Arrays;
@@ -25,14 +26,16 @@ class CommandLineParser {
     /**
      * Returns null on parse failure.
      */
+    @Nullable
     public InvocationSettings parseSettings(String[] args) throws IOException, SettingsNotAvailableException {
         OptionParser parser = new OptionParser();
         AbstractOptionSpec<Void> helpOption = parser.acceptsAll(Arrays.asList("h", "help"), "Show this usage information")
             .forHelp();
+        AbstractOptionSpec<Void> versionOption = parser.acceptsAll(Arrays.asList("v", "version"), "Display version information");
         parser.nonOptions("The scenarios or task names to run");
         ArgumentAcceptingOptionSpec<File> projectOption = parser.accepts("project-dir", "The directory containing the build to run")
             .withRequiredArg().ofType(File.class).defaultsTo(new File("."));
-        ArgumentAcceptingOptionSpec<String> versionOption = parser.accepts("gradle-version", "Gradle version or installation to use to run build")
+        ArgumentAcceptingOptionSpec<String> gradleVersionOption = parser.accepts("gradle-version", "Gradle version or installation to use to run build")
             .withRequiredArg();
         ArgumentAcceptingOptionSpec<File> gradleUserHomeOption = parser.accepts("gradle-user-home", "The Gradle user home to use")
             .withRequiredArg()
@@ -75,7 +78,13 @@ class CommandLineParser {
         }
 
         if (parsedOptions.has(helpOption)) {
-            return showHelp(parser);
+            showHelp(parser);
+            return null;
+        }
+
+        if (parsedOptions.has(versionOption)) {
+            showVersion();
+            return null;
         }
 
         File projectDir = parsedOptions.valueOf(projectOption);
@@ -99,7 +108,7 @@ class CommandLineParser {
         List<String> benchmarkedBuildOperations = parsedOptions.valuesOf(benchmarkBuildOperation);
 
         List<String> targetNames = parsedOptions.nonOptionArguments().stream().map(Object::toString).collect(Collectors.toList());
-        List<String> versions = parsedOptions.valuesOf(versionOption);
+        List<String> gradleVersions = parsedOptions.valuesOf(gradleVersionOption);
         File scenarioFile = parsedOptions.valueOf(scenarioFileOption);
 
         // TODO - should validate the various combinations of invocation options
@@ -144,7 +153,7 @@ class CommandLineParser {
             .setInvoker(invoker)
             .setDryRun(dryRun)
             .setScenarioFile(scenarioFile)
-            .setVersions(versions)
+            .setVersions(gradleVersions)
             .setTargets(targetNames)
             .setSysProperties(sysProperties)
             .setGradleUserHome(gradleUserHome)
@@ -172,11 +181,15 @@ class CommandLineParser {
     private InvocationSettings fail(OptionParser parser, String message) throws IOException {
         System.out.println(message);
         System.out.println();
-        return showHelp(parser);
+        showHelp(parser);
+        throw new SettingsNotAvailableException();
     }
 
-    private InvocationSettings showHelp(OptionParser parser) throws IOException {
+    private void showHelp(OptionParser parser) throws IOException {
         parser.printHelpOn(System.out);
-        throw new SettingsNotAvailableException();
+    }
+
+    private void showVersion() {
+        System.out.printf("Gradle Profiler version %s%n", CommandLineParser.class.getPackage().getImplementationVersion());
     }
 }

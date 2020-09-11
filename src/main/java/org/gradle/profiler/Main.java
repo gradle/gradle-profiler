@@ -28,6 +28,9 @@ public class Main {
         try {
             Instant started = Instant.now();
             InvocationSettings settings = new CommandLineParser().parseSettings(args);
+            if (settings == null) {
+                return;
+            }
 
             System.out.println();
             System.out.println("* Writing results to " + settings.getOutputDir().getAbsolutePath());

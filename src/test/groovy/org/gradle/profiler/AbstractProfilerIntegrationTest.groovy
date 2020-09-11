@@ -1,12 +1,10 @@
 package org.gradle.profiler
 
-
 import org.junit.Rule
 import org.junit.rules.TemporaryFolder
 import spock.lang.Shared
-import spock.lang.Specification
 
-abstract class AbstractProfilerIntegrationTest extends Specification {
+abstract class AbstractProfilerIntegrationTest extends AbstractIntegrationTest {
 
     private static int NUMBER_OF_HEADERS = 4;
     private static int NUMBER_OF_STATS = 8;
@@ -25,15 +23,9 @@ abstract class AbstractProfilerIntegrationTest extends Specification {
 
     @Rule
     TemporaryFolder tmpDir = new TemporaryFolder()
-    ByteArrayOutputStream outputBuffer
 
     File projectDir
     File outputDir
-
-    String getOutput() {
-        System.out.flush()
-        return new String(outputBuffer.toByteArray())
-    }
 
     LogFile getLogFile() {
         def f = new File(outputDir, "profile.log")
@@ -57,15 +49,8 @@ abstract class AbstractProfilerIntegrationTest extends Specification {
     }
 
     def setup() {
-        Logging.resetLogging()
-        outputBuffer = new ByteArrayOutputStream()
-        System.out = new PrintStream(new TeeOutputStream(System.out, outputBuffer))
         projectDir = tmpDir.newFolder()
         outputDir = tmpDir.newFolder()
-    }
-
-    def cleanup() {
-        Logging.resetLogging()
     }
 
     void assertBuildScanPublished(String buildScanPluginVersion) {

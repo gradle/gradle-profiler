@@ -1,6 +1,5 @@
 package org.gradle.profiler.report;
 
-import com.google.common.collect.ImmutableMap;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonArray;
@@ -8,6 +7,7 @@ import com.google.gson.JsonObject;
 import com.google.gson.JsonSerializationContext;
 import com.google.gson.JsonSerializer;
 import org.gradle.profiler.ScenarioDefinition;
+import org.gradle.profiler.Version;
 import org.gradle.profiler.result.BuildInvocationResult;
 import org.gradle.profiler.result.Sample;
 
@@ -33,7 +33,25 @@ public class JsonResultWriter {
             .registerTypeHierarchyAdapter(BuildScenarioResult.class, (JsonSerializer<? extends BuildScenarioResult<?>>) this::serializeScenarioResult)
             .registerTypeHierarchyAdapter(ScenarioDefinition.class, (JsonSerializer<ScenarioDefinition>) this::serializeScenarioDefinition)
             .create();
-        gson.toJson(ImmutableMap.of("scenarios", scenarios), writer);
+        gson.toJson(new Output(new Environment(), scenarios), writer);
+    }
+
+    private static class Environment {
+        final String profilerVersion;
+
+        public Environment() {
+            this.profilerVersion = Version.getVersion();
+        }
+    }
+
+    private static class Output {
+        final Environment environment;
+        final List<? extends BuildScenarioResult<?>> scenarios;
+
+        public Output(Environment environment, List<? extends BuildScenarioResult<?>> scenarios) {
+            this.environment = environment;
+            this.scenarios = scenarios;
+        }
     }
 
     private <T extends BuildInvocationResult> JsonObject serializeScenarioResult(BuildScenarioResult<T> scenarioResult, Type type, JsonSerializationContext context) {
