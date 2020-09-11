@@ -40,6 +40,15 @@ tr:hover td.MEASURE {
 div.controls > div.col-form-label {
     text-align: right;
 }
+footer {
+    margin-top: 2em;
+    padding: 1em;
+    color: #aaa;
+    background-color: #eee;
+    font-size: smaller;
+    text-align: right;
+    border-top: 1px solid #ddd;
+}
     </style>
     <script>
 const Phase = {
@@ -53,7 +62,7 @@ let benchmarkResult =
 </script>
 </head>
 <body>
-<!-- As a heading -->
+<div id="app">
 <nav class="navbar navbar-dark bg-dark">
 <span class="navbar-brand mb-0 h1">Benchmark results</span>
 </nav>
@@ -137,8 +146,9 @@ let benchmarkResult =
         </div>
     </div>
 </div>
+</div>
 <footer>
-    <span>Gradle Profiler version @@version@@</span>
+    <span>Gradle Profiler version {{ version }}</span>
 </footer>
 </div>
 <script>
@@ -186,7 +196,7 @@ function calc(operation, sample, scenario) {
 }
 
 var app = new Vue({
-    el: '#data-table',
+    el: '#app',
     data: benchmarkResult,
     filters: {
         "numeric": (value) => value.toFixed(2),
