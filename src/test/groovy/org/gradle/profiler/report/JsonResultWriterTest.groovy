@@ -1,11 +1,13 @@
 package org.gradle.profiler.report
 
+
 import org.gradle.profiler.BuildContext
 import org.gradle.profiler.BuildMutator
 import org.gradle.profiler.BuildScenarioResultImpl
 import org.gradle.profiler.Phase
 import org.gradle.profiler.ScenarioContext
 import org.gradle.profiler.ScenarioDefinition
+import org.gradle.profiler.Version
 import org.gradle.profiler.result.BuildInvocationResult
 import org.gradle.profiler.result.Sample
 import spock.lang.Specification
@@ -41,155 +43,155 @@ class JsonResultWriterTest extends Specification {
         when:
         writer.write([result1, result2], stringWriter)
         then:
-        stringWriter.toString() ==~ /\{
-  "environment": \{
-    "profilerVersion": ".*"
-  \},
-  "scenarios": \[
-    \{
-      "definition": \{
+        stringWriter.toString() == """{
+  "environment": {
+    "profilerVersion": "${Version.version}"
+  },
+  "scenarios": [
+    {
+      "definition": {
         "name": "release",
         "title": "Assemble Release",
         "displayName": "Assemble Release",
         "buildTool": "Test Tool",
         "tasks": ":assemble"
-      \},
-      "samples": \[
-        \{
+      },
+      "samples": [
+        {
           "name": "execution",
           "confidence": 0.0
-        \},
-        \{
+        },
+        {
           "name": "Test sample",
           "confidence": 0.0
-        \}
-      \],
-      "iterations": \[
-        \{
+        }
+      ],
+      "iterations": [
+        {
           "id": "release@0@WARM_UP@1",
           "phase": "WARM_UP",
           "iteration": 1,
           "title": "warm-up build #1",
-          "values": \{
+          "values": {
             "execution": 100.0,
             "Test sample": 120.0
-          \}
-        \},
-        \{
+          }
+        },
+        {
           "id": "release@0@WARM_UP@2",
           "phase": "WARM_UP",
           "iteration": 2,
           "title": "warm-up build #2",
-          "values": \{
+          "values": {
             "execution": 80.0,
             "Test sample": 100.0
-          \}
-        \},
-        \{
+          }
+        },
+        {
           "id": "release@0@MEASURE@1",
           "phase": "MEASURE",
           "iteration": 1,
           "title": "measured build #1",
-          "values": \{
+          "values": {
             "execution": 75.0,
             "Test sample": 90.0
-          \}
-        \},
-        \{
+          }
+        },
+        {
           "id": "release@0@MEASURE@2",
           "phase": "MEASURE",
           "iteration": 2,
           "title": "measured build #2",
-          "values": \{
+          "values": {
             "execution": 70.0,
             "Test sample": 85.0
-          \}
-        \},
-        \{
+          }
+        },
+        {
           "id": "release@0@MEASURE@3",
           "phase": "MEASURE",
           "iteration": 3,
           "title": "measured build #3",
-          "values": \{
+          "values": {
             "execution": 72.0,
             "Test sample": 80.0
-          \}
-        \},
-        \{
+          }
+        },
+        {
           "id": "release@0@MEASURE@4",
           "phase": "MEASURE",
           "iteration": 4,
           "title": "measured build #4",
-          "values": \{
+          "values": {
             "execution": 68.0,
             "Test sample": 88.0
-          \}
-        \}
-      \]
-    \},
-    \{
-      "definition": \{
+          }
+        }
+      ]
+    },
+    {
+      "definition": {
         "name": "debug",
         "title": "Assemble Debug",
         "displayName": "Assemble Debug",
         "buildTool": "Test Tool",
         "tasks": ":assembleDebug"
-      \},
-      "samples": \[
-        \{
+      },
+      "samples": [
+        {
           "name": "execution",
           "confidence": 0.9359224935489405
-        \},
-        \{
+        },
+        {
           "name": "Test sample",
           "confidence": 0.9359224935489405
-        \}
-      \],
-      "iterations": \[
-        \{
+        }
+      ],
+      "iterations": [
+        {
           "id": "debug@1@WARM_UP@1",
           "phase": "WARM_UP",
           "iteration": 1,
           "title": "warm-up build #1",
-          "values": \{
+          "values": {
             "execution": 110.0,
             "Test sample": 220.0
-          \}
-        \},
-        \{
+          }
+        },
+        {
           "id": "debug@1@WARM_UP@2",
           "phase": "WARM_UP",
           "iteration": 2,
           "title": "warm-up build #2",
-          "values": \{
+          "values": {
             "execution": 90.0,
             "Test sample": 200.0
-          \}
-        \},
-        \{
+          }
+        },
+        {
           "id": "debug@1@MEASURE@1",
           "phase": "MEASURE",
           "iteration": 1,
           "title": "measured build #1",
-          "values": \{
+          "values": {
             "execution": 85.0,
             "Test sample": 190.0
-          \}
-        \},
-        \{
+          }
+        },
+        {
           "id": "debug@1@MEASURE@2",
           "phase": "MEASURE",
           "iteration": 2,
           "title": "measured build #2",
-          "values": \{
+          "values": {
             "execution": 80.0,
             "Test sample": 185.0
-          \}
-        \}
-      \]
-    \}
-  \]
-\}/
+          }
+        }
+      ]
+    }
+  ]
+}"""
     }
 
     static class TestSample implements Sample<BuildInvocationResult> {
