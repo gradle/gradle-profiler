@@ -118,7 +118,7 @@ let benchmarkResult =
                             </tr>
                         </thead>
                         <tbody>
-                            <template v-for="scenario in scenarios">
+                            <template v-for="scenario in benchmarkResult.scenarios">
                                 <template v-for="(sample, index) in scenario.samples">
                                     <tr>
                                         <td v-if="index === 0" :rowspan="scenario.samples.length">{{ scenario.definition.title }}</td>
@@ -148,7 +148,7 @@ let benchmarkResult =
 </div>
 </div>
 <footer>
-    <span>Gradle Profiler version {{ environment.profilerVersion }}</span>
+    <span>Gradle Profiler version {{ benchmarkResult.environment.profilerVersion }}</span>
 </footer>
 </div>
 <script>
@@ -192,7 +192,9 @@ const OPERATIONS = {
 
 var app = new Vue({
     el: '#app',
-    data: benchmarkResult,
+    data: {
+        benchmarkResult: benchmarkResult
+    },
     methods: {
         calc: (operation, sample, scenario) => {
             let data = iterations(scenario, Phase.MEASURE).map(iteration => iteration.values[sample.name]);
