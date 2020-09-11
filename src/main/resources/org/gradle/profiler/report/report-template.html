@@ -197,6 +197,20 @@ function sampleId(scenario, sample) {
     return scenario.definition.id + "$"+ sample.name;
 }
 
+const COLORS = ["#527AB3", "#56ac76", "#f44336", "#d49c3e", "#211f2d"];
+class PaletteGenerator {
+    constructor() {
+        this.colors = COLORS.slice();
+    }
+    nextColor() {
+        if (this.colors.length) {
+            return this.colors.shift();
+        } else {
+            return "#8B899A";
+        }
+    }
+};
+
 var app = new Vue({
     el: '#app',
     data: {
@@ -231,20 +245,6 @@ var app = new Vue({
         "percent": (value) => (value * 100).toFixed(2) + "%"
     }
 });
-
-const COLORS = ["#527AB3", "#56ac76", "#f44336", "#d49c3e", "#211f2d"];
-class PaletteGenerator {
-    constructor() {
-        this.colors = COLORS.slice();
-    }
-    nextColor() {
-        if (this.colors.length) {
-            return this.colors.shift();
-        } else {
-            return "#8B899A";
-        }
-    }
-};
 
 function convertScenarioToChart(scenario, sample, sorted, color) {
     var data = iterations(scenario, Phase.MEASURE)
