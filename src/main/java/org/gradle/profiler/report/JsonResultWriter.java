@@ -33,15 +33,23 @@ public class JsonResultWriter {
             .registerTypeHierarchyAdapter(BuildScenarioResult.class, (JsonSerializer<? extends BuildScenarioResult<?>>) this::serializeScenarioResult)
             .registerTypeHierarchyAdapter(ScenarioDefinition.class, (JsonSerializer<ScenarioDefinition>) this::serializeScenarioDefinition)
             .create();
-        gson.toJson(new Output(scenarios), writer);
+        gson.toJson(new Output(new Environment(), scenarios), writer);
+    }
+
+    private static class Environment {
+        final String profilerVersion;
+
+        public Environment() {
+            this.profilerVersion = Version.getVersion();
+        }
     }
 
     private static class Output {
-        final String version;
+        final Environment environment;
         final List<? extends BuildScenarioResult<?>> scenarios;
 
-        public Output(List<? extends BuildScenarioResult<?>> scenarios) {
-            this.version = Version.getVersion();
+        public Output(Environment environment, List<? extends BuildScenarioResult<?>> scenarios) {
+            this.environment = environment;
             this.scenarios = scenarios;
         }
     }

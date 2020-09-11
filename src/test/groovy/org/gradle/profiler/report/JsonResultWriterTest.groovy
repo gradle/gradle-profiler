@@ -42,7 +42,9 @@ class JsonResultWriterTest extends Specification {
         writer.write([result1, result2], stringWriter)
         then:
         stringWriter.toString() ==~ /\{
-  "version": .*,
+  "environment": \{
+    "profilerVersion": ".*"
+  \},
   "scenarios": \[
     \{
       "definition": \{
