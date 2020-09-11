@@ -190,14 +190,15 @@ const OPERATIONS = {
     }
 };
 
-function calc(operation, sample, scenario) {
-    let data = iterations(scenario, Phase.MEASURE).map(iteration => iteration.values[sample.name]);
-    return OPERATIONS[operation](data);
-}
-
 var app = new Vue({
     el: '#app',
     data: benchmarkResult,
+    methods: {
+        calc: (operation, sample, scenario) => {
+            let data = iterations(scenario, Phase.MEASURE).map(iteration => iteration.values[sample.name]);
+            return OPERATIONS[operation](data);
+        }
+    },
     filters: {
         "numeric": (value) => value.toFixed(2),
         "percent": (value) => (value * 100).toFixed(2) + "%"
