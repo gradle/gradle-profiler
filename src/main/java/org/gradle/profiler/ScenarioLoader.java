@@ -258,10 +258,10 @@ class ScenarioLoader {
                 }
 
                 List<String> gradleArgs = ConfigUtil.strings(scenario, GRADLE_ARGS);
-                GradleBuildInvoker invoker = invoker(scenario, (GradleBuildInvoker) settings.getInvoker());
+                BuildAction buildAction = getBuildAction(scenario, scenarioFile);
+                GradleBuildInvoker invoker = invoker(scenario, (GradleBuildInvoker) settings.getInvoker(), buildAction);
                 int warmUpCount = getWarmUpCount(settings, invoker, scenario);
                 List<String> measuredBuildOperations = getMeasuredBuildOperations(settings, scenario);
-                BuildAction buildAction = getBuildAction(scenario, scenarioFile);
                 BuildAction cleanupAction = getCleanupAction(scenario);
                 Map<String, String> systemProperties = ConfigUtil.map(scenario, SYSTEM_PROPERTIES, settings.getSystemProperties());
                 List<String> jvmArgs = ConfigUtil.strings(scenario, JVM_ARGS);
@@ -348,9 +348,17 @@ class ScenarioLoader {
         }
     }
 
-    public static GradleBuildInvoker invoker(Config config, GradleBuildInvoker defaultValue) {
+    public static GradleBuildInvoker invoker(Config config, GradleBuildInvoker defaultValue, BuildAction buildAction) {
         GradleBuildInvoker invoker = defaultValue;
+        boolean sync = buildAction instanceof AndroidStudioSyncAction;
+        if (sync) {
+            invoker = GradleBuildInvoker.AndroidStudio;
+        }
+
         if (config.hasPath(RUN_USING)) {
+            if (sync) {
+                throw new IllegalArgumentException("Cannot specify '" + RUN_USING + "' when performing Android sync.");
+            }
             String value = ConfigUtil.string(config, RUN_USING, null);
             if (value.equals("cli")) {
                 invoker = GradleBuildInvoker.Cli;
@@ -363,6 +371,9 @@ class ScenarioLoader {
         if (config.hasPath(DAEMON)) {
             String value = ConfigUtil.string(config, DAEMON, null);
             if (value.equals("none")) {
+                if (sync) {
+                    throw new IllegalArgumentException("Cannot use no daemon when performing Android sync.");
+                }
                 invoker = GradleBuildInvoker.CliNoDaemon;
             } else if (value.equals("cold")) {
                 invoker = invoker.withColdDaemon();
@@ -370,6 +381,7 @@ class ScenarioLoader {
                 throw new IllegalArgumentException("Unexpected value for '" + DAEMON + "' provided: " + value);
             } // else, already warm
         }
+
         return invoker;
     }
 
@@ -385,7 +397,7 @@ class ScenarioLoader {
         Class<?> toolingModel = getToolingModelClass(scenario, scenarioFile);
         boolean sync = scenario.hasPath(ANDROID_STUDIO_SYNC);
         List<String> tasks = ConfigUtil.strings(scenario, TASKS);
-        if (toolingModel != null && sync) {
+        if (sync && toolingModel != null) {
             throw new IllegalArgumentException("Cannot load tooling model and Android studio sync in same scenario.");
         }
         if (sync && !tasks.isEmpty()) {

@@ -100,18 +100,10 @@ public class GradleScenarioInvoker extends ScenarioInvoker<GradleScenarioDefinit
             allBuildsGradleArgsCalculator.calculateGradleArgs(allBuildsGradleArgs);
             logGradleArgs(allBuildsGradleArgs);
 
-            GradleInvoker buildInvoker;
-            if (scenario.getInvoker() == GradleBuildInvoker.CliNoDaemon) {
-                buildInvoker = new CliInvoker(buildConfiguration, buildConfiguration.getJavaHome(), settings.getProjectDir(), false);
-            } else if (scenario.getInvoker() == GradleBuildInvoker.ToolingApi || scenario.getInvoker() == GradleBuildInvoker.ToolingApiColdDaemon) {
-                buildInvoker = new ToolingApiInvoker(projectConnection);
-            } else if (scenario.getInvoker() == GradleBuildInvoker.Cli || scenario.getInvoker() == GradleBuildInvoker.CliColdDaemon) {
-                buildInvoker = new CliInvoker(buildConfiguration, buildConfiguration.getJavaHome(), settings.getProjectDir(), true);
-            } else {
-                throw new IllegalArgumentException();
-            }
+            GradleInvoker buildInvoker = scenario.getInvoker().getClient().createInvoker(buildConfiguration, settings, projectConnection);
+
             BuildAction beforeBuildAction;
-            if (scenario.getInvoker().isColdDaemon()) {
+            if (scenario.getInvoker().isShouldCleanUpDaemon()) {
                 beforeBuildAction = new CleanupThenStopDaemon(cleanupAction, daemonControl, buildConfiguration);
             } else {
                 beforeBuildAction = cleanupAction;
