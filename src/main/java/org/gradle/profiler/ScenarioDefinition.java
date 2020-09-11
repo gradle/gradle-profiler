@@ -14,7 +14,15 @@ public abstract class ScenarioDefinition {
     private final int buildCount;
     private final File outputDir;
 
-    public ScenarioDefinition(String name, @Nullable String title, Supplier<BuildMutator> buildMutator, int warmUpCount, int buildCount, File outputDir) {
+
+    public ScenarioDefinition(
+        String name,
+        @Nullable String title,
+        Supplier<BuildMutator> buildMutator,
+        int warmUpCount,
+        int buildCount,
+        File outputDir
+    ) {
         this.name = name;
         this.title = title;
         this.buildMutator = buildMutator;
@@ -83,4 +91,13 @@ public abstract class ScenarioDefinition {
 
     protected void printDetail(PrintStream out) {
     }
+//
+//    protected String getExecutableName() {
+//        return getBuildToolDisplayName().toLowerCase();
+//    }
+//
+//    public String getExecutablePath() {
+//        String toolHomePath = toolHome == null ? System.getenv(getBuildToolDisplayName().toUpperCase() + "_HOME") : getToolHome().getAbsolutePath();
+//        return toolHomePath == null ? getExecutableName() : toolHomePath + "/bin/" + getExecutableName();
+//    }
 }

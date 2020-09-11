@@ -44,15 +44,15 @@ public abstract class ScenarioInvoker<T extends ScenarioDefinition, R extends Bu
     /**
      * Returns a {@link Supplier} that returns the result of the given command.
      */
-    BuildStepAction<BuildInvocationResult> measureCommandLineExecution(List<String> commandLine, File workingDir, File buildLog) {
-        return new BuildStepAction<BuildInvocationResult>() {
+    BuildStepAction<R> measureCommandLineExecution(List<String> commandLine, File workingDir, File buildLog) {
+        return new BuildStepAction<R>() {
             @Override
             public boolean isDoesSomething() {
                 return true;
             }
 
             @Override
-            public BuildInvocationResult run(BuildContext buildContext, BuildStep buildStep) {
+            public R run(BuildContext buildContext, BuildStep buildStep) {
                 Timer timer = new Timer();
                 if (buildLog == null) {
                     new CommandExec().inDir(workingDir).run(commandLine);
@@ -60,7 +60,7 @@ public abstract class ScenarioInvoker<T extends ScenarioDefinition, R extends Bu
                     new CommandExec().inDir(workingDir).runAndCollectOutput(buildLog, commandLine);
                 }
                 Duration executionTime = timer.elapsed();
-                return new BuildInvocationResult(buildContext, executionTime);
+                return (R) new BuildInvocationResult(buildContext, executionTime);
             }
         };
     }

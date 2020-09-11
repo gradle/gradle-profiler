@@ -5,10 +5,36 @@ import com.google.common.collect.ImmutableSet;
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
 import com.typesafe.config.ConfigParseOptions;
-import org.gradle.profiler.mutations.*;
+import org.gradle.profiler.mutations.AbstractFileChangeMutator;
+import org.gradle.profiler.mutations.ApplyAbiChangeToSourceFileMutator;
+import org.gradle.profiler.mutations.ApplyChangeToAndroidLayoutFileMutator;
+import org.gradle.profiler.mutations.ApplyChangeToAndroidManifestFileMutator;
+import org.gradle.profiler.mutations.ApplyChangeToAndroidResourceFileMutator;
+import org.gradle.profiler.mutations.ApplyChangeToNativeSourceFileMutator;
+import org.gradle.profiler.mutations.ApplyChangeToPropertyResourceFileMutator;
+import org.gradle.profiler.mutations.ApplyNonAbiChangeToSourceFileMutator;
+import org.gradle.profiler.mutations.ApplyValueChangeToAndroidResourceFileMutator;
+import org.gradle.profiler.mutations.BuildMutatorConfigurator;
+import org.gradle.profiler.mutations.ClearArtifactTransformCacheMutator;
+import org.gradle.profiler.mutations.ClearBuildCacheMutator;
+import org.gradle.profiler.mutations.ClearConfigurationCacheStateMutator;
+import org.gradle.profiler.mutations.ClearGradleUserHomeMutator;
+import org.gradle.profiler.mutations.ClearJarsCacheMutator;
+import org.gradle.profiler.mutations.ClearProjectCacheMutator;
+import org.gradle.profiler.mutations.FileChangeMutatorConfigurator;
+import org.gradle.profiler.mutations.GitCheckoutMutator;
+import org.gradle.profiler.mutations.GitRevertMutator;
+import org.gradle.profiler.mutations.ShowBuildCacheSizeMutator;
 
 import java.io.File;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.TreeSet;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
@@ -24,6 +50,7 @@ class ScenarioLoader {
     private static final String BAZEL = "bazel";
     private static final String BUCK = "buck";
     private static final String MAVEN = "maven";
+    private static final String TOOL_HOME = "home";
     private static final String WARM_UP_COUNT = "warm-ups";
     private static final String ITERATIONS = "iterations";
     private static final String MEASURED_BUILD_OPERATIONS = "measured-build-ops";
@@ -88,13 +115,14 @@ class ScenarioLoader {
         BUCK,
         MAVEN,
         MODEL,
+        TOOL_HOME,
         ANDROID_STUDIO_SYNC,
         DAEMON,
         JVM_ARGS
     );
-    private static final List<String> BAZEL_KEYS = Collections.singletonList(TARGETS);
-    private static final List<String> BUCK_KEYS = Arrays.asList(TARGETS, TYPE);
-    private static final List<String> MAVEN_KEYS = Collections.singletonList(TARGETS);
+    private static final List<String> BAZEL_KEYS = Arrays.asList(TARGETS, TOOL_HOME);
+    private static final List<String> BUCK_KEYS = Arrays.asList(TARGETS, TYPE, TOOL_HOME);
+    private static final List<String> MAVEN_KEYS = Arrays.asList(TARGETS, TOOL_HOME);
 
     private final GradleBuildConfigurationReader gradleBuildConfigurationReader;
 
@@ -208,48 +236,28 @@ class ScenarioLoader {
             File scenarioBaseDir = new File(settings.getOutputDir(), GradleScenarioDefinition.safeFileName(scenarioName));
 
             if (scenario.hasPath(BAZEL) && settings.isBazel()) {
-                if (settings.isProfile()) {
-                    throw new IllegalArgumentException("Can only profile scenario '" + scenarioName + "' when building using Gradle.");
-                }
-                Config executionInstructions = scenario.getConfig(BAZEL);
-                for (String key : scenario.getObject(BAZEL).keySet()) {
-                    if (!BAZEL_KEYS.contains(key)) {
-                        throw new IllegalArgumentException("Unrecognized key '" + scenarioName + ".bazel." + key + "' defined in scenario file " + scenarioFile);
-                    }
-                }
+                Config executionInstructions = getConfig(scenarioFile, settings, scenarioName, scenario, BAZEL, BAZEL_KEYS);
+
                 List<String> targets = ConfigUtil.strings(executionInstructions, TARGETS);
+                File bazelHome = getToolHome(executionInstructions);
                 File outputDir = new File(scenarioBaseDir, "bazel");
                 int warmUpCount = getWarmUpCount(settings, scenario);
-                definitions.add(new BazelScenarioDefinition(scenarioName, title, targets, buildMutatorFactory, warmUpCount, buildCount, outputDir));
+                definitions.add(new BazelScenarioDefinition(scenarioName, title, targets, buildMutatorFactory, warmUpCount, buildCount, outputDir, bazelHome));
             } else if (scenario.hasPath(BUCK) && settings.isBuck()) {
-                if (settings.isProfile()) {
-                    throw new IllegalArgumentException("Can only profile scenario '" + scenarioName + "' when building using Gradle.");
-                }
-                Config executionInstructions = scenario.getConfig(BUCK);
-                for (String key : scenario.getObject(BUCK).keySet()) {
-                    if (!BUCK_KEYS.contains(key)) {
-                        throw new IllegalArgumentException("Unrecognized key '" + scenarioName + ".buck." + key + "' defined in scenario file " + scenarioFile);
-                    }
-                }
+                Config executionInstructions = getConfig(scenarioFile, settings, scenarioName, scenario, BUCK, BUCK_KEYS);
                 List<String> targets = ConfigUtil.strings(executionInstructions, TARGETS);
                 String type = ConfigUtil.string(executionInstructions, TYPE, null);
+                File buckHome = getToolHome(executionInstructions);
                 File outputDir = new File(scenarioBaseDir, "buck");
                 int warmUpCount = getWarmUpCount(settings, scenario);
-                definitions.add(new BuckScenarioDefinition(scenarioName, title, targets, type, buildMutatorFactory, warmUpCount, buildCount, outputDir));
+                definitions.add(new BuckScenarioDefinition(scenarioName, title, targets, type, buildMutatorFactory, warmUpCount, buildCount, outputDir, buckHome));
             } else if (scenario.hasPath(MAVEN) && settings.isMaven()) {
-                if (settings.isProfile()) {
-                    throw new IllegalArgumentException("Can only profile scenario '" + scenarioName + "' when building using Gradle.");
-                }
-                Config executionInstructions = scenario.getConfig(MAVEN);
-                for (String key : scenario.getObject(MAVEN).keySet()) {
-                    if (!MAVEN_KEYS.contains(key)) {
-                        throw new IllegalArgumentException("Unrecognized key '" + scenarioName + ".maven." + key + "' defined in scenario file " + scenarioFile);
-                    }
-                }
+                Config executionInstructions = getConfig(scenarioFile, settings, scenarioName, scenario, MAVEN, MAVEN_KEYS);
                 List<String> targets = ConfigUtil.strings(executionInstructions, TARGETS);
+                File mavenHome = getToolHome(executionInstructions);
                 File outputDir = new File(scenarioBaseDir, "maven");
                 int warmUpCount = getWarmUpCount(settings, scenario);
-                definitions.add(new MavenScenarioDefinition(scenarioName, title, targets, buildMutatorFactory, warmUpCount, buildCount, outputDir));
+                definitions.add(new MavenScenarioDefinition(scenarioName, title, targets, buildMutatorFactory, warmUpCount, buildCount, outputDir, mavenHome));
             } else if (!settings.isBazel() && !settings.isBuck() && !settings.isMaven()) {
                 List<GradleBuildConfiguration> versions = ConfigUtil.strings(scenario, VERSIONS, settings.getVersions()).stream().map(inspector::readConfiguration).collect(
                     Collectors.toList());
@@ -290,6 +298,19 @@ class ScenarioLoader {
         return definitions;
     }
 
+    private static Config getConfig(File scenarioFile, InvocationSettings settings, String scenarioName, Config scenario, String toolName, List<String> toolKeys) {
+        if (settings.isProfile()) {
+            throw new IllegalArgumentException("Can only profile scenario '" + scenarioName + "' when building using Gradle.");
+        }
+        Config executionInstructions = scenario.getConfig(toolName);
+        for (String key : scenario.getObject(toolName).keySet()) {
+            if (!toolKeys.contains(key)) {
+                throw new IllegalArgumentException("Unrecognized key '" + scenarioName + "." + toolName + "." + key + "' defined in scenario file " + scenarioFile);
+            }
+        }
+        return executionInstructions;
+    }
+
     private static ImmutableList<String> getMeasuredBuildOperations(InvocationSettings settings, Config scenario) {
         return ImmutableSet.<String>builder()
             .addAll(settings.getMeasuredBuildOperations())
@@ -321,6 +342,11 @@ class ScenarioLoader {
         } else {
             return 1;
         }
+    }
+
+    private static File getToolHome(Config config) {
+        String homeString = ConfigUtil.string(config, TOOL_HOME, null);
+        return homeString == null ? null : new File(homeString);
     }
 
     private static int getWarmUpCount(InvocationSettings settings, Config scenario) {

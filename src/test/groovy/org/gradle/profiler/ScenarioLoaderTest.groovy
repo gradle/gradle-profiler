@@ -6,6 +6,7 @@ import org.gradle.tooling.model.idea.IdeaProject
 import org.junit.Rule
 import org.junit.rules.TemporaryFolder
 import spock.lang.Specification
+import spock.lang.Unroll
 
 import static org.gradle.profiler.ScenarioLoader.loadScenarios
 
@@ -411,13 +412,15 @@ class ScenarioLoaderTest extends Specification {
         (scenarios[0] as GradleScenarioDefinition).action.tasks == ["alma"]
     }
 
-    def "can load Bazel scenario"() {
+    @Unroll
+    def "can load Bazel scenario"(String home) {
         def settings = settings(BuildInvoker.Bazel)
 
         scenarioFile << """
             default {
                 bazel {
                     targets = ["help"]
+                    ${home == null ? "" : "home = \"$home\""}
                 }
             }
         """
@@ -425,15 +428,21 @@ class ScenarioLoaderTest extends Specification {
         expect:
         scenarios*.name == ["default"]
         (scenarios[0] as BazelScenarioDefinition).targets == ["help"]
+        (scenarios[0] as BazelScenarioDefinition).toolHome?.absolutePath == home
+
+        where:
+        home << ["/my/bazel/home", null]
     }
 
-    def "can load Buck scenario"() {
+    @Unroll
+    def "can load Buck scenario"(String home) {
         def settings = settings(BuildInvoker.Buck)
 
         scenarioFile << """
             default {
                 buck {
                     targets = ["help"]
+                    ${home == null ? "" : "home = \"$home\""}
                 }
             }
         """
@@ -441,15 +450,21 @@ class ScenarioLoaderTest extends Specification {
         expect:
         scenarios*.name == ["default"]
         (scenarios[0] as BuckScenarioDefinition).targets == ["help"]
+        (scenarios[0] as BuckScenarioDefinition).toolHome?.absolutePath == home
+        where:
+        home << ["/my/buck/home", null]
     }
 
-    def "can load Maven scenario"() {
+    @Unroll
+    def "can load Maven scenario"(String home) {
         def settings = settings(BuildInvoker.Maven)
 
         scenarioFile << """
             default {
                 maven {
                     targets = ["help"]
+                    home = "/my/maven/home"
+                    ${home == null ? "" : "home = \"$home\""}
                 }
             }
         """
@@ -457,6 +472,9 @@ class ScenarioLoaderTest extends Specification {
         expect:
         scenarios*.name == ["default"]
         (scenarios[0] as MavenScenarioDefinition).targets == ["help"]
+        (scenarios[0] as MavenScenarioDefinition).toolHome?.absolutePath == home
+        where:
+        home << ["/my/maven/home", null]
     }
 
     def "can load scenario with multiple files for a single mutation"() {
