@@ -186,15 +186,25 @@ const OPERATIONS = {
     }
 };
 
-function updateData() {
-    let sorted = app.options.order === "sorted";
-    let samples = $("#sample").val();
-    chart.data.datasets = convertData(samples, sorted);
-    chart.update();
-}
-
-function sampleId(scenario, sample) {
-    return scenario.definition.id + "$"+ sample.name;
+function convertScenarioToChart(scenario, sample, sorted, color) {
+    var data = iterations(scenario, Phase.MEASURE)
+            .map(iteration => iteration.values[sample]);
+    if (sorted) {
+        data = data.sort((a, b) => b - a);
+    }
+    return {
+        label: `${scenario.definition.title} (${sample}) ${scenario.definition.buildTool}`,
+        showLine: true,
+        steppedLine: "middle",
+        pointRadius: 0,
+        pointHitRadius: 10,
+        hoverRadius: 6,
+        fill: false,
+        borderWidth: 3,
+        pointBackgroundColor: color,
+        borderColor: color,
+        data: data
+    };
 }
 
 const COLORS = ["#527AB3", "#56ac76", "#f44336", "#d49c3e", "#211f2d"];
@@ -210,6 +220,22 @@ class PaletteGenerator {
         }
     }
 };
+
+function convertData(samples, sorted) {
+    let palette = new PaletteGenerator();
+    return samples.map(sample => benchmarkResult.scenarios.map(scenario => convertScenarioToChart(scenario, sample, sorted, palette.nextColor()))).flat();
+}
+
+function updateData() {
+    let sorted = app.options.order === "sorted";
+    let samples = $("#sample").val();
+    chart.data.datasets = convertData(samples, sorted);
+    chart.update();
+}
+
+function sampleId(scenario, sample) {
+    return scenario.definition.id + "$"+ sample.name;
+}
 
 var app = new Vue({
     el: '#app',
@@ -245,32 +271,6 @@ var app = new Vue({
         "percent": (value) => (value * 100).toFixed(2) + "%"
     }
 });
-
-function convertScenarioToChart(scenario, sample, sorted, color) {
-    var data = iterations(scenario, Phase.MEASURE)
-            .map(iteration => iteration.values[sample]);
-    if (sorted) {
-        data = data.sort((a, b) => b - a);
-    }
-    return {
-        label: `${scenario.definition.title} (${sample}) ${scenario.definition.buildTool}`,
-        showLine: true,
-        steppedLine: "middle",
-        pointRadius: 0,
-        pointHitRadius: 10,
-        hoverRadius: 6,
-        fill: false,
-        borderWidth: 3,
-        pointBackgroundColor: color,
-        borderColor: color,
-        data: data
-    };
-}
-
-function convertData(samples, sorted) {
-    let palette = new PaletteGenerator();
-    return samples.map(sample => benchmarkResult.scenarios.map(scenario => convertScenarioToChart(scenario, sample, sorted, palette.nextColor()))).flat();
-}
 
 let ctx = document.getElementById('samples').getContext('2d');
 let maxMeasuredIterations = Math.max(...(benchmarkResult.scenarios.map(scenario => iterations(scenario, Phase.MEASURE).length)));
