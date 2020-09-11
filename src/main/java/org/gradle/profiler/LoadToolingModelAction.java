@@ -2,7 +2,7 @@ package org.gradle.profiler;
 
 import java.util.List;
 
-public class LoadToolingModelAction implements BuildAction {
+public class LoadToolingModelAction extends GradleInvokerBuildAction {
     private final Class<?> toolingModel;
     private final List<String> tasks;
 

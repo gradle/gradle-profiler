@@ -1,5 +1,6 @@
 package org.gradle.profiler;
 
+import java.time.Duration;
 import java.util.List;
 
 public class CleanupThenStopDaemon implements BuildAction {
@@ -37,8 +38,9 @@ public class CleanupThenStopDaemon implements BuildAction {
     }
 
     @Override
-    public void run(GradleInvoker buildInvoker, List<String> gradleArgs, List<String> jvmArgs) {
-        cleanupAction.run(buildInvoker, gradleArgs, jvmArgs);
+    public Duration run(GradleClient gradleClient, List<String> gradleArgs, List<String> jvmArgs) {
+        Duration duration = cleanupAction.run(gradleClient, gradleArgs, jvmArgs);
         daemonControl.stop(configuration);
+        return duration;
     }
 }

@@ -15,14 +15,14 @@ import java.util.Optional;
 public class BuildUnderTestInvoker {
     private final List<String> jvmArgs;
     private final List<String> gradleArgs;
+    private final GradleClient gradleClient;
     private final PidInstrumentation pidInstrumentation;
     private final BuildOperationInstrumentation buildOperationInstrumentation;
-    private final GradleInvoker buildInvoker;
 
-    public BuildUnderTestInvoker(List<String> jvmArgs, List<String> gradleArgs, GradleInvoker buildInvoker, PidInstrumentation pidInstrumentation, BuildOperationInstrumentation buildOperationInstrumentation) {
+    public BuildUnderTestInvoker(List<String> jvmArgs, List<String> gradleArgs, GradleClient gradleClient, PidInstrumentation pidInstrumentation, BuildOperationInstrumentation buildOperationInstrumentation) {
         this.jvmArgs = jvmArgs;
         this.gradleArgs = gradleArgs;
-        this.buildInvoker = buildInvoker;
+        this.gradleClient = gradleClient;
         this.pidInstrumentation = pidInstrumentation;
         this.buildOperationInstrumentation = buildOperationInstrumentation;
     }
@@ -36,9 +36,7 @@ public class BuildUnderTestInvoker {
         jvmArgs.add("-Dorg.gradle.profiler.number=" + buildContext.getIteration());
         jvmArgs.add("-Dorg.gradle.profiler.step=" + buildStep);
 
-        Timer timer = new Timer();
-        buildAction.run(buildInvoker, gradleArgs, jvmArgs);
-        Duration executionTime = timer.elapsed();
+        Duration executionTime = buildAction.run(gradleClient, gradleArgs, jvmArgs);
 
         String pid = pidInstrumentation.getPidForLastBuild();
         Logging.detailed().println("Used daemon with pid " + pid);
@@ -69,6 +67,6 @@ public class BuildUnderTestInvoker {
     }
 
     private BuildUnderTestInvoker copy(List<String> jvmArgs, List<String> gradleArgs) {
-        return new BuildUnderTestInvoker(jvmArgs, gradleArgs, buildInvoker, pidInstrumentation, buildOperationInstrumentation);
+        return new BuildUnderTestInvoker(jvmArgs, gradleArgs, gradleClient, pidInstrumentation, buildOperationInstrumentation);
     }
 }

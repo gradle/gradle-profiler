@@ -1,5 +1,6 @@
 package org.gradle.profiler;
 
+import java.time.Duration;
 import java.util.List;
 
 /**
@@ -23,7 +24,8 @@ public interface BuildAction {
         }
 
         @Override
-        public void run(GradleInvoker buildInvoker, List<String> gradleArgs, List<String> jvmArgs) {
+        public Duration run(GradleClient gradleClient, List<String> gradleArgs, List<String> jvmArgs) {
+            return Duration.ZERO;
         }
     };
 
@@ -40,7 +42,7 @@ public interface BuildAction {
     String getShortDisplayName();
 
     /**
-     * Runs the measured work of this action.
+     * Runs the work of this action and returns the result.
      */
-    void run(GradleInvoker buildInvoker, List<String> gradleArgs, List<String> jvmArgs);
+    Duration run(GradleClient gradleClient, List<String> gradleArgs, List<String> jvmArgs);
 }

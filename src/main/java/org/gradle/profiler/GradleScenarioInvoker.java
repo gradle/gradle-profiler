@@ -100,7 +100,7 @@ public class GradleScenarioInvoker extends ScenarioInvoker<GradleScenarioDefinit
             allBuildsGradleArgsCalculator.calculateGradleArgs(allBuildsGradleArgs);
             logGradleArgs(allBuildsGradleArgs);
 
-            GradleInvoker buildInvoker = scenario.getInvoker().getClient().createInvoker(buildConfiguration, settings, projectConnection);
+            GradleClient gradleClient = scenario.getInvoker().getClient().create(buildConfiguration, settings, projectConnection);
 
             BuildAction beforeBuildAction;
             if (scenario.getInvoker().isShouldCleanUpDaemon()) {
@@ -109,7 +109,7 @@ public class GradleScenarioInvoker extends ScenarioInvoker<GradleScenarioDefinit
                 beforeBuildAction = cleanupAction;
             }
 
-            BuildUnderTestInvoker invoker = new BuildUnderTestInvoker(allBuildsJvmArgs, allBuildsGradleArgs, buildInvoker, pidInstrumentation, buildOperationInstrumentation);
+            BuildUnderTestInvoker invoker = new BuildUnderTestInvoker(allBuildsJvmArgs, allBuildsGradleArgs, gradleClient, pidInstrumentation, buildOperationInstrumentation);
 
             mutator.beforeScenario(scenarioContext);
 
@@ -177,6 +177,7 @@ public class GradleScenarioInvoker extends ScenarioInvoker<GradleScenarioDefinit
             control.stopSession();
             Objects.requireNonNull(results);
             checkPid(pid, results.getDaemonPid(), scenario.getInvoker());
+            gradleClient.close();
         } finally {
             mutator.afterScenario(scenarioContext);
             projectConnection.close();
