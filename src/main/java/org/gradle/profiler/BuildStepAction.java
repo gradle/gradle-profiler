@@ -1,7 +1,9 @@
 package org.gradle.profiler;
 
-public interface BuildStepAction {
-    BuildStepAction NO_OP = new BuildStepAction() {
+import org.gradle.profiler.result.BuildInvocationResult;
+
+public interface BuildStepAction<T extends BuildInvocationResult> {
+    BuildStepAction<GradleBuildInvocationResult> NO_OP = new BuildStepAction<GradleBuildInvocationResult>() {
         @Override
         public boolean isDoesSomething() {
             return false;
@@ -18,5 +20,5 @@ public interface BuildStepAction {
     /**
      * Runs a single build step.
      */
-    GradleBuildInvocationResult run(BuildContext buildContext, BuildStep buildStep);
+    T run(BuildContext buildContext, BuildStep buildStep);
 }

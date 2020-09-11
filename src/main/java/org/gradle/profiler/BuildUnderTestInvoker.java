@@ -27,7 +27,7 @@ public class BuildUnderTestInvoker {
         this.buildOperationInstrumentation = buildOperationInstrumentation;
     }
 
-    public BuildStepAction create(BuildAction action) {
+    public BuildStepAction<GradleBuildInvocationResult> create(BuildAction action) {
         if (action.isDoesSomething()) {
             return new InvokeAndMeasureAction(action);
         } else {
@@ -35,7 +35,7 @@ public class BuildUnderTestInvoker {
         }
     }
 
-    private class InvokeAndMeasureAction implements BuildStepAction {
+    private class InvokeAndMeasureAction implements BuildStepAction<GradleBuildInvocationResult> {
         private final BuildAction action;
 
         public InvokeAndMeasureAction(BuildAction action) {

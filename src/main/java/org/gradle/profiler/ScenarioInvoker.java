@@ -11,8 +11,6 @@ import java.util.List;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
 
-import static org.gradle.profiler.Logging.startOperation;
-
 public abstract class ScenarioInvoker<T extends ScenarioDefinition, R extends BuildInvocationResult> {
     /**
      * Runs a scenario and collects the results.
@@ -37,50 +35,33 @@ public abstract class ScenarioInvoker<T extends ScenarioDefinition, R extends Bu
     /**
      * Runs a single measured build and collects the result.
      */
-    protected R runMeasured(BuildContext buildContext, BuildMutator mutator, Supplier<? extends R> action, Consumer<? super R> consumer) {
-        startOperation("Running " + buildContext.getDisplayName());
-        mutator.beforeBuild(buildContext);
-        R result = tryRun(() -> {
-            R result1 = action.get();
-            printExecutionTime(result1.getExecutionTime());
-            return result1;
-        }, error -> mutator.afterBuild(buildContext, error));
+    protected R runMeasured(BuildContext buildContext, BuildMutator buildMutator, BuildStepAction<? extends R> action, Consumer<? super R> consumer) {
+        R result = new RunBuildStepAction<R>(action, buildMutator).run(buildContext, BuildStep.BUILD);
         consumer.accept(result);
         return result;
-    }
-
-    private static void printExecutionTime(Duration executionTime) {
-        System.out.println("Execution time " + executionTime.toMillis() + " ms");
     }
 
     /**
      * Returns a {@link Supplier} that returns the result of the given command.
      */
-    Supplier<BuildInvocationResult> measureCommandLineExecution(BuildContext buildContext, List<String> commandLine, File workingDir, File buildLog) {
-        return () -> {
-            Timer timer = new Timer();
-            if (buildLog == null) {
-                new CommandExec().inDir(workingDir).run(commandLine);
-            } else {
-                new CommandExec().inDir(workingDir).runAndCollectOutput(buildLog, commandLine);
+    BuildStepAction<BuildInvocationResult> measureCommandLineExecution(List<String> commandLine, File workingDir, File buildLog) {
+        return new BuildStepAction<BuildInvocationResult>() {
+            @Override
+            public boolean isDoesSomething() {
+                return true;
             }
-            Duration executionTime = timer.elapsed();
-            return new BuildInvocationResult(buildContext, executionTime);
-        };
-    }
 
-    private <V> V tryRun(Supplier<? extends V> action, Consumer<Throwable> after) {
-        Throwable error = null;
-        try {
-            return action.get();
-        } catch (RuntimeException | Error ex) {
-            error = ex;
-            throw ex;
-        } catch (Throwable ex) {
-            error = ex;
-            throw new RuntimeException(ex);
-        } finally {
-            after.accept(error);
-        }
+            @Override
+            public BuildInvocationResult run(BuildContext buildContext, BuildStep buildStep) {
+                Timer timer = new Timer();
+                if (buildLog == null) {
+                    new CommandExec().inDir(workingDir).run(commandLine);
+                } else {
+                    new CommandExec().inDir(workingDir).runAndCollectOutput(buildLog, commandLine);
+                }
+                Duration executionTime = timer.elapsed();
+                return new BuildInvocationResult(buildContext, executionTime);
+            }
+        };
     }
 }
