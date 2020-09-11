@@ -116,16 +116,16 @@ let benchmarkResult =
                                         <td v-if="index === 0" :rowspan="scenario.samples.length">{{ scenario.definition.buildTool }}</td>
                                         <td v-if="index === 0" :rowspan="scenario.samples.length">{{ scenario.definition.tasks }}</td>
                                         <td>{{ sample.name }}</td>
-                                        <td class="numeric">{{ calc('mean', sample, scenario) }}</td>
-                                        <td class="numeric">{{ calc('p25', sample, scenario) }}</td>
-                                        <td class="numeric">{{ calc('min', sample, scenario) }}</td>
-                                        <td class="numeric">{{ calc('median', sample, scenario) }}</td>
-                                        <td class="numeric">{{ calc('p75', sample, scenario) }}</td>
-                                        <td class="numeric">{{ calc('max', sample, scenario) }}</td>
-                                        <td class="numeric">{{ calc('stddev', sample, scenario) }}</td>
-                                        <td class="numeric">{{ (sample.confidence * 100).toFixed(2) + "%" }}</td>
+                                        <td class="numeric">{{ calc('mean', sample, scenario) | numeric }}</td>
+                                        <td class="numeric">{{ calc('p25', sample, scenario) | numeric }}</td>
+                                        <td class="numeric">{{ calc('min', sample, scenario) | numeric }}</td>
+                                        <td class="numeric">{{ calc('median', sample, scenario) | numeric }}</td>
+                                        <td class="numeric">{{ calc('p75', sample, scenario) | numeric }}</td>
+                                        <td class="numeric">{{ calc('max', sample, scenario) | numeric }}</td>
+                                        <td class="numeric">{{ calc('stddev', sample, scenario) | numeric }}</td>
+                                        <td class="numeric">{{ sample.confidence | percent }}</td>
                                         <template v-for="iteration in scenario.iterations">
-                                            <td class="numeric" :class="iteration.phase" :title="iteration.phase + ' #' + iteration.iteration">{{ iteration.values[sample.name].toFixed(2) }}</td>
+                                            <td class="numeric" :class="iteration.phase" :title="iteration.phase + ' #' + iteration.iteration">{{ iteration.values[sample.name] | numeric }}</td>
                                         </template>
                                     </tr>
                                 </template>
@@ -182,15 +182,18 @@ const OPERATIONS = {
 
 function calc(operation, sample, scenario) {
     let data = iterations(scenario, Phase.MEASURE).map(iteration => iteration.values[sample.name]);
-    return OPERATIONS[operation](data).toFixed(2);
+    return OPERATIONS[operation](data);
 }
 
 var app = new Vue({
-  el: '#data-table',
-  data: benchmarkResult
+    el: '#data-table',
+    data: benchmarkResult,
+    filters: {
+        "numeric": (value) => value.toFixed(2),
+        "percent": (value) => (value * 100).toFixed(2) + "%"
+    }
 });
-</script>
-<script>
+
 const COLORS = ["#527AB3", "#56ac76", "#f44336", "#d49c3e", "#211f2d"];
 class PaletteGenerator {
     constructor() {
