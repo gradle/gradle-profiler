@@ -7,6 +7,10 @@ rootProject.name = "gradle-profiler"
 
 include("chrome-trace")
 include("build-operations")
+include("client-protocol")
+include("instrumentation-support")
+include("studio-agent")
+
 rootProject.children.forEach {
     it.projectDir = rootDir.resolve( "subprojects/${it.name}")
 }
