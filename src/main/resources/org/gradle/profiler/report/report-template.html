@@ -5,8 +5,6 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/4.5.2/css/bootstrap.min.css" integrity="sha512-MoRNloxbStBcD8z3M/2BmnT+rg4IsMxPkXaGh2zD6LGNNFE80W3onsAhRcMAMrSoyWL9xD7Ert0men7vR8LUZg==" crossorigin="anonymous">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.13/css/select2.min.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.14.0/css/all.min.css">
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.13/js/select2.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/vue/2.6.12/vue.min.js"></script>
     <script src='https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.9.3/Chart.bundle.min.js'></script>
     <script src='https://cdn.jsdelivr.net/npm/chartjs-plugin-crosshair@1.1.6'></script>
@@ -24,6 +22,12 @@ td.numeric {
 }
 td.diff {
     font-size: 9pt; color: #c0c0c0;
+}
+td.clickable {
+    cursor: pointer;
+}
+td.clickable:hover {
+    color: blue;
 }
 td.WARM_UP {
     background-color: #fff8ee;
@@ -83,13 +87,6 @@ let benchmarkResult =
             </label>
         </div>
     </div>
-    <div class="form-group col-md-1 col-form-label">
-        <label for="sample">Samples:</label>
-    </div>
-    <div class="form-group col-md-8">
-        <select multiple class="form-control" id="sample">
-        </select>
-    </div>
 </div>
 <div class="row mt-3">
     <div class='col ml-auto mr-auto'>
@@ -122,8 +119,8 @@ let benchmarkResult =
                                         <td v-if="index === 0" :rowspan="scenario.samples.length">{{ scenario.definition.title }}</td>
                                         <td v-if="index === 0" :rowspan="scenario.samples.length">{{ scenario.definition.buildTool }}</td>
                                         <td v-if="index === 0" :rowspan="scenario.samples.length">{{ scenario.definition.tasks }}</td>
-                                        <td :style="sample.style"><i class="fa fa-check-square"></i></td>
-                                        <td @click="select(scenario, sample)">{{ sample.name }}</td>
+                                        <td class="clickable" @click="select(scenario, sample)" :style="sample.style"><i class="fa fa-check-square"></i></td>
+                                        <td class="clickable" @click="select(scenario, sample)">{{ sample.name }}</td>
                                         <td class="numeric">{{ calc('mean', sample, scenario) | numeric }}</td>
                                         <td class="numeric">{{ calc('p25', sample, scenario) | numeric }}</td>
                                         <td class="numeric">{{ calc('min', sample, scenario) | numeric }}</td>
@@ -165,8 +162,8 @@ function toggleSample(sample, enabled) {
     }
 }
 
-// Enable the first sample for each scenario
-benchmarkResult.scenarios.forEach(scenario => scenario.samples.forEach((sample, index) => toggleSample(sample, index === 0)));
+// Initialize sample config
+benchmarkResult.scenarios.forEach(scenario => scenario.samples.forEach((sample, index) => toggleSample(sample, false)));
 
 function iterations(scenario, phase) {
     return scenario.iterations.filter(iteration => iteration.phase === phase);
@@ -206,12 +203,12 @@ const OPERATIONS = {
 
 function convertScenarioToChart(scenario, sample, sorted, color) {
     var data = iterations(scenario, Phase.MEASURE)
-            .map(iteration => iteration.values[sample]);
+            .map(iteration => iteration.values[sample.name]);
     if (sorted) {
         data = data.sort((a, b) => b - a);
     }
     return {
-        label: `${scenario.definition.title} (${sample}) ${scenario.definition.buildTool}`,
+        label: `${scenario.definition.title} (${sample.name}) ${scenario.definition.buildTool}`,
         showLine: true,
         steppedLine: "middle",
         pointRadius: 0,
@@ -239,15 +236,11 @@ class PaletteGenerator {
     }
 };
 
-function convertData(samples, sorted) {
-    let palette = new PaletteGenerator();
-    return samples.map(sample => benchmarkResult.scenarios.map(scenario => convertScenarioToChart(scenario, sample, sorted, palette.nextColor()))).flat();
-}
-
 function updateData() {
-    let sorted = app.options.order === "sorted";
-    let samples = $("#sample").val();
-    chart.data.datasets = convertData(samples, sorted);
+    let sorted = this.options.order === "sorted";
+    let selected = this.options.selected;
+    let palette = new PaletteGenerator();
+    chart.data.datasets = selected.map(item => convertScenarioToChart(item.scenario, item.sample, sorted, palette.nextColor()));
     chart.update();
 }
 
@@ -275,15 +268,15 @@ var app = new Vue({
     },
     watch: {
         "options.order": updateData,
-        "options.selected": (val) => console.log("Selected", val)
+        "options.selected": updateData
     },
     methods: {
         calc: (operation, sample, scenario) => {
             let data = iterations(scenario, Phase.MEASURE).map(iteration => iteration.values[sample.name]);
             return OPERATIONS[operation](data);
         },
-        select: (scenario, sample) => {
-            let selected = app.options.selected;
+        select: function(scenario, sample) {
+            let selected = this.options.selected;
             let item = new SelectedItem(scenario, sample);
             let index = selected.findIndex(it => item.equals(it));
             if (index === -1) {
@@ -297,6 +290,9 @@ var app = new Vue({
     filters: {
         "numeric": (value) => value.toFixed(2),
         "percent": (value) => (value * 100).toFixed(2) + "%"
+    },
+    created: function(x, y, z) {
+        this.benchmarkResult.scenarios.forEach(scenario => this.select(scenario, scenario.samples[0]));
     }
 });
 
@@ -348,21 +344,6 @@ let chart = new Chart(ctx, {
             }]
         }
     }
-});
-
-$(document).ready(function() {
-    let samples = benchmarkResult.scenarios
-        .map(scenario => scenario.samples)
-        .flat()
-        .map(sample => sample.name)
-        .unique();
-    $("#sample")
-        .append(samples.map(sample => new Option(sample)))
-        .val(samples[0])
-        .select2();
-
-    $("#sample").change(updateData);
-    updateData();
 });
 </script>
 
