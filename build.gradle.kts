@@ -96,6 +96,16 @@ tasks.processResources {
     }
 }
 
+tasks.register<ProcessResources>("testHtmlReport") {
+    val dataFile = file("src/test/resources/org/gradle/profiler/report/example.json")
+    inputs.file(dataFile)
+
+    from("src/main/resources/org/gradle/profiler/report")
+    into("$buildDir/test-html-report")
+    rename("report-template.html", "test-report.html")
+    filter { line -> if (line == "@@BENCHMARK_RESULT_JSON@@") dataFile.readText() else line }
+}
+
 val profilerDistribution = artifacts.add("archives", tasks.distZip.flatMap { it.archiveFile }) {
     type = "zip"
 }

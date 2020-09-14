@@ -1,29 +1,40 @@
 <!DOCTYPE html>
 <html>
 <head>
+    <meta charset="UTF-8">
     <title>Benchmark Results</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/4.5.2/css/bootstrap.min.css" integrity="sha512-MoRNloxbStBcD8z3M/2BmnT+rg4IsMxPkXaGh2zD6LGNNFE80W3onsAhRcMAMrSoyWL9xD7Ert0men7vR8LUZg==" crossorigin="anonymous">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.13/css/select2.min.css">
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/4.5.2/js/bootstrap.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.13/js/select2.min.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.14.0/css/all.min.css">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Roboto+Mono:wght@300&display=swap">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/vue/2.6.12/vue.min.js"></script>
     <script src='https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.9.3/Chart.bundle.min.js'></script>
     <script src='https://cdn.jsdelivr.net/npm/chartjs-plugin-crosshair@1.1.6'></script>
     <style type="text/css">
 #data-table {
     overflow-x: scroll;
+    font-size: 0.8em;
 }
 th {
     font-size: larger;
     text-align: center;
 }
+td {
+    font-family: 'Roboto Mono', monospace;
+}
 td.numeric {
     text-align: right;
-    font-family: monospace;
+    padding-left: 1em;
+    padding-right: 1em;
 }
 td.diff {
     font-size: 9pt; color: #c0c0c0;
+}
+td.clickable {
+    cursor: pointer;
+}
+td.clickable:hover {
+    color: blue;
 }
 td.WARM_UP {
     background-color: #fff8ee;
@@ -50,48 +61,26 @@ footer {
     border-top: 1px solid #ddd;
 }
     </style>
-    <script>
-const Phase = {
-    WARM_UP: "WARM_UP",
-    MEASURE: "MEASURE"
-};
-
-let benchmarkResult =
-@@BENCHMARK_RESULT_JSON@@
-;
-</script>
 </head>
 <body>
 <div id="app">
 <nav class="navbar navbar-dark bg-dark">
 <span class="navbar-brand mb-0 h1">Benchmark results</span>
+<div class="form-row controls">
+    <div class="btn-group btn-group-toggle" data-toggle="buttons">
+        <label class="btn btn-secondary" :class="{ active: options.order === 'historical' }">
+            <input type="radio" name="order" v-model="options.order" value="historical"> Historical
+        </label>
+        <label class="btn btn-secondary" :class="{ active: options.order === 'sorted' }">
+            <input type="radio" name="order" v-model="options.order" value="sorted"> Sorted
+        </label>
+    </div>
+</div>
 </nav>
 <div class='container-fluid'>
 <div class='row mt-3'>
     <div class='col ml-auto mr-auto'>
         <canvas id='samples' style="width: 100%; height: 400px;"></canvas>
-    </div>
-</div>
-<div class="form-group form-row controls mt-3">
-    <div class="form-group col-md-2">
-        <div class="btn-group btn-group-toggle" data-toggle="buttons">
-            <label class="btn btn-secondary active">
-                <input type="radio" name="sorting" value="historical" autocomplete="off" checked> Historical
-            </label>
-            <label class="btn btn-secondary">
-                <input type="radio" name="sorting" value="sorted" autocomplete="off"> Sorted
-            </label>
-        </div>
-    </div>
-    <div class="form-group col-md-1">
-        <button id="reset-zoom" class="btn btn-secondary">Reset Zoom</button>
-    </div>
-    <div class="form-group col-md-1 col-form-label">
-        <label for="sample">Samples:</label>
-    </div>
-    <div class="form-group col-md-8">
-        <select multiple class="form-control" id="sample">
-        </select>
     </div>
 </div>
 <div class="row mt-3">
@@ -105,6 +94,7 @@ let benchmarkResult =
                                 <th>Scenario</th>
                                 <th>Version</th>
                                 <th>Tasks</th>
+                                <th></th>
                                 <th>Sample</th>
                                 <th>Mean</th>
                                 <th>Min</th>
@@ -118,13 +108,14 @@ let benchmarkResult =
                             </tr>
                         </thead>
                         <tbody>
-                            <template v-for="scenario in scenarios">
+                            <template v-for="scenario in benchmarkResult.scenarios">
                                 <template v-for="(sample, index) in scenario.samples">
                                     <tr>
                                         <td v-if="index === 0" :rowspan="scenario.samples.length">{{ scenario.definition.title }}</td>
                                         <td v-if="index === 0" :rowspan="scenario.samples.length">{{ scenario.definition.buildTool }}</td>
                                         <td v-if="index === 0" :rowspan="scenario.samples.length">{{ scenario.definition.tasks }}</td>
-                                        <td>{{ sample.name }}</td>
+                                        <td class="clickable" @click="select(sample)" :style="{ color: sample.color, visibility: sample.selected ? 'visible' : 'hidden' }"><i class="fa fa-check-square"></i></td>
+                                        <td class="clickable" @click="select(sample)" :style="{ color: sample.color }">{{ sample.name }}</td>
                                         <td class="numeric">{{ calc('mean', sample, scenario) | numeric }}</td>
                                         <td class="numeric">{{ calc('p25', sample, scenario) | numeric }}</td>
                                         <td class="numeric">{{ calc('min', sample, scenario) | numeric }}</td>
@@ -148,21 +139,36 @@ let benchmarkResult =
 </div>
 </div>
 <footer>
-    <span>Gradle Profiler version {{ environment.profilerVersion }}</span>
+    <span>Gradle Profiler version {{ benchmarkResult.environment.profilerVersion }}</span>
 </footer>
 </div>
 <script>
-Array.prototype.unique = function() { return [...new Set(this)]; };
+const Phase = {
+    WARM_UP: "WARM_UP",
+    MEASURE: "MEASURE"
+};
 
-function iterations(scenario, phase) {
-    return scenario.iterations.filter(iteration => iteration.phase === phase);
-}
-function sort(array) {
-    return array.slice().sort((a, b) => a - b);
-}
+const benchmarkResult =
+@@BENCHMARK_RESULT_JSON@@
+;
 
-function quantile(data, q) {
-    const sorted = sort(data);
+Array.prototype.numericSort = function() {
+    return this.slice().sort((a, b) => a - b);
+}
+Array.prototype.reverseNumericSort = function() {
+    return this.slice().sort((a, b) => b - a);
+}
+Array.prototype.min = function() {
+    return Math.min(...this);
+}
+Array.prototype.mean = function() {
+    return this.reduce((sum, val) => sum + val) / this.length;
+}
+Array.prototype.max = function() {
+    return Math.max(...this);
+}
+Array.prototype.quantile = function(q) {
+    const sorted = this.numericSort();
     const pos = (sorted.length - 1) * q;
     const base = Math.floor(pos);
     const rest = pos - base;
@@ -171,152 +177,150 @@ function quantile(data, q) {
     } else {
         return sorted[base];
     }
-};
+}
+Array.prototype.stddev = function() {
+    const mean = this.mean();
+    return Math.sqrt(this.map(x => Math.pow(x - mean, 2)).mean());
+}
+const millisecondFormat = new Intl.NumberFormat(navigator.language, {style: 'unit', unit: 'millisecond', unitDisplay: 'short', minimumFractionDigits: 2, maximumFractionDigits: 2});
 
-function mean(data) {
-    return data.reduce((sum, val) => sum + val) / data.length;
+function measuredIterations(scenario) {
+    return scenario.iterations.filter(iteration => iteration.phase === Phase.MEASURE);
 }
 
 const OPERATIONS = {
-    "mean": (data) => mean(data),
-    "min": (data) => Math.min(...data),
-    "max": (data) => Math.max(...data),
-    "p25": (data) => quantile(data, .25),
-    "median": (data) => quantile(data, .50),
-    "p75": (data) => quantile(data, .75),
-    "stddev": (data) => {
-        let dataMean = mean(data);
-        return Math.sqrt(mean(data.map(x => Math.pow(x - dataMean, 2))));
-    }
+    "mean": (data) => data.mean(),
+    "min": (data) => data.min(),
+    "max": (data) => data.max(),
+    "p25": (data) => data.quantile(.25),
+    "median": (data) => data.quantile(.50),
+    "p75": (data) => data.quantile(.75),
+    "stddev": (data) => data.stddev()
 };
 
-function calc(operation, sample, scenario) {
-    let data = iterations(scenario, Phase.MEASURE).map(iteration => iteration.values[sample.name]);
-    return OPERATIONS[operation](data);
-}
-
-var app = new Vue({
+new Vue({
     el: '#app',
-    data: benchmarkResult,
-    filters: {
-        "numeric": (value) => value.toFixed(2),
-        "percent": (value) => (value * 100).toFixed(2) + "%"
-    }
-});
-
-const COLORS = ["#527AB3", "#56ac76", "#f44336", "#d49c3e", "#211f2d"];
-class PaletteGenerator {
-    constructor() {
-        this.colors = COLORS.slice();
-    }
-    nextColor() {
-        if (this.colors.length) {
-            return this.colors.shift();
-        } else {
-            return "#8B899A";
-        }
-    }
-};
-
-function convertScenarioToChart(scenario, sample, sorted, color) {
-    var data = iterations(scenario, Phase.MEASURE)
-            .map(iteration => iteration.values[sample]);
-    if (sorted) {
-        data = data.sort((a, b) => b - a);
-    }
-    return {
-        label: `${scenario.definition.title} (${sample}) ${scenario.definition.buildTool}`,
-        showLine: true,
-        steppedLine: "middle",
-        pointRadius: 0,
-        pointHitRadius: 10,
-        hoverRadius: 6,
-        fill: false,
-        borderWidth: 3,
-        pointBackgroundColor: color,
-        borderColor: color,
-        data: data
-    };
-}
-
-function convertData(samples, sorted) {
-    let palette = new PaletteGenerator();
-    return samples.map(sample => benchmarkResult.scenarios.map(scenario => convertScenarioToChart(scenario, sample, sorted, palette.nextColor()))).flat();
-}
-
-function updateData() {
-    let sorted = $("input[name='sorting']:checked").val() === "sorted";
-    let samples = $("#sample").val();
-    chart.data.datasets = convertData(samples, sorted);
-    chart.update();
-}
-
-let ctx = document.getElementById('samples').getContext('2d');
-let maxMeasuredIterations = Math.max(...(benchmarkResult.scenarios.map(scenario => iterations(scenario, Phase.MEASURE).length)));
-let chart = new Chart(ctx, {
-    type: 'line',
     data: {
-        labels: Array.from(Array(maxMeasuredIterations), (_, i) => (i + 1).toString()),
-        datasets: []
+        options: {
+            order: "historical"
+        },
+        benchmarkResult: benchmarkResult
     },
-    options: {
-        plugins: {
-            crosshair: {
-                zoom: {
-                    enabled: false
-                },
-                snap: {
-                    enabled: false
-                }
-            }
-        },
-        responsive: false,
-        animation: {
-            duration: 0
-        },
-        legend: {
-            position: "bottom",
-            align: "start",
-            fullWidth: false
-        },
-        tooltips: {
-            mode: "index",
-            position: "nearest",
-            itemSort: (a, b) => b.yLabel - a.yLabel,
-            callbacks: {
-                title: (tooltips, data) => `Build #${tooltips[0].label}`,
-                label: (tooltip, data) => tooltip.yLabel.toFixed(2)
-            }
-        },
-        hover: {
-            intersect: false
-        },
-        scales: {
-            yAxes: [{
-                ticks: {
-                    min: 0
-                }
-            }]
+    computed: {
+        chartData: function() {
+            const sorted = this.options.order === "sorted";
+            return this.benchmarkResult.scenarios
+                .map(scenario => scenario.samples
+                    .filter(sample => sample.selected)
+                    .map(sample => {
+                        let data = measuredIterations(scenario)
+                            .map(iteration => iteration.values[sample.name]);
+                        if (sorted) {
+                            data = data.reverseNumericSort();
+                        }
+                        return {
+                            label: sample.name,
+                            showLine: true,
+                            steppedLine: "middle",
+                            pointRadius: 0,
+                            pointHitRadius: 10,
+                            hoverRadius: 6,
+                            fill: false,
+                            borderWidth: sample.thickness,
+                            pointBackgroundColor: sample.color,
+                            borderColor: sample.color,
+                            data: data
+                        };
+                    }))
+                .flat();
         }
+    },
+    watch: {
+        "options.order": "updateData"
+    },
+    methods: {
+        calc: (operation, sample, scenario) => {
+            const data = measuredIterations(scenario)
+                .map(iteration => iteration.values[sample.name]);
+            return OPERATIONS[operation](data);
+        },
+        select: function(sample) {
+            sample.selected = !sample.selected;
+            this.updateData();
+        },
+        updateData: function() {
+            this.chart.data.datasets = this.chartData;
+            this.chart.update();
+        }
+    },
+    filters: {
+        "numeric": (value) => millisecondFormat.format(value).replace(/\s+/g, "\u00A0"),
+        "percent": (value) => (value * 100).toFixed(2) + "%"
+    },
+    beforeCreate: function() {
+        // Initialize sample config
+        benchmarkResult.scenarios.forEach((scenario, scenarioIndex, scenarios) => {
+            scenario.samples.forEach((sample, sampleIndex, samples) => {
+                sample.color = `hsl(${scenarioIndex * 360 / scenarios.length}, ${100 - 80 * sampleIndex / samples.length}%, ${30 + 40 * sampleIndex / samples.length}%)`;
+                sample.thickness = sampleIndex === 0 ? 3 : 2;
+                sample.selected = sampleIndex === 0;
+            });
+        });
+    },
+    mounted: function() {
+        const ctx = document.getElementById('samples').getContext('2d');
+        const maxMeasuredIterations = benchmarkResult.scenarios
+            .map(scenario => measuredIterations(scenario).length)
+            .max();
+        this.chart = new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: Array.from(Array(maxMeasuredIterations), (_, i) => (i + 1).toString()),
+                datasets: this.chartData
+            },
+            options: {
+                plugins: {
+                    crosshair: {
+                        zoom: {
+                            enabled: false
+                        },
+                        snap: {
+                            enabled: false
+                        }
+                    }
+                },
+                responsive: false,
+                animation: {
+                    duration: 0
+                },
+                legend: {
+                    position: "bottom",
+                    align: "start",
+                    fullWidth: false
+                },
+                tooltips: {
+                    mode: "index",
+                    position: "nearest",
+                    itemSort: (a, b) => b.yLabel - a.yLabel,
+                    callbacks: {
+                        title: (tooltips, data) => `Build #${tooltips[0].label}`,
+                        label: (tooltip, data) => millisecondFormat.format(tooltip.yLabel) + " – " + data.datasets[tooltip.datasetIndex].label
+                    }
+                },
+                hover: {
+                    intersect: false
+                },
+                scales: {
+                    yAxes: [{
+                        ticks: {
+                            min: 0
+                        }
+                    }]
+                }
+            }
+        });
     }
-});
-
-$(document).ready(function() {
-    let samples = benchmarkResult.scenarios
-        .map(scenario => scenario.samples)
-        .flat()
-        .map(sample => sample.name)
-        .unique();
-    $("#sample")
-        .append(samples.map(sample => new Option(sample)))
-        .val(samples[0])
-        .select2();
-
-    $("input[name=sorting]").change(updateData);
-    $("#sample").change(updateData);
-    updateData();
 });
 </script>
-
 </body>
 </html>

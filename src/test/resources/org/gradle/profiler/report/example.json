@@ -1,0 +1,855 @@
+{
+  "environment": {
+    "profilerVersion": "0.15.0-alpha2"
+  },
+  "scenarios": [
+    {
+      "definition": {
+        "name": "no-optimizations",
+        "title": "0 – Baseline",
+        "displayName": "0 – Baseline using Gradle 6.7-20200903220111+0000",
+        "buildTool": "6.7-20200903220111+0000",
+        "tasks": ":santa-tracker:assembleDebug",
+        "id": "_2268a672_a4bc_42d2_88a9_e5eac94c12e0_no_optimizations_9153a177"
+      },
+      "samples": [
+        {
+          "name": "execution",
+          "confidence": 0.0
+        },
+        {
+          "name": "ResolveConfigurationDependenciesBuildOperationType",
+          "confidence": 0.0
+        },
+        {
+          "name": "DefaultTransformer$FingerprintTransformInputsOperation",
+          "confidence": 0.0
+        },
+        {
+          "name": "CaptureStateBeforeExecutionStep$Operation",
+          "confidence": 0.0
+        },
+        {
+          "name": "BuildCacheArchivePackBuildOperationType",
+          "confidence": 0.0
+        },
+        {
+          "name": "BuildCacheArchiveUnpackBuildOperationType",
+          "confidence": 0.0
+        },
+        {
+          "name": "SnapshotOutputsStep$Operation",
+          "confidence": 0.0
+        },
+        {
+          "name": "ExecuteTaskActionBuildOperationType",
+          "confidence": 0.0
+        },
+        {
+          "name": "ExecuteTaskBuildOperationType",
+          "confidence": 0.0
+        }
+      ],
+      "iterations": [
+        {
+          "id": "_2268a672_a4bc_42d2_88a9_e5eac94c12e0_no_optimizations_9153a177_WARM_UP_1",
+          "phase": "WARM_UP",
+          "iteration": 1,
+          "title": "warm-up build #1",
+          "values": {
+            "execution": 22444.354108,
+            "ResolveConfigurationDependenciesBuildOperationType": 753.0,
+            "DefaultTransformer$FingerprintTransformInputsOperation": 8.0,
+            "CaptureStateBeforeExecutionStep$Operation": 9756.0,
+            "BuildCacheArchivePackBuildOperationType": 0.0,
+            "BuildCacheArchiveUnpackBuildOperationType": 0.0,
+            "SnapshotOutputsStep$Operation": 5692.0,
+            "ExecuteTaskActionBuildOperationType": 30644.0,
+            "ExecuteTaskBuildOperationType": 48085.0
+          }
+        },
+        {
+          "id": "_2268a672_a4bc_42d2_88a9_e5eac94c12e0_no_optimizations_9153a177_WARM_UP_2",
+          "phase": "WARM_UP",
+          "iteration": 2,
+          "title": "warm-up build #2",
+          "values": {
+            "execution": 1486.805261,
+            "ResolveConfigurationDependenciesBuildOperationType": 546.0,
+            "DefaultTransformer$FingerprintTransformInputsOperation": 1.0,
+            "CaptureStateBeforeExecutionStep$Operation": 1489.0,
+            "BuildCacheArchivePackBuildOperationType": 0.0,
+            "BuildCacheArchiveUnpackBuildOperationType": 0.0,
+            "SnapshotOutputsStep$Operation": 90.0,
+            "ExecuteTaskActionBuildOperationType": 233.0,
+            "ExecuteTaskBuildOperationType": 2108.0
+          }
+        },
+        {
+          "id": "_2268a672_a4bc_42d2_88a9_e5eac94c12e0_no_optimizations_9153a177_MEASURE_1",
+          "phase": "MEASURE",
+          "iteration": 1,
+          "title": "measured build #1",
+          "values": {
+            "execution": 1197.583931,
+            "ResolveConfigurationDependenciesBuildOperationType": 309.0,
+            "DefaultTransformer$FingerprintTransformInputsOperation": 2.0,
+            "CaptureStateBeforeExecutionStep$Operation": 1162.0,
+            "BuildCacheArchivePackBuildOperationType": 0.0,
+            "BuildCacheArchiveUnpackBuildOperationType": 0.0,
+            "SnapshotOutputsStep$Operation": 89.0,
+            "ExecuteTaskActionBuildOperationType": 174.0,
+            "ExecuteTaskBuildOperationType": 1633.0
+          }
+        },
+        {
+          "id": "_2268a672_a4bc_42d2_88a9_e5eac94c12e0_no_optimizations_9153a177_MEASURE_2",
+          "phase": "MEASURE",
+          "iteration": 2,
+          "title": "measured build #2",
+          "values": {
+            "execution": 1157.474167,
+            "ResolveConfigurationDependenciesBuildOperationType": 182.0,
+            "DefaultTransformer$FingerprintTransformInputsOperation": 3.0,
+            "CaptureStateBeforeExecutionStep$Operation": 1019.0,
+            "BuildCacheArchivePackBuildOperationType": 0.0,
+            "BuildCacheArchiveUnpackBuildOperationType": 0.0,
+            "SnapshotOutputsStep$Operation": 84.0,
+            "ExecuteTaskActionBuildOperationType": 193.0,
+            "ExecuteTaskBuildOperationType": 1494.0
+          }
+        },
+        {
+          "id": "_2268a672_a4bc_42d2_88a9_e5eac94c12e0_no_optimizations_9153a177_MEASURE_3",
+          "phase": "MEASURE",
+          "iteration": 3,
+          "title": "measured build #3",
+          "values": {
+            "execution": 1075.285777,
+            "ResolveConfigurationDependenciesBuildOperationType": 149.0,
+            "DefaultTransformer$FingerprintTransformInputsOperation": 1.0,
+            "CaptureStateBeforeExecutionStep$Operation": 943.0,
+            "BuildCacheArchivePackBuildOperationType": 0.0,
+            "BuildCacheArchiveUnpackBuildOperationType": 0.0,
+            "SnapshotOutputsStep$Operation": 81.0,
+            "ExecuteTaskActionBuildOperationType": 169.0,
+            "ExecuteTaskBuildOperationType": 1323.0
+          }
+        },
+        {
+          "id": "_2268a672_a4bc_42d2_88a9_e5eac94c12e0_no_optimizations_9153a177_MEASURE_4",
+          "phase": "MEASURE",
+          "iteration": 4,
+          "title": "measured build #4",
+          "values": {
+            "execution": 1090.179434,
+            "ResolveConfigurationDependenciesBuildOperationType": 154.0,
+            "DefaultTransformer$FingerprintTransformInputsOperation": 6.0,
+            "CaptureStateBeforeExecutionStep$Operation": 1002.0,
+            "BuildCacheArchivePackBuildOperationType": 0.0,
+            "BuildCacheArchiveUnpackBuildOperationType": 0.0,
+            "SnapshotOutputsStep$Operation": 87.0,
+            "ExecuteTaskActionBuildOperationType": 191.0,
+            "ExecuteTaskBuildOperationType": 1401.0
+          }
+        },
+        {
+          "id": "_2268a672_a4bc_42d2_88a9_e5eac94c12e0_no_optimizations_9153a177_MEASURE_5",
+          "phase": "MEASURE",
+          "iteration": 5,
+          "title": "measured build #5",
+          "values": {
+            "execution": 954.529153,
+            "ResolveConfigurationDependenciesBuildOperationType": 135.0,
+            "DefaultTransformer$FingerprintTransformInputsOperation": 1.0,
+            "CaptureStateBeforeExecutionStep$Operation": 924.0,
+            "BuildCacheArchivePackBuildOperationType": 0.0,
+            "BuildCacheArchiveUnpackBuildOperationType": 0.0,
+            "SnapshotOutputsStep$Operation": 86.0,
+            "ExecuteTaskActionBuildOperationType": 156.0,
+            "ExecuteTaskBuildOperationType": 1321.0
+          }
+        },
+        {
+          "id": "_2268a672_a4bc_42d2_88a9_e5eac94c12e0_no_optimizations_9153a177_MEASURE_6",
+          "phase": "MEASURE",
+          "iteration": 6,
+          "title": "measured build #6",
+          "values": {
+            "execution": 946.793746,
+            "ResolveConfigurationDependenciesBuildOperationType": 151.0,
+            "DefaultTransformer$FingerprintTransformInputsOperation": 1.0,
+            "CaptureStateBeforeExecutionStep$Operation": 917.0,
+            "BuildCacheArchivePackBuildOperationType": 0.0,
+            "BuildCacheArchiveUnpackBuildOperationType": 0.0,
+            "SnapshotOutputsStep$Operation": 83.0,
+            "ExecuteTaskActionBuildOperationType": 162.0,
+            "ExecuteTaskBuildOperationType": 1285.0
+          }
+        },
+        {
+          "id": "_2268a672_a4bc_42d2_88a9_e5eac94c12e0_no_optimizations_9153a177_MEASURE_7",
+          "phase": "MEASURE",
+          "iteration": 7,
+          "title": "measured build #7",
+          "values": {
+            "execution": 997.436113,
+            "ResolveConfigurationDependenciesBuildOperationType": 129.0,
+            "DefaultTransformer$FingerprintTransformInputsOperation": 4.0,
+            "CaptureStateBeforeExecutionStep$Operation": 953.0,
+            "BuildCacheArchivePackBuildOperationType": 0.0,
+            "BuildCacheArchiveUnpackBuildOperationType": 0.0,
+            "SnapshotOutputsStep$Operation": 88.0,
+            "ExecuteTaskActionBuildOperationType": 186.0,
+            "ExecuteTaskBuildOperationType": 1349.0
+          }
+        },
+        {
+          "id": "_2268a672_a4bc_42d2_88a9_e5eac94c12e0_no_optimizations_9153a177_MEASURE_8",
+          "phase": "MEASURE",
+          "iteration": 8,
+          "title": "measured build #8",
+          "values": {
+            "execution": 936.071348,
+            "ResolveConfigurationDependenciesBuildOperationType": 147.0,
+            "DefaultTransformer$FingerprintTransformInputsOperation": 1.0,
+            "CaptureStateBeforeExecutionStep$Operation": 878.0,
+            "BuildCacheArchivePackBuildOperationType": 0.0,
+            "BuildCacheArchiveUnpackBuildOperationType": 0.0,
+            "SnapshotOutputsStep$Operation": 96.0,
+            "ExecuteTaskActionBuildOperationType": 172.0,
+            "ExecuteTaskBuildOperationType": 1236.0
+          }
+        },
+        {
+          "id": "_2268a672_a4bc_42d2_88a9_e5eac94c12e0_no_optimizations_9153a177_MEASURE_9",
+          "phase": "MEASURE",
+          "iteration": 9,
+          "title": "measured build #9",
+          "values": {
+            "execution": 980.778962,
+            "ResolveConfigurationDependenciesBuildOperationType": 101.0,
+            "DefaultTransformer$FingerprintTransformInputsOperation": 1.0,
+            "CaptureStateBeforeExecutionStep$Operation": 899.0,
+            "BuildCacheArchivePackBuildOperationType": 0.0,
+            "BuildCacheArchiveUnpackBuildOperationType": 0.0,
+            "SnapshotOutputsStep$Operation": 95.0,
+            "ExecuteTaskActionBuildOperationType": 137.0,
+            "ExecuteTaskBuildOperationType": 1232.0
+          }
+        },
+        {
+          "id": "_2268a672_a4bc_42d2_88a9_e5eac94c12e0_no_optimizations_9153a177_MEASURE_10",
+          "phase": "MEASURE",
+          "iteration": 10,
+          "title": "measured build #10",
+          "values": {
+            "execution": 950.883695,
+            "ResolveConfigurationDependenciesBuildOperationType": 173.0,
+            "DefaultTransformer$FingerprintTransformInputsOperation": 0.0,
+            "CaptureStateBeforeExecutionStep$Operation": 1061.0,
+            "BuildCacheArchivePackBuildOperationType": 0.0,
+            "BuildCacheArchiveUnpackBuildOperationType": 0.0,
+            "SnapshotOutputsStep$Operation": 83.0,
+            "ExecuteTaskActionBuildOperationType": 156.0,
+            "ExecuteTaskBuildOperationType": 1416.0
+          }
+        },
+        {
+          "id": "_2268a672_a4bc_42d2_88a9_e5eac94c12e0_no_optimizations_9153a177_MEASURE_11",
+          "phase": "MEASURE",
+          "iteration": 11,
+          "title": "measured build #11",
+          "values": {
+            "execution": 861.323841,
+            "ResolveConfigurationDependenciesBuildOperationType": 106.0,
+            "DefaultTransformer$FingerprintTransformInputsOperation": 1.0,
+            "CaptureStateBeforeExecutionStep$Operation": 785.0,
+            "BuildCacheArchivePackBuildOperationType": 0.0,
+            "BuildCacheArchiveUnpackBuildOperationType": 0.0,
+            "SnapshotOutputsStep$Operation": 83.0,
+            "ExecuteTaskActionBuildOperationType": 139.0,
+            "ExecuteTaskBuildOperationType": 1128.0
+          }
+        },
+        {
+          "id": "_2268a672_a4bc_42d2_88a9_e5eac94c12e0_no_optimizations_9153a177_MEASURE_12",
+          "phase": "MEASURE",
+          "iteration": 12,
+          "title": "measured build #12",
+          "values": {
+            "execution": 895.011393,
+            "ResolveConfigurationDependenciesBuildOperationType": 112.0,
+            "DefaultTransformer$FingerprintTransformInputsOperation": 2.0,
+            "CaptureStateBeforeExecutionStep$Operation": 746.0,
+            "BuildCacheArchivePackBuildOperationType": 0.0,
+            "BuildCacheArchiveUnpackBuildOperationType": 0.0,
+            "SnapshotOutputsStep$Operation": 82.0,
+            "ExecuteTaskActionBuildOperationType": 135.0,
+            "ExecuteTaskBuildOperationType": 1039.0
+          }
+        },
+        {
+          "id": "_2268a672_a4bc_42d2_88a9_e5eac94c12e0_no_optimizations_9153a177_MEASURE_13",
+          "phase": "MEASURE",
+          "iteration": 13,
+          "title": "measured build #13",
+          "values": {
+            "execution": 953.422211,
+            "ResolveConfigurationDependenciesBuildOperationType": 98.0,
+            "DefaultTransformer$FingerprintTransformInputsOperation": 1.0,
+            "CaptureStateBeforeExecutionStep$Operation": 823.0,
+            "BuildCacheArchivePackBuildOperationType": 0.0,
+            "BuildCacheArchiveUnpackBuildOperationType": 0.0,
+            "SnapshotOutputsStep$Operation": 81.0,
+            "ExecuteTaskActionBuildOperationType": 261.0,
+            "ExecuteTaskBuildOperationType": 1273.0
+          }
+        },
+        {
+          "id": "_2268a672_a4bc_42d2_88a9_e5eac94c12e0_no_optimizations_9153a177_MEASURE_14",
+          "phase": "MEASURE",
+          "iteration": 14,
+          "title": "measured build #14",
+          "values": {
+            "execution": 958.65142,
+            "ResolveConfigurationDependenciesBuildOperationType": 95.0,
+            "DefaultTransformer$FingerprintTransformInputsOperation": 0.0,
+            "CaptureStateBeforeExecutionStep$Operation": 771.0,
+            "BuildCacheArchivePackBuildOperationType": 0.0,
+            "BuildCacheArchiveUnpackBuildOperationType": 0.0,
+            "SnapshotOutputsStep$Operation": 88.0,
+            "ExecuteTaskActionBuildOperationType": 135.0,
+            "ExecuteTaskBuildOperationType": 1122.0
+          }
+        },
+        {
+          "id": "_2268a672_a4bc_42d2_88a9_e5eac94c12e0_no_optimizations_9153a177_MEASURE_15",
+          "phase": "MEASURE",
+          "iteration": 15,
+          "title": "measured build #15",
+          "values": {
+            "execution": 860.275572,
+            "ResolveConfigurationDependenciesBuildOperationType": 152.0,
+            "DefaultTransformer$FingerprintTransformInputsOperation": 1.0,
+            "CaptureStateBeforeExecutionStep$Operation": 758.0,
+            "BuildCacheArchivePackBuildOperationType": 0.0,
+            "BuildCacheArchiveUnpackBuildOperationType": 0.0,
+            "SnapshotOutputsStep$Operation": 94.0,
+            "ExecuteTaskActionBuildOperationType": 150.0,
+            "ExecuteTaskBuildOperationType": 1116.0
+          }
+        },
+        {
+          "id": "_2268a672_a4bc_42d2_88a9_e5eac94c12e0_no_optimizations_9153a177_MEASURE_16",
+          "phase": "MEASURE",
+          "iteration": 16,
+          "title": "measured build #16",
+          "values": {
+            "execution": 907.592415,
+            "ResolveConfigurationDependenciesBuildOperationType": 186.0,
+            "DefaultTransformer$FingerprintTransformInputsOperation": 1.0,
+            "CaptureStateBeforeExecutionStep$Operation": 854.0,
+            "BuildCacheArchivePackBuildOperationType": 0.0,
+            "BuildCacheArchiveUnpackBuildOperationType": 0.0,
+            "SnapshotOutputsStep$Operation": 85.0,
+            "ExecuteTaskActionBuildOperationType": 162.0,
+            "ExecuteTaskBuildOperationType": 1253.0
+          }
+        },
+        {
+          "id": "_2268a672_a4bc_42d2_88a9_e5eac94c12e0_no_optimizations_9153a177_MEASURE_17",
+          "phase": "MEASURE",
+          "iteration": 17,
+          "title": "measured build #17",
+          "values": {
+            "execution": 1683.021924,
+            "ResolveConfigurationDependenciesBuildOperationType": 112.0,
+            "DefaultTransformer$FingerprintTransformInputsOperation": 0.0,
+            "CaptureStateBeforeExecutionStep$Operation": 768.0,
+            "BuildCacheArchivePackBuildOperationType": 0.0,
+            "BuildCacheArchiveUnpackBuildOperationType": 0.0,
+            "SnapshotOutputsStep$Operation": 83.0,
+            "ExecuteTaskActionBuildOperationType": 163.0,
+            "ExecuteTaskBuildOperationType": 1106.0
+          }
+        },
+        {
+          "id": "_2268a672_a4bc_42d2_88a9_e5eac94c12e0_no_optimizations_9153a177_MEASURE_18",
+          "phase": "MEASURE",
+          "iteration": 18,
+          "title": "measured build #18",
+          "values": {
+            "execution": 849.908231,
+            "ResolveConfigurationDependenciesBuildOperationType": 107.0,
+            "DefaultTransformer$FingerprintTransformInputsOperation": 2.0,
+            "CaptureStateBeforeExecutionStep$Operation": 814.0,
+            "BuildCacheArchivePackBuildOperationType": 0.0,
+            "BuildCacheArchiveUnpackBuildOperationType": 0.0,
+            "SnapshotOutputsStep$Operation": 83.0,
+            "ExecuteTaskActionBuildOperationType": 141.0,
+            "ExecuteTaskBuildOperationType": 1171.0
+          }
+        },
+        {
+          "id": "_2268a672_a4bc_42d2_88a9_e5eac94c12e0_no_optimizations_9153a177_MEASURE_19",
+          "phase": "MEASURE",
+          "iteration": 19,
+          "title": "measured build #19",
+          "values": {
+            "execution": 874.417982,
+            "ResolveConfigurationDependenciesBuildOperationType": 102.0,
+            "DefaultTransformer$FingerprintTransformInputsOperation": 2.0,
+            "CaptureStateBeforeExecutionStep$Operation": 727.0,
+            "BuildCacheArchivePackBuildOperationType": 0.0,
+            "BuildCacheArchiveUnpackBuildOperationType": 0.0,
+            "SnapshotOutputsStep$Operation": 85.0,
+            "ExecuteTaskActionBuildOperationType": 198.0,
+            "ExecuteTaskBuildOperationType": 1154.0
+          }
+        },
+        {
+          "id": "_2268a672_a4bc_42d2_88a9_e5eac94c12e0_no_optimizations_9153a177_MEASURE_20",
+          "phase": "MEASURE",
+          "iteration": 20,
+          "title": "measured build #20",
+          "values": {
+            "execution": 858.331896,
+            "ResolveConfigurationDependenciesBuildOperationType": 106.0,
+            "DefaultTransformer$FingerprintTransformInputsOperation": 1.0,
+            "CaptureStateBeforeExecutionStep$Operation": 690.0,
+            "BuildCacheArchivePackBuildOperationType": 0.0,
+            "BuildCacheArchiveUnpackBuildOperationType": 0.0,
+            "SnapshotOutputsStep$Operation": 99.0,
+            "ExecuteTaskActionBuildOperationType": 167.0,
+            "ExecuteTaskBuildOperationType": 1048.0
+          }
+        }
+      ]
+    },
+    {
+      "definition": {
+        "name": "only-file-system-watching",
+        "title": "2 – FS watching",
+        "displayName": "2 – FS watching using Gradle 6.7-20200903220111+0000",
+        "buildTool": "6.7-20200903220111+0000",
+        "tasks": ":santa-tracker:assembleDebug",
+        "id": "_2268a672_a4bc_42d2_88a9_e5eac94c12e0_only_file_system_watching_c9e0b933"
+      },
+      "samples": [
+        {
+          "name": "execution",
+          "confidence": 0.9991642831782728
+        },
+        {
+          "name": "ResolveConfigurationDependenciesBuildOperationType",
+          "confidence": 0.7023232455278197
+        },
+        {
+          "name": "DefaultTransformer$FingerprintTransformInputsOperation",
+          "confidence": 0.13956902626472267
+        },
+        {
+          "name": "CaptureStateBeforeExecutionStep$Operation",
+          "confidence": 0.9999999011729629
+        },
+        {
+          "name": "BuildCacheArchivePackBuildOperationType",
+          "confidence": 0.0
+        },
+        {
+          "name": "BuildCacheArchiveUnpackBuildOperationType",
+          "confidence": 0.0
+        },
+        {
+          "name": "SnapshotOutputsStep$Operation",
+          "confidence": 0.10758613603151901
+        },
+        {
+          "name": "ExecuteTaskActionBuildOperationType",
+          "confidence": 0.18185053861180012
+        },
+        {
+          "name": "ExecuteTaskBuildOperationType",
+          "confidence": 0.9999987143919465
+        }
+      ],
+      "iterations": [
+        {
+          "id": "_2268a672_a4bc_42d2_88a9_e5eac94c12e0_only_file_system_watching_c9e0b933_WARM_UP_1",
+          "phase": "WARM_UP",
+          "iteration": 1,
+          "title": "warm-up build #1",
+          "values": {
+            "execution": 22441.80708,
+            "ResolveConfigurationDependenciesBuildOperationType": 1092.0,
+            "DefaultTransformer$FingerprintTransformInputsOperation": 8.0,
+            "CaptureStateBeforeExecutionStep$Operation": 9617.0,
+            "BuildCacheArchivePackBuildOperationType": 0.0,
+            "BuildCacheArchiveUnpackBuildOperationType": 0.0,
+            "SnapshotOutputsStep$Operation": 5664.0,
+            "ExecuteTaskActionBuildOperationType": 29256.0,
+            "ExecuteTaskBuildOperationType": 46885.0
+          }
+        },
+        {
+          "id": "_2268a672_a4bc_42d2_88a9_e5eac94c12e0_only_file_system_watching_c9e0b933_WARM_UP_2",
+          "phase": "WARM_UP",
+          "iteration": 2,
+          "title": "warm-up build #2",
+          "values": {
+            "execution": 1408.557642,
+            "ResolveConfigurationDependenciesBuildOperationType": 581.0,
+            "DefaultTransformer$FingerprintTransformInputsOperation": 2.0,
+            "CaptureStateBeforeExecutionStep$Operation": 936.0,
+            "BuildCacheArchivePackBuildOperationType": 0.0,
+            "BuildCacheArchiveUnpackBuildOperationType": 0.0,
+            "SnapshotOutputsStep$Operation": 102.0,
+            "ExecuteTaskActionBuildOperationType": 187.0,
+            "ExecuteTaskBuildOperationType": 1493.0
+          }
+        },
+        {
+          "id": "_2268a672_a4bc_42d2_88a9_e5eac94c12e0_only_file_system_watching_c9e0b933_MEASURE_1",
+          "phase": "MEASURE",
+          "iteration": 1,
+          "title": "measured build #1",
+          "values": {
+            "execution": 1107.259593,
+            "ResolveConfigurationDependenciesBuildOperationType": 448.0,
+            "DefaultTransformer$FingerprintTransformInputsOperation": 5.0,
+            "CaptureStateBeforeExecutionStep$Operation": 750.0,
+            "BuildCacheArchivePackBuildOperationType": 0.0,
+            "BuildCacheArchiveUnpackBuildOperationType": 0.0,
+            "SnapshotOutputsStep$Operation": 84.0,
+            "ExecuteTaskActionBuildOperationType": 174.0,
+            "ExecuteTaskBuildOperationType": 1290.0
+          }
+        },
+        {
+          "id": "_2268a672_a4bc_42d2_88a9_e5eac94c12e0_only_file_system_watching_c9e0b933_MEASURE_2",
+          "phase": "MEASURE",
+          "iteration": 2,
+          "title": "measured build #2",
+          "values": {
+            "execution": 1067.021165,
+            "ResolveConfigurationDependenciesBuildOperationType": 191.0,
+            "DefaultTransformer$FingerprintTransformInputsOperation": 1.0,
+            "CaptureStateBeforeExecutionStep$Operation": 622.0,
+            "BuildCacheArchivePackBuildOperationType": 0.0,
+            "BuildCacheArchiveUnpackBuildOperationType": 0.0,
+            "SnapshotOutputsStep$Operation": 90.0,
+            "ExecuteTaskActionBuildOperationType": 248.0,
+            "ExecuteTaskBuildOperationType": 1202.0
+          }
+        },
+        {
+          "id": "_2268a672_a4bc_42d2_88a9_e5eac94c12e0_only_file_system_watching_c9e0b933_MEASURE_3",
+          "phase": "MEASURE",
+          "iteration": 3,
+          "title": "measured build #3",
+          "values": {
+            "execution": 1018.966119,
+            "ResolveConfigurationDependenciesBuildOperationType": 191.0,
+            "DefaultTransformer$FingerprintTransformInputsOperation": 0.0,
+            "CaptureStateBeforeExecutionStep$Operation": 584.0,
+            "BuildCacheArchivePackBuildOperationType": 0.0,
+            "BuildCacheArchiveUnpackBuildOperationType": 0.0,
+            "SnapshotOutputsStep$Operation": 84.0,
+            "ExecuteTaskActionBuildOperationType": 191.0,
+            "ExecuteTaskBuildOperationType": 1012.0
+          }
+        },
+        {
+          "id": "_2268a672_a4bc_42d2_88a9_e5eac94c12e0_only_file_system_watching_c9e0b933_MEASURE_4",
+          "phase": "MEASURE",
+          "iteration": 4,
+          "title": "measured build #4",
+          "values": {
+            "execution": 956.48795,
+            "ResolveConfigurationDependenciesBuildOperationType": 159.0,
+            "DefaultTransformer$FingerprintTransformInputsOperation": 1.0,
+            "CaptureStateBeforeExecutionStep$Operation": 539.0,
+            "BuildCacheArchivePackBuildOperationType": 0.0,
+            "BuildCacheArchiveUnpackBuildOperationType": 0.0,
+            "SnapshotOutputsStep$Operation": 98.0,
+            "ExecuteTaskActionBuildOperationType": 175.0,
+            "ExecuteTaskBuildOperationType": 959.0
+          }
+        },
+        {
+          "id": "_2268a672_a4bc_42d2_88a9_e5eac94c12e0_only_file_system_watching_c9e0b933_MEASURE_5",
+          "phase": "MEASURE",
+          "iteration": 5,
+          "title": "measured build #5",
+          "values": {
+            "execution": 893.928164,
+            "ResolveConfigurationDependenciesBuildOperationType": 198.0,
+            "DefaultTransformer$FingerprintTransformInputsOperation": 1.0,
+            "CaptureStateBeforeExecutionStep$Operation": 573.0,
+            "BuildCacheArchivePackBuildOperationType": 0.0,
+            "BuildCacheArchiveUnpackBuildOperationType": 0.0,
+            "SnapshotOutputsStep$Operation": 84.0,
+            "ExecuteTaskActionBuildOperationType": 189.0,
+            "ExecuteTaskBuildOperationType": 994.0
+          }
+        },
+        {
+          "id": "_2268a672_a4bc_42d2_88a9_e5eac94c12e0_only_file_system_watching_c9e0b933_MEASURE_6",
+          "phase": "MEASURE",
+          "iteration": 6,
+          "title": "measured build #6",
+          "values": {
+            "execution": 931.276501,
+            "ResolveConfigurationDependenciesBuildOperationType": 150.0,
+            "DefaultTransformer$FingerprintTransformInputsOperation": 1.0,
+            "CaptureStateBeforeExecutionStep$Operation": 516.0,
+            "BuildCacheArchivePackBuildOperationType": 0.0,
+            "BuildCacheArchiveUnpackBuildOperationType": 0.0,
+            "SnapshotOutputsStep$Operation": 83.0,
+            "ExecuteTaskActionBuildOperationType": 169.0,
+            "ExecuteTaskBuildOperationType": 923.0
+          }
+        },
+        {
+          "id": "_2268a672_a4bc_42d2_88a9_e5eac94c12e0_only_file_system_watching_c9e0b933_MEASURE_7",
+          "phase": "MEASURE",
+          "iteration": 7,
+          "title": "measured build #7",
+          "values": {
+            "execution": 832.092968,
+            "ResolveConfigurationDependenciesBuildOperationType": 206.0,
+            "DefaultTransformer$FingerprintTransformInputsOperation": 1.0,
+            "CaptureStateBeforeExecutionStep$Operation": 526.0,
+            "BuildCacheArchivePackBuildOperationType": 0.0,
+            "BuildCacheArchiveUnpackBuildOperationType": 0.0,
+            "SnapshotOutputsStep$Operation": 83.0,
+            "ExecuteTaskActionBuildOperationType": 152.0,
+            "ExecuteTaskBuildOperationType": 913.0
+          }
+        },
+        {
+          "id": "_2268a672_a4bc_42d2_88a9_e5eac94c12e0_only_file_system_watching_c9e0b933_MEASURE_8",
+          "phase": "MEASURE",
+          "iteration": 8,
+          "title": "measured build #8",
+          "values": {
+            "execution": 819.357055,
+            "ResolveConfigurationDependenciesBuildOperationType": 142.0,
+            "DefaultTransformer$FingerprintTransformInputsOperation": 4.0,
+            "CaptureStateBeforeExecutionStep$Operation": 433.0,
+            "BuildCacheArchivePackBuildOperationType": 0.0,
+            "BuildCacheArchiveUnpackBuildOperationType": 0.0,
+            "SnapshotOutputsStep$Operation": 82.0,
+            "ExecuteTaskActionBuildOperationType": 153.0,
+            "ExecuteTaskBuildOperationType": 827.0
+          }
+        },
+        {
+          "id": "_2268a672_a4bc_42d2_88a9_e5eac94c12e0_only_file_system_watching_c9e0b933_MEASURE_9",
+          "phase": "MEASURE",
+          "iteration": 9,
+          "title": "measured build #9",
+          "values": {
+            "execution": 876.220026,
+            "ResolveConfigurationDependenciesBuildOperationType": 109.0,
+            "DefaultTransformer$FingerprintTransformInputsOperation": 0.0,
+            "CaptureStateBeforeExecutionStep$Operation": 503.0,
+            "BuildCacheArchivePackBuildOperationType": 0.0,
+            "BuildCacheArchiveUnpackBuildOperationType": 0.0,
+            "SnapshotOutputsStep$Operation": 85.0,
+            "ExecuteTaskActionBuildOperationType": 148.0,
+            "ExecuteTaskBuildOperationType": 855.0
+          }
+        },
+        {
+          "id": "_2268a672_a4bc_42d2_88a9_e5eac94c12e0_only_file_system_watching_c9e0b933_MEASURE_10",
+          "phase": "MEASURE",
+          "iteration": 10,
+          "title": "measured build #10",
+          "values": {
+            "execution": 800.749571,
+            "ResolveConfigurationDependenciesBuildOperationType": 120.0,
+            "DefaultTransformer$FingerprintTransformInputsOperation": 0.0,
+            "CaptureStateBeforeExecutionStep$Operation": 454.0,
+            "BuildCacheArchivePackBuildOperationType": 0.0,
+            "BuildCacheArchiveUnpackBuildOperationType": 0.0,
+            "SnapshotOutputsStep$Operation": 86.0,
+            "ExecuteTaskActionBuildOperationType": 154.0,
+            "ExecuteTaskBuildOperationType": 803.0
+          }
+        },
+        {
+          "id": "_2268a672_a4bc_42d2_88a9_e5eac94c12e0_only_file_system_watching_c9e0b933_MEASURE_11",
+          "phase": "MEASURE",
+          "iteration": 11,
+          "title": "measured build #11",
+          "values": {
+            "execution": 775.45923,
+            "ResolveConfigurationDependenciesBuildOperationType": 147.0,
+            "DefaultTransformer$FingerprintTransformInputsOperation": 3.0,
+            "CaptureStateBeforeExecutionStep$Operation": 465.0,
+            "BuildCacheArchivePackBuildOperationType": 0.0,
+            "BuildCacheArchiveUnpackBuildOperationType": 0.0,
+            "SnapshotOutputsStep$Operation": 84.0,
+            "ExecuteTaskActionBuildOperationType": 145.0,
+            "ExecuteTaskBuildOperationType": 766.0
+          }
+        },
+        {
+          "id": "_2268a672_a4bc_42d2_88a9_e5eac94c12e0_only_file_system_watching_c9e0b933_MEASURE_12",
+          "phase": "MEASURE",
+          "iteration": 12,
+          "title": "measured build #12",
+          "values": {
+            "execution": 800.056185,
+            "ResolveConfigurationDependenciesBuildOperationType": 127.0,
+            "DefaultTransformer$FingerprintTransformInputsOperation": 1.0,
+            "CaptureStateBeforeExecutionStep$Operation": 479.0,
+            "BuildCacheArchivePackBuildOperationType": 0.0,
+            "BuildCacheArchiveUnpackBuildOperationType": 0.0,
+            "SnapshotOutputsStep$Operation": 83.0,
+            "ExecuteTaskActionBuildOperationType": 155.0,
+            "ExecuteTaskBuildOperationType": 837.0
+          }
+        },
+        {
+          "id": "_2268a672_a4bc_42d2_88a9_e5eac94c12e0_only_file_system_watching_c9e0b933_MEASURE_13",
+          "phase": "MEASURE",
+          "iteration": 13,
+          "title": "measured build #13",
+          "values": {
+            "execution": 849.218443,
+            "ResolveConfigurationDependenciesBuildOperationType": 124.0,
+            "DefaultTransformer$FingerprintTransformInputsOperation": 1.0,
+            "CaptureStateBeforeExecutionStep$Operation": 425.0,
+            "BuildCacheArchivePackBuildOperationType": 0.0,
+            "BuildCacheArchiveUnpackBuildOperationType": 0.0,
+            "SnapshotOutputsStep$Operation": 87.0,
+            "ExecuteTaskActionBuildOperationType": 160.0,
+            "ExecuteTaskBuildOperationType": 802.0
+          }
+        },
+        {
+          "id": "_2268a672_a4bc_42d2_88a9_e5eac94c12e0_only_file_system_watching_c9e0b933_MEASURE_14",
+          "phase": "MEASURE",
+          "iteration": 14,
+          "title": "measured build #14",
+          "values": {
+            "execution": 826.303162,
+            "ResolveConfigurationDependenciesBuildOperationType": 116.0,
+            "DefaultTransformer$FingerprintTransformInputsOperation": 1.0,
+            "CaptureStateBeforeExecutionStep$Operation": 417.0,
+            "BuildCacheArchivePackBuildOperationType": 0.0,
+            "BuildCacheArchiveUnpackBuildOperationType": 0.0,
+            "SnapshotOutputsStep$Operation": 84.0,
+            "ExecuteTaskActionBuildOperationType": 142.0,
+            "ExecuteTaskBuildOperationType": 713.0
+          }
+        },
+        {
+          "id": "_2268a672_a4bc_42d2_88a9_e5eac94c12e0_only_file_system_watching_c9e0b933_MEASURE_15",
+          "phase": "MEASURE",
+          "iteration": 15,
+          "title": "measured build #15",
+          "values": {
+            "execution": 816.229317,
+            "ResolveConfigurationDependenciesBuildOperationType": 120.0,
+            "DefaultTransformer$FingerprintTransformInputsOperation": 0.0,
+            "CaptureStateBeforeExecutionStep$Operation": 428.0,
+            "BuildCacheArchivePackBuildOperationType": 0.0,
+            "BuildCacheArchiveUnpackBuildOperationType": 0.0,
+            "SnapshotOutputsStep$Operation": 93.0,
+            "ExecuteTaskActionBuildOperationType": 173.0,
+            "ExecuteTaskBuildOperationType": 812.0
+          }
+        },
+        {
+          "id": "_2268a672_a4bc_42d2_88a9_e5eac94c12e0_only_file_system_watching_c9e0b933_MEASURE_16",
+          "phase": "MEASURE",
+          "iteration": 16,
+          "title": "measured build #16",
+          "values": {
+            "execution": 753.850732,
+            "ResolveConfigurationDependenciesBuildOperationType": 111.0,
+            "DefaultTransformer$FingerprintTransformInputsOperation": 0.0,
+            "CaptureStateBeforeExecutionStep$Operation": 394.0,
+            "BuildCacheArchivePackBuildOperationType": 0.0,
+            "BuildCacheArchiveUnpackBuildOperationType": 0.0,
+            "SnapshotOutputsStep$Operation": 85.0,
+            "ExecuteTaskActionBuildOperationType": 141.0,
+            "ExecuteTaskBuildOperationType": 717.0
+          }
+        },
+        {
+          "id": "_2268a672_a4bc_42d2_88a9_e5eac94c12e0_only_file_system_watching_c9e0b933_MEASURE_17",
+          "phase": "MEASURE",
+          "iteration": 17,
+          "title": "measured build #17",
+          "values": {
+            "execution": 828.374138,
+            "ResolveConfigurationDependenciesBuildOperationType": 195.0,
+            "DefaultTransformer$FingerprintTransformInputsOperation": 3.0,
+            "CaptureStateBeforeExecutionStep$Operation": 508.0,
+            "BuildCacheArchivePackBuildOperationType": 0.0,
+            "BuildCacheArchiveUnpackBuildOperationType": 0.0,
+            "SnapshotOutputsStep$Operation": 83.0,
+            "ExecuteTaskActionBuildOperationType": 145.0,
+            "ExecuteTaskBuildOperationType": 861.0
+          }
+        },
+        {
+          "id": "_2268a672_a4bc_42d2_88a9_e5eac94c12e0_only_file_system_watching_c9e0b933_MEASURE_18",
+          "phase": "MEASURE",
+          "iteration": 18,
+          "title": "measured build #18",
+          "values": {
+            "execution": 825.380884,
+            "ResolveConfigurationDependenciesBuildOperationType": 104.0,
+            "DefaultTransformer$FingerprintTransformInputsOperation": 2.0,
+            "CaptureStateBeforeExecutionStep$Operation": 372.0,
+            "BuildCacheArchivePackBuildOperationType": 0.0,
+            "BuildCacheArchiveUnpackBuildOperationType": 0.0,
+            "SnapshotOutputsStep$Operation": 83.0,
+            "ExecuteTaskActionBuildOperationType": 211.0,
+            "ExecuteTaskBuildOperationType": 774.0
+          }
+        },
+        {
+          "id": "_2268a672_a4bc_42d2_88a9_e5eac94c12e0_only_file_system_watching_c9e0b933_MEASURE_19",
+          "phase": "MEASURE",
+          "iteration": 19,
+          "title": "measured build #19",
+          "values": {
+            "execution": 757.588883,
+            "ResolveConfigurationDependenciesBuildOperationType": 84.0,
+            "DefaultTransformer$FingerprintTransformInputsOperation": 2.0,
+            "CaptureStateBeforeExecutionStep$Operation": 377.0,
+            "BuildCacheArchivePackBuildOperationType": 0.0,
+            "BuildCacheArchiveUnpackBuildOperationType": 0.0,
+            "SnapshotOutputsStep$Operation": 144.0,
+            "ExecuteTaskActionBuildOperationType": 144.0,
+            "ExecuteTaskBuildOperationType": 759.0
+          }
+        },
+        {
+          "id": "_2268a672_a4bc_42d2_88a9_e5eac94c12e0_only_file_system_watching_c9e0b933_MEASURE_20",
+          "phase": "MEASURE",
+          "iteration": 20,
+          "title": "measured build #20",
+          "values": {
+            "execution": 764.868427,
+            "ResolveConfigurationDependenciesBuildOperationType": 121.0,
+            "DefaultTransformer$FingerprintTransformInputsOperation": 6.0,
+            "CaptureStateBeforeExecutionStep$Operation": 405.0,
+            "BuildCacheArchivePackBuildOperationType": 0.0,
+            "BuildCacheArchiveUnpackBuildOperationType": 0.0,
+            "SnapshotOutputsStep$Operation": 95.0,
+            "ExecuteTaskActionBuildOperationType": 139.0,
+            "ExecuteTaskBuildOperationType": 762.0
+          }
+        }
+      ]
+    }
+  ]
+}
