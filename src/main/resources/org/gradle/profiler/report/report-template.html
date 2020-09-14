@@ -4,6 +4,7 @@
     <title>Benchmark Results</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/4.5.2/css/bootstrap.min.css" integrity="sha512-MoRNloxbStBcD8z3M/2BmnT+rg4IsMxPkXaGh2zD6LGNNFE80W3onsAhRcMAMrSoyWL9xD7Ert0men7vR8LUZg==" crossorigin="anonymous">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.13/css/select2.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.14.0/css/all.min.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.13/js/select2.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/vue/2.6.12/vue.min.js"></script>
@@ -101,6 +102,7 @@ let benchmarkResult =
                                 <th>Scenario</th>
                                 <th>Version</th>
                                 <th>Tasks</th>
+                                <th></th>
                                 <th>Sample</th>
                                 <th>Mean</th>
                                 <th>Min</th>
@@ -120,6 +122,7 @@ let benchmarkResult =
                                         <td v-if="index === 0" :rowspan="scenario.samples.length">{{ scenario.definition.title }}</td>
                                         <td v-if="index === 0" :rowspan="scenario.samples.length">{{ scenario.definition.buildTool }}</td>
                                         <td v-if="index === 0" :rowspan="scenario.samples.length">{{ scenario.definition.tasks }}</td>
+                                        <td :style="sample.style"><i class="fa fa-check-square"></i></td>
                                         <td @click="select(scenario, sample)">{{ sample.name }}</td>
                                         <td class="numeric">{{ calc('mean', sample, scenario) | numeric }}</td>
                                         <td class="numeric">{{ calc('p25', sample, scenario) | numeric }}</td>
@@ -149,6 +152,21 @@ let benchmarkResult =
 </div>
 <script>
 Array.prototype.unique = function() { return [...new Set(this)]; };
+
+function toggleSample(sample, enabled) {
+    if (enabled) {
+        sample.style = {
+            visibility: "visible"
+        };
+    } else {
+        sample.style = {
+            visibility: "hidden"
+        };
+    }
+}
+
+// Enable the first sample for each scenario
+benchmarkResult.scenarios.forEach(scenario => scenario.samples.forEach((sample, index) => toggleSample(sample, index === 0)));
 
 function iterations(scenario, phase) {
     return scenario.iterations.filter(iteration => iteration.phase === phase);
@@ -266,13 +284,14 @@ var app = new Vue({
         },
         select: (scenario, sample) => {
             let selected = app.options.selected;
-            let newItem = new SelectedItem(scenario, sample);
-            let index = selected.findIndex(item => newItem.equals(item));
+            let item = new SelectedItem(scenario, sample);
+            let index = selected.findIndex(it => item.equals(it));
             if (index === -1) {
-                selected.push(newItem);
+                selected.push(item);
             } else {
                 selected.splice(index, 1);
             }
+            toggleSample(sample, index === -1);
         }
     },
     filters: {
