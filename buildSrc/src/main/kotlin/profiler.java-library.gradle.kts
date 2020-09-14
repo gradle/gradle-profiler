@@ -9,6 +9,12 @@ repositories {
     }
 }
 
+java {
+    toolchain {
+        languageVersion.set(JavaLanguageVersion.of(8))
+    }
+}
+
 project.extensions.create("versions", Versions::class.java)
 
 abstract class Versions {
