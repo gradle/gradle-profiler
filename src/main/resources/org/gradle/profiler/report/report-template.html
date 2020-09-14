@@ -8,8 +8,7 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.14.0/css/all.min.css">
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Roboto+Mono:wght@300&display=swap">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/vue/2.6.12/vue.min.js"></script>
-    <script src='https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.9.3/Chart.bundle.min.js'></script>
-    <script src='https://cdn.jsdelivr.net/npm/chartjs-plugin-crosshair@1.1.6'></script>
+    <script src='https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.0.0-beta/chart.min.js'></script>
     <style type="text/css">
 #data-table {
     overflow-x: scroll;
@@ -221,12 +220,13 @@ new Vue({
                         return {
                             label: sample.name,
                             showLine: true,
-                            steppedLine: "middle",
+                            stepped: "middle",
                             pointRadius: 0,
                             pointHitRadius: 10,
                             hoverRadius: 6,
                             fill: false,
                             borderWidth: sample.thickness,
+                            backgroundColor: sample.color,
                             pointBackgroundColor: sample.color,
                             borderColor: sample.color,
                             data: data
@@ -304,18 +304,16 @@ new Vue({
                     itemSort: (a, b) => b.yLabel - a.yLabel,
                     callbacks: {
                         title: (tooltips, data) => `Build #${tooltips[0].label}`,
-                        label: (tooltip, data) => millisecondFormat.format(tooltip.yLabel) + " – " + data.datasets[tooltip.datasetIndex].label
+                        label: (context) => millisecondFormat.format(context.dataPoint.y) + " – " + context.dataset.label
                     }
                 },
                 hover: {
                     intersect: false
                 },
                 scales: {
-                    yAxes: [{
-                        ticks: {
-                            min: 0
-                        }
-                    }]
+                    y: {
+                        beginAtZero: true
+                    }
                 }
             }
         });
