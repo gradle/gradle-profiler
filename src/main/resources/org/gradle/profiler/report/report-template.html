@@ -176,6 +176,7 @@ Array.prototype.stddev = function() {
     const mean = this.mean();
     return Math.sqrt(this.map(x => Math.pow(x - mean, 2)).mean());
 }
+const millisecondFormat = new Intl.NumberFormat(navigator.language, {style: 'unit', unit: 'millisecond', unitDisplay: 'short', minimumFractionDigits: 2, maximumFractionDigits: 2});
 
 function measuredIterations(scenario) {
     return scenario.iterations.filter(iteration => iteration.phase === Phase.MEASURE);
@@ -247,7 +248,7 @@ new Vue({
         }
     },
     filters: {
-        "numeric": (value) => value.toFixed(2),
+        "numeric": (value) => millisecondFormat.format(value).replace(/\s+/g, "\u00A0"),
         "percent": (value) => (value * 100).toFixed(2) + "%"
     },
     beforeCreate: function() {
@@ -297,7 +298,7 @@ new Vue({
                     itemSort: (a, b) => b.yLabel - a.yLabel,
                     callbacks: {
                         title: (tooltips, data) => `Build #${tooltips[0].label}`,
-                        label: (tooltip, data) => tooltip.yLabel.toFixed(2) + " – " + data.datasets[tooltip.datasetIndex].label
+                        label: (tooltip, data) => millisecondFormat.format(tooltip.yLabel) + " – " + data.datasets[tooltip.datasetIndex].label
                     }
                 },
                 hover: {
