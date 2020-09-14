@@ -3,6 +3,7 @@ package org.gradle.profiler.client.protocol;
 import java.io.IOException;
 import java.net.InetAddress;
 import java.net.Socket;
+import java.time.Duration;
 
 /**
  * A singleton that runs inside a client process to communicate with the controller process.
@@ -24,7 +25,7 @@ public class Client {
                 connection = new Connection(socket);
                 serializer = new Serializer("controller process", connection);
             } catch (IOException e) {
-                throw new RuntimeException("Could not connect to contoller process.", e);
+                throw new RuntimeException("Could not connect to controller process.", e);
             }
         }
     }
@@ -38,6 +39,12 @@ public class Client {
     public void send(SyncCompleted message) {
         synchronized (lock) {
             serializer.send(message);
+        }
+    }
+
+    public SyncParameters receiveParameters(Duration timeout) {
+        synchronized (lock) {
+            return serializer.receive(SyncParameters.class, timeout);
         }
     }
 

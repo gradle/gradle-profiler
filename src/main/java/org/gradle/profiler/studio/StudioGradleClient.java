@@ -1,11 +1,11 @@
 package org.gradle.profiler.studio;
 
 import com.google.common.base.Joiner;
+import org.gradle.profiler.CommandExec;
 import org.gradle.profiler.GradleClient;
 import org.gradle.profiler.InvocationSettings;
 import org.gradle.profiler.Logging;
-import org.gradle.profiler.client.protocol.Server;
-import org.gradle.profiler.client.protocol.ServerConnection;
+import org.gradle.profiler.client.protocol.*;
 
 import java.io.File;
 import java.io.IOException;
@@ -17,8 +17,9 @@ import java.util.Map;
 
 public class StudioGradleClient implements GradleClient {
     private final Server server;
-    private final Process studioProcess;
+    private final CommandExec.RunHandle studioProcess;
     private final ServerConnection agentConnection;
+    private boolean hasRun;
 
     public StudioGradleClient(InvocationSettings invocationSettings) {
         Path studioInstallDir = invocationSettings.getStudioInstallDir().toPath();
@@ -39,10 +40,10 @@ public class StudioGradleClient implements GradleClient {
 
         server = new Server("agent");
         studioProcess = startStudio(launchConfiguration, studioInstallDir, server);
-        agentConnection = server.waitForIncoming();
+        agentConnection = server.waitForIncoming(Duration.ofMinutes(1));
     }
 
-    private Process startStudio(LaunchConfiguration launchConfiguration, Path studioInstallDir, Server server) {
+    private CommandExec.RunHandle startStudio(LaunchConfiguration launchConfiguration, Path studioInstallDir, Server server) {
         List<String> commandLine = new ArrayList<>();
         commandLine.add(launchConfiguration.getJavaCommand().toString());
         commandLine.add("-cp");
@@ -57,28 +58,31 @@ public class StudioGradleClient implements GradleClient {
         commandLine.add(launchConfiguration.getMainClass());
         System.out.println("* Using command line: " + commandLine);
 
-        try {
-            return new ProcessBuilder(commandLine).inheritIO().directory(studioInstallDir.toFile()).start();
-        } catch (IOException e) {
-            throw new RuntimeException("Could not start Android Studio.", e);
-        }
+        return new CommandExec().inDir(studioInstallDir.toFile()).start(commandLine);
     }
 
     @Override
     public void close() throws IOException {
-        System.out.println("* Waiting for Android Studio to stop...");
-        try {
-            studioProcess.waitFor();
-        } catch (InterruptedException e) {
-            throw new RuntimeException(e);
-        }
+        System.out.println("* PLEASE STOP ANDROID STUDIO....");
+        studioProcess.waitForSuccess();
         System.out.println("* Android Studio stopped.");
 
         server.close();
     }
 
-    public Duration sync() {
-        System.out.println("* WARNING: Android Studio sync is not implemented yet.");
-        return Duration.ZERO;
+    public Duration sync(List<String> gradleArgs, List<String> jvmArgs) {
+        if (!hasRun) {
+            System.out.println("* PLEASE RUN SYNC IN ANDROID STUDIO (once it has finished starting up)....");
+            hasRun = true;
+        } else {
+            System.out.println("* PLEASE RUN SYNC IN ANDROID STUDIO....");
+        }
+
+        SyncStarted started = agentConnection.receiveSyncStarted(Duration.ofMinutes(2));
+        agentConnection.send(new SyncParameters(gradleArgs, jvmArgs));
+        System.out.println("* Sync has started");
+        SyncCompleted completed = agentConnection.receiveSyncCompeted(Duration.ofHours(1));
+        System.out.println("* Sync has completed");
+        return Duration.ofMillis(completed.getDurationMillis());
     }
 }

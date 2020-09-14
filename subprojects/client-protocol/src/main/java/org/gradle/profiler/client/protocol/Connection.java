@@ -5,6 +5,8 @@ import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
 import java.net.Socket;
+import java.util.ArrayList;
+import java.util.List;
 
 public class Connection implements Closeable {
     private final Socket socket;
@@ -26,24 +28,40 @@ public class Connection implements Closeable {
         return inputStream.readByte();
     }
 
-    public int readInt() throws IOException {
-        return inputStream.readInt();
-    }
-
-    public long readLong() throws IOException {
-        return inputStream.readLong();
-    }
-
     public void writeByte(byte value) throws IOException {
         outputStream.writeByte(value);
+    }
+
+    public int readInt() throws IOException {
+        return inputStream.readInt();
     }
 
     public void writeInt(int value) throws IOException {
         outputStream.writeInt(value);
     }
 
+    public long readLong() throws IOException {
+        return inputStream.readLong();
+    }
+
     public void writeLong(long value) throws IOException {
         outputStream.writeLong(value);
+    }
+
+    public void writeStrings(List<String> strings) throws IOException {
+        outputStream.writeInt(strings.size());
+        for (String s : strings) {
+            outputStream.writeUTF(s);
+        }
+    }
+
+    public List<String> readStrings() throws IOException {
+        int count = inputStream.readInt();
+        List<String> strings = new ArrayList<>(count);
+        for (int i = 0; i < count; i++) {
+            strings.add(inputStream.readUTF());
+        }
+        return strings;
     }
 
     public void flush() throws IOException {

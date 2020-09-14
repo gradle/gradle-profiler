@@ -8,9 +8,9 @@ import java.nio.channels.SelectionKey;
 import java.nio.channels.Selector;
 import java.nio.channels.ServerSocketChannel;
 import java.nio.channels.SocketChannel;
+import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.TimeUnit;
 
 /**
  * An endpoint for communicating with a single client process.
@@ -43,9 +43,9 @@ public class Server implements Closeable {
         }
     }
 
-    public ServerConnection waitForIncoming() {
+    public ServerConnection waitForIncoming(Duration timeout) {
         try {
-            int keys = selector.select(TimeUnit.MINUTES.toMillis(2));
+            int keys = selector.select(timeout.toMillis());
             if (keys != 1) {
                 throw new IllegalStateException(String.format("Timeout waiting for incoming connection from %s.", peerName));
             }

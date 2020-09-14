@@ -145,7 +145,6 @@ public class GradleScenarioInvoker extends ScenarioInvoker<GradleScenarioDefinit
             control.stopSession();
             Objects.requireNonNull(results);
             checkPid(pid, results.getDaemonPid(), scenario.getInvoker());
-            gradleClient.close();
         } finally {
             mutator.afterScenario(scenarioContext);
             gradleClient.close();

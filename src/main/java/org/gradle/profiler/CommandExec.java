@@ -40,6 +40,11 @@ public class CommandExec {
         run(processBuilder);
     }
 
+    public RunHandle start(List<String> commandLine) {
+        ProcessBuilder processBuilder = new ProcessBuilder(commandLine);
+        return start(processBuilder);
+    }
+
     public String runAndCollectOutput(List<String> commandLine) {
         return runAndCollectOutput(commandLine.toArray(new String[commandLine.size()]));
     }
@@ -47,7 +52,7 @@ public class CommandExec {
     public String runAndCollectOutput(String... commandLine) {
         ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
         try {
-            run(new ProcessBuilder(commandLine), outputStream, outputStream::toString, null).waitForSuccess();
+            start(new ProcessBuilder(commandLine), outputStream, outputStream::toString, null).waitForSuccess();
         } catch (RuntimeException e) {
             System.out.print(new String(outputStream.toByteArray()));
             throw e;
@@ -78,12 +83,16 @@ public class CommandExec {
     }
 
     public void run(ProcessBuilder processBuilder) {
+        start(processBuilder).waitForSuccess();
+    }
+
+    private RunHandle start(ProcessBuilder processBuilder) {
         OutputStream outputStream = Logging.detailed();
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
         run(processBuilder, new TeeOutputStream(outputStream, baos), baos::toString, null).waitForSuccess();
     }
 
-    protected RunHandle run(ProcessBuilder processBuilder, OutputStream outputStream, Supplier<String> diagnosticOutput, @Nullable InputStream inputStream) {
+    protected RunHandle start(ProcessBuilder processBuilder, OutputStream outputStream, Supplier<String> diagnosticOutput, @Nullable InputStream inputStream) {
         if (directory != null) {
             processBuilder.directory(directory);
         }
