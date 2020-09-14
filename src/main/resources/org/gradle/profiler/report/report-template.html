@@ -233,8 +233,17 @@ function updateData() {
     chart.update();
 }
 
-function sampleId(scenario, sample) {
-    return scenario.definition.id + "$"+ sample.name;
+class SelectedItem {
+    constructor(scenario, sample) {
+        this.scenario = scenario;
+        this.sample = sample;
+    }
+
+    equals(other) {
+        return other !== null
+            && this.scenario === other.scenario
+            && this.sample === other.sample;
+    }
 }
 
 var app = new Vue({
@@ -256,11 +265,11 @@ var app = new Vue({
             return OPERATIONS[operation](data);
         },
         select: (scenario, sample) => {
-            let id = sampleId(scenario, sample);
             let selected = app.options.selected;
-            let index = selected.indexOf(id);
+            let newItem = new SelectedItem(scenario, sample);
+            let index = selected.findIndex(item => newItem.equals(item));
             if (index === -1) {
-                selected.push(id);
+                selected.push(newItem);
             } else {
                 selected.splice(index, 1);
             }
