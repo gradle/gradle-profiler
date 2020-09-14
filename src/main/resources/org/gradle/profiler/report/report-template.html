@@ -119,8 +119,8 @@ let benchmarkResult =
                                         <td v-if="index === 0" :rowspan="scenario.samples.length">{{ scenario.definition.title }}</td>
                                         <td v-if="index === 0" :rowspan="scenario.samples.length">{{ scenario.definition.buildTool }}</td>
                                         <td v-if="index === 0" :rowspan="scenario.samples.length">{{ scenario.definition.tasks }}</td>
-                                        <td class="clickable" @click="select(scenario, sample)" :style="{ color: sample.color, visibility: sample.selected ? 'visible' : 'hidden' }"><i class="fa fa-check-square"></i></td>
-                                        <td class="clickable" @click="select(scenario, sample)" :style="{ color: sample.color }">{{ sample.name }}</td>
+                                        <td class="clickable" @click="select(sample)" :style="{ color: sample.color, visibility: sample.selected ? 'visible' : 'hidden' }"><i class="fa fa-check-square"></i></td>
+                                        <td class="clickable" @click="select(sample)" :style="{ color: sample.color }">{{ sample.name }}</td>
                                         <td class="numeric">{{ calc('mean', sample, scenario) | numeric }}</td>
                                         <td class="numeric">{{ calc('p25', sample, scenario) | numeric }}</td>
                                         <td class="numeric">{{ calc('min', sample, scenario) | numeric }}</td>
@@ -155,7 +155,7 @@ benchmarkResult.scenarios.forEach((scenario, scenarioIndex, scenarios) => {
     scenario.samples.forEach((sample, sampleIndex, samples) => {
         sample.color = `hsl(${scenarioIndex * 360 / scenarios.length}, ${100 - 80 * sampleIndex / samples.length}%, ${30 + 40 * sampleIndex / samples.length}%)`;
         sample.thickness = sampleIndex === 0 ? 3 : 2;
-        sample.selected = false;
+        sample.selected = sampleIndex === 0;
     });
 });
 
@@ -218,61 +218,38 @@ function convertScenarioToChart(scenario, sample, sorted, color) {
 
 function updateData() {
     let sorted = this.options.order === "sorted";
-    let selected = this.options.selected;
-    chart.data.datasets = selected.map(item => convertScenarioToChart(item.scenario, item.sample, sorted, item.sample.color));
+    chart.data.datasets = this.benchmarkResult.scenarios
+        .map(scenario => scenario.samples
+            .filter(sample => sample.selected)
+            .map(sample => convertScenarioToChart(scenario, sample, sorted, sample.color)))
+        .flat();
     chart.update();
-}
-
-class SelectedItem {
-    constructor(scenario, sample) {
-        this.scenario = scenario;
-        this.sample = sample;
-    }
-
-    equals(other) {
-        return other !== null
-            && this.scenario === other.scenario
-            && this.sample === other.sample;
-    }
 }
 
 var app = new Vue({
     el: '#app',
     data: {
         options: {
-            order: "historical",
-            selected: []
+            order: "historical"
         },
         benchmarkResult: benchmarkResult
     },
     watch: {
-        "options.order": updateData,
-        "options.selected": updateData
+        "options.order": updateData
     },
     methods: {
         calc: (operation, sample, scenario) => {
             let data = iterations(scenario, Phase.MEASURE).map(iteration => iteration.values[sample.name]);
             return OPERATIONS[operation](data);
         },
-        select: function(scenario, sample) {
-            let selected = this.options.selected;
-            let item = new SelectedItem(scenario, sample);
-            let index = selected.findIndex(it => item.equals(it));
-            if (index === -1) {
-                selected.push(item);
-                sample.selected = true;
-            } else {
-                selected.splice(index, 1);
-                sample.selected = false;
-            }
+        select: function(sample) {
+            sample.selected = !sample.selected;
+            updateData.call(this);
         }
     },
     filters: {
         "numeric": (value) => value.toFixed(2),
         "percent": (value) => (value * 100).toFixed(2) + "%"
-    },
-    created: function(x, y, z) {
-        this.benchmarkResult.scenarios.forEach(scenario => this.select(scenario, scenario.samples[0]));
     }
 });
 
@@ -310,7 +287,7 @@ let chart = new Chart(ctx, {
             itemSort: (a, b) => b.yLabel - a.yLabel,
             callbacks: {
                 title: (tooltips, data) => `Build #${tooltips[0].label}`,
-                label: (tooltip, data) => { console.log(tooltip, data); return tooltip.yLabel.toFixed(2) + " – (" + data.datasets[tooltip.datasetIndex].label + ")"; }
+                label: (tooltip, data) => tooltip.yLabel.toFixed(2) + " – " + data.datasets[tooltip.datasetIndex].label
             }
         },
         hover: {
@@ -325,6 +302,8 @@ let chart = new Chart(ctx, {
         }
     }
 });
+
+updateData.call(app);
 </script>
 
 </body>
