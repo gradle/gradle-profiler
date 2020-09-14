@@ -61,7 +61,7 @@ const Phase = {
     MEASURE: "MEASURE"
 };
 
-let benchmarkResult =
+const benchmarkResult =
 @@BENCHMARK_RESULT_JSON@@
 ;
 </script>
@@ -189,13 +189,13 @@ const OPERATIONS = {
     "median": (data) => quantile(data, .50),
     "p75": (data) => quantile(data, .75),
     "stddev": (data) => {
-        let dataMean = mean(data);
+        const dataMean = mean(data);
         return Math.sqrt(mean(data.map(x => Math.pow(x - dataMean, 2))));
     }
 };
 
 function convertScenarioToChart(scenario, sample, sorted, color) {
-    var data = iterations(scenario, Phase.MEASURE)
+    let data = iterations(scenario, Phase.MEASURE)
             .map(iteration => iteration.values[sample.name]);
     if (sorted) {
         data = data.sort((a, b) => b - a);
@@ -215,7 +215,7 @@ function convertScenarioToChart(scenario, sample, sorted, color) {
     };
 }
 
-var app = new Vue({
+new Vue({
     el: '#app',
     data: {
         options: {
@@ -225,7 +225,7 @@ var app = new Vue({
     },
     computed: {
         chartData: function() {
-            let sorted = this.options.order === "sorted";
+            const sorted = this.options.order === "sorted";
             return this.benchmarkResult.scenarios
                 .map(scenario => scenario.samples
                     .filter(sample => sample.selected)
@@ -238,7 +238,7 @@ var app = new Vue({
     },
     methods: {
         calc: (operation, sample, scenario) => {
-            let data = iterations(scenario, Phase.MEASURE).map(iteration => iteration.values[sample.name]);
+            const data = iterations(scenario, Phase.MEASURE).map(iteration => iteration.values[sample.name]);
             return OPERATIONS[operation](data);
         },
         select: function(sample) {
@@ -255,8 +255,8 @@ var app = new Vue({
         "percent": (value) => (value * 100).toFixed(2) + "%"
     },
     mounted: function() {
-        let ctx = document.getElementById('samples').getContext('2d');
-        let maxMeasuredIterations = Math.max(...(benchmarkResult.scenarios.map(scenario => iterations(scenario, Phase.MEASURE).length)));
+        const ctx = document.getElementById('samples').getContext('2d');
+        const maxMeasuredIterations = Math.max(...(benchmarkResult.scenarios.map(scenario => iterations(scenario, Phase.MEASURE).length)));
         this.chart = new Chart(ctx, {
             type: 'line',
             data: {
