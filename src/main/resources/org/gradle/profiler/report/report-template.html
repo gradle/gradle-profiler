@@ -147,17 +147,6 @@ const benchmarkResult =
 </footer>
 </div>
 <script>
-Array.prototype.unique = function() { return [...new Set(this)]; };
-
-// Initialize sample config
-benchmarkResult.scenarios.forEach((scenario, scenarioIndex, scenarios) => {
-    scenario.samples.forEach((sample, sampleIndex, samples) => {
-        sample.color = `hsl(${scenarioIndex * 360 / scenarios.length}, ${100 - 80 * sampleIndex / samples.length}%, ${30 + 40 * sampleIndex / samples.length}%)`;
-        sample.thickness = sampleIndex === 0 ? 3 : 2;
-        sample.selected = sampleIndex === 0;
-    });
-});
-
 function iterations(scenario, phase) {
     return scenario.iterations.filter(iteration => iteration.phase === phase);
 }
@@ -253,6 +242,16 @@ new Vue({
     filters: {
         "numeric": (value) => value.toFixed(2),
         "percent": (value) => (value * 100).toFixed(2) + "%"
+    },
+    beforeCreate: function() {
+        // Initialize sample config
+        benchmarkResult.scenarios.forEach((scenario, scenarioIndex, scenarios) => {
+            scenario.samples.forEach((sample, sampleIndex, samples) => {
+                sample.color = `hsl(${scenarioIndex * 360 / scenarios.length}, ${100 - 80 * sampleIndex / samples.length}%, ${30 + 40 * sampleIndex / samples.length}%)`;
+                sample.thickness = sampleIndex === 0 ? 3 : 2;
+                sample.selected = sampleIndex === 0;
+            });
+        });
     },
     mounted: function() {
         const ctx = document.getElementById('samples').getContext('2d');
