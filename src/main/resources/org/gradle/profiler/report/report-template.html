@@ -55,16 +55,6 @@ footer {
     border-top: 1px solid #ddd;
 }
     </style>
-    <script>
-const Phase = {
-    WARM_UP: "WARM_UP",
-    MEASURE: "MEASURE"
-};
-
-const benchmarkResult =
-@@BENCHMARK_RESULT_JSON@@
-;
-</script>
 </head>
 <body>
 <div id="app">
@@ -147,6 +137,15 @@ const benchmarkResult =
 </footer>
 </div>
 <script>
+const Phase = {
+    WARM_UP: "WARM_UP",
+    MEASURE: "MEASURE"
+};
+
+const benchmarkResult =
+@@BENCHMARK_RESULT_JSON@@
+;
+
 Array.prototype.numericSort = function() {
     return this.slice().sort((a, b) => a - b);
 }
