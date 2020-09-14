@@ -119,8 +119,8 @@ let benchmarkResult =
                                         <td v-if="index === 0" :rowspan="scenario.samples.length">{{ scenario.definition.title }}</td>
                                         <td v-if="index === 0" :rowspan="scenario.samples.length">{{ scenario.definition.buildTool }}</td>
                                         <td v-if="index === 0" :rowspan="scenario.samples.length">{{ scenario.definition.tasks }}</td>
-                                        <td class="clickable" @click="select(scenario, sample)" :style="sample.style"><i class="fa fa-check-square"></i></td>
-                                        <td class="clickable" @click="select(scenario, sample)">{{ sample.name }}</td>
+                                        <td class="clickable" @click="select(scenario, sample)" :style="{ color: sample.color, visibility: sample.selected ? 'visible' : 'hidden' }"><i class="fa fa-check-square"></i></td>
+                                        <td class="clickable" @click="select(scenario, sample)" :style="{ color: sample.color }">{{ sample.name }}</td>
                                         <td class="numeric">{{ calc('mean', sample, scenario) | numeric }}</td>
                                         <td class="numeric">{{ calc('p25', sample, scenario) | numeric }}</td>
                                         <td class="numeric">{{ calc('min', sample, scenario) | numeric }}</td>
@@ -150,20 +150,14 @@ let benchmarkResult =
 <script>
 Array.prototype.unique = function() { return [...new Set(this)]; };
 
-function toggleSample(sample, enabled) {
-    if (enabled) {
-        sample.style = {
-            visibility: "visible"
-        };
-    } else {
-        sample.style = {
-            visibility: "hidden"
-        };
-    }
-}
-
 // Initialize sample config
-benchmarkResult.scenarios.forEach(scenario => scenario.samples.forEach((sample, index) => toggleSample(sample, false)));
+benchmarkResult.scenarios.forEach((scenario, scenarioIndex, scenarios) => {
+    scenario.samples.forEach((sample, sampleIndex, samples) => {
+        sample.color = `hsl(${scenarioIndex * 360 / scenarios.length}, ${100 - 80 * sampleIndex / samples.length}%, ${30 + 40 * sampleIndex / samples.length}%)`;
+        sample.thickness = sampleIndex === 0 ? 3 : 2;
+        sample.selected = false;
+    });
+});
 
 function iterations(scenario, phase) {
     return scenario.iterations.filter(iteration => iteration.phase === phase);
@@ -208,39 +202,24 @@ function convertScenarioToChart(scenario, sample, sorted, color) {
         data = data.sort((a, b) => b - a);
     }
     return {
-        label: `${scenario.definition.title} (${sample.name}) ${scenario.definition.buildTool}`,
+        label: sample.name,
         showLine: true,
         steppedLine: "middle",
         pointRadius: 0,
         pointHitRadius: 10,
         hoverRadius: 6,
         fill: false,
-        borderWidth: 3,
+        borderWidth: sample.thickness,
         pointBackgroundColor: color,
         borderColor: color,
         data: data
     };
 }
 
-const COLORS = ["#527AB3", "#56ac76", "#f44336", "#d49c3e", "#211f2d"];
-class PaletteGenerator {
-    constructor() {
-        this.colors = COLORS.slice();
-    }
-    nextColor() {
-        if (this.colors.length) {
-            return this.colors.shift();
-        } else {
-            return "#8B899A";
-        }
-    }
-};
-
 function updateData() {
     let sorted = this.options.order === "sorted";
     let selected = this.options.selected;
-    let palette = new PaletteGenerator();
-    chart.data.datasets = selected.map(item => convertScenarioToChart(item.scenario, item.sample, sorted, palette.nextColor()));
+    chart.data.datasets = selected.map(item => convertScenarioToChart(item.scenario, item.sample, sorted, item.sample.color));
     chart.update();
 }
 
@@ -281,10 +260,11 @@ var app = new Vue({
             let index = selected.findIndex(it => item.equals(it));
             if (index === -1) {
                 selected.push(item);
+                sample.selected = true;
             } else {
                 selected.splice(index, 1);
+                sample.selected = false;
             }
-            toggleSample(sample, index === -1);
         }
     },
     filters: {
@@ -330,7 +310,7 @@ let chart = new Chart(ctx, {
             itemSort: (a, b) => b.yLabel - a.yLabel,
             callbacks: {
                 title: (tooltips, data) => `Build #${tooltips[0].label}`,
-                label: (tooltip, data) => tooltip.yLabel.toFixed(2)
+                label: (tooltip, data) => { console.log(tooltip, data); return tooltip.yLabel.toFixed(2) + " – (" + data.datasets[tooltip.datasetIndex].label + ")"; }
             }
         },
         hover: {
