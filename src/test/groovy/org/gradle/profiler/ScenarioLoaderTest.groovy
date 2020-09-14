@@ -412,6 +412,14 @@ class ScenarioLoaderTest extends Specification {
         (scenarios[0] as GradleScenarioDefinition).action.tasks == ["alma"]
     }
 
+    private static String mockToolHome(String tool) {
+        if (OperatingSystem.isWindows()) {
+            return "C:/my/$tool/home"
+        } else {
+            return "/my/$tool/home"
+        }
+    }
+
     @Unroll
     def "can load Bazel scenario"(String home) {
         def settings = settings(BuildInvoker.Bazel)
@@ -428,10 +436,10 @@ class ScenarioLoaderTest extends Specification {
         expect:
         scenarios*.name == ["default"]
         (scenarios[0] as BazelScenarioDefinition).targets == ["help"]
-        (scenarios[0] as BazelScenarioDefinition).toolHome?.absolutePath == home
+        (scenarios[0] as BazelScenarioDefinition).toolHome?.absolutePath?.replace((char) '\\', (char) '/') == home
 
         where:
-        home << ["/my/bazel/home", null]
+        home << [mockToolHome("bazel"), null]
     }
 
     @Unroll
@@ -450,9 +458,9 @@ class ScenarioLoaderTest extends Specification {
         expect:
         scenarios*.name == ["default"]
         (scenarios[0] as BuckScenarioDefinition).targets == ["help"]
-        (scenarios[0] as BuckScenarioDefinition).toolHome?.absolutePath == home
+        (scenarios[0] as BuckScenarioDefinition).toolHome?.absolutePath?.replace((char) '\\', (char) '/') == home
         where:
-        home << ["/my/buck/home", null]
+        home << [mockToolHome("buck"), null]
     }
 
     @Unroll
@@ -463,7 +471,6 @@ class ScenarioLoaderTest extends Specification {
             default {
                 maven {
                     targets = ["help"]
-                    home = "/my/maven/home"
                     ${home == null ? "" : "home = \"$home\""}
                 }
             }
@@ -472,9 +479,9 @@ class ScenarioLoaderTest extends Specification {
         expect:
         scenarios*.name == ["default"]
         (scenarios[0] as MavenScenarioDefinition).targets == ["help"]
-        (scenarios[0] as MavenScenarioDefinition).toolHome?.absolutePath == home
+        (scenarios[0] as MavenScenarioDefinition).toolHome?.absolutePath?.replace((char) '\\', (char) '/') == home
         where:
-        home << ["/my/maven/home", null]
+        home << [mockToolHome("maven"), null]
     }
 
     def "can load scenario with multiple files for a single mutation"() {
