@@ -14,13 +14,6 @@ allprojects {
     version = property("profiler.version") as String
 }
 
-repositories {
-    jcenter()
-    maven {
-        url = uri("https://repo.gradle.org/gradle/repo")
-    }
-}
-
 val gradleRuntime by configurations.creating
 val profilerPlugins by configurations.creating
 
@@ -47,11 +40,12 @@ dependencies {
     gradleRuntime(versions.toolingApi)
     profilerPlugins(project(":chrome-trace"))
     profilerPlugins(project(":build-operations"))
+    profilerPlugins(project(":instrumentation-support"))
     profilerPlugins(project(":studio-agent"))
 
     runtimeOnly("org.slf4j:slf4j-simple:1.7.10")
-    testImplementation("org.codehaus.groovy:groovy:2.4.7")
-    testImplementation("org.spockframework:spock-core:1.1-groovy-2.4")
+    testImplementation(versions.groovy)
+    testImplementation(versions.spock)
     testRuntimeOnly("cglib:cglib:3.2.6")
     testRuntimeOnly("org.objenesis:objenesis:2.6")
 }

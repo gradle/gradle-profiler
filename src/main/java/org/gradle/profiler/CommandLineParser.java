@@ -41,6 +41,7 @@ class CommandLineParser {
             .withRequiredArg()
             .ofType(File.class)
             .defaultsTo(new File("gradle-user-home"));
+        ArgumentAcceptingOptionSpec<File> studioHomeOption = parser.accepts("studio-install-dir", "The Studio installation to use").withRequiredArg().ofType(File.class);
         ArgumentAcceptingOptionSpec<File> scenarioFileOption = parser.accepts("scenario-file", "Scenario definition file to use").withRequiredArg().ofType(File.class);
         ArgumentAcceptingOptionSpec<String> sysPropOption = parser.accepts("D", "Defines a system property").withRequiredArg();
         ArgumentAcceptingOptionSpec<File> outputDirOption = parser.accepts("output-dir", "Directory to write results to").withRequiredArg()
@@ -110,6 +111,7 @@ class CommandLineParser {
         List<String> targetNames = parsedOptions.nonOptionArguments().stream().map(Object::toString).collect(Collectors.toList());
         List<String> gradleVersions = parsedOptions.valuesOf(gradleVersionOption);
         File scenarioFile = parsedOptions.valueOf(scenarioFileOption);
+        File studioInstallDir = parsedOptions.valueOf(studioHomeOption);
 
         // TODO - should validate the various combinations of invocation options
         GradleBuildInvoker gradleInvoker = GradleBuildInvoker.ToolingApi;
@@ -157,6 +159,7 @@ class CommandLineParser {
             .setTargets(targetNames)
             .setSysProperties(sysProperties)
             .setGradleUserHome(gradleUserHome)
+            .setStudioInstallDir(studioInstallDir)
             .setWarmupCount(warmups)
             .setIterations(iterations)
             .setMeasureConfigTime(measureConfig)

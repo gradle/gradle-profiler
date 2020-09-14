@@ -56,7 +56,7 @@ public abstract class GradleClientSpec {
 
         @Override
         public GradleClient create(GradleBuildConfiguration buildConfiguration, InvocationSettings invocationSettings, ProjectConnection projectConnection) {
-            return new StudioGradleClient();
+            return new StudioGradleClient(invocationSettings);
         }
     };
 

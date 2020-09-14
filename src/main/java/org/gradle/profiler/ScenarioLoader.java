@@ -266,7 +266,7 @@ class ScenarioLoader {
                 }
 
                 List<String> gradleArgs = ConfigUtil.strings(scenario, GRADLE_ARGS);
-                BuildAction buildAction = getBuildAction(scenario, scenarioFile);
+                BuildAction buildAction = getBuildAction(scenario, scenarioFile, settings);
                 GradleBuildInvoker invoker = invoker(scenario, (GradleBuildInvoker) settings.getInvoker(), buildAction);
                 int warmUpCount = getWarmUpCount(settings, invoker, scenario);
                 List<String> measuredBuildOperations = getMeasuredBuildOperations(settings, scenario);
@@ -419,26 +419,32 @@ class ScenarioLoader {
         return new RunTasksAction(tasks);
     }
 
-    private static BuildAction getBuildAction(Config scenario, File scenarioFile) {
+    private static BuildAction getBuildAction(Config scenario, File scenarioFile, InvocationSettings invocationSettings) {
         Class<?> toolingModel = getToolingModelClass(scenario, scenarioFile);
         boolean sync = scenario.hasPath(ANDROID_STUDIO_SYNC);
         List<String> tasks = ConfigUtil.strings(scenario, TASKS);
-        if (sync && toolingModel != null) {
-            throw new IllegalArgumentException("Cannot load tooling model and Android studio sync in same scenario.");
-        }
-        if (sync && !tasks.isEmpty()) {
-            throw new IllegalArgumentException("Cannot run tasks and Android studio sync in same scenario.");
-        }
-        if (toolingModel != null) {
-            return new LoadToolingModelAction(toolingModel, tasks);
-        }
+
         if (sync) {
+            if (toolingModel != null) {
+                throw new IllegalArgumentException("Cannot load tooling model and Android studio sync in same scenario.");
+            }
+            if (!tasks.isEmpty()) {
+                throw new IllegalArgumentException("Cannot run tasks and Android studio sync in same scenario.");
+            }
+            if (invocationSettings.getStudioInstallDir() == null) {
+                throw new IllegalArgumentException("Android Studio installation directory should be specified using --studio-install-dir when performing Android studio sync.");
+            }
             Config androidStudioConfig = scenario.getConfig(ANDROID_STUDIO_SYNC);
             String buildFlavor = ConfigUtil.string(androidStudioConfig, ANDROID_BUILD_VARIANT, "debug");
             boolean skipSourceGeneration = ConfigUtil.bool(androidStudioConfig, ANDROID_SKIP_SOURCE_GENERATION, false);
             return new AndroidStudioSyncAction(buildFlavor, skipSourceGeneration);
         }
-        return new RunTasksAction(tasks);
+
+        if (toolingModel != null) {
+            return new LoadToolingModelAction(toolingModel, tasks);
+        } else {
+            return new RunTasksAction(tasks);
+        }
     }
 
     private static Class<?> getToolingModelClass(Config scenario, File scenarioFile) {

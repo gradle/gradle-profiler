@@ -21,6 +21,7 @@ public class InvocationSettings {
     private final List<String> targets;
     private final Map<String, String> sysProperties;
     private final File gradleUserHome;
+    private final File studioInstallDir;
     private final Integer warmupCount;
     private final Integer iterations;
     private final boolean measureConfigTime;
@@ -46,6 +47,7 @@ public class InvocationSettings {
         List<String> targets,
         Map<String, String> sysProperties,
         File gradleUserHome,
+        File studioInstallDir,
         Integer warmupCount,
         Integer iterations,
         boolean measureConfigTime,
@@ -64,6 +66,7 @@ public class InvocationSettings {
         this.targets = targets;
         this.sysProperties = sysProperties;
         this.gradleUserHome = gradleUserHome;
+        this.studioInstallDir = studioInstallDir;
         this.warmupCount = warmupCount;
         this.iterations = iterations;
         this.measureConfigTime = measureConfigTime;
@@ -145,6 +148,10 @@ public class InvocationSettings {
         return gradleUserHome;
     }
 
+    public File getStudioInstallDir() {
+        return studioInstallDir;
+    }
+
     public boolean isMeasureConfigTime() {
         return measureConfigTime;
     }
@@ -195,6 +202,7 @@ public class InvocationSettings {
         private List<String> targets;
         private Map<String, String> sysProperties;
         private File gradleUserHome;
+        private File studioInstallDir;
         private Integer warmupCount;
         private Integer iterations;
         private boolean measureConfigTime;
@@ -257,6 +265,11 @@ public class InvocationSettings {
             return this;
         }
 
+        public InvocationSettingsBuilder setStudioInstallDir(File studioInstallDir) {
+            this.studioInstallDir = studioInstallDir;
+            return this;
+        }
+
         public InvocationSettingsBuilder setWarmupCount(Integer warmupCount) {
             this.warmupCount = warmupCount;
             return this;
@@ -300,6 +313,7 @@ public class InvocationSettings {
                 targets,
                 sysProperties,
                 gradleUserHome,
+                studioInstallDir,
                 warmupCount,
                 iterations,
                 measureConfigTime,
