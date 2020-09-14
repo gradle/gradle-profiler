@@ -22,6 +22,10 @@ public class ServerConnection implements Closeable {
         serializer.send(syncParameters);
     }
 
+    public void send(ConnectionParameters connectionParameters) {
+        serializer.send(connectionParameters);
+    }
+
     public SyncStarted receiveSyncStarted(Duration timeout) {
         return serializer.receive(SyncStarted.class, timeout);
     }

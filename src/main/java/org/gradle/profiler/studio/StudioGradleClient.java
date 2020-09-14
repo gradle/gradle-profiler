@@ -1,10 +1,7 @@
 package org.gradle.profiler.studio;
 
 import com.google.common.base.Joiner;
-import org.gradle.profiler.CommandExec;
-import org.gradle.profiler.GradleClient;
-import org.gradle.profiler.InvocationSettings;
-import org.gradle.profiler.Logging;
+import org.gradle.profiler.*;
 import org.gradle.profiler.client.protocol.*;
 
 import java.io.File;
@@ -21,7 +18,7 @@ public class StudioGradleClient implements GradleClient {
     private final ServerConnection agentConnection;
     private boolean hasRun;
 
-    public StudioGradleClient(InvocationSettings invocationSettings) {
+    public StudioGradleClient(GradleBuildConfiguration buildConfiguration, InvocationSettings invocationSettings) {
         Path studioInstallDir = invocationSettings.getStudioInstallDir().toPath();
         Logging.startOperation("Starting Android Studio at " + studioInstallDir);
 
@@ -41,6 +38,7 @@ public class StudioGradleClient implements GradleClient {
         server = new Server("agent");
         studioProcess = startStudio(launchConfiguration, studioInstallDir, server);
         agentConnection = server.waitForIncoming(Duration.ofMinutes(1));
+        agentConnection.send(new ConnectionParameters(buildConfiguration.getGradleHome()));
     }
 
     private CommandExec.RunHandle startStudio(LaunchConfiguration launchConfiguration, Path studioInstallDir, Server server) {
@@ -78,7 +76,8 @@ public class StudioGradleClient implements GradleClient {
             System.out.println("* PLEASE RUN SYNC IN ANDROID STUDIO....");
         }
 
-        SyncStarted started = agentConnection.receiveSyncStarted(Duration.ofMinutes(2));
+        // Use a long time out because it can take quite some time between the tapi action completing and studio finishing the sync
+        SyncStarted started = agentConnection.receiveSyncStarted(Duration.ofMinutes(10));
         agentConnection.send(new SyncParameters(gradleArgs, jvmArgs));
         System.out.println("* Sync has started");
         SyncCompleted completed = agentConnection.receiveSyncCompeted(Duration.ofHours(1));

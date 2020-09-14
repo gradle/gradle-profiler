@@ -48,11 +48,12 @@ public class Connection implements Closeable {
         outputStream.writeLong(value);
     }
 
-    public void writeStrings(List<String> strings) throws IOException {
-        outputStream.writeInt(strings.size());
-        for (String s : strings) {
-            outputStream.writeUTF(s);
-        }
+    public String readString() throws IOException {
+        return inputStream.readUTF();
+    }
+
+    public void writeString(String value) throws IOException {
+        outputStream.writeUTF(value);
     }
 
     public List<String> readStrings() throws IOException {
@@ -62,6 +63,13 @@ public class Connection implements Closeable {
             strings.add(inputStream.readUTF());
         }
         return strings;
+    }
+
+    public void writeStrings(List<String> strings) throws IOException {
+        outputStream.writeInt(strings.size());
+        for (String s : strings) {
+            outputStream.writeUTF(s);
+        }
     }
 
     public void flush() throws IOException {

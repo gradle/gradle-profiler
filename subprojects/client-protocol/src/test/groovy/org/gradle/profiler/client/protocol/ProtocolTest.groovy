@@ -13,21 +13,25 @@ class ProtocolTest extends Specification {
         client.connect(server.port)
         def serverConnection = server.waitForIncoming(timeout)
 
+        serverConnection.send(new ConnectionParameters(new File("gradle-home")))
+        def m1 = client.receiveConnectionParameters(timeout)
+
         client.send(new SyncStarted(1))
-        def m1 = serverConnection.receiveSyncStarted(timeout)
+        def m2 = serverConnection.receiveSyncStarted(timeout)
 
         serverConnection.send(new SyncParameters(["gradle-arg"], ["jvm-arg"]))
-        def m2 = client.receiveParameters(timeout)
+        def m3 = client.receiveSyncParameters(timeout)
 
         client.send(new SyncCompleted(1, 123))
-        def m3 = serverConnection.receiveSyncCompeted(timeout)
+        def m4 = serverConnection.receiveSyncCompeted(timeout)
 
         then:
-        m1.id == 1
-        m2.gradleArgs == ["gradle-arg"]
-        m2.jvmArgs == ["jvm-arg"]
-        m3.id == 1
-        m3.durationMillis == 123
+        m1.gradleInstallation.path == "gradle-home"
+        m2.id == 1
+        m3.gradleArgs == ["gradle-arg"]
+        m3.jvmArgs == ["jvm-arg"]
+        m4.id == 1
+        m4.durationMillis == 123
 
         cleanup:
         client?.disconnect()

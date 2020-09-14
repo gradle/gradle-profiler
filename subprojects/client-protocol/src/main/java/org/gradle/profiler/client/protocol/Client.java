@@ -42,9 +42,15 @@ public class Client {
         }
     }
 
-    public SyncParameters receiveParameters(Duration timeout) {
+    public SyncParameters receiveSyncParameters(Duration timeout) {
         synchronized (lock) {
             return serializer.receive(SyncParameters.class, timeout);
+        }
+    }
+
+    public ConnectionParameters receiveConnectionParameters(Duration timeout) {
+        synchronized (lock) {
+            return serializer.receive(ConnectionParameters.class, timeout);
         }
     }
 
