@@ -24,9 +24,10 @@ public class LauncherConfigurationParser {
         Map<String, String> systemProperties = mapValues(jvmOptions.dict("Properties").toMap(), v -> v.replace("$APP_PACKAGE", studioInstallDir.toString()));
         Path javaCommand = studioInstallDir.resolve("Contents/jre/jdk/Contents/Home/bin/java");
         Path agentJar = GradleInstrumentation.unpackPlugin("studio-agent").toPath();
+        Path asmJar = GradleInstrumentation.unpackPlugin("asm").toPath();
         Path supportJar = GradleInstrumentation.unpackPlugin("instrumentation-support").toPath();
         Path protocolJar = GradleInstrumentation.unpackPlugin("client-protocol").toPath();
-        return new LaunchConfiguration(javaCommand, classPath, systemProperties, mainClass, agentJar, supportJar, protocolJar);
+        return new LaunchConfiguration(javaCommand, classPath, systemProperties, mainClass, agentJar, supportJar, Arrays.asList(asmJar, protocolJar));
     }
 
     private static <T, S> Map<String, S> mapValues(Map<String, T> map, Function<T, S> mapper) {

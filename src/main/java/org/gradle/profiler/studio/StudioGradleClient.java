@@ -50,10 +50,10 @@ public class StudioGradleClient implements GradleClient {
         for (Map.Entry<String, String> systemProperty : launchConfiguration.getSystemProperties().entrySet()) {
             commandLine.add("-D" + systemProperty.getKey() + "=" + systemProperty.getValue());
         }
-        commandLine.add("-javaagent:" + launchConfiguration.getAgentJar() + "=" + server.getPort());
+        commandLine.add("-javaagent:" + launchConfiguration.getAgentJar() + "=" + server.getPort() + "," + launchConfiguration.getSupportJar());
         commandLine.add("--add-exports");
         commandLine.add("java.base/jdk.internal.misc=ALL-UNNAMED");
-        commandLine.add("-Xbootclasspath/a:" + launchConfiguration.getProtocolJar());
+        commandLine.add("-Xbootclasspath/a:" + Joiner.on(File.pathSeparator).join(launchConfiguration.getSharedJars()));
         commandLine.add(launchConfiguration.getMainClass());
         System.out.println("* Using command line: " + commandLine);
 

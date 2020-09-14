@@ -11,7 +11,7 @@ public class LaunchConfiguration {
     private final String mainClass;
     private final Path agentJar;
     private final Path supportJar;
-    private final Path protocolJar;
+    private final List<Path> sharedJars;
 
     public LaunchConfiguration(Path javaCommand,
                                List<Path> classPath,
@@ -19,14 +19,14 @@ public class LaunchConfiguration {
                                String mainClass,
                                Path agentJar,
                                Path supportJar,
-                               Path protocolJar) {
+                               List<Path> sharedJars) {
         this.javaCommand = javaCommand;
         this.classPath = classPath;
         this.systemProperties = systemProperties;
         this.mainClass = mainClass;
         this.agentJar = agentJar;
         this.supportJar = supportJar;
-        this.protocolJar = protocolJar;
+        this.sharedJars = sharedJars;
     }
 
     public Path getJavaCommand() {
@@ -53,7 +53,7 @@ public class LaunchConfiguration {
         return supportJar;
     }
 
-    public Path getProtocolJar() {
-        return protocolJar;
+    public List<Path> getSharedJars() {
+        return sharedJars;
     }
 }

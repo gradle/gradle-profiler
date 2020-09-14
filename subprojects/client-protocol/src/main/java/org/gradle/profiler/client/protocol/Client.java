@@ -14,14 +14,18 @@ public class Client {
     private Connection connection;
     private Serializer serializer;
 
-    public void connect(int port) throws IOException {
+    public void connect(int port) {
         synchronized (lock) {
             if (connection != null) {
                 throw new IllegalStateException("This client is already connected.");
             }
-            Socket socket = new Socket(InetAddress.getLoopbackAddress(), port);
-            connection = new Connection(socket);
-            serializer = new Serializer("controller process", connection);
+            try {
+                Socket socket = new Socket(InetAddress.getLoopbackAddress(), port);
+                connection = new Connection(socket);
+                serializer = new Serializer("controller process", connection);
+            } catch (IOException e) {
+                throw new RuntimeException("Could not connect to contoller process.", e);
+            }
         }
     }
 
