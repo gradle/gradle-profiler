@@ -7,12 +7,16 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.13/css/select2.min.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.14.0/css/all.min.css">
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Roboto+Mono:wght@300&display=swap">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Lato&display=swap">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/vue/2.6.12/vue.min.js"></script>
     <script src='https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.0.0-beta/chart.min.js'></script>
     <style type="text/css">
+body {
+    font-family: 'Lato', sans-serif;
+    font-size: 12px;
+}
 #data-table {
     overflow-x: scroll;
-    font-size: 0.8em;
 }
 th {
     font-size: larger;
@@ -279,6 +283,9 @@ new Vue({
                 datasets: this.chartData
             },
             options: {
+                font: {
+                    family: "Roboto Mono"
+                },
                 plugins: {
                     crosshair: {
                         zoom: {
