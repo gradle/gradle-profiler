@@ -16,6 +16,7 @@ public class ToolingApiGradleClient implements GradleInvoker, GradleClient {
 
     @Override
     public void close() {
+        projectConnection.close();
     }
 
     private static <T extends LongRunningOperation, R> R run(T operation, Function<T, R> function) {

@@ -6,8 +6,6 @@ import org.gradle.profiler.buildops.BuildOperationInstrumentation;
 import org.gradle.profiler.instrument.PidInstrumentation;
 import org.gradle.profiler.result.BuildInvocationResult;
 import org.gradle.profiler.result.Sample;
-import org.gradle.tooling.GradleConnector;
-import org.gradle.tooling.ProjectConnection;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -62,17 +60,13 @@ public class GradleScenarioInvoker extends ScenarioInvoker<GradleScenarioDefinit
             allBuildsGradleArgsCalculator = allBuildsGradleArgsCalculator.plus(buildOperationInstrumentation);
         }
 
-        BuildAction cleanupAction = scenario.getCleanupAction();
         GradleBuildConfiguration buildConfiguration = scenario.getBuildConfiguration();
 
         daemonControl.stop(buildConfiguration);
 
         BuildMutator mutator = scenario.getBuildMutator().get();
-        GradleConnector connector = GradleConnector.newConnector()
-            .useInstallation(buildConfiguration.getGradleHome())
-            .useGradleUserHomeDir(settings.getGradleUserHome().getAbsoluteFile());
         ScenarioContext scenarioContext = ScenarioContext.from(settings, scenario);
-        ProjectConnection projectConnection = connector.forProjectDirectory(settings.getProjectDir()).connect();
+        GradleClient gradleClient = scenario.getInvoker().getClient().create(buildConfiguration, settings);
         try {
             buildConfiguration.printVersionInfo();
 
@@ -98,8 +92,6 @@ public class GradleScenarioInvoker extends ScenarioInvoker<GradleScenarioDefinit
             }
             allBuildsGradleArgsCalculator.calculateGradleArgs(allBuildsGradleArgs);
             logGradleArgs(allBuildsGradleArgs);
-
-            GradleClient gradleClient = scenario.getInvoker().getClient().create(buildConfiguration, settings, projectConnection);
 
             BuildUnderTestInvoker uninstrumented = new BuildUnderTestInvoker(allBuildsJvmArgs, allBuildsGradleArgs, gradleClient, pidInstrumentation, buildOperationInstrumentation);
 
@@ -156,7 +148,7 @@ public class GradleScenarioInvoker extends ScenarioInvoker<GradleScenarioDefinit
             gradleClient.close();
         } finally {
             mutator.afterScenario(scenarioContext);
-            projectConnection.close();
+            gradleClient.close();
             daemonControl.stop(buildConfiguration);
         }
     }

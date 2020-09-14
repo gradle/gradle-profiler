@@ -1,6 +1,7 @@
 package org.gradle.profiler;
 
 import org.gradle.profiler.studio.StudioGradleClient;
+import org.gradle.tooling.GradleConnector;
 import org.gradle.tooling.ProjectConnection;
 
 /**
@@ -14,7 +15,11 @@ public abstract class GradleClientSpec {
         }
 
         @Override
-        public GradleClient create(GradleBuildConfiguration buildConfiguration, InvocationSettings invocationSettings, ProjectConnection projectConnection) {
+        public GradleClient create(GradleBuildConfiguration buildConfiguration, InvocationSettings invocationSettings) {
+            GradleConnector connector = GradleConnector.newConnector()
+                .useInstallation(buildConfiguration.getGradleHome())
+                .useGradleUserHomeDir(invocationSettings.getGradleUserHome().getAbsoluteFile());
+            ProjectConnection projectConnection = connector.forProjectDirectory(invocationSettings.getProjectDir()).connect();
             return new ToolingApiGradleClient(projectConnection);
         }
     };
@@ -26,8 +31,8 @@ public abstract class GradleClientSpec {
         }
 
         @Override
-        public GradleClient create(GradleBuildConfiguration buildConfiguration, InvocationSettings invocationSettings, ProjectConnection projectConnection) {
-            return new CliGradleClient(buildConfiguration, buildConfiguration.getJavaHome(), invocationSettings.getProjectDir(), true, invocationSettings.getBuildLog());
+        public GradleClient create(GradleBuildConfiguration buildConfiguration, InvocationSettings invocationSettings) {
+            return new CliGradleClient(buildConfiguration, buildConfiguration.getJavaHome(), invocationSettings.getProjectDir(), true, , invocationSettings.getBuildLog());
         }
     };
 
@@ -43,7 +48,7 @@ public abstract class GradleClientSpec {
         }
 
         @Override
-        public GradleClient create(GradleBuildConfiguration buildConfiguration, InvocationSettings invocationSettings, ProjectConnection projectConnection) {
+        public GradleClient create(GradleBuildConfiguration buildConfiguration, InvocationSettings invocationSettings) {
             return new CliGradleClient(buildConfiguration, buildConfiguration.getJavaHome(), invocationSettings.getProjectDir(), false, invocationSettings.getBuildLog());
         }
     };
@@ -55,7 +60,7 @@ public abstract class GradleClientSpec {
         }
 
         @Override
-        public GradleClient create(GradleBuildConfiguration buildConfiguration, InvocationSettings invocationSettings, ProjectConnection projectConnection) {
+        public GradleClient create(GradleBuildConfiguration buildConfiguration, InvocationSettings invocationSettings) {
             return new StudioGradleClient(invocationSettings);
         }
     };
@@ -64,5 +69,5 @@ public abstract class GradleClientSpec {
         return true;
     }
 
-    public abstract GradleClient create(GradleBuildConfiguration buildConfiguration, InvocationSettings invocationSettings, ProjectConnection projectConnection);
+    public abstract GradleClient create(GradleBuildConfiguration buildConfiguration, InvocationSettings invocationSettings);
 }
