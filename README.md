@@ -183,6 +183,7 @@ The following command line options only apply when measuring Gradle builds:
 - `--measure-config-time`: Measure some additional details about configuration time. Only supported for Gradle 6.1 and later.
 - `--measure-build-op`: Additionally measure the cumulative time spent in the given build operation. Only supported for Gradle 6.1 and later.
 - `-D<key>=<value>`: Defines a system property when running the build, overriding the default for the build.
+- `--studio-install-dir`: The Android Studio installation directory. Required when measuring Android Studio sync.
 
 ## Advanced profiling scenarios
 
@@ -233,13 +234,8 @@ Here is an example:
     }
     androidStudioSync {
         title = "Android Studio Sync"
-        # Simulate an Android studio sync
+        # Measure an Android studio sync
         android-studio-sync {
-            # Skip source generation on sync
-            skip-source-generation = true // if not specified defaults to "false"
-            # If the above flag is set to "false", the Android studio sync simulation runs "generateDebugSources" tasks by default
-            # This behavior can be overridden in case if the project has different product flavors (e.g. "development", "production", etc.) 
-            build-variant = "developmentDebug" // if not specified defaults to "debug"
         }
     }
 
