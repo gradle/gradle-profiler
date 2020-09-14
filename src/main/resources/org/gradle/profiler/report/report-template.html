@@ -222,6 +222,16 @@ var app = new Vue({
         },
         benchmarkResult: benchmarkResult
     },
+    computed: {
+        chartData: function() {
+            let sorted = this.options.order === "sorted";
+            return this.benchmarkResult.scenarios
+                .map(scenario => scenario.samples
+                    .filter(sample => sample.selected)
+                    .map(sample => convertScenarioToChart(scenario, sample, sorted, sample.color)))
+                .flat();
+        }
+    },
     watch: {
         "options.order": "updateData"
     },
@@ -235,72 +245,66 @@ var app = new Vue({
             this.updateData();
         },
         updateData: function() {
-            let sorted = this.options.order === "sorted";
-            chart.data.datasets = this.benchmarkResult.scenarios
-                .map(scenario => scenario.samples
-                    .filter(sample => sample.selected)
-                    .map(sample => convertScenarioToChart(scenario, sample, sorted, sample.color)))
-                .flat();
-            chart.update();
+            this.chart.data.datasets = this.chartData;
+            this.chart.update();
         }
     },
     filters: {
         "numeric": (value) => value.toFixed(2),
         "percent": (value) => (value * 100).toFixed(2) + "%"
-    }
-});
-
-let ctx = document.getElementById('samples').getContext('2d');
-let maxMeasuredIterations = Math.max(...(benchmarkResult.scenarios.map(scenario => iterations(scenario, Phase.MEASURE).length)));
-let chart = new Chart(ctx, {
-    type: 'line',
-    data: {
-        labels: Array.from(Array(maxMeasuredIterations), (_, i) => (i + 1).toString()),
-        datasets: []
     },
-    options: {
-        plugins: {
-            crosshair: {
-                zoom: {
-                    enabled: false
+    mounted: function() {
+        let ctx = document.getElementById('samples').getContext('2d');
+        let maxMeasuredIterations = Math.max(...(benchmarkResult.scenarios.map(scenario => iterations(scenario, Phase.MEASURE).length)));
+        this.chart = new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: Array.from(Array(maxMeasuredIterations), (_, i) => (i + 1).toString()),
+                datasets: this.chartData
+            },
+            options: {
+                plugins: {
+                    crosshair: {
+                        zoom: {
+                            enabled: false
+                        },
+                        snap: {
+                            enabled: false
+                        }
+                    }
                 },
-                snap: {
-                    enabled: false
+                responsive: false,
+                animation: {
+                    duration: 0
+                },
+                legend: {
+                    position: "bottom",
+                    align: "start",
+                    fullWidth: false
+                },
+                tooltips: {
+                    mode: "index",
+                    position: "nearest",
+                    itemSort: (a, b) => b.yLabel - a.yLabel,
+                    callbacks: {
+                        title: (tooltips, data) => `Build #${tooltips[0].label}`,
+                        label: (tooltip, data) => tooltip.yLabel.toFixed(2) + " – " + data.datasets[tooltip.datasetIndex].label
+                    }
+                },
+                hover: {
+                    intersect: false
+                },
+                scales: {
+                    yAxes: [{
+                        ticks: {
+                            min: 0
+                        }
+                    }]
                 }
             }
-        },
-        responsive: false,
-        animation: {
-            duration: 0
-        },
-        legend: {
-            position: "bottom",
-            align: "start",
-            fullWidth: false
-        },
-        tooltips: {
-            mode: "index",
-            position: "nearest",
-            itemSort: (a, b) => b.yLabel - a.yLabel,
-            callbacks: {
-                title: (tooltips, data) => `Build #${tooltips[0].label}`,
-                label: (tooltip, data) => tooltip.yLabel.toFixed(2) + " – " + data.datasets[tooltip.datasetIndex].label
-            }
-        },
-        hover: {
-            intersect: false
-        },
-        scales: {
-            yAxes: [{
-                ticks: {
-                    min: 0
-                }
-            }]
-        }
+        });
     }
 });
-
-app.updateData();
 </script>
 
 </body>
