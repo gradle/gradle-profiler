@@ -9,13 +9,7 @@ import java.util.List;
  * A mock-up of Android studio sync.
  */
 public class AndroidStudioSyncAction implements BuildAction {
-
-    private final String buildFlavor;
-    private final boolean skipSourceGeneration;
-
-    public AndroidStudioSyncAction(String buildFlavor, boolean skipSourceGeneration) {
-        this.buildFlavor = buildFlavor;
-        this.skipSourceGeneration = skipSourceGeneration;
+    public AndroidStudioSyncAction() {
     }
 
     @Override

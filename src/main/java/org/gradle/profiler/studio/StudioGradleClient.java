@@ -19,6 +19,9 @@ public class StudioGradleClient implements GradleClient {
     private boolean hasRun;
 
     public StudioGradleClient(GradleBuildConfiguration buildConfiguration, InvocationSettings invocationSettings) {
+        if (!OperatingSystem.isMacOS()) {
+            throw new IllegalArgumentException("Support for Android studio is currently only implemented on macOS.");
+        }
         Path studioInstallDir = invocationSettings.getStudioInstallDir().toPath();
         Logging.startOperation("Starting Android Studio at " + studioInstallDir);
 

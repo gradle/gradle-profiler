@@ -160,7 +160,7 @@ class ScenarioLoaderTest extends Specification {
         expect:
         def instantExecution = scenarios[0] as GradleScenarioDefinition
         instantExecution.systemProperties == [
-            "org.gradle.unsafe.instant-execution": "true",
+            "org.gradle.unsafe.instant-execution"                 : "true",
             "org.gradle.unsafe.instant-execution.fail-on-problems": "false"
         ]
     }
@@ -340,28 +340,6 @@ class ScenarioLoaderTest extends Specification {
         scenarios*.name == ["default"]
         def scenarioDefinition = scenarios[0] as GradleScenarioDefinition
         scenarioDefinition.action instanceof AndroidStudioSyncAction
-        scenarioDefinition.action.skipSourceGeneration == false
-        scenarioDefinition.action.buildFlavor == "debug"
-    }
-
-    def "loads Android studio sync included config"() {
-        def settings = settings()
-
-        scenarioFile << """
-            default {
-                android-studio-sync {
-                    build-variant = "developmentDebug"
-                    skip-source-generation = true
-                }
-            }
-        """
-        def scenarios = loadScenarios(scenarioFile, settings, Mock(GradleBuildConfigurationReader))
-        expect:
-        scenarios*.name == ["default"]
-        def scenarioDefinition = scenarios[0] as GradleScenarioDefinition
-        scenarioDefinition.action instanceof AndroidStudioSyncAction
-        scenarioDefinition.action.skipSourceGeneration == true
-        scenarioDefinition.action.buildFlavor == "developmentDebug"
     }
 
     def "loads default scenarios only"() {

@@ -77,8 +77,6 @@ class ScenarioLoader {
     private static final String TYPE = "type";
     private static final String MODEL = "model";
     private static final String ANDROID_STUDIO_SYNC = "android-studio-sync";
-    private static final String ANDROID_BUILD_VARIANT = "build-variant";
-    private static final String ANDROID_SKIP_SOURCE_GENERATION = "skip-source-generation";
     private static final String JVM_ARGS = "jvm-args";
 
     private static final List<String> ALL_SCENARIO_KEYS = Arrays.asList(
@@ -434,10 +432,7 @@ class ScenarioLoader {
             if (invocationSettings.getStudioInstallDir() == null) {
                 throw new IllegalArgumentException("Android Studio installation directory should be specified using --studio-install-dir when performing Android studio sync.");
             }
-            Config androidStudioConfig = scenario.getConfig(ANDROID_STUDIO_SYNC);
-            String buildFlavor = ConfigUtil.string(androidStudioConfig, ANDROID_BUILD_VARIANT, "debug");
-            boolean skipSourceGeneration = ConfigUtil.bool(androidStudioConfig, ANDROID_SKIP_SOURCE_GENERATION, false);
-            return new AndroidStudioSyncAction(buildFlavor, skipSourceGeneration);
+            return new AndroidStudioSyncAction();
         }
 
         if (toolingModel != null) {
