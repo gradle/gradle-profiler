@@ -88,8 +88,13 @@ footer {
     color: #aaa;
     background-color: #eee;
     font-size: smaller;
-    text-align: right;
     border-top: 1px solid #ddd;
+}
+footer .date {
+    float: left;
+}
+footer .version {
+    float: right;
 }
     </style>
 </head>
@@ -242,7 +247,9 @@ footer {
 </div>
 </div>
 <footer>
-    <span>Gradle Profiler version {{ benchmarkResult.environment.profilerVersion }}</span>
+    <div class="date">{{ new Date(Date.parse(benchmarkResult.environment.date)) | date }}</div>
+    <div class="version">Gradle Profiler version {{ benchmarkResult.environment.profilerVersion }}</div>
+    <div style="clear: both;"></div>
 </footer>
 </div>
 <script>
@@ -359,7 +366,12 @@ new Vue({
     },
     filters: {
         "numeric": (value) => millisecondFormat.format(value),
-        "percent": (value) => (value * 100).toFixed(2) + "%"
+        "percent": (value) => (value * 100).toFixed(2) + "%",
+        "date": (value) => value.toLocaleString(navigator.language, {
+            year: 'numeric', month: 'long', day: 'numeric',
+            hour: 'numeric', minute: 'numeric', second: 'numeric',
+           timeZoneName: 'short'
+        })
     },
     beforeCreate: function() {
         // Initialize sample config
