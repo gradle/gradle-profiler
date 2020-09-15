@@ -49,8 +49,14 @@ td.diff {
 td.clickable {
     cursor: pointer;
 }
-td.clickable:hover {
-    color: blue;
+td.clickable .selection-icon {
+    width: 1em;
+}
+td.clickable:hover .selection-icon::before {
+    content: "\f00c";
+}
+td.clickable .selection-icon.selected::before {
+    content: "\f14a";
 }
 td.WARM_UP {
     background-color: #fff8ee;
@@ -108,7 +114,6 @@ footer {
                         <thead>
                             <tr>
                                 <th>Scenario</th>
-                                <th></th>
                                 <th>Sample</th>
                                 <th>Mean</th>
                                 <th>Min</th>
@@ -141,10 +146,10 @@ footer {
                                                 </ul>
                                             </div>
                                         </td>
-                                        <td class="clickable data" @click="select(sample)">
-                                            <i class="fa fa-check-square" :style="{ color: sample.color, visibility: sample.selected ? 'visible' : 'hidden' }"></i>
+                                        <td class="clickable data" @click="select(sample)" :style="{ color: sample.color }">
+                                            <span class="fa selection-icon" :class="{ selected: sample.selected }" :style="{ color: sample.color }"></span>
+                                            <span>{{ sample.name }}</span>
                                         </td>
-                                        <td class="clickable data" @click="select(sample)" :style="{ color: sample.color }">{{ sample.name }}</td>
                                         <td class="numeric data">{{ calc('mean', sample, scenario) | numeric }}</td>
                                         <td class="numeric data">{{ calc('p25', sample, scenario) | numeric }}</td>
                                         <td class="numeric data">{{ calc('min', sample, scenario) | numeric }}</td>
