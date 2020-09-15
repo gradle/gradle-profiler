@@ -38,14 +38,13 @@ span.description {
     font-family: 'Roboto Mono', monospace;
     white-space: nowrap;
 }
-td.title div {
-    width: 400px;
-    overflow-x: scroll;
+td.title {
+    white-space: nowrap;
 }
-td .btn {
+td.title .btn {
     font-size: 10px;
-    padding: 0.2em 0.5em 0.2em 0.5em;
-    float: right;
+    padding: 2px 5px 2px 5px;
+    margin-right: 2px;
 }
 td.numeric {
     text-align: right;
@@ -148,10 +147,10 @@ footer .env {
                                 <template v-for="(sample, index) in scenario.samples">
                                     <tr>
                                         <td class="title" v-if="index === 0" :rowspan="scenario.samples.length">
-                                            <div>
-                                                <button class="btn btn-light" @click="scenario.showDetails = !scenario.showDetails"><i class="fa fa-ellipsis-h"></i></button>
-                                                <span class="title">{{ scenario.definition.title }}</span>
-                                            </div>
+                                            <button class="btn btn-light" @click="scenario.showDetails = !scenario.showDetails">
+                                                <span class="fa">{{ scenario.showDetails ? "&#xf068;" : "&#xf067;" }}</span>
+                                            </button>
+                                            <span class="title">{{ scenario.definition.title }}</span>
                                         </td>
                                         <td class="clickable data" @click="select(sample)" :style="{ color: sample.color }">
                                             <span class="fa selection-icon" :class="{ selected: sample.selected }" :style="{ color: sample.color }"></span>
