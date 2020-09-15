@@ -8,8 +8,35 @@
         "name": "no-optimizations",
         "title": "Baseline",
         "displayName": "Baseline using Gradle 6.7-20200903220111+0000",
-        "buildTool": "6.7-20200903220111+0000",
+        "buildTool": "Gradle 6.7-20200903220111+0000",
         "tasks": ":santa-tracker:assembleDebug",
+        "version": "6.7-20200903220111+0000",
+        "gradleHome": "/home/lptr/Workspace/santa-tracker-performance/gradle-user-home/wrapper/dists/gradle-6.7-20200903220111+0000-bin/6csfyoy16renvfjrtt5md548g/gradle-6.7-20200903220111+0000",
+        "javaHome": "/opt/files/jdk-linux/OpenJDK8U-jdk_x64_linux_hotspot_8u242b08.tar.gz",
+        "usesScanPlugin": false,
+        "action": "run tasks :santa-tracker:assembleDebug",
+        "cleanup": "do nothing",
+        "invoker": "Tooling API",
+        "args": [
+          "-Dorg.gradle.workers.max\u003d8",
+          "--init-script",
+          "../gradle-benchmark-base/scans.init.gradle",
+          "--no-scan",
+          "--no-build-cache",
+          "--no-watch-fs",
+          "--no-configuration-cache"
+        ],
+        "jvmArgs": [
+          "-XX:MaxPermSize\u003d512m",
+          "-Xmx4096m",
+          "-Dfile.encoding\u003dUTF-8",
+          "-Duser.country\u003dUS",
+          "-Duser.language\u003den",
+          "-Duser.variant"
+        ],
+        "systemProperties": {
+          "agpVersion": "4.2.0-alpha10"
+        },
         "id": "_2268a672_a4bc_42d2_88a9_e5eac94c12e0_no_optimizations_9153a177"
       },
       "samples": [
@@ -224,8 +251,35 @@
         "name": "only-file-system-watching",
         "title": "FS watching",
         "displayName": "FS watching using Gradle 6.7-20200903220111+0000",
-        "buildTool": "6.7-20200903220111+0000",
+        "buildTool": "Gradle 6.7-20200903220111+0000",
         "tasks": ":santa-tracker:assembleDebug",
+        "version": "6.7-20200903220111+0000",
+        "gradleHome": "/home/lptr/Workspace/santa-tracker-performance/gradle-user-home/wrapper/dists/gradle-6.7-20200903220111+0000-bin/6csfyoy16renvfjrtt5md548g/gradle-6.7-20200903220111+0000",
+        "javaHome": "/opt/files/jdk-linux/OpenJDK8U-jdk_x64_linux_hotspot_8u242b08.tar.gz",
+        "usesScanPlugin": false,
+        "action": "run tasks :santa-tracker:assembleDebug",
+        "cleanup": "do nothing",
+        "invoker": "Tooling API",
+        "args": [
+          "-Dorg.gradle.workers.max\u003d8",
+          "--init-script",
+          "../gradle-benchmark-base/scans.init.gradle",
+          "--no-scan",
+          "--no-build-cache",
+          "--watch-fs",
+          "--no-configuration-cache"
+        ],
+        "jvmArgs": [
+          "-XX:MaxPermSize\u003d512m",
+          "-Xmx4096m",
+          "-Dfile.encoding\u003dUTF-8",
+          "-Duser.country\u003dUS",
+          "-Duser.language\u003den",
+          "-Duser.variant"
+        ],
+        "systemProperties": {
+          "agpVersion": "4.2.0-alpha10"
+        },
         "id": "_2268a672_a4bc_42d2_88a9_e5eac94c12e0_only_file_system_watching_c9e0b933"
       },
       "samples": [
