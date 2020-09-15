@@ -94,6 +94,9 @@ footer .date {
     float: left;
 }
 footer .version {
+    text-align: center;
+}
+footer .env {
     float: right;
 }
     </style>
@@ -248,8 +251,8 @@ footer .version {
 </div>
 <footer>
     <div class="date">{{ new Date(Date.parse(benchmarkResult.environment.date)) | date }}</div>
+    <div class="env">{{ benchmarkResult.environment.operatingSystem }}</div>
     <div class="version">Gradle Profiler version {{ benchmarkResult.environment.profilerVersion }}</div>
-    <div style="clear: both;"></div>
 </footer>
 </div>
 <script>

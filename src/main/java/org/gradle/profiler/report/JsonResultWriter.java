@@ -10,6 +10,7 @@ import com.google.gson.JsonSerializationContext;
 import com.google.gson.JsonSerializer;
 import com.google.gson.internal.bind.util.ISO8601Utils;
 import org.gradle.profiler.GradleScenarioDefinition;
+import org.gradle.profiler.OperatingSystem;
 import org.gradle.profiler.ScenarioDefinition;
 import org.gradle.profiler.Version;
 import org.gradle.profiler.result.BuildInvocationResult;
@@ -51,11 +52,13 @@ public class JsonResultWriter {
 
     private static class Environment {
         final String profilerVersion;
+        final String operatingSystem;
         final Date date;
 
         public Environment(Date date) {
-            this.date = date;
             this.profilerVersion = Version.getVersion();
+            this.operatingSystem = OperatingSystem.getId();
+            this.date = date;
         }
     }
 

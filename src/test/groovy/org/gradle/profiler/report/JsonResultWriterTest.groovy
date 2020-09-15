@@ -7,6 +7,7 @@ import org.gradle.profiler.BuildScenarioResultImpl
 import org.gradle.profiler.GradleBuildConfiguration
 import org.gradle.profiler.GradleBuildInvoker
 import org.gradle.profiler.GradleScenarioDefinition
+import org.gradle.profiler.OperatingSystem
 import org.gradle.profiler.Phase
 import org.gradle.profiler.RunTasksAction
 import org.gradle.profiler.ScenarioContext
@@ -103,6 +104,7 @@ class JsonResultWriterTest extends Specification {
         stringWriter.toString() == """{
   "environment": {
     "profilerVersion": "UNKNOWN",
+    "operatingSystem": "${OperatingSystem.getId()}",
     "date": "2020-09-13T12:26:40Z"
   },
   "scenarios": [
