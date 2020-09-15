@@ -36,12 +36,12 @@ public class StudioGradleClient implements GradleClient {
         System.out.println("* Main class: " + launchConfiguration.getMainClass());
 
         server = new Server("agent");
-        studioProcess = startStudio(launchConfiguration, studioInstallDir, server);
+        studioProcess = startStudio(launchConfiguration, studioInstallDir, invocationSettings, server);
         agentConnection = server.waitForIncoming(Duration.ofMinutes(1));
         agentConnection.send(new ConnectionParameters(buildConfiguration.getGradleHome()));
     }
 
-    private CommandExec.RunHandle startStudio(LaunchConfiguration launchConfiguration, Path studioInstallDir, Server server) {
+    private CommandExec.RunHandle startStudio(LaunchConfiguration launchConfiguration, Path studioInstallDir, InvocationSettings invocationSettings, Server server) {
         List<String> commandLine = new ArrayList<>();
         commandLine.add(launchConfiguration.getJavaCommand().toString());
         commandLine.add("-cp");
@@ -54,6 +54,7 @@ public class StudioGradleClient implements GradleClient {
         commandLine.add("java.base/jdk.internal.misc=ALL-UNNAMED");
         commandLine.add("-Xbootclasspath/a:" + Joiner.on(File.pathSeparator).join(launchConfiguration.getSharedJars()));
         commandLine.add(launchConfiguration.getMainClass());
+        commandLine.add(invocationSettings.getProjectDir().toString());
         System.out.println("* Using command line: " + commandLine);
 
         return new CommandExec().inDir(studioInstallDir.toFile()).start(commandLine);
