@@ -3,7 +3,6 @@ package org.gradle.profiler.report
 import com.google.gson.Gson
 import org.gradle.profiler.BuildAction
 import org.gradle.profiler.BuildContext
-import org.gradle.profiler.BuildMutator
 import org.gradle.profiler.BuildScenarioResultImpl
 import org.gradle.profiler.GradleBuildConfiguration
 import org.gradle.profiler.GradleBuildInvoker
@@ -11,6 +10,7 @@ import org.gradle.profiler.GradleScenarioDefinition
 import org.gradle.profiler.Phase
 import org.gradle.profiler.RunTasksAction
 import org.gradle.profiler.ScenarioContext
+import org.gradle.profiler.mutations.ApplyAbiChangeToKotlinSourceFileMutator
 import org.gradle.profiler.result.BuildInvocationResult
 import org.gradle.profiler.result.Sample
 import org.gradle.util.GradleVersion
@@ -39,6 +39,8 @@ class JsonResultWriterTest extends Specification {
         def releaseOutputDir = tmpDir.newFolder("output-dir-release")
         def debugOutputDir = tmpDir.newFolder("output-dir-debug")
         def gradleVersion = GradleVersion.version("6.7")
+        def sourceFile = tmpDir.newFile("Source.kt")
+        def mutator = new ApplyAbiChangeToKotlinSourceFileMutator(sourceFile)
 
         def config = new GradleBuildConfiguration(
             gradleVersion,
@@ -57,7 +59,7 @@ class JsonResultWriterTest extends Specification {
             BuildAction.NO_OP,
             ["-Palma=release"],
             ["org.gradle.test": "true"],
-            { -> BuildMutator.NOOP },
+            { -> mutator },
             2,
             4,
             releaseOutputDir,
@@ -74,7 +76,7 @@ class JsonResultWriterTest extends Specification {
             BuildAction.NO_OP,
             ["-Palma=debug"],
             ["org.gradle.test": "true"],
-            { -> BuildMutator.NOOP },
+            { -> mutator },
             2,
             4,
             debugOutputDir,
@@ -117,6 +119,7 @@ class JsonResultWriterTest extends Specification {
         "action": "run tasks :assemble",
         "cleanup": "do nothing",
         "invoker": "Tooling API",
+        "mutator": ${escape("ApplyAbiChangeToKotlinSourceFileMutator(${sourceFile.absolutePath})")},
         "args": [
           "-Palma\\u003drelease"
         ],
@@ -216,6 +219,7 @@ class JsonResultWriterTest extends Specification {
         "action": "run tasks :assembleDebug",
         "cleanup": "do nothing",
         "invoker": "Tooling API",
+        "mutator": ${escape("ApplyAbiChangeToKotlinSourceFileMutator(${sourceFile.absolutePath})")},
         "args": [
           "-Palma\\u003ddebug"
         ],
