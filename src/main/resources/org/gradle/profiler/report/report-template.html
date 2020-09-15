@@ -7,20 +7,36 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.13/css/select2.min.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.14.0/css/all.min.css">
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Roboto+Mono:wght@300&display=swap">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Lato:wght@400;700&display=swap">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/vue/2.6.12/vue.min.js"></script>
-    <script src='https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.9.3/Chart.bundle.min.js'></script>
-    <script src='https://cdn.jsdelivr.net/npm/chartjs-plugin-crosshair@1.1.6'></script>
+    <script src='https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.0.0-beta/chart.min.js'></script>
     <style type="text/css">
+body {
+    font-family: 'Lato', sans-serif;
+    font-size: 12px;
+}
 #data-table {
     overflow-x: scroll;
-    font-size: 0.8em;
 }
 th {
     font-size: larger;
     text-align: center;
 }
-td {
+.title {
+    font-weight: bold;
+}
+.data {
     font-family: 'Roboto Mono', monospace;
+    white-space: nowrap;
+}
+td.title div {
+    width: 400px;
+    overflow-x: scroll;
+}
+td .btn {
+    font-size: 10px;
+    padding: 0.2em 0.5em 0.2em 0.5em;
+    float: right;
 }
 td.numeric {
     text-align: right;
@@ -33,8 +49,14 @@ td.diff {
 td.clickable {
     cursor: pointer;
 }
-td.clickable:hover {
-    color: blue;
+td.clickable .selection-icon {
+    width: 1em;
+}
+td.clickable:hover .selection-icon::before {
+    content: "\f00c";
+}
+td.clickable .selection-icon.selected::before {
+    content: "\f14a";
 }
 td.WARM_UP {
     background-color: #fff8ee;
@@ -92,9 +114,6 @@ footer {
                         <thead>
                             <tr>
                                 <th>Scenario</th>
-                                <th>Version</th>
-                                <th>Tasks</th>
-                                <th></th>
                                 <th>Sample</th>
                                 <th>Mean</th>
                                 <th>Min</th>
@@ -111,21 +130,36 @@ footer {
                             <template v-for="scenario in benchmarkResult.scenarios">
                                 <template v-for="(sample, index) in scenario.samples">
                                     <tr>
-                                        <td v-if="index === 0" :rowspan="scenario.samples.length">{{ scenario.definition.title }}</td>
-                                        <td v-if="index === 0" :rowspan="scenario.samples.length">{{ scenario.definition.buildTool }}</td>
-                                        <td v-if="index === 0" :rowspan="scenario.samples.length">{{ scenario.definition.tasks }}</td>
-                                        <td class="clickable" @click="select(sample)" :style="{ color: sample.color, visibility: sample.selected ? 'visible' : 'hidden' }"><i class="fa fa-check-square"></i></td>
-                                        <td class="clickable" @click="select(sample)" :style="{ color: sample.color }">{{ sample.name }}</td>
-                                        <td class="numeric">{{ calc('mean', sample, scenario) | numeric }}</td>
-                                        <td class="numeric">{{ calc('p25', sample, scenario) | numeric }}</td>
-                                        <td class="numeric">{{ calc('min', sample, scenario) | numeric }}</td>
-                                        <td class="numeric">{{ calc('median', sample, scenario) | numeric }}</td>
-                                        <td class="numeric">{{ calc('p75', sample, scenario) | numeric }}</td>
-                                        <td class="numeric">{{ calc('max', sample, scenario) | numeric }}</td>
-                                        <td class="numeric">{{ calc('stddev', sample, scenario) | numeric }}</td>
-                                        <td class="numeric">{{ sample.confidence | percent }}</td>
+                                        <td class="title" v-if="index === 0" :rowspan="scenario.samples.length">
+                                            <div>
+                                                <button class="btn btn-light" @click="console.log(scenario); scenario.showDetails = !scenario.showDetails"><i class="fa fa-ellipsis-h"></i></button>
+                                                <span class="title">{{ scenario.definition.title }}</span>
+                                                <ul v-show="scenario.showDetails">
+                                                    <li>
+                                                        <span class="description">Build tool:</span>
+                                                        <span class="data">{{ scenario.definition.buildTool }}</span>
+                                                    </li>
+                                                    <li>
+                                                        <span class="description">Tasks:</span>
+                                                        <span class="data">{{ scenario.definition.tasks }}</span>
+                                                    </li>
+                                                </ul>
+                                            </div>
+                                        </td>
+                                        <td class="clickable data" @click="select(sample)" :style="{ color: sample.color }">
+                                            <span class="fa selection-icon" :class="{ selected: sample.selected }" :style="{ color: sample.color }"></span>
+                                            <span>{{ sample.name }}</span>
+                                        </td>
+                                        <td class="numeric data">{{ calc('mean', sample, scenario) | numeric }}</td>
+                                        <td class="numeric data">{{ calc('p25', sample, scenario) | numeric }}</td>
+                                        <td class="numeric data">{{ calc('min', sample, scenario) | numeric }}</td>
+                                        <td class="numeric data">{{ calc('median', sample, scenario) | numeric }}</td>
+                                        <td class="numeric data">{{ calc('p75', sample, scenario) | numeric }}</td>
+                                        <td class="numeric data">{{ calc('max', sample, scenario) | numeric }}</td>
+                                        <td class="numeric data">{{ calc('stddev', sample, scenario) | numeric }}</td>
+                                        <td class="numeric data">{{ sample.confidence | percent }}</td>
                                         <template v-for="iteration in scenario.iterations">
-                                            <td class="numeric" :class="iteration.phase" :title="iteration.phase + ' #' + iteration.iteration">{{ iteration.values[sample.name] | numeric }}</td>
+                                            <td class="numeric data" :class="iteration.phase" :title="iteration.phase + ' #' + iteration.iteration">{{ iteration.values[sample.name] | numeric }}</td>
                                         </template>
                                     </tr>
                                 </template>
@@ -221,12 +255,13 @@ new Vue({
                         return {
                             label: sample.name,
                             showLine: true,
-                            steppedLine: "middle",
+                            stepped: "middle",
                             pointRadius: 0,
                             pointHitRadius: 10,
                             hoverRadius: 6,
                             fill: false,
                             borderWidth: sample.thickness,
+                            backgroundColor: sample.color,
                             pointBackgroundColor: sample.color,
                             borderColor: sample.color,
                             data: data
@@ -254,12 +289,13 @@ new Vue({
         }
     },
     filters: {
-        "numeric": (value) => millisecondFormat.format(value).replace(/\s+/g, "\u00A0"),
+        "numeric": (value) => millisecondFormat.format(value),
         "percent": (value) => (value * 100).toFixed(2) + "%"
     },
     beforeCreate: function() {
         // Initialize sample config
         benchmarkResult.scenarios.forEach((scenario, scenarioIndex, scenarios) => {
+            scenario.showDetails = false;
             scenario.samples.forEach((sample, sampleIndex, samples) => {
                 sample.color = `hsl(${scenarioIndex * 360 / scenarios.length}, ${100 - 80 * sampleIndex / samples.length}%, ${30 + 40 * sampleIndex / samples.length}%)`;
                 sample.thickness = sampleIndex === 0 ? 3 : 2;
@@ -279,6 +315,9 @@ new Vue({
                 datasets: this.chartData
             },
             options: {
+                font: {
+                    family: "Roboto Mono"
+                },
                 plugins: {
                     crosshair: {
                         zoom: {
@@ -304,18 +343,16 @@ new Vue({
                     itemSort: (a, b) => b.yLabel - a.yLabel,
                     callbacks: {
                         title: (tooltips, data) => `Build #${tooltips[0].label}`,
-                        label: (tooltip, data) => millisecondFormat.format(tooltip.yLabel) + " – " + data.datasets[tooltip.datasetIndex].label
+                        label: (context) => millisecondFormat.format(context.dataPoint.y) + " – " + context.dataset.label
                     }
                 },
                 hover: {
                     intersect: false
                 },
                 scales: {
-                    yAxes: [{
-                        ticks: {
-                            min: 0
-                        }
-                    }]
+                    y: {
+                        beginAtZero: true
+                    }
                 }
             }
         });
