@@ -1,6 +1,7 @@
 {
   "environment": {
-    "profilerVersion": "0.15.0-alpha2"
+    "profilerVersion": "0.15.0-alpha2",
+    "date": "2020-09-13T12:26:40Z"
   },
   "scenarios": [
     {

@@ -98,11 +98,12 @@ class JsonResultWriterTest extends Specification {
         result2.accept(new GradleInvocationResult(scenarioContext2.withBuild(Phase.MEASURE, 2),  80, 185))
 
         when:
-        writer.write([result1, result2], stringWriter)
+        writer.write([result1, result2], new Date(1600000000000), stringWriter)
         then:
         stringWriter.toString() == """{
   "environment": {
-    "profilerVersion": "UNKNOWN"
+    "profilerVersion": "UNKNOWN",
+    "date": "2020-09-13T12:26:40Z"
   },
   "scenarios": [
     {
@@ -327,7 +328,7 @@ class JsonResultWriterTest extends Specification {
         @Delegate
         private final ScenarioContext scenario
         final Phase phase
-        final int iteration;
+        final int iteration
         final String uniqueBuildId
         final String displayName
 

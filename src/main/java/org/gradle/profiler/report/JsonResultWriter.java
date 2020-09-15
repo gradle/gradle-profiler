@@ -5,8 +5,10 @@ import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
+import com.google.gson.JsonPrimitive;
 import com.google.gson.JsonSerializationContext;
 import com.google.gson.JsonSerializer;
+import com.google.gson.internal.bind.util.ISO8601Utils;
 import org.gradle.profiler.GradleScenarioDefinition;
 import org.gradle.profiler.ScenarioDefinition;
 import org.gradle.profiler.Version;
@@ -16,19 +18,24 @@ import org.gradle.profiler.result.Sample;
 import javax.annotation.OverridingMethodsMustInvokeSuper;
 import java.io.Writer;
 import java.lang.reflect.Type;
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
 import java.time.Duration;
+import java.util.Date;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 
 public class JsonResultWriter {
 
     private final boolean pretty;
+    private final DateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSZ", Locale.US);
 
     public JsonResultWriter(boolean pretty) {
         this.pretty = pretty;
     }
 
-    public void write(List<? extends BuildScenarioResult<?>> scenarios, Writer writer) {
+    public void write(List<? extends BuildScenarioResult<?>> scenarios, Date reportDate, Writer writer) {
         GsonBuilder builder = new GsonBuilder();
         if (pretty) {
             builder.setPrettyPrinting();
@@ -37,14 +44,17 @@ public class JsonResultWriter {
             .registerTypeHierarchyAdapter(BuildScenarioResult.class, (JsonSerializer<? extends BuildScenarioResult<?>>) this::serializeScenarioResult)
             .registerTypeHierarchyAdapter(ScenarioDefinition.class, new ScenarioSerializer<>())
             .registerTypeHierarchyAdapter(GradleScenarioDefinition.class, new GradleScenarioSerializer())
+            .registerTypeAdapter(Date.class, (JsonSerializer<Date>) (date, type, context) -> new JsonPrimitive(ISO8601Utils.format(date)))
             .create();
-        gson.toJson(new Output(new Environment(), scenarios), writer);
+        gson.toJson(new Output(new Environment(reportDate), scenarios), writer);
     }
 
     private static class Environment {
         final String profilerVersion;
+        final Date date;
 
-        public Environment() {
+        public Environment(Date date) {
+            this.date = date;
             this.profilerVersion = Version.getVersion();
         }
     }
