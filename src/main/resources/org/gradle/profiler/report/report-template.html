@@ -29,6 +29,15 @@ th {
     font-family: 'Roboto Mono', monospace;
     white-space: nowrap;
 }
+td.title div {
+    width: 400px;
+    overflow-x: scroll;
+}
+td .btn {
+    font-size: 10px;
+    padding: 0.2em 0.5em 0.2em 0.5em;
+    float: right;
+}
 td.numeric {
     text-align: right;
     padding-left: 1em;
@@ -116,18 +125,21 @@ footer {
                             <template v-for="scenario in benchmarkResult.scenarios">
                                 <template v-for="(sample, index) in scenario.samples">
                                     <tr>
-                                        <td v-if="index === 0" :rowspan="scenario.samples.length">
-                                            <div class="title">{{ scenario.definition.title }}</div>
-                                            <ul>
-                                                <li>
-                                                    <span class="title">Build tool:</span>
-                                                    <span class="data">{{ scenario.definition.buildTool }}</span>
-                                                </li>
-                                                <li>
-                                                    <span class="title">Tasks:</span>
-                                                    <span class="data">{{ scenario.definition.tasks }}</span>
-                                                </li>
-                                            </ul>
+                                        <td class="title" v-if="index === 0" :rowspan="scenario.samples.length">
+                                            <div>
+                                                <button class="btn btn-light" @click="console.log(scenario); scenario.showDetails = !scenario.showDetails"><i class="fa fa-ellipsis-h"></i></button>
+                                                <span class="title">{{ scenario.definition.title }}</span>
+                                                <ul v-show="scenario.showDetails">
+                                                    <li>
+                                                        <span class="description">Build tool:</span>
+                                                        <span class="data">{{ scenario.definition.buildTool }}</span>
+                                                    </li>
+                                                    <li>
+                                                        <span class="description">Tasks:</span>
+                                                        <span class="data">{{ scenario.definition.tasks }}</span>
+                                                    </li>
+                                                </ul>
+                                            </div>
                                         </td>
                                         <td class="clickable data" @click="select(sample)" :style="{ color: sample.color, visibility: sample.selected ? 'visible' : 'hidden' }"><i class="fa fa-check-square"></i></td>
                                         <td class="clickable data" @click="select(sample)" :style="{ color: sample.color }">{{ sample.name }}</td>
@@ -276,6 +288,7 @@ new Vue({
     beforeCreate: function() {
         // Initialize sample config
         benchmarkResult.scenarios.forEach((scenario, scenarioIndex, scenarios) => {
+            scenario.showDetails = false;
             scenario.samples.forEach((sample, sampleIndex, samples) => {
                 sample.color = `hsl(${scenarioIndex * 360 / scenarios.length}, ${100 - 80 * sampleIndex / samples.length}%, ${30 + 40 * sampleIndex / samples.length}%)`;
                 sample.thickness = sampleIndex === 0 ? 3 : 2;
