@@ -112,7 +112,7 @@ class ScenarioLoaderTest extends Specification {
             }
         """
         def settings1 = settings(GradleBuildInvoker.ToolingApi)
-        def settings2 = settings(GradleBuildInvoker.CliColdDaemon)
+        def settings2 = settings(GradleBuildInvoker.Cli)
 
         expect:
         def scenarios1 = loadScenarios(scenarioFile, settings1, Mock(GradleBuildConfigurationReader))
@@ -120,7 +120,7 @@ class ScenarioLoaderTest extends Specification {
         (scenarios1[1] as GradleScenarioDefinition).invoker == GradleBuildInvoker.ToolingApi
 
         def scenarios2 = loadScenarios(scenarioFile, settings2, Mock(GradleBuildConfigurationReader))
-        (scenarios2[0] as GradleScenarioDefinition).invoker == GradleBuildInvoker.CliColdDaemon
+        (scenarios2[0] as GradleScenarioDefinition).invoker == GradleBuildInvoker.Cli
         (scenarios2[1] as GradleScenarioDefinition).invoker == GradleBuildInvoker.ToolingApi
     }
 
@@ -184,9 +184,11 @@ class ScenarioLoaderTest extends Specification {
 
         expect:
         def cliCold = scenarios[0] as GradleScenarioDefinition
-        cliCold.invoker == GradleBuildInvoker.CliColdDaemon
+        cliCold.invoker.client == GradleClientSpec.GradleCli
+        cliCold.invoker.daemonReuse == GradleDaemonReuse.ColdDaemonOnly
         def cold = scenarios[1] as GradleScenarioDefinition
-        cold.invoker == GradleBuildInvoker.ToolingApiColdDaemon
+        cold.invoker.client == GradleClientSpec.ToolingApi
+        cold.invoker.daemonReuse == GradleDaemonReuse.ColdDaemonOnly
         def none = scenarios[2] as GradleScenarioDefinition
         none.invoker == GradleBuildInvoker.CliNoDaemon
         def warm = scenarios[3] as GradleScenarioDefinition

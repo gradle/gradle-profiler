@@ -9,17 +9,21 @@ import java.util.List;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
-public class CliInvoker extends GradleInvoker {
+public class CliGradleClient implements GradleInvoker, GradleClient {
     private final GradleBuildConfiguration gradleBuildConfiguration;
     private final File javaHome;
     private final File projectDir;
     private final boolean daemon;
 
-    public CliInvoker(GradleBuildConfiguration gradleBuildConfiguration, File javaHome, File projectDir, boolean daemon) {
+    public CliGradleClient(GradleBuildConfiguration gradleBuildConfiguration, File javaHome, File projectDir, boolean daemon) {
         this.gradleBuildConfiguration = gradleBuildConfiguration;
         this.javaHome = javaHome;
         this.projectDir = projectDir;
         this.daemon = daemon;
+    }
+
+    @Override
+    public void close() {
     }
 
     @Override

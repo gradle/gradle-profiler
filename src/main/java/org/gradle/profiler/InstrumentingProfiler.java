@@ -49,7 +49,7 @@ public abstract class InstrumentingProfiler extends Profiler {
         if (settings.getScenario().getInvoker().isReuseDaemon()) {
             return JvmArgsCalculator.DEFAULT;
         }
-        boolean captureSnapshotOnExit = settings.getScenario().getInvoker() == GradleBuildInvoker.CliNoDaemon;
+        boolean captureSnapshotOnExit = settings.getScenario().getInvoker().isDoesNotUseDaemon();
         return jvmArgsWithInstrumentation(settings, true, captureSnapshotOnExit);
     }
 
@@ -68,7 +68,7 @@ public abstract class InstrumentingProfiler extends Profiler {
     @Override
     public ProfilerController newController(String pid, ScenarioSettings settings) {
         SnapshotCapturingProfilerController controller = doNewController(settings);
-        if (settings.getScenario().getInvoker() == GradleBuildInvoker.CliNoDaemon) {
+        if (settings.getScenario().getInvoker().isDoesNotUseDaemon()) {
             return new SessionOnlyController(pid, controller);
         }
         if (settings.getScenario().getInvoker().isReuseDaemon()) {

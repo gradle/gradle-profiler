@@ -1,20 +1,21 @@
 package org.gradle.profiler;
 
 import org.gradle.tooling.BuildAction;
-import org.gradle.tooling.BuildActionExecuter;
-import org.gradle.tooling.GradleConnectionException;
-import org.gradle.tooling.LongRunningOperation;
-import org.gradle.tooling.ProjectConnection;
+import org.gradle.tooling.*;
 
 import java.util.List;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
-public class ToolingApiInvoker extends GradleInvoker {
+public class ToolingApiGradleClient implements GradleInvoker, GradleClient {
     private final ProjectConnection projectConnection;
 
-    public ToolingApiInvoker(ProjectConnection projectConnection) {
+    public ToolingApiGradleClient(ProjectConnection projectConnection) {
         this.projectConnection = projectConnection;
+    }
+
+    @Override
+    public void close() {
     }
 
     private static <T extends LongRunningOperation, R> R run(T operation, Function<T, R> function) {

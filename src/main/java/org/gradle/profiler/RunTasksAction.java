@@ -3,7 +3,7 @@ package org.gradle.profiler;
 import java.util.List;
 import java.util.stream.Collectors;
 
-public class RunTasksAction implements BuildAction {
+public class RunTasksAction extends GradleInvokerBuildAction {
     private final List<String> tasks;
 
     public RunTasksAction(List<String> tasks) {

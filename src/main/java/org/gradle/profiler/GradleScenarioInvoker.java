@@ -16,7 +16,6 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.function.Consumer;
 
-import static org.gradle.profiler.BuildStep.BUILD;
 import static org.gradle.profiler.BuildStep.CLEANUP;
 import static org.gradle.profiler.Phase.MEASURE;
 import static org.gradle.profiler.Phase.WARM_UP;
@@ -100,24 +99,12 @@ public class GradleScenarioInvoker extends ScenarioInvoker<GradleScenarioDefinit
             allBuildsGradleArgsCalculator.calculateGradleArgs(allBuildsGradleArgs);
             logGradleArgs(allBuildsGradleArgs);
 
-            GradleInvoker buildInvoker;
-            if (scenario.getInvoker() == GradleBuildInvoker.CliNoDaemon) {
-                buildInvoker = new CliInvoker(buildConfiguration, buildConfiguration.getJavaHome(), settings.getProjectDir(), false);
-            } else if (scenario.getInvoker() == GradleBuildInvoker.ToolingApi || scenario.getInvoker() == GradleBuildInvoker.ToolingApiColdDaemon) {
-                buildInvoker = new ToolingApiInvoker(projectConnection);
-            } else if (scenario.getInvoker() == GradleBuildInvoker.Cli || scenario.getInvoker() == GradleBuildInvoker.CliColdDaemon) {
-                buildInvoker = new CliInvoker(buildConfiguration, buildConfiguration.getJavaHome(), settings.getProjectDir(), true);
-            } else {
-                throw new IllegalArgumentException();
-            }
-            BuildAction beforeBuildAction;
-            if (scenario.getInvoker().isColdDaemon()) {
-                beforeBuildAction = new CleanupThenStopDaemon(cleanupAction, daemonControl, buildConfiguration);
-            } else {
-                beforeBuildAction = cleanupAction;
-            }
+            GradleClient gradleClient = scenario.getInvoker().getClient().create(buildConfiguration, settings, projectConnection);
 
-            BuildUnderTestInvoker invoker = new BuildUnderTestInvoker(allBuildsJvmArgs, allBuildsGradleArgs, buildInvoker, pidInstrumentation, buildOperationInstrumentation);
+            BuildUnderTestInvoker uninstrumented = new BuildUnderTestInvoker(allBuildsJvmArgs, allBuildsGradleArgs, gradleClient, pidInstrumentation, buildOperationInstrumentation);
+
+            BuildStepAction<?> cleanupStep = cleanupStep(uninstrumented, mutator, scenario, buildConfiguration);
+            BuildStepAction<GradleBuildInvocationResult> warmupBuildStep = buildStep(uninstrumented, scenario);
 
             mutator.beforeScenario(scenarioContext);
 
@@ -126,8 +113,8 @@ public class GradleScenarioInvoker extends ScenarioInvoker<GradleScenarioDefinit
 
             for (int iteration = 1; iteration <= scenario.getWarmUpCount(); iteration++) {
                 BuildContext buildContext = scenarioContext.withBuild(WARM_UP, iteration);
-                beforeBuild(buildContext, invoker, beforeBuildAction, mutator);
-                results = runMeasured(buildContext, mutator, () -> invoker.runBuild(buildContext, BUILD, scenario.getAction()), resultConsumer);
+                cleanupStep.run(buildContext, CLEANUP);
+                results = runMeasured(buildContext, mutator, warmupBuildStep, resultConsumer);
                 if (pid == null) {
                     pid = results.getDaemonPid();
                 } else {
@@ -152,44 +139,38 @@ public class GradleScenarioInvoker extends ScenarioInvoker<GradleScenarioDefinit
                 logGradleArgs(instrumentedBuildGradleArgs);
             }
 
-            BuildUnderTestInvoker instrumentedBuildInvoker = invoker.withJvmArgs(instrumentedBuildJvmArgs).withGradleArgs(instrumentedBuildGradleArgs);
+            BuildUnderTestInvoker instrumentedBuildInvoker = uninstrumented.withJvmArgs(instrumentedBuildJvmArgs).withGradleArgs(instrumentedBuildGradleArgs);
+            BuildStepAction<GradleBuildInvocationResult> measuredBuildStep = buildStep(instrumentedBuildInvoker, scenario);
+            RecordingBuildStepAction recordingBuildStep = new RecordingBuildStepAction(measuredBuildStep, cleanupStep, scenario, control);
 
             control.startSession();
             for (int i = 1; i <= scenario.getBuildCount(); i++) {
-                final int iteration = i;
-                BuildContext buildContext = scenarioContext.withBuild(MEASURE, iteration);
-                beforeBuild(buildContext, invoker, beforeBuildAction, mutator);
-                results = runMeasured(buildContext, mutator, () -> {
-                    if ((iteration == 1 || beforeBuildAction.isDoesSomething())) {
-                        try {
-                            control.startRecording();
-                        } catch (IOException | InterruptedException e) {
-                            throw new RuntimeException(e);
-                        }
-                    }
-
-                    GradleBuildInvocationResult result = instrumentedBuildInvoker.runBuild(buildContext, BUILD, scenario.getAction());
-
-                    if ((iteration == scenario.getBuildCount() || beforeBuildAction.isDoesSomething())) {
-                        try {
-                            control.stopRecording(result.getDaemonPid());
-                        } catch (IOException | InterruptedException e) {
-                            throw new RuntimeException(e);
-                        }
-                    }
-
-                    return result;
-                }, resultConsumer);
+                BuildContext buildContext = scenarioContext.withBuild(MEASURE, i);
+                cleanupStep.run(buildContext, CLEANUP);
+                results = runMeasured(buildContext, mutator, recordingBuildStep, resultConsumer);
             }
 
             control.stopSession();
             Objects.requireNonNull(results);
             checkPid(pid, results.getDaemonPid(), scenario.getInvoker());
+            gradleClient.close();
         } finally {
             mutator.afterScenario(scenarioContext);
             projectConnection.close();
             daemonControl.stop(buildConfiguration);
         }
+    }
+
+    private BuildStepAction<GradleBuildInvocationResult> buildStep(BuildUnderTestInvoker invoker, GradleScenarioDefinition scenario) {
+        return invoker.create(scenario.getAction());
+    }
+
+    private BuildStepAction<?> cleanupStep(BuildUnderTestInvoker invoker, BuildMutator buildMutator, GradleScenarioDefinition scenario, GradleBuildConfiguration buildConfiguration) {
+        BuildStepAction<GradleBuildInvocationResult> cleanupStep = invoker.create(scenario.getCleanupAction());
+        if (scenario.getInvoker().isShouldCleanUpDaemon()) {
+            cleanupStep = new StopDaemonAfterAction<>(cleanupStep, daemonControl, buildConfiguration);
+        }
+        return new RunCleanupStepAction<>(cleanupStep, buildMutator);
     }
 
     private void logGradleArgs(List<String> allBuildsGradleArgs) {
@@ -203,12 +184,6 @@ public class GradleScenarioInvoker extends ScenarioInvoker<GradleScenarioDefinit
         Logging.detailed().println("JVM args:");
         for (String jvmArg : allBuildsJvmArgs) {
             Logging.detailed().println("  " + jvmArg);
-        }
-    }
-
-    private void beforeBuild(BuildContext buildContext, BuildUnderTestInvoker invoker, BuildAction cleanupAction, BuildMutator mutator) {
-        if (cleanupAction.isDoesSomething()) {
-            runCleanup(buildContext, mutator, () -> invoker.runBuild(buildContext, CLEANUP, cleanupAction));
         }
     }
 
