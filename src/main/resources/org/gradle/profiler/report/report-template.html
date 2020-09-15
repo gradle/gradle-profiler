@@ -7,7 +7,7 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.13/css/select2.min.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.14.0/css/all.min.css">
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Roboto+Mono:wght@300&display=swap">
-    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Lato:wght@400;700&display=swap">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Lato:wght@300;400;700&display=swap">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/vue/2.6.12/vue.min.js"></script>
     <script src='https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.0.0-beta/chart.min.js'></script>
     <style type="text/css">
@@ -20,15 +20,23 @@ body {
 }
 th {
     font-size: 16px;
+}
+th.center {
     text-align: center;
+}
+th.dark, td.dark {
+    background-color: #f8f8f8;
+}
+tr:hover th.dark, tr:hover td.dark {
+    background-color: #e8e8e8;
 }
 tr.details {
     border-top: 1px solid #ddd;
     background-color: #eee;
 }
 span.title {
-    font-weight: bold;
     font-size: 16px;
+    font-weight: 300;
 }
 span.description {
     font-weight: bold;
@@ -38,13 +46,12 @@ span.description {
     font-family: 'Roboto Mono', monospace;
     white-space: nowrap;
 }
+td.details .btn {
+    font-size: 10px;
+    padding: 2px 4px 2px 4px;
+}
 td.title {
     white-space: nowrap;
-}
-td.title .btn {
-    font-size: 10px;
-    padding: 2px 5px 2px 5px;
-    margin-right: 2px;
 }
 td.numeric {
     text-align: right;
@@ -129,27 +136,30 @@ footer .env {
                     <table class='table table-sm table-hover'>
                         <thead>
                             <tr>
+                                <th></th>
                                 <th>Scenario</th>
-                                <th>Sample</th>
-                                <th>Mean</th>
-                                <th>Min</th>
-                                <th>P25</th>
-                                <th>Median</th>
-                                <th>P75</th>
-                                <th>Max</th>
-                                <th>Std.dev</th>
-                                <th>Confidence</th>
-                                <th :colspan="Math.max(...benchmarkResult.scenarios.map(scenario => scenario.iterations.length))">Builds</th>
+                                <th class="center">Sample</th>
+                                <th class="center">Mean</th>
+                                <th class="center dark">Min</th>
+                                <th class="center">P25</th>
+                                <th class="center dark">Median</th>
+                                <th class="center">P75</th>
+                                <th class="center dark">Max</th>
+                                <th class="center">Std.dev</th>
+                                <th class="center dark">Confidence</th>
+                                <th :colspan="Math.max(...benchmarkResult.scenarios.map(scenario => scenario.iterations.length))">Iterations</th>
                             </tr>
                         </thead>
                         <tbody>
                             <template v-for="scenario in benchmarkResult.scenarios">
                                 <template v-for="(sample, index) in scenario.samples">
                                     <tr>
-                                        <td class="title" v-if="index === 0" :rowspan="scenario.samples.length">
+                                        <td class="details" v-if="index === 0" :rowspan="scenario.samples.length">
                                             <button class="btn btn-light" @click="scenario.showDetails = !scenario.showDetails">
                                                 <span class="fa">{{ scenario.showDetails ? "&#xf068;" : "&#xf067;" }}</span>
                                             </button>
+                                        </td>
+                                        <td class="title" v-if="index === 0" :rowspan="scenario.samples.length">
                                             <span class="title">{{ scenario.definition.title }}</span>
                                         </td>
                                         <td class="clickable data" @click="select(sample)" :style="{ color: sample.color }">
@@ -157,13 +167,13 @@ footer .env {
                                             <span>{{ sample.name }}</span>
                                         </td>
                                         <td class="numeric data">{{ calc('mean', sample, scenario) | numeric }}</td>
+                                        <td class="numeric data dark">{{ calc('min', sample, scenario) | numeric }}</td>
                                         <td class="numeric data">{{ calc('p25', sample, scenario) | numeric }}</td>
-                                        <td class="numeric data">{{ calc('min', sample, scenario) | numeric }}</td>
-                                        <td class="numeric data">{{ calc('median', sample, scenario) | numeric }}</td>
+                                        <td class="numeric data dark">{{ calc('median', sample, scenario) | numeric }}</td>
                                         <td class="numeric data">{{ calc('p75', sample, scenario) | numeric }}</td>
-                                        <td class="numeric data">{{ calc('max', sample, scenario) | numeric }}</td>
+                                        <td class="numeric data dark">{{ calc('max', sample, scenario) | numeric }}</td>
                                         <td class="numeric data">{{ calc('stddev', sample, scenario) | numeric }}</td>
-                                        <td class="numeric data">{{ sample.confidence | percent }}</td>
+                                        <td class="numeric data dark">{{ sample.confidence | percent }}</td>
                                         <template v-for="iteration in scenario.iterations">
                                             <td class="numeric data" :class="iteration.phase" :title="iteration.phase + ' #' + iteration.iteration">{{ iteration.values[sample.name] | numeric }}</td>
                                         </template>
