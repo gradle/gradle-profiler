@@ -25,7 +25,7 @@ class BenchmarkIntegrationTest extends AbstractProfilerIntegrationTest {
         def lines = resultFile.lines
         lines.size() == totalLinesForExecutions(16)
         lines.get(0) == "scenario,default,default"
-        lines.get(1) == "version,${minimalSupportedGradleVersion},5.0"
+        lines.get(1) == "version,Gradle ${minimalSupportedGradleVersion},Gradle 5.0"
         lines.get(2) == "tasks,assemble,assemble"
         lines.get(3) == "value,execution,execution"
         lines.get(4).matches("warm-up build #1,\\d+,\\d+")
@@ -62,7 +62,7 @@ class BenchmarkIntegrationTest extends AbstractProfilerIntegrationTest {
         def lines = resultFile.lines
         lines.size() == totalLinesForExecutions(16)
         lines.get(0) == "scenario,default,default"
-        lines.get(1) == "version,${minimalSupportedGradleVersion},5.0"
+        lines.get(1) == "version,Gradle ${minimalSupportedGradleVersion},Gradle 5.0"
         lines.get(2) == "tasks,assemble,assemble"
         lines.get(3) == "value,execution,execution"
         lines.get(4).matches("warm-up build #1,\\d+,\\d+")
@@ -102,7 +102,7 @@ class BenchmarkIntegrationTest extends AbstractProfilerIntegrationTest {
         def lines = resultFile.lines
         lines.size() == totalLinesForExecutions(16)
         lines.get(0) == "scenario,default,default"
-        lines.get(1) == "version,${minimalSupportedGradleVersion},5.0"
+        lines.get(1) == "version,Gradle ${minimalSupportedGradleVersion},Gradle 5.0"
         lines.get(2) == "tasks,assemble,assemble"
         lines.get(3) == "value,execution,execution"
         lines.get(4).matches("warm-up build #1,,\\d+")

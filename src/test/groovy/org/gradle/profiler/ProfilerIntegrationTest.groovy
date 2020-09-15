@@ -340,7 +340,7 @@ println "<daemon: " + gradle.services.get(org.gradle.internal.environment.Gradle
         def lines = resultFile.lines
         lines.size() == totalLinesForExecutions(16)
         lines.get(0) == "scenario,assemble,assemble,help"
-        lines.get(1) == "version,3.0,${minimalSupportedGradleVersion},${minimalSupportedGradleVersion}"
+        lines.get(1) == "version,Gradle 3.0,Gradle ${minimalSupportedGradleVersion},Gradle ${minimalSupportedGradleVersion}"
         lines.get(2) == "tasks,assemble,assemble,help"
         lines.get(3) == "value,execution,execution,execution"
     }
@@ -381,7 +381,7 @@ println "<daemon: " + gradle.services.get(org.gradle.internal.environment.Gradle
         def lines = resultFile.lines
         lines.size() == totalLinesForExecutions(16)
         lines.get(0) == "scenario,xyz"
-        lines.get(1) == "version,${minimalSupportedGradleVersion}"
+        lines.get(1) == "version,Gradle ${minimalSupportedGradleVersion}"
         lines.get(2) == "tasks,default tasks"
         lines.get(3) == "value,execution"
     }
@@ -459,7 +459,7 @@ plugins.withId("idea") {
         def lines = resultFile.lines
         lines.size() == totalLinesForExecutions(16)
         lines.get(0) == "scenario,ideaModel,ideaModel"
-        lines.get(1) == "version,$minimalSupportedGradleVersion,$latestSupportedGradleVersion"
+        lines.get(1) == "version,Gradle $minimalSupportedGradleVersion,Gradle $latestSupportedGradleVersion"
         lines.get(2) == "tasks,model IdeaProject,model IdeaProject"
         lines.get(3) == "value,execution,execution"
     }
@@ -619,7 +619,7 @@ println "<daemon: " + gradle.services.get(org.gradle.internal.environment.Gradle
         def lines = resultFile.lines
         lines.size() == totalLinesForExecutions(16)
         lines.get(0) == "scenario,help"
-        lines.get(1) == "version,${minimalSupportedGradleVersion}"
+        lines.get(1) == "version,Gradle ${minimalSupportedGradleVersion}"
         lines.get(2) == "tasks,help"
         lines.get(3) == "value,execution"
         lines.get(4).matches("warm-up build #1,\\d+")
@@ -696,7 +696,7 @@ println "<dry-run: " + gradle.startParameter.dryRun + ">"
         def lines = resultFile.lines
         lines.size() == totalLinesForExecutions(2)
         lines.get(0) == "scenario,s1,s1,s2"
-        lines.get(1) == "version,3.0,${minimalSupportedGradleVersion},${minimalSupportedGradleVersion}"
+        lines.get(1) == "version,Gradle 3.0,Gradle ${minimalSupportedGradleVersion},Gradle ${minimalSupportedGradleVersion}"
         lines.get(2) == "tasks,assemble,assemble,clean assemble"
         lines.get(3) == "value,execution,execution,execution"
         lines.get(4).matches("warm-up build #1,\\d+,\\d+,\\d+")

@@ -1,21 +1,29 @@
 package org.gradle.profiler.report
 
-
+import com.google.gson.Gson
+import org.gradle.profiler.BuildAction
 import org.gradle.profiler.BuildContext
 import org.gradle.profiler.BuildMutator
 import org.gradle.profiler.BuildScenarioResultImpl
+import org.gradle.profiler.GradleBuildConfiguration
+import org.gradle.profiler.GradleBuildInvoker
+import org.gradle.profiler.GradleScenarioDefinition
 import org.gradle.profiler.Phase
+import org.gradle.profiler.RunTasksAction
 import org.gradle.profiler.ScenarioContext
-import org.gradle.profiler.ScenarioDefinition
-import org.gradle.profiler.Version
 import org.gradle.profiler.result.BuildInvocationResult
 import org.gradle.profiler.result.Sample
+import org.gradle.util.GradleVersion
+import org.junit.Rule
+import org.junit.rules.TemporaryFolder
 import spock.lang.Specification
 
 import java.time.Duration
-import java.util.function.Supplier
 
 class JsonResultWriterTest extends Specification {
+
+    @Rule TemporaryFolder tmpDir
+
     int counter
     def stringWriter = new StringWriter()
 
@@ -25,36 +33,100 @@ class JsonResultWriterTest extends Specification {
 
     def "can serialize scenario"() {
         def writer = new JsonResultWriter(true)
-        def scenario1 = new TestScenarioDefinition("release", "Assemble Release", ":assemble")
-        def scenario2 = new TestScenarioDefinition("debug", "Assemble Debug", ":assembleDebug")
+
+        def gradleHomeDir = tmpDir.newFolder("gradle-home")
+        def javaHomeDir = tmpDir.newFolder("java-home")
+        def releaseOutputDir = tmpDir.newFolder("output-dir-release")
+        def debugOutputDir = tmpDir.newFolder("output-dir-debug")
+        def gradleVersion = GradleVersion.version("6.7")
+
+        def config = new GradleBuildConfiguration(
+            gradleVersion,
+            gradleHomeDir,
+            javaHomeDir,
+            ["-Xmx512m"],
+            false
+        )
+
+        def scenario1 = new GradleScenarioDefinition(
+            "release",
+            "Assemble Release",
+            GradleBuildInvoker.ToolingApi,
+            config,
+            new RunTasksAction([":assemble"]),
+            BuildAction.NO_OP,
+            ["-Palma=release"],
+            ["org.gradle.test": "true"],
+            { -> BuildMutator.NOOP },
+            2,
+            4,
+            releaseOutputDir,
+            ["-Xmx1024m"],
+            ["some-build-op"]
+        )
+        def scenarioContext1 = new TestScenarioContext("release@0")
+        def scenario2 = new GradleScenarioDefinition(
+            "debug",
+            "Assemble Debug",
+            GradleBuildInvoker.ToolingApi,
+            config,
+            new RunTasksAction([":assembleDebug"]),
+            BuildAction.NO_OP,
+            ["-Palma=debug"],
+            ["org.gradle.test": "true"],
+            { -> BuildMutator.NOOP },
+            2,
+            4,
+            debugOutputDir,
+            ["-Xmx1024m"],
+            ["some-build-op"]
+        )
+        def scenarioContext2 = new TestScenarioContext("debug@1")
         def result1 = new BuildScenarioResultImpl<BuildInvocationResult>(scenario1, null, [BuildInvocationResult.EXECUTION_TIME, TestSample.INSTANCE])
-        result1.accept(new TestInvocationResult(scenario1.context.withBuild(Phase.WARM_UP, 1), 100, 120))
-        result1.accept(new TestInvocationResult(scenario1.context.withBuild(Phase.WARM_UP, 2),  80, 100))
-        result1.accept(new TestInvocationResult(scenario1.context.withBuild(Phase.MEASURE, 1),  75,  90))
-        result1.accept(new TestInvocationResult(scenario1.context.withBuild(Phase.MEASURE, 2),  70,  85))
-        result1.accept(new TestInvocationResult(scenario1.context.withBuild(Phase.MEASURE, 3),  72,  80))
-        result1.accept(new TestInvocationResult(scenario1.context.withBuild(Phase.MEASURE, 4),  68,  88))
+        result1.accept(new GradleInvocationResult(scenarioContext1.withBuild(Phase.WARM_UP, 1), 100, 120))
+        result1.accept(new GradleInvocationResult(scenarioContext1.withBuild(Phase.WARM_UP, 2),  80, 100))
+        result1.accept(new GradleInvocationResult(scenarioContext1.withBuild(Phase.MEASURE, 1),  75,  90))
+        result1.accept(new GradleInvocationResult(scenarioContext1.withBuild(Phase.MEASURE, 2),  70,  85))
+        result1.accept(new GradleInvocationResult(scenarioContext1.withBuild(Phase.MEASURE, 3),  72,  80))
+        result1.accept(new GradleInvocationResult(scenarioContext1.withBuild(Phase.MEASURE, 4),  68,  88))
         def result2 = new BuildScenarioResultImpl<BuildInvocationResult>(scenario2, result1, [BuildInvocationResult.EXECUTION_TIME, TestSample.INSTANCE])
-        result2.accept(new TestInvocationResult(scenario2.context.withBuild(Phase.WARM_UP, 1), 110, 220))
-        result2.accept(new TestInvocationResult(scenario2.context.withBuild(Phase.WARM_UP, 2),  90, 200))
-        result2.accept(new TestInvocationResult(scenario2.context.withBuild(Phase.MEASURE, 1),  85, 190))
-        result2.accept(new TestInvocationResult(scenario2.context.withBuild(Phase.MEASURE, 2),  80, 185))
+        result2.accept(new GradleInvocationResult(scenarioContext2.withBuild(Phase.WARM_UP, 1), 110, 220))
+        result2.accept(new GradleInvocationResult(scenarioContext2.withBuild(Phase.WARM_UP, 2),  90, 200))
+        result2.accept(new GradleInvocationResult(scenarioContext2.withBuild(Phase.MEASURE, 1),  85, 190))
+        result2.accept(new GradleInvocationResult(scenarioContext2.withBuild(Phase.MEASURE, 2),  80, 185))
 
         when:
         writer.write([result1, result2], stringWriter)
         then:
         stringWriter.toString() == """{
   "environment": {
-    "profilerVersion": "${Version.version}"
+    "profilerVersion": "UNKNOWN"
   },
   "scenarios": [
     {
       "definition": {
         "name": "release",
         "title": "Assemble Release",
-        "displayName": "Assemble Release",
-        "buildTool": "Test Tool",
+        "displayName": "Assemble Release using Gradle 6.7",
+        "buildTool": "Gradle 6.7",
         "tasks": ":assemble",
+        "version": "6.7",
+        "gradleHome": ${escape(gradleHomeDir.absolutePath)},
+        "javaHome": ${escape(javaHomeDir.absolutePath)},
+        "usesScanPlugin": false,
+        "action": "run tasks :assemble",
+        "cleanup": "do nothing",
+        "invoker": "Tooling API",
+        "args": [
+          "-Palma\\u003drelease"
+        ],
+        "jvmArgs": [
+          "-Xmx512m",
+          "-Xmx1024m"
+        ],
+        "systemProperties": {
+          "org.gradle.test": "true"
+        },
         "id": "release@0"
       },
       "samples": [
@@ -134,9 +206,26 @@ class JsonResultWriterTest extends Specification {
       "definition": {
         "name": "debug",
         "title": "Assemble Debug",
-        "displayName": "Assemble Debug",
-        "buildTool": "Test Tool",
+        "displayName": "Assemble Debug using Gradle 6.7",
+        "buildTool": "Gradle 6.7",
         "tasks": ":assembleDebug",
+        "version": "6.7",
+        "gradleHome": ${escape(gradleHomeDir.absolutePath)},
+        "javaHome": ${escape(javaHomeDir.absolutePath)},
+        "usesScanPlugin": false,
+        "action": "run tasks :assembleDebug",
+        "cleanup": "do nothing",
+        "invoker": "Tooling API",
+        "args": [
+          "-Palma\\u003ddebug"
+        ],
+        "jvmArgs": [
+          "-Xmx512m",
+          "-Xmx1024m"
+        ],
+        "systemProperties": {
+          "org.gradle.test": "true"
+        },
         "id": "debug@1"
       },
       "samples": [
@@ -202,54 +291,15 @@ class JsonResultWriterTest extends Specification {
 
         @Override
         Duration extractFrom(BuildInvocationResult result) {
-            return ((TestInvocationResult) result).testTime
+            return ((GradleInvocationResult) result).testTime
         }
     }
 
-    class TestScenarioDefinition extends ScenarioDefinition {
-        final ScenarioContext context
-        private final String tasks
-
-        TestScenarioDefinition(
-            String name,
-            String title = name,
-            String tasks,
-            Supplier<BuildMutator> buildMutator = { null },
-            int warmUpCount = 2,
-            int buildCount = 4,
-            File outputDir = null
-        ) {
-            super(name, title, buildMutator, warmUpCount, buildCount, outputDir)
-            this.context = new TestScenarioContext("${name}@${counter++}")
-            this.tasks = tasks
-        }
-
-        @Override
-        String getDisplayName() {
-            return getTitle()
-        }
-
-        @Override
-        String getProfileName() {
-            return null
-        }
-
-        @Override
-        String getBuildToolDisplayName() {
-            return "Test Tool"
-        }
-
-        @Override
-        String getTasksDisplayName() {
-            tasks
-        }
-    }
-
-    class TestInvocationResult extends BuildInvocationResult {
+    class GradleInvocationResult extends BuildInvocationResult {
         final Duration testTime
         final BuildContext context
 
-        TestInvocationResult(BuildContext context, long executionTime, long testTime) {
+        GradleInvocationResult(BuildContext context, long executionTime, long testTime) {
             super(context, Duration.ofMillis(executionTime))
             this.testTime = Duration.ofMillis(testTime)
             this.context = context
@@ -284,5 +334,9 @@ class JsonResultWriterTest extends Specification {
             this.uniqueBuildId = "${scenario.uniqueScenarioId}@${phase}@${iteration}"
             this.displayName = phase.displayBuildNumber(getIteration())
         }
+    }
+
+    private static String escape(String string) {
+        new Gson().toJson(string)
     }
 }
