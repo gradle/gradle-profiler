@@ -141,7 +141,9 @@ footer {
                                                 </ul>
                                             </div>
                                         </td>
-                                        <td class="clickable data" @click="select(sample)" :style="{ color: sample.color, visibility: sample.selected ? 'visible' : 'hidden' }"><i class="fa fa-check-square"></i></td>
+                                        <td class="clickable data" @click="select(sample)">
+                                            <i class="fa fa-check-square" :style="{ color: sample.color, visibility: sample.selected ? 'visible' : 'hidden' }"></i>
+                                        </td>
                                         <td class="clickable data" @click="select(sample)" :style="{ color: sample.color }">{{ sample.name }}</td>
                                         <td class="numeric data">{{ calc('mean', sample, scenario) | numeric }}</td>
                                         <td class="numeric data">{{ calc('p25', sample, scenario) | numeric }}</td>
