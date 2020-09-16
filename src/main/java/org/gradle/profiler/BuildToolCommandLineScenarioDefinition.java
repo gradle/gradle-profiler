@@ -5,7 +5,6 @@ import java.io.File;
 import java.io.PrintStream;
 import java.util.List;
 import java.util.function.Supplier;
-import java.util.stream.Collectors;
 
 public abstract class BuildToolCommandLineScenarioDefinition extends ScenarioDefinition {
     private final List<String> targets;
@@ -36,13 +35,13 @@ public abstract class BuildToolCommandLineScenarioDefinition extends ScenarioDef
     }
 
     public String getExecutablePath() {
-        String toolHomePath = toolHome == null ? System.getenv(getToolHomeEnvName()) : toolHome.getAbsolutePath();
+        String toolHomePath = getToolHome() == null ? System.getenv(getToolHomeEnvName()) : getToolHome().getAbsolutePath();
         return toolHomePath == null ? getExecutableName() : toolHomePath + "/bin/" + getExecutableName();
     }
 
     @Override
     public String getTasksDisplayName() {
-        return targets.stream().collect(Collectors.joining(" "));
+        return String.join(" ", targets);
     }
 
     public List<String> getTargets() {
