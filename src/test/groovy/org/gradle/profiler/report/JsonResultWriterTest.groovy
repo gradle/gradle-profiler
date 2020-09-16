@@ -20,6 +20,7 @@ import org.junit.rules.TemporaryFolder
 import spock.lang.Specification
 
 import java.time.Duration
+import java.time.Instant
 
 class JsonResultWriterTest extends Specification {
 
@@ -99,7 +100,7 @@ class JsonResultWriterTest extends Specification {
         result2.accept(new GradleInvocationResult(scenarioContext2.withBuild(Phase.MEASURE, 2),  80, 185))
 
         when:
-        writer.write([result1, result2], new Date(1600000000000), stringWriter)
+        writer.write([result1, result2], Instant.ofEpochMilli(1600000000000), stringWriter)
         then:
         stringWriter.toString() == """{
   "environment": {

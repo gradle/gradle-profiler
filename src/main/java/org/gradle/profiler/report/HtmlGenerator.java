@@ -7,7 +7,7 @@ import java.io.BufferedWriter;
 import java.io.File;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
-import java.util.Date;
+import java.time.Instant;
 
 public class HtmlGenerator extends AbstractGenerator {
     private static final String JSON_PATTERN = "@@BENCHMARK_RESULT_JSON@@";
@@ -22,7 +22,7 @@ public class HtmlGenerator extends AbstractGenerator {
             @Override
             public boolean processLine(String line) throws IOException {
                 if (line.equals(JSON_PATTERN)) {
-                    new JsonResultWriter(true).write(benchmarkResult.getScenarios(), new Date(), writer);
+                    new JsonResultWriter(true).write(benchmarkResult.getScenarios(), Instant.now(), writer);
                 } else {
                     writer.write(line);
                 }

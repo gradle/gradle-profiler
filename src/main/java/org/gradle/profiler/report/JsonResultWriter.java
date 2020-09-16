@@ -8,7 +8,6 @@ import com.google.gson.JsonObject;
 import com.google.gson.JsonPrimitive;
 import com.google.gson.JsonSerializationContext;
 import com.google.gson.JsonSerializer;
-import com.google.gson.internal.bind.util.ISO8601Utils;
 import org.gradle.profiler.GradleScenarioDefinition;
 import org.gradle.profiler.OperatingSystem;
 import org.gradle.profiler.ScenarioDefinition;
@@ -19,24 +18,21 @@ import org.gradle.profiler.result.Sample;
 import javax.annotation.OverridingMethodsMustInvokeSuper;
 import java.io.Writer;
 import java.lang.reflect.Type;
-import java.text.DateFormat;
-import java.text.SimpleDateFormat;
 import java.time.Duration;
-import java.util.Date;
+import java.time.format.DateTimeFormatter;
+import java.time.temporal.Temporal;
 import java.util.List;
-import java.util.Locale;
 import java.util.Map;
 
 public class JsonResultWriter {
 
     private final boolean pretty;
-    private final DateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSZ", Locale.US);
 
     public JsonResultWriter(boolean pretty) {
         this.pretty = pretty;
     }
 
-    public void write(List<? extends BuildScenarioResult<?>> scenarios, Date reportDate, Writer writer) {
+    public void write(List<? extends BuildScenarioResult<?>> scenarios, Temporal reportDate, Writer writer) {
         GsonBuilder builder = new GsonBuilder();
         if (pretty) {
             builder.setPrettyPrinting();
@@ -45,7 +41,7 @@ public class JsonResultWriter {
             .registerTypeHierarchyAdapter(BuildScenarioResult.class, (JsonSerializer<? extends BuildScenarioResult<?>>) this::serializeScenarioResult)
             .registerTypeHierarchyAdapter(ScenarioDefinition.class, new ScenarioSerializer<>())
             .registerTypeHierarchyAdapter(GradleScenarioDefinition.class, new GradleScenarioSerializer())
-            .registerTypeAdapter(Date.class, (JsonSerializer<Date>) (date, type, context) -> new JsonPrimitive(ISO8601Utils.format(date)))
+            .registerTypeHierarchyAdapter(Temporal.class, (JsonSerializer<Temporal>) (date, type, context) -> new JsonPrimitive(DateTimeFormatter.ISO_INSTANT.format(date)))
             .create();
         gson.toJson(new Output(new Environment(reportDate), scenarios), writer);
     }
@@ -53,9 +49,9 @@ public class JsonResultWriter {
     private static class Environment {
         final String profilerVersion;
         final String operatingSystem;
-        final Date date;
+        final Temporal date;
 
-        public Environment(Date date) {
+        public Environment(Temporal date) {
             this.profilerVersion = Version.getVersion();
             this.operatingSystem = OperatingSystem.getId();
             this.date = date;
