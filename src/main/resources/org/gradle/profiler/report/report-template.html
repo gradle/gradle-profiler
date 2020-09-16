@@ -186,6 +186,10 @@ footer .env {
                                     <td :colspan="scenario.iterations.length + 10">
                                         <ul>
                                             <li>
+                                                <span class="description">Scenario name:</span>
+                                                <span class="data">{{ scenario.definition.name }}</span>
+                                            </li>
+                                            <li>
                                                 <span class="description">Build tool:</span>
                                                 <span class="data">{{ scenario.definition.buildTool }}</span>
                                             </li>
