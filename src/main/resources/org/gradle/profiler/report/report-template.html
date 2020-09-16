@@ -164,6 +164,7 @@ footer .env {
                                         </td>
                                         <td class="title" v-if="index === 0" :rowspan="scenario.samples.length">
                                             <span class="title">{{ scenario.definition.title }}</span>
+                                            <span class="title" v-if="showBuildTool">({{ scenario.definition.buildTool }})</span>
                                         </td>
                                         <td class="clickable data" @click="select(sample)" :style="{ color: sample.color }">
                                             <span class="fa selection-icon" :class="{ selected: sample.selected }" :style="{ color: sample.color }"></span>
@@ -311,6 +312,9 @@ Array.prototype.stddev = function() {
     const mean = this.mean();
     return Math.sqrt(this.map(x => Math.pow(x - mean, 2)).mean());
 }
+Array.prototype.unique = function() {
+    return [...new Set(this)];
+}
 const millisecondFormat = new Intl.NumberFormat(navigator.language, {style: 'unit', unit: 'millisecond', unitDisplay: 'short', minimumFractionDigits: 2, maximumFractionDigits: 2});
 
 function measuredIterations(scenario) {
@@ -336,6 +340,9 @@ new Vue({
         benchmarkResult: benchmarkResult
     },
     computed: {
+        showBuildTool: function() {
+            return this.benchmarkResult.scenarios.map(scenario => scenario.definition.buildTool).unique().length > 1;
+        },
         chartData: function() {
             const sorted = this.options.order === "sorted";
             return this.benchmarkResult.scenarios
