@@ -219,7 +219,7 @@ class JsonResultWriterTest extends Specification {
             int buildCount = 4,
             File outputDir = null
         ) {
-            super(name, title, buildMutator, warmUpCount, buildCount, outputDir, null)
+            super(name, title, buildMutator, warmUpCount, buildCount, outputDir)
             this.context = new TestScenarioContext("${name}@${counter++}")
             this.tasks = tasks
         }
