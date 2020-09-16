@@ -96,28 +96,25 @@ tasks.processResources {
     }
 }
 
-tasks.register<ProcessResources>("testHtmlReportWithoutOps") {
-    val dataFile = file("src/test/resources/org/gradle/profiler/report/example.json")
-    inputs.file(dataFile)
+val testReports = mapOf(
+    "testHtmlReportWithoutOps" to "example",
+    "testHtmlReportWithOps" to "example-with-build-operations",
+    "testHtmlReportRegression" to "example-regression"
+)
+testReports.forEach { taskName, fileName ->
+    tasks.register<ProcessResources>(taskName) {
+        val dataFile = file("src/test/resources/org/gradle/profiler/report/${fileName}.json")
+        inputs.file(dataFile)
 
-    from("src/main/resources/org/gradle/profiler/report")
-    into("$buildDir/test-html-report")
-    rename("report-template.html", "test-report.html")
-    filter { line -> if (line == "@@BENCHMARK_RESULT_JSON@@") dataFile.readText() else line }
-}
-
-tasks.register<ProcessResources>("testHtmlReportWithOps") {
-    val dataFile = file("src/test/resources/org/gradle/profiler/report/example-with-build-operations.json")
-    inputs.file(dataFile)
-
-    from("src/main/resources/org/gradle/profiler/report")
-    into("$buildDir/test-html-report")
-    rename("report-template.html", "test-report-with-build-operations.html")
-    filter { line -> if (line == "@@BENCHMARK_RESULT_JSON@@") dataFile.readText() else line }
+        from("src/main/resources/org/gradle/profiler/report")
+        into("$buildDir/test-html-report")
+        rename("report-template.html", "test-report-${fileName}.html")
+        filter { line -> if (line == "@@BENCHMARK_RESULT_JSON@@") dataFile.readText() else line }
+    }
 }
 
 tasks.register("testHtmlReports") {
-    dependsOn("testHtmlReportWithoutOps", "testHtmlReportWithOps")
+    dependsOn(testReports.keys)
 }
 
 val profilerDistribution = artifacts.add("archives", tasks.distZip.flatMap { it.archiveFile }) {
