@@ -155,7 +155,10 @@ footer .env {
                                 <template v-for="(sample, index) in scenario.samples">
                                     <tr>
                                         <td class="details" v-if="index === 0" :rowspan="scenario.samples.length">
-                                            <button class="btn btn-light" @click="scenario.showDetails = !scenario.showDetails">
+                                            <button
+                                                class="btn btn-light"
+                                                @click="scenario.showDetails = !scenario.showDetails"
+                                                :title="scenario.showDetails ? 'Hide details' : 'Show details'">
                                                 <span class="fa">{{ scenario.showDetails ? "&#xf068;" : "&#xf067;" }}</span>
                                             </button>
                                         </td>
