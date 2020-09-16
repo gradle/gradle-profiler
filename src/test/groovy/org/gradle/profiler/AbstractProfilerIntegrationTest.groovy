@@ -157,7 +157,7 @@ genrule(
             def lines = this.lines
             assert lines.size() == totalLinesForExecutions(16)
             assert lines.get(0) == "scenario,${name}"
-            assert lines.get(1) == "version,${gradleVersion}"
+            assert lines.get(1) == "version,Gradle ${gradleVersion}"
             assert lines.get(2) == "tasks,${tasks.join(", ")}"
             assert lines.get(3) == "value,execution"
             assert lines.get(4).matches("warm-up build #1,\\d+")
@@ -177,7 +177,7 @@ genrule(
             def lines = this.lines
             assert lines.size() == totalLinesForExecutions(11)
             assert lines.get(0) == "scenario,${name}"
-            assert lines.get(1) == "version,${gradleVersion}"
+            assert lines.get(1) == "version,Gradle ${gradleVersion}"
             assert lines.get(2) == "tasks,${tasks.join(", ")}"
             assert lines.get(3) == "value,execution"
             assert lines.get(4).matches("warm-up build #1,\\d+")
@@ -196,7 +196,7 @@ genrule(
             def lines = this.lines
             assert lines.size() == totalLinesForExecutions(11)
             assert lines.get(0) == "scenario,${name}"
-            assert lines.get(1) == "version,${gradleVersion}"
+            assert lines.get(1) == "version,Gradle ${gradleVersion}"
             assert lines.get(2) == "tasks,${tasks.join(", ")}"
             assert lines.get(3) == "value,execution"
             assert lines.get(4).matches("warm-up build #1,\\d+")

@@ -37,7 +37,7 @@ class BuildOperationInstrumentationIntegrationTest extends AbstractProfilerInteg
         def lines = resultFile.lines
         lines.size() == totalLinesForExecutions(16)
         lines.get(0) == "scenario,default,default"
-        lines.get(1) == "version,${gradleVersion},${gradleVersion}"
+        lines.get(1) == "version,Gradle ${gradleVersion},Gradle ${gradleVersion}"
         lines.get(2) == "tasks,assemble,assemble"
         lines.get(3) == "value,execution,task start"
         lines.get(4).matches("warm-up build #1,\\d+,\\d+")
@@ -97,7 +97,7 @@ class BuildOperationInstrumentationIntegrationTest extends AbstractProfilerInteg
         def lines = resultFile.lines
         lines.size() == totalLinesForExecutions(16)
         lines.get(0) == "scenario,default,default"
-        lines.get(1) == "version,${gradleVersion},${gradleVersion}"
+        lines.get(1) == "version,Gradle ${gradleVersion},Gradle ${gradleVersion}"
         lines.get(2) == "tasks,assemble,assemble"
         lines.get(3) == "value,execution,SnapshotTaskInputsBuildOperationType"
 
@@ -171,7 +171,7 @@ class BuildOperationInstrumentationIntegrationTest extends AbstractProfilerInteg
         def lines = resultFile.lines
         assertThat(lines.size(), equalTo(totalLinesForExecutions(16)))
         lines.get(0) == "scenario,default,default,default"
-        lines.get(1) == "version,${gradleVersion},${gradleVersion},${gradleVersion}"
+        lines.get(1) == "version,Gradle ${gradleVersion},Gradle ${gradleVersion},Gradle ${gradleVersion}"
         lines.get(2) == "tasks,assemble,assemble,assemble"
         lines.get(3) == "value,execution,task start,SnapshotTaskInputsBuildOperationType"
         lines.get(4).matches("warm-up build #1,\\d+,\\d+,\\d+")
