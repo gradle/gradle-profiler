@@ -91,13 +91,4 @@ public abstract class ScenarioDefinition {
 
     protected void printDetail(PrintStream out) {
     }
-//
-//    protected String getExecutableName() {
-//        return getBuildToolDisplayName().toLowerCase();
-//    }
-//
-//    public String getExecutablePath() {
-//        String toolHomePath = toolHome == null ? System.getenv(getBuildToolDisplayName().toUpperCase() + "_HOME") : getToolHome().getAbsolutePath();
-//        return toolHomePath == null ? getExecutableName() : toolHomePath + "/bin/" + getExecutableName();
-//    }
 }
