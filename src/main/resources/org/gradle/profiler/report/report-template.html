@@ -38,6 +38,9 @@ span.title {
     font-size: 16px;
     font-weight: 300;
 }
+span.title.version {
+    color: #aaa;
+}
 span.description {
     font-weight: bold;
 }
@@ -164,7 +167,7 @@ footer .env {
                                         </td>
                                         <td class="title" v-if="index === 0" :rowspan="scenario.samples.length">
                                             <span class="title">{{ scenario.definition.title }}</span>
-                                            <span class="title" v-if="showBuildTool">({{ scenario.definition.buildTool }})</span>
+                                            <span class="title version" v-if="showBuildTool">({{ scenario.definition.buildTool }})</span>
                                         </td>
                                         <td class="clickable data" @click="select(sample)" :style="{ color: sample.color }">
                                             <span class="fa selection-icon" :class="{ selected: sample.selected }" :style="{ color: sample.color }"></span>
