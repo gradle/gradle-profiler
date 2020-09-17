@@ -53,7 +53,11 @@ public class BuckScenarioDefinition extends BuildToolCommandLineScenarioDefiniti
 
     @Override
     protected String getExecutableName() {
-        return "buck";
+        if (OperatingSystem.isWindows()) {
+            return "buck.exe";
+        } else {
+            return "buck";
+        }
     }
 
     @Override
