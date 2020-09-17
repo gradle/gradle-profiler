@@ -172,15 +172,15 @@ footer .env {
                                             <span>{{ sample.name }}</span>
                                         </td>
                                         <td v-for="(operation, index) in OPERATIONS" class="numeric data" :class="{ dark: index %2 === 1 }">
-                                            <div>{{ sample[operation.name] | numeric }}</div>
+                                            <div>{{ sample[operation.name] | numeric }} {{ sample.unit }}</div>
                                             <template v-if="baseline && baseline !== scenario && baseline.samples.some(it => it.name === sample.name)">
-                                                <div class="diff">{{ sample[operation.name] - baseline.samples.find(it => it.name === sample.name)[operation.name] | diff }}</div>
+                                                <div class="diff">{{ sample[operation.name] - baseline.samples.find(it => it.name === sample.name)[operation.name] | diff }} {{ sample.unit }}</div>
                                                 <div class="diff">{{ (sample[operation.name] / baseline.samples.find(it => it.name === sample.name)[operation.name]) - 1 | percentDiff }}</div>
                                             </template>
                                         </td>
                                         <td class="numeric data dark">{{ sample.confidence | percent }}</td>
                                         <template v-for="iteration in scenario.iterations">
-                                            <td class="numeric data" :class="iteration.phase" :title="iteration.phase + ' #' + iteration.iteration">{{ iteration.values[sample.name] | numeric }}</td>
+                                            <td class="numeric data" :class="iteration.phase" :title="iteration.phase + ' #' + iteration.iteration">{{ iteration.values[sample.name] | numeric }} {{ sample.unit }}</td>
                                         </template>
                                     </tr>
                                 </template>
@@ -316,8 +316,8 @@ Array.prototype.stddev = function() {
 Array.prototype.unique = function() {
     return [...new Set(this)];
 }
-const millisecondFormat = new Intl.NumberFormat(navigator.language, { style: 'unit', unit: 'millisecond', unitDisplay: 'short', minimumFractionDigits: 2, maximumFractionDigits: 2 });
-const millisecondDiffFormat = new Intl.NumberFormat(navigator.language, { style: 'unit', unit: 'millisecond', unitDisplay: 'short', minimumFractionDigits: 2, maximumFractionDigits: 2, signDisplay: "exceptZero" });
+const dataFormat = new Intl.NumberFormat(navigator.language, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+const dataDiffFormat = new Intl.NumberFormat(navigator.language, { minimumFractionDigits: 2, maximumFractionDigits: 2, signDisplay: "exceptZero" });
 const percentFormat = new Intl.NumberFormat(navigator.language, { style: 'percent', minimumFractionDigits: 2, maximumFractionDigits: 2 });
 const percentDiffFormat = new Intl.NumberFormat(navigator.language, { style: 'percent', minimumFractionDigits: 2, maximumFractionDigits: 2, signDisplay: "exceptZero"  });
 
@@ -383,7 +383,8 @@ new Vue({
                             backgroundColor: sample.color,
                             pointBackgroundColor: sample.color,
                             borderColor: sample.color,
-                            data: data
+                            data: data,
+                            sample: sample
                         };
                     }))
                 .flat();
@@ -403,8 +404,8 @@ new Vue({
         }
     },
     filters: {
-        "numeric": (value) => millisecondFormat.format(value),
-        "diff": (value) => millisecondDiffFormat.format(value),
+        "numeric": (value) => dataFormat.format(value),
+        "diff": (value) => dataDiffFormat.format(value),
         "percent": (value) => percentFormat.format(value),
         "percentDiff": (value) => percentDiffFormat.format(value),
         "date": (value) => value.toLocaleString(navigator.language, {
@@ -421,6 +422,7 @@ new Vue({
                 sample.color = `hsl(${scenarioIndex * 360 / scenarios.length}, ${100 - 80 * sampleIndex / samples.length}%, ${30 + 40 * sampleIndex / samples.length}%)`;
                 sample.thickness = sampleIndex === 0 ? 3 : 2;
                 sample.selected = sampleIndex === 0;
+                sample.unit = "ms";
                 const data = measuredIterations(scenario).map(iteration => iteration.values[sample.name]);
                 OPERATIONS.forEach(operation => sample[operation.name] = operation.apply(data));
             });
@@ -472,7 +474,7 @@ new Vue({
                     itemSort: (a, b) => b.yLabel - a.yLabel,
                     callbacks: {
                         title: (tooltips, data) => `Build #${tooltips[0].label}`,
-                        label: (context) => millisecondFormat.format(context.dataPoint.y) + " – " + context.dataset.label
+                        label: (context) => dataFormat.format(context.dataPoint.y) + " " + context.dataset.sample.unit + " – " + context.dataset.label
                     }
                 },
                 hover: {
