@@ -165,9 +165,10 @@ footer .env {
                                                 <span class="fa">{{ scenario.showDetails ? "&#xf068;" : "&#xf067;" }}</span>
                                             </button>
                                         </td>
-                                        <td class="title" v-if="index === 0" :rowspan="scenario.samples.length">
+                                        <td class="title" v-if="index === 0" :rowspan="scenario.samples.length" @click="baseline = baseline === scenario ? null : scenario">
                                             <span class="title">{{ scenario.definition.title }}</span>
-                                            <span class="title version" v-if="showBuildTool">({{ scenario.definition.buildTool }})</span>
+                                            <span class="title version" v-if="multipleBuildToolsPresent">({{ scenario.definition.buildTool }})</span>
+                                            <span v-show="baseline === scenario">[baseline]</span>
                                         </td>
                                         <td class="clickable data" @click="select(sample)" :style="{ color: sample.color }">
                                             <span class="fa selection-icon" :class="{ selected: sample.selected }" :style="{ color: sample.color }"></span>
@@ -340,10 +341,11 @@ new Vue({
         options: {
             order: "historical"
         },
-        benchmarkResult: benchmarkResult
+        benchmarkResult: benchmarkResult,
+        baseline: null
     },
     computed: {
-        showBuildTool: function() {
+        multipleBuildToolsPresent: function() {
             return this.benchmarkResult.scenarios.map(scenario => scenario.definition.buildTool).unique().length > 1;
         },
         chartData: function() {
@@ -412,6 +414,12 @@ new Vue({
                 sample.selected = sampleIndex === 0;
             });
         });
+    },
+    created: function() {
+        // Set baseline for regression tests
+        this.baseline = this.multipleBuildToolsPresent
+            ? benchmarkResult.scenarios[0]
+            : null;
     },
     mounted: function() {
         const ctx = document.getElementById('samples').getContext('2d');
