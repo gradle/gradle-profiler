@@ -132,7 +132,7 @@ new Vue({
             ];
             const u = mwu.test(samples);
             const z = mwu.criticalValue(u, samples);
-            return math.erf(z / math.sqrt(2));
+            return 0.5 * (1 + math.erf(z / math.sqrt(2)));
         }
     },
     filters: {
