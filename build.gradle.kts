@@ -89,6 +89,10 @@ tasks.withType<Jar>().configureEach {
 
 application.mainClassName = "org.gradle.profiler.Main"
 
+node {
+    download = true
+}
+
 val generateHtmlReportJavaScript = tasks.register<NpxTask>("generateHtmlReportJavaScript") {
     dependsOn("npmInstall")
     val source = file("src/main/js/org/gradle/profiler/report/report.js")
