@@ -138,12 +138,10 @@ class JsonResultWriterTest extends Specification {
       },
       "samples": [
         {
-          "name": "execution",
-          "confidence": 0.0
+          "name": "execution"
         },
         {
-          "name": "Test sample",
-          "confidence": 0.0
+          "name": "Test sample"
         }
       ],
       "iterations": [
@@ -238,12 +236,10 @@ class JsonResultWriterTest extends Specification {
       },
       "samples": [
         {
-          "name": "execution",
-          "confidence": 0.9359224935489405
+          "name": "execution"
         },
         {
-          "name": "Test sample",
-          "confidence": 0.9359224935489405
+          "name": "Test sample"
         }
       ],
       "iterations": [
