@@ -157,8 +157,8 @@ footer .env {
                             <tr>
                                 <th></th>
                                 <th>Scenario</th>
+                                <th class="center dark">Baseline</th>
                                 <th class="center">Sample</th>
-                                <th class="center">Baseline</th>
                                 <th v-for="(operation, index) in operations" class="center" :class="{ dark: index %2 === 0 }">{{ operation.title }}</th>
                                 <th :colspan="benchmarkResult.scenarios.map(scenario => scenario.iterations.length).max()">Iterations</th>
                             </tr>
@@ -179,16 +179,16 @@ footer .env {
                                             <span class="title">{{ scenario.definition.title }}</span>
                                             <span class="title version" v-if="multipleBuildToolsPresent">({{ scenario.definition.buildTool }})</span>
                                         </td>
+                                        <template>
+                                            <td class="numeric data dark" v-if="baseline && baseline !== scenario" title="Confidence of difference to baseline">{{ utest(scenario, baseline, sample) | percent }}</td>
+                                            <td class="center title dark" v-else-if="index == 0" :rowspan="scenario.samples.length" @click="baseline = baseline ? null : scenario">
+                                                <input type="checkbox" :checked="baseline">
+                                            </td>
+                                        </template>
                                         <td class="clickable data" @click="select(sample)" :style="{ color: sample.color }">
                                             <span class="fa selection-icon" :class="{ selected: sample.selected }" :style="{ color: sample.color }"></span>
                                             <span>{{ sample.name }}</span>
                                         </td>
-                                        <template>
-                                            <td class="numeric data" v-if="baseline && baseline !== scenario">{{ utest(scenario, baseline, sample) | percent }}</td>
-                                            <td class="center title" v-else-if="index == 0" :rowspan="scenario.samples.length">
-                                                <input type="checkbox" :checked="baseline" @click="baseline = baseline ? null : scenario">
-                                            </td>
-                                        </template>
                                         <td v-for="(operation, index) in operations" class="numeric data" :class="{ dark: index %2 === 0 }">
                                             <div>{{ sample[operation.name] | numeric }} {{ sample.unit }}</div>
                                             <template v-if="baseline && baseline !== scenario && baseline.samples.some(it => it.name === sample.name)">
