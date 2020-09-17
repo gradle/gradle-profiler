@@ -6,8 +6,7 @@ import spock.lang.Shared
 
 abstract class AbstractProfilerIntegrationTest extends AbstractIntegrationTest {
 
-    private static int NUMBER_OF_HEADERS = 4;
-    private static int NUMBER_OF_STATS = 8;
+    private static int NUMBER_OF_HEADERS = 4
 
     @Shared
     List<String> supportedGradleVersions = [
@@ -165,9 +164,6 @@ genrule(
             assert lines.get(10).matches("measured build #1,\\d+")
             assert lines.get(11).matches("measured build #2,\\d+")
             assert lines.get(19).matches("measured build #10,\\d+")
-            assert lines.get(20).matches("mean,\\d+\\.\\d+")
-            assert lines.get(23).matches("median,\\d+\\.\\d+")
-            assert lines.get(26).matches("stddev,\\d+\\.\\d+")
         }
 
         /**
@@ -184,9 +180,6 @@ genrule(
             assert lines.get(5).matches("measured build #1,\\d+")
             assert lines.get(6).matches("measured build #2,\\d+")
             assert lines.get(14).matches("measured build #10,\\d+")
-            assert lines.get(15).matches("mean,\\d+\\.\\d+")
-            assert lines.get(18).matches("median,\\d+\\.\\d+")
-            assert lines.get(21).matches("stddev,\\d+\\.\\d+")
         }
 
         /**
@@ -203,10 +196,6 @@ genrule(
             assert lines.get(5).matches("measured build #1,\\d+")
             assert lines.get(6).matches("measured build #2,\\d+")
             assert lines.get(14).matches("measured build #10,\\d+")
-            assert lines.get(15).matches("mean,\\d+\\.\\d+")
-            assert lines.get(18).matches("median,\\d+\\.\\d+")
-            assert lines.get(21).matches("stddev,\\d+\\.\\d+")
-            assert lines.get(22).matches("confidence,\\d+\\.\\d+")
         }
     }
 
@@ -270,6 +259,6 @@ genrule(
     }
 
     static int totalLinesForExecutions(int numberOfExecutions) {
-        return NUMBER_OF_HEADERS + numberOfExecutions + NUMBER_OF_STATS;
+        return NUMBER_OF_HEADERS + numberOfExecutions
     }
 }
