@@ -1,0 +1,13 @@
+{
+  "dependencies": {
+    "build": "^0.1.4",
+    "mann-whitney-utest": "^1.0.5",
+    "run-script": "^0.1.1"
+  },
+  "devDependencies": {
+    "browserify": "^16.5.2"
+  },
+  "scripts": {
+    "build": "browserify index.js -o build/script.js"
+  }
+}

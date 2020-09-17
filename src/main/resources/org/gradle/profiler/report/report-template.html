@@ -10,6 +10,7 @@
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Lato:wght@300;400;700&display=swap">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/vue/2.6.12/vue.min.js"></script>
     <script src='https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.0.0-beta/chart.min.js'></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/mathjs/7.2.0/math.min.js"></script>
     <style type="text/css">
 body {
     font-family: 'Lato', sans-serif;
@@ -21,13 +22,13 @@ body {
 th {
     font-size: 16px;
 }
-th.center {
+th.center, td.center {
     text-align: center;
 }
 th.dark, td.dark {
     background-color: #f8f8f8;
 }
-tr:hover th.dark, tr:hover td.dark {
+tr:hover td.dark {
     background-color: #e8e8e8;
 }
 tr.details {
@@ -81,6 +82,18 @@ td.clickable .selection-icon.selected::before {
 }
 td.WARM_UP {
     background-color: #fff8ee;
+}
+tr.baseline {
+    background-color: #ffeedd;
+}
+tr.baseline td.dark {
+    background-color: #f8e8d8;
+}
+tr.baseline:hover td {
+    background-color: #f8e8d8;
+}
+tr.baseline:hover td.dark {
+    background-color: #f0e0d0;
 }
 tr:hover td.WARM_UP {
     background-color: #ffe6d4;
@@ -145,15 +158,15 @@ footer .env {
                                 <th></th>
                                 <th>Scenario</th>
                                 <th class="center">Sample</th>
-                                <th v-for="(operation, index) in OPERATIONS" class="center" :class="{ dark: index %2 === 1 }">{{ operation.title }}</th>
-                                <th class="center dark">Confidence</th>
+                                <th class="center">Baseline</th>
+                                <th v-for="(operation, index) in operations" class="center" :class="{ dark: index %2 === 0 }">{{ operation.title }}</th>
                                 <th :colspan="benchmarkResult.scenarios.map(scenario => scenario.iterations.length).max()">Iterations</th>
                             </tr>
                         </thead>
                         <tbody>
                             <template v-for="scenario in benchmarkResult.scenarios">
                                 <template v-for="(sample, index) in scenario.samples">
-                                    <tr>
+                                    <tr :class="{ baseline: baseline === scenario }">
                                         <td class="details" v-if="index === 0" :rowspan="scenario.samples.length">
                                             <button
                                                 class="btn btn-light"
@@ -162,23 +175,27 @@ footer .env {
                                                 <span class="fa">{{ scenario.showDetails ? "&#xf068;" : "&#xf067;" }}</span>
                                             </button>
                                         </td>
-                                        <td class="title" v-if="index === 0" :rowspan="scenario.samples.length" @click="baseline = baseline === scenario ? null : scenario">
+                                        <td class="title" v-if="index === 0" :rowspan="scenario.samples.length">
                                             <span class="title">{{ scenario.definition.title }}</span>
                                             <span class="title version" v-if="multipleBuildToolsPresent">({{ scenario.definition.buildTool }})</span>
-                                            <span v-show="baseline === scenario">[baseline]</span>
                                         </td>
                                         <td class="clickable data" @click="select(sample)" :style="{ color: sample.color }">
                                             <span class="fa selection-icon" :class="{ selected: sample.selected }" :style="{ color: sample.color }"></span>
                                             <span>{{ sample.name }}</span>
                                         </td>
-                                        <td v-for="(operation, index) in OPERATIONS" class="numeric data" :class="{ dark: index %2 === 1 }">
+                                        <template>
+                                            <td class="numeric data" v-if="baseline && baseline !== scenario">{{ utest(scenario, baseline, sample) | percent }}</td>
+                                            <td class="center title" v-else-if="index == 0" :rowspan="scenario.samples.length">
+                                                <input type="checkbox" :checked="baseline" @click="baseline = baseline ? null : scenario">
+                                            </td>
+                                        </template>
+                                        <td v-for="(operation, index) in operations" class="numeric data" :class="{ dark: index %2 === 0 }">
                                             <div>{{ sample[operation.name] | numeric }} {{ sample.unit }}</div>
                                             <template v-if="baseline && baseline !== scenario && baseline.samples.some(it => it.name === sample.name)">
                                                 <div class="diff">{{ sample[operation.name] - baseline.samples.find(it => it.name === sample.name)[operation.name] | diff }} {{ sample.unit }}</div>
                                                 <div class="diff">{{ (sample[operation.name] / baseline.samples.find(it => it.name === sample.name)[operation.name]) - 1 | percentDiff }}</div>
                                             </template>
                                         </td>
-                                        <td class="numeric data dark">{{ sample.confidence | percent }}</td>
                                         <template v-for="iteration in scenario.iterations">
                                             <td class="numeric data" :class="iteration.phase" :title="iteration.phase + ' #' + iteration.iteration">{{ iteration.values[sample.name] | numeric }} {{ sample.unit }}</td>
                                         </template>
@@ -274,221 +291,12 @@ footer .env {
 </footer>
 </div>
 <script>
-const Phase = {
-    WARM_UP: "WARM_UP",
-    MEASURE: "MEASURE"
-};
-
 const benchmarkResult =
 @@BENCHMARK_RESULT_JSON@@
 ;
 
-Array.prototype.numericSort = function() {
-    return this.slice().sort((a, b) => a - b);
-}
-Array.prototype.reverseNumericSort = function() {
-    return this.slice().sort((a, b) => b - a);
-}
-Array.prototype.min = function() {
-    return Math.min(...this);
-}
-Array.prototype.mean = function() {
-    return this.reduce((sum, val) => sum + val) / this.length;
-}
-Array.prototype.max = function() {
-    return Math.max(...this);
-}
-Array.prototype.quantile = function(q) {
-    const sorted = this.numericSort();
-    const pos = (sorted.length - 1) * q;
-    const base = Math.floor(pos);
-    const rest = pos - base;
-    if (sorted[base + 1] !== undefined) {
-        return sorted[base] + rest * (sorted[base + 1] - sorted[base]);
-    } else {
-        return sorted[base];
-    }
-}
-Array.prototype.stddev = function() {
-    const mean = this.mean();
-    return Math.sqrt(this.map(x => Math.pow(x - mean, 2)).mean());
-}
-Array.prototype.unique = function() {
-    return [...new Set(this)];
-}
-const dataFormat = new Intl.NumberFormat(navigator.language, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-const dataDiffFormat = new Intl.NumberFormat(navigator.language, { minimumFractionDigits: 2, maximumFractionDigits: 2, signDisplay: "exceptZero" });
-const percentFormat = new Intl.NumberFormat(navigator.language, { style: 'percent', minimumFractionDigits: 2, maximumFractionDigits: 2 });
-const percentDiffFormat = new Intl.NumberFormat(navigator.language, { style: 'percent', minimumFractionDigits: 2, maximumFractionDigits: 2, signDisplay: "exceptZero"  });
+@@SCRIPT@@
 
-function measuredIterations(scenario) {
-    return scenario.iterations.filter(iteration => iteration.phase === Phase.MEASURE);
-}
-
-class Operation {
-    constructor(name, title, calculator) {
-        this.name = name;
-        this.title = title;
-        this.calculator = calculator;
-    }
-
-    apply(data) {
-        return this.calculator(data);
-    }
-}
-
-const OPERATIONS = [
-    new Operation("mean", "Mean", (data) => data.mean()),
-    new Operation("min", "Min", (data) => data.min()),
-    new Operation("p25", "P25", (data) => data.quantile(.25)),
-    new Operation("median", "Median", (data) => data.quantile(.50)),
-    new Operation("p75", "P75", (data) => data.quantile(.75)),
-    new Operation("max", "Max", (data) => data.max()),
-    new Operation("stddev", "Std.dev", (data) => data.stddev())
-];
-
-new Vue({
-    el: '#app',
-    data: {
-        options: {
-            order: "historical"
-        },
-        benchmarkResult: benchmarkResult,
-        baseline: null
-    },
-    computed: {
-        multipleBuildToolsPresent: function() {
-            return this.benchmarkResult.scenarios.map(scenario => scenario.definition.buildTool).unique().length > 1;
-        },
-        chartData: function() {
-            const sorted = this.options.order === "sorted";
-            return this.benchmarkResult.scenarios
-                .map(scenario => scenario.samples
-                    .filter(sample => sample.selected)
-                    .map(sample => {
-                        let data = measuredIterations(scenario)
-                            .map(iteration => iteration.values[sample.name]);
-                        if (sorted) {
-                            data = data.reverseNumericSort();
-                        }
-                        return {
-                            label: sample.name,
-                            showLine: true,
-                            stepped: "middle",
-                            pointRadius: 0,
-                            pointHitRadius: 10,
-                            hoverRadius: 6,
-                            fill: false,
-                            borderWidth: sample.thickness,
-                            backgroundColor: sample.color,
-                            pointBackgroundColor: sample.color,
-                            borderColor: sample.color,
-                            data: data,
-                            sample: sample
-                        };
-                    }))
-                .flat();
-        }
-    },
-    watch: {
-        "options.order": "updateData"
-    },
-    methods: {
-        select: function(sample) {
-            sample.selected = !sample.selected;
-            this.updateData();
-        },
-        updateData: function() {
-            this.chart.data.datasets = this.chartData;
-            this.chart.update();
-        }
-    },
-    filters: {
-        "numeric": (value) => dataFormat.format(value),
-        "diff": (value) => dataDiffFormat.format(value),
-        "percent": (value) => percentFormat.format(value),
-        "percentDiff": (value) => percentDiffFormat.format(value),
-        "date": (value) => value.toLocaleString(navigator.language, {
-            year: 'numeric', month: 'long', day: 'numeric',
-            hour: 'numeric', minute: 'numeric', second: 'numeric',
-           timeZoneName: 'short'
-        })
-    },
-    beforeCreate: function() {
-        // Initialize sample config
-        benchmarkResult.scenarios.forEach((scenario, scenarioIndex, scenarios) => {
-            scenario.showDetails = false;
-            scenario.samples.forEach((sample, sampleIndex, samples) => {
-                sample.color = `hsl(${scenarioIndex * 360 / scenarios.length}, ${100 - 80 * sampleIndex / samples.length}%, ${30 + 40 * sampleIndex / samples.length}%)`;
-                sample.thickness = sampleIndex === 0 ? 3 : 2;
-                sample.selected = sampleIndex === 0;
-                sample.unit = "ms";
-                const data = measuredIterations(scenario).map(iteration => iteration.values[sample.name]);
-                OPERATIONS.forEach(operation => sample[operation.name] = operation.apply(data));
-            });
-        });
-    },
-    created: function() {
-        // Set baseline for regression tests
-        this.baseline = this.multipleBuildToolsPresent
-            ? benchmarkResult.scenarios[0]
-            : null;
-    },
-    mounted: function() {
-        const ctx = document.getElementById('samples').getContext('2d');
-        const maxMeasuredIterations = benchmarkResult.scenarios
-            .map(scenario => measuredIterations(scenario).length)
-            .max();
-        this.chart = new Chart(ctx, {
-            type: 'line',
-            data: {
-                labels: Array.from(Array(maxMeasuredIterations), (_, i) => (i + 1).toString()),
-                datasets: this.chartData
-            },
-            options: {
-                font: {
-                    family: "Roboto Mono"
-                },
-                plugins: {
-                    crosshair: {
-                        zoom: {
-                            enabled: false
-                        },
-                        snap: {
-                            enabled: false
-                        }
-                    }
-                },
-                responsive: false,
-                animation: {
-                    duration: 0
-                },
-                legend: {
-                    position: "bottom",
-                    align: "start",
-                    fullWidth: false
-                },
-                tooltips: {
-                    mode: "index",
-                    position: "nearest",
-                    itemSort: (a, b) => b.yLabel - a.yLabel,
-                    callbacks: {
-                        title: (tooltips, data) => `Build #${tooltips[0].label}`,
-                        label: (context) => dataFormat.format(context.dataPoint.y) + " " + context.dataset.sample.unit + " – " + context.dataset.label
-                    }
-                },
-                hover: {
-                    intersect: false
-                },
-                scales: {
-                    y: {
-                        beginAtZero: true
-                    }
-                }
-            }
-        });
-    }
-});
 </script>
 </body>
 </html>

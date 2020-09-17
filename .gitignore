@@ -3,6 +3,8 @@
 *.ipr
 *.iws
 
+/node_modules/
+
 /profile-out/
 /profile-out-*/
 /gradle-user-home/
