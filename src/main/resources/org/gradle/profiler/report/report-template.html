@@ -142,13 +142,7 @@ footer .env {
                                 <th></th>
                                 <th>Scenario</th>
                                 <th class="center">Sample</th>
-                                <th class="center">Mean</th>
-                                <th class="center dark">Min</th>
-                                <th class="center">P25</th>
-                                <th class="center dark">Median</th>
-                                <th class="center">P75</th>
-                                <th class="center dark">Max</th>
-                                <th class="center">Std.dev</th>
+                                <th v-for="(operation, index) in OPERATIONS" class="center" :class="{ dark: index %2 === 1 }">{{ operation.title }}</th>
                                 <th class="center dark">Confidence</th>
                                 <th :colspan="Math.max(...benchmarkResult.scenarios.map(scenario => scenario.iterations.length))">Iterations</th>
                             </tr>
@@ -174,13 +168,9 @@ footer .env {
                                             <span class="fa selection-icon" :class="{ selected: sample.selected }" :style="{ color: sample.color }"></span>
                                             <span>{{ sample.name }}</span>
                                         </td>
-                                        <td class="numeric data">{{ calc('mean', sample, scenario) | numeric }}</td>
-                                        <td class="numeric data dark">{{ calc('min', sample, scenario) | numeric }}</td>
-                                        <td class="numeric data">{{ calc('p25', sample, scenario) | numeric }}</td>
-                                        <td class="numeric data dark">{{ calc('median', sample, scenario) | numeric }}</td>
-                                        <td class="numeric data">{{ calc('p75', sample, scenario) | numeric }}</td>
-                                        <td class="numeric data dark">{{ calc('max', sample, scenario) | numeric }}</td>
-                                        <td class="numeric data">{{ calc('stddev', sample, scenario) | numeric }}</td>
+                                        <td v-for="(operation, index) in OPERATIONS" :class="{ dark: index %2 === 1 }">
+                                            <span class="numeric data">{{ sample[operation.name] | numeric }}</span>
+                                        </td>
                                         <td class="numeric data dark">{{ sample.confidence | percent }}</td>
                                         <template v-for="iteration in scenario.iterations">
                                             <td class="numeric data" :class="iteration.phase" :title="iteration.phase + ' #' + iteration.iteration">{{ iteration.values[sample.name] | numeric }}</td>
@@ -325,15 +315,27 @@ function measuredIterations(scenario) {
     return scenario.iterations.filter(iteration => iteration.phase === Phase.MEASURE);
 }
 
-const OPERATIONS = {
-    "mean": (data) => data.mean(),
-    "min": (data) => data.min(),
-    "max": (data) => data.max(),
-    "p25": (data) => data.quantile(.25),
-    "median": (data) => data.quantile(.50),
-    "p75": (data) => data.quantile(.75),
-    "stddev": (data) => data.stddev()
-};
+class Operation {
+    constructor(name, title, calculator) {
+        this.name = name;
+        this.title = title;
+        this.calculator = calculator;
+    }
+
+    apply(data) {
+        return this.calculator(data);
+    }
+}
+
+const OPERATIONS = [
+    new Operation("mean", "Mean", (data) => data.mean()),
+    new Operation("min", "Min", (data) => data.min()),
+    new Operation("p25", "P25", (data) => data.quantile(.25)),
+    new Operation("median", "Median", (data) => data.quantile(.50)),
+    new Operation("p75", "P75", (data) => data.quantile(.75)),
+    new Operation("max", "Max", (data) => data.max()),
+    new Operation("stddev", "Std.dev", (data) => data.stddev())
+];
 
 new Vue({
     el: '#app',
@@ -381,11 +383,6 @@ new Vue({
         "options.order": "updateData"
     },
     methods: {
-        calc: (operation, sample, scenario) => {
-            const data = measuredIterations(scenario)
-                .map(iteration => iteration.values[sample.name]);
-            return OPERATIONS[operation](data);
-        },
         select: function(sample) {
             sample.selected = !sample.selected;
             this.updateData();
@@ -412,6 +409,8 @@ new Vue({
                 sample.color = `hsl(${scenarioIndex * 360 / scenarios.length}, ${100 - 80 * sampleIndex / samples.length}%, ${30 + 40 * sampleIndex / samples.length}%)`;
                 sample.thickness = sampleIndex === 0 ? 3 : 2;
                 sample.selected = sampleIndex === 0;
+                const data = measuredIterations(scenario).map(iteration => iteration.values[sample.name]);
+                OPERATIONS.forEach(operation => sample[operation.name] = operation.apply(data));
             });
         });
     },
