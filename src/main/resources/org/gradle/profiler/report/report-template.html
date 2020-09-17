@@ -180,7 +180,7 @@ footer .env {
                                             <span class="title version" v-if="multipleBuildToolsPresent">({{ scenario.definition.buildTool }})</span>
                                         </td>
                                         <template>
-                                            <td class="numeric data dark" v-if="baseline && baseline !== scenario" title="Confidence of difference to baseline">{{ utest(scenario, baseline, sample) | percent }}</td>
+                                            <td class="numeric data dark" v-if="baseline && baseline !== scenario" title="Confidence of difference to baseline">{{ uTest(scenario, baseline, sample) | percent }}</td>
                                             <td class="center title dark" v-else-if="index == 0" :rowspan="scenario.samples.length" @click="baseline = baseline ? null : scenario">
                                                 <input type="checkbox" :checked="baseline">
                                             </td>

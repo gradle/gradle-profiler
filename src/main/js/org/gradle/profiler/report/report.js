@@ -125,7 +125,7 @@ new Vue({
             this.chart.data.datasets = this.chartData;
             this.chart.update();
         },
-        utest: function(scenario, baseline, sample) {
+        uTest: function(scenario, baseline, sample) {
             const samples = [
                 measuredIterations(baseline).map(iteration => iteration.values[sample.name]),
                 measuredIterations(scenario).map(iteration => iteration.values[sample.name])
