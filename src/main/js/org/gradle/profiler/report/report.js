@@ -138,8 +138,8 @@ new Vue({
     filters: {
         "numeric": (value) => dataFormat.format(value),
         "diff": (value) => dataDiffFormat.format(value),
-        "percent": (value) => percentFormat.format(value),
-        "percentDiff": (value) => percentDiffFormat.format(value),
+        "percent": (value) => isNaN(value) ? "" : percentFormat.format(value),
+        "percentDiff": (value) => isNaN(value) ? "" : percentDiffFormat.format(value),
         "date": (value) => value.toLocaleString(navigator.language, {
             year: 'numeric', month: 'long', day: 'numeric',
             hour: 'numeric', minute: 'numeric', second: 'numeric',
