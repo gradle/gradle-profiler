@@ -8,7 +8,6 @@ import java.io.File;
 import java.io.IOException;
 import java.time.Duration;
 import java.util.List;
-import java.util.function.Function;
 import java.util.stream.Collectors;
 
 public class CsvGenerator extends AbstractGenerator {
@@ -100,16 +99,6 @@ public class CsvGenerator extends AbstractGenerator {
             }
             writer.newLine();
         }
-
-        List<BuildScenarioResult.Statistics> statistics = allScenarios.stream().flatMap(s -> s.getStatistics().values().stream()).collect(Collectors.toList());
-        statistic(writer, "mean", statistics, BuildScenarioResult.Statistics::getMean);
-        statistic(writer, "min", statistics, BuildScenarioResult.Statistics::getMin);
-        statistic(writer, "25th percentile", statistics, v -> v.getPercentile(25));
-        statistic(writer, "median", statistics, BuildScenarioResult.Statistics::getMedian);
-        statistic(writer, "75th percentile", statistics, v -> v.getPercentile(75));
-        statistic(writer, "max", statistics, BuildScenarioResult.Statistics::getMax);
-        statistic(writer, "stddev", statistics, BuildScenarioResult.Statistics::getStandardDeviation);
-        statistic(writer, "confidence", statistics, BuildScenarioResult.Statistics::getConfidencePercent);
     }
 
     private <T extends BuildInvocationResult> void writeWideRow(BufferedWriter writer, int row, BuildScenarioResult<T> scenario) throws IOException {
@@ -154,14 +143,5 @@ public class CsvGenerator extends AbstractGenerator {
                 writer.newLine();
             }
         }
-    }
-
-    private void statistic(BufferedWriter writer, String name, List<BuildScenarioResult.Statistics> statistics, Function<BuildScenarioResult.Statistics, Double> value) throws IOException {
-        writer.write(name);
-        for (BuildScenarioResult.Statistics statistic : statistics) {
-            writer.write(",");
-            writer.write(String.valueOf(value.apply(statistic)));
-        }
-        writer.newLine();
     }
 }

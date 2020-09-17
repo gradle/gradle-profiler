@@ -21,28 +21,9 @@ public class BenchmarkResultCollector {
     }
 
     public <S extends ScenarioDefinition, T extends BuildInvocationResult> Consumer<T> scenario(S scenario, List<Sample<? super T>> samples) {
-        BuildScenarioResultImpl<T> buildScenario = new BuildScenarioResultImpl<>(scenario, baseLineFor(scenario), samples);
+        BuildScenarioResultImpl<T> buildScenario = new BuildScenarioResultImpl<>(scenario, samples);
         allBuilds.add(buildScenario);
         return buildScenario;
-    }
-
-    @SuppressWarnings("unchecked")
-    private <S extends ScenarioDefinition, T extends BuildInvocationResult> BuildScenarioResultImpl<T> baseLineFor(S scenario) {
-        if (allBuilds.isEmpty()) {
-            return null;
-        }
-        for (BuildScenarioResultImpl<?> candidate : allBuilds) {
-            if (candidate.getScenarioDefinition().getName().equals(scenario.getName())) {
-                return (BuildScenarioResultImpl<T>) candidate;
-            }
-        }
-        if (allBuilds.size() >= 2) {
-            if (allBuilds.get(allBuilds.size() - 1).getScenarioDefinition().getName().equals(allBuilds.get(allBuilds.size() - 2)
-                .getScenarioDefinition().getName())) {
-                return null;
-            }
-        }
-        return (BuildScenarioResultImpl<T>) allBuilds.get(0);
     }
 
     public void write() throws IOException {
