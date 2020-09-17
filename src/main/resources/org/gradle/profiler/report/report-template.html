@@ -196,8 +196,14 @@ footer .env {
                                                 <div class="diff">{{ (sample[operation.name] / baseline.samples.find(it => it.name === sample.name)[operation.name]) - 1 | percentDiff }}</div>
                                             </template>
                                         </td>
-                                        <template v-for="iteration in scenario.iterations">
-                                            <td class="numeric data" :class="iteration.phase" :title="iteration.phase + ' #' + iteration.iteration">{{ iteration.values[sample.name] | numeric }} {{ sample.unit }}</td>
+                                        <template v-for="(iteration, index) in scenario.iterations">
+                                            <td class="numeric data" :class="iteration.phase" :title="iteration.phase + ' #' + iteration.iteration">
+                                                <span>{{ iteration.values[sample.name] | numeric }} {{ sample.unit }}</span>
+                                                <template v-if="baseline && baseline !== scenario && baseline.samples.some(it => it.name === sample.name) && baseline.iterations[index]">
+                                                    <div class="diff">{{ iteration.values[sample.name] - baseline.iterations[index].values[sample.name] | diff }} {{ sample.unit }}</div>
+                                                    <div class="diff">{{ (iteration.values[sample.name] / baseline.iterations[index].values[sample.name]) - 1 | percentDiff }}</div>
+                                                </template>
+                                            </td>
                                         </template>
                                     </tr>
                                 </template>
