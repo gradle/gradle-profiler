@@ -147,7 +147,7 @@ footer .env {
                                 <th class="center">Sample</th>
                                 <th v-for="(operation, index) in OPERATIONS" class="center" :class="{ dark: index %2 === 1 }">{{ operation.title }}</th>
                                 <th class="center dark">Confidence</th>
-                                <th :colspan="Math.max(...benchmarkResult.scenarios.map(scenario => scenario.iterations.length))">Iterations</th>
+                                <th :colspan="benchmarkResult.scenarios.map(scenario => scenario.iterations.length).max()">Iterations</th>
                             </tr>
                         </thead>
                         <tbody>
