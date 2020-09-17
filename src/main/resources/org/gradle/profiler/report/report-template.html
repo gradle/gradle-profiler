@@ -49,6 +49,9 @@ span.description {
     font-family: 'Roboto Mono', monospace;
     white-space: nowrap;
 }
+.diff {
+    color: #aaa;
+}
 td.details .btn {
     font-size: 10px;
     padding: 2px 4px 2px 4px;
@@ -168,8 +171,12 @@ footer .env {
                                             <span class="fa selection-icon" :class="{ selected: sample.selected }" :style="{ color: sample.color }"></span>
                                             <span>{{ sample.name }}</span>
                                         </td>
-                                        <td v-for="(operation, index) in OPERATIONS" :class="{ dark: index %2 === 1 }">
-                                            <span class="numeric data">{{ sample[operation.name] | numeric }}</span>
+                                        <td v-for="(operation, index) in OPERATIONS" class="numeric data" :class="{ dark: index %2 === 1 }">
+                                            <div>{{ sample[operation.name] | numeric }}</div>
+                                            <template v-if="baseline && baseline !== scenario && baseline.samples.some(it => it.name === sample.name)">
+                                                <div class="diff">{{ sample[operation.name] - baseline.samples.find(it => it.name === sample.name)[operation.name] | diff }}</div>
+                                                <div class="diff">{{ (sample[operation.name] / baseline.samples.find(it => it.name === sample.name)[operation.name]) - 1 | percentDiff }}</div>
+                                            </template>
                                         </td>
                                         <td class="numeric data dark">{{ sample.confidence | percent }}</td>
                                         <template v-for="iteration in scenario.iterations">
@@ -309,7 +316,10 @@ Array.prototype.stddev = function() {
 Array.prototype.unique = function() {
     return [...new Set(this)];
 }
-const millisecondFormat = new Intl.NumberFormat(navigator.language, {style: 'unit', unit: 'millisecond', unitDisplay: 'short', minimumFractionDigits: 2, maximumFractionDigits: 2});
+const millisecondFormat = new Intl.NumberFormat(navigator.language, { style: 'unit', unit: 'millisecond', unitDisplay: 'short', minimumFractionDigits: 2, maximumFractionDigits: 2 });
+const millisecondDiffFormat = new Intl.NumberFormat(navigator.language, { style: 'unit', unit: 'millisecond', unitDisplay: 'short', minimumFractionDigits: 2, maximumFractionDigits: 2, signDisplay: "exceptZero" });
+const percentFormat = new Intl.NumberFormat(navigator.language, { style: 'percent', minimumFractionDigits: 2, maximumFractionDigits: 2 });
+const percentDiffFormat = new Intl.NumberFormat(navigator.language, { style: 'percent', minimumFractionDigits: 2, maximumFractionDigits: 2, signDisplay: "exceptZero"  });
 
 function measuredIterations(scenario) {
     return scenario.iterations.filter(iteration => iteration.phase === Phase.MEASURE);
@@ -394,7 +404,9 @@ new Vue({
     },
     filters: {
         "numeric": (value) => millisecondFormat.format(value),
-        "percent": (value) => (value * 100).toFixed(2) + "%",
+        "diff": (value) => millisecondDiffFormat.format(value),
+        "percent": (value) => percentFormat.format(value),
+        "percentDiff": (value) => percentDiffFormat.format(value),
         "date": (value) => value.toLocaleString(navigator.language, {
             year: 'numeric', month: 'long', day: 'numeric',
             hour: 'numeric', minute: 'numeric', second: 'numeric',
