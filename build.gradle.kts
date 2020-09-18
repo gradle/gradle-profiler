@@ -100,7 +100,7 @@ val generateHtmlReportJavaScript = tasks.register<NpxTask>("generateHtmlReportJa
     val output = outputDir.map { it.file("org/gradle/profiler/report/report.js") }
     inputs.file(source)
     outputs.dir(outputDir)
-    command = "browserify"
+    command = "browserify@16.5.2"
     setArgs(listOf(source.absolutePath, "--outfile", output.get().asFile))
 }
 
