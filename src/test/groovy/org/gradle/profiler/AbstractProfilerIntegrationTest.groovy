@@ -159,11 +159,11 @@ genrule(
             assert lines.get(1) == "version,Gradle ${gradleVersion}"
             assert lines.get(2) == "tasks,${tasks.join(", ")}"
             assert lines.get(3) == "value,execution"
-            assert lines.get(4).matches("warm-up build #1,\\d+")
-            assert lines.get(9).matches("warm-up build #6,\\d+")
-            assert lines.get(10).matches("measured build #1,\\d+")
-            assert lines.get(11).matches("measured build #2,\\d+")
-            assert lines.get(19).matches("measured build #10,\\d+")
+            assert lines.get(4).matches(/warm-up build #1,\d+(?:\.\d+)?/)
+            assert lines.get(9).matches(/warm-up build #6,\d+(?:\.\d+)?/)
+            assert lines.get(10).matches(/measured build #1,\d+(?:\.\d+)?/)
+            assert lines.get(11).matches(/measured build #2,\d+(?:\.\d+)?/)
+            assert lines.get(19).matches(/measured build #10,\d+(?:\.\d+)?/)
         }
 
         /**
@@ -176,10 +176,10 @@ genrule(
             assert lines.get(1) == "version,Gradle ${gradleVersion}"
             assert lines.get(2) == "tasks,${tasks.join(", ")}"
             assert lines.get(3) == "value,execution"
-            assert lines.get(4).matches("warm-up build #1,\\d+")
-            assert lines.get(5).matches("measured build #1,\\d+")
-            assert lines.get(6).matches("measured build #2,\\d+")
-            assert lines.get(14).matches("measured build #10,\\d+")
+            assert lines.get(4).matches(/warm-up build #1,\d+(?:\.\d+)?/)
+            assert lines.get(5).matches(/measured build #1,\d+(?:\.\d+)?/)
+            assert lines.get(6).matches(/measured build #2,\d+(?:\.\d+)?/)
+            assert lines.get(14).matches(/measured build #10,\d+(?:\.\d+)?/)
         }
 
         /**
@@ -192,10 +192,10 @@ genrule(
             assert lines.get(1) == "version,Gradle ${gradleVersion}"
             assert lines.get(2) == "tasks,${tasks.join(", ")}"
             assert lines.get(3) == "value,execution"
-            assert lines.get(4).matches("warm-up build #1,\\d+")
-            assert lines.get(5).matches("measured build #1,\\d+")
-            assert lines.get(6).matches("measured build #2,\\d+")
-            assert lines.get(14).matches("measured build #10,\\d+")
+            assert lines.get(4).matches(/warm-up build #1,\d+(?:\.\d+)?/)
+            assert lines.get(5).matches(/measured build #1,\d+(?:\.\d+)?/)
+            assert lines.get(6).matches(/measured build #2,\d+(?:\.\d+)?/)
+            assert lines.get(14).matches(/measured build #10,\d+(?:\.\d+)?/)
         }
     }
 

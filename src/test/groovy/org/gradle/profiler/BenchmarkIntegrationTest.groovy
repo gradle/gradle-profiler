@@ -28,12 +28,12 @@ class BenchmarkIntegrationTest extends AbstractProfilerIntegrationTest {
         lines.get(1) == "version,Gradle ${minimalSupportedGradleVersion},Gradle 5.0"
         lines.get(2) == "tasks,assemble,assemble"
         lines.get(3) == "value,execution,execution"
-        lines.get(4).matches("warm-up build #1,\\d+,\\d+")
-        lines.get(9).matches("warm-up build #6,\\d+,\\d+")
-        lines.get(10).matches("measured build #1,\\d+,\\d+")
-        lines.get(11).matches("measured build #2,\\d+,\\d+")
-        lines.get(12).matches("measured build #3,,\\d+")
-        lines.get(19).matches("measured build #10,,\\d+")
+        lines.get(4).matches(/warm-up build #1,\d+(?:\.\d+)?,\d+(?:\.\d+)?/)
+        lines.get(9).matches(/warm-up build #6,\d+(?:\.\d+)?,\d+(?:\.\d+)?/)
+        lines.get(10).matches(/measured build #1,\d+(?:\.\d+)?,\d+(?:\.\d+)?/)
+        lines.get(11).matches(/measured build #2,\d+(?:\.\d+)?,\d+(?:\.\d+)?/)
+        lines.get(12).matches(/measured build #3,,\d+(?:\.\d+)?/)
+        lines.get(19).matches(/measured build #10,,\d+(?:\.\d+)?/)
     }
 
     def "recovers from failure in warm-up build while running benchmarks"() {
@@ -62,15 +62,15 @@ class BenchmarkIntegrationTest extends AbstractProfilerIntegrationTest {
         lines.get(1) == "version,Gradle ${minimalSupportedGradleVersion},Gradle 5.0"
         lines.get(2) == "tasks,assemble,assemble"
         lines.get(3) == "value,execution,execution"
-        lines.get(4).matches("warm-up build #1,\\d+,\\d+")
-        lines.get(5).matches("warm-up build #2,\\d+,\\d+")
-        lines.get(6).matches("warm-up build #3,\\d+,\\d+")
-        lines.get(7).matches("warm-up build #4,,\\d+")
-        lines.get(8).matches("warm-up build #5,,\\d+")
-        lines.get(9).matches("warm-up build #6,,\\d+")
-        lines.get(10).matches("measured build #1,,\\d+")
-        lines.get(11).matches("measured build #2,,\\d+")
-        lines.get(19).matches("measured build #10,,\\d+")
+        lines.get(4).matches(/warm-up build #1,\d+(?:\.\d+)?,\d+(?:\.\d+)?/)
+        lines.get(5).matches(/warm-up build #2,\d+(?:\.\d+)?,\d+(?:\.\d+)?/)
+        lines.get(6).matches(/warm-up build #3,\d+(?:\.\d+)?,\d+(?:\.\d+)?/)
+        lines.get(7).matches(/warm-up build #4,,\d+(?:\.\d+)?/)
+        lines.get(8).matches(/warm-up build #5,,\d+(?:\.\d+)?/)
+        lines.get(9).matches(/warm-up build #6,,\d+(?:\.\d+)?/)
+        lines.get(10).matches(/measured build #1,,\d+(?:\.\d+)?/)
+        lines.get(11).matches(/measured build #2,,\d+(?:\.\d+)?/)
+        lines.get(19).matches(/measured build #10,,\d+(?:\.\d+)?/)
     }
 
     def "recovers from failure to run any builds while running benchmarks"() {
@@ -99,12 +99,12 @@ class BenchmarkIntegrationTest extends AbstractProfilerIntegrationTest {
         lines.get(1) == "version,Gradle ${minimalSupportedGradleVersion},Gradle 5.0"
         lines.get(2) == "tasks,assemble,assemble"
         lines.get(3) == "value,execution,execution"
-        lines.get(4).matches("warm-up build #1,,\\d+")
-        lines.get(5).matches("warm-up build #2,,\\d+")
-        lines.get(6).matches("warm-up build #3,,\\d+")
-        lines.get(10).matches("measured build #1,,\\d+")
-        lines.get(11).matches("measured build #2,,\\d+")
-        lines.get(19).matches("measured build #10,,\\d+")
+        lines.get(4).matches(/warm-up build #1,,\d+(?:\.\d+)?/)
+        lines.get(5).matches(/warm-up build #2,,\d+(?:\.\d+)?/)
+        lines.get(6).matches(/warm-up build #3,,\d+(?:\.\d+)?/)
+        lines.get(10).matches(/measured build #1,,\d+(?:\.\d+)?/)
+        lines.get(11).matches(/measured build #2,,\d+(?:\.\d+)?/)
+        lines.get(19).matches(/measured build #10,,\d+(?:\.\d+)?/)
     }
 
     def brokenBuild(int successfulIterations) {

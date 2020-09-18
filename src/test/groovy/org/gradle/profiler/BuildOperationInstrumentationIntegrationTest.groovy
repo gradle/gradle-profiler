@@ -40,14 +40,14 @@ class BuildOperationInstrumentationIntegrationTest extends AbstractProfilerInteg
         lines.get(1) == "version,Gradle ${gradleVersion},Gradle ${gradleVersion}"
         lines.get(2) == "tasks,assemble,assemble"
         lines.get(3) == "value,execution,task start"
-        lines.get(4).matches("warm-up build #1,\\d+,\\d+")
-        lines.get(9).matches("warm-up build #6,\\d+,\\d+")
-        lines.get(10).matches("measured build #1,\\d+,\\d+")
+        lines.get(4).matches(/warm-up build #1,\d+(?:\.\d+)?,\d+(?:\.\d+)?/)
+        lines.get(9).matches(/warm-up build #6,\d+(?:\.\d+)?,\d+(?:\.\d+)?/)
+        lines.get(10).matches(/measured build #1,\d+(?:\.\d+)?,\d+(?:\.\d+)?/)
 
         and:
-        def taskStart = lines.get(10) =~ /measured build #1,\d+,(\d+)/
+        def taskStart = lines.get(10) =~ /measured build #1,\d+(?:\.\d+)?,(\d+(?:\.\d+)?)/
         taskStart.matches()
-        Long.valueOf(taskStart[0][1]) > 0
+        Double.valueOf(taskStart[0][1]) > 0
 
         where:
         gradleVersion                | configurationCache
@@ -98,12 +98,12 @@ class BuildOperationInstrumentationIntegrationTest extends AbstractProfilerInteg
         lines.get(3) == "value,execution,SnapshotTaskInputsBuildOperationType"
 
         def firstWarmup = lines.get(4)
-        def snapshottingDuration = firstWarmup =~ /warm-up build #1,\d+,(\d+)/
+        def snapshottingDuration = firstWarmup =~ /warm-up build #1,\d+(?:\.\d+)?,(\d+(?:\.\d+)?)/
         snapshottingDuration.matches()
-        Long.valueOf(snapshottingDuration[0][1]) > 0
+        Double.valueOf(snapshottingDuration[0][1]) > 0
 
-        lines.get(9).matches("warm-up build #6,\\d+,\\d+")
-        lines.get(10).matches("measured build #1,\\d+,\\d+")
+        lines.get(9).matches(/warm-up build #6,\d+(?:\.\d+)?,\d+(?:\.\d+)?/)
+        lines.get(10).matches(/measured build #1,\d+(?:\.\d+)?,\d+(?:\.\d+)?/)
 
         where:
         [via, commandLine, scenarioConfiguration, gradleVersion, configurationCache] << [
@@ -167,18 +167,18 @@ class BuildOperationInstrumentationIntegrationTest extends AbstractProfilerInteg
         lines.get(1) == "version,Gradle ${gradleVersion},Gradle ${gradleVersion},Gradle ${gradleVersion}"
         lines.get(2) == "tasks,assemble,assemble,assemble"
         lines.get(3) == "value,execution,task start,SnapshotTaskInputsBuildOperationType"
-        lines.get(4).matches("warm-up build #1,\\d+,\\d+,\\d+")
-        lines.get(9).matches("warm-up build #6,\\d+,\\d+,\\d+")
-        lines.get(10).matches("measured build #1,\\d+,\\d+,\\d+")
+        lines.get(4).matches(/warm-up build #1,\d+(?:\.\d+)?,\d+(?:\.\d+)?,\d+(?:\.\d+)?/)
+        lines.get(9).matches(/warm-up build #6,\d+(?:\.\d+)?,\d+(?:\.\d+)?,\d+(?:\.\d+)?/)
+        lines.get(10).matches(/measured build #1,\d+(?:\.\d+)?,\d+(?:\.\d+)?,\d+(?:\.\d+)?/)
 
         and:
         def buildLines = lines.subList(10, 19).collect { it.tokenize(',') }
-        def executions = buildLines.collect { Long.valueOf(it.get(1)) } as Set
-        def taskStarts = buildLines.collect { Long.valueOf(it.get(2)) } as Set
-        def buildOps = buildLines.collect { Long.valueOf(it.get(3)) } as Set
-        assertThat("non zero execution times", executions, hasItem(not(equalTo(0L))))
-        assertThat("non zero task start times", taskStarts, hasItem(not(equalTo(0L))))
-        assertThat("non zero build-op times", buildOps, hasItem(not(equalTo(0L))))
+        def executions = buildLines.collect { Double.valueOf(it.get(1)) } as Set
+        def taskStarts = buildLines.collect { Double.valueOf(it.get(2)) } as Set
+        def buildOps = buildLines.collect { Double.valueOf(it.get(3)) } as Set
+        assertThat("non zero execution times", executions, hasItem(not(equalTo(0d))))
+        assertThat("non zero task start times", taskStarts, hasItem(not(equalTo(0d))))
+        assertThat("non zero build-op times", buildOps, hasItem(not(equalTo(0d))))
         assertTrue("different execution times", executions.size() > 1)
         assertTrue("different task start times", taskStarts.size() > 1)
         assertTrue("different build-op times", buildOps.size() > 1)
