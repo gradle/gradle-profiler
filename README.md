@@ -309,6 +309,8 @@ You can compare Gradle against Bazel, Buck, and Maven by specifying their equiva
         tasks = ["build"]
         cleanup-tasks = ["clean"]
         maven {
+            # If empty, it will be infered from MAVEN_HOME environment variable
+            home = "/path/to/maven/home"
             targets = ["clean", "build"]
         }
     }
@@ -321,6 +323,8 @@ You can compare Gradle against Bazel, Buck, and Maven by specifying their equiva
         tasks = ["assemble"]
 
         bazel {
+            # If empty, it will be infered from BAZEL_HOME environment variable
+            home = "/path/to/bazel/home"
             targets = ["build" "//some/target"]
         }
     }
@@ -333,6 +337,8 @@ You can compare Gradle against Bazel, Buck, and Maven by specifying their equiva
         tasks = ["assemble"]
 
         buck {
+            # If empty, it will be infered from BUCK_HOME environment variable
+            home = "/path/to/buck/home"
             type = "android_binary" // can be a Buck build rule type or "all"
         }
     }
