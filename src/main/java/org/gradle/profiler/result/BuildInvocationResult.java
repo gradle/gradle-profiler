@@ -8,14 +8,14 @@ public class BuildInvocationResult {
     private final BuildContext buildContext;
     private final Duration executionTime;
 
-    public static final Sample<BuildInvocationResult> EXECUTION_TIME = new Sample<BuildInvocationResult>() {
+    public static final Sample<BuildInvocationResult> EXECUTION_TIME = new TimeSample<BuildInvocationResult>() {
         @Override
         public String getName() {
             return "execution";
         }
 
         @Override
-        public Duration extractFrom(BuildInvocationResult result) {
+        protected Duration getDuration(BuildInvocationResult result) {
             return result.getExecutionTime();
         }
     };

@@ -6,7 +6,6 @@ import org.gradle.profiler.result.Sample;
 import java.io.BufferedWriter;
 import java.io.File;
 import java.io.IOException;
-import java.time.Duration;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -110,7 +109,6 @@ public class CsvGenerator extends AbstractGenerator {
         T buildResult = results.get(row);
         writer.write(scenario.getSamples().stream()
             .map(sample -> sample.extractFrom(buildResult))
-            .map(Duration::toMillis)
             .map(Object::toString)
             .collect(Collectors.joining(","))
         );
@@ -139,7 +137,7 @@ public class CsvGenerator extends AbstractGenerator {
                 writer.write(",");
                 writer.write(sample.getName());
                 writer.write(",");
-                writer.write(String.valueOf(sample.extractFrom(result).toMillis()));
+                writer.write(String.valueOf(sample.extractFrom(result)));
                 writer.newLine();
             }
         }

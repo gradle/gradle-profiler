@@ -18,7 +18,6 @@ import org.gradle.profiler.result.Sample;
 import javax.annotation.OverridingMethodsMustInvokeSuper;
 import java.io.Writer;
 import java.lang.reflect.Type;
-import java.time.Duration;
 import java.time.format.DateTimeFormatter;
 import java.time.temporal.Temporal;
 import java.util.List;
@@ -108,8 +107,8 @@ public class JsonResultWriter {
         json.addProperty("title", result.getBuildContext().getDisplayName());
         JsonObject valuesJson = new JsonObject();
         for (Sample<? super T> sample : samples) {
-            Duration value = sample.extractFrom(result);
-            valuesJson.addProperty(sample.getName(), value.toNanos() / 1000000d);
+            double value = sample.extractFrom(result);
+            valuesJson.addProperty(sample.getName(), value);
         }
         json.add("values", valuesJson);
         return json;
