@@ -8,7 +8,7 @@ import java.util.function.Supplier;
 public class BazelScenarioDefinition extends BuildToolCommandLineScenarioDefinition {
     public BazelScenarioDefinition(
         String scenarioName,
-        String title,
+        @Nullable String title,
         List<String> targets,
         Supplier<BuildMutator> buildMutator,
         int warmUpCount,

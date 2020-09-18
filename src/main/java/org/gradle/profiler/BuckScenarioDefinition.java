@@ -11,7 +11,7 @@ public class BuckScenarioDefinition extends BuildToolCommandLineScenarioDefiniti
 
     public BuckScenarioDefinition(
         String scenarioName,
-        String title,
+        @Nullable String title,
         List<String> targets,
         String type,
         Supplier<BuildMutator> buildMutator,
