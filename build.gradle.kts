@@ -111,7 +111,7 @@ tasks.processResources {
             rename("""(.*)-\d\.\d.*\.jar""", "${'$'}1.jar")
         }
     }
-    from(generateHtmlReportJavaScript.map { it.outputs })
+    from(generateHtmlReportJavaScript)
 }
 
 val testReports = mapOf(
