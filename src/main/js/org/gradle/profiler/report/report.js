@@ -156,7 +156,6 @@ new Vue({
                 sample.color = `hsl(${scenarioIndex * 360 / scenarios.length}, ${100 - 80 * sampleIndex / samples.length}%, ${30 + 40 * sampleIndex / samples.length}%)`;
                 sample.thickness = sampleIndex === 0 ? 3 : 2;
                 sample.selected = sampleIndex === 0;
-                sample.unit = "ms";
                 const data = measuredIterations(scenario).map(iteration => iteration.values[sample.name]);
                 OPERATIONS.forEach(operation => sample[operation.name] = operation.apply(data));
             });

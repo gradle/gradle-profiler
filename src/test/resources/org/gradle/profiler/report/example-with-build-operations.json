@@ -45,39 +45,39 @@
       "samples": [
         {
           "name": "execution",
-          "confidence": 0.0
+          "unit": "ms"
         },
         {
           "name": "ResolveConfigurationDependenciesBuildOperationType",
-          "confidence": 0.0
+          "unit": "ms"
         },
         {
           "name": "DefaultTransformer$FingerprintTransformInputsOperation",
-          "confidence": 0.0
+          "unit": "ms"
         },
         {
           "name": "CaptureStateBeforeExecutionStep$Operation",
-          "confidence": 0.0
+          "unit": "ms"
         },
         {
           "name": "BuildCacheArchivePackBuildOperationType",
-          "confidence": 0.0
+          "unit": "ms"
         },
         {
           "name": "BuildCacheArchiveUnpackBuildOperationType",
-          "confidence": 0.0
+          "unit": "ms"
         },
         {
           "name": "SnapshotOutputsStep$Operation",
-          "confidence": 0.0
+          "unit": "ms"
         },
         {
           "name": "ExecuteTaskActionBuildOperationType",
-          "confidence": 0.0
+          "unit": "ms"
         },
         {
           "name": "ExecuteTaskBuildOperationType",
-          "confidence": 0.0
+          "unit": "ms"
         }
       ],
       "iterations": [
@@ -497,39 +497,39 @@
       "samples": [
         {
           "name": "execution",
-          "confidence": 0.9991642831782728
+          "unit": "ms"
         },
         {
           "name": "ResolveConfigurationDependenciesBuildOperationType",
-          "confidence": 0.7023232455278197
+          "unit": "ms"
         },
         {
           "name": "DefaultTransformer$FingerprintTransformInputsOperation",
-          "confidence": 0.13956902626472267
+          "unit": "ms"
         },
         {
           "name": "CaptureStateBeforeExecutionStep$Operation",
-          "confidence": 0.9999999011729629
+          "unit": "ms"
         },
         {
           "name": "BuildCacheArchivePackBuildOperationType",
-          "confidence": 0.0
+          "unit": "ms"
         },
         {
           "name": "BuildCacheArchiveUnpackBuildOperationType",
-          "confidence": 0.0
+          "unit": "ms"
         },
         {
           "name": "SnapshotOutputsStep$Operation",
-          "confidence": 0.10758613603151901
+          "unit": "ms"
         },
         {
           "name": "ExecuteTaskActionBuildOperationType",
-          "confidence": 0.18185053861180012
+          "unit": "ms"
         },
         {
           "name": "ExecuteTaskBuildOperationType",
-          "confidence": 0.9999987143919465
+          "unit": "ms"
         }
       ],
       "iterations": [

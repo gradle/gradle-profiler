@@ -96,6 +96,7 @@ public class JsonResultWriter {
     private JsonObject serializeSample(BuildScenarioResult<? extends BuildInvocationResult> scenarioResult, Sample<?> sample) {
         JsonObject json = new JsonObject();
         json.addProperty("name", sample.getName());
+        json.addProperty("unit", sample.getUnit());
         return json;
     }
 
