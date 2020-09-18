@@ -12,9 +12,37 @@
     <script src='https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.0.0-beta/chart.min.js'></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/mathjs/7.2.0/math.min.js"></script>
     <style type="text/css">
+html {
+    position: relative;
+    min-height: 100%;
+}
 body {
     font-family: 'Lato', sans-serif;
     font-size: 13.5px;
+    margin-bottom: 3rem; /* Margin bottom by footer height */
+}
+div.footer {
+    position: absolute;
+    bottom: 0;
+    width: 100%;
+    height: 2.5rem; /* Set the fixed height of the footer here */
+    line-height: 2.5rem; /* Vertically center the text there */
+
+    padding-left: 1em;
+    padding-right: 1em;
+    color: #aaa;
+    background-color: #eee;
+    font-size: 13.5px;
+    border-top: 1px solid #ddd;
+}
+div.footer .date {
+    float: left;
+}
+div.footer .version {
+    text-align: center;
+}
+div.footer .env {
+    float: right;
 }
 #data-table {
     overflow-x: scroll;
@@ -106,23 +134,6 @@ tr:hover td.MEASURE {
 }
 div.controls > div.col-form-label {
     text-align: right;
-}
-footer {
-    margin-top: 2em;
-    padding: 1em;
-    color: #aaa;
-    background-color: #eee;
-    font-size: smaller;
-    border-top: 1px solid #ddd;
-}
-footer .date {
-    float: left;
-}
-footer .version {
-    text-align: center;
-}
-footer .env {
-    float: right;
 }
     </style>
 </head>
@@ -284,11 +295,11 @@ footer .env {
             </div>
         </div>
     </div>
-    <footer>
+    <div class="footer fixed-bottom">
         <div class="date">{{ new Date(Date.parse(benchmarkResult.environment.date)) | date }}</div>
         <div class="env">{{ benchmarkResult.environment.operatingSystem }}</div>
         <div class="version">Gradle Profiler version {{ benchmarkResult.environment.profilerVersion }}</div>
-    </footer>
+    </div>
 </div>
 <script>
 const benchmarkResult =
