@@ -1,18 +1,26 @@
 package org.gradle.profiler;
 
+import javax.annotation.Nullable;
 import java.io.File;
 import java.io.PrintStream;
 import java.util.List;
 import java.util.function.Supplier;
-import java.util.stream.Collectors;
 
-public class BuckScenarioDefinition extends ScenarioDefinition {
-    private final List<String> targets;
+public class BuckScenarioDefinition extends BuildToolCommandLineScenarioDefinition {
     private final String type;
 
-    public BuckScenarioDefinition(String scenarioName, String title, List<String> targets, String type, Supplier<BuildMutator> buildMutator, int warmUpCount, int buildCount, File outputDir) {
-        super(scenarioName, title, buildMutator, warmUpCount, buildCount, outputDir);
-        this.targets = targets;
+    public BuckScenarioDefinition(
+        String scenarioName,
+        @Nullable String title,
+        List<String> targets,
+        String type,
+        Supplier<BuildMutator> buildMutator,
+        int warmUpCount,
+        int buildCount,
+        File outputDir,
+        @Nullable File buckHome
+    ) {
+        super(scenarioName, title, targets, buildMutator, warmUpCount, buildCount, outputDir, buckHome);
         this.type = type;
     }
 
@@ -31,15 +39,6 @@ public class BuckScenarioDefinition extends ScenarioDefinition {
         return "buck";
     }
 
-    @Override
-    public String getTasksDisplayName() {
-        return targets.stream().collect(Collectors.joining(" "));
-    }
-
-    public List<String> getTargets() {
-        return targets;
-    }
-
     public String getType() {
         return type;
     }
@@ -50,5 +49,19 @@ public class BuckScenarioDefinition extends ScenarioDefinition {
         if (getType() != null) {
             out.println("  Type: " + getType());
         }
+    }
+
+    @Override
+    protected String getExecutableName() {
+        if (OperatingSystem.isWindows()) {
+            return "buck.exe";
+        } else {
+            return "buck";
+        }
+    }
+
+    @Override
+    protected String getToolHomeEnvName() {
+        return "BUCK_HOME";
     }
 }

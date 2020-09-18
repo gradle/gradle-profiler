@@ -8,10 +8,7 @@ import java.util.List;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
-import static org.gradle.profiler.Phase.MEASURE;
-import static org.gradle.profiler.Phase.WARM_UP;
-
-public class BuckScenarioInvoker extends ScenarioInvoker<BuckScenarioDefinition, BuildInvocationResult> {
+public class BuckScenarioInvoker extends BuildToolCommandLineInvoker<BuckScenarioDefinition, BuildInvocationResult> {
     @Override
     void doRun(BuckScenarioDefinition scenario, InvocationSettings settings, Consumer<BuildInvocationResult> resultConsumer) {
         String buckwExe = settings.getProjectDir() + "/buckw";
@@ -36,21 +33,6 @@ public class BuckScenarioInvoker extends ScenarioInvoker<BuckScenarioDefinition,
         commandLine.add("build");
         commandLine.addAll(targets);
 
-        BuildMutator mutator = scenario.getBuildMutator().get();
-        ScenarioContext scenarioContext = ScenarioContext.from(settings, scenario);
-
-        mutator.beforeScenario(scenarioContext);
-        try {
-            for (int iteration = 1; iteration <= scenario.getWarmUpCount(); iteration++) {
-                BuildContext buildContext = scenarioContext.withBuild(WARM_UP, iteration);
-                runMeasured(buildContext, mutator, measureCommandLineExecution(commandLine, settings.getProjectDir(), settings.getBuildLog()), resultConsumer);
-            }
-            for (int iteration = 1; iteration <= scenario.getBuildCount(); iteration++) {
-                BuildContext buildContext = scenarioContext.withBuild(MEASURE, iteration);
-                runMeasured(buildContext, mutator, measureCommandLineExecution(commandLine, settings.getProjectDir(), settings.getBuildLog()), resultConsumer);
-            }
-        } finally {
-            mutator.afterScenario(scenarioContext);
-        }
+        doRun(scenario, settings, resultConsumer, commandLine);
     }
 }

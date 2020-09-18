@@ -14,7 +14,15 @@ public abstract class ScenarioDefinition {
     private final int buildCount;
     private final File outputDir;
 
-    public ScenarioDefinition(String name, @Nullable String title, Supplier<BuildMutator> buildMutator, int warmUpCount, int buildCount, File outputDir) {
+
+    public ScenarioDefinition(
+        String name,
+        @Nullable String title,
+        Supplier<BuildMutator> buildMutator,
+        int warmUpCount,
+        int buildCount,
+        File outputDir
+    ) {
         this.name = name;
         this.title = title;
         this.buildMutator = buildMutator;
