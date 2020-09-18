@@ -25,6 +25,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicLong;
+import java.util.concurrent.atomic.AtomicReference;
 
 @SuppressWarnings("unused")
 public class BuildOperationTrace {
@@ -95,7 +96,7 @@ public class BuildOperationTrace {
             for (Map.Entry<String, File> entry : getParameters().getCapturedBuildOperations().get().entrySet()) {
                 String operationType = entry.getKey();
                 File outputFile = entry.getValue();
-                collectors.add(new BuildOperationCollector(Class.forName(operationType + "$Details"), outputFile));
+                collectors.add(new BuildOperationTimeCollector(Class.forName(operationType + "$Details"), outputFile));
             }
         }
 
@@ -126,24 +127,38 @@ public class BuildOperationTrace {
         }
     }
 
-    private static class BuildOperationCollector {
-        private final Class<?> detailsType;
+    private abstract static class BuildOperationCollector {
         private final File outputFile;
-        private final AtomicLong buildOperationTime = new AtomicLong(0);
+        private final AtomicReference<Double> data = new AtomicReference<>(0d);
 
-        public BuildOperationCollector(Class<?> detailsType, File outputFile) {
-            this.detailsType = detailsType;
+        public BuildOperationCollector(File outputFile) {
             this.outputFile = outputFile;
         }
 
-        public void collect(Object details, OperationFinishEvent operationFinishEvent) {
-            if (detailsType.isAssignableFrom(details.getClass())) {
-                buildOperationTime.addAndGet(operationFinishEvent.getEndTime() - operationFinishEvent.getStartTime());
-            }
+        public abstract void collect(Object details, OperationFinishEvent operationFinishEvent);
+
+        protected void accumulate(double delta) {
+            data.accumulateAndGet(delta, Double::sum);
         }
 
         public void write() throws IOException {
-            Files.write(outputFile.toPath(), String.valueOf(buildOperationTime.longValue()).getBytes(StandardCharsets.UTF_8));
+            Files.write(outputFile.toPath(), String.valueOf(data.get().doubleValue()).getBytes(StandardCharsets.UTF_8));
+        }
+    }
+
+    private static class BuildOperationTimeCollector extends BuildOperationCollector {
+        private final Class<?> detailsType;
+
+        public BuildOperationTimeCollector(Class<?> detailsType, File outputFile) {
+            super(outputFile);
+            this.detailsType = detailsType;
+        }
+
+        @Override
+        public void collect(Object details, OperationFinishEvent operationFinishEvent) {
+            if (detailsType.isAssignableFrom(details.getClass())) {
+                accumulate(operationFinishEvent.getEndTime() - operationFinishEvent.getStartTime());
+            }
         }
     }
 }

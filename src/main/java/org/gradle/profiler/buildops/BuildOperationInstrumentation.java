@@ -90,7 +90,7 @@ public class BuildOperationInstrumentation extends GradleInstrumentation {
     private static Duration readCumulativeTimeFromDataFile(File dataFile) {
         try {
             try (Stream<String> lines = Files.lines(dataFile.toPath(), StandardCharsets.UTF_8)) {
-                return Duration.ofMillis(lines.mapToLong(Long::parseLong).sum());
+                return Duration.ofNanos((long) lines.mapToDouble(Double::parseDouble).sum() * 1000000);
             }
         } catch (IOException e) {
             throw new RuntimeException("Could not read result from file.", e);

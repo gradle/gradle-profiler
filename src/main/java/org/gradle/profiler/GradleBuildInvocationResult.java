@@ -27,7 +27,7 @@ public class GradleBuildInvocationResult extends BuildInvocationResult {
         }
     };
 
-    public static Sample<GradleBuildInvocationResult> sampleBuildOperation(String buildOperationDetailsClass) {
+    public static Sample<GradleBuildInvocationResult> sampleBuildOperationDuration(String buildOperationDetailsClass) {
         return new TimeSample<GradleBuildInvocationResult>() {
             @Override
             public String getName() {

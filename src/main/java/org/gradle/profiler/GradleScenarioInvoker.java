@@ -37,7 +37,7 @@ public class GradleScenarioInvoker extends ScenarioInvoker<GradleScenarioDefinit
             builder.add(GradleBuildInvocationResult.TIME_TO_TASK_EXECUTION);
         }
         scenario.getMeasuredBuildOperations().stream()
-            .map(GradleBuildInvocationResult::sampleBuildOperation)
+            .map(GradleBuildInvocationResult::sampleBuildOperationDuration)
             .forEach(builder::add);
         return builder.build();
     }
