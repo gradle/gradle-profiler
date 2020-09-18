@@ -35,7 +35,7 @@ public class JFRJvmArgsCalculator implements JvmArgsCalculator {
         if (profileOnStart) {
             String startArgs = "name=profile,settings=" + args.getJfrSettings();
             if (captureOnExit) {
-                startArgs += ",dumponexit=true,filename=" + outputFile.getAbsolutePath();
+                startArgs += ",dumponexit=true,dumponexitpath=" + outputFile.getParentFile().getAbsolutePath();
             }
             jvmArgs.add("-XX:StartFlightRecording=" + startArgs);
         }
