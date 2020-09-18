@@ -10,8 +10,8 @@ import java.nio.charset.StandardCharsets;
 import java.time.Instant;
 
 public class HtmlGenerator extends AbstractGenerator {
-    private static final String JSON_PLACEHOLDER = "@@SCRIPT@@";
-    private static final String SCRIPT_PLACEHOLDER = "@@BENCHMARK_RESULT_JSON@@";
+    private static final String JSON_PLACEHOLDER = "@@BENCHMARK_RESULT_JSON@@";
+    private static final String SCRIPT_PLACEHOLDER = "@@SCRIPT@@";
 
     public HtmlGenerator(File outputFile) {
         super(outputFile);
