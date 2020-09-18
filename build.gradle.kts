@@ -115,7 +115,8 @@ tasks.processResources {
 }
 
 val testReports = mapOf(
-    "testHtmlReportWithoutOps" to "example",
+    "testHtmlReport" to "example",
+    "testHtmlReportSingle" to "example-single",
     "testHtmlReportWithOps" to "example-with-build-operations",
     "testHtmlReportRegression" to "example-regression"
 )

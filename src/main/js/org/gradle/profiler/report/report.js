@@ -114,7 +114,9 @@ new Vue({
         }
     },
     watch: {
-        "options.order": "updateData"
+        "options.order": function() {
+            this.updateData();
+        }
     },
     methods: {
         select: function(sample) {

@@ -164,7 +164,7 @@ div.controls > div.col-form-label {
                         <tr>
                             <th></th>
                             <th>Scenario</th>
-                            <th class="center dark">Baseline</th>
+                            <th class="center dark" v-if="benchmarkResult.scenarios.length > 1">Baseline</th>
                             <th class="center">Sample</th>
                             <th v-for="(operation, index) in operations" class="center" :class="{ dark: index %2 === 0 }">{{ operation.title }}</th>
                             <th :colspan="benchmarkResult.scenarios.map(scenario => scenario.iterations.length).max()">Iterations</th>
@@ -186,7 +186,7 @@ div.controls > div.col-form-label {
                                         <span class="title">{{ scenario.definition.title }}</span>
                                         <span class="title version" v-if="multipleBuildToolsPresent">({{ scenario.definition.buildTool }})</span>
                                     </td>
-                                    <template>
+                                    <template v-if="benchmarkResult.scenarios.length > 1">
                                         <td class="numeric data dark" v-if="baseline && baseline !== scenario" title="Confidence of difference to baseline">{{ uTest(scenario, baseline, sample) | percent }}</td>
                                         <td class="center title dark" v-else-if="index == 0" :rowspan="scenario.samples.length" @click="baseline = baseline ? null : scenario">
                                             <input type="checkbox" :checked="baseline">
