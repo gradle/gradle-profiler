@@ -100,7 +100,7 @@ val generateHtmlReportJavaScript = tasks.register<NpxTask>("generateHtmlReportJa
     inputs.file(source)
     inputs.files(tasks.npmInstall)
     outputs.dir(outputDir)
-    command = "browserify@16.5.2"
+    command = "browserify"
     setArgs(listOf(source.absolutePath, "--outfile", output.get().asFile))
 }
 
