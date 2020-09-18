@@ -1,14 +1,20 @@
 package org.gradle.profiler;
 
 import javax.annotation.Nullable;
-import java.io.*;
+import java.io.ByteArrayOutputStream;
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.lang.reflect.Field;
 import java.util.Collection;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
-import java.util.stream.Collectors;
+import java.util.function.Supplier;
 
 public class CommandExec {
     private final File directory;
@@ -41,7 +47,7 @@ public class CommandExec {
     public String runAndCollectOutput(String... commandLine) {
         ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
         try {
-            run(new ProcessBuilder(commandLine), outputStream, null, null).waitForSuccess();
+            run(new ProcessBuilder(commandLine), outputStream, outputStream::toString, null).waitForSuccess();
         } catch (RuntimeException e) {
             System.out.print(new String(outputStream.toByteArray()));
             throw e;
@@ -54,51 +60,57 @@ public class CommandExec {
     }
 
     public void runAndCollectOutput(File outputFile, String... commandLine) {
-        FileOutputStream outputStream;
+        OutputStream outputStream = createFileOutputStream(outputFile);
+        run(new ProcessBuilder(commandLine), outputStream, () -> "See build log " + outputFile + " for details", null).waitForSuccess();
+    }
+
+    private OutputStream createFileOutputStream(File outputFile) {
         try {
-            outputStream = new FileOutputStream(outputFile);
+            return new FileOutputStream(outputFile);
         } catch (FileNotFoundException e) {
             throw new RuntimeException(e);
         }
-        run(new ProcessBuilder(commandLine), new BufferedOutputStream(outputStream), Logging.detailed(), null).waitForSuccess();
+    }
+
+    public void runAndCollectOutput(File outputFile, ProcessBuilder processBuilder) {
+        OutputStream outputStream = createFileOutputStream(outputFile);
+        run(processBuilder, outputStream, () -> "See build log " + outputFile + " for details", null).waitForSuccess();
     }
 
     public void run(ProcessBuilder processBuilder) {
         OutputStream outputStream = Logging.detailed();
-        run(processBuilder, outputStream, null, null).waitForSuccess();
+        ByteArrayOutputStream baos = new ByteArrayOutputStream();
+        run(processBuilder, new TeeOutputStream(outputStream, baos), baos::toString, null).waitForSuccess();
     }
 
-    protected RunHandle run(ProcessBuilder processBuilder, OutputStream outputStream, @Nullable OutputStream errorStream, @Nullable InputStream inputStream) {
+    protected RunHandle run(ProcessBuilder processBuilder, OutputStream outputStream, Supplier<String> diagnosticOutput, @Nullable InputStream inputStream) {
         if (directory != null) {
             processBuilder.directory(directory);
         }
+
         String command = processBuilder.command().get(0);
         Logging.detailed().println("Running command " + String.join(" ", processBuilder.command()));
-        ByteArrayOutputStream diagnosticOutput = new ByteArrayOutputStream();
+
         try {
-            if (errorStream == null) {
-                processBuilder.redirectErrorStream(true);
-            }
+            processBuilder.redirectErrorStream(true);
             Process process = processBuilder.start();
             ExecutorService executor = Executors.newFixedThreadPool(3);
             executor.execute(() -> {
                 byte[] buffer = new byte[4096];
                 while (true) {
-                    if (readStream(process.getInputStream(), outputStream, diagnosticOutput, command, buffer)) {
+                    if (readStream(process.getInputStream(), outputStream, command, buffer)) {
                         break;
                     }
                 }
             });
-            if (errorStream != null) {
-                executor.execute(() -> {
-                    byte[] buffer = new byte[4096];
-                    while (true) {
-                        if (readStream(process.getErrorStream(), errorStream, diagnosticOutput, command, buffer)) {
-                            break;
-                        }
+            executor.execute(() -> {
+                byte[] buffer = new byte[4096];
+                while (true) {
+                    if (readStream(process.getErrorStream(), outputStream, command, buffer)) {
+                        break;
                     }
-                });
-            }
+                }
+            });
             if (inputStream != null) {
                 executor.execute(() -> {
                     byte[] buffer = new byte[4096];
@@ -120,11 +132,11 @@ public class CommandExec {
             }
             return new RunHandle(processBuilder, process, diagnosticOutput, executor);
         } catch (IOException e) {
-            throw new RuntimeException(commandErrorMessage(processBuilder, diagnosticOutput), e);
+            throw new RuntimeException(commandErrorMessage(processBuilder, diagnosticOutput.get()), e);
         }
     }
 
-    private boolean readStream(InputStream inputStream, OutputStream outputStream, OutputStream diagnoticStream, String command, byte[] buffer) {
+    private boolean readStream(InputStream inputStream, OutputStream outputStream, String command, byte[] buffer) {
         int nread;
         try {
             nread = inputStream.read(buffer);
@@ -136,7 +148,6 @@ public class CommandExec {
         }
         try {
             outputStream.write(buffer, 0, nread);
-            diagnoticStream.write(buffer, 0, nread);
         } catch (IOException e) {
             throw new RuntimeException("Could not write output from child process for command '" + command + "'", e);
         } finally {
@@ -149,11 +160,10 @@ public class CommandExec {
         return false;
     }
 
-    private String commandErrorMessage(ProcessBuilder processBuilder, ByteArrayOutputStream diagnosticOutput) {
-        String message = "Could not run command " + processBuilder.command().stream().collect(Collectors.joining(" "));
-        String diagnosticMessage = diagnosticOutput.toString();
-        if (!diagnosticMessage.isEmpty()) {
-            message += "\nOutput:\n======\n" + diagnosticMessage + "======";
+    private static String commandErrorMessage(ProcessBuilder processBuilder, String diagnosticOutput) {
+        String message = "Could not run command " + String.join(" ", processBuilder.command());
+        if (!diagnosticOutput.isEmpty()) {
+            message += "\nOutput:\n======\n" + diagnosticOutput + "======";
         }
         return message;
     }
@@ -161,10 +171,10 @@ public class CommandExec {
     public class RunHandle {
         private final ProcessBuilder processBuilder;
         private final Process process;
-        private final ByteArrayOutputStream diagnosticOutput;
+        private final Supplier<String> diagnosticOutput;
         private final ExecutorService executor;
 
-        RunHandle(ProcessBuilder processBuilder, Process process, ByteArrayOutputStream diagnosticOutput, ExecutorService executor) {
+        RunHandle(ProcessBuilder processBuilder, Process process, Supplier<String> diagnosticOutput, ExecutorService executor) {
             this.processBuilder = processBuilder;
             this.process = process;
             this.diagnosticOutput = diagnosticOutput;
@@ -182,10 +192,10 @@ public class CommandExec {
                 shutdownExecutor();
             }
             if (failure != null) {
-                throw new RuntimeException(commandErrorMessage(processBuilder, diagnosticOutput), failure);
+                throw new RuntimeException(commandErrorMessage(processBuilder, diagnosticOutput.get()), failure);
             }
             if (result != 0) {
-                throw new RuntimeException(commandErrorMessage(processBuilder, diagnosticOutput));
+                throw new RuntimeException(commandErrorMessage(processBuilder, diagnosticOutput.get()));
             }
         }
 
