@@ -122,9 +122,9 @@ val testReports = mapOf(
 )
 testReports.forEach { taskName, fileName ->
     tasks.register<ProcessResources>(taskName) {
-        dependsOn(tasks.processResources)
         val dataFile = file("src/test/resources/org/gradle/profiler/report/${fileName}.json")
         inputs.file(dataFile)
+        inputs.files(tasks.processResources)
 
         from("src/main/resources/org/gradle/profiler/report")
         into("$buildDir/test-html-report")
