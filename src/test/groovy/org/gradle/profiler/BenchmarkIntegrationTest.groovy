@@ -34,9 +34,6 @@ class BenchmarkIntegrationTest extends AbstractProfilerIntegrationTest {
         lines.get(11).matches("measured build #2,\\d+,\\d+")
         lines.get(12).matches("measured build #3,,\\d+")
         lines.get(19).matches("measured build #10,,\\d+")
-        lines.get(20).matches("mean,\\d+\\.\\d+,\\d+\\.\\d+")
-        lines.get(23).matches("median,\\d+\\.\\d+,\\d+\\.\\d+")
-        lines.get(26).matches("stddev,\\d+\\.\\d+,\\d+\\.\\d+")
     }
 
     def "recovers from failure in warm-up build while running benchmarks"() {
@@ -74,9 +71,6 @@ class BenchmarkIntegrationTest extends AbstractProfilerIntegrationTest {
         lines.get(10).matches("measured build #1,,\\d+")
         lines.get(11).matches("measured build #2,,\\d+")
         lines.get(19).matches("measured build #10,,\\d+")
-        lines.get(20).matches("mean,NaN,\\d+\\.\\d+")
-        lines.get(23).matches("median,NaN,\\d+\\.\\d+")
-        lines.get(26).matches("stddev,NaN,\\d+\\.\\d+")
     }
 
     def "recovers from failure to run any builds while running benchmarks"() {
@@ -111,9 +105,6 @@ class BenchmarkIntegrationTest extends AbstractProfilerIntegrationTest {
         lines.get(10).matches("measured build #1,,\\d+")
         lines.get(11).matches("measured build #2,,\\d+")
         lines.get(19).matches("measured build #10,,\\d+")
-        lines.get(20).matches("mean,NaN,\\d+\\.\\d+")
-        lines.get(23).matches("median,NaN,\\d+\\.\\d+")
-        lines.get(26).matches("stddev,NaN,\\d+\\.\\d+")
     }
 
     def brokenBuild(int successfulIterations) {

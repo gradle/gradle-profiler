@@ -8,7 +8,7 @@
     {
       "definition": {
         "name": "no-optimizations",
-        "title": "Baseline",
+        "title": "No optimizations",
         "displayName": "Baseline using Gradle 6.7-20200903220111+0000",
         "buildTool": "Gradle 6.7-20200903220111+0000",
         "tasks": ":santa-tracker:assembleDebug",

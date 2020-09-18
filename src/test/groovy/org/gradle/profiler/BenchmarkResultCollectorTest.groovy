@@ -14,7 +14,7 @@ class BenchmarkResultCollectorTest extends Specification {
         def scenario = scenario()
         def result1 = result()
         def result2 = result()
-        BenchmarkResult result
+        BenchmarkResult result = null
 
         when:
         def consumer = collector.scenario(scenario, [sample()])
@@ -32,58 +32,6 @@ class BenchmarkResultCollectorTest extends Specification {
         def scenarioResult = result.scenarios[0]
         scenarioResult.scenarioDefinition == scenario
         scenarioResult.results == [result1, result2]
-        !scenarioResult.baseline.present
-    }
-
-    def "uses first version as the baseline when multiple present"() {
-        def scenario1 = scenario("one", "4.8")
-        def scenario2 = scenario("one", "4.9")
-        def scenario3 = scenario("two", "4.8")
-        def scenario4 = scenario("two", "4.9")
-        BenchmarkResult result
-
-        when:
-        collector.scenario(scenario1, [sample()])
-        collector.scenario(scenario2, [sample()])
-        collector.scenario(scenario3, [sample()])
-        collector.scenario(scenario4, [sample()])
-        collector.write()
-
-        then:
-        1 * generator.write(_) >> { BenchmarkResult r ->
-            result = r
-        }
-
-        and:
-        result.scenarios.size() == 4
-        !result.scenarios[0].baseline.present
-        result.scenarios[1].baseline.get() == result.scenarios[0]
-        !result.scenarios[2].baseline.present
-        result.scenarios[3].baseline.get() == result.scenarios[2]
-    }
-
-    def "uses first scenario as the baseline when a single version used"() {
-        def scenario1 = scenario("one", "4.7")
-        def scenario2 = scenario("two", "4.7")
-        def scenario3 = scenario("three", "4.7")
-        BenchmarkResult result
-
-        when:
-        collector.scenario(scenario1, [sample()])
-        collector.scenario(scenario2, [sample()])
-        collector.scenario(scenario3, [sample()])
-        collector.write()
-
-        then:
-        1 * generator.write(_) >> { BenchmarkResult r ->
-            result = r
-        }
-
-        and:
-        result.scenarios.size() == 3
-        !result.scenarios[0].baseline.present
-        result.scenarios[1].baseline.get() == result.scenarios[0]
-        result.scenarios[2].baseline.get() == result.scenarios[0]
     }
 
     def sample() {

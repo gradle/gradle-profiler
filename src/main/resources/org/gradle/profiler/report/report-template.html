@@ -10,10 +10,38 @@
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Lato:wght@300;400;700&display=swap">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/vue/2.6.12/vue.min.js"></script>
     <script src='https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.0.0-beta/chart.min.js'></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/mathjs/7.2.0/math.min.js"></script>
     <style type="text/css">
+html {
+    position: relative;
+    min-height: 100%;
+}
 body {
     font-family: 'Lato', sans-serif;
     font-size: 13.5px;
+    margin-bottom: 3rem; /* Margin bottom by footer height */
+}
+div.footer {
+    position: absolute;
+    bottom: 0;
+    width: 100%;
+    height: 2.5rem; /* Set the fixed height of the footer here */
+    line-height: 2.5rem; /* Vertically center the text there */
+
+    padding-left: 1em;
+    padding-right: 1em;
+    color: #aaa;
+    background-color: #eee;
+    font-size: 13.5px;
+}
+div.footer .date {
+    float: left;
+}
+div.footer .version {
+    text-align: center;
+}
+div.footer .env {
+    float: right;
 }
 #data-table {
     overflow-x: scroll;
@@ -21,13 +49,13 @@ body {
 th {
     font-size: 16px;
 }
-th.center {
+th.center, td.center {
     text-align: center;
 }
 th.dark, td.dark {
     background-color: #f8f8f8;
 }
-tr:hover th.dark, tr:hover td.dark {
+tr:hover td.dark {
     background-color: #e8e8e8;
 }
 tr.details {
@@ -48,6 +76,9 @@ span.description {
     font-size: 12px;
     font-family: 'Roboto Mono', monospace;
     white-space: nowrap;
+}
+.diff {
+    color: #aaa;
 }
 td.details .btn {
     font-size: 10px;
@@ -79,6 +110,18 @@ td.clickable .selection-icon.selected::before {
 td.WARM_UP {
     background-color: #fff8ee;
 }
+tr.baseline {
+    background-color: #ffeedd;
+}
+tr.baseline td.dark {
+    background-color: #f8e8d8;
+}
+tr.baseline:hover td {
+    background-color: #f8e8d8;
+}
+tr.baseline:hover td.dark {
+    background-color: #f0e0d0;
+}
 tr:hover td.WARM_UP {
     background-color: #ffe6d4;
 }
@@ -91,383 +134,179 @@ tr:hover td.MEASURE {
 div.controls > div.col-form-label {
     text-align: right;
 }
-footer {
-    margin-top: 2em;
-    padding: 1em;
-    color: #aaa;
-    background-color: #eee;
-    font-size: smaller;
-    border-top: 1px solid #ddd;
-}
-footer .date {
-    float: left;
-}
-footer .version {
-    text-align: center;
-}
-footer .env {
-    float: right;
-}
     </style>
 </head>
 <body>
 <div id="app">
-<nav class="navbar navbar-dark bg-dark">
-<span class="navbar-brand mb-0 h1">Gradle Profiler – Benchmark results</span>
-<div class="form-row controls">
-    <div class="btn-group btn-group-toggle" data-toggle="buttons">
-        <label class="btn btn-secondary" :class="{ active: options.order === 'historical' }">
-            <input type="radio" name="order" v-model="options.order" value="historical"> Historical
-        </label>
-        <label class="btn btn-secondary" :class="{ active: options.order === 'sorted' }">
-            <input type="radio" name="order" v-model="options.order" value="sorted"> Sorted
-        </label>
-    </div>
-</div>
-</nav>
-<div class='container-fluid'>
-<div class='row mt-3'>
-    <div class='col ml-auto mr-auto'>
-        <canvas id='samples' style="width: 100%; height: 400px;"></canvas>
-    </div>
-</div>
-<div class="row mt-3">
-    <div class='col ml-auto mr-auto'>
-        <div id="data-table">
-            <div class='row'>
-                <div class='col'>
-                    <table class='table table-sm table-hover'>
-                        <thead>
-                            <tr>
-                                <th></th>
-                                <th>Scenario</th>
-                                <th class="center">Sample</th>
-                                <th class="center">Mean</th>
-                                <th class="center dark">Min</th>
-                                <th class="center">P25</th>
-                                <th class="center dark">Median</th>
-                                <th class="center">P75</th>
-                                <th class="center dark">Max</th>
-                                <th class="center">Std.dev</th>
-                                <th class="center dark">Confidence</th>
-                                <th :colspan="Math.max(...benchmarkResult.scenarios.map(scenario => scenario.iterations.length))">Iterations</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <template v-for="scenario in benchmarkResult.scenarios">
-                                <template v-for="(sample, index) in scenario.samples">
-                                    <tr>
-                                        <td class="details" v-if="index === 0" :rowspan="scenario.samples.length">
-                                            <button
-                                                class="btn btn-light"
-                                                @click="scenario.showDetails = !scenario.showDetails"
-                                                :title="scenario.showDetails ? 'Hide details' : 'Show details'">
-                                                <span class="fa">{{ scenario.showDetails ? "&#xf068;" : "&#xf067;" }}</span>
-                                            </button>
-                                        </td>
-                                        <td class="title" v-if="index === 0" :rowspan="scenario.samples.length">
-                                            <span class="title">{{ scenario.definition.title }}</span>
-                                            <span class="title version" v-if="showBuildTool">({{ scenario.definition.buildTool }})</span>
-                                        </td>
-                                        <td class="clickable data" @click="select(sample)" :style="{ color: sample.color }">
-                                            <span class="fa selection-icon" :class="{ selected: sample.selected }" :style="{ color: sample.color }"></span>
-                                            <span>{{ sample.name }}</span>
-                                        </td>
-                                        <td class="numeric data">{{ calc('mean', sample, scenario) | numeric }}</td>
-                                        <td class="numeric data dark">{{ calc('min', sample, scenario) | numeric }}</td>
-                                        <td class="numeric data">{{ calc('p25', sample, scenario) | numeric }}</td>
-                                        <td class="numeric data dark">{{ calc('median', sample, scenario) | numeric }}</td>
-                                        <td class="numeric data">{{ calc('p75', sample, scenario) | numeric }}</td>
-                                        <td class="numeric data dark">{{ calc('max', sample, scenario) | numeric }}</td>
-                                        <td class="numeric data">{{ calc('stddev', sample, scenario) | numeric }}</td>
-                                        <td class="numeric data dark">{{ sample.confidence | percent }}</td>
-                                        <template v-for="iteration in scenario.iterations">
-                                            <td class="numeric data" :class="iteration.phase" :title="iteration.phase + ' #' + iteration.iteration">{{ iteration.values[sample.name] | numeric }}</td>
-                                        </template>
-                                    </tr>
-                                </template>
-                                <tr class="details" v-show="scenario.showDetails">
-                                    <td :colspan="scenario.iterations.length + 10">
-                                        <ul>
-                                            <li>
-                                                <span class="description">Scenario name:</span>
-                                                <span class="data">{{ scenario.definition.name }}</span>
-                                            </li>
-                                            <li>
-                                                <span class="description">Build tool:</span>
-                                                <span class="data">{{ scenario.definition.buildTool }}</span>
-                                            </li>
-                                            <template v-if="scenario.definition.action">
-                                                <li>
-                                                    <span class="description">Action:</span>
-                                                    <span class="data">{{ scenario.definition.action }}</span>
-                                                </li>
-                                                <li>
-                                                    <span class="description">Cleanup:</span>
-                                                    <span class="data">{{ scenario.definition.cleanup }}</span>
-                                                </li>
-                                                <li>
-                                                    <span class="description">Mutator:</span>
-                                                    <span class="data">{{ scenario.definition.mutator }}</span>
-                                                </li>
-                                                <li>
-                                                    <span class="description">Run using:</span>
-                                                    <span class="data">{{ scenario.definition.invoker }}</span>
-                                                </li>
-                                                <li>
-                                                    <span class="description">Scan plugin:</span>
-                                                    <span class="data">{{ scenario.definition.usesScanPlugin ? "yes" : "no" }}</span>
-                                                </li>
-                                                <li>
-                                                    <span class="description">Gradle arguments:</span>
-                                                    <ul>
-                                                        <li v-for="arg in scenario.definition.args">
-                                                            <span class="data">{{ arg }}</span>
-                                                        </li>
-                                                    </ul>
-                                                </li>
-                                                <li>
-                                                    <span class="description">System properties:</span>
-                                                    <ul>
-                                                        <li v-for="(value, key) in scenario.definition.systemProperties">
-                                                            <span class="data">{{ key }} = {{ value }}</span>
-                                                        </li>
-                                                    </ul>
-                                                </li>
-                                                <li>
-                                                    <span class="description">JVM arguments:</span>
-                                                    <ul>
-                                                        <li v-for="arg in scenario.definition.jvmArgs">
-                                                            <span class="data">{{ arg }}</span>
-                                                        </li>
-                                                    </ul>
-                                                </li>
-                                                <li>
-                                                    <span class="description">Gradle home:</span>
-                                                    <span class="data">{{ scenario.definition.gradleHome }}</span>
-                                                </li>
-                                                <li>
-                                                    <span class="description">Java home:</span>
-                                                    <span class="data">{{ scenario.definition.javaHome }}</span>
-                                                </li>
-                                            </template>
-                                            <template v-else>
-                                                <li>
-                                                    <span class="description">Tasks:</span>
-                                                    <span class="data">{{ scenario.definition.tasks }}</span>
-                                                </li>
-                                            </template>
-                                        </ul>
+    <nav class="navbar navbar-dark bg-dark">
+        <span class="navbar-brand mb-0 h1">Gradle Profiler – Benchmark results</span>
+        <div class="form-row controls">
+            <div class="btn-group btn-group-toggle" data-toggle="buttons">
+                <label class="btn btn-secondary" :class="{ active: options.order === 'historical' }">
+                    <input type="radio" name="order" v-model="options.order" value="historical"> Historical
+                </label>
+                <label class="btn btn-secondary" :class="{ active: options.order === 'sorted' }">
+                    <input type="radio" name="order" v-model="options.order" value="sorted"> Sorted
+                </label>
+            </div>
+        </div>
+    </nav>
+    <div class='container-fluid'>
+        <div class='row mt-3'>
+            <div class='col'>
+                <canvas id='samples' style="width: 100%; height: 400px;"></canvas>
+            </div>
+        </div>
+        <div class="row mt-3">
+            <div class='col' id="data-table">
+                <table class='table table-sm table-hover'>
+                    <thead>
+                        <tr>
+                            <th></th>
+                            <th>Scenario</th>
+                            <th class="center dark" v-if="benchmarkResult.scenarios.length > 1">Baseline</th>
+                            <th class="center">Sample</th>
+                            <th v-for="(operation, index) in operations" class="center" :class="{ dark: index %2 === 0 }">{{ operation.title }}</th>
+                            <th :colspan="benchmarkResult.scenarios.map(scenario => scenario.iterations.length).max()">Iterations</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <template v-for="scenario in benchmarkResult.scenarios">
+                            <template v-for="(sample, index) in scenario.samples">
+                                <tr :class="{ baseline: baseline === scenario }">
+                                    <td class="details" v-if="index === 0" :rowspan="scenario.samples.length">
+                                        <button
+                                            class="btn btn-light"
+                                            @click="scenario.showDetails = !scenario.showDetails"
+                                            :title="scenario.showDetails ? 'Hide details' : 'Show details'">
+                                            <span class="fa">{{ scenario.showDetails ? "&#xf068;" : "&#xf067;" }}</span>
+                                        </button>
                                     </td>
+                                    <td class="title" v-if="index === 0" :rowspan="scenario.samples.length">
+                                        <span class="title">{{ scenario.definition.title }}</span>
+                                        <span class="title version" v-if="multipleBuildToolsPresent">({{ scenario.definition.buildTool }})</span>
+                                    </td>
+                                    <template v-if="benchmarkResult.scenarios.length > 1">
+                                        <td class="numeric data dark" v-if="baseline && baseline !== scenario" title="Confidence of difference to baseline">{{ uTest(scenario, baseline, sample) | percent }}</td>
+                                        <td class="center title dark" v-else-if="index == 0" :rowspan="scenario.samples.length" @click="baseline = baseline ? null : scenario">
+                                            <input type="checkbox" :checked="baseline">
+                                        </td>
+                                    </template>
+                                    <td class="clickable data" @click="select(sample)" :style="{ color: sample.color }">
+                                        <span class="fa selection-icon" :class="{ selected: sample.selected }" :style="{ color: sample.color }"></span>
+                                        <span>{{ sample.name }}</span>
+                                    </td>
+                                    <td v-for="(operation, index) in operations" class="numeric data" :class="{ dark: index %2 === 0 }">
+                                        <div>{{ sample[operation.name] | numeric }} {{ sample.unit }}</div>
+                                        <template v-if="baseline && baseline !== scenario && baseline.samples.some(it => it.name === sample.name)">
+                                            <div class="diff">{{ sample[operation.name] - baseline.samples.find(it => it.name === sample.name)[operation.name] | diff }} {{ sample.unit }}</div>
+                                            <div class="diff">{{ (sample[operation.name] / baseline.samples.find(it => it.name === sample.name)[operation.name]) - 1 | percentDiff }}</div>
+                                        </template>
+                                    </td>
+                                    <template v-for="(iteration, index) in scenario.iterations">
+                                        <td class="numeric data" :class="iteration.phase" :title="iteration.phase + ' #' + iteration.iteration">
+                                            <span>{{ iteration.values[sample.name] | numeric }} {{ sample.unit }}</span>
+                                            <template v-if="baseline && baseline !== scenario && baseline.samples.some(it => it.name === sample.name) && baseline.iterations[index]">
+                                                <div class="diff">{{ iteration.values[sample.name] - baseline.iterations[index].values[sample.name] | diff }} {{ sample.unit }}</div>
+                                                <div class="diff">{{ (iteration.values[sample.name] / baseline.iterations[index].values[sample.name]) - 1 | percentDiff }}</div>
+                                            </template>
+                                        </td>
+                                    </template>
                                 </tr>
                             </template>
-                        </tbody>
-                    </table>
-                </div>
+                            <tr class="details" v-show="scenario.showDetails">
+                                <td :colspan="scenario.iterations.length + 10">
+                                    <ul>
+                                        <li>
+                                            <span class="description">Scenario name:</span>
+                                            <span class="data">{{ scenario.definition.name }}</span>
+                                        </li>
+                                        <li>
+                                            <span class="description">Build tool:</span>
+                                            <span class="data">{{ scenario.definition.buildTool }}</span>
+                                        </li>
+                                        <template v-if="scenario.definition.action">
+                                            <li>
+                                                <span class="description">Action:</span>
+                                                <span class="data">{{ scenario.definition.action }}</span>
+                                            </li>
+                                            <li>
+                                                <span class="description">Cleanup:</span>
+                                                <span class="data">{{ scenario.definition.cleanup }}</span>
+                                            </li>
+                                            <li>
+                                                <span class="description">Mutator:</span>
+                                                <span class="data">{{ scenario.definition.mutator }}</span>
+                                            </li>
+                                            <li>
+                                                <span class="description">Run using:</span>
+                                                <span class="data">{{ scenario.definition.invoker }}</span>
+                                            </li>
+                                            <li>
+                                                <span class="description">Scan plugin:</span>
+                                                <span class="data">{{ scenario.definition.usesScanPlugin ? "yes" : "no" }}</span>
+                                            </li>
+                                            <li>
+                                                <span class="description">Gradle arguments:</span>
+                                                <ul>
+                                                    <li v-for="arg in scenario.definition.args">
+                                                        <span class="data">{{ arg }}</span>
+                                                    </li>
+                                                </ul>
+                                            </li>
+                                            <li>
+                                                <span class="description">System properties:</span>
+                                                <ul>
+                                                    <li v-for="(value, key) in scenario.definition.systemProperties">
+                                                        <span class="data">{{ key }} = {{ value }}</span>
+                                                    </li>
+                                                </ul>
+                                            </li>
+                                            <li>
+                                                <span class="description">JVM arguments:</span>
+                                                <ul>
+                                                    <li v-for="arg in scenario.definition.jvmArgs">
+                                                        <span class="data">{{ arg }}</span>
+                                                    </li>
+                                                </ul>
+                                            </li>
+                                            <li>
+                                                <span class="description">Gradle home:</span>
+                                                <span class="data">{{ scenario.definition.gradleHome }}</span>
+                                            </li>
+                                            <li>
+                                                <span class="description">Java home:</span>
+                                                <span class="data">{{ scenario.definition.javaHome }}</span>
+                                            </li>
+                                        </template>
+                                        <template v-else>
+                                            <li>
+                                                <span class="description">Tasks:</span>
+                                                <span class="data">{{ scenario.definition.tasks }}</span>
+                                            </li>
+                                        </template>
+                                    </ul>
+                                </td>
+                            </tr>
+                        </template>
+                    </tbody>
+                </table>
             </div>
         </div>
     </div>
-</div>
-</div>
-<footer>
-    <div class="date">{{ new Date(Date.parse(benchmarkResult.environment.date)) | date }}</div>
-    <div class="env">{{ benchmarkResult.environment.operatingSystem }}</div>
-    <div class="version">Gradle Profiler version {{ benchmarkResult.environment.profilerVersion }}</div>
-</footer>
+    <div class="footer fixed-bottom">
+        <div class="date">{{ new Date(Date.parse(benchmarkResult.environment.date)) | date }}</div>
+        <div class="env">{{ benchmarkResult.environment.operatingSystem }}</div>
+        <div class="version">Gradle Profiler version {{ benchmarkResult.environment.profilerVersion }}</div>
+    </div>
 </div>
 <script>
-const Phase = {
-    WARM_UP: "WARM_UP",
-    MEASURE: "MEASURE"
-};
-
 const benchmarkResult =
 @@BENCHMARK_RESULT_JSON@@
 ;
 
-Array.prototype.numericSort = function() {
-    return this.slice().sort((a, b) => a - b);
-}
-Array.prototype.reverseNumericSort = function() {
-    return this.slice().sort((a, b) => b - a);
-}
-Array.prototype.min = function() {
-    return Math.min(...this);
-}
-Array.prototype.mean = function() {
-    return this.reduce((sum, val) => sum + val) / this.length;
-}
-Array.prototype.max = function() {
-    return Math.max(...this);
-}
-Array.prototype.quantile = function(q) {
-    const sorted = this.numericSort();
-    const pos = (sorted.length - 1) * q;
-    const base = Math.floor(pos);
-    const rest = pos - base;
-    if (sorted[base + 1] !== undefined) {
-        return sorted[base] + rest * (sorted[base + 1] - sorted[base]);
-    } else {
-        return sorted[base];
-    }
-}
-Array.prototype.stddev = function() {
-    const mean = this.mean();
-    return Math.sqrt(this.map(x => Math.pow(x - mean, 2)).mean());
-}
-Array.prototype.unique = function() {
-    return [...new Set(this)];
-}
-const millisecondFormat = new Intl.NumberFormat(navigator.language, {style: 'unit', unit: 'millisecond', unitDisplay: 'short', minimumFractionDigits: 2, maximumFractionDigits: 2});
+@@SCRIPT@@
 
-function measuredIterations(scenario) {
-    return scenario.iterations.filter(iteration => iteration.phase === Phase.MEASURE);
-}
-
-const OPERATIONS = {
-    "mean": (data) => data.mean(),
-    "min": (data) => data.min(),
-    "max": (data) => data.max(),
-    "p25": (data) => data.quantile(.25),
-    "median": (data) => data.quantile(.50),
-    "p75": (data) => data.quantile(.75),
-    "stddev": (data) => data.stddev()
-};
-
-new Vue({
-    el: '#app',
-    data: {
-        options: {
-            order: "historical"
-        },
-        benchmarkResult: benchmarkResult
-    },
-    computed: {
-        showBuildTool: function() {
-            return this.benchmarkResult.scenarios.map(scenario => scenario.definition.buildTool).unique().length > 1;
-        },
-        chartData: function() {
-            const sorted = this.options.order === "sorted";
-            return this.benchmarkResult.scenarios
-                .map(scenario => scenario.samples
-                    .filter(sample => sample.selected)
-                    .map(sample => {
-                        let data = measuredIterations(scenario)
-                            .map(iteration => iteration.values[sample.name]);
-                        if (sorted) {
-                            data = data.reverseNumericSort();
-                        }
-                        return {
-                            label: sample.name,
-                            showLine: true,
-                            stepped: "middle",
-                            pointRadius: 0,
-                            pointHitRadius: 10,
-                            hoverRadius: 6,
-                            fill: false,
-                            borderWidth: sample.thickness,
-                            backgroundColor: sample.color,
-                            pointBackgroundColor: sample.color,
-                            borderColor: sample.color,
-                            data: data
-                        };
-                    }))
-                .flat();
-        }
-    },
-    watch: {
-        "options.order": "updateData"
-    },
-    methods: {
-        calc: (operation, sample, scenario) => {
-            const data = measuredIterations(scenario)
-                .map(iteration => iteration.values[sample.name]);
-            return OPERATIONS[operation](data);
-        },
-        select: function(sample) {
-            sample.selected = !sample.selected;
-            this.updateData();
-        },
-        updateData: function() {
-            this.chart.data.datasets = this.chartData;
-            this.chart.update();
-        }
-    },
-    filters: {
-        "numeric": (value) => millisecondFormat.format(value),
-        "percent": (value) => (value * 100).toFixed(2) + "%",
-        "date": (value) => value.toLocaleString(navigator.language, {
-            year: 'numeric', month: 'long', day: 'numeric',
-            hour: 'numeric', minute: 'numeric', second: 'numeric',
-           timeZoneName: 'short'
-        })
-    },
-    beforeCreate: function() {
-        // Initialize sample config
-        benchmarkResult.scenarios.forEach((scenario, scenarioIndex, scenarios) => {
-            scenario.showDetails = false;
-            scenario.samples.forEach((sample, sampleIndex, samples) => {
-                sample.color = `hsl(${scenarioIndex * 360 / scenarios.length}, ${100 - 80 * sampleIndex / samples.length}%, ${30 + 40 * sampleIndex / samples.length}%)`;
-                sample.thickness = sampleIndex === 0 ? 3 : 2;
-                sample.selected = sampleIndex === 0;
-            });
-        });
-    },
-    mounted: function() {
-        const ctx = document.getElementById('samples').getContext('2d');
-        const maxMeasuredIterations = benchmarkResult.scenarios
-            .map(scenario => measuredIterations(scenario).length)
-            .max();
-        this.chart = new Chart(ctx, {
-            type: 'line',
-            data: {
-                labels: Array.from(Array(maxMeasuredIterations), (_, i) => (i + 1).toString()),
-                datasets: this.chartData
-            },
-            options: {
-                font: {
-                    family: "Roboto Mono"
-                },
-                plugins: {
-                    crosshair: {
-                        zoom: {
-                            enabled: false
-                        },
-                        snap: {
-                            enabled: false
-                        }
-                    }
-                },
-                responsive: false,
-                animation: {
-                    duration: 0
-                },
-                legend: {
-                    position: "bottom",
-                    align: "start",
-                    fullWidth: false
-                },
-                tooltips: {
-                    mode: "index",
-                    position: "nearest",
-                    itemSort: (a, b) => b.yLabel - a.yLabel,
-                    callbacks: {
-                        title: (tooltips, data) => `Build #${tooltips[0].label}`,
-                        label: (context) => millisecondFormat.format(context.dataPoint.y) + " – " + context.dataset.label
-                    }
-                },
-                hover: {
-                    intersect: false
-                },
-                scales: {
-                    y: {
-                        beginAtZero: true
-                    }
-                }
-            }
-        });
-    }
-});
 </script>
 </body>
 </html>

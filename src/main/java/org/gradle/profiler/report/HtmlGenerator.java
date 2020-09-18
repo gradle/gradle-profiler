@@ -10,7 +10,8 @@ import java.nio.charset.StandardCharsets;
 import java.time.Instant;
 
 public class HtmlGenerator extends AbstractGenerator {
-    private static final String JSON_PATTERN = "@@BENCHMARK_RESULT_JSON@@";
+    private static final String JSON_PLACEHOLDER = "@@BENCHMARK_RESULT_JSON@@";
+    private static final String SCRIPT_PLACEHOLDER = "@@SCRIPT@@";
 
     public HtmlGenerator(File outputFile) {
         super(outputFile);
@@ -21,7 +22,9 @@ public class HtmlGenerator extends AbstractGenerator {
         Resources.readLines(Resources.getResource(HtmlGenerator.class, "report-template.html"), StandardCharsets.UTF_8, new LineProcessor<Void>() {
             @Override
             public boolean processLine(String line) throws IOException {
-                if (line.equals(JSON_PATTERN)) {
+                if (line.equals(SCRIPT_PLACEHOLDER)) {
+                    Resources.asCharSource(Resources.getResource(HtmlGenerator.class, "report.js"), StandardCharsets.UTF_8).copyTo(writer);
+                } else if (line.equals(JSON_PLACEHOLDER)) {
                     new JsonResultWriter(true).write(benchmarkResult.getScenarios(), Instant.now(), writer);
                 } else {
                     writer.write(line);

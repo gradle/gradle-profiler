@@ -1,10 +1,12 @@
 import java.net.URI
+import com.moowork.gradle.node.npm.NpxTask
 
 plugins {
     java
     groovy
     application
     `maven-publish`
+    id("com.github.node-gradle.node") version "2.2.4"
 }
 
 allprojects {
@@ -87,6 +89,21 @@ tasks.withType<Jar>().configureEach {
 
 application.mainClassName = "org.gradle.profiler.Main"
 
+node {
+    download = true
+}
+
+val generateHtmlReportJavaScript = tasks.register<NpxTask>("generateHtmlReportJavaScript") {
+    val source = file("src/main/js/org/gradle/profiler/report/report.js")
+    val outputDir = layout.buildDirectory.dir("html-report")
+    val output = outputDir.map { it.file("org/gradle/profiler/report/report.js") }
+    inputs.file(source)
+    inputs.files(tasks.npmInstall)
+    outputs.dir(outputDir)
+    command = "browserify"
+    setArgs(listOf(source.absolutePath, "--outfile", output.get().asFile))
+}
+
 tasks.processResources {
     into("META-INF/jars") {
         from(profilerPlugins) {
@@ -94,22 +111,29 @@ tasks.processResources {
             rename("""(.*)-\d\.\d.*\.jar""", "${'$'}1.jar")
         }
     }
+    from(generateHtmlReportJavaScript)
 }
 
 val testReports = mapOf(
-    "testHtmlReportWithoutOps" to "example",
+    "testHtmlReport" to "example",
+    "testHtmlReportSingle" to "example-single",
     "testHtmlReportWithOps" to "example-with-build-operations",
     "testHtmlReportRegression" to "example-regression"
 )
 testReports.forEach { taskName, fileName ->
     tasks.register<ProcessResources>(taskName) {
+        dependsOn(tasks.processResources)
         val dataFile = file("src/test/resources/org/gradle/profiler/report/${fileName}.json")
         inputs.file(dataFile)
 
         from("src/main/resources/org/gradle/profiler/report")
         into("$buildDir/test-html-report")
         rename("report-template.html", "test-report-${fileName}.html")
-        filter { line -> if (line == "@@BENCHMARK_RESULT_JSON@@") dataFile.readText() else line }
+        filter { line ->
+            if (line == "@@BENCHMARK_RESULT_JSON@@") dataFile.readText()
+            else if (line == "@@SCRIPT@@") File(tasks.processResources.get().destinationDir, "org/gradle/profiler/report/report.js").readText(Charsets.UTF_8)
+            else line
+        }
     }
 }
 

@@ -86,14 +86,14 @@ class JsonResultWriterTest extends Specification {
             ["some-build-op"]
         )
         def scenarioContext2 = new TestScenarioContext("debug@1")
-        def result1 = new BuildScenarioResultImpl<BuildInvocationResult>(scenario1, null, [BuildInvocationResult.EXECUTION_TIME, TestSample.INSTANCE])
+        def result1 = new BuildScenarioResultImpl<BuildInvocationResult>(scenario1, [BuildInvocationResult.EXECUTION_TIME, TestSample.INSTANCE])
         result1.accept(new GradleInvocationResult(scenarioContext1.withBuild(Phase.WARM_UP, 1), 100, 120))
         result1.accept(new GradleInvocationResult(scenarioContext1.withBuild(Phase.WARM_UP, 2),  80, 100))
         result1.accept(new GradleInvocationResult(scenarioContext1.withBuild(Phase.MEASURE, 1),  75,  90))
         result1.accept(new GradleInvocationResult(scenarioContext1.withBuild(Phase.MEASURE, 2),  70,  85))
         result1.accept(new GradleInvocationResult(scenarioContext1.withBuild(Phase.MEASURE, 3),  72,  80))
         result1.accept(new GradleInvocationResult(scenarioContext1.withBuild(Phase.MEASURE, 4),  68,  88))
-        def result2 = new BuildScenarioResultImpl<BuildInvocationResult>(scenario2, result1, [BuildInvocationResult.EXECUTION_TIME, TestSample.INSTANCE])
+        def result2 = new BuildScenarioResultImpl<BuildInvocationResult>(scenario2, [BuildInvocationResult.EXECUTION_TIME, TestSample.INSTANCE])
         result2.accept(new GradleInvocationResult(scenarioContext2.withBuild(Phase.WARM_UP, 1), 110, 220))
         result2.accept(new GradleInvocationResult(scenarioContext2.withBuild(Phase.WARM_UP, 2),  90, 200))
         result2.accept(new GradleInvocationResult(scenarioContext2.withBuild(Phase.MEASURE, 1),  85, 190))
@@ -138,12 +138,10 @@ class JsonResultWriterTest extends Specification {
       },
       "samples": [
         {
-          "name": "execution",
-          "confidence": 0.0
+          "name": "execution"
         },
         {
-          "name": "Test sample",
-          "confidence": 0.0
+          "name": "Test sample"
         }
       ],
       "iterations": [
@@ -238,12 +236,10 @@ class JsonResultWriterTest extends Specification {
       },
       "samples": [
         {
-          "name": "execution",
-          "confidence": 0.9359224935489405
+          "name": "execution"
         },
         {
-          "name": "Test sample",
-          "confidence": 0.9359224935489405
+          "name": "Test sample"
         }
       ],
       "iterations": [

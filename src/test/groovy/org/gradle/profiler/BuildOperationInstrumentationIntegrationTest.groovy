@@ -43,10 +43,6 @@ class BuildOperationInstrumentationIntegrationTest extends AbstractProfilerInteg
         lines.get(4).matches("warm-up build #1,\\d+,\\d+")
         lines.get(9).matches("warm-up build #6,\\d+,\\d+")
         lines.get(10).matches("measured build #1,\\d+,\\d+")
-        lines.get(20).matches("mean,\\d+\\.\\d+,\\d+\\.\\d+")
-        lines.get(23).matches("median,\\d+\\.\\d+,\\d+\\.\\d+")
-        lines.get(26).matches("stddev,\\d+\\.\\d+,\\d+\\.\\d+")
-        lines.get(27).matches("confidence,\\d+\\.\\d+,\\d+\\.\\d+")
 
         and:
         def taskStart = lines.get(10) =~ /measured build #1,\d+,(\d+)/
@@ -108,9 +104,6 @@ class BuildOperationInstrumentationIntegrationTest extends AbstractProfilerInteg
 
         lines.get(9).matches("warm-up build #6,\\d+,\\d+")
         lines.get(10).matches("measured build #1,\\d+,\\d+")
-        lines.get(20).matches("mean,\\d+\\.\\d+,\\d+\\.\\d+")
-        lines.get(23).matches("median,\\d+\\.\\d+,\\d+\\.\\d+")
-        lines.get(26).matches("stddev,\\d+\\.\\d+,\\d+\\.\\d+")
 
         where:
         [via, commandLine, scenarioConfiguration, gradleVersion, configurationCache] << [
@@ -177,10 +170,6 @@ class BuildOperationInstrumentationIntegrationTest extends AbstractProfilerInteg
         lines.get(4).matches("warm-up build #1,\\d+,\\d+,\\d+")
         lines.get(9).matches("warm-up build #6,\\d+,\\d+,\\d+")
         lines.get(10).matches("measured build #1,\\d+,\\d+,\\d+")
-        lines.get(20).matches("mean,\\d+\\.\\d+,\\d+\\.\\d+,\\d+\\.\\d+")
-        lines.get(23).matches("median,\\d+\\.\\d+,\\d+\\.\\d+,\\d+\\.\\d+")
-        lines.get(26).matches("stddev,\\d+\\.\\d+,\\d+\\.\\d+,\\d+\\.\\d+")
-        lines.get(27).matches("confidence,\\d+\\.\\d+,\\d+\\.\\d+,\\d+\\.\\d+")
 
         and:
         def buildLines = lines.subList(10, 19).collect { it.tokenize(',') }
