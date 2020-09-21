@@ -176,7 +176,7 @@ new Vue({
         const maxMeasuredIterations = benchmarkResult.scenarios
             .map(scenario => measuredIterations(scenario).length)
             .max();
-        this.chart = new Chart(ctx, {
+        const chart = this.chart = new Chart(ctx, {
             type: 'line',
             data: {
                 labels: Array.from(Array(maxMeasuredIterations), (_, i) => (i + 1).toString()),
@@ -224,5 +224,6 @@ new Vue({
                 }
             }
         });
+        document.fonts.ready.then(() => chart.update());
     }
 });
