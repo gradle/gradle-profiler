@@ -1,7 +1,6 @@
 package org.gradle.profiler
 
 import spock.lang.IgnoreIf
-import spock.lang.Requires
 import spock.lang.Unroll
 
 // TODO Re-enable once Oracle JDK 8 lookup is fixed with toolchains
@@ -142,8 +141,6 @@ class JFRProfilerIntegrationTest extends AbstractProfilerIntegrationTest {
         latestSupportedGradleVersion  | _
     }
 
-    @Requires({ !OperatingSystem.isWindows() })
-    // No perl installed on Windows
     @Unroll
     def "can profile Gradle no daemon #versionUnderTest with #iterations iterations"(String versionUnderTest, int iterations) {
         given:
@@ -172,8 +169,10 @@ class JFRProfilerIntegrationTest extends AbstractProfilerIntegrationTest {
         logFile.find("<invocations: 1>").size() == 2 + iterations
 
         outputDir.listFiles().findAll { it.name.endsWith(".jfr") }.size() == iterations
-        new File(outputDir, "${versionUnderTest}.jfr-flamegraphs").isDirectory()
-
+        if (!OperatingSystem.isWindows()) {
+            // No perl installed on Windows
+            new File(outputDir, "${versionUnderTest}.jfr-flamegraphs").isDirectory()
+        }
         where:
         versionUnderTest              | iterations
         minimalSupportedGradleVersion | 1
@@ -184,14 +183,7 @@ class JFRProfilerIntegrationTest extends AbstractProfilerIntegrationTest {
 
     def "cannot profile using JFR with multiple iterations and cleanup steps"() {
         given:
-        instrumentedBuildScript()
-
-        def scenarioFile = file("performance.scenarios")
-        scenarioFile.text = """
-            assemble {
-                cleanup-tasks = "clean"
-            }
-        """
+        File scenarioFile = prepareBuild()
 
         when:
         new Main().run("--project-dir", projectDir.absolutePath, "--output-dir", outputDir.absolutePath, "--scenario-file", scenarioFile.absolutePath, "--gradle-version", minimalSupportedGradleVersion, "--profile", "jfr", "--iterations", "2", "assemble")
@@ -203,4 +195,26 @@ class JFRProfilerIntegrationTest extends AbstractProfilerIntegrationTest {
         output.contains("Scenario assemble using Gradle ${minimalSupportedGradleVersion}: Profiler JFR does not support profiling multiple iterations with cleanup steps in between.")
     }
 
+    def "can profile using JFR with multiple iterations and cleanup steps with no daemon"() {
+        given:
+        File scenarioFile = prepareBuild()
+
+        when:
+        new Main().run("--project-dir", projectDir.absolutePath, "--output-dir", outputDir.absolutePath, "--scenario-file", scenarioFile.absolutePath, "--gradle-version", minimalSupportedGradleVersion, "--profile", "jfr", "--iterations", "2", "--no-daemon", "assemble")
+
+        then:
+        new File(outputDir, "assemble").listFiles().findAll { it.name.endsWith(".jfr") }.size() == 2
+    }
+
+    private File prepareBuild() {
+        instrumentedBuildScript()
+
+        def scenarioFile = file("performance.scenarios")
+        scenarioFile.text = """
+            assemble {
+                cleanup-tasks = "clean"
+            }
+        """
+        return scenarioFile
+    }
 }
