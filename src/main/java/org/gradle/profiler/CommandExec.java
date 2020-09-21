@@ -1,13 +1,7 @@
 package org.gradle.profiler;
 
 import javax.annotation.Nullable;
-import java.io.ByteArrayOutputStream;
-import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
+import java.io.*;
 import java.lang.reflect.Field;
 import java.util.Collection;
 import java.util.List;
@@ -32,15 +26,18 @@ public class CommandExec {
     }
 
     public void run(Collection<String> commandLine) {
-        run(commandLine.toArray(new String[commandLine.size()]));
+        start(commandLine).waitForSuccess();
+    }
+
+    public RunHandle start(Collection<String> commandLine) {
+        return start(commandLine.toArray(new String[commandLine.size()]));
     }
 
     public void run(String... commandLine) {
-        ProcessBuilder processBuilder = new ProcessBuilder(commandLine);
-        run(processBuilder);
+        start(commandLine).waitForSuccess();
     }
 
-    public RunHandle start(List<String> commandLine) {
+    public RunHandle start(String... commandLine) {
         ProcessBuilder processBuilder = new ProcessBuilder(commandLine);
         return start(processBuilder);
     }
@@ -66,7 +63,7 @@ public class CommandExec {
 
     public void runAndCollectOutput(File outputFile, String... commandLine) {
         OutputStream outputStream = createFileOutputStream(outputFile);
-        run(new ProcessBuilder(commandLine), outputStream, () -> "See build log " + outputFile + " for details", null).waitForSuccess();
+        start(new ProcessBuilder(commandLine), outputStream, () -> "See build log " + outputFile + " for details", null).waitForSuccess();
     }
 
     private OutputStream createFileOutputStream(File outputFile) {
@@ -79,20 +76,20 @@ public class CommandExec {
 
     public void runAndCollectOutput(File outputFile, ProcessBuilder processBuilder) {
         OutputStream outputStream = createFileOutputStream(outputFile);
-        run(processBuilder, outputStream, () -> "See build log " + outputFile + " for details", null).waitForSuccess();
+        start(processBuilder, outputStream, () -> "See build log " + outputFile + " for details", null).waitForSuccess();
     }
 
     public void run(ProcessBuilder processBuilder) {
         start(processBuilder).waitForSuccess();
     }
 
-    private RunHandle start(ProcessBuilder processBuilder) {
+    public RunHandle start(ProcessBuilder processBuilder) {
         OutputStream outputStream = Logging.detailed();
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
-        run(processBuilder, new TeeOutputStream(outputStream, baos), baos::toString, null).waitForSuccess();
+        return start(processBuilder, new TeeOutputStream(outputStream, baos), baos::toString, null);
     }
 
-    protected RunHandle start(ProcessBuilder processBuilder, OutputStream outputStream, Supplier<String> diagnosticOutput, @Nullable InputStream inputStream) {
+    private RunHandle start(ProcessBuilder processBuilder, OutputStream outputStream, Supplier<String> diagnosticOutput, @Nullable InputStream inputStream) {
         if (directory != null) {
             processBuilder.directory(directory);
         }
