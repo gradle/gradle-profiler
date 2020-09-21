@@ -105,8 +105,7 @@ public class DefaultGradleBuildConfigurationReader implements GradleBuildConfigu
 
     private GradleBuildConfiguration probe(GradleConnector connector) {
         GradleBuildConfiguration version;
-        ProjectConnection connection = connector.forProjectDirectory(projectDir).connect();
-        try {
+        try (ProjectConnection connection = connector.forProjectDirectory(projectDir).connect()) {
             BuildEnvironment buildEnvironment = connection.getModel(BuildEnvironment.class);
             new ToolingApiGradleClient(connection).runTasks(ImmutableList.of("help"), ImmutableList.of("-I", initScript.getAbsolutePath()), ImmutableList.of());
             List<String> buildDetails = readBuildDetails();
@@ -120,8 +119,6 @@ public class DefaultGradleBuildConfigurationReader implements GradleBuildConfigu
                 allJvmArgs,
                 Boolean.valueOf(buildDetails.get(1))
             );
-        } finally {
-            connection.close();
         }
         daemonControl.stop(version);
         return version;

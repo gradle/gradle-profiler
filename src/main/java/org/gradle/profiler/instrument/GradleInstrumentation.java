@@ -43,10 +43,10 @@ public abstract class GradleInstrumentation implements GradleArgsCalculator {
         };
     }
 
-    private File unpackPlugin(String jarName) {
+    public static File unpackPlugin(String jarName) {
         try {
             File pluginJar = File.createTempFile(jarName, "jar").getCanonicalFile();
-            try (InputStream inputStream = getClass().getResourceAsStream("/META-INF/jars/" + jarName + ".jar")) {
+            try (InputStream inputStream = GradleInstrumentation.class.getResourceAsStream("/META-INF/jars/" + jarName + ".jar")) {
                 Files.copy(inputStream, pluginJar.toPath(), StandardCopyOption.REPLACE_EXISTING);
             }
             pluginJar.deleteOnExit();

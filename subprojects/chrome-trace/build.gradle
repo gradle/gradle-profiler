@@ -1,5 +1,5 @@
 plugins {
-    id 'java-gradle-plugin'
+    id 'profiler.embedded-library'
 }
 
 dependencies {

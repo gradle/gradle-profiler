@@ -2,7 +2,7 @@ import java.net.URI
 import com.moowork.gradle.node.npm.NpxTask
 
 plugins {
-    java
+    id("profiler.java-library")
     groovy
     application
     `maven-publish`
@@ -14,17 +14,11 @@ allprojects {
     version = property("profiler.version") as String
 }
 
-repositories {
-    jcenter()
-    maven {
-        url = uri("https://repo.gradle.org/gradle/repo")
-    }
-}
-
+val gradleRuntime by configurations.creating
 val profilerPlugins by configurations.creating
 
 dependencies {
-    implementation("org.gradle:gradle-tooling-api:5.2.1")
+    implementation(versions.toolingApi)
     implementation("com.google.code.findbugs:annotations:3.0.1")
     implementation("com.google.guava:guava:27.1-android") {
         because("Gradle uses the android variant as well and we are running the same code there.")
@@ -36,32 +30,26 @@ dependencies {
     implementation("org.apache.ant:ant-compress:1.5")
     implementation("commons-io:commons-io:2.6")
     implementation("org.gradle.org.openjdk.jmc:flightrecorder:7.0.0-alpha01")
-    implementation("com.android.tools.build:builder-model:3.0.0")
+    implementation("com.googlecode.plist:dd-plist:1.23") {
+        because("To extract launch details from Android Studio installation")
+    }
     implementation("com.google.code.gson:gson:2.8.6") {
         because("To write JSON output")
     }
+    implementation(project(":client-protocol"))
 
-    profilerPlugins(project(":chrome-trace")) {
-        isTransitive = false
-    }
-    profilerPlugins(project(":build-operations")) {
-        isTransitive = false
-    }
+    gradleRuntime(gradleApi())
+    gradleRuntime(versions.toolingApi)
+    profilerPlugins(project(":chrome-trace"))
+    profilerPlugins(project(":build-operations"))
+    profilerPlugins(project(":instrumentation-support"))
+    profilerPlugins(project(":studio-agent"))
 
     runtimeOnly("org.slf4j:slf4j-simple:1.7.10")
-    testImplementation("org.codehaus.groovy:groovy:2.4.7")
-    testImplementation("org.spockframework:spock-core:1.1-groovy-2.4")
+    testImplementation(versions.groovy)
+    testImplementation(versions.spock)
     testRuntimeOnly("cglib:cglib:3.2.6")
     testRuntimeOnly("org.objenesis:objenesis:2.6")
-}
-
-allprojects {
-    pluginManager.withPlugin("java") {
-        java {
-            sourceCompatibility = JavaVersion.VERSION_1_8
-            targetCompatibility = JavaVersion.VERSION_1_8
-        }
-    }
 }
 
 subprojects {
@@ -106,12 +94,18 @@ val generateHtmlReportJavaScript = tasks.register<NpxTask>("generateHtmlReportJa
 
 tasks.processResources {
     into("META-INF/jars") {
-        from(profilerPlugins) {
+        from(profilerPlugins.minus(gradleRuntime)) {
             // Removing the version from the JARs here, since they are referenced by name in production code.
             rename("""(.*)-\d\.\d.*\.jar""", "${'$'}1.jar")
         }
     }
     from(generateHtmlReportJavaScript)
+}
+
+tasks.test {
+    // Use the current JVM. Some tests require JFR, which is only available in some JVM implementations
+    // For now assume that the current JVM has JFR support and that CI will inject the correct implementation
+    javaLauncher.set(null as JavaLauncher?)
 }
 
 val testReports = mapOf(
