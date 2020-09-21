@@ -2,6 +2,7 @@ package org.gradle.profiler
 
 import org.gradle.profiler.buildscan.BuildScanProfiler
 import org.gradle.util.GradleVersion
+import spock.lang.IgnoreIf
 import spock.lang.Requires
 import spock.lang.Unroll
 
@@ -106,6 +107,8 @@ println "<tasks: " + gradle.startParameter.taskNames + ">"
         output.contains("Scenario help using Gradle ${minimalSupportedGradleVersion}: You can not skip warm-ups when profiling or benchmarking a Gradle build. Use --no-daemon or --cold-daemon if you want to profile or benchmark JVM startup")
     }
 
+    // TODO Re-enable once Oracle JDK 8 lookup is fixed with toolchains
+    @IgnoreIf({ OperatingSystem.macOS })
     def "reports build failures"() {
         given:
         buildFile.text = """
@@ -132,6 +135,8 @@ assemble.doFirst {
         output.contains("java.lang.RuntimeException: broken!")
     }
 
+    // TODO Re-enable once Oracle JDK 8 lookup is fixed with toolchains
+    @IgnoreIf({ OperatingSystem.macOS })
     def "profiles build using JFR, specified Gradle versions and tasks"() {
         given:
         buildFile.text = """
@@ -156,6 +161,8 @@ println "<daemon: " + gradle.services.get(org.gradle.internal.environment.Gradle
         new File(outputDir, "3.0/3.0.jfr").file
     }
 
+    // TODO Re-enable once Oracle JDK 8 lookup is fixed with toolchains
+    @IgnoreIf({ OperatingSystem.macOS })
     def "can specify the number of warm-up builds and iterations when profiling"() {
         given:
         buildFile.text = """
@@ -271,6 +278,8 @@ println "<daemon: " + gradle.services.get(org.gradle.internal.environment.Gradle
         assertBuildScanPublished("1.2")
     }
 
+    // TODO Re-enable once Oracle JDK 8 lookup is fixed with toolchains
+    @IgnoreIf({ OperatingSystem.macOS })
     def "profiles build using JFR, Build Scans, specified Gradle version and tasks"() {
         given:
         buildFile.text = """
@@ -464,6 +473,8 @@ plugins.withId("idea") {
         lines.get(3) == "value,execution,execution"
     }
 
+    // TODO Re-enable once Oracle JDK 8 lookup is fixed with toolchains
+    @IgnoreIf({ OperatingSystem.macOS })
     def "profiles fetching tooling model using JFR"() {
         given:
         def scenarioFile = file("benchmark.conf")
@@ -504,6 +515,8 @@ plugins.withId("idea") {
         profileFile.isFile()
     }
 
+    // TODO Re-enable once Oracle JDK 8 lookup is fixed with toolchains
+    @IgnoreIf({ OperatingSystem.macOS })
     def "profiles scenarios defined in scenario file using multiple Gradle versions"() {
         given:
         def scenarioFile = file("benchmark.conf")
@@ -543,6 +556,8 @@ println "<tasks: " + gradle.startParameter.taskNames + ">"
         new File(outputDir, "help/3.0/help-3.0.jfr").file
     }
 
+    // TODO Re-enable once Oracle JDK 8 lookup is fixed with toolchains
+    @IgnoreIf({ OperatingSystem.macOS })
     def "resolve placeholders in configuration"() {
         given:
 
@@ -1142,6 +1157,8 @@ help {
         output.contains("Can only profile scenario 'buildTarget' when building using Gradle.")
     }
 
+    // TODO Re-enable once Oracle JDK 8 lookup is fixed with toolchains
+    @IgnoreIf({ OperatingSystem.macOS })
     def "can profile a scenario that contains buck build instructions when building with Gradle"() {
         given:
         writeBuckw()
@@ -1241,6 +1258,8 @@ help {
         output.contains("Can only profile scenario 'buildTarget' when building using Gradle.")
     }
 
+    // TODO Re-enable once Oracle JDK 8 lookup is fixed with toolchains
+    @IgnoreIf({ OperatingSystem.macOS })
     def "can profile a scenario that contains bazel build instructions when building with Gradle"() {
         given:
         def scenarios = file("performance.scenario")
