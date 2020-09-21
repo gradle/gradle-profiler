@@ -73,7 +73,7 @@ new Vue({
     el: '#app',
     data: {
         options: {
-            order: "historical",
+            sorted: false,
             showAll: true
         },
         benchmarkResult: benchmarkResult,
@@ -85,7 +85,7 @@ new Vue({
             return this.benchmarkResult.scenarios.map(scenario => scenario.definition.buildTool).unique().length > 1;
         },
         chartData: function() {
-            const sorted = this.options.order === "sorted";
+            const sorted = this.options.sorted;
             const multipleBuildToolsPresent = this.multipleBuildToolsPresent;
             return this.benchmarkResult.scenarios
                 .map(scenario => scenario.samples
@@ -118,7 +118,7 @@ new Vue({
         }
     },
     watch: {
-        "options.order": function() {
+        "options.sorted": function() {
             this.updateData();
         }
     },

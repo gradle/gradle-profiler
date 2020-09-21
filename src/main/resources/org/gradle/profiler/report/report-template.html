@@ -155,14 +155,10 @@ div.controls .btn {
         </div>
         <div class="form-row controls">
             <div class="btn-group btn-group-toggle" data-toggle="buttons">
-                <label class="btn btn-secondary" :class="{ active: options.order === 'historical' }">
-                    <input type="radio" name="order" v-model="options.order" value="historical">
-                    <span>Historical</span>
-                </label>
-                <label class="btn btn-secondary" :class="{ active: options.order === 'sorted' }">
-                    <input type="radio" name="order" v-model="options.order" value="sorted">
-                    <span>Sorted</span>
-                </label>
+                <div class="btn-group btn-group-toggle" data-toggle="buttons">
+                    <button class="btn btn-secondary" :class="{ active: !options.sorted }" @click="options.sorted = false">Historical</button>
+                    <button class="btn btn-secondary" :class="{ active: options.sorted }" @click="options.sorted = true">Sorted</button>
+                </div>
             </div>
             <div class="btn-separator"></div>
             <div class="btn-group">
