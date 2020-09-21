@@ -126,6 +126,10 @@ new Vue({
             sample.selected = !sample.selected;
             this.updateData();
         },
+        toggleAll: function(selected) {
+            benchmarkResult.scenarios.forEach(scenario => scenario.samples.forEach(sample => sample.selected = selected));
+            this.updateData();
+        },
         updateData: function() {
             this.chart.data.datasets = this.chartData;
             this.chart.update();
