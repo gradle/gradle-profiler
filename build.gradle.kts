@@ -52,6 +52,15 @@ dependencies {
     testRuntimeOnly("org.objenesis:objenesis:2.6")
 }
 
+allprojects {
+    pluginManager.withPlugin("java") {
+        java {
+            sourceCompatibility = JavaVersion.VERSION_1_8
+            targetCompatibility = JavaVersion.VERSION_1_8
+        }
+    }
+}
+
 subprojects {
     // Subprojects are packaged into the Gradle profiler Jar, so let's make them reproducible
     tasks.withType<Jar>().configureEach {
@@ -100,12 +109,6 @@ tasks.processResources {
         }
     }
     from(generateHtmlReportJavaScript)
-}
-
-tasks.test {
-    // Use the current JVM. Some tests require JFR, which is only available in some JVM implementations
-    // For now assume that the current JVM has JFR support and that CI will inject the correct implementation
-    javaLauncher.set(null as JavaLauncher?)
 }
 
 val testReports = mapOf(
