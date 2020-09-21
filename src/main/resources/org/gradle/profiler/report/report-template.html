@@ -131,9 +131,12 @@ td.MEASURE {
 tr:hover td.MEASURE {
     background-color: #d8ffd8;
 }
-div.controls,
-div.controls .btn {
+div.controls {
     font-size: 13.5px;
+}
+div.controls .btn {
+    font-size: 1em;
+    padding: .375em .75em;
 }
 .btn-separator:after {
     content: ' ';
@@ -156,7 +159,7 @@ div.controls .btn {
                 <canvas id='samples' style="width: 100%; height: 400px;"></canvas>
             </div>
         </div>
-        <div class="form-row mt-2 controls">
+        <div class="form-row mt-2 controls ml-auto mr-auto">
             <div class="btn-group btn-group-toggle" data-toggle="buttons">
                 <div class="btn-group btn-group-toggle" data-toggle="buttons">
                     <button class="btn btn-secondary" :class="{ active: !options.sorted }" @click="options.sorted = false">Historical</button>
