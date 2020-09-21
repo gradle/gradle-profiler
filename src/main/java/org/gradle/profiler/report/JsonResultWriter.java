@@ -15,6 +15,7 @@ import org.gradle.profiler.Version;
 import org.gradle.profiler.result.BuildInvocationResult;
 import org.gradle.profiler.result.Sample;
 
+import javax.annotation.Nullable;
 import javax.annotation.OverridingMethodsMustInvokeSuper;
 import java.io.Writer;
 import java.lang.reflect.Type;
@@ -32,7 +33,7 @@ public class JsonResultWriter {
         this.pretty = pretty;
     }
 
-    public void write(List<? extends BuildScenarioResult<?>> scenarios, Temporal reportDate, Writer writer) {
+    public void write(@Nullable String title, Temporal reportDate, List<? extends BuildScenarioResult<?>> scenarios, Writer writer) {
         GsonBuilder builder = new GsonBuilder();
         if (pretty) {
             builder.setPrettyPrinting();
@@ -43,26 +44,33 @@ public class JsonResultWriter {
             .registerTypeHierarchyAdapter(GradleScenarioDefinition.class, new GradleScenarioSerializer())
             .registerTypeHierarchyAdapter(Temporal.class, (JsonSerializer<Temporal>) (date, type, context) -> new JsonPrimitive(DateTimeFormatter.ISO_INSTANT.format(date)))
             .create();
-        gson.toJson(new Output(new Environment(reportDate), scenarios), writer);
+        gson.toJson(new Output(title, reportDate, new Environment(), scenarios), writer);
     }
 
     private static class Environment {
         final String profilerVersion;
         final String operatingSystem;
-        final Temporal date;
 
-        public Environment(Temporal date) {
+        public Environment() {
             this.profilerVersion = Version.getVersion();
             this.operatingSystem = OperatingSystem.getId();
-            this.date = date;
         }
     }
 
     private static class Output {
+        final String title;
+        final Temporal date;
         final Environment environment;
         final List<? extends BuildScenarioResult<?>> scenarios;
 
-        public Output(Environment environment, List<? extends BuildScenarioResult<?>> scenarios) {
+        public Output(
+            String title,
+            Temporal date,
+            Environment environment,
+            List<? extends BuildScenarioResult<?>> scenarios
+        ) {
+            this.title = title;
+            this.date = date;
             this.environment = environment;
             this.scenarios = scenarios;
         }

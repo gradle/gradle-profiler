@@ -27,6 +27,7 @@ public class InvocationSettings {
     private final boolean measureConfigTime;
     private final List<String> measuredBuildOperations;
     private final Format csvFormat;
+    private final String title;
     /**
      * The log file which the build should write stdout and stderr to.
      * If {@code null}, the stdout and stderr are stored in memory.
@@ -53,6 +54,7 @@ public class InvocationSettings {
         boolean measureConfigTime,
         List<String> measuredBuildOperations,
         Format csvFormat,
+        String title,
         File buildLog
     ) {
         this.benchmark = benchmark;
@@ -72,6 +74,7 @@ public class InvocationSettings {
         this.measureConfigTime = measureConfigTime;
         this.measuredBuildOperations = measuredBuildOperations;
         this.csvFormat = csvFormat;
+        this.title = title;
         this.buildLog = buildLog;
     }
 
@@ -164,6 +167,10 @@ public class InvocationSettings {
         return csvFormat;
     }
 
+    public String getTitle() {
+        return title;
+    }
+
     public UUID getInvocationId() {
         return invocationId;
     }
@@ -208,6 +215,7 @@ public class InvocationSettings {
         private boolean measureConfigTime;
         private List<String> measuredBuildOperations;
         private Format csvFormat;
+        private String title;
         private File buildLog;
 
         public InvocationSettingsBuilder setProjectDir(File projectDir) {
@@ -295,6 +303,11 @@ public class InvocationSettings {
             return this;
         }
 
+        public InvocationSettingsBuilder setTitle(@Nullable String title) {
+            this.title = title;
+            return this;
+        }
+
         public InvocationSettingsBuilder setBuildLog(File buildLog) {
             this.buildLog = buildLog;
             return this;
@@ -319,6 +332,7 @@ public class InvocationSettings {
                 measureConfigTime,
                 measuredBuildOperations,
                 csvFormat,
+                title,
                 buildLog
             );
         }

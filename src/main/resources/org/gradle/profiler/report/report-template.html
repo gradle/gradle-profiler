@@ -145,7 +145,10 @@ div.controls .btn {
 <body>
 <div id="app">
     <nav class="navbar navbar-dark bg-dark">
-        <span class="navbar-brand mb-0 h1">Gradle Profiler – Benchmark results</span>
+        <div class="navbar-brand mb-0 h1">
+            <span>{{ benchmarkResult.title || "Benchmark results" }}</span>
+        </div>
+        <div class="navbar-brand mb-0 h1">Gradle Profiler</div>
     </nav>
     <div class='container-fluid'>
         <div class='row mt-3'>
@@ -309,7 +312,7 @@ div.controls .btn {
         </div>
     </div>
     <div class="footer fixed-bottom">
-        <div class="date">{{ new Date(Date.parse(benchmarkResult.environment.date)) | date }}</div>
+        <div class="date">{{ new Date(Date.parse(benchmarkResult.date)) | date }}</div>
         <div class="env">{{ benchmarkResult.environment.operatingSystem }}</div>
         <div class="version">Gradle Profiler version {{ benchmarkResult.environment.profilerVersion }}</div>
     </div>

@@ -1,8 +1,9 @@
 {
+  "title": "Example benchmark",
+  "date": "2020-09-13T12:26:40Z",
   "environment": {
     "profilerVersion": "0.15.0-alpha2",
-    "operatingSystem": "mac os x x86_64 10.15.6",
-    "date": "2020-09-13T12:26:40Z"
+    "operatingSystem": "mac os x x86_64 10.15.6"
   },
   "scenarios": [
     {
