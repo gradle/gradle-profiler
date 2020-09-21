@@ -200,32 +200,4 @@ class JFRProfilerIntegrationTest extends AbstractProfilerIntegrationTest {
         output.contains("Scenario assemble using Gradle ${minimalSupportedGradleVersion}: Profiler JFR does not support profiling multiple iterations with cleanup steps in between.")
     }
 
-    def "cannot profile using JFR with multiple iterations and cold daemon"() {
-        given:
-        instrumentedBuildScript()
-
-        when:
-        new Main().run("--project-dir", projectDir.absolutePath, "--output-dir", outputDir.absolutePath, "--gradle-version", minimalSupportedGradleVersion, "--profile", "jfr", "--iterations", "2", "--cold-daemon", "assemble")
-
-        then:
-        thrown(IllegalArgumentException)
-
-        and:
-        output.contains("Scenario using Gradle ${minimalSupportedGradleVersion}: Profiler JFR does not support profiling multiple daemons.")
-    }
-
-    def "cannot profile using JFR with multiple iterations and no daemon"() {
-        given:
-        instrumentedBuildScript()
-
-        when:
-        new Main().run("--project-dir", projectDir.absolutePath, "--output-dir", outputDir.absolutePath, "--gradle-version", minimalSupportedGradleVersion, "--profile", "jfr", "--iterations", "2", "--no-daemon", "assemble")
-
-        then:
-        thrown(IllegalArgumentException)
-
-        and:
-        output.contains("Scenario using Gradle ${minimalSupportedGradleVersion}: Profiler JFR does not support profiling multiple daemons.")
-    }
-
 }
