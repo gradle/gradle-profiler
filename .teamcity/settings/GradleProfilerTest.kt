@@ -18,7 +18,7 @@ open class GradleProfilerTest(os: Os) : BuildType({
         gradle {
             tasks = "clean build"
             buildFile = ""
-            gradleParams = "-s ${buildCacheConfigurations()}"
+            gradleParams = "-s ${buildCacheConfigurations()} ${toolchainConfiguration(os)}"
             param("org.jfrog.artifactory.selectedDeployableServer.defaultModuleVersionConfiguration", "GLOBAL")
         }
     }

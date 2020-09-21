@@ -13,6 +13,10 @@ fun buildCacheConfigurations() = listOf("-Dgradle.cache.remote.push=true",
     "-Dgradle.cache.remote.username=%gradle.cache.remote.username%",
     "-Dgradle.cache.remote.password=%gradle.cache.remote.password%").joinToString(" ")
 
+fun toolchainConfiguration(os: Os) = listOf("-Porg.gradle.java.installations.auto-detect=false",
+    "-Porg.gradle.java.installations.auto-download=false",
+    """"-Porg.gradle.java.installations.paths=%${os.name}.java8.oracle.64bit%,%${os.name}.java11.openjdk.64bit%"""").joinToString(" ")
+
 fun ParametrizedWithType.java8Home(os: Os) {
     param("env.JAVA_HOME", "%${os.name}.java8.oracle.64bit%")
 }
