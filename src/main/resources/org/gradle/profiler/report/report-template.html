@@ -166,16 +166,18 @@ div.controls .btn {
                     <button class="btn btn-secondary" :class="{ active: options.sorted }" @click="options.sorted = true">Sorted</button>
                 </div>
             </div>
-            <div class="btn-separator"></div>
-            <div class="btn-group">
-                <button class="btn btn-secondary" @click="toggleAll(true)">Select all</button>
-                <button class="btn btn-secondary" @click="toggleAll(false)">Clear all</button>
-            </div>
-            <div class="btn-separator"></div>
-            <div class="btn-group btn-group-toggle" data-toggle="buttons">
-                <button class="btn btn-secondary" :class="{ active: options.showAll }" @click="options.showAll = true">Show all</button>
-                <button class="btn btn-secondary" :class="{ active: !options.showAll }" @click="options.showAll = false">Show selected only</button>
-            </div>
+            <template v-if="benchmarkResult.scenarios.length > 1 || benchmarkResult.scenarios[0].samples.length > 1">
+                <div class="btn-separator"></div>
+                <div class="btn-group">
+                    <button class="btn btn-secondary" @click="toggleAll(true)">Select all</button>
+                    <button class="btn btn-secondary" @click="toggleAll(false)">Clear all</button>
+                </div>
+                <div class="btn-separator"></div>
+                <div class="btn-group btn-group-toggle" data-toggle="buttons">
+                    <button class="btn btn-secondary" :class="{ active: options.showAll }" @click="options.showAll = true">Show all</button>
+                    <button class="btn btn-secondary" :class="{ active: !options.showAll }" @click="options.showAll = false">Show selected only</button>
+                </div>
+            </template>
         </div>
         <div class="row mt-3">
             <div class='col' id="data-table">
