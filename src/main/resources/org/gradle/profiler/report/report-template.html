@@ -156,16 +156,23 @@ div.controls .btn {
         <div class="form-row controls">
             <div class="btn-group btn-group-toggle" data-toggle="buttons">
                 <label class="btn btn-secondary" :class="{ active: options.order === 'historical' }">
-                    <input type="radio" name="order" v-model="options.order" value="historical"> Historical
+                    <input type="radio" name="order" v-model="options.order" value="historical">
+                    <span>Historical</span>
                 </label>
                 <label class="btn btn-secondary" :class="{ active: options.order === 'sorted' }">
-                    <input type="radio" name="order" v-model="options.order" value="sorted"> Sorted
+                    <input type="radio" name="order" v-model="options.order" value="sorted">
+                    <span>Sorted</span>
                 </label>
             </div>
             <div class="btn-separator"></div>
             <div class="btn-group">
                 <button class="btn btn-secondary" @click="toggleAll(true)">Select all</button>
                 <button class="btn btn-secondary" @click="toggleAll(false)">Clear all</button>
+            </div>
+            <div class="btn-separator"></div>
+            <div class="btn-group btn-group-toggle" data-toggle="buttons">
+                <button class="btn btn-secondary" :class="{ active: options.showAll }" @click="options.showAll = true">Show all</button>
+                <button class="btn btn-secondary" :class="{ active: !options.showAll }" @click="options.showAll = false">Show selected only</button>
             </div>
         </div>
         <div class="row mt-3">
@@ -183,9 +190,9 @@ div.controls .btn {
                     </thead>
                     <tbody>
                         <template v-for="scenario in benchmarkResult.scenarios">
-                            <template v-for="(sample, index) in scenario.samples">
+                            <template v-for="(sample, index) in scenario.samples.filter(sample => options.showAll || sample.selected)">
                                 <tr :class="{ baseline: baseline === scenario }">
-                                    <td class="details" v-if="index === 0" :rowspan="scenario.samples.length">
+                                    <td class="details" v-if="index === 0" :rowspan="rowCount(scenario)">
                                         <button
                                             class="btn btn-light"
                                             @click="scenario.showDetails = !scenario.showDetails"
@@ -193,13 +200,13 @@ div.controls .btn {
                                             <span class="fa">{{ scenario.showDetails ? "&#xf068;" : "&#xf067;" }}</span>
                                         </button>
                                     </td>
-                                    <td class="title" v-if="index === 0" :rowspan="scenario.samples.length">
+                                    <td class="title" v-if="index === 0" :rowspan="rowCount(scenario)">
                                         <span class="title">{{ scenario.definition.title }}</span>
                                         <span class="title version" v-if="multipleBuildToolsPresent">({{ scenario.definition.buildTool }})</span>
                                     </td>
                                     <template v-if="benchmarkResult.scenarios.length > 1">
                                         <td class="numeric data dark" v-if="baseline && baseline !== scenario" title="Confidence of difference to baseline">{{ uTest(scenario, baseline, sample) | percent }}</td>
-                                        <td class="center title dark" v-else-if="index == 0" :rowspan="scenario.samples.length" @click="baseline = baseline ? null : scenario">
+                                        <td class="center title dark" v-else-if="index == 0" :rowspan="rowCount(scenario)" @click="baseline = baseline ? null : scenario">
                                             <input type="checkbox" :checked="baseline">
                                         </td>
                                     </template>

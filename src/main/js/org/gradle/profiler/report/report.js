@@ -73,7 +73,8 @@ new Vue({
     el: '#app',
     data: {
         options: {
-            order: "historical"
+            order: "historical",
+            showAll: true
         },
         benchmarkResult: benchmarkResult,
         operations: OPERATIONS,
@@ -129,6 +130,9 @@ new Vue({
         toggleAll: function(selected) {
             benchmarkResult.scenarios.forEach(scenario => scenario.samples.forEach(sample => sample.selected = selected));
             this.updateData();
+        },
+        rowCount: function(scenario) {
+            return scenario.samples.filter(sample => this.options.showAll || sample.selected).length;
         },
         updateData: function() {
             this.chart.data.datasets = this.chartData;
