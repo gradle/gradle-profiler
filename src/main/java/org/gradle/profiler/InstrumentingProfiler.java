@@ -15,7 +15,7 @@ import java.util.function.Consumer;
  * <li>Use some communication mechanism to capture a snapshot from an instrumented JVM that is currently running.</li>
  * </ul>
  *
- * <p>The profiler may support starting recording multiple times for a given JVM. The implementation should indicate this by overriding {@link #canRestartRecording()}.</p>
+ * <p>The profiler may support starting recording multiple times for a given JVM. The implementation should indicate this by overriding {@link #canRestartRecording(ScenarioSettings)}.</p>
  */
 public abstract class InstrumentingProfiler extends Profiler {
     /**
@@ -85,7 +85,7 @@ public abstract class InstrumentingProfiler extends Profiler {
 
     protected void validateMultipleIterationsWithCleanupAction(ScenarioSettings settings, Consumer<String> reporter) {
         GradleScenarioDefinition scenario = settings.getScenario();
-        if (scenario.getBuildCount() > 1 && !canRestartRecording() && scenario.getCleanupAction().isDoesSomething()) {
+        if (scenario.getBuildCount() > 1 && !canRestartRecording(settings) && scenario.getCleanupAction().isDoesSomething()) {
             reporter.accept("Profiler " + toString() + " does not support profiling multiple iterations with cleanup steps in between.");
         }
     }
@@ -100,7 +100,7 @@ public abstract class InstrumentingProfiler extends Profiler {
     /**
      * Can this profiler implementation restart recording, for the same JVM?
      */
-    protected boolean canRestartRecording() {
+    protected boolean canRestartRecording(ScenarioSettings settings) {
         return false;
     }
 

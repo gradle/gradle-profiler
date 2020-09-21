@@ -27,7 +27,7 @@ public class JProfilerProfiler extends InstrumentingProfiler {
     }
 
     @Override
-    protected boolean canRestartRecording() {
+    protected boolean canRestartRecording(ScenarioSettings settings) {
         return true;
     }
 

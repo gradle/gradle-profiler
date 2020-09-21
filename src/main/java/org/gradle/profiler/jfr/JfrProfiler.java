@@ -50,4 +50,9 @@ public class JfrProfiler extends InstrumentingProfiler {
     public void validate(ScenarioSettings settings, Consumer<String> reporter) {
         validateMultipleIterationsWithCleanupAction(settings, reporter);
     }
+
+    @Override
+    protected boolean canRestartRecording(ScenarioSettings settings) {
+        return !settings.getScenario().getInvoker().isReuseDaemon();
+    }
 }

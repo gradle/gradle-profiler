@@ -1,6 +1,7 @@
 package org.gradle.profiler
 
 import spock.lang.IgnoreIf
+import spock.lang.Requires
 import spock.lang.Unroll
 
 // TODO Re-enable once Oracle JDK 8 lookup is fixed with toolchains
@@ -141,6 +142,8 @@ class JFRProfilerIntegrationTest extends AbstractProfilerIntegrationTest {
         latestSupportedGradleVersion  | _
     }
 
+    @Requires({ !OperatingSystem.isWindows() })
+    // No perl installed on Windows
     @Unroll
     def "can profile Gradle no daemon #versionUnderTest with #iterations iterations"(String versionUnderTest, int iterations) {
         given:
