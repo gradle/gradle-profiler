@@ -201,9 +201,7 @@ new Vue({
                     duration: 0
                 },
                 legend: {
-                    position: "bottom",
-                    align: "start",
-                    fullWidth: false
+                    display: false
                 },
                 tooltips: {
                     mode: "index",
