@@ -27,7 +27,7 @@ public class HtmlGenerator extends AbstractGenerator {
                     Resources.asCharSource(Resources.getResource(HtmlGenerator.class, "report.js"), StandardCharsets.UTF_8).copyTo(writer);
                 } else if (line.equals(JSON_PLACEHOLDER)) {
                     new JsonResultWriter(true).write(
-                        settings.getTitle(),
+                        settings.getBenchmarkTitle(),
                         Instant.now(),
                         benchmarkResult.getScenarios(),
                         writer
