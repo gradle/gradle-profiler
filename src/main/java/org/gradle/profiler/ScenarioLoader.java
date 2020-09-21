@@ -430,7 +430,7 @@ class ScenarioLoader {
                 throw new IllegalArgumentException("Cannot run tasks and Android studio sync in same scenario.");
             }
             if (invocationSettings.getStudioInstallDir() == null) {
-                throw new IllegalArgumentException("Android Studio installation directory should be specified using --studio-install-dir when performing Android studio sync.");
+                throw new IllegalArgumentException("Android Studio installation directory should be specified using --studio-install-dir when measuring Android studio sync.");
             }
             return new AndroidStudioSyncAction();
         }

@@ -1,23 +1,24 @@
 package org.gradle.profiler.studio;
 
+import com.dd.plist.NSDictionary;
+import com.dd.plist.NSObject;
+import com.dd.plist.NSString;
+import com.dd.plist.PropertyListParser;
 import org.gradle.profiler.instrument.GradleInstrumentation;
 
-import javax.xml.stream.XMLInputFactory;
-import javax.xml.stream.XMLStreamException;
-import javax.xml.stream.XMLStreamReader;
-import java.io.IOException;
-import java.io.InputStream;
 import java.nio.file.FileSystems;
-import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.*;
+import java.util.Arrays;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
 public class LauncherConfigurationParser {
     public LaunchConfiguration calculate(Path studioInstallDir) {
         Path infoFile = studioInstallDir.resolve("Contents/Info.plist");
-        Dict entries = PListParser.parse(infoFile);
+        Dict entries = parse(infoFile);
         Dict jvmOptions = entries.dict("JVMOptions");
         List<Path> classPath = Arrays.stream(jvmOptions.string("ClassPath").split(":")).map(s -> FileSystems.getDefault().getPath(s.replace("$APP_PACKAGE", studioInstallDir.toString()))).collect(Collectors.toList());
         String mainClass = jvmOptions.string("MainClass");
@@ -30,6 +31,14 @@ public class LauncherConfigurationParser {
         return new LaunchConfiguration(javaCommand, classPath, systemProperties, mainClass, agentJar, supportJar, Arrays.asList(asmJar, protocolJar));
     }
 
+    private static Dict parse(Path infoFile) {
+        try {
+            return new Dict((NSDictionary) PropertyListParser.parse(infoFile.toFile()));
+        } catch (Exception e) {
+            throw new RuntimeException(String.format("Could not parse '%s'.", infoFile), e);
+        }
+    }
+
     private static <T, S> Map<String, S> mapValues(Map<String, T> map, Function<T, S> mapper) {
         Map<String, S> result = new LinkedHashMap<>();
         for (Map.Entry<String, T> entry : map.entrySet()) {
@@ -39,166 +48,30 @@ public class LauncherConfigurationParser {
     }
 
     private static class Dict {
-        private final Map<String, ?> contents;
+        private final NSDictionary contents;
 
-        public Dict(Map<String, ?> contents) {
+        public Dict(NSDictionary contents) {
             this.contents = contents;
         }
 
         Dict dict(String key) {
-            return (Dict) getEntry(key);
+            return new Dict((NSDictionary) getEntry(key));
         }
 
         String string(String key) {
-            return (String) getEntry(key);
+            return ((NSString) getEntry(key)).getContent();
         }
 
         Map<String, String> toMap() {
-            return mapValues(contents, v -> (String) v);
+            return mapValues(contents, v -> ((NSString) v).getContent());
         }
 
-        private Object getEntry(String key) {
-            Object value = contents.get(key);
+        private NSObject getEntry(String key) {
+            NSObject value = contents.get(key);
             if (value == null) {
                 throw new IllegalArgumentException(String.format("Dictionary does not contain entry '%s'.", key));
             }
             return value;
-        }
-    }
-
-    private static class PListParser {
-        private final XMLStreamReader reader;
-
-        public PListParser(InputStream content) throws XMLStreamException {
-            reader = XMLInputFactory.newFactory().createXMLStreamReader(content);
-            while (reader.hasNext() && reader.getEventType() != XMLStreamReader.START_ELEMENT) {
-                reader.next();
-            }
-        }
-
-        public static Dict parse(Path infoFile) {
-            try {
-                try (InputStream inputStream = Files.newInputStream(infoFile)) {
-                    return new PListParser(inputStream).plist();
-                }
-            } catch (IOException | XMLStreamException e) {
-                throw new RuntimeException(String.format("Could not parse '%s'.", infoFile), e);
-            }
-        }
-
-        public Dict plist() throws XMLStreamException {
-            expectStart("plist");
-            expectStart("dict");
-            Dict result = dictEntries();
-            expectEnd("dict");
-            expectEnd("plist");
-            return result;
-        }
-
-        private Dict dictEntries() throws XMLStreamException {
-            Map<String, Object> entries = new LinkedHashMap<>();
-            while (maybeStart("key")) {
-                String key = expectText();
-                expectEnd("key");
-                Object value = readObject();
-                entries.put(key, value);
-            }
-            return new Dict(entries);
-        }
-
-        private Object readObject() throws XMLStreamException {
-            if (maybeStart("string")) {
-                String text = expectText();
-                expectEnd("string");
-                return text;
-            } else if (maybeStart("false")) {
-                expectEnd("false");
-                return false;
-            } else if (maybeStart("true")) {
-                expectEnd("true");
-                return true;
-            } else if (maybeStart("array")) {
-                List<Object> elements = new ArrayList<>();
-                while (true) {
-                    if (maybeStart("dict")) {
-                        elements.add(dictEntries());
-                        expectEnd("dict");
-                    } else if (maybeStart("string")) {
-                        elements.add(expectText());
-                        expectEnd("string");
-                    } else {
-                        break;
-                    }
-                }
-                expectEnd("array");
-                return elements;
-            } else if (maybeStart("dict")) {
-                Dict value = dictEntries();
-                expectEnd("dict");
-                return value;
-            }
-            throw broken("object");
-        }
-
-        private void expectStart(String name) throws XMLStreamException {
-            if (!maybeStart(name)) {
-                throw broken("<" + name + ">");
-            }
-            reader.next();
-        }
-
-        private boolean maybeStart(String name) throws XMLStreamException {
-            while (reader.getEventType() != XMLStreamReader.START_ELEMENT) {
-                if (reader.getEventType() == XMLStreamReader.SPACE) {
-                    reader.next();
-                } else {
-                    break;
-                }
-            }
-            if (reader.getEventType() != XMLStreamReader.START_ELEMENT || !reader.getLocalName().equalsIgnoreCase(name)) {
-                return false;
-            }
-            reader.next();
-            return true;
-        }
-
-        private void expectEnd(String name) throws XMLStreamException {
-            while (reader.getEventType() != XMLStreamReader.END_ELEMENT) {
-                if (reader.getEventType() == XMLStreamReader.SPACE) {
-                    reader.next();
-                } else {
-                    break;
-                }
-            }
-            if (reader.getEventType() != XMLStreamReader.END_ELEMENT || !reader.getLocalName().equalsIgnoreCase(name)) {
-                throw broken("</" + name + ">");
-            }
-            reader.next();
-        }
-
-        private String expectText() throws XMLStreamException {
-            if (reader.getEventType() != XMLStreamReader.CHARACTERS) {
-                throw broken("text");
-            }
-            String result = reader.getText();
-            reader.next();
-            return result;
-        }
-
-        private IllegalStateException broken(String expected) {
-            return new IllegalStateException(String.format("Expected %s at line %s, found %s.", expected, reader.getLocation().getLineNumber(), current()));
-        }
-
-        private String current() {
-            switch (reader.getEventType()) {
-                case XMLStreamReader.START_ELEMENT:
-                    return "<" + reader.getLocalName() + ">";
-                case XMLStreamReader.SPACE:
-                case XMLStreamReader.CHARACTERS:
-                    return "\"" + reader.getText() + "\"";
-                default:
-                    return "??";
-            }
         }
     }
 }
