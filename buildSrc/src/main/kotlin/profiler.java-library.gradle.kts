@@ -15,7 +15,7 @@ java {
     }
 }
 
-project.extensions.create("versions", Versions::class.java)
+project.extensions.create<Versions>("versions")
 
 abstract class Versions {
     val toolingApi = "org.gradle:gradle-tooling-api:6.6.1"
