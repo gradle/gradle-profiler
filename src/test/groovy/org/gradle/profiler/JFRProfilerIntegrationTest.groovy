@@ -1,7 +1,10 @@
 package org.gradle.profiler
 
+import spock.lang.IgnoreIf
 import spock.lang.Unroll
 
+// TODO Re-enable once Oracle JDK 8 lookup is fixed with toolchains
+@IgnoreIf({ OperatingSystem.macOS })
 class JFRProfilerIntegrationTest extends AbstractProfilerIntegrationTest {
     @Unroll
     def "can profile Gradle #versionUnderTest using JFR, tooling API and warm daemon"() {
