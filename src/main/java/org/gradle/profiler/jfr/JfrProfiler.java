@@ -1,6 +1,5 @@
 package org.gradle.profiler.jfr;
 
-import org.gradle.profiler.GradleScenarioDefinition;
 import org.gradle.profiler.InstrumentingProfiler;
 import org.gradle.profiler.JvmArgsCalculator;
 import org.gradle.profiler.ScenarioSettings;
@@ -49,9 +48,6 @@ public class JfrProfiler extends InstrumentingProfiler {
 
     @Override
     public void validate(ScenarioSettings settings, Consumer<String> reporter) {
-        GradleScenarioDefinition scenario = settings.getScenario();
-        if (scenario.getBuildCount() > 1 && !canRestartRecording() && scenario.getCleanupAction().isDoesSomething()) {
-            reporter.accept("Profiler " + toString() + " does not support profiling multiple iterations with cleanup steps in between.");
-        }
+        validateMultipleIterationsWithCleanupAction(settings, reporter);
     }
 }
