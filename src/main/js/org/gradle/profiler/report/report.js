@@ -85,6 +85,7 @@ new Vue({
         },
         chartData: function() {
             const sorted = this.options.order === "sorted";
+            const multipleBuildToolsPresent = this.multipleBuildToolsPresent;
             return this.benchmarkResult.scenarios
                 .map(scenario => scenario.samples
                     .filter(sample => sample.selected)
@@ -95,7 +96,9 @@ new Vue({
                             data = data.reverseNumericSort();
                         }
                         return {
-                            label: sample.name,
+                            label: multipleBuildToolsPresent
+                                ? `${scenario.definition.title} ${scenario.definition.buildTool} (${sample.name})`
+                                : `${scenario.definition.title} (${sample.name})`,
                             showLine: true,
                             stepped: "middle",
                             pointRadius: 0,
