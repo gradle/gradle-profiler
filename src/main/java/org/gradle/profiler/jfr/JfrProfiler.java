@@ -45,4 +45,14 @@ public class JfrProfiler extends InstrumentingProfiler {
     private File getJfrFile(ScenarioSettings settings) {
         return new File(settings.getScenario().getOutputDir(), settings.getScenario().getProfileName() + PROFILE_JFR_SUFFIX);
     }
+
+    @Override
+    public void validate(ScenarioSettings settings, Consumer<String> reporter) {
+        validateMultipleIterationsWithCleanupAction(settings, reporter);
+    }
+
+    @Override
+    protected boolean canRestartRecording(ScenarioSettings settings) {
+        return !settings.getScenario().getInvoker().isReuseDaemon();
+    }
 }

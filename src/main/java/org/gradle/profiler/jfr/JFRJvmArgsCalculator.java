@@ -29,16 +29,21 @@ public class JFRJvmArgsCalculator implements JvmArgsCalculator {
             jvmArgs.add("-XX:+UnlockCommercialFeatures");
         }
         jvmArgs.add("-XX:+FlightRecorder");
-        jvmArgs.add("-XX:FlightRecorderOptions=stackdepth=1024");
         jvmArgs.add("-XX:+UnlockDiagnosticVMOptions");
         jvmArgs.add("-XX:+DebugNonSafepoints");
+
+        StringBuilder flightRecorderOptions = new StringBuilder("-XX:FlightRecorderOptions=stackdepth=1024");
+
         if (profileOnStart) {
-            String startArgs = "name=profile,settings=" + args.getJfrSettings();
+            jvmArgs.add("-XX:StartFlightRecording=name=profile,settings=" + args.getJfrSettings());
             if (captureOnExit) {
-                startArgs += ",dumponexit=true,filename=" + outputFile.getAbsolutePath();
+                flightRecorderOptions.append(",defaultrecording=true,dumponexit=true")
+                    .append(",dumponexitpath=")
+                    .append(outputFile.getParentFile().getAbsolutePath());
             }
-            jvmArgs.add("-XX:StartFlightRecording=" + startArgs);
         }
+
+        jvmArgs.add(flightRecorderOptions.toString());
     }
 
     private boolean isOracleVm() {
