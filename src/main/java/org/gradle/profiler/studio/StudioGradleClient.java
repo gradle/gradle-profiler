@@ -57,7 +57,7 @@ public class StudioGradleClient implements GradleClient {
         commandLine.add("java.base/jdk.internal.misc=ALL-UNNAMED");
         commandLine.add("-Xbootclasspath/a:" + Joiner.on(File.pathSeparator).join(launchConfiguration.getSharedJars()));
         commandLine.add(launchConfiguration.getMainClass());
-        commandLine.add(invocationSettings.getProjectDir().toString());
+        commandLine.add(invocationSettings.getProjectDir().getAbsolutePath());
         System.out.println("* Using command line: " + commandLine);
 
         return new CommandExec().inDir(studioInstallDir.toFile()).start(commandLine);
