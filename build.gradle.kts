@@ -1,11 +1,10 @@
-import java.net.URI
 import com.moowork.gradle.node.npm.NpxTask
 
 plugins {
     id("profiler.java-library")
     groovy
     application
-    `maven-publish`
+    id("profiler.publication")
     id("com.github.node-gradle.node") version "2.2.4"
 }
 
@@ -137,40 +136,6 @@ tasks.register("testHtmlReports") {
 
 val profilerDistribution = artifacts.add("archives", tasks.distZip.flatMap { it.archiveFile }) {
     type = "zip"
-}
-
-publishing {
-    publications {
-        register<MavenPublication>("mavenJava") {
-            from(components["java"])
-            artifact(profilerDistribution)
-            pom {
-                licenses {
-                    license {
-                        name.set("The Apache License, Version 2.0")
-                        url.set("http://www.apache.org/licenses/LICENSE-2.0.txt")
-                    }
-                }
-            }
-        }
-    }
-
-    repositories {
-        maven {
-            name = "GradleBuildInternal"
-            url = gradleInternalRepositoryUrl()
-            credentials {
-                username = project.findProperty("artifactoryUsername") as String?
-                password = project.findProperty("artifactoryPassword") as String?
-            }
-        }
-    }
-}
-
-fun Project.gradleInternalRepositoryUrl(): URI {
-    val isSnapshot = version.toString().endsWith("-SNAPSHOT")
-    val repositoryQualifier = if (isSnapshot) "snapshots" else "releases"
-    return uri("https://repo.gradle.org/gradle/ext-$repositoryQualifier-local")
 }
 
 buildScan {
