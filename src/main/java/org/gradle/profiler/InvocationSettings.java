@@ -167,6 +167,9 @@ public class InvocationSettings {
         return csvFormat;
     }
 
+    /**
+     * The title of the benchmark. Shown on the HTML report and on the console.
+     */
     public String getBenchmarkTitle() {
         return benchmarkTitle;
     }
@@ -306,6 +309,9 @@ public class InvocationSettings {
             return this;
         }
 
+        /**
+         * The title of the benchmark. Shown on the HTML report and on the console.
+         */
         public InvocationSettingsBuilder setBenchmarkTitle(@Nullable String benchmarkTitle) {
             this.benchmarkTitle = benchmarkTitle;
             return this;
