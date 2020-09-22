@@ -100,13 +100,14 @@ class JsonResultWriterTest extends Specification {
         result2.accept(new GradleInvocationResult(scenarioContext2.withBuild(Phase.MEASURE, 2),  80, 185))
 
         when:
-        writer.write([result1, result2], Instant.ofEpochMilli(1600000000000), stringWriter)
+        writer.write("Test benchmark", Instant.ofEpochMilli(1600000000000), [result1, result2], stringWriter)
         then:
         stringWriter.toString() == """{
+  "title": "Test benchmark",
+  "date": "2020-09-13T12:26:40Z",
   "environment": {
     "profilerVersion": "UNKNOWN",
-    "operatingSystem": "${OperatingSystem.getId()}",
-    "date": "2020-09-13T12:26:40Z"
+    "operatingSystem": "${OperatingSystem.getId()}"
   },
   "scenarios": [
     {

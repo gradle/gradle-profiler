@@ -1,5 +1,6 @@
 package org.gradle.profiler.report;
 
+import org.gradle.profiler.InvocationSettings;
 import org.gradle.profiler.result.BuildInvocationResult;
 import org.gradle.profiler.result.Sample;
 
@@ -32,7 +33,7 @@ public class CsvGenerator extends AbstractGenerator {
     }
 
     @Override
-    protected void write(BenchmarkResult benchmarkResult, BufferedWriter writer) throws IOException {
+    protected void write(InvocationSettings settings, BenchmarkResult benchmarkResult, BufferedWriter writer) throws IOException {
         List<? extends BuildScenarioResult<?>> allScenarios = benchmarkResult.getScenarios();
         switch (format) {
             case WIDE:

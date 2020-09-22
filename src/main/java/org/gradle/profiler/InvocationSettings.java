@@ -27,6 +27,7 @@ public class InvocationSettings {
     private final boolean measureConfigTime;
     private final List<String> measuredBuildOperations;
     private final Format csvFormat;
+    private final String benchmarkTitle;
     /**
      * The log file which the build should write stdout and stderr to.
      * If {@code null}, the stdout and stderr are stored in memory.
@@ -53,6 +54,7 @@ public class InvocationSettings {
         boolean measureConfigTime,
         List<String> measuredBuildOperations,
         Format csvFormat,
+        String benchmarkTitle,
         File buildLog
     ) {
         this.benchmark = benchmark;
@@ -72,6 +74,7 @@ public class InvocationSettings {
         this.measureConfigTime = measureConfigTime;
         this.measuredBuildOperations = measuredBuildOperations;
         this.csvFormat = csvFormat;
+        this.benchmarkTitle = benchmarkTitle;
         this.buildLog = buildLog;
     }
 
@@ -164,11 +167,21 @@ public class InvocationSettings {
         return csvFormat;
     }
 
+    /**
+     * The title of the benchmark. Shown on the HTML report and on the console.
+     */
+    public String getBenchmarkTitle() {
+        return benchmarkTitle;
+    }
+
     public UUID getInvocationId() {
         return invocationId;
     }
 
     public void printTo(PrintStream out) {
+        if (benchmarkTitle != null) {
+            out.println("Title: " + benchmarkTitle);
+        }
         out.println("Project dir: " + getProjectDir());
         out.println("Output dir: " + getOutputDir());
         out.println("Profiler: " + getProfiler());
@@ -208,6 +221,7 @@ public class InvocationSettings {
         private boolean measureConfigTime;
         private List<String> measuredBuildOperations;
         private Format csvFormat;
+        private String benchmarkTitle;
         private File buildLog;
 
         public InvocationSettingsBuilder setProjectDir(File projectDir) {
@@ -295,6 +309,14 @@ public class InvocationSettings {
             return this;
         }
 
+        /**
+         * The title of the benchmark. Shown on the HTML report and on the console.
+         */
+        public InvocationSettingsBuilder setBenchmarkTitle(@Nullable String benchmarkTitle) {
+            this.benchmarkTitle = benchmarkTitle;
+            return this;
+        }
+
         public InvocationSettingsBuilder setBuildLog(File buildLog) {
             this.buildLog = buildLog;
             return this;
@@ -319,6 +341,7 @@ public class InvocationSettings {
                 measureConfigTime,
                 measuredBuildOperations,
                 csvFormat,
+                benchmarkTitle,
                 buildLog
             );
         }

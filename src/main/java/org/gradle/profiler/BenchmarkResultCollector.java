@@ -26,9 +26,9 @@ public class BenchmarkResultCollector {
         return buildScenario;
     }
 
-    public void write() throws IOException {
+    public void write(InvocationSettings settings) throws IOException {
         for (AbstractGenerator generator : generators) {
-            generator.write(new BenchmarkResultImpl());
+            generator.write(settings, new BenchmarkResultImpl());
         }
     }
 

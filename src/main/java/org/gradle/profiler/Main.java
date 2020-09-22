@@ -82,7 +82,7 @@ public class Main {
             if (settings.isBenchmark()) {
                 // Write the final results and generate the reports
                 // This overwrites the existing reports, so may leave them in a corrupted state if this process crashes during the generation.
-                benchmarkResults.write();
+                benchmarkResults.write(settings);
             }
 
             System.out.println();
@@ -116,7 +116,7 @@ public class Main {
             // This overwrites the existing reports, so may leave them in a corrupted state if this process crashes during the generation.
             // This is just intended to be a simple best effort solution
             if (settings.isBenchmark()) {
-                benchmarkResults.write();
+                benchmarkResults.write(settings);
             }
         }
     }

@@ -73,7 +73,8 @@ new Vue({
     el: '#app',
     data: {
         options: {
-            order: "historical"
+            sorted: false,
+            showAll: true
         },
         benchmarkResult: benchmarkResult,
         operations: OPERATIONS,
@@ -84,7 +85,7 @@ new Vue({
             return this.benchmarkResult.scenarios.map(scenario => scenario.definition.buildTool).unique().length > 1;
         },
         chartData: function() {
-            const sorted = this.options.order === "sorted";
+            const sorted = this.options.sorted;
             const multipleBuildToolsPresent = this.multipleBuildToolsPresent;
             return this.benchmarkResult.scenarios
                 .map(scenario => scenario.samples
@@ -117,7 +118,7 @@ new Vue({
         }
     },
     watch: {
-        "options.order": function() {
+        "options.sorted": function() {
             this.updateData();
         }
     },
@@ -125,6 +126,13 @@ new Vue({
         select: function(sample) {
             sample.selected = !sample.selected;
             this.updateData();
+        },
+        toggleAll: function(selected) {
+            benchmarkResult.scenarios.forEach(scenario => scenario.samples.forEach(sample => sample.selected = selected));
+            this.updateData();
+        },
+        rowCount: function(scenario) {
+            return scenario.samples.filter(sample => this.options.showAll || sample.selected).length;
         },
         updateData: function() {
             this.chart.data.datasets = this.chartData;
@@ -201,9 +209,7 @@ new Vue({
                     duration: 0
                 },
                 legend: {
-                    position: "bottom",
-                    align: "start",
-                    fullWidth: false
+                    display: false
                 },
                 tooltips: {
                     mode: "index",

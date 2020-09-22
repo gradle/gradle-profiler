@@ -70,6 +70,10 @@ class CommandLineParser {
             "The CSV format produced (" + Stream.of(Format.values()).map(Format::toString).collect(Collectors.joining(", ")) + ")")
             .withRequiredArg()
             .defaultsTo("wide");
+        ArgumentAcceptingOptionSpec<String> benchmarkTitleOption = parser.accepts("title",
+            "Title to show on benchmark report")
+            .withOptionalArg()
+            .ofType(String.class);
 
         OptionSet parsedOptions;
         try {
@@ -146,6 +150,7 @@ class CommandLineParser {
             }
         }
         CsvGenerator.Format csvFormat = CsvGenerator.Format.parse(parsedOptions.valueOf(csvFormatOption));
+        String benchmarkTitle = parsedOptions.valueOf(benchmarkTitleOption);
 
         return new InvocationSettings.InvocationSettingsBuilder()
             .setProjectDir(projectDir)
@@ -165,6 +170,7 @@ class CommandLineParser {
             .setMeasureConfigTime(measureConfig)
             .setMeasuredBuildOperations(benchmarkedBuildOperations)
             .setCsvFormat(csvFormat)
+            .setBenchmarkTitle(benchmarkTitle)
             .build();
     }
 

@@ -15,15 +15,16 @@ class BenchmarkResultCollectorTest extends Specification {
         def result1 = result()
         def result2 = result()
         BenchmarkResult result = null
+        def settings = new InvocationSettings.InvocationSettingsBuilder().build()
 
         when:
         def consumer = collector.scenario(scenario, [sample()])
         consumer.accept(result1)
         consumer.accept(result2)
-        collector.write()
+        collector.write(settings)
 
         then:
-        1 * generator.write(_) >> { BenchmarkResult r ->
+        1 * generator.write(settings, _) >> { InvocationSettings s, BenchmarkResult r ->
             result = r
         }
         result.scenarios.size() == 1
