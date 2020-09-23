@@ -1,11 +1,12 @@
-import java.net.URI
 import com.moowork.gradle.node.npm.NpxTask
+import java.net.URI
 
 plugins {
     id("profiler.java-library")
     groovy
     application
     `maven-publish`
+    id("profiler.publication")
     id("com.github.node-gradle.node") version "2.2.4"
 }
 
@@ -141,28 +142,8 @@ val profilerDistribution = artifacts.add("archives", tasks.distZip.flatMap { it.
 
 publishing {
     publications {
-        register<MavenPublication>("mavenJava") {
-            from(components["java"])
+        named<MavenPublication>("mavenJava") {
             artifact(profilerDistribution)
-            pom {
-                licenses {
-                    license {
-                        name.set("The Apache License, Version 2.0")
-                        url.set("http://www.apache.org/licenses/LICENSE-2.0.txt")
-                    }
-                }
-            }
-        }
-    }
-
-    repositories {
-        maven {
-            name = "GradleBuildInternal"
-            url = gradleInternalRepositoryUrl()
-            credentials {
-                username = project.findProperty("artifactoryUsername") as String?
-                password = project.findProperty("artifactoryPassword") as String?
-            }
         }
     }
 }
