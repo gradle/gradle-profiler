@@ -1,4 +1,5 @@
 import com.moowork.gradle.node.npm.NpxTask
+import java.net.URI
 
 plugins {
     id("profiler.java-library")
@@ -147,7 +148,7 @@ publishing {
     }
 }
 
-fun Project.gradleInternalRepositoryUrl(): java.net.URI {
+fun Project.gradleInternalRepositoryUrl(): URI {
     val isSnapshot = version.toString().endsWith("-SNAPSHOT")
     val repositoryQualifier = if (isSnapshot) "snapshots" else "releases"
     return uri("https://repo.gradle.org/gradle/ext-$repositoryQualifier-local")
