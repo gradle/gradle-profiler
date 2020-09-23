@@ -8,6 +8,7 @@ import org.gradle.profiler.instrument.GradleInstrumentation;
 
 import java.nio.file.FileSystems;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -17,13 +18,19 @@ import java.util.stream.Collectors;
 
 public class LauncherConfigurationParser {
     public LaunchConfiguration calculate(Path studioInstallDir) {
-        Path infoFile = studioInstallDir.resolve("Contents/Info.plist");
-        Dict entries = parse(infoFile);
+        Dict entries = parse(studioInstallDir.resolve("Contents/Info.plist"));
+        Path actualInstallDir;
+        if ("jetbrains-toolbox-launcher".equals(entries.string("CFBundleExecutable"))) {
+            actualInstallDir = Paths.get(entries.string("JetBrainsToolboxApp"));
+            entries = parse(actualInstallDir.resolve("Contents/Info.plist"));
+        } else {
+            actualInstallDir = studioInstallDir;
+        }
         Dict jvmOptions = entries.dict("JVMOptions");
-        List<Path> classPath = Arrays.stream(jvmOptions.string("ClassPath").split(":")).map(s -> FileSystems.getDefault().getPath(s.replace("$APP_PACKAGE", studioInstallDir.toString()))).collect(Collectors.toList());
+        List<Path> classPath = Arrays.stream(jvmOptions.string("ClassPath").split(":")).map(s -> FileSystems.getDefault().getPath(s.replace("$APP_PACKAGE", actualInstallDir.toString()))).collect(Collectors.toList());
         String mainClass = jvmOptions.string("MainClass");
-        Map<String, String> systemProperties = mapValues(jvmOptions.dict("Properties").toMap(), v -> v.replace("$APP_PACKAGE", studioInstallDir.toString()));
-        Path javaCommand = studioInstallDir.resolve("Contents/jre/jdk/Contents/Home/bin/java");
+        Map<String, String> systemProperties = mapValues(jvmOptions.dict("Properties").toMap(), v -> v.replace("$APP_PACKAGE", actualInstallDir.toString()));
+        Path javaCommand = actualInstallDir.resolve("Contents/jre/jdk/Contents/Home/bin/java");
         Path agentJar = GradleInstrumentation.unpackPlugin("studio-agent").toPath();
         Path asmJar = GradleInstrumentation.unpackPlugin("asm").toPath();
         Path supportJar = GradleInstrumentation.unpackPlugin("instrumentation-support").toPath();
