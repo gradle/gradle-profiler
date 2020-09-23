@@ -4,6 +4,7 @@ plugins {
     id("profiler.java-library")
     groovy
     application
+    `maven-publish`
     id("profiler.publication")
     id("com.github.node-gradle.node") version "2.2.4"
 }
@@ -136,6 +137,20 @@ tasks.register("testHtmlReports") {
 
 val profilerDistribution = artifacts.add("archives", tasks.distZip.flatMap { it.archiveFile }) {
     type = "zip"
+}
+
+publishing {
+    publications {
+        named<MavenPublication>("mavenJava") {
+            artifact(profilerDistribution)
+        }
+    }
+}
+
+fun Project.gradleInternalRepositoryUrl(): java.net.URI {
+    val isSnapshot = version.toString().endsWith("-SNAPSHOT")
+    val repositoryQualifier = if (isSnapshot) "snapshots" else "releases"
+    return uri("https://repo.gradle.org/gradle/ext-$repositoryQualifier-local")
 }
 
 buildScan {

@@ -8,16 +8,6 @@ publishing {
     publications {
         register<MavenPublication>("mavenJava") {
             from(components["java"])
-
-            if (project.parent == null) {
-                afterEvaluate {
-                    val profilerDistribution = artifacts.add("archives", tasks.named<Zip>("distZip").flatMap { it.archiveFile }) {
-                        type = "zip"
-                    }
-                    artifact(profilerDistribution)
-                }
-            }
-
             pom {
                 licenses {
                     license {
