@@ -18,8 +18,8 @@ object GradleProfilerPublishing : BuildType({
 
     steps {
         gradle {
-            tasks = "clean publishAllPublicationsToGradleBuildInternalRepository"
-            gradleParams = "-PartifactoryUsername=%ARTIFACTORY_USERNAME% -PartifactoryPassword=%ARTIFACTORY_PASSWORD% ${buildCacheConfigurations()} ${toolchainConfiguration(Os.linux)}"
+            tasks = "clean publishAllPublicationsToGradleBuildInternalRepository gitPushTag"
+            gradleParams = "-PartifactoryUsername=%ARTIFACTORY_USERNAME% -PartifactoryPassword=%ARTIFACTORY_PASSWORD% -PgithubToken=%github.bot-teamcity.token% ${buildCacheConfigurations()} ${toolchainConfiguration(Os.linux)}"
             param("org.jfrog.artifactory.selectedDeployableServer.defaultModuleVersionConfiguration", "GLOBAL")
             buildFile = ""
         }
