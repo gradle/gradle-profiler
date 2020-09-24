@@ -157,3 +157,16 @@ fun Project.gradleInternalRepositoryUrl(): URI {
 buildScan {
     isCaptureTaskInputFiles = true
 }
+
+val releaseTagName = "v$version"
+
+tasks.register<Exec>("gitTag") {
+    commandLine("git", "tag", releaseTagName)
+}
+
+tasks.register<Exec>("gitPushTag") {
+    mustRunAfter("publishAllPublicationsToGradleBuildInternalRepository")
+    dependsOn("gitTag")
+    commandLine("git", "push", "https://bot-teamcity:${project.property("githubToken")}@github.com/gradle/gradle-profiler.git", releaseTagName)
+}
+
