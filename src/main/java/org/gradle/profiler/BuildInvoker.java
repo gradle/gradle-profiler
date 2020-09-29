@@ -27,4 +27,8 @@ public class BuildInvoker {
     public int profileWarmUps() {
         return 2;
     }
+
+    public boolean allowsCleanupBetweenBuilds() {
+        return true;
+    }
 }

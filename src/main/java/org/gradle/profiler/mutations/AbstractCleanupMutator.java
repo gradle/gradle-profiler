@@ -3,14 +3,15 @@ package org.gradle.profiler.mutations;
 import com.typesafe.config.Config;
 import org.apache.commons.io.FileUtils;
 import org.gradle.profiler.BuildContext;
+import org.gradle.profiler.BuildInvoker;
 import org.gradle.profiler.BuildMutator;
 import org.gradle.profiler.ConfigUtil;
+import org.gradle.profiler.InvocationSettings;
 import org.gradle.profiler.ScenarioContext;
 
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
-import java.util.function.Supplier;
 
 public abstract class AbstractCleanupMutator implements BuildMutator {
 
@@ -18,6 +19,13 @@ public abstract class AbstractCleanupMutator implements BuildMutator {
 
     public AbstractCleanupMutator(CleanupSchedule schedule) {
         this.schedule = schedule;
+    }
+
+    @Override
+    public void validate(BuildInvoker invoker) {
+        if (schedule != CleanupSchedule.SCENARIO && !invoker.allowsCleanupBetweenBuilds()) {
+            throw new IllegalStateException(this + " is not allowed to be executed between builds with invoker " + invoker);
+        }
     }
 
     @Override
@@ -57,15 +65,15 @@ public abstract class AbstractCleanupMutator implements BuildMutator {
 
     protected static abstract class Configurator implements BuildMutatorConfigurator {
         @Override
-        public Supplier<BuildMutator> configure(Config scenario, String scenarioName, File projectDir, String key) {
+        public BuildMutator configure(Config scenario, String scenarioName, InvocationSettings settings, String key) {
             CleanupSchedule schedule = ConfigUtil.enumValue(scenario, key, CleanupSchedule.class, null);
             if (schedule == null) {
                 throw new IllegalArgumentException("Schedule for cleanup is not specified");
             }
-            return () -> newInstance(scenario, scenarioName, projectDir, key, schedule);
+            return newInstance(scenario, scenarioName, settings, key, schedule);
         }
 
-        protected abstract BuildMutator newInstance(Config scenario, String scenarioName, File projectDir, String key, CleanupSchedule schedule);
+        protected abstract BuildMutator newInstance(Config scenario, String scenarioName, InvocationSettings settings, String key, CleanupSchedule schedule);
     }
 
     @Override

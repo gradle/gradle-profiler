@@ -257,8 +257,13 @@ div.controls .btn {
                                                 <span class="data">{{ scenario.definition.cleanup }}</span>
                                             </li>
                                             <li>
-                                                <span class="description">Mutator:</span>
-                                                <span class="data">{{ scenario.definition.mutator }}</span>
+                                                <span class="description">Mutators:</span>
+                                                <span class="data" v-if="scenario.definition.mutators.length === 0">none</span>
+                                                <ul v-else>
+                                                    <li v-for="mutator in scenario.definition.mutators">
+                                                        <span class="data">{{ mutator }}</span>
+                                                    </li>
+                                                </ul>
                                             </li>
                                             <li>
                                                 <span class="description">Run using:</span>

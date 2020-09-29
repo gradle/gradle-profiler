@@ -20,6 +20,12 @@ public class GradleBuildInvoker extends BuildInvoker {
     }
 
     @Override
+    public boolean allowsCleanupBetweenBuilds() {
+        // Warm daemons keep caches open and thus they cannot be removed
+        return !isReuseDaemon();
+    }
+
+    @Override
     public String toString() {
         if (daemonReuse == GradleDaemonReuse.ColdDaemonOnly) {
             return client + " with cold daemon";

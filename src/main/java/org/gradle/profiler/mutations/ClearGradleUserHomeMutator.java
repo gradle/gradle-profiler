@@ -2,6 +2,7 @@ package org.gradle.profiler.mutations;
 
 import com.typesafe.config.Config;
 import org.gradle.profiler.BuildMutator;
+import org.gradle.profiler.InvocationSettings;
 
 import java.io.File;
 import java.io.IOException;
@@ -36,15 +37,9 @@ public class ClearGradleUserHomeMutator extends AbstractCleanupMutator {
     }
 
     public static class Configurator extends AbstractCleanupMutator.Configurator {
-        private final File gradleUserHome;
-
-        public Configurator(File gradleUserHome) {
-            this.gradleUserHome = gradleUserHome;
-        }
-
         @Override
-        protected BuildMutator newInstance(Config scenario, String scenarioName, File projectDir, String key, CleanupSchedule schedule) {
-            return new ClearGradleUserHomeMutator(gradleUserHome, schedule);
+        protected BuildMutator newInstance(Config scenario, String scenarioName, InvocationSettings settings, String key, CleanupSchedule schedule) {
+            return new ClearGradleUserHomeMutator(settings.getGradleUserHome(), schedule);
         }
     }
 }

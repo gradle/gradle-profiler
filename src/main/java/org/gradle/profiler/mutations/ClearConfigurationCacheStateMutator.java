@@ -3,6 +3,7 @@ package org.gradle.profiler.mutations;
 import com.typesafe.config.Config;
 import org.apache.commons.io.FileUtils;
 import org.gradle.profiler.BuildMutator;
+import org.gradle.profiler.InvocationSettings;
 
 import java.io.File;
 import java.io.IOException;
@@ -33,8 +34,8 @@ public class ClearConfigurationCacheStateMutator extends AbstractCleanupMutator 
 
     public static class Configurator extends AbstractCleanupMutator.Configurator {
         @Override
-        protected BuildMutator newInstance(Config scenario, String scenarioName, File projectDir, String key, CleanupSchedule schedule) {
-            return new ClearConfigurationCacheStateMutator(projectDir, schedule);
+        protected BuildMutator newInstance(Config scenario, String scenarioName, InvocationSettings settings, String key, CleanupSchedule schedule) {
+            return new ClearConfigurationCacheStateMutator(settings.getProjectDir(), schedule);
         }
     }
 }

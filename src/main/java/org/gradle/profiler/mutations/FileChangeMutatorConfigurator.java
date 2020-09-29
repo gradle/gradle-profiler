@@ -4,13 +4,13 @@ import com.typesafe.config.Config;
 import org.gradle.profiler.BuildMutator;
 import org.gradle.profiler.CompositeBuildMutator;
 import org.gradle.profiler.ConfigUtil;
+import org.gradle.profiler.InvocationSettings;
 
 import java.io.File;
 import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
-import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
 public class FileChangeMutatorConfigurator implements BuildMutatorConfigurator {
@@ -21,13 +21,13 @@ public class FileChangeMutatorConfigurator implements BuildMutatorConfigurator {
 	}
 
 	@Override
-	public Supplier<BuildMutator> configure(Config scenario, String scenarioName, File projectDir, String key) {
+	public BuildMutator configure(Config scenario, String scenarioName, InvocationSettings settings, String key) {
 		List<BuildMutator> mutatorsForKey = new ArrayList<>();
-		for (File sourceFileToChange : sourceFiles(scenario, scenarioName, projectDir, key)) {
+		for (File sourceFileToChange : sourceFiles(scenario, scenarioName, settings.getProjectDir(), key)) {
 			mutatorsForKey.add(getBuildMutatorForFile(sourceFileToChange));
 		}
 
-		return () -> new CompositeBuildMutator(mutatorsForKey);
+		return new CompositeBuildMutator(mutatorsForKey);
 	}
 
 	private BuildMutator getBuildMutatorForFile(File sourceFileToChange) {

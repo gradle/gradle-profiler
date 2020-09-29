@@ -1350,6 +1350,8 @@ buildGoal {
         scenarios.text = """
 buildTarget {
     versions = ["4.5"]
+    // Warm daemons don't allow cleaning caches
+    daemon = cold
     clear-build-cache-before = BUILD
     gradle-args = ["--build-cache"]
     tasks = ["checkNoCacheBefore", "clean", "compileJava", "checkHasCacheAfter"]
@@ -1448,6 +1450,8 @@ buildTarget {
         scenarios.text = """
 buildTarget {
     versions = ["4.10"]
+    // Warm daemons don't allow cleaning caches
+    daemon = cold
     clear-transform-cache-before = BUILD
     tasks = ["clean", "resolve", "checkHasCacheAfter"]
 }
@@ -1517,6 +1521,8 @@ buildTarget {
         scenarios.text = """
 buildTarget {
     versions = ["${latestSupportedGradleVersion}"]
+    // Warm daemons don't allow cleaning caches
+    daemon = cold
     clear-project-cache-before = BUILD
     tasks = ["compileJava"]
 }

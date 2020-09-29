@@ -4,7 +4,6 @@ import java.io.File;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
-import java.util.function.Supplier;
 
 public class AdhocGradleScenarioDefinition extends GradleScenarioDefinition {
     public AdhocGradleScenarioDefinition(
@@ -12,7 +11,6 @@ public class AdhocGradleScenarioDefinition extends GradleScenarioDefinition {
         GradleBuildInvoker invoker,
         BuildAction buildAction,
         Map<String, String> systemProperties,
-        Supplier<BuildMutator> buildMutator,
         int warmUpCount,
         int buildCount,
         File outputDir,
@@ -27,7 +25,7 @@ public class AdhocGradleScenarioDefinition extends GradleScenarioDefinition {
             BuildAction.NO_OP,
             Collections.emptyList(),
             systemProperties,
-            buildMutator,
+            Collections.emptyList(),
             warmUpCount,
             buildCount,
             outputDir,

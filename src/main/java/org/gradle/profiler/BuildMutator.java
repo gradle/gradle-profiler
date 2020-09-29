@@ -2,6 +2,11 @@ package org.gradle.profiler;
 
 public interface BuildMutator {
     /**
+     * Validates if the mutator works with the given invoker.
+     */
+    default void validate(BuildInvoker invoker) {}
+
+    /**
      * Runs before the first iteration of the scenario.
      */
     default void beforeScenario(ScenarioContext context) {}

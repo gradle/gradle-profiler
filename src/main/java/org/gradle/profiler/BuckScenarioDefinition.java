@@ -4,7 +4,6 @@ import javax.annotation.Nullable;
 import java.io.File;
 import java.io.PrintStream;
 import java.util.List;
-import java.util.function.Supplier;
 
 public class BuckScenarioDefinition extends BuildToolCommandLineScenarioDefinition {
     private final String type;
@@ -14,13 +13,13 @@ public class BuckScenarioDefinition extends BuildToolCommandLineScenarioDefiniti
         @Nullable String title,
         List<String> targets,
         String type,
-        Supplier<BuildMutator> buildMutator,
+        List<BuildMutator> buildMutators,
         int warmUpCount,
         int buildCount,
         File outputDir,
         @Nullable File buckHome
     ) {
-        super(scenarioName, title, targets, buildMutator, warmUpCount, buildCount, outputDir, buckHome);
+        super(scenarioName, title, targets, buildMutators, warmUpCount, buildCount, outputDir, buckHome);
         this.type = type;
     }
 
@@ -41,6 +40,11 @@ public class BuckScenarioDefinition extends BuildToolCommandLineScenarioDefiniti
 
     public String getType() {
         return type;
+    }
+
+    @Override
+    public BuildInvoker getInvoker() {
+        return BuildInvoker.Buck;
     }
 
     @Override
