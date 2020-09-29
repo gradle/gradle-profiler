@@ -3,20 +3,19 @@ package org.gradle.profiler;
 import javax.annotation.Nullable;
 import java.io.File;
 import java.util.List;
-import java.util.function.Supplier;
 
 public class MavenScenarioDefinition extends BuildToolCommandLineScenarioDefinition {
     public MavenScenarioDefinition(
         String scenarioName,
         @Nullable String title,
         List<String> targets,
-        Supplier<BuildMutator> buildMutator,
+        List<BuildMutator> buildMutators,
         int warmUpCount,
         int buildCount,
         File outputDir,
         @Nullable File mavenHome
     ) {
-        super(scenarioName, title, targets, buildMutator, warmUpCount, buildCount, outputDir, mavenHome);
+        super(scenarioName, title, targets, buildMutators, warmUpCount, buildCount, outputDir, mavenHome);
     }
 
     @Override

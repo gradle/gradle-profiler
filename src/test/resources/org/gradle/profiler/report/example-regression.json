@@ -20,7 +20,9 @@
           "action": "run tasks :santa-tracker:assembleDebug",
           "cleanup": "do nothing",
           "invoker": "Tooling API",
-          "mutator": "ApplyNonAbiChangeToSourceFileMutator(santa-tracker-java/village/src/main/java/com/google/android/apps/santatracker/village/SnowFlake.java)",
+          "mutators": [
+              "ApplyNonAbiChangeToSourceFileMutator(santa-tracker-java/village/src/main/java/com/google/android/apps/santatracker/village/SnowFlake.java)"
+          ],
           "args": [
             "-Dorg.gradle.workers.max\u003d8",
             "--init-script",
@@ -264,7 +266,9 @@
           "action": "run tasks :santa-tracker:assembleDebug",
           "cleanup": "do nothing",
           "invoker": "Tooling API",
-          "mutator": "ApplyNonAbiChangeToSourceFileMutator(santa-tracker-java/village/src/main/java/com/google/android/apps/santatracker/village/SnowFlake.java)",
+          "mutators": [
+              "ApplyNonAbiChangeToSourceFileMutator(santa-tracker-java/village/src/main/java/com/google/android/apps/santatracker/village/SnowFlake.java)"
+          ],
           "args": [
             "-Dorg.gradle.workers.max\u003d8",
             "--init-script",

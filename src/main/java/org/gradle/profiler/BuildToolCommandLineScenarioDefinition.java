@@ -4,7 +4,6 @@ import javax.annotation.Nullable;
 import java.io.File;
 import java.io.PrintStream;
 import java.util.List;
-import java.util.function.Supplier;
 
 public abstract class BuildToolCommandLineScenarioDefinition extends ScenarioDefinition {
     private final List<String> targets;
@@ -14,13 +13,13 @@ public abstract class BuildToolCommandLineScenarioDefinition extends ScenarioDef
         String name,
         @Nullable String title,
         List<String> targets,
-        Supplier<BuildMutator> buildMutator,
+        List<BuildMutator> buildMutators,
         int warmUpCount,
         int buildCount,
         File outputDir,
         @Nullable File toolHome
     ) {
-        super(name, title, buildMutator, warmUpCount, buildCount, outputDir);
+        super(name, title, buildMutators, warmUpCount, buildCount, outputDir);
         this.targets = targets;
         this.toolHome = toolHome;
     }

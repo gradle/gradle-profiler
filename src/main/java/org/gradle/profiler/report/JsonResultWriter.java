@@ -1,6 +1,5 @@
 package org.gradle.profiler.report;
 
-import com.google.common.collect.Iterables;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonArray;
@@ -24,6 +23,7 @@ import java.time.format.DateTimeFormatter;
 import java.time.temporal.Temporal;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Stream;
 
 public class JsonResultWriter {
 
@@ -91,7 +91,7 @@ public class JsonResultWriter {
         JsonArray samplesJson = new JsonArray();
         List<Sample<? super T>> samples = scenarioResult.getSamples();
         for (Sample<? super T> sample : samples) {
-            samplesJson.add(serializeSample(scenarioResult, sample));
+            samplesJson.add(serializeSample(sample));
         }
         json.add("samples", samplesJson);
         JsonArray iterationsJson = new JsonArray();
@@ -102,7 +102,7 @@ public class JsonResultWriter {
         return json;
     }
 
-    private JsonObject serializeSample(BuildScenarioResult<? extends BuildInvocationResult> scenarioResult, Sample<?> sample) {
+    private JsonObject serializeSample(Sample<?> sample) {
         JsonObject json = new JsonObject();
         json.addProperty("name", sample.getName());
         return json;
@@ -148,15 +148,15 @@ public class JsonResultWriter {
             json.addProperty("action", scenario.getAction().getDisplayName());
             json.addProperty("cleanup", scenario.getCleanupAction().getDisplayName());
             json.addProperty("invoker", scenario.getInvoker().toString());
-            json.addProperty("mutator", scenario.getBuildMutator().toString());
-            json.add("args", toJson(scenario.getGradleArgs()));
-            json.add("jvmArgs", toJson(Iterables.concat(scenario.getBuildConfiguration().getJvmArguments(), scenario.getJvmArgs())));
+            json.add("mutators", toJson(scenario.getBuildMutators().stream().map(Object::toString)));
+            json.add("args", toJson(scenario.getGradleArgs().stream()));
+            json.add("jvmArgs", toJson(Stream.concat(scenario.getBuildConfiguration().getJvmArguments().stream(), scenario.getJvmArgs().stream())));
             json.add("systemProperties", toJson(scenario.getSystemProperties()));
             return json;
         }
     }
 
-    private static JsonArray toJson(Iterable<String> array) {
+    private static JsonArray toJson(Stream<String> array) {
         JsonArray json = new JsonArray();
         array.forEach(json::add);
         return json;

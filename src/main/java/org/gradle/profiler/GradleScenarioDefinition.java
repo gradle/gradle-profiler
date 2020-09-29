@@ -8,7 +8,6 @@ import java.io.PrintStream;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Consumer;
-import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
 public class GradleScenarioDefinition extends ScenarioDefinition {
@@ -31,14 +30,14 @@ public class GradleScenarioDefinition extends ScenarioDefinition {
         BuildAction cleanupAction,
         List<String> gradleArgs,
         Map<String, String> systemProperties,
-        Supplier<BuildMutator> buildMutator,
+        List<BuildMutator> buildMutators,
         int warmUpCount,
         int buildCount,
         File outputDir,
         List<String> jvmArgs,
         List<String> measuredBuildOperations
     ) {
-        super(name, title, buildMutator, warmUpCount, buildCount, outputDir);
+        super(name, title, buildMutators, warmUpCount, buildCount, outputDir);
         this.invoker = invoker;
         this.buildAction = buildAction;
         this.buildConfiguration = buildConfiguration;
