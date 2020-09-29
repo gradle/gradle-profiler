@@ -64,7 +64,7 @@ public class GradleScenarioInvoker extends ScenarioInvoker<GradleScenarioDefinit
 
         daemonControl.stop(buildConfiguration);
 
-        BuildMutator mutator = scenario.getBuildMutator().get();
+        BuildMutator mutator = scenario.getBuildMutator();
         ScenarioContext scenarioContext = ScenarioContext.from(settings, scenario);
         GradleClient gradleClient = scenario.getInvoker().getClient().create(buildConfiguration, settings);
         try {

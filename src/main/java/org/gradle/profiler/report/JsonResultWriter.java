@@ -148,7 +148,7 @@ public class JsonResultWriter {
             json.addProperty("action", scenario.getAction().getDisplayName());
             json.addProperty("cleanup", scenario.getCleanupAction().getDisplayName());
             json.addProperty("invoker", scenario.getInvoker().toString());
-            json.addProperty("mutator", scenario.getBuildMutator().get().toString());
+            json.addProperty("mutator", scenario.getBuildMutator().toString());
             json.add("args", toJson(scenario.getGradleArgs()));
             json.add("jvmArgs", toJson(Iterables.concat(scenario.getBuildConfiguration().getJvmArguments(), scenario.getJvmArgs())));
             json.add("systemProperties", toJson(scenario.getSystemProperties()));

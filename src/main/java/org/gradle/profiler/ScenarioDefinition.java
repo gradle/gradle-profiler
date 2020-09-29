@@ -9,7 +9,7 @@ import java.util.function.Supplier;
 public abstract class ScenarioDefinition {
     private final String name;
     private final String title;
-    private final Supplier<BuildMutator> buildMutator;
+    private final BuildMutator buildMutator;
     private final int warmUpCount;
     private final int buildCount;
     private final File outputDir;
@@ -25,7 +25,7 @@ public abstract class ScenarioDefinition {
     ) {
         this.name = name;
         this.title = title;
-        this.buildMutator = buildMutator;
+        this.buildMutator = buildMutator.get();
         this.warmUpCount = warmUpCount;
         this.buildCount = buildCount;
         this.outputDir = outputDir;
@@ -66,7 +66,7 @@ public abstract class ScenarioDefinition {
         return outputDir;
     }
 
-    public Supplier<BuildMutator> getBuildMutator() {
+    public BuildMutator getBuildMutator() {
         return buildMutator;
     }
 
