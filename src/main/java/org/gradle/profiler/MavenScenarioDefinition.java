@@ -34,6 +34,11 @@ public class MavenScenarioDefinition extends BuildToolCommandLineScenarioDefinit
     }
 
     @Override
+    public BuildInvoker getInvoker() {
+        return BuildInvoker.Maven;
+    }
+
+    @Override
     protected String getExecutableName() {
         if (OperatingSystem.isWindows()) {
             return "mvn.cmd";

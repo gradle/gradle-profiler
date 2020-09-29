@@ -34,6 +34,11 @@ public class BazelScenarioDefinition extends BuildToolCommandLineScenarioDefinit
     }
 
     @Override
+    public BuildInvoker getInvoker() {
+        return BuildInvoker.Bazel;
+    }
+
+    @Override
     protected String getExecutableName() {
         if (OperatingSystem.isWindows()) {
             return "bazel.exe";

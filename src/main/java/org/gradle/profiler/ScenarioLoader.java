@@ -280,6 +280,8 @@ class ScenarioLoader {
             }
         }
 
+        definitions.forEach(ScenarioDefinition::validate);
+
         return definitions;
     }
 

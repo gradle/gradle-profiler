@@ -3,6 +3,7 @@ package org.gradle.profiler.mutations;
 import com.typesafe.config.Config;
 import org.apache.commons.io.FileUtils;
 import org.gradle.profiler.BuildContext;
+import org.gradle.profiler.BuildInvoker;
 import org.gradle.profiler.BuildMutator;
 import org.gradle.profiler.ConfigUtil;
 import org.gradle.profiler.InvocationSettings;
@@ -18,6 +19,13 @@ public abstract class AbstractCleanupMutator implements BuildMutator {
 
     public AbstractCleanupMutator(CleanupSchedule schedule) {
         this.schedule = schedule;
+    }
+
+    @Override
+    public void validate(BuildInvoker invoker) {
+        if (schedule != CleanupSchedule.SCENARIO && !invoker.allowsCleanupBetweenBuilds()) {
+            throw new IllegalStateException(this + " is not allowed to be executed between builds with invoker " + invoker);
+        }
     }
 
     @Override

@@ -1,6 +1,7 @@
 package org.gradle.profiler
 
 import com.google.common.collect.ImmutableList
+import org.gradle.profiler.mutations.AbstractCleanupMutator
 import org.gradle.profiler.report.CsvGenerator
 import org.gradle.tooling.model.idea.IdeaProject
 import org.junit.Rule
@@ -9,6 +10,9 @@ import spock.lang.Specification
 import spock.lang.Unroll
 
 import static org.gradle.profiler.ScenarioLoader.loadScenarios
+import static org.gradle.profiler.mutations.AbstractCleanupMutator.CleanupSchedule.BUILD
+import static org.gradle.profiler.mutations.AbstractCleanupMutator.CleanupSchedule.CLEANUP
+import static org.gradle.profiler.mutations.AbstractCleanupMutator.CleanupSchedule.SCENARIO
 
 class ScenarioLoaderTest extends Specification {
     @Rule
@@ -483,5 +487,67 @@ class ScenarioLoaderTest extends Specification {
 
         expect:
         scenarios*.name == ["default"]
+    }
+
+    @Unroll
+    def "allows cleanup action scheduled for #schedule with cold daemon invoker"() {
+        def settings = settings()
+
+        scenarioFile << """
+            default {
+                tasks = ["help"]
+                daemon = cold
+
+                clear-transform-cache-before = $schedule
+            }
+        """
+
+        when:
+        loadScenarios(scenarioFile, settings, Mock(GradleBuildConfigurationReader))
+
+        then:
+        noExceptionThrown()
+
+        where:
+        schedule << AbstractCleanupMutator.CleanupSchedule.values()
+    }
+
+    @Unroll
+    def "allows cleanup action scheduled for SCENARIO with warm daemon invoker"() {
+        def settings = settings()
+
+        scenarioFile << """
+            default {
+                tasks = ["help"]
+
+                clear-transform-cache-before = ${SCENARIO}
+            }
+        """
+
+        expect:
+        loadScenarios(scenarioFile, settings, Mock(GradleBuildConfigurationReader))
+    }
+
+    @Unroll
+    def "fails with cleanup action scheduled for #schedule with warm daemon invoker"() {
+        def settings = settings()
+
+        scenarioFile << """
+            default {
+                tasks = ["help"]
+
+                clear-transform-cache-before = $schedule
+            }
+        """
+
+        when:
+        loadScenarios(scenarioFile, settings, Mock(GradleBuildConfigurationReader))
+
+        then:
+        def ex = thrown IllegalStateException
+        ex.message == "Scenario 'default' is invalid: ClearArtifactTransformCacheMutator($schedule) is not allowed to be executed between builds with invoker `gradle` command"
+
+        where:
+        schedule << [BUILD, CLEANUP]
     }
 }

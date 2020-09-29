@@ -43,6 +43,11 @@ public class BuckScenarioDefinition extends BuildToolCommandLineScenarioDefiniti
     }
 
     @Override
+    public BuildInvoker getInvoker() {
+        return BuildInvoker.Buck;
+    }
+
+    @Override
     protected void printDetail(PrintStream out) {
         out.println("  Targets: " + getTargets());
         if (getType() != null) {

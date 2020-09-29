@@ -76,6 +76,7 @@ public class GradleScenarioDefinition extends ScenarioDefinition {
         return gradleArgs;
     }
 
+    @Override
     public GradleBuildInvoker getInvoker() {
         return invoker;
     }

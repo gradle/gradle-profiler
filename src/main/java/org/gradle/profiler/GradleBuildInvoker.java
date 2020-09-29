@@ -20,6 +20,11 @@ public class GradleBuildInvoker extends BuildInvoker {
     }
 
     @Override
+    public boolean allowsCleanupBetweenBuilds() {
+        return daemonReuse == GradleDaemonReuse.ColdDaemonOnly;
+    }
+
+    @Override
     public String toString() {
         if (daemonReuse == GradleDaemonReuse.ColdDaemonOnly) {
             return client + " with cold daemon";

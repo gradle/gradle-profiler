@@ -14,7 +14,6 @@ public abstract class ScenarioDefinition {
     private final int buildCount;
     private final File outputDir;
 
-
     public ScenarioDefinition(
         String name,
         @Nullable String title,
@@ -29,6 +28,16 @@ public abstract class ScenarioDefinition {
         this.warmUpCount = warmUpCount;
         this.buildCount = buildCount;
         this.outputDir = outputDir;
+    }
+
+    public void validate() {
+        for (BuildMutator buildMutator : buildMutators) {
+            try {
+                buildMutator.validate(getInvoker());
+            } catch (Exception ex) {
+                throw new IllegalStateException("Scenario '" + getTitle() + "' is invalid: " + ex.getMessage(), ex);
+            }
+        }
     }
 
     /**
@@ -57,6 +66,8 @@ public abstract class ScenarioDefinition {
      * A human consumable description of the 'tasks' that are run for this scenario (may not be Gradle tasks).
      */
     public abstract String getTasksDisplayName();
+
+    public abstract BuildInvoker getInvoker();
 
     public String getName() {
         return name;
