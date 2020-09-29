@@ -2,9 +2,8 @@ package org.gradle.profiler.mutations;
 
 import com.typesafe.config.Config;
 import org.gradle.profiler.BuildMutator;
-
-import java.io.File;
+import org.gradle.profiler.InvocationSettings;
 
 public interface BuildMutatorConfigurator {
-	BuildMutator configure(Config scenario, String scenarioName, File projectDir, String key);
+	BuildMutator configure(Config scenario, String scenarioName, InvocationSettings settings, String key);
 }

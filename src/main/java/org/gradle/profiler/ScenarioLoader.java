@@ -205,25 +205,25 @@ class ScenarioLoader {
             String title = scenario.hasPath(TITLE) ? scenario.getString(TITLE) : null;
 
             List<BuildMutator> mutators = new ArrayList<>();
-            maybeAddMutator(scenario, scenarioName, settings.getProjectDir(), APPLY_ABI_CHANGE_TO, ApplyAbiChangeToSourceFileMutator.class, mutators);
-            maybeAddMutator(scenario, scenarioName, settings.getProjectDir(), APPLY_NON_ABI_CHANGE_TO, ApplyNonAbiChangeToSourceFileMutator.class, mutators);
-            maybeAddMutator(scenario, scenarioName, settings.getProjectDir(), APPLY_ANDROID_RESOURCE_CHANGE_TO, ApplyChangeToAndroidResourceFileMutator.class, mutators);
-            maybeAddMutator(scenario, scenarioName, settings.getProjectDir(), APPLY_ANDROID_RESOURCE_VALUE_CHANGE_TO, ApplyValueChangeToAndroidResourceFileMutator.class, mutators);
-            maybeAddMutator(scenario, scenarioName, settings.getProjectDir(), APPLY_ANDROID_LAYOUT_CHANGE_TO, ApplyChangeToAndroidLayoutFileMutator.class, mutators);
-            maybeAddMutator(scenario, scenarioName, settings.getProjectDir(), APPLY_ANDROID_MANIFEST_CHANGE_TO, ApplyChangeToAndroidManifestFileMutator.class, mutators);
-            maybeAddMutator(scenario, scenarioName, settings.getProjectDir(), APPLY_PROPERTY_RESOURCE_CHANGE_TO, ApplyChangeToPropertyResourceFileMutator.class, mutators);
-            maybeAddMutator(scenario, scenarioName, settings.getProjectDir(), APPLY_CPP_SOURCE_CHANGE_TO, ApplyChangeToNativeSourceFileMutator.class, mutators);
-            maybeAddMutator(scenario, scenarioName, settings.getProjectDir(), APPLY_H_SOURCE_CHANGE_TO, ApplyChangeToNativeSourceFileMutator.class, mutators);
-            maybeAddMutator(scenario, scenarioName, settings.getProjectDir(), CLEAR_BUILD_CACHE_BEFORE, new ClearBuildCacheMutator.Configurator(settings.getGradleUserHome()), mutators);
-            maybeAddMutator(scenario, scenarioName, settings.getProjectDir(), CLEAR_GRADLE_USER_HOME_BEFORE, new ClearGradleUserHomeMutator.Configurator(settings.getGradleUserHome()), mutators);
-            maybeAddMutator(scenario, scenarioName, settings.getProjectDir(), CLEAR_INSTANT_EXECUTION_STATE_BEFORE, new ClearConfigurationCacheStateMutator.Configurator(), mutators);
-            maybeAddMutator(scenario, scenarioName, settings.getProjectDir(), CLEAR_CONFIGURATION_CACHE_STATE_BEFORE, new ClearConfigurationCacheStateMutator.Configurator(), mutators);
-            maybeAddMutator(scenario, scenarioName, settings.getProjectDir(), CLEAR_PROJECT_CACHE_BEFORE, new ClearProjectCacheMutator.Configurator(), mutators);
-            maybeAddMutator(scenario, scenarioName, settings.getProjectDir(), CLEAR_TRANSFORM_CACHE_BEFORE, new ClearArtifactTransformCacheMutator.Configurator(settings.getGradleUserHome()), mutators);
-            maybeAddMutator(scenario, scenarioName, settings.getProjectDir(), CLEAR_JARS_CACHE_BEFORE, new ClearJarsCacheMutator.Configurator(settings.getGradleUserHome()), mutators);
-            maybeAddMutator(scenario, scenarioName, settings.getProjectDir(), SHOW_BUILD_CACHE_SIZE, new ShowBuildCacheSizeMutator.Configurator(settings.getGradleUserHome()), mutators);
-            maybeAddMutator(scenario, scenarioName, settings.getProjectDir(), GIT_CHECKOUT, new GitCheckoutMutator.Configurator(), mutators);
-            maybeAddMutator(scenario, scenarioName, settings.getProjectDir(), GIT_REVERT, new GitRevertMutator.Configurator(), mutators);
+            maybeAddMutator(scenario, scenarioName, settings, APPLY_ABI_CHANGE_TO, ApplyAbiChangeToSourceFileMutator.class, mutators);
+            maybeAddMutator(scenario, scenarioName, settings, APPLY_NON_ABI_CHANGE_TO, ApplyNonAbiChangeToSourceFileMutator.class, mutators);
+            maybeAddMutator(scenario, scenarioName, settings, APPLY_ANDROID_RESOURCE_CHANGE_TO, ApplyChangeToAndroidResourceFileMutator.class, mutators);
+            maybeAddMutator(scenario, scenarioName, settings, APPLY_ANDROID_RESOURCE_VALUE_CHANGE_TO, ApplyValueChangeToAndroidResourceFileMutator.class, mutators);
+            maybeAddMutator(scenario, scenarioName, settings, APPLY_ANDROID_LAYOUT_CHANGE_TO, ApplyChangeToAndroidLayoutFileMutator.class, mutators);
+            maybeAddMutator(scenario, scenarioName, settings, APPLY_ANDROID_MANIFEST_CHANGE_TO, ApplyChangeToAndroidManifestFileMutator.class, mutators);
+            maybeAddMutator(scenario, scenarioName, settings, APPLY_PROPERTY_RESOURCE_CHANGE_TO, ApplyChangeToPropertyResourceFileMutator.class, mutators);
+            maybeAddMutator(scenario, scenarioName, settings, APPLY_CPP_SOURCE_CHANGE_TO, ApplyChangeToNativeSourceFileMutator.class, mutators);
+            maybeAddMutator(scenario, scenarioName, settings, APPLY_H_SOURCE_CHANGE_TO, ApplyChangeToNativeSourceFileMutator.class, mutators);
+            maybeAddMutator(scenario, scenarioName, settings, CLEAR_BUILD_CACHE_BEFORE, new ClearBuildCacheMutator.Configurator(), mutators);
+            maybeAddMutator(scenario, scenarioName, settings, CLEAR_GRADLE_USER_HOME_BEFORE, new ClearGradleUserHomeMutator.Configurator(), mutators);
+            maybeAddMutator(scenario, scenarioName, settings, CLEAR_INSTANT_EXECUTION_STATE_BEFORE, new ClearConfigurationCacheStateMutator.Configurator(), mutators);
+            maybeAddMutator(scenario, scenarioName, settings, CLEAR_CONFIGURATION_CACHE_STATE_BEFORE, new ClearConfigurationCacheStateMutator.Configurator(), mutators);
+            maybeAddMutator(scenario, scenarioName, settings, CLEAR_PROJECT_CACHE_BEFORE, new ClearProjectCacheMutator.Configurator(), mutators);
+            maybeAddMutator(scenario, scenarioName, settings, CLEAR_TRANSFORM_CACHE_BEFORE, new ClearArtifactTransformCacheMutator.Configurator(), mutators);
+            maybeAddMutator(scenario, scenarioName, settings, CLEAR_JARS_CACHE_BEFORE, new ClearJarsCacheMutator.Configurator(), mutators);
+            maybeAddMutator(scenario, scenarioName, settings, SHOW_BUILD_CACHE_SIZE, new ShowBuildCacheSizeMutator.Configurator(), mutators);
+            maybeAddMutator(scenario, scenarioName, settings, GIT_CHECKOUT, new GitCheckoutMutator.Configurator(), mutators);
+            maybeAddMutator(scenario, scenarioName, settings, GIT_REVERT, new GitRevertMutator.Configurator(), mutators);
 
             int buildCount = getBuildCount(settings, scenario);
             File scenarioBaseDir = new File(settings.getOutputDir(), GradleScenarioDefinition.safeFileName(scenarioName));
@@ -449,13 +449,13 @@ class ScenarioLoader {
         }
     }
 
-    private static void maybeAddMutator(Config scenario, String scenarioName, File projectDir, String key, Class<? extends AbstractFileChangeMutator> mutatorClass, List<BuildMutator> mutators) {
-        maybeAddMutator(scenario, scenarioName, projectDir, key, new FileChangeMutatorConfigurator(mutatorClass), mutators);
+    private static void maybeAddMutator(Config scenario, String scenarioName, InvocationSettings settings, String key, Class<? extends AbstractFileChangeMutator> mutatorClass, List<BuildMutator> mutators) {
+        maybeAddMutator(scenario, scenarioName, settings, key, new FileChangeMutatorConfigurator(mutatorClass), mutators);
     }
 
-    private static void maybeAddMutator(Config scenario, String scenarioName, File projectDir, String key, BuildMutatorConfigurator configurator, List<BuildMutator> mutators) {
+    private static void maybeAddMutator(Config scenario, String scenarioName, InvocationSettings settings, String key, BuildMutatorConfigurator configurator, List<BuildMutator> mutators) {
         if (scenario.hasPath(key)) {
-            BuildMutator mutator = configurator.configure(scenario, scenarioName, projectDir, key);
+            BuildMutator mutator = configurator.configure(scenario, scenarioName, settings, key);
             if (mutator != BuildMutator.NOOP) {
                 mutators.add(mutator);
             }
