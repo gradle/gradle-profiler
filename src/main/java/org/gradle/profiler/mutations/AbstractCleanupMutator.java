@@ -10,7 +10,6 @@ import org.gradle.profiler.ScenarioContext;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
-import java.util.function.Supplier;
 
 public abstract class AbstractCleanupMutator implements BuildMutator {
 
@@ -57,12 +56,12 @@ public abstract class AbstractCleanupMutator implements BuildMutator {
 
     protected static abstract class Configurator implements BuildMutatorConfigurator {
         @Override
-        public Supplier<BuildMutator> configure(Config scenario, String scenarioName, File projectDir, String key) {
+        public BuildMutator configure(Config scenario, String scenarioName, File projectDir, String key) {
             CleanupSchedule schedule = ConfigUtil.enumValue(scenario, key, CleanupSchedule.class, null);
             if (schedule == null) {
                 throw new IllegalArgumentException("Schedule for cleanup is not specified");
             }
-            return () -> newInstance(scenario, scenarioName, projectDir, key, schedule);
+            return newInstance(scenario, scenarioName, projectDir, key, schedule);
         }
 
         protected abstract BuildMutator newInstance(Config scenario, String scenarioName, File projectDir, String key, CleanupSchedule schedule);

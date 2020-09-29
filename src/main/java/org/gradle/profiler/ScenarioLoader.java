@@ -455,7 +455,7 @@ class ScenarioLoader {
 
     private static void maybeAddMutator(Config scenario, String scenarioName, File projectDir, String key, BuildMutatorConfigurator configurator, List<BuildMutator> mutators) {
         if (scenario.hasPath(key)) {
-            BuildMutator mutator = configurator.configure(scenario, scenarioName, projectDir, key).get();
+            BuildMutator mutator = configurator.configure(scenario, scenarioName, projectDir, key);
             if (mutator != BuildMutator.NOOP) {
                 mutators.add(mutator);
             }

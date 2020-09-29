@@ -8,7 +8,6 @@ import org.gradle.profiler.ConfigUtil;
 import org.gradle.profiler.ScenarioContext;
 
 import java.io.File;
-import java.util.function.Supplier;
 
 public class GitCheckoutMutator extends AbstractGitMutator {
 
@@ -62,14 +61,14 @@ public class GitCheckoutMutator extends AbstractGitMutator {
 
 	public static class Configurator implements BuildMutatorConfigurator {
 		@Override
-		public Supplier<BuildMutator> configure(Config scenario, String scenarioName, File projectDir, String key) {
+		public BuildMutator configure(Config scenario, String scenarioName, File projectDir, String key) {
 			Config config = scenario.getConfig(key);
 			String cleanup = ConfigUtil.string(config, "cleanup", null);
 			String build = ConfigUtil.string(config, "build", null);
 			if (build == null) {
 				throw new IllegalArgumentException("No git-checkout target specified for build");
 			}
-			return () -> new GitCheckoutMutator(projectDir, cleanup, build);
+			return new GitCheckoutMutator(projectDir, cleanup, build);
 		}
 	}
 
