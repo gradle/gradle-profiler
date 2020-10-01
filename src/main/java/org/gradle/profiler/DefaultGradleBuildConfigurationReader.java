@@ -29,11 +29,13 @@ public class DefaultGradleBuildConfigurationReader implements GradleBuildConfigu
     private final File buildDetails;
     private final Map<String, GradleBuildConfiguration> versions = new HashMap<>();
     private GradleBuildConfiguration defaultVersion;
+    private final Map<String, String> systemProperties;
 
-    public DefaultGradleBuildConfigurationReader(File projectDir, File gradleUserHome, DaemonControl daemonControl) throws IOException {
+    public DefaultGradleBuildConfigurationReader(File projectDir, File gradleUserHome, DaemonControl daemonControl, Map<String, String> systemProperties) throws IOException {
         this.projectDir = projectDir;
         this.gradleUserHome = gradleUserHome;
         this.daemonControl = daemonControl;
+        this.systemProperties = systemProperties;
         initScript = File.createTempFile("gradle-profiler", ".gradle").getCanonicalFile();
         initScript.deleteOnExit();
         buildDetails = File.createTempFile("gradle-profiler", "build-details");
@@ -107,7 +109,8 @@ public class DefaultGradleBuildConfigurationReader implements GradleBuildConfigu
         GradleBuildConfiguration version;
         try (ProjectConnection connection = connector.forProjectDirectory(projectDir).connect()) {
             BuildEnvironment buildEnvironment = connection.getModel(BuildEnvironment.class);
-            new ToolingApiGradleClient(connection).runTasks(ImmutableList.of("help"), ImmutableList.of("-I", initScript.getAbsolutePath()), ImmutableList.of());
+            List<String> gradleArgs = buildGradleArgs();
+            new ToolingApiGradleClient(connection).runTasks(ImmutableList.of("help"), gradleArgs, ImmutableList.of());
             List<String> buildDetails = readBuildDetails();
             JavaEnvironment javaEnvironment = buildEnvironment.getJava();
             List<String> allJvmArgs = new ArrayList<>(javaEnvironment.getJvmArguments());
@@ -122,6 +125,16 @@ public class DefaultGradleBuildConfigurationReader implements GradleBuildConfigu
         }
         daemonControl.stop(version);
         return version;
+    }
+
+    private List<String> buildGradleArgs() {
+        List<String> result = new ArrayList<>();
+
+        result.add("-I");
+        result.add(initScript.getAbsolutePath());
+
+        systemProperties.forEach((key, value) -> result.add("-D" + key + "=" + value));
+        return Collections.unmodifiableList(result);
     }
 
     private List<String> readSystemPropertiesFromGradleProperties() {

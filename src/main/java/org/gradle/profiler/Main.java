@@ -44,7 +44,7 @@ public class Main {
             settings.printTo(System.out);
 
             DaemonControl daemonControl = new DaemonControl(settings.getGradleUserHome());
-            GradleBuildConfigurationReader gradleBuildConfigurationReader = new DefaultGradleBuildConfigurationReader(settings.getProjectDir(), settings.getGradleUserHome(), daemonControl);
+            GradleBuildConfigurationReader gradleBuildConfigurationReader = new DefaultGradleBuildConfigurationReader(settings.getProjectDir(), settings.getGradleUserHome(), daemonControl, settings.getSystemProperties());
             ScenarioLoader scenarioLoader = new ScenarioLoader(gradleBuildConfigurationReader);
             List<ScenarioDefinition> scenarios = scenarioLoader.loadScenarios(settings);
             int totalScenarios = scenarios.size();
