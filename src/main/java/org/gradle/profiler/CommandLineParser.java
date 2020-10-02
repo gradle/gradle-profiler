@@ -61,7 +61,8 @@ class CommandLineParser {
         OptionSpecBuilder noDaemonOption = parser.accepts("no-daemon", "Do not use the Gradle daemon");
         OptionSpecBuilder coldDaemonOption = parser.accepts("cold-daemon", "Use a cold Gradle daemon");
         OptionSpecBuilder cliOption = parser.accepts("cli", "Uses the command-line client to connect to the daemon");
-        OptionSpecBuilder measureConfigOption = parser.accepts("measure-config-time", "Include a breakdown of configuration time in benchmark results");
+        OptionSpecBuilder measureGarbageCollectionOption = parser.accepts("measure-gc", "Measure the GC time during each invocation");
+        OptionSpecBuilder measureConfigTimeOption = parser.accepts("measure-config-time", "Include a breakdown of configuration time in benchmark results");
         OptionSpecBuilder dryRunOption = parser.accepts("dry-run", "Verify configuration");
         OptionSpecBuilder bazelOption = parser.accepts("bazel", "Benchmark scenarios using Bazel");
         OptionSpecBuilder buckOption = parser.accepts("buck", "Benchmark scenarios using buck");
@@ -109,7 +110,8 @@ class CommandLineParser {
         File gradleUserHome = parsedOptions.valueOf(gradleUserHomeOption);
         Integer warmups = parsedOptions.valueOf(warmupsOption);
         Integer iterations = parsedOptions.valueOf(iterationsOption);
-        boolean measureConfig = parsedOptions.has(measureConfigOption);
+        boolean measureGarbageCollection = parsedOptions.has(measureGarbageCollectionOption);
+        boolean measureConfig = parsedOptions.has(measureConfigTimeOption);
         List<String> benchmarkedBuildOperations = parsedOptions.valuesOf(benchmarkBuildOperation);
 
         List<String> targetNames = parsedOptions.nonOptionArguments().stream().map(Object::toString).collect(Collectors.toList());
@@ -167,6 +169,7 @@ class CommandLineParser {
             .setStudioInstallDir(studioInstallDir)
             .setWarmupCount(warmups)
             .setIterations(iterations)
+            .setMeasureGarbageCollection(measureGarbageCollection)
             .setMeasureConfigTime(measureConfig)
             .setMeasuredBuildOperations(benchmarkedBuildOperations)
             .setCsvFormat(csvFormat)
