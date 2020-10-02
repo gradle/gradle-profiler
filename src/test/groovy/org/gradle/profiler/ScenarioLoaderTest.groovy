@@ -51,6 +51,7 @@ class ScenarioLoaderTest extends Specification {
             .setStudioInstallDir(tmpDir.newFolder())
             .setWarmupCount(warmups)
             .setIterations(iterations)
+            .setMeasureGarbageCollection(false)
             .setMeasureConfigTime(false)
             .setMeasuredBuildOperations(measuredBuildOperations)
             .setCsvFormat(CsvGenerator.Format.WIDE

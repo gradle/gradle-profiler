@@ -18,6 +18,10 @@ import org.gradle.internal.operations.OperationStartEvent;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.PrintWriter;
+import java.io.UncheckedIOException;
+import java.lang.management.GarbageCollectorMXBean;
+import java.lang.management.ManagementFactory;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.util.ArrayList;
@@ -31,10 +35,30 @@ public class BuildOperationTrace {
 
     private final BuildEventListenerRegistryInternal registry;
     private final BuildServiceRegistry sharedServices;
+    private final GradleInternal gradle;
 
     public BuildOperationTrace(GradleInternal gradle) {
-        registry = gradle.getServices().get(BuildEventListenerRegistryInternal.class);
-        sharedServices = gradle.getSharedServices();
+        this.gradle = gradle;
+        this.registry = gradle.getServices().get(BuildEventListenerRegistryInternal.class);
+        this.sharedServices = gradle.getSharedServices();
+    }
+
+    public BuildOperationTrace measureGarbageCollection(File outFile) {
+        long gcTimeAtStart = sumGarbageCollectionTime();
+        gradle.buildFinished(result -> {
+            try (PrintWriter writer = new PrintWriter(outFile)) {
+                writer.println(sumGarbageCollectionTime() - gcTimeAtStart);
+            } catch (IOException e) {
+                throw new UncheckedIOException(e);
+            }
+        });
+        return this;
+    }
+
+    private long sumGarbageCollectionTime() {
+        return ManagementFactory.getGarbageCollectorMXBeans().stream()
+            .map(GarbageCollectorMXBean::getCollectionTime)
+            .reduce(0L, Long::sum);
     }
 
     public BuildOperationTrace measureConfigurationTime(File outFile) {

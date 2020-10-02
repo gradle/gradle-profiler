@@ -31,6 +31,9 @@ public class GradleScenarioInvoker extends ScenarioInvoker<GradleScenarioDefinit
     public List<Sample<? super GradleBuildInvocationResult>> samplesFor(InvocationSettings settings, GradleScenarioDefinition scenario) {
         ImmutableList.Builder<Sample<? super GradleBuildInvocationResult>> builder = ImmutableList.builder();
         builder.add(BuildInvocationResult.EXECUTION_TIME);
+        if (settings.isMeasureGarbageCollection()) {
+            builder.add(GradleBuildInvocationResult.GARBAGE_COLLECTION_TIME);
+        }
         if (settings.isMeasureConfigTime()) {
             builder.add(GradleBuildInvocationResult.TIME_TO_TASK_EXECUTION);
         }
@@ -53,6 +56,7 @@ public class GradleScenarioInvoker extends ScenarioInvoker<GradleScenarioDefinit
         allBuildsGradleArgsCalculator = allBuildsGradleArgsCalculator.plus(settings.getProfiler().newGradleArgsCalculator(scenarioSettings));
 
         BuildOperationInstrumentation buildOperationInstrumentation = new BuildOperationInstrumentation(
+            settings.isMeasureGarbageCollection(),
             settings.isMeasureConfigTime(),
             scenario.getMeasuredBuildOperations()
         );

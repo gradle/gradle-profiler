@@ -24,6 +24,7 @@ public class InvocationSettings {
     private final File studioInstallDir;
     private final Integer warmupCount;
     private final Integer iterations;
+    private final boolean measureGarbageCollection;
     private final boolean measureConfigTime;
     private final List<String> measuredBuildOperations;
     private final Format csvFormat;
@@ -51,6 +52,7 @@ public class InvocationSettings {
         File studioInstallDir,
         Integer warmupCount,
         Integer iterations,
+        boolean measureGarbageCollection,
         boolean measureConfigTime,
         List<String> measuredBuildOperations,
         Format csvFormat,
@@ -71,6 +73,7 @@ public class InvocationSettings {
         this.studioInstallDir = studioInstallDir;
         this.warmupCount = warmupCount;
         this.iterations = iterations;
+        this.measureGarbageCollection = measureGarbageCollection;
         this.measureConfigTime = measureConfigTime;
         this.measuredBuildOperations = measuredBuildOperations;
         this.csvFormat = csvFormat;
@@ -155,6 +158,10 @@ public class InvocationSettings {
         return studioInstallDir;
     }
 
+    public boolean isMeasureGarbageCollection() {
+        return measureGarbageCollection;
+    }
+
     public boolean isMeasureConfigTime() {
         return measureConfigTime;
     }
@@ -218,6 +225,7 @@ public class InvocationSettings {
         private File studioInstallDir;
         private Integer warmupCount;
         private Integer iterations;
+        private boolean measureGarbageCollection;
         private boolean measureConfigTime;
         private List<String> measuredBuildOperations;
         private Format csvFormat;
@@ -294,6 +302,11 @@ public class InvocationSettings {
             return this;
         }
 
+        public InvocationSettingsBuilder setMeasureGarbageCollection(boolean measureGarbageCollection) {
+            this.measureGarbageCollection = measureGarbageCollection;
+            return this;
+        }
+
         public InvocationSettingsBuilder setMeasureConfigTime(boolean measureConfigTime) {
             this.measureConfigTime = measureConfigTime;
             return this;
@@ -338,6 +351,7 @@ public class InvocationSettings {
                 studioInstallDir,
                 warmupCount,
                 iterations,
+                measureGarbageCollection,
                 measureConfigTime,
                 measuredBuildOperations,
                 csvFormat,

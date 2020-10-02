@@ -85,6 +85,7 @@ class CompositeProfiler extends Profiler {
             .setGradleUserHome(settings.getGradleUserHome())
             .setWarmupCount(settings.getWarmUpCount())
             .setIterations(settings.getBuildCount())
+            .setMeasureGarbageCollection(settings.isMeasureGarbageCollection())
             .setMeasureConfigTime(settings.isMeasureConfigTime())
             .setMeasuredBuildOperations(settings.getMeasuredBuildOperations())
             .setCsvFormat(settings.getCsvFormat())
