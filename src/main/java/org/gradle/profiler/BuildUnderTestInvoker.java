@@ -5,6 +5,7 @@ import org.gradle.profiler.instrument.PidInstrumentation;
 
 import java.time.Duration;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -18,6 +19,7 @@ public class BuildUnderTestInvoker {
     private final GradleClient gradleClient;
     private final PidInstrumentation pidInstrumentation;
     private final BuildOperationInstrumentation buildOperationInstrumentation;
+    private final Map<String, Duration> previousGcTimes = new HashMap<>();
 
     public BuildUnderTestInvoker(List<String> jvmArgs, List<String> gradleArgs, GradleClient gradleClient, PidInstrumentation pidInstrumentation, BuildOperationInstrumentation buildOperationInstrumentation) {
         this.jvmArgs = jvmArgs;
@@ -59,7 +61,12 @@ public class BuildUnderTestInvoker {
             String pid = pidInstrumentation.getPidForLastBuild();
             Logging.detailed().printf("Used daemon with pid %s%n", pid);
 
-            Optional<Duration> garbageCollectionTime = buildOperationInstrumentation.getGarbageCollectionTime();
+            Optional<Duration> garbageCollectionTime = buildOperationInstrumentation.getTotalGarbageCollectionTime()
+                .map(currentTotal -> {
+                    Duration previousTotal = previousGcTimes.getOrDefault(pid, Duration.ZERO);
+                    previousGcTimes.put(pid, currentTotal);
+                    return currentTotal.minus(previousTotal);
+                });
             Optional<Duration> timeToTaskExecution = buildOperationInstrumentation.getTimeToTaskExecution();
 
             Map<String, Duration> cumulativeBuildOperationTimes = buildOperationInstrumentation.getCumulativeBuildOperationTimes();

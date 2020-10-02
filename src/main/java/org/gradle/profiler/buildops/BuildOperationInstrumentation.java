@@ -18,14 +18,14 @@ import java.util.stream.Stream;
 
 public class BuildOperationInstrumentation extends GradleInstrumentation {
     private final boolean measureGarbageCollection;
-    private final File garbageCollectionDataFile;
+    private final File totalGarbageCollectionTimeDataFile;
     private final boolean measureConfigTime;
     private final File configurationTimeDataFile;
     private final Map<String, File> buildOperationDataFiles;
 
     public BuildOperationInstrumentation(boolean measureGarbageCollection, boolean measureConfigTime, List<String> measuredBuildOperations) throws IOException {
         this.measureGarbageCollection = measureGarbageCollection;
-        this.garbageCollectionDataFile = File.createTempFile("gradle-profiler", "gc-time");
+        this.totalGarbageCollectionTimeDataFile = File.createTempFile("gradle-profiler", "gc-time");
         this.measureConfigTime = measureConfigTime;
         this.configurationTimeDataFile = File.createTempFile("gradle-profiler", "build-ops-config-time");
         this.configurationTimeDataFile.deleteOnExit();
@@ -51,7 +51,7 @@ public class BuildOperationInstrumentation extends GradleInstrumentation {
     protected void generateInitScriptBody(PrintWriter writer) {
         writer.print("new org.gradle.trace.buildops.BuildOperationTrace(gradle)");
         if (measureGarbageCollection) {
-            writer.print(".measureGarbageCollection(" + newFile(garbageCollectionDataFile) + ")");
+            writer.print(".measureGarbageCollection(" + newFile(totalGarbageCollectionTimeDataFile) + ")");
         }
         if (measureConfigTime) {
             writer.print(".measureConfigurationTime(" + newFile(configurationTimeDataFile) + ")");
@@ -69,11 +69,14 @@ public class BuildOperationInstrumentation extends GradleInstrumentation {
         return "new File(new URI('" + dataFile.toURI() + "'))";
     }
 
-    public Optional<Duration> getGarbageCollectionTime() {
-        if (configurationTimeDataFile.length() == 0) {
+    /**
+     * This is the cumulative total GC time since the process started, not the GC time of the current invocation.
+     */
+    public Optional<Duration> getTotalGarbageCollectionTime() {
+        if (totalGarbageCollectionTimeDataFile.length() == 0) {
             return Optional.empty();
         }
-        return Optional.of(readCumulativeTimeFromDataFile(garbageCollectionDataFile));
+        return Optional.of(readCumulativeTimeFromDataFile(totalGarbageCollectionTimeDataFile));
     }
 
     public Optional<Duration> getTimeToTaskExecution() {

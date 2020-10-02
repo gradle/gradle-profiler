@@ -44,21 +44,16 @@ public class BuildOperationTrace {
     }
 
     public BuildOperationTrace measureGarbageCollection(File outFile) {
-        long gcTimeAtStart = sumGarbageCollectionTime();
         gradle.buildFinished(result -> {
             try (PrintWriter writer = new PrintWriter(outFile)) {
-                writer.println(sumGarbageCollectionTime() - gcTimeAtStart);
+                writer.println(ManagementFactory.getGarbageCollectorMXBeans().stream()
+                    .map(GarbageCollectorMXBean::getCollectionTime)
+                    .reduce(0L, Long::sum));
             } catch (IOException e) {
                 throw new UncheckedIOException(e);
             }
         });
         return this;
-    }
-
-    private long sumGarbageCollectionTime() {
-        return ManagementFactory.getGarbageCollectorMXBeans().stream()
-            .map(GarbageCollectorMXBean::getCollectionTime)
-            .reduce(0L, Long::sum);
     }
 
     public BuildOperationTrace measureConfigurationTime(File outFile) {
