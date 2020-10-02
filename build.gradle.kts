@@ -1,4 +1,7 @@
 import com.moowork.gradle.node.npm.NpxTask
+import io.sdkman.vendors.tasks.SdkAnnounceVersionTask
+import io.sdkman.vendors.tasks.SdkDefaultVersionTask
+import io.sdkman.vendors.tasks.SdkReleaseVersionTask
 import io.sdkman.vendors.tasks.SdkmanVendorBaseTask
 import java.net.URI
 
@@ -184,4 +187,22 @@ sdkman {
 
 tasks.withType<SdkmanVendorBaseTask>().configureEach {
     mustRunAfter(gitPushTag)
+}
+
+tasks.withType<SdkDefaultVersionTask>().configureEach {
+    mustRunAfter(tasks.withType<SdkReleaseVersionTask>())
+}
+
+tasks.withType<SdkAnnounceVersionTask>().configureEach {
+    mustRunAfter(tasks.withType<SdkReleaseVersionTask>())
+}
+
+tasks.register("releaseToSdkMan") {
+    val versionString = project.version.toString()
+    val isFinalRelease = Regex("""[0-9\.]*""").matchEntire(versionString) != null
+    dependsOn(tasks.withType<SdkReleaseVersionTask>())
+    if (isFinalRelease) {
+        dependsOn(tasks.withType<SdkDefaultVersionTask>())
+        dependsOn(tasks.withType<SdkAnnounceVersionTask>())
+    }
 }

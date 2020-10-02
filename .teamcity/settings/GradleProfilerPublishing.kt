@@ -18,7 +18,7 @@ object GradleProfilerPublishing : BuildType({
 
     steps {
         gradle {
-            tasks = "clean publishAllPublicationsToGradleBuildInternalRepository gitPushTag sdkMinorRelease"
+            tasks = "clean publishAllPublicationsToGradleBuildInternalRepository gitPushTag releaseToSdkMan"
             gradleParams = "-PartifactoryUsername=%ARTIFACTORY_USERNAME% -PartifactoryPassword=%ARTIFACTORY_PASSWORD% -PgithubToken=%github.bot-teamcity.token% " +
                 "-PsdkmanKey=%gradleprofiler.sdkman.key% -PsdkmanToken=%gradleprofiler.sdkman.token% " +
                 "${buildCacheConfigurations()} ${toolchainConfiguration(Os.linux)}"
