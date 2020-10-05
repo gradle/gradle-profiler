@@ -11,6 +11,47 @@ import static org.junit.Assert.assertTrue
 class BuildOperationInstrumentationIntegrationTest extends AbstractProfilerIntegrationTest {
 
     @Unroll
+    def "can benchmark GC time for build using #gradleVersion (configuration-cache: #configurationCache)"() {
+        given:
+        instrumentedBuildScript()
+
+        and:
+        String[] args = [
+            "--project-dir", projectDir.absolutePath,
+            "--output-dir", outputDir.absolutePath,
+            "--gradle-version", gradleVersion,
+            "--benchmark",
+            "--measure-gc",
+            "assemble"
+        ]
+        if (configurationCache) {
+            file("gradle.properties") << """
+                org.gradle.unsafe.configuration-cache=true
+            """
+        }
+
+        when:
+        new Main().run(*args)
+
+        then:
+        def lines = resultFile.lines
+        lines.size() == totalLinesForExecutions(16)
+        lines.get(0) == "scenario,default,default"
+        lines.get(1) == "version,Gradle ${gradleVersion},Gradle ${gradleVersion}"
+        lines.get(2) == "tasks,assemble,assemble"
+        lines.get(3) == "value,execution,garbage collection time"
+        lines.get(4).matches("warm-up build #1,\\d+,\\d+")
+        lines.get(9).matches("warm-up build #6,\\d+,\\d+")
+        lines.get(10).matches("measured build #1,\\d+,\\d+")
+
+        where:
+        gradleVersion                | configurationCache
+        "6.1"                        | false
+        latestSupportedGradleVersion | false
+        latestSupportedGradleVersion | true
+    }
+
+    @Unroll
     def "can benchmark configuration time for build using #gradleVersion (configuration-cache: #configurationCache)"() {
         given:
         instrumentedBuildScript()
