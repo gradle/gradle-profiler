@@ -15,6 +15,12 @@ class BuildOperationInstrumentationIntegrationTest extends AbstractProfilerInteg
         given:
         instrumentedBuildScript()
 
+        buildFile << """
+            assemble.doLast {
+                System.gc()
+            }
+        """
+
         and:
         String[] args = [
             "--project-dir", projectDir.absolutePath,
@@ -43,6 +49,11 @@ class BuildOperationInstrumentationIntegrationTest extends AbstractProfilerInteg
         lines.get(4).matches("warm-up build #1,\\d+,\\d+")
         lines.get(9).matches("warm-up build #6,\\d+,\\d+")
         lines.get(10).matches("measured build #1,\\d+,\\d+")
+
+        and:
+        def gcTime = lines.get(10) =~ /measured build #1,\d+,(\d+)/
+        gcTime.matches()
+        Long.valueOf(gcTime[0][1]) > 0
 
         where:
         gradleVersion                | configurationCache
