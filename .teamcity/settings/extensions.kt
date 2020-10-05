@@ -24,6 +24,6 @@ fun ParametrizedWithType.java8Home(os: Os) {
 fun BuildType.gradleProfilerVcs() {
     vcs {
         root(DslContext.settingsRoot)
-        checkoutMode = CheckoutMode.ON_SERVER
+        checkoutMode = CheckoutMode.ON_AGENT
     }
 }
