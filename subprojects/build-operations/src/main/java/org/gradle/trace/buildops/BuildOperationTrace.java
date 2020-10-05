@@ -15,6 +15,8 @@ import org.gradle.internal.operations.OperationFinishEvent;
 import org.gradle.internal.operations.OperationIdentifier;
 import org.gradle.internal.operations.OperationProgressEvent;
 import org.gradle.internal.operations.OperationStartEvent;
+import org.gradle.tooling.events.FinishEvent;
+import org.gradle.tooling.events.OperationCompletionListener;
 
 import java.io.File;
 import java.io.IOException;
@@ -32,20 +34,18 @@ public class BuildOperationTrace {
 
     private final BuildEventListenerRegistryInternal registry;
     private final BuildServiceRegistry sharedServices;
-    private final GradleInternal gradle;
 
     public BuildOperationTrace(GradleInternal gradle) {
-        this.gradle = gradle;
         this.registry = gradle.getServices().get(BuildEventListenerRegistryInternal.class);
         this.sharedServices = gradle.getSharedServices();
     }
 
     public BuildOperationTrace measureGarbageCollection(File outFile) {
-        Provider<GcTimeCollectionService> provider = sharedServices.registerIfAbsent("gc-time", GcTimeCollectionService.class, spec -> {
+        Provider<GcTimeCollectionService> listenerProvider = sharedServices.registerIfAbsent("gc-time", GcTimeCollectionService.class, spec -> {
             spec.getParameters().getOutputFile().set(outFile);
         });
         // Force the service to be instantiated so we actually get a close() call at the end of the build
-        provider.get();
+        registry.onTaskCompletion(listenerProvider);
         return this;
     }
 
@@ -71,9 +71,14 @@ public class BuildOperationTrace {
         }
     }
 
-    public static abstract class GcTimeCollectionService implements BuildService<GcTimeCollectionService.Params>, AutoCloseable {
+    public static abstract class GcTimeCollectionService implements BuildService<GcTimeCollectionService.Params>, OperationCompletionListener, AutoCloseable {
         interface Params extends BuildServiceParameters {
             RegularFileProperty getOutputFile();
+        }
+
+        @Override
+        public void onFinish(FinishEvent event) {
+            // Ignore, we are only interested in the callback to close()
         }
 
         @Override
