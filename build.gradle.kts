@@ -1,4 +1,8 @@
 import com.moowork.gradle.node.npm.NpxTask
+import io.sdkman.vendors.tasks.SdkAnnounceVersionTask
+import io.sdkman.vendors.tasks.SdkDefaultVersionTask
+import io.sdkman.vendors.tasks.SdkReleaseVersionTask
+import io.sdkman.vendors.tasks.SdkmanVendorBaseTask
 import java.net.URI
 
 plugins {
@@ -8,6 +12,7 @@ plugins {
     `maven-publish`
     id("profiler.publication")
     id("com.github.node-gradle.node") version "2.2.4"
+    id("io.sdkman.vendors") version "2.0.0"
 }
 
 allprojects {
@@ -76,7 +81,7 @@ tasks.withType<Jar>().configureEach {
     }
 }
 
-application.mainClassName = "org.gradle.profiler.Main"
+application.mainClass.set("org.gradle.profiler.Main")
 
 node {
     download = true
@@ -151,7 +156,7 @@ publishing {
 fun Project.gradleInternalRepositoryUrl(): URI {
     val isSnapshot = version.toString().endsWith("-SNAPSHOT")
     val repositoryQualifier = if (isSnapshot) "snapshots" else "releases"
-    return uri("https://repo.gradle.org/gradle/ext-$repositoryQualifier-local")
+    return uri("https://repo.gradle.org/gradle/ext-$repositoryQualifier-local/")
 }
 
 buildScan {
@@ -164,9 +169,48 @@ tasks.register<Exec>("gitTag") {
     commandLine("git", "tag", releaseTagName)
 }
 
-tasks.register<Exec>("gitPushTag") {
+val gitPushTag = tasks.register<Exec>("gitPushTag") {
     mustRunAfter("publishAllPublicationsToGradleBuildInternalRepository")
     dependsOn("gitTag")
     commandLine("git", "push", "https://bot-teamcity:${project.property("githubToken")}@github.com/gradle/gradle-profiler.git", releaseTagName)
 }
 
+sdkman {
+    api = "https://vendors.sdkman.io"
+    candidate = "gradleprofiler"
+    hashtag = "#gradleprofiler"
+    version = project.version.toString()
+    url = project.gradleInternalRepositoryUrl().resolve("org/gradle/profiler/gradle-profiler/$version/gradle-profiler-$version.zip").toString()
+    consumerKey = project.findProperty("sdkmanKey") as String?
+    consumerToken = project.findProperty("sdkmanToken") as String?
+}
+
+tasks.withType<SdkmanVendorBaseTask>().configureEach {
+    mustRunAfter(gitPushTag)
+}
+
+tasks.withType<SdkDefaultVersionTask>().configureEach {
+    mustRunAfter(tasks.withType<SdkReleaseVersionTask>())
+}
+
+tasks.withType<SdkAnnounceVersionTask>().configureEach {
+    mustRunAfter(tasks.withType<SdkReleaseVersionTask>())
+}
+
+tasks.register("releaseToSdkMan") {
+    val versionString = project.version.toString()
+    // We only announce and set the default version for final releases
+    // A release is not final if it contains things different to numbers and dots.
+    // For example:
+    //   - 1.3: final
+    //   - 1.3.25: final
+    //   - 1.3-rc-4: not final
+    //   - 1.3.RC5: not final
+    //   - 1.3-alpha5: not final
+    val isFinalRelease = Regex("""[0-9\.]*""").matchEntire(versionString) != null
+    dependsOn(tasks.withType<SdkReleaseVersionTask>())
+    if (isFinalRelease) {
+        dependsOn(tasks.withType<SdkDefaultVersionTask>())
+        dependsOn(tasks.withType<SdkAnnounceVersionTask>())
+    }
+}
