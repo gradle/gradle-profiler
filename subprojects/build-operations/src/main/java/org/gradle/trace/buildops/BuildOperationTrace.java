@@ -15,15 +15,14 @@ import org.gradle.internal.operations.OperationFinishEvent;
 import org.gradle.internal.operations.OperationIdentifier;
 import org.gradle.internal.operations.OperationProgressEvent;
 import org.gradle.internal.operations.OperationStartEvent;
+import org.gradle.tooling.events.FinishEvent;
+import org.gradle.tooling.events.OperationCompletionListener;
 
 import java.io.File;
 import java.io.IOException;
 import java.io.PrintWriter;
-import java.io.UncheckedIOException;
 import java.lang.management.GarbageCollectorMXBean;
 import java.lang.management.ManagementFactory;
-import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -35,24 +34,18 @@ public class BuildOperationTrace {
 
     private final BuildEventListenerRegistryInternal registry;
     private final BuildServiceRegistry sharedServices;
-    private final GradleInternal gradle;
 
     public BuildOperationTrace(GradleInternal gradle) {
-        this.gradle = gradle;
         this.registry = gradle.getServices().get(BuildEventListenerRegistryInternal.class);
         this.sharedServices = gradle.getSharedServices();
     }
 
     public BuildOperationTrace measureGarbageCollection(File outFile) {
-        gradle.buildFinished(result -> {
-            try (PrintWriter writer = new PrintWriter(outFile)) {
-                writer.println(ManagementFactory.getGarbageCollectorMXBeans().stream()
-                    .map(GarbageCollectorMXBean::getCollectionTime)
-                    .reduce(0L, Long::sum));
-            } catch (IOException e) {
-                throw new UncheckedIOException(e);
-            }
+        Provider<GcTimeCollectionService> listenerProvider = sharedServices.registerIfAbsent("gc-time", GcTimeCollectionService.class, spec -> {
+            spec.getParameters().getOutputFile().set(outFile);
         });
+        // Force the service to be instantiated so we actually get a close() call at the end of the build
+        registry.onTaskCompletion(listenerProvider);
         return this;
     }
 
@@ -70,6 +63,30 @@ public class BuildOperationTrace {
         });
         registry.onOperationCompletion(listenerProvider);
         return this;
+    }
+
+    private static void writeToFile(File outputFile, Object data) throws IOException {
+        try (PrintWriter writer = new PrintWriter(outputFile)) {
+            writer.println(data);
+        }
+    }
+
+    public static abstract class GcTimeCollectionService implements BuildService<GcTimeCollectionService.Params>, OperationCompletionListener, AutoCloseable {
+        interface Params extends BuildServiceParameters {
+            RegularFileProperty getOutputFile();
+        }
+
+        @Override
+        public void onFinish(FinishEvent event) {
+            // Ignore, we are only interested in the callback to close()
+        }
+
+        @Override
+        public void close() throws Exception {
+            writeToFile(getParameters().getOutputFile().getAsFile().get(), ManagementFactory.getGarbageCollectorMXBeans().stream()
+                .map(GarbageCollectorMXBean::getCollectionTime)
+                .reduce(0L, Long::sum));
+        }
     }
 
     public static abstract class TimeToFirstTaskRecordingListener implements BuildService<TimeToFirstTaskRecordingListener.Params>, BuildOperationListener, AutoCloseable {
@@ -97,8 +114,8 @@ public class BuildOperationTrace {
         }
 
         @Override
-        public void close() throws IOException {
-            Files.write(getParameters().getOutputFile().get().getAsFile().toPath(), String.valueOf(timeToFirstTask.longValue()).getBytes(StandardCharsets.UTF_8));
+        public void close() throws Exception {
+            writeToFile(getParameters().getOutputFile().getAsFile().get(), timeToFirstTask.longValue());
         }
     }
 
@@ -162,7 +179,7 @@ public class BuildOperationTrace {
         }
 
         public void write() throws IOException {
-            Files.write(outputFile.toPath(), String.valueOf(buildOperationTime.longValue()).getBytes(StandardCharsets.UTF_8));
+            writeToFile(outputFile, buildOperationTime.longValue());
         }
     }
 }

@@ -110,10 +110,17 @@ public class GradleScenarioDefinition extends ScenarioDefinition {
         if (getWarmUpCount() < 1) {
             reporter.accept("You can not skip warm-ups when profiling or benchmarking a Gradle build. Use --no-daemon or --cold-daemon if you want to profile or benchmark JVM startup");
         }
-        if (settings.isMeasureConfigTime() && buildConfiguration.getGradleVersion().compareTo(GradleVersion.version("6.1-milestone-3")) < 0) {
+        if (settings.isMeasureGarbageCollection() && isBuildServiceUnsupported()) {
+            reporter.accept("Measuring garbage collection is only supported for Gradle 6.1-milestone-3 and later");
+        }
+        if (settings.isMeasureConfigTime() && isBuildServiceUnsupported()) {
             reporter.accept("Measuring build configuration is only supported for Gradle 6.1-milestone-3 and later");
         }
         settings.getProfiler().validate(new ScenarioSettings(settings, this), reporter);
+    }
+
+    private boolean isBuildServiceUnsupported() {
+        return buildConfiguration.getGradleVersion().compareTo(GradleVersion.version("6.1-milestone-3")) < 0;
     }
 
     @Override
