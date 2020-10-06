@@ -1,7 +1,10 @@
 package org.gradle.profiler;
 
 import org.gradle.tooling.BuildAction;
-import org.gradle.tooling.*;
+import org.gradle.tooling.BuildActionExecuter;
+import org.gradle.tooling.GradleConnectionException;
+import org.gradle.tooling.LongRunningOperation;
+import org.gradle.tooling.ProjectConnection;
 
 import java.util.List;
 import java.util.function.Consumer;
@@ -32,9 +35,16 @@ public class ToolingApiGradleClient implements GradleInvoker, GradleClient {
         }
     }
 
+    public <T extends LongRunningOperation, R> R runOperation(
+        Function<ProjectConnection, T> createOperation,
+        Function<T, R> operationAction
+    ) {
+        return run(createOperation.apply(projectConnection), operationAction);
+    }
+
     @Override
     public void runTasks(List<String> tasks, List<String> gradleArgs, List<String> jvmArgs) {
-        run(projectConnection.newBuild(), build -> {
+        runOperation(ProjectConnection::newBuild, build -> {
             build.forTasks(tasks.toArray(new String[0]));
             build.withArguments(gradleArgs);
             build.setJvmArguments(jvmArgs);
@@ -45,7 +55,7 @@ public class ToolingApiGradleClient implements GradleInvoker, GradleClient {
 
     @Override
     public void loadToolingModel(List<String> tasks, List<String> gradleArgs, List<String> jvmArgs, Class<?> toolingModel) {
-        run(projectConnection.model(toolingModel), build -> {
+        runOperation(connection -> connection.model(toolingModel), build -> {
             build.forTasks(tasks.toArray(new String[0]));
             build.withArguments(gradleArgs);
             build.setJvmArguments(jvmArgs);
@@ -56,7 +66,7 @@ public class ToolingApiGradleClient implements GradleInvoker, GradleClient {
 
     @Override
     public <T> T runToolingAction(List<String> tasks, List<String> gradleArgs, List<String> jvmArgs, BuildAction<T> action, Consumer<BuildActionExecuter<?>> configureAction) {
-        return run(projectConnection.action(action), build -> {
+        return runOperation(connection -> connection.action(action), build -> {
             build.forTasks(tasks.toArray(new String[0]));
             build.withArguments(gradleArgs);
             build.setJvmArguments(jvmArgs);
