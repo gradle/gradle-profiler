@@ -59,6 +59,8 @@ You can also use the `--measure-config-time` option to measure some additional d
 You can use `--measure-build-op` together with the fully qualified class name of the enveloping type of the `Details` interface to benchmark cumulative build operation time.
 For example, for Gradle 5.x there is a [`org.gradle.api.internal.tasks.SnapshotTaskInputsBuildOperationType`](https://github.com/gradle/gradle/blob/c671360a3f1729b406c5b8b5b0d22c7b81296993/subprojects/core/src/main/java/org/gradle/api/internal/tasks/SnapshotTaskInputsBuildOperationType.java) which can be used to capture snapshotting time.
 The time recorded is cumulative time, so the wall clock time spent on executing the measured build operations is probably smaller.
+If the build operation does not exists in a benchmarked version of Gradle, it is gracefully ignored.
+In the resulting reports it will show up with 0 time.
 
 ### Regression detection
 
