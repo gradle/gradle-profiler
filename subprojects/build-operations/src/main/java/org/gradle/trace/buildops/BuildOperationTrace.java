@@ -17,6 +17,8 @@ import org.gradle.internal.operations.OperationProgressEvent;
 import org.gradle.internal.operations.OperationStartEvent;
 import org.gradle.tooling.events.FinishEvent;
 import org.gradle.tooling.events.OperationCompletionListener;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.IOException;
@@ -31,6 +33,7 @@ import java.util.concurrent.atomic.AtomicLong;
 
 @SuppressWarnings("unused")
 public class BuildOperationTrace {
+    private static final Logger LOGGER = LoggerFactory.getLogger(BuildOperationTrace.class);
 
     private final BuildEventListenerRegistryInternal registry;
     private final BuildServiceRegistry sharedServices;
@@ -126,12 +129,20 @@ public class BuildOperationTrace {
 
         private final List<BuildOperationCollector> collectors;
 
-        public BuildOperationDurationRecordingListener() throws ClassNotFoundException {
+        public BuildOperationDurationRecordingListener() {
             this.collectors = new ArrayList<>();
             for (Map.Entry<String, File> entry : getParameters().getCapturedBuildOperations().get().entrySet()) {
                 String operationType = entry.getKey();
                 File outputFile = entry.getValue();
-                collectors.add(new BuildOperationCollector(Class.forName(operationType + "$Details"), outputFile));
+                Class<?> detailsType;
+                try {
+                    detailsType = Class.forName(operationType + "$Details");
+                } catch (ClassNotFoundException e) {
+                    LOGGER.warn("Couldn't find Details subtype for operation type {}", operationType, e);
+                    continue;
+                }
+
+                collectors.add(new BuildOperationCollector(detailsType, outputFile));
             }
         }
 
