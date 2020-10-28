@@ -44,23 +44,24 @@ public class CliGradleClient implements GradleInvoker, GradleClient {
 
     @Override
     public void runTasks(List<String> tasks, List<String> gradleArgs, List<String> jvmArgs) {
-        String gradleOpts = jvmArgs.stream().map(arg -> '"' + arg + '"').collect(Collectors.joining(" "));
+        String gradleOpts = quoteJvmArguments(daemon, jvmArgs);
 
         List<String> commandLine = new ArrayList<>();
         gradleBuildConfiguration.addGradleCommand(commandLine);
         commandLine.addAll(gradleArgs);
         commandLine.addAll(tasks);
         commandLine.add("-Dorg.gradle.daemon=" + daemon);
-        if (daemon) {
-            commandLine.add("-Dorg.gradle.jvmargs=" + gradleOpts);
-        } else {
+        if (!daemon) {
             commandLine.add("-Dorg.gradle.jvmargs");
         }
 
         ProcessBuilder builder = new ProcessBuilder(commandLine);
         builder.directory(projectDir);
         if (daemon) {
-            builder.environment().put("GRADLE_OPTS", "-Xmx128m -Xms128m -XX:+HeapDumpOnOutOfMemoryError");
+            String orgGradleJvmArgs = jvmArgs.isEmpty()
+                ? ""
+                : " \"-Dorg.gradle.jvmargs=" + gradleOpts + "\"";
+            builder.environment().put("GRADLE_OPTS", "-Xmx128m -Xms128m -XX:+HeapDumpOnOutOfMemoryError" + orgGradleJvmArgs);
         } else {
             Logging.detailed().println("GRADLE_OPTS: " + gradleOpts);
             builder.environment().put("GRADLE_OPTS", gradleOpts);
@@ -80,5 +81,17 @@ public class CliGradleClient implements GradleInvoker, GradleClient {
             System.out.println();
             throw new RuntimeException("Build failed.", e);
         }
+    }
+
+    private static String quoteJvmArguments(boolean forSystemProperty, List<String> jvmArgs) {
+        char quotes = forSystemProperty ? '\'' : '"';
+        return jvmArgs.stream()
+            .peek(arg -> {
+                if (arg.contains("\"") || arg.contains("'")) {
+                    throw new IllegalArgumentException("jvmArgs must not contain quotes, but this argument does: " + arg);
+                }
+            })
+            .map(arg -> quotes + arg + quotes)
+            .collect(Collectors.joining(" "));
     }
 }
