@@ -44,10 +44,7 @@ public class CliGradleClient implements GradleInvoker, GradleClient {
 
     @Override
     public void runTasks(List<String> tasks, List<String> gradleArgs, List<String> jvmArgs) {
-        String gradleOpts = jvmArgs.stream()
-            .peek(arg -> { if (arg.contains("\"") || arg.contains("'")) { throw new IllegalArgumentException("jvmArgs must not contain quotes, but this argument does: " + arg); } })
-            .map(arg -> "'" + arg + "'")
-            .collect(Collectors.joining(" "));
+        String gradleOpts = quoteJvmArguments(daemon, jvmArgs);
 
         List<String> commandLine = new ArrayList<>();
         gradleBuildConfiguration.addGradleCommand(commandLine);
@@ -84,5 +81,17 @@ public class CliGradleClient implements GradleInvoker, GradleClient {
             System.out.println();
             throw new RuntimeException("Build failed.", e);
         }
+    }
+
+    private static String quoteJvmArguments(boolean forSystemProperty, List<String> jvmArgs) {
+        char quotes = forSystemProperty ? '\'' : '"';
+        return jvmArgs.stream()
+            .peek(arg -> {
+                if (arg.contains("\"") || arg.contains("'")) {
+                    throw new IllegalArgumentException("jvmArgs must not contain quotes, but this argument does: " + arg);
+                }
+            })
+            .map(arg -> quotes + arg + quotes)
+            .collect(Collectors.joining(" "));
     }
 }

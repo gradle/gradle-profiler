@@ -176,7 +176,7 @@ class GradleInvocationIntegrationTest extends AbstractProfilerIntegrationTest {
                 run-using = ${runUsing}
                 daemon = $daemon
                 tasks = assemble
-                jvm-args = "-DmySystemProperty=I have spaces!"
+                jvm-args = ["-DmySystemProperty=I have spaces!", "-Xms128m"]
             }
         """
 
