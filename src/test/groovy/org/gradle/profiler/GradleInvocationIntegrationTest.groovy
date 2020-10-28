@@ -1,5 +1,8 @@
 package org.gradle.profiler
 
+import spock.lang.Unroll
+
+@Unroll
 class GradleInvocationIntegrationTest extends AbstractProfilerIntegrationTest {
     def "benchmarks using tooling API and warm daemon when invocation type is not specified"() {
         given:
@@ -160,5 +163,37 @@ class GradleInvocationIntegrationTest extends AbstractProfilerIntegrationTest {
         logFile.containsOne("Run using: `gradle` command with --no-daemon")
         logFile.containsNoDaemonScenario(minimalSupportedGradleVersion, "s1", ["assemble"])
         resultFile.containsNoDaemonScenario(minimalSupportedGradleVersion, "s1", ["assemble"])
+    }
+
+    def "can pass jvm args with spaces to #invokerString and #daemon daemon"() {
+        given:
+        instrumentedBuildScript()
+        buildFile << """
+            println("mySystemProperty='\${System.getProperty("mySystemProperty")}'")
+        """
+        def scenarioFile = file("performance.scenarios") << """
+            s1 {
+                run-using = ${runUsing}
+                daemon = $daemon
+                tasks = assemble
+                jvm-args = "-DmySystemProperty=I have spaces!"
+            }
+        """
+
+        when:
+        new Main().run("--project-dir", projectDir.absolutePath, "--output-dir", outputDir.absolutePath, "--gradle-version", minimalSupportedGradleVersion, "--benchmark", "--warmups", "2", "--iterations", "2", "--scenario-file", scenarioFile.absolutePath, "s1")
+
+        then:
+        !logFile.find("mySystemProperty='I have spaces!'").empty
+
+        where:
+        runUsing      | daemon
+        "tooling-api" | "warm"
+        "tooling-api" | "cold"
+        "cli"         | "warm"
+        "cli"         | "cold"
+        "cli"         | "none"
+
+        invokerString = runUsing == "cli" ? "`gradle` command" : "tooling API"
     }
 }
