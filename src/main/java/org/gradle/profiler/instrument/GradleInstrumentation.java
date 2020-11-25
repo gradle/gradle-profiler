@@ -29,12 +29,13 @@ public abstract class GradleInstrumentation implements GradleArgsCalculator {
     private void maybeGenerate() {
         File buildOpJar = unpackPlugin("build-operations");
         File chromeTraceJar = unpackPlugin("chrome-trace");
+        File heapDumpJar = unpackPlugin("heap-dump");
         initScript = new GeneratedInitScript() {
             @Override
             public void writeContents(final PrintWriter writer) {
                 writer.write("initscript {\n");
                 writer.write("    dependencies {\n");
-                writer.write("        classpath files('" + buildOpJar.toURI() + "', '" + chromeTraceJar.toURI() + "')\n");
+                writer.write("        classpath files('" + buildOpJar.toURI() + "', '" + chromeTraceJar.toURI() + "', '" + heapDumpJar.toURI() + "')\n");
                 writer.write("    }\n");
                 writer.write("}\n");
                 writer.write("\n");
