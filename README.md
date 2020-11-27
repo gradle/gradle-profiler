@@ -282,8 +282,8 @@ They can be added to a scenario file like this:
         apply-h-change-to = "src/main/headers/app.h"
         apply-cpp-change-to = "src/main/cpp/app.cpp"
         apply-property-resource-change-to = "src/main/resources/thing.properties"
-        apply-android-resource-change-to = "src/main/res/value/strings.xml"
-        apply-android-resource-value-change-to = "src/main/res/value/strings.xml"
+        apply-android-resource-change-to = "src/main/res/values/strings.xml"
+        apply-android-resource-value-change-to = "src/main/res/values/strings.xml"
         apply-android-manifest-change-to = "src/main/AndroidManifest.xml"
         clear-build-cache-before = SCENARIO
         clear-transform-cache-before = BUILD
