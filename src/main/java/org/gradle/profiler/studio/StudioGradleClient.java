@@ -81,10 +81,10 @@ public class StudioGradleClient implements GradleClient {
         }
 
         // Use a long time out because it can take quite some time between the tapi action completing and studio finishing the sync
-        SyncStarted started = agentConnection.receiveSyncStarted(Duration.ofMinutes(10));
+        SyncStarted started = agentConnection.receiveSyncStarted(Duration.ofHours(2));
         agentConnection.send(new SyncParameters(gradleArgs, jvmArgs));
         System.out.println("* Sync has started, waiting for it to complete...");
-        SyncCompleted completed = agentConnection.receiveSyncCompeted(Duration.ofHours(1));
+        SyncCompleted completed = agentConnection.receiveSyncCompeted(Duration.ofHours(2));
         System.out.println("* Sync has completed");
         return Duration.ofMillis(completed.getDurationMillis());
     }

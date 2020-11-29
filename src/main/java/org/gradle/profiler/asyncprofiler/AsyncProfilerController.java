@@ -2,7 +2,6 @@ package org.gradle.profiler.asyncprofiler;
 
 import com.google.common.collect.ImmutableList;
 import org.gradle.profiler.CommandExec;
-import org.gradle.profiler.GradleScenarioDefinition;
 import org.gradle.profiler.InstrumentingProfiler;
 import org.gradle.profiler.ScenarioSettings;
 import org.gradle.profiler.flamegraph.FlameGraphSanitizer;
@@ -19,14 +18,13 @@ import static org.gradle.profiler.flamegraph.FlameGraphSanitizer.*;
 
 public class AsyncProfilerController implements InstrumentingProfiler.SnapshotCapturingProfilerController {
     private final AsyncProfilerConfig profilerConfig;
-    private final ScenarioSettings scenarioSettings;
+    private final AsyncProfilerWorkspace workspace;
     private final FlameGraphTool flamegraphGenerator;
     private final FlameGraphSanitizer flamegraphSanitizer;
-    private final File stacks;
 
-    public AsyncProfilerController(AsyncProfilerConfig profilerConfig, ScenarioSettings scenarioSettings) {
+    public AsyncProfilerController(AsyncProfilerConfig profilerConfig, ScenarioSettings scenarioSettings, AsyncProfilerWorkspace workspace) {
         this.profilerConfig = profilerConfig;
-        this.scenarioSettings = scenarioSettings;
+        this.workspace = workspace;
         ImmutableList.Builder<SanitizeFunction> sanitizers = ImmutableList.<SanitizeFunction>builder();
         if (!profilerConfig.isIncludeSystemThreads()) {
             sanitizers.add(new RemoveSystemThreads());
@@ -35,8 +33,6 @@ public class AsyncProfilerController implements InstrumentingProfiler.SnapshotCa
         sanitizers.add(COLLAPSE_BUILD_SCRIPTS, COLLAPSE_GRADLE_INFRASTRUCTURE, SIMPLE_NAMES);
         this.flamegraphSanitizer = new FlameGraphSanitizer(sanitizers.build().toArray(new SanitizeFunction[0]));
         this.flamegraphGenerator = new FlameGraphTool();
-
-        this.stacks = AsyncProfiler.stacksFileFor(scenarioSettings.getScenario());
     }
 
     public String getName() {
@@ -57,13 +53,13 @@ public class AsyncProfilerController implements InstrumentingProfiler.SnapshotCa
     }
 
     @Override
-    public void stopRecording(String pid) throws IOException, InterruptedException {
+    public void stopRecording(String pid) {
         new CommandExec().run(
             getProfilerScript().getAbsolutePath(),
             "stop",
             "-o", "collapsed=" + profilerConfig.getCounter().name().toLowerCase(Locale.ROOT),
             "-a",
-            "-f", stacks.getAbsolutePath(),
+            "-f", workspace.getStacksFile().getAbsolutePath(),
             pid
         );
     }
@@ -74,15 +70,14 @@ public class AsyncProfilerController implements InstrumentingProfiler.SnapshotCa
 
     @Override
     public void stopSession() {
-        GradleScenarioDefinition scenario = scenarioSettings.getScenario();
         if (flamegraphGenerator.checkInstallation()) {
-            File simplifiedStacks = new File(scenario.getOutputDir(), scenario.getProfileName() + ".simplified-stacks.txt");
-            flamegraphSanitizer.sanitize(stacks, simplifiedStacks);
+            File simplifiedStacks = workspace.getSimplifiedStacksFile();
+            flamegraphSanitizer.sanitize(workspace.getStacksFile(), simplifiedStacks);
 
             Counter counter = profilerConfig.getCounter();
             String unit = counter == Counter.SAMPLES ? "samples" : "units";
             String titlePrefix = profilerConfig.getEvent().toUpperCase(Locale.ROOT);
-            File flamegraph = new File(scenario.getOutputDir(), scenario.getProfileName() + "-flames.svg");
+            File flamegraph = workspace.getFlamesFile();
             flamegraphGenerator.generateFlameGraph(
                 simplifiedStacks, flamegraph,
                 "--colors", "java",
@@ -90,7 +85,7 @@ public class AsyncProfilerController implements InstrumentingProfiler.SnapshotCa
                 "--title", titlePrefix + " Flame Graph",
                 "--countname", unit
             );
-            File iciclegraph = new File(scenario.getOutputDir(), scenario.getProfileName() + "-icicles.svg");
+            File iciclegraph = workspace.getIciclesFile();
             flamegraphGenerator.generateFlameGraph(
                 simplifiedStacks, iciclegraph,
                 "--reverse", "--invert",

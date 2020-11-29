@@ -63,7 +63,7 @@ public class AsyncProfilerFactory extends ProfilerFactory {
     @Override
     public Profiler createFromOptions(OptionSet parsedOptions) {
         AsyncProfilerConfig config = createConfig(parsedOptions);
-        return new AsyncProfiler(config);
+        return new AsyncProfiler(config, "cpu");
     }
 
     AsyncProfilerConfig createConfig(OptionSet parsedOptions) {

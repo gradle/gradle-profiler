@@ -1,8 +1,6 @@
 package org.gradle.profiler.asyncprofiler;
 
-import org.gradle.profiler.GradleScenarioDefinition;
 import org.gradle.profiler.JvmArgsCalculator;
-import org.gradle.profiler.ScenarioSettings;
 
 import java.io.File;
 import java.util.List;
@@ -10,12 +8,12 @@ import java.util.Locale;
 
 class AsyncProfilerJvmArgsCalculator implements JvmArgsCalculator {
     private final AsyncProfilerConfig profilerConfig;
-    private final ScenarioSettings scenarioSettings;
+    private final AsyncProfilerWorkspace workspace;
     private final boolean captureSnapshotOnProcessExit;
 
-    AsyncProfilerJvmArgsCalculator(AsyncProfilerConfig profilerConfig, ScenarioSettings scenarioSettings, boolean captureSnapshotOnProcessExit) {
+    AsyncProfilerJvmArgsCalculator(AsyncProfilerConfig profilerConfig, AsyncProfilerWorkspace workspace, boolean captureSnapshotOnProcessExit) {
         this.profilerConfig = profilerConfig;
-        this.scenarioSettings = scenarioSettings;
+        this.workspace = workspace;
         this.captureSnapshotOnProcessExit = captureSnapshotOnProcessExit;
     }
 
@@ -31,8 +29,7 @@ class AsyncProfilerJvmArgsCalculator implements JvmArgsCalculator {
             .append(",ann");
 
         if (captureSnapshotOnProcessExit) {
-            GradleScenarioDefinition scenario = scenarioSettings.getScenario();
-            File stacks = AsyncProfiler.stacksFileFor(scenario);
+            File stacks = workspace.getStacksFile();
             agent.append(",file=").append(stacks.getAbsolutePath());
         }
 

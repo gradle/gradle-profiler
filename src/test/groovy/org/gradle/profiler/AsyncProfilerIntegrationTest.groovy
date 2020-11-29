@@ -17,8 +17,8 @@ class AsyncProfilerIntegrationTest extends AbstractProfilerIntegrationTest {
         logFile.containsOne("<invocations: 3>")
 
         and:
-        new File(outputDir, "${latestSupportedGradleVersion}-flames.svg").file
-        new File(outputDir, "${latestSupportedGradleVersion}-icicles.svg").file
+        new File(outputDir, "${latestSupportedGradleVersion}/cpu/flames.svg").file
+        new File(outputDir, "${latestSupportedGradleVersion}/cpu/icicles.svg").file
     }
 
     @Requires({ !OperatingSystem.isWindows() })
@@ -34,8 +34,27 @@ class AsyncProfilerIntegrationTest extends AbstractProfilerIntegrationTest {
         logFile.containsOne("<invocations: 3>")
 
         and:
-        new File(outputDir, "${latestSupportedGradleVersion}-flames.svg").file
-        new File(outputDir, "${latestSupportedGradleVersion}-icicles.svg").file
+        new File(outputDir, "${latestSupportedGradleVersion}/heap/flames.svg").file
+        new File(outputDir, "${latestSupportedGradleVersion}/heap/icicles.svg").file
+    }
+
+    @Requires({ !OperatingSystem.isWindows() })
+    def "profiles both build CPU usage and heap allocation using async-profiler with tooling API and warm daemon"() {
+        given:
+        instrumentedBuildScript()
+
+        when:
+        new Main().run("--project-dir", projectDir.absolutePath, "--output-dir", outputDir.absolutePath, "--gradle-version", latestSupportedGradleVersion, "--profile", "async-profiler", "--profile", "async-profiler-heap", "assemble")
+
+        then:
+        logFile.find("<daemon: true").size() == 4
+        logFile.containsOne("<invocations: 3>")
+
+        and:
+        new File(outputDir, "${latestSupportedGradleVersion}/cpu/flames.svg").file
+        new File(outputDir, "${latestSupportedGradleVersion}/cpu/icicles.svg").file
+        new File(outputDir, "${latestSupportedGradleVersion}/heap/flames.svg").file
+        new File(outputDir, "${latestSupportedGradleVersion}/heap/icicles.svg").file
     }
 
     @Requires({ !OperatingSystem.isWindows() })
@@ -51,8 +70,8 @@ class AsyncProfilerIntegrationTest extends AbstractProfilerIntegrationTest {
         logFile.containsOne("<invocations: 4>")
 
         and:
-        new File(outputDir, "${latestSupportedGradleVersion}-flames.svg").file
-        new File(outputDir, "${latestSupportedGradleVersion}-icicles.svg").file
+        new File(outputDir, "${latestSupportedGradleVersion}/cpu/flames.svg").file
+        new File(outputDir, "${latestSupportedGradleVersion}/cpu/icicles.svg").file
     }
 
     @Requires({ !OperatingSystem.isWindows() })
@@ -68,8 +87,8 @@ class AsyncProfilerIntegrationTest extends AbstractProfilerIntegrationTest {
         logFile.find("<invocations: 1>").size() == 3
 
         and:
-        new File(outputDir, "${latestSupportedGradleVersion}-flames.svg").file
-        new File(outputDir, "${latestSupportedGradleVersion}-icicles.svg").file
+        new File(outputDir, "${latestSupportedGradleVersion}/cpu/flames.svg").file
+        new File(outputDir, "${latestSupportedGradleVersion}/cpu/icicles.svg").file
     }
 
     @Requires({ !OperatingSystem.isWindows() })
@@ -86,8 +105,8 @@ class AsyncProfilerIntegrationTest extends AbstractProfilerIntegrationTest {
         logFile.find("<invocations: 1>").size() == 3
 
         and:
-        new File(outputDir, "${latestSupportedGradleVersion}-flames.svg").file
-        new File(outputDir, "${latestSupportedGradleVersion}-icicles.svg").file
+        new File(outputDir, "${latestSupportedGradleVersion}/cpu/flames.svg").file
+        new File(outputDir, "${latestSupportedGradleVersion}/cpu/icicles.svg").file
     }
 
     @Requires({ !OperatingSystem.isWindows() })
@@ -138,7 +157,7 @@ class AsyncProfilerIntegrationTest extends AbstractProfilerIntegrationTest {
         logFile.containsOne("<invocations: 3>")
 
         and:
-        new File(outputDir, "a-b/a-b-${latestSupportedGradleVersion}-flames.svg").file
-        new File(outputDir, "a-b/a-b-${latestSupportedGradleVersion}-icicles.svg").file
+        new File(outputDir, "a-b/a-b-${latestSupportedGradleVersion}/cpu/flames.svg").file
+        new File(outputDir, "a-b/a-b-${latestSupportedGradleVersion}/cpu/icicles.svg").file
     }
 }

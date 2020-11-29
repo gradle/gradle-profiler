@@ -9,7 +9,9 @@ import java.io.File;
 import java.io.IOException;
 import java.time.Instant;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
+import java.util.stream.Collectors;
 
 public class Main {
     public static void main(String[] args) {
@@ -139,7 +141,7 @@ public class Main {
         if (outputDir == null) {
             return;
         }
-        for (File file : outputDir.listFiles()) {
+        for (File file : Arrays.stream(outputDir.listFiles()).sorted().collect(Collectors.toList())) {
             profiler.summarizeResultFile(file, line -> System.out.println("  " + line));
         }
         for (File file : outputDir.listFiles()) {

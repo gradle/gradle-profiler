@@ -10,9 +10,11 @@ import java.util.function.Consumer;
 
 public class AsyncProfiler extends InstrumentingProfiler {
     private final AsyncProfilerConfig config;
+    private final String profilerName;
 
-    AsyncProfiler(AsyncProfilerConfig config) {
+    AsyncProfiler(AsyncProfilerConfig config, String profilerName) {
         this.config = config;
+        this.profilerName = profilerName;
     }
 
     @Override
@@ -21,17 +23,17 @@ public class AsyncProfiler extends InstrumentingProfiler {
             // Can attach later instead
             return JvmArgsCalculator.DEFAULT;
         }
-        return new AsyncProfilerJvmArgsCalculator(config, settings, captureSnapshotOnProcessExit);
+        return new AsyncProfilerJvmArgsCalculator(config, new AsyncProfilerWorkspace(settings.getScenario(), profilerName), captureSnapshotOnProcessExit);
     }
 
     @Override
     protected SnapshotCapturingProfilerController doNewController(ScenarioSettings settings) {
-        return new AsyncProfilerController(config, settings);
+        return new AsyncProfilerController(config, settings, new AsyncProfilerWorkspace(settings.getScenario(), profilerName));
     }
 
     @Override
     public void summarizeResultFile(File resultFile, Consumer<String> consumer) {
-        if (resultFile.getName().endsWith(".svg")) {
+        if (resultFile.getName().endsWith(".svg") && resultFile.getParentFile().getName().equals(profilerName)) {
             consumer.accept(resultFile.getAbsolutePath());
         }
     }
