@@ -9,6 +9,7 @@ Profiling information can be captured using several different tools:
 - Using [JProfiler](https://www.ej-technologies.com/products/jprofiler/overview.html)
 - Using [YourKit](https://www.yourkit.com) profiler
 - Using [Java flight recorder](https://docs.oracle.com/javacomponents/jmc-5-4/jfr-runtime-guide/about.htm#JFRUH170)
+- Producing a heap dump in HPROF format
 - Producing [Chrome Trace](https://www.chromium.org/developers/how-tos/trace-event-profiling-tool) output
 
 ## Installing
@@ -154,6 +155,10 @@ You will get both the JFR file and flame graph visualizations of the data, which
 
 In order to profile with JFR, add the `--profile jfr` option. 
 You can change the profiler settings using `--jfr-settings`, specifying either the path to a `.jfc` file or the name of a built-in template like `profile`.
+
+### Heap dump
+
+To capture a heap dump at the end of each measured build, add the `--profile heap-dump` option. You can use this with other `--profile` options.
 
 ### Chrome Trace
 

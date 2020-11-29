@@ -25,7 +25,7 @@ import static java.nio.file.StandardCopyOption.REPLACE_EXISTING;
  * Downloads a version of async profiler and installs into ~/.gradle-profiler-dist.
  */
 public class AsyncProfilerDownload {
-    private static final String ASYNC_PROFILER_VERSION = "1.7.1";
+    private static final String ASYNC_PROFILER_VERSION = "1.8.2";
 
     /**
      * Attempts to locate a default install of async profiler. Uses a previously downloaded installation, or downloads if not available.
@@ -42,9 +42,9 @@ public class AsyncProfilerDownload {
             return null;
         }
 
-        File installDist = new File(new File(System.getProperty("user.home")), ".gradle-profiler-dist/" + ASYNC_PROFILER_VERSION + "/" + platformName);
+        File installDist = new File(new File(System.getProperty("user.home")), ".gradle-profiler-dist/" + ASYNC_PROFILER_VERSION + "-" + platformName);
         File marker = new File(installDist, "ok");
-        File homeDir = new File(installDist, "home");
+        File homeDir = new File(installDist, String.format("async-profiler-%s-%s", ASYNC_PROFILER_VERSION, platformName));
 
         if (marker.isFile()) {
             return homeDir;
@@ -59,7 +59,7 @@ public class AsyncProfilerDownload {
             copyTo(download, bundle);
 
             deleteDir(homeDir);
-            untarTo(bundle, homeDir);
+            untarTo(bundle, installDist);
 
             marker.createNewFile();
         } catch (IOException e) {

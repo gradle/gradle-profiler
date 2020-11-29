@@ -50,22 +50,13 @@ dependencies {
     profilerPlugins(project(":build-operations"))
     profilerPlugins(project(":instrumentation-support"))
     profilerPlugins(project(":studio-agent"))
+    profilerPlugins(project(":heap-dump"))
 
     runtimeOnly("org.slf4j:slf4j-simple:1.7.10")
     testImplementation(versions.groovy)
     testImplementation(versions.spock)
     testRuntimeOnly("cglib:cglib:3.2.6")
     testRuntimeOnly("org.objenesis:objenesis:2.6")
-}
-
-subprojects {
-    // Subprojects are packaged into the Gradle profiler Jar, so let's make them reproducible
-    tasks.withType<Jar>().configureEach {
-        isReproducibleFileOrder = true
-        isPreserveFileTimestamps = false
-        dirMode = Integer.parseInt("0755", 8)
-        fileMode = Integer.parseInt("0644", 8)
-    }
 }
 
 java {

@@ -74,8 +74,7 @@ public class AsyncProfilerFactory extends ProfilerFactory {
         int stackDepth = stackDepthOption.value(parsedOptions);
         int frameBuffer = frameBufferOption.value(parsedOptions);
         Boolean showSystemThreads = systemThreadOption.value(parsedOptions);
-        AsyncProfilerConfig config = new AsyncProfilerConfig(profilerHome, event, counter, interval, stackDepth, frameBuffer, showSystemThreads);
-        return config;
+        return new AsyncProfilerConfig(profilerHome, event, counter, interval, stackDepth, frameBuffer, showSystemThreads);
     }
 
     private File getProfilerHome(OptionSet parsedOptions) {
