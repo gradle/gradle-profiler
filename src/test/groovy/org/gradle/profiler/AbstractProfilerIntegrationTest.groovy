@@ -1,5 +1,7 @@
 package org.gradle.profiler
 
+import org.gradle.api.JavaVersion
+import org.gradle.util.GradleVersion
 import org.junit.Rule
 import org.junit.rules.TemporaryFolder
 import spock.lang.Shared
@@ -14,7 +16,9 @@ abstract class AbstractProfilerIntegrationTest extends AbstractIntegrationTest {
         "4.0", "4.1", "4.2.1", "4.7",
         "5.2.1", "5.5.1", "5.6.3",
         "6.0.1", "6.1", "6.6.1"
-    ]
+    ].findAll {
+        JavaVersion.current().isJava11Compatible() ? GradleVersion.version(it) >= GradleVersion.version("5.0") : true
+    }
     @Shared
     String minimalSupportedGradleVersion = supportedGradleVersions.first()
     @Shared
