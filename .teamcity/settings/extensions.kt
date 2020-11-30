@@ -21,6 +21,17 @@ fun ParametrizedWithType.java8Home(os: Os) {
     param("env.JAVA_HOME", "%${os.name}.java8.oracle.64bit%")
 }
 
+fun ParametrizedWithType.javaHome(os: Os, javaVersion: JavaVersion) {
+    param("env.JAVA_HOME", javaVersion.javaHome(os))
+}
+
+enum class JavaVersion(private val javaHomePostfix: String) {
+    ORACLE_JAVA_8("java8.oracle.64bit"),
+    OPENJDK_11("java11.openjdk.64bit");
+
+    fun javaHome(os: Os) = "%${os.name}.$javaHomePostfix%"
+}
+
 fun BuildType.gradleProfilerVcs() {
     vcs {
         root(DslContext.settingsRoot)

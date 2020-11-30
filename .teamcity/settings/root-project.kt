@@ -7,6 +7,7 @@ fun Project.configureGradleProfilerProject() {
     buildType(MacOSJava18)
     buildType(WindowsJava18)
     buildType(LinuxJava18)
+    buildType(LinuxJava11)
 
     buildType(GradleProfilerPublishing)
 
