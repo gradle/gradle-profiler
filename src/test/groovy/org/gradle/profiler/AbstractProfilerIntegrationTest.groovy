@@ -28,6 +28,10 @@ abstract class AbstractProfilerIntegrationTest extends AbstractIntegrationTest {
     @Shared
     String latestSupportedGradleVersion = supportedGradleVersions.last()
 
+    static String buildScanPluginVersion(String gradleVersion) {
+        (GradleVersion.version(gradleVersion) < GradleVersion.version("5.0")) ? '1.16' : '3.5'
+    }
+
     @Rule
     TemporaryFolder tmpDir = new TemporaryFolder()
 

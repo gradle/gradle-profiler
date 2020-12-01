@@ -1,7 +1,9 @@
 package org.gradle.profiler
 
+import org.gradle.api.JavaVersion
 import org.gradle.profiler.buildscan.BuildScanProfiler
 import org.gradle.util.GradleVersion
+import spock.lang.IgnoreIf
 import spock.lang.Requires
 import spock.lang.Unroll
 
@@ -224,7 +226,7 @@ println "<gradle-version: " + gradle.gradleVersion + ">"
         given:
         buildFile.text = """
 plugins {
-    id 'com.gradle.build-scan' version '1.16'
+    id 'com.gradle.build-scan' version '${buildScanPluginVersion(minimalSupportedGradleVersion)}'
 }
 apply plugin: BasePlugin
 
@@ -271,6 +273,7 @@ println "<daemon: " + gradle.services.get(org.gradle.internal.environment.Gradle
         assertBuildScanPublished("1.2")
     }
 
+    @IgnoreIf({ JavaVersion.current().isJava11Compatible() }) // JFR doesn't work on Java 11, yet
     def "profiles build using JFR, Build Scans, specified Gradle version and tasks"() {
         given:
         buildFile.text = """
@@ -1349,7 +1352,7 @@ buildGoal {
         def scenarios = file("performance.scenario")
         scenarios.text = """
 buildTarget {
-    versions = ["4.5"]
+    versions = ["5.2"]
     // Warm daemons don't allow cleaning caches
     daemon = cold
     clear-build-cache-before = BUILD
@@ -1449,7 +1452,7 @@ buildTarget {
         def scenarios = file("performance.scenario")
         scenarios.text = """
 buildTarget {
-    versions = ["4.10"]
+    versions = ["5.2"]
     // Warm daemons don't allow cleaning caches
     daemon = cold
     clear-transform-cache-before = BUILD
@@ -1482,7 +1485,7 @@ buildTarget {
         def scenarios = file("performance.scenario")
         scenarios.text = """
 buildTarget {
-    versions = ["4.5"]
+    versions = ["5.2"]
     clear-build-cache-before = SCENARIO
     show-build-cache-size = true
     gradle-args = ["--build-cache"]
