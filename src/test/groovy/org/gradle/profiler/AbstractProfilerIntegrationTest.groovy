@@ -23,6 +23,7 @@ abstract class AbstractProfilerIntegrationTest extends AbstractIntegrationTest {
         "5.2.1", "5.5.1", "5.6.3",
         "6.0.1", "6.1", "6.6.1"
     ])
+
     @Shared
     String minimalSupportedGradleVersion = supportedGradleVersions.first()
     @Shared
@@ -30,6 +31,17 @@ abstract class AbstractProfilerIntegrationTest extends AbstractIntegrationTest {
 
     static String buildScanPluginVersion(String gradleVersion) {
         (GradleVersion.version(gradleVersion) < GradleVersion.version("5.0")) ? '1.16' : '3.5'
+    }
+
+    static String transformCacheLocation(String gradleVersionString) {
+        def gradleVersion = GradleVersion.version(gradleVersionString)
+        if (gradleVersion < GradleVersion.version("5.1")) {
+            return 'transforms-1/files-1.1'
+        }
+        if (gradleVersion < GradleVersion.version('6.8')) {
+            return 'transforms-2/files-2.1'
+        }
+        return "transforms-3"
     }
 
     @Rule

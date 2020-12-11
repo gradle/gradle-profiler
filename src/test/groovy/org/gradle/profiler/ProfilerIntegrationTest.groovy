@@ -1370,6 +1370,7 @@ buildTarget {
 
     def "clears transform cache when asked"() {
         given:
+        String gradleVersion = "5.2"
         buildFile << """
             plugins {
                 id 'java-library'
@@ -1425,13 +1426,21 @@ buildTarget {
                 }
             }
 
-            def cacheFiles(File gradleHome) {
-                file("\${gradleHome}/caches/transforms-1/files-1.1").listFiles().findAll { it.name.endsWith(".jar") }
+            boolean transformedFileExists(File gradleHome) {
+                boolean found = false
+                def transformsCache = file("\${gradleHome}/caches/${transformCacheLocation(gradleVersion)}")
+                if (transformsCache.exists()) {
+                    transformsCache.eachFileRecurse {
+                        if (it.name == 'guava-21.0.jar.txt') {
+                            found = true
+                        }
+                    }
+                }
+                return found
             }
 
             def checkNoCacheBefore() {
-                def files = cacheFiles(gradle.gradleUserHomeDir)
-                assert (files == null || files.empty)
+                assert !transformedFileExists(gradle.gradleUserHomeDir)
             }
 
             gradle.taskGraph.whenReady {
@@ -1443,8 +1452,7 @@ buildTarget {
             task checkHasCacheAfter {
                 mustRunAfter resolve
                 doFirst {
-                    def files = cacheFiles(gradle.gradleUserHomeDir)
-                    assert !files.empty
+                    assert transformedFileExists(gradle.gradleUserHomeDir)
                 }
             }
         """
@@ -1452,7 +1460,7 @@ buildTarget {
         def scenarios = file("performance.scenario")
         scenarios.text = """
 buildTarget {
-    versions = ["5.2"]
+    versions = ["${gradleVersion}"]
     // Warm daemons don't allow cleaning caches
     daemon = cold
     clear-transform-cache-before = BUILD
@@ -1757,6 +1765,7 @@ buildTarget {
             "--gradle-version", minimalSupportedGradleVersion,
             "--warmups", "1",
             "--iterations", "1",
+            "--gradle-user-home", new File(projectDir, 'gradle-user-home').absolutePath,
             "buildTarget"
         )
     }
