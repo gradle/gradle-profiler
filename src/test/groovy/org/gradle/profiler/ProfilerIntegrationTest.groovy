@@ -1508,7 +1508,7 @@ buildTarget {
         benchmarkScenario(scenarios)
 
         then:
-        output.count("> Build cache size:") == 5
+        output.count("> Build cache size:") == 4
     }
 
     def "clean project cache when configured (buildSrc: #buildSrc)"() {
