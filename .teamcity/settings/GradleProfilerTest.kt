@@ -63,7 +63,7 @@ open class GradleProfilerTest(os: Os, javaVersion: JavaVersion) : BuildType({
     }
 }
 
-object LinuxJava18 : GradleProfilerTest(Os.linux, JavaVersion.OPENJDK_11, {
+object LinuxJava18 : GradleProfilerTest(Os.linux, JavaVersion.ORACLE_JAVA_8, {
     name = "Linux - Java 1.8"
 })
 
