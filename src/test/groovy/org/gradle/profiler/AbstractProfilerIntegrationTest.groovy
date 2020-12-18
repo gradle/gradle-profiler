@@ -10,14 +10,14 @@ abstract class AbstractProfilerIntegrationTest extends AbstractIntegrationTest {
 
     private static int NUMBER_OF_HEADERS = 4
 
-    static List<String> supportedOnCurrentJvm(List<String> gradleVersions) {
+    static List<String> gradleVersionsSupportedOnCurrentJvm(List<String> gradleVersions) {
         gradleVersions.findAll {
             JavaVersion.current().isJava11Compatible() ? GradleVersion.version(it) >= GradleVersion.version("5.0") : true
         }
     }
 
     @Shared
-    List<String> supportedGradleVersions = supportedOnCurrentJvm([
+    List<String> supportedGradleVersions = gradleVersionsSupportedOnCurrentJvm([
         "3.3", "3.4.1", "3.5",
         "4.0", "4.1", "4.2.1", "4.7",
         "5.2.1", "5.5.1", "5.6.3",

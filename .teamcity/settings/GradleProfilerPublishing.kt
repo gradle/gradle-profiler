@@ -11,7 +11,7 @@ object GradleProfilerPublishing : BuildType({
     gradleProfilerVcs()
 
     params {
-        java8Home(Os.linux)
+        javaHome(Os.linux, JavaVersion.ORACLE_JAVA_8)
         text("ARTIFACTORY_USERNAME", "bot-build-tool", allowEmpty = true)
         password("ARTIFACTORY_PASSWORD", "credentialsJSON:d94612fb-3291-41f5-b043-e2b3994aeeb4", display = ParameterDisplay.HIDDEN)
     }
