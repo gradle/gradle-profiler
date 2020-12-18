@@ -10,7 +10,7 @@ public abstract class PidCollectorJava8BuildService extends AbstractPidCollector
     protected Long getPid() {
         try {
             // With Gradle 6.6 we can't inject `ProcessEnvironment`, so that is why we access the runtime MXBean here.
-            // On Java 9 we could use the nicer ProcessHandle.
+            // On Java 9 we use `ProcessHandle` via `PidCollectorBuildService`.
             RuntimeMXBean runtime = ManagementFactory.getRuntimeMXBean();
             java.lang.reflect.Field jvm = runtime.getClass().getDeclaredField("jvm");
             jvm.setAccessible(true);
