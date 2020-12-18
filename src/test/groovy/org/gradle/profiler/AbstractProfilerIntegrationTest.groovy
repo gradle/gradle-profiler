@@ -67,6 +67,10 @@ abstract class AbstractProfilerIntegrationTest extends AbstractIntegrationTest {
         return new File(projectDir, "build.gradle")
     }
 
+    File getSettingsFile() {
+        return new File(projectDir, "settings.gradle")
+    }
+
     File file(String path) {
         return new File(projectDir, path)
     }
@@ -74,6 +78,9 @@ abstract class AbstractProfilerIntegrationTest extends AbstractIntegrationTest {
     def setup() {
         projectDir = tmpDir.newFolder()
         outputDir = tmpDir.newFolder()
+        settingsFile.text = """
+            rootProject.name = "example-project"
+        """
     }
 
     void assertBuildScanPublished(String buildScanPluginVersion) {
