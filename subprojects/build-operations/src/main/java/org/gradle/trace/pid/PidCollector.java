@@ -1,5 +1,6 @@
 package org.gradle.trace.pid;
 
+import org.gradle.api.JavaVersion;
 import org.gradle.api.internal.GradleInternal;
 import org.gradle.internal.nativeintegration.ProcessEnvironment;
 import org.gradle.util.GFileUtils;
@@ -14,7 +15,11 @@ public class PidCollector {
         ProcessEnvironment processEnvironment = gradle.getServices().get(ProcessEnvironment.class);
         GFileUtils.writeFile(processEnvironment.getPid().toString(), outFile);
         if (GradleVersion.current().compareTo(GradleVersion.version("6.1")) >= 0) {
-            PidCollectorBuildService.registerBuildService(gradle, outFile);
+            if (JavaVersion.current().isJava9Compatible()) {
+                AbstractPidCollectorBuildService.registerBuildService(PidCollectorBuildService.class, gradle, outFile);
+            } else {
+                AbstractPidCollectorBuildService.registerBuildService(PidCollectorJava8BuildService.class, gradle, outFile);
+            }
         }
     }
 }
