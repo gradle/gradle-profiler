@@ -1,7 +1,9 @@
 package org.gradle.profiler
 
+import org.gradle.api.JavaVersion
 import org.gradle.profiler.buildscan.BuildScanProfiler
 import org.gradle.util.GradleVersion
+import spock.lang.IgnoreIf
 import spock.lang.Requires
 import spock.lang.Unroll
 
@@ -143,17 +145,17 @@ println "<daemon: " + gradle.services.get(org.gradle.internal.environment.Gradle
 
         when:
         new Main().
-            run("--project-dir", projectDir.absolutePath, "--output-dir", outputDir.absolutePath, "--gradle-version", minimalSupportedGradleVersion, "--gradle-version", "3.0", "--profile", "jfr", "assemble")
+            run("--project-dir", projectDir.absolutePath, "--output-dir", outputDir.absolutePath, "--gradle-version", minimalSupportedGradleVersion, "--gradle-version", latestSupportedGradleVersion, "--profile", "jfr", "assemble")
 
         then:
         // Probe version, 2 warm up, 1 build
         logFile.containsOne("* Running scenario using Gradle $minimalSupportedGradleVersion (scenario 1/2)")
-        logFile.containsOne("* Running scenario using Gradle 3.0 (scenario 2/2)")
+        logFile.containsOne("* Running scenario using Gradle $latestSupportedGradleVersion (scenario 2/2)")
         logFile.find("<gradle-version: $minimalSupportedGradleVersion").size() == 4
-        logFile.find("<gradle-version: 3.0").size() == 4
+        logFile.find("<gradle-version: $latestSupportedGradleVersion").size() == 4
 
         new File(outputDir, "$minimalSupportedGradleVersion/${minimalSupportedGradleVersion}.jfr").file
-        new File(outputDir, "3.0/3.0.jfr").file
+        new File(outputDir, "$latestSupportedGradleVersion/${latestSupportedGradleVersion}.jfr").file
     }
 
     def "can specify the number of warm-up builds and iterations when profiling"() {
@@ -224,7 +226,7 @@ println "<gradle-version: " + gradle.gradleVersion + ">"
         given:
         buildFile.text = """
 plugins {
-    id 'com.gradle.build-scan' version '1.16'
+    id 'com.gradle.build-scan' version '${buildScanPluginVersion(minimalSupportedGradleVersion)}'
 }
 apply plugin: BasePlugin
 
@@ -256,11 +258,13 @@ println "<gradle-version: " + gradle.gradleVersion + ">"
 println "<tasks: " + gradle.startParameter.taskNames + ">"
 println "<daemon: " + gradle.services.get(org.gradle.internal.environment.GradleBuildEnvironment).longLivingProcess + ">"
 """
+        def requestedBuildScanVersion = GradleVersion.version(minimalSupportedGradleVersion) < GradleVersion.version("5.0") ?
+            "1.2" : "2.2.1"
 
         when:
         new Main().
             run("--project-dir", projectDir.absolutePath, "--output-dir", outputDir.absolutePath, "--gradle-version", minimalSupportedGradleVersion,
-                "--profile", "buildscan", "--buildscan-version", "1.2",
+                "--profile", "buildscan", "--buildscan-version", requestedBuildScanVersion,
                 "assemble")
 
         then:
@@ -268,9 +272,10 @@ println "<daemon: " + gradle.services.get(org.gradle.internal.environment.Gradle
         logFile.find("<gradle-version: $minimalSupportedGradleVersion>").size() == 4
         logFile.find("<daemon: true").size() == 4
         logFile.find("<tasks: [assemble]>").size() == 3
-        assertBuildScanPublished("1.2")
+        assertBuildScanPublished(requestedBuildScanVersion)
     }
 
+    @IgnoreIf({ JavaVersion.current().isJava11Compatible() }) // JFR doesn't work on Java 11, yet
     def "profiles build using JFR, Build Scans, specified Gradle version and tasks"() {
         given:
         buildFile.text = """
@@ -303,7 +308,7 @@ println "<daemon: " + gradle.services.get(org.gradle.internal.environment.Gradle
         def scenarioFile = file("benchmark.conf")
         scenarioFile.text = """
 assemble {
-    versions = ["3.0", "$minimalSupportedGradleVersion"]
+    versions = ["$latestSupportedGradleVersion", "$minimalSupportedGradleVersion"]
     tasks = assemble
 }
 help {
@@ -327,20 +332,20 @@ println "<daemon: " + gradle.services.get(org.gradle.internal.environment.Gradle
         then:
         // Probe version, 2 scenarios have 6 warm up, 10 builds, 1 scenario has 1 warm up, 10 builds
         logFile.find("<gradle-version: $minimalSupportedGradleVersion>").size() == 1 + 16 + 11
-        logFile.find("<gradle-version: 3.0").size() == 17
+        logFile.find("<gradle-version: $latestSupportedGradleVersion").size() == 17
         logFile.find("<daemon: true").size() == 2 + 16 * 2
         logFile.find("<daemon: false").size() == 11
         logFile.find("<tasks: [help]>").size() == 2 + 11
         logFile.find("<tasks: [assemble]>").size() == 16 * 2
 
-        logFile.containsOne("* Running scenario assemble using Gradle 3.0 (scenario 1/3)")
+        logFile.containsOne("* Running scenario assemble using Gradle $latestSupportedGradleVersion (scenario 1/3)")
         logFile.containsOne("* Running scenario assemble using Gradle $minimalSupportedGradleVersion (scenario 2/3)")
         logFile.containsOne("* Running scenario help using Gradle $minimalSupportedGradleVersion (scenario 3/3)")
 
         def lines = resultFile.lines
         lines.size() == totalLinesForExecutions(16)
         lines.get(0) == "scenario,assemble,assemble,help"
-        lines.get(1) == "version,Gradle 3.0,Gradle ${minimalSupportedGradleVersion},Gradle ${minimalSupportedGradleVersion}"
+        lines.get(1) == "version,Gradle $latestSupportedGradleVersion,Gradle ${minimalSupportedGradleVersion},Gradle ${minimalSupportedGradleVersion}"
         lines.get(2) == "tasks,assemble,assemble,help"
         lines.get(3) == "value,execution,execution,execution"
     }
@@ -524,23 +529,23 @@ println "<tasks: " + gradle.startParameter.taskNames + ">"
 
         when:
         new Main().run("--project-dir", projectDir.absolutePath, "--output-dir", outputDir.absolutePath, "--scenario-file", scenarioFile.absolutePath,
-            "--profile", "jfr", "--gradle-version", minimalSupportedGradleVersion, "--gradle-version", "3.0")
+            "--profile", "jfr", "--gradle-version", minimalSupportedGradleVersion, "--gradle-version", latestSupportedGradleVersion)
 
         then:
         logFile.find("<gradle-version: $minimalSupportedGradleVersion>").size() == 7
-        logFile.find("<gradle-version: 3.0>").size() == 7
+        logFile.find("<gradle-version: $latestSupportedGradleVersion>").size() == 7
         logFile.find("<tasks: [help]>").size() == 8
         logFile.find("<tasks: [assemble]>").size() == 6
 
         logFile.containsOne("* Running scenario assemble using Gradle $minimalSupportedGradleVersion (scenario 1/4)")
-        logFile.containsOne("* Running scenario assemble using Gradle 3.0 (scenario 2/4)")
+        logFile.containsOne("* Running scenario assemble using Gradle $latestSupportedGradleVersion (scenario 2/4)")
         logFile.containsOne("* Running scenario help using Gradle $minimalSupportedGradleVersion (scenario 3/4)")
-        logFile.containsOne("* Running scenario help using Gradle 3.0 (scenario 4/4)")
+        logFile.containsOne("* Running scenario help using Gradle $latestSupportedGradleVersion (scenario 4/4)")
 
         new File(outputDir, "assemble/$minimalSupportedGradleVersion/assemble-${minimalSupportedGradleVersion}.jfr").file
-        new File(outputDir, "assemble/3.0/assemble-3.0.jfr").file
+        new File(outputDir, "assemble/$latestSupportedGradleVersion/assemble-${latestSupportedGradleVersion}.jfr").file
         new File(outputDir, "help/$minimalSupportedGradleVersion/help-${minimalSupportedGradleVersion}.jfr").file
-        new File(outputDir, "help/3.0/help-3.0.jfr").file
+        new File(outputDir, "help/$latestSupportedGradleVersion/help-${latestSupportedGradleVersion}.jfr").file
     }
 
     def "resolve placeholders in configuration"() {
@@ -553,7 +558,7 @@ default-scenarios = ["assemble", "help"]
 baseVersion = "${minimalSupportedGradleVersion}"
 
 defaults = {
-    versions = [ \${baseVersion}, "3.0" ]
+    versions = [ \${baseVersion}, "$latestSupportedGradleVersion" ]
 }
 
 assemble = \${defaults} {
@@ -576,17 +581,17 @@ println "<tasks: " + gradle.startParameter.taskNames + ">"
 
         then:
         logFile.find("<gradle-version: $minimalSupportedGradleVersion>").size() == 7
-        logFile.find("<gradle-version: 3.0>").size() == 7
+        logFile.find("<gradle-version: $latestSupportedGradleVersion>").size() == 7
         logFile.find("<tasks: [assemble]>").size() == 6
         logFile.find("<tasks: [help]>").size() == 8
 
         logFile.containsOne("* Running scenario assemble using Gradle $minimalSupportedGradleVersion (scenario 1/4)")
-        logFile.containsOne("* Running scenario assemble using Gradle 3.0 (scenario 2/4)")
+        logFile.containsOne("* Running scenario assemble using Gradle $latestSupportedGradleVersion (scenario 2/4)")
         logFile.containsOne("* Running scenario help using Gradle $minimalSupportedGradleVersion (scenario 3/4)")
-        logFile.containsOne("* Running scenario help using Gradle 3.0 (scenario 4/4)")
+        logFile.containsOne("* Running scenario help using Gradle $latestSupportedGradleVersion (scenario 4/4)")
 
         new File(outputDir, "help/$minimalSupportedGradleVersion/help-${minimalSupportedGradleVersion}.jfr").file
-        new File(outputDir, "help/3.0/help-3.0.jfr").file
+        new File(outputDir, "help/$latestSupportedGradleVersion/help-${latestSupportedGradleVersion}.jfr").file
     }
 
     def "runs cleanup tasks defined in scenario file"() {
@@ -634,7 +639,7 @@ println "<daemon: " + gradle.services.get(org.gradle.internal.environment.Gradle
         def scenarioFile = file("benchmark.conf")
         scenarioFile.text = """
 assemble {
-    versions = ["3.0", "$minimalSupportedGradleVersion"]
+    versions = ["$latestSupportedGradleVersion", "$minimalSupportedGradleVersion"]
     tasks = assemble
 }
 help {
@@ -653,7 +658,7 @@ apply plugin: BasePlugin
             "--benchmark", "assemble")
 
         then:
-        logFile.containsOne("* Running scenario assemble using Gradle 3.0 (scenario 1/2)")
+        logFile.containsOne("* Running scenario assemble using Gradle $latestSupportedGradleVersion (scenario 1/2)")
         logFile.containsOne("* Running scenario assemble using Gradle $minimalSupportedGradleVersion (scenario 2/2)")
 
         !logFile.find("Tasks: [help]")
@@ -664,7 +669,7 @@ apply plugin: BasePlugin
         def scenarioFile = file("benchmark.conf")
         scenarioFile.text = """
 s1 {
-    versions = ["3.0", "$minimalSupportedGradleVersion"]
+    versions = ["$latestSupportedGradleVersion", "$minimalSupportedGradleVersion"]
     tasks = assemble
 }
 s2 {
@@ -686,7 +691,7 @@ println "<dry-run: " + gradle.startParameter.dryRun + ">"
         then:
         // Probe version, 1 warm up, 1 build
         logFile.find("<gradle-version: $minimalSupportedGradleVersion>").size() == 5
-        logFile.find("<gradle-version: 3.0").size() == 3
+        logFile.find("<gradle-version: $latestSupportedGradleVersion").size() == 3
         logFile.find("<dry-run: false>").size() == 2
         logFile.find("<dry-run: true>").size() == 6
         logFile.find("<tasks: [help]>").size() == 2
@@ -696,7 +701,7 @@ println "<dry-run: " + gradle.startParameter.dryRun + ">"
         def lines = resultFile.lines
         lines.size() == totalLinesForExecutions(2)
         lines.get(0) == "scenario,s1,s1,s2"
-        lines.get(1) == "version,Gradle 3.0,Gradle ${minimalSupportedGradleVersion},Gradle ${minimalSupportedGradleVersion}"
+        lines.get(1) == "version,Gradle ${latestSupportedGradleVersion},Gradle ${minimalSupportedGradleVersion},Gradle ${minimalSupportedGradleVersion}"
         lines.get(2) == "tasks,assemble,assemble,clean assemble"
         lines.get(3) == "value,execution,execution,execution"
         lines.get(4).matches("warm-up build #1,\\d+,\\d+,\\d+")
@@ -1349,7 +1354,7 @@ buildGoal {
         def scenarios = file("performance.scenario")
         scenarios.text = """
 buildTarget {
-    versions = ["4.5"]
+    versions = ["5.2"]
     // Warm daemons don't allow cleaning caches
     daemon = cold
     clear-build-cache-before = BUILD
@@ -1367,6 +1372,7 @@ buildTarget {
 
     def "clears transform cache when asked"() {
         given:
+        String gradleVersion = "5.2"
         buildFile << """
             plugins {
                 id 'java-library'
@@ -1422,13 +1428,21 @@ buildTarget {
                 }
             }
 
-            def cacheFiles(File gradleHome) {
-                file("\${gradleHome}/caches/transforms-1/files-1.1").listFiles().findAll { it.name.endsWith(".jar") }
+            boolean transformedFileExists(File gradleHome) {
+                boolean found = false
+                def transformsCache = file("\${gradleHome}/caches/${transformCacheLocation(gradleVersion)}")
+                if (transformsCache.exists()) {
+                    transformsCache.eachFileRecurse {
+                        if (it.name == 'guava-21.0.jar.txt') {
+                            found = true
+                        }
+                    }
+                }
+                return found
             }
 
             def checkNoCacheBefore() {
-                def files = cacheFiles(gradle.gradleUserHomeDir)
-                assert (files == null || files.empty)
+                assert !transformedFileExists(gradle.gradleUserHomeDir)
             }
 
             gradle.taskGraph.whenReady {
@@ -1440,8 +1454,7 @@ buildTarget {
             task checkHasCacheAfter {
                 mustRunAfter resolve
                 doFirst {
-                    def files = cacheFiles(gradle.gradleUserHomeDir)
-                    assert !files.empty
+                    assert transformedFileExists(gradle.gradleUserHomeDir)
                 }
             }
         """
@@ -1449,7 +1462,7 @@ buildTarget {
         def scenarios = file("performance.scenario")
         scenarios.text = """
 buildTarget {
-    versions = ["4.10"]
+    versions = ["${gradleVersion}"]
     // Warm daemons don't allow cleaning caches
     daemon = cold
     clear-transform-cache-before = BUILD
@@ -1482,7 +1495,7 @@ buildTarget {
         def scenarios = file("performance.scenario")
         scenarios.text = """
 buildTarget {
-    versions = ["4.5"]
+    versions = ["5.2"]
     clear-build-cache-before = SCENARIO
     show-build-cache-size = true
     gradle-args = ["--build-cache"]
@@ -1495,7 +1508,7 @@ buildTarget {
         benchmarkScenario(scenarios)
 
         then:
-        output.count("> Build cache size:") == 5
+        output.count("> Build cache size:") == 4
     }
 
     def "clean project cache when configured (buildSrc: #buildSrc)"() {
@@ -1754,6 +1767,7 @@ buildTarget {
             "--gradle-version", minimalSupportedGradleVersion,
             "--warmups", "1",
             "--iterations", "1",
+            "--gradle-user-home", new File(projectDir, 'gradle-user-home').absolutePath,
             "buildTarget"
         )
     }

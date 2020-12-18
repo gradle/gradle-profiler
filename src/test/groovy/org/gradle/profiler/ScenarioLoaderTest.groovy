@@ -1,6 +1,5 @@
 package org.gradle.profiler
 
-import com.google.common.collect.ImmutableList
 import org.gradle.profiler.mutations.AbstractCleanupMutator
 import org.gradle.profiler.report.CsvGenerator
 import org.gradle.tooling.model.idea.IdeaProject
@@ -34,7 +33,7 @@ class ScenarioLoaderTest extends Specification {
         boolean benchmark = true,
         Integer warmups = null,
         Integer iterations = null,
-        List<String> measuredBuildOperations = ImmutableList.of()
+        List<String> measuredBuildOperations = []
     ) {
         new InvocationSettings.InvocationSettingsBuilder()
             .setProjectDir(projectDir)

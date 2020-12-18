@@ -1,5 +1,7 @@
 package org.gradle.profiler
 
+import org.gradle.api.JavaVersion
+import org.gradle.util.GradleVersion
 import org.junit.Rule
 import org.junit.rules.TemporaryFolder
 import spock.lang.Shared
@@ -8,17 +10,39 @@ abstract class AbstractProfilerIntegrationTest extends AbstractIntegrationTest {
 
     private static int NUMBER_OF_HEADERS = 4
 
+    static List<String> gradleVersionsSupportedOnCurrentJvm(List<String> gradleVersions) {
+        gradleVersions.findAll {
+            JavaVersion.current().isJava11Compatible() ? GradleVersion.version(it) >= GradleVersion.version("5.0") : true
+        }
+    }
+
     @Shared
-    List<String> supportedGradleVersions = [
+    List<String> supportedGradleVersions = gradleVersionsSupportedOnCurrentJvm([
         "3.3", "3.4.1", "3.5",
         "4.0", "4.1", "4.2.1", "4.7",
         "5.2.1", "5.5.1", "5.6.3",
         "6.0.1", "6.1", "6.6.1"
-    ]
+    ])
+
     @Shared
     String minimalSupportedGradleVersion = supportedGradleVersions.first()
     @Shared
     String latestSupportedGradleVersion = supportedGradleVersions.last()
+
+    static String buildScanPluginVersion(String gradleVersion) {
+        (GradleVersion.version(gradleVersion) < GradleVersion.version("5.0")) ? '1.16' : '3.5'
+    }
+
+    static String transformCacheLocation(String gradleVersionString) {
+        def gradleVersion = GradleVersion.version(gradleVersionString)
+        if (gradleVersion < GradleVersion.version("5.1")) {
+            return 'transforms-1/files-1.1'
+        }
+        if (gradleVersion < GradleVersion.version('6.8')) {
+            return 'transforms-2/files-2.1'
+        }
+        return "transforms-3"
+    }
 
     @Rule
     TemporaryFolder tmpDir = new TemporaryFolder()
