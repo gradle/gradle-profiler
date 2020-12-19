@@ -1589,6 +1589,7 @@ buildTarget {
         def repoDir = new File(projectDir, "repo")
         def repo = new TestGitRepo(repoDir)
 
+        new File(repoDir, "settings.gradle")  << ''
         new File(repoDir, "build.gradle") << """
             task cleanTest {
                 doFirst {
@@ -1623,6 +1624,7 @@ buildTarget {
         def repoDir = new File(projectDir, "repo")
         def repo = new TestGitRepo(repoDir)
 
+        new File(repoDir, "settings.gradle")  << ''
         new File(repoDir, "build.gradle") << """
             task cleanTest {
                 doFirst {
@@ -1661,6 +1663,7 @@ buildTarget {
         def repoDir = new File(projectDir, "repo")
         def repo = new TestGitRepo(repoDir)
 
+        new File(repoDir, "settings.gradle")  << ''
         new File(repoDir, "build.gradle") << """
             task cleanTest {
                 doFirst {
