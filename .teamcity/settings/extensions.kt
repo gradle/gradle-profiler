@@ -9,10 +9,6 @@ fun BuildType.agentRequirement(os: Os) {
     }
 }
 
-fun buildCacheConfigurations() = listOf("-Dgradle.cache.remote.push=true",
-    "-Dgradle.cache.remote.username=%gradle.cache.remote.username%",
-    "-Dgradle.cache.remote.password=%gradle.cache.remote.password%").joinToString(" ")
-
 fun toolchainConfiguration(os: Os) = listOf("-Porg.gradle.java.installations.auto-detect=false",
     "-Porg.gradle.java.installations.auto-download=false",
     """"-Porg.gradle.java.installations.paths=%${os.name}.java8.oracle.64bit%,%${os.name}.java11.openjdk.64bit%"""").joinToString(" ")

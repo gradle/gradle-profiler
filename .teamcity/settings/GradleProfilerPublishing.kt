@@ -14,14 +14,20 @@ object GradleProfilerPublishing : BuildType({
         javaHome(Os.linux, JavaVersion.ORACLE_JAVA_8)
         text("ARTIFACTORY_USERNAME", "bot-build-tool", allowEmpty = true)
         password("ARTIFACTORY_PASSWORD", "credentialsJSON:d94612fb-3291-41f5-b043-e2b3994aeeb4", display = ParameterDisplay.HIDDEN)
+
+        param("env.ORG_GRADLE_PROJECT_artifactoryUsername", "%ARTIFACTORY_USERNAME%")
+        param("env.ORG_GRADLE_PROJECT_artifactoryPassword", "%ARTIFACTORY_PASSWORD%")
+        param("env.ORG_GRADLE_PROJECT_githubToken", "%github.bot-teamcity.token%")
+        param("env.ORG_GRADLE_PROJECT_sdkmanKey", "%gradleprofiler.sdkman.key%")
+        param("env.ORG_GRADLE_PROJECT_sdkmanToken", "%gradleprofiler.sdkman.token%")
+        param("env.GRADLE_CACHE_REMOTE_USERNAME", "%gradle.cache.remote.username%")
+        param("env.GRADLE_CACHE_REMOTE_PASSWORD", "%gradle.cache.remote.password%")
     }
 
     steps {
         gradle {
             tasks = "clean publishAllPublicationsToGradleBuildInternalRepository gitPushTag releaseToSdkMan"
-            gradleParams = "-PartifactoryUsername=%ARTIFACTORY_USERNAME% -PartifactoryPassword=%ARTIFACTORY_PASSWORD% -PgithubToken=%github.bot-teamcity.token% " +
-                "-PsdkmanKey=%gradleprofiler.sdkman.key% -PsdkmanToken=%gradleprofiler.sdkman.token% " +
-                "${buildCacheConfigurations()} ${toolchainConfiguration(Os.linux)}"
+            gradleParams = toolchainConfiguration(Os.linux) + " -Dgradle.cache.remote.push=true"
             param("org.jfrog.artifactory.selectedDeployableServer.defaultModuleVersionConfiguration", "GLOBAL")
             buildFile = ""
         }
