@@ -275,7 +275,7 @@ A scenario can define changes that should be applied to the source before each b
 - `iterations`: Number of builds to actually measure
 - `jvm-args`: Sets or overrides the jvm arguments set by `org.gradle.jvmargs` in gradle.properties.
 - `show-build-cache-size`: Shows the number of files and their size in the build cache before scenario execution, and after each cleanup and build round..
-- `warm-ups`: Number of warmups to perform before measurement
+- `warmups`: Number of warmups to perform before measurement
 
 They can be added to a scenario file like this:
 
