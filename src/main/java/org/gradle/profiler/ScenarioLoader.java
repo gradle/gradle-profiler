@@ -212,7 +212,6 @@ class ScenarioLoader {
             String title = scenario.hasPath(TITLE) ? scenario.getString(TITLE) : null;
 
             List<BuildMutator> mutators = BUILD_MUTATOR_CONFIGURATORS.entrySet().stream()
-                .filter(entry -> scenario.hasPath(entry.getKey()))
                 .map(entry -> entry.getValue().configure(scenario, scenarioName, settings, entry.getKey()))
                 .filter(mutator -> mutator != BuildMutator.NOOP)
                 .collect(Collectors.toList());
