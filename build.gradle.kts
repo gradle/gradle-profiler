@@ -104,6 +104,7 @@ tasks.test {
     // For now assume that the current JVM has JFR support and that CI will inject the correct implementation
     javaLauncher.set(null as JavaLauncher?)
     javaLauncher.convention(null as JavaLauncher?)
+    setForkEvery(1)
 }
 
 val testReports = mapOf(
