@@ -4,7 +4,6 @@ import org.gradle.api.JavaVersion
 import org.gradle.profiler.buildscan.BuildScanProfiler
 import org.gradle.util.GradleVersion
 import spock.lang.IgnoreIf
-import spock.lang.IgnoreRest
 import spock.lang.Requires
 import spock.lang.Unroll
 
@@ -1512,7 +1511,6 @@ buildTarget {
         output.count("> Build cache size:") == 4
     }
 
-    @IgnoreRest
     def "clean project cache when configured (buildSrc: #buildSrc)"() {
         given:
         buildFile << """
