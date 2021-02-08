@@ -22,6 +22,11 @@ spotless {
         importOrder("", "javax", "java", "\\#")
         removeUnusedImports()
     }
+    pluginManager.withPlugin("groovy") {
+        groovy {
+            importOrder("", "groovy", "javax", "java", "\\#")
+        }
+    }
 }
 
 project.extensions.create<Versions>("versions")

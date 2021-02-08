@@ -1,6 +1,6 @@
 plugins {
-    id("profiler.embedded-library")
     id("groovy")
+    id("profiler.embedded-library")
     id("profiler.publication")
 }
 

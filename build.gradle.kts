@@ -6,8 +6,8 @@ import io.sdkman.vendors.tasks.SdkmanVendorBaseTask
 import java.net.URI
 
 plugins {
-    id("profiler.java-library")
     groovy
+    id("profiler.java-library")
     application
     `maven-publish`
     id("profiler.publication")
