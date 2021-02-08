@@ -5,7 +5,8 @@ import org.gradle.profiler.InstrumentingProfiler;
 
 import java.io.File;
 
-public class YourKitProfilerController implements InstrumentingProfiler.SnapshotCapturingProfilerController {
+public class YourKitProfilerController
+        implements InstrumentingProfiler.SnapshotCapturingProfilerController {
     private final YourKitConfig options;
 
     public YourKitProfilerController(YourKitConfig options) {
@@ -42,19 +43,26 @@ public class YourKitProfilerController implements InstrumentingProfiler.Snapshot
     }
 
     @Override
-    public void stopSession() {
-    }
+    public void stopSession() {}
 
     private void runYourKitCommand(String command) {
         File controllerJar = findControllerJar();
-        new CommandExec().run(System.getProperty("java.home") + "/bin/java", "-jar", controllerJar.getAbsolutePath(), "localhost", String.valueOf(YourKitJvmArgsCalculator.PORT), command);
+        new CommandExec()
+                .run(
+                        System.getProperty("java.home") + "/bin/java",
+                        "-jar",
+                        controllerJar.getAbsolutePath(),
+                        "localhost",
+                        String.valueOf(YourKitJvmArgsCalculator.PORT),
+                        command);
     }
 
     private File findControllerJar() {
         File yourKitHome = YourKit.findYourKitHome();
         File controllerJar = YourKit.findControllerJar();
         if (!controllerJar.isFile()) {
-            throw new IllegalArgumentException("Could not locate YourKit library in YourKit home directory " + yourKitHome);
+            throw new IllegalArgumentException(
+                    "Could not locate YourKit library in YourKit home directory " + yourKitHome);
         }
         return controllerJar;
     }

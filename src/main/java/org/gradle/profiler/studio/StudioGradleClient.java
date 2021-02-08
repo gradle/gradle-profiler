@@ -18,14 +18,17 @@ public class StudioGradleClient implements GradleClient {
     private final ServerConnection agentConnection;
     private boolean hasRun;
 
-    public StudioGradleClient(GradleBuildConfiguration buildConfiguration, InvocationSettings invocationSettings) {
+    public StudioGradleClient(
+            GradleBuildConfiguration buildConfiguration, InvocationSettings invocationSettings) {
         if (!OperatingSystem.isMacOS()) {
-            throw new IllegalArgumentException("Support for Android studio is currently only implemented on macOS.");
+            throw new IllegalArgumentException(
+                    "Support for Android studio is currently only implemented on macOS.");
         }
         Path studioInstallDir = invocationSettings.getStudioInstallDir().toPath();
         Logging.startOperation("Starting Android Studio at " + studioInstallDir);
 
-        LaunchConfiguration launchConfiguration = new LauncherConfigurationParser().calculate(studioInstallDir);
+        LaunchConfiguration launchConfiguration =
+                new LauncherConfigurationParser().calculate(studioInstallDir);
         System.out.println();
         System.out.println("* Java command: " + launchConfiguration.getJavaCommand());
         System.out.println("* Classpath:");
@@ -33,29 +36,44 @@ public class StudioGradleClient implements GradleClient {
             System.out.println("  " + entry);
         }
         System.out.println("* System properties:");
-        for (Map.Entry<String, String> entry : launchConfiguration.getSystemProperties().entrySet()) {
+        for (Map.Entry<String, String> entry :
+                launchConfiguration.getSystemProperties().entrySet()) {
             System.out.println("  " + entry.getKey() + " -> " + entry.getValue());
         }
         System.out.println("* Main class: " + launchConfiguration.getMainClass());
 
         server = new Server("agent");
-        studioProcess = startStudio(launchConfiguration, studioInstallDir, invocationSettings, server);
+        studioProcess =
+                startStudio(launchConfiguration, studioInstallDir, invocationSettings, server);
         agentConnection = server.waitForIncoming(Duration.ofMinutes(1));
         agentConnection.send(new ConnectionParameters(buildConfiguration.getGradleHome()));
     }
 
-    private CommandExec.RunHandle startStudio(LaunchConfiguration launchConfiguration, Path studioInstallDir, InvocationSettings invocationSettings, Server server) {
+    private CommandExec.RunHandle startStudio(
+            LaunchConfiguration launchConfiguration,
+            Path studioInstallDir,
+            InvocationSettings invocationSettings,
+            Server server) {
         List<String> commandLine = new ArrayList<>();
         commandLine.add(launchConfiguration.getJavaCommand().toString());
         commandLine.add("-cp");
         commandLine.add(Joiner.on(File.pathSeparator).join(launchConfiguration.getClassPath()));
-        for (Map.Entry<String, String> systemProperty : launchConfiguration.getSystemProperties().entrySet()) {
+        for (Map.Entry<String, String> systemProperty :
+                launchConfiguration.getSystemProperties().entrySet()) {
             commandLine.add("-D" + systemProperty.getKey() + "=" + systemProperty.getValue());
         }
-        commandLine.add("-javaagent:" + launchConfiguration.getAgentJar() + "=" + server.getPort() + "," + launchConfiguration.getSupportJar());
+        commandLine.add(
+                "-javaagent:"
+                        + launchConfiguration.getAgentJar()
+                        + "="
+                        + server.getPort()
+                        + ","
+                        + launchConfiguration.getSupportJar());
         commandLine.add("--add-exports");
         commandLine.add("java.base/jdk.internal.misc=ALL-UNNAMED");
-        commandLine.add("-Xbootclasspath/a:" + Joiner.on(File.pathSeparator).join(launchConfiguration.getSharedJars()));
+        commandLine.add(
+                "-Xbootclasspath/a:"
+                        + Joiner.on(File.pathSeparator).join(launchConfiguration.getSharedJars()));
         commandLine.add(launchConfiguration.getMainClass());
         commandLine.add(invocationSettings.getProjectDir().getAbsolutePath());
         System.out.println("* Using command line: " + commandLine);
@@ -74,13 +92,15 @@ public class StudioGradleClient implements GradleClient {
 
     public Duration sync(List<String> gradleArgs, List<String> jvmArgs) {
         if (!hasRun) {
-            System.out.println("* PLEASE RUN SYNC IN ANDROID STUDIO (once it has finished starting up)....");
+            System.out.println(
+                    "* PLEASE RUN SYNC IN ANDROID STUDIO (once it has finished starting up)....");
             hasRun = true;
         } else {
             System.out.println("* PLEASE RUN SYNC IN ANDROID STUDIO....");
         }
 
-        // Use a long time out because it can take quite some time between the tapi action completing and studio finishing the sync
+        // Use a long time out because it can take quite some time between the tapi action
+        // completing and studio finishing the sync
         SyncStarted started = agentConnection.receiveSyncStarted(Duration.ofMinutes(10));
         agentConnection.send(new SyncParameters(gradleArgs, jvmArgs));
         System.out.println("* Sync has started, waiting for it to complete...");

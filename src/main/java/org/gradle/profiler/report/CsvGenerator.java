@@ -15,7 +15,8 @@ public class CsvGenerator extends AbstractGenerator {
     private final Format format;
 
     public enum Format {
-        LONG, WIDE;
+        LONG,
+        WIDE;
 
         public static Format parse(String name) {
             for (Format format : values()) {
@@ -33,7 +34,9 @@ public class CsvGenerator extends AbstractGenerator {
     }
 
     @Override
-    protected void write(InvocationSettings settings, BenchmarkResult benchmarkResult, BufferedWriter writer) throws IOException {
+    protected void write(
+            InvocationSettings settings, BenchmarkResult benchmarkResult, BufferedWriter writer)
+            throws IOException {
         List<? extends BuildScenarioResult<?>> allScenarios = benchmarkResult.getScenarios();
         switch (format) {
             case WIDE:
@@ -47,7 +50,9 @@ public class CsvGenerator extends AbstractGenerator {
         }
     }
 
-    private void writeWide(BufferedWriter writer, List<? extends BuildScenarioResult<?>> allScenarios) throws IOException {
+    private void writeWide(
+            BufferedWriter writer, List<? extends BuildScenarioResult<?>> allScenarios)
+            throws IOException {
         writer.write("scenario");
         for (BuildScenarioResult<?> scenario : allScenarios) {
             for (int i = 0; i < scenario.getSamples().size(); i++) {
@@ -102,22 +107,25 @@ public class CsvGenerator extends AbstractGenerator {
         }
     }
 
-    private <T extends BuildInvocationResult> void writeWideRow(BufferedWriter writer, int row, BuildScenarioResult<T> scenario) throws IOException {
+    private <T extends BuildInvocationResult> void writeWideRow(
+            BufferedWriter writer, int row, BuildScenarioResult<T> scenario) throws IOException {
         List<T> results = scenario.getResults();
         writer.write(",");
         if (row >= results.size()) {
             return;
         }
         T buildResult = results.get(row);
-        writer.write(scenario.getSamples().stream()
-            .map(sample -> sample.extractFrom(buildResult))
-            .map(Duration::toMillis)
-            .map(Object::toString)
-            .collect(Collectors.joining(","))
-        );
+        writer.write(
+                scenario.getSamples().stream()
+                        .map(sample -> sample.extractFrom(buildResult))
+                        .map(Duration::toMillis)
+                        .map(Object::toString)
+                        .collect(Collectors.joining(",")));
     }
 
-    private void writeLong(BufferedWriter writer, List<? extends BuildScenarioResult<?>> allScenarios) throws IOException {
+    private void writeLong(
+            BufferedWriter writer, List<? extends BuildScenarioResult<?>> allScenarios)
+            throws IOException {
         writer.write("Scenario,Tool,Tasks,Phase,Iteration,Sample,Duration");
         writer.newLine();
         for (BuildScenarioResult<?> scenario : allScenarios) {
@@ -125,7 +133,8 @@ public class CsvGenerator extends AbstractGenerator {
         }
     }
 
-    private <T extends BuildInvocationResult> void writeLongRow(BufferedWriter writer, BuildScenarioResult<T> scenario) throws IOException {
+    private <T extends BuildInvocationResult> void writeLongRow(
+            BufferedWriter writer, BuildScenarioResult<T> scenario) throws IOException {
         for (T result : scenario.getResults()) {
             for (Sample<? super T> sample : scenario.getSamples()) {
                 writer.write(scenario.getScenarioDefinition().getTitle());

@@ -25,7 +25,11 @@ public class CountEvent implements TraceEvent {
         Iterator<Map.Entry<String, Double>> itr = info.entrySet().iterator();
         while (itr.hasNext()) {
             Map.Entry<String, Double> entry = itr.next();
-            s.append("\"").append(entry.getKey()).append("\": ").append(entry.getValue()).append("");
+            s.append("\"")
+                    .append(entry.getKey())
+                    .append("\": ")
+                    .append(entry.getValue())
+                    .append("");
             s.append(itr.hasNext() ? "," : "");
         }
         s.append("}");
@@ -36,6 +40,8 @@ public class CountEvent implements TraceEvent {
             cname = String.format(", \"cname\": \"%s\"", colorName);
         }
 
-        return String.format("{\"name\": \"%s\", \"ph\": \"C\", \"pid\": 0, \"tid\": %d, \"ts\": %d, \"args\": %s %s}", name, Thread.currentThread().getId(), timestamp, args, cname);
+        return String.format(
+                "{\"name\": \"%s\", \"ph\": \"C\", \"pid\": 0, \"tid\": %d, \"ts\": %d, \"args\": %s %s}",
+                name, Thread.currentThread().getId(), timestamp, args, cname);
     }
 }

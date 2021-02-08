@@ -44,26 +44,41 @@ public class BuildOperationTrace {
     }
 
     public BuildOperationTrace measureGarbageCollection(File outFile) {
-        Provider<GcTimeCollectionService> listenerProvider = sharedServices.registerIfAbsent("gc-time", GcTimeCollectionService.class, spec -> {
-            spec.getParameters().getOutputFile().set(outFile);
-        });
-        // Force the service to be instantiated so we actually get a close() call at the end of the build
+        Provider<GcTimeCollectionService> listenerProvider =
+                sharedServices.registerIfAbsent(
+                        "gc-time",
+                        GcTimeCollectionService.class,
+                        spec -> {
+                            spec.getParameters().getOutputFile().set(outFile);
+                        });
+        // Force the service to be instantiated so we actually get a close() call at the end of the
+        // build
         registry.onTaskCompletion(listenerProvider);
         return this;
     }
 
     public BuildOperationTrace measureConfigurationTime(File outFile) {
-        Provider<TimeToFirstTaskRecordingListener> listenerProvider = sharedServices.registerIfAbsent("time-to-first-task", TimeToFirstTaskRecordingListener.class, spec -> {
-            spec.getParameters().getOutputFile().set(outFile);
-        });
+        Provider<TimeToFirstTaskRecordingListener> listenerProvider =
+                sharedServices.registerIfAbsent(
+                        "time-to-first-task",
+                        TimeToFirstTaskRecordingListener.class,
+                        spec -> {
+                            spec.getParameters().getOutputFile().set(outFile);
+                        });
         registry.onOperationCompletion(listenerProvider);
         return this;
     }
 
     public BuildOperationTrace measureBuildOperations(Map<String, File> capturedBuildOperations) {
-        Provider<BuildOperationDurationRecordingListener> listenerProvider = sharedServices.registerIfAbsent("measure-build-operations", BuildOperationDurationRecordingListener.class, spec -> {
-            spec.getParameters().getCapturedBuildOperations().set(new HashMap<>(capturedBuildOperations));
-        });
+        Provider<BuildOperationDurationRecordingListener> listenerProvider =
+                sharedServices.registerIfAbsent(
+                        "measure-build-operations",
+                        BuildOperationDurationRecordingListener.class,
+                        spec -> {
+                            spec.getParameters()
+                                    .getCapturedBuildOperations()
+                                    .set(new HashMap<>(capturedBuildOperations));
+                        });
         registry.onOperationCompletion(listenerProvider);
         return this;
     }
@@ -74,7 +89,10 @@ public class BuildOperationTrace {
         }
     }
 
-    public static abstract class GcTimeCollectionService implements BuildService<GcTimeCollectionService.Params>, OperationCompletionListener, AutoCloseable {
+    public abstract static class GcTimeCollectionService
+            implements BuildService<GcTimeCollectionService.Params>,
+                    OperationCompletionListener,
+                    AutoCloseable {
         interface Params extends BuildServiceParameters {
             RegularFileProperty getOutputFile();
         }
@@ -86,13 +104,18 @@ public class BuildOperationTrace {
 
         @Override
         public void close() throws Exception {
-            writeToFile(getParameters().getOutputFile().getAsFile().get(), ManagementFactory.getGarbageCollectorMXBeans().stream()
-                .map(GarbageCollectorMXBean::getCollectionTime)
-                .reduce(0L, Long::sum));
+            writeToFile(
+                    getParameters().getOutputFile().getAsFile().get(),
+                    ManagementFactory.getGarbageCollectorMXBeans().stream()
+                            .map(GarbageCollectorMXBean::getCollectionTime)
+                            .reduce(0L, Long::sum));
         }
     }
 
-    public static abstract class TimeToFirstTaskRecordingListener implements BuildService<TimeToFirstTaskRecordingListener.Params>, BuildOperationListener, AutoCloseable {
+    public abstract static class TimeToFirstTaskRecordingListener
+            implements BuildService<TimeToFirstTaskRecordingListener.Params>,
+                    BuildOperationListener,
+                    AutoCloseable {
         interface Params extends BuildServiceParameters {
             RegularFileProperty getOutputFile();
         }
@@ -100,17 +123,24 @@ public class BuildOperationTrace {
         private final AtomicLong timeToFirstTask = new AtomicLong(0);
 
         @Override
-        public void started(BuildOperationDescriptor buildOperationDescriptor, OperationStartEvent operationStartEvent) {
-        }
+        public void started(
+                BuildOperationDescriptor buildOperationDescriptor,
+                OperationStartEvent operationStartEvent) {}
 
         @Override
-        public void progress(OperationIdentifier operationIdentifier, OperationProgressEvent operationProgressEvent) {
-        }
+        public void progress(
+                OperationIdentifier operationIdentifier,
+                OperationProgressEvent operationProgressEvent) {}
 
         @Override
-        public void finished(BuildOperationDescriptor buildOperationDescriptor, OperationFinishEvent operationFinishEvent) {
-            if (buildOperationDescriptor.getDetails() instanceof RunRootBuildWorkBuildOperationType.Details) {
-                RunRootBuildWorkBuildOperationType.Details details = (RunRootBuildWorkBuildOperationType.Details) buildOperationDescriptor.getDetails();
+        public void finished(
+                BuildOperationDescriptor buildOperationDescriptor,
+                OperationFinishEvent operationFinishEvent) {
+            if (buildOperationDescriptor.getDetails()
+                    instanceof RunRootBuildWorkBuildOperationType.Details) {
+                RunRootBuildWorkBuildOperationType.Details details =
+                        (RunRootBuildWorkBuildOperationType.Details)
+                                buildOperationDescriptor.getDetails();
                 long duration = operationFinishEvent.getStartTime() - details.getBuildStartTime();
                 timeToFirstTask.set(duration);
             }
@@ -118,11 +148,15 @@ public class BuildOperationTrace {
 
         @Override
         public void close() throws Exception {
-            writeToFile(getParameters().getOutputFile().getAsFile().get(), timeToFirstTask.longValue());
+            writeToFile(
+                    getParameters().getOutputFile().getAsFile().get(), timeToFirstTask.longValue());
         }
     }
 
-    public static abstract class BuildOperationDurationRecordingListener implements BuildService<BuildOperationDurationRecordingListener.Params>, BuildOperationListener, AutoCloseable {
+    public abstract static class BuildOperationDurationRecordingListener
+            implements BuildService<BuildOperationDurationRecordingListener.Params>,
+                    BuildOperationListener,
+                    AutoCloseable {
         interface Params extends BuildServiceParameters {
             MapProperty<String, File> getCapturedBuildOperations();
         }
@@ -131,14 +165,18 @@ public class BuildOperationTrace {
 
         public BuildOperationDurationRecordingListener() {
             this.collectors = new ArrayList<>();
-            for (Map.Entry<String, File> entry : getParameters().getCapturedBuildOperations().get().entrySet()) {
+            for (Map.Entry<String, File> entry :
+                    getParameters().getCapturedBuildOperations().get().entrySet()) {
                 String operationType = entry.getKey();
                 File outputFile = entry.getValue();
                 Class<?> detailsType;
                 try {
                     detailsType = Class.forName(operationType + "$Details");
                 } catch (ClassNotFoundException e) {
-                    LOGGER.warn("Couldn't find Details subtype for operation type {}", operationType, e);
+                    LOGGER.warn(
+                            "Couldn't find Details subtype for operation type {}",
+                            operationType,
+                            e);
                     continue;
                 }
 
@@ -147,15 +185,19 @@ public class BuildOperationTrace {
         }
 
         @Override
-        public void started(BuildOperationDescriptor buildOperationDescriptor, OperationStartEvent operationStartEvent) {
-        }
+        public void started(
+                BuildOperationDescriptor buildOperationDescriptor,
+                OperationStartEvent operationStartEvent) {}
 
         @Override
-        public void progress(OperationIdentifier operationIdentifier, OperationProgressEvent operationProgressEvent) {
-        }
+        public void progress(
+                OperationIdentifier operationIdentifier,
+                OperationProgressEvent operationProgressEvent) {}
 
         @Override
-        public void finished(BuildOperationDescriptor buildOperationDescriptor, OperationFinishEvent operationFinishEvent) {
+        public void finished(
+                BuildOperationDescriptor buildOperationDescriptor,
+                OperationFinishEvent operationFinishEvent) {
             Object details = buildOperationDescriptor.getDetails();
             if (details == null) {
                 return;
@@ -185,7 +227,8 @@ public class BuildOperationTrace {
 
         public void collect(Object details, OperationFinishEvent operationFinishEvent) {
             if (detailsType.isAssignableFrom(details.getClass())) {
-                buildOperationTime.addAndGet(operationFinishEvent.getEndTime() - operationFinishEvent.getStartTime());
+                buildOperationTime.addAndGet(
+                        operationFinishEvent.getEndTime() - operationFinishEvent.getStartTime());
             }
         }
 

@@ -1,7 +1,5 @@
 package org.gradle.trace;
 
-import static org.gradle.trace.util.ReflectionUtil.invokerGetter;
-
 import org.gradle.BuildAdapter;
 import org.gradle.BuildResult;
 import org.gradle.api.internal.GradleInternal;
@@ -14,6 +12,8 @@ import org.gradle.trace.util.TimeUtil;
 
 import java.io.File;
 import java.util.HashMap;
+
+import static org.gradle.trace.util.ReflectionUtil.invokerGetter;
 
 public class GradleTracingPlugin {
     private static final String CATEGORY_PHASE = "BUILD_PHASE";
@@ -63,7 +63,10 @@ public class GradleTracingPlugin {
             try {
                 return buildRequestMetaData.getStartTime();
             } catch (NoSuchMethodError e) {
-                return (long) invokerGetter(invokerGetter(buildRequestMetaData, "getBuildTimeClock"), "getStartTime");
+                return (long)
+                        invokerGetter(
+                                invokerGetter(buildRequestMetaData, "getBuildTimeClock"),
+                                "getStartTime");
             }
         }
     }

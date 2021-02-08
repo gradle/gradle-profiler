@@ -41,7 +41,8 @@ public class BuildScanInitScript extends GeneratedInitScript {
         writer.write("}\n");
         writer.write("\n");
         writer.write("rootProject { prj ->\n");
-        writer.write("    apply plugin: initscript.classLoader.loadClass(\"com.gradle.scan.plugin.BuildScanPlugin\")\n");
+        writer.write(
+                "    apply plugin: initscript.classLoader.loadClass(\"com.gradle.scan.plugin.BuildScanPlugin\")\n");
         writer.write("    buildScan {\n");
         if (version.startsWith("0.") || version.startsWith("1.")) {
             writer.write("        licenseAgreementUrl = 'https://gradle.com/terms-of-service'\n");
@@ -53,6 +54,4 @@ public class BuildScanInitScript extends GeneratedInitScript {
         writer.write("    }\n");
         writer.write("}\n");
     }
-
-
 }

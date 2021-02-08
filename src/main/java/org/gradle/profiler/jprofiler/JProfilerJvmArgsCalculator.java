@@ -22,7 +22,11 @@ public class JProfilerJvmArgsCalculator implements JvmArgsCalculator {
     private final boolean startRecordingOnProcessStart;
     private final boolean captureSnapshotOnProcessExit;
 
-    public JProfilerJvmArgsCalculator(JProfilerConfig jProfilerConfig, ScenarioSettings settings, boolean startRecordingOnProcessStart, boolean captureSnapshotOnProcessExit) {
+    public JProfilerJvmArgsCalculator(
+            JProfilerConfig jProfilerConfig,
+            ScenarioSettings settings,
+            boolean startRecordingOnProcessStart,
+            boolean captureSnapshotOnProcessExit) {
         this.jProfilerConfig = jProfilerConfig;
         this.settings = settings;
         this.startRecordingOnProcessStart = startRecordingOnProcessStart;
@@ -39,7 +43,10 @@ public class JProfilerJvmArgsCalculator implements JvmArgsCalculator {
     private String getAgentPathParameter(int port) {
         File jprofilerDir = getJProfilerDir();
         if (!jprofilerDir.exists()) {
-            throw new RuntimeException("JProfiler home directory " + jprofilerDir + " does not exist, please specify a different directory with --jprofiler-home");
+            throw new RuntimeException(
+                    "JProfiler home directory "
+                            + jprofilerDir
+                            + " does not exist, please specify a different directory with --jprofiler-home");
         }
         boolean is64Bit = System.getProperty("sun.arch.data.model", "64").equals("64");
 
@@ -69,7 +76,8 @@ public class JProfilerJvmArgsCalculator implements JvmArgsCalculator {
             builder.append(File.separator);
             builder.append("libjprofilerti.so");
         } else {
-            throw new RuntimeException("Currently only Windows, macOS and Linux-x86 are detected for the native JProfiler agent library");
+            throw new RuntimeException(
+                    "Currently only Windows, macOS and Linux-x86 are detected for the native JProfiler agent library");
         }
 
         builder.append("=offline,");
@@ -98,7 +106,12 @@ public class JProfilerJvmArgsCalculator implements JvmArgsCalculator {
 
     private File transformConfigFile(File configFile, String id) {
         if (startRecordingOnProcessStart) {
-            return JProfilerConfigFileTransformer.transform(configFile, id, jProfilerConfig, JProfiler.getSnapshotPath(settings), captureSnapshotOnProcessExit);
+            return JProfilerConfigFileTransformer.transform(
+                    configFile,
+                    id,
+                    jProfilerConfig,
+                    JProfiler.getSnapshotPath(settings),
+                    captureSnapshotOnProcessExit);
         } else {
             return configFile;
         }

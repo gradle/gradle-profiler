@@ -9,6 +9,7 @@ import javax.xml.transform.*;
 import javax.xml.transform.dom.DOMSource;
 import javax.xml.transform.stream.StreamResult;
 import javax.xml.transform.stream.StreamSource;
+
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
@@ -18,13 +19,21 @@ import java.nio.file.Files;
 
 public class JProfilerConfigFileTransformer {
 
-    public static File transform(File configFile, String id, JProfilerConfig jProfilerConfig, String snapshotPath, boolean captureOnExit) {
+    public static File transform(
+            File configFile,
+            String id,
+            JProfilerConfig jProfilerConfig,
+            String snapshotPath,
+            boolean captureOnExit) {
         try {
             File transformedConfigFile = File.createTempFile("jprofiler", ".xml");
             transformedConfigFile.deleteOnExit();
             File probesFile = createProbesDocument(jProfilerConfig);
-            URL resource = JProfilerConfigFileTransformer.class.getResource("/jprofiler/transform.xsl");
-            Templates template = TransformerFactory.newInstance().newTemplates(new StreamSource(resource.openStream()));
+            URL resource =
+                    JProfilerConfigFileTransformer.class.getResource("/jprofiler/transform.xsl");
+            Templates template =
+                    TransformerFactory.newInstance()
+                            .newTemplates(new StreamSource(resource.openStream()));
             Source source = new StreamSource(new FileInputStream(configFile));
             Result result = new StreamResult(new FileOutputStream(transformedConfigFile));
             Transformer transformer = template.newTransformer();
@@ -45,7 +54,8 @@ public class JProfilerConfigFileTransformer {
         }
     }
 
-    private static File createProbesDocument(JProfilerConfig jProfilerConfig) throws ParserConfigurationException, TransformerException, IOException {
+    private static File createProbesDocument(JProfilerConfig jProfilerConfig)
+            throws ParserConfigurationException, TransformerException, IOException {
         File probesFile = File.createTempFile("jprofiler", ".xml");
         probesFile.deleteOnExit();
         Document document = DocumentBuilderFactory.newInstance().newDocumentBuilder().newDocument();
@@ -53,8 +63,14 @@ public class JProfilerConfigFileTransformer {
         for (String probeName : jProfilerConfig.getRecordedProbes()) {
             Element probeElement = document.createElement("probe");
             probeElement.setAttribute("name", probeName);
-            probeElement.setAttribute("events", String.valueOf(jProfilerConfig.getProbesWithEventRecording().contains(probeName)));
-            probeElement.setAttribute("recordSpecial", String.valueOf(jProfilerConfig.getProbesWithSpecialRecording().contains(probeName)));
+            probeElement.setAttribute(
+                    "events",
+                    String.valueOf(
+                            jProfilerConfig.getProbesWithEventRecording().contains(probeName)));
+            probeElement.setAttribute(
+                    "recordSpecial",
+                    String.valueOf(
+                            jProfilerConfig.getProbesWithSpecialRecording().contains(probeName)));
             probesElement.appendChild(probeElement);
         }
         document.appendChild(probesElement);
@@ -63,5 +79,4 @@ public class JProfilerConfigFileTransformer {
         TransformerFactory.newInstance().newTransformer().transform(source, result);
         return probesFile;
     }
-
 }

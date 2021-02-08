@@ -12,9 +12,7 @@ import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * An endpoint for communicating with a single client process.
- */
+/** An endpoint for communicating with a single client process. */
 public class Server implements Closeable {
 
     private final ServerSocketChannel serverSocketChannel;
@@ -31,7 +29,10 @@ public class Server implements Closeable {
             selector = Selector.open();
             serverSocketChannel.register(selector, SelectionKey.OP_ACCEPT);
         } catch (IOException e) {
-            throw new RuntimeException(String.format("Could not start listening for incoming %s connections.", peerName), e);
+            throw new RuntimeException(
+                    String.format(
+                            "Could not start listening for incoming %s connections.", peerName),
+                    e);
         }
     }
 
@@ -47,14 +48,18 @@ public class Server implements Closeable {
         try {
             int keys = selector.select(timeout.toMillis());
             if (keys != 1) {
-                throw new IllegalStateException(String.format("Timeout waiting for incoming connection from %s.", peerName));
+                throw new IllegalStateException(
+                        String.format(
+                                "Timeout waiting for incoming connection from %s.", peerName));
             }
             SocketChannel channel = serverSocketChannel.accept();
-            ServerConnection connection = new ServerConnection(peerName, new Connection(channel.socket()));
+            ServerConnection connection =
+                    new ServerConnection(peerName, new Connection(channel.socket()));
             connections.add(connection);
             return connection;
         } catch (IOException e) {
-            throw new RuntimeException(String.format("Could not receive incoming connection from %s.", peerName), e);
+            throw new RuntimeException(
+                    String.format("Could not receive incoming connection from %s.", peerName), e);
         }
     }
 

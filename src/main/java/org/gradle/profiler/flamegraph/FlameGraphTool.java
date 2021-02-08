@@ -11,14 +11,13 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-/**
- * Generates flame graphs from collapsed stacks.
- */
+/** Generates flame graphs from collapsed stacks. */
 public class FlameGraphTool {
     private final File flamegraphScript;
 
     private static File createScript(String scriptName) {
-        try (InputStream stream = FlameGraphTool.class.getResource(scriptName + ".pl").openStream()) {
+        try (InputStream stream =
+                FlameGraphTool.class.getResource(scriptName + ".pl").openStream()) {
             File script = File.createTempFile(scriptName, ".pl");
             Files.copy(stream, script.toPath(), StandardCopyOption.REPLACE_EXISTING);
             script.deleteOnExit();
@@ -59,5 +58,4 @@ public class FlameGraphTool {
     public void generateFlameGraph(File stacks, File flames, String... args) {
         generateFlameGraph(stacks, flames, Arrays.asList(args));
     }
-
 }

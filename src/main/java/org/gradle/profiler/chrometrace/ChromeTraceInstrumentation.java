@@ -15,9 +15,9 @@
  */
 package org.gradle.profiler.chrometrace;
 
-import org.gradle.profiler.instrument.GradleInstrumentation;
 import org.gradle.profiler.GradleScenarioDefinition;
 import org.gradle.profiler.ScenarioSettings;
+import org.gradle.profiler.instrument.GradleInstrumentation;
 
 import java.io.File;
 import java.io.PrintWriter;
@@ -32,6 +32,9 @@ public class ChromeTraceInstrumentation extends GradleInstrumentation {
 
     @Override
     protected void generateInitScriptBody(PrintWriter writer) {
-        writer.println("org.gradle.trace.GradleTracingPlugin.start(gradle, new File(new URI(\"" + traceFile.toURI() + "\")))");
+        writer.println(
+                "org.gradle.trace.GradleTracingPlugin.start(gradle, new File(new URI(\""
+                        + traceFile.toURI()
+                        + "\")))");
     }
 }

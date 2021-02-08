@@ -20,8 +20,8 @@ import static org.gradle.profiler.jfr.JfrToStacksConverter.Options;
 
 /**
  * Generates flame graphs based on JFR recordings.
- * <p>
- * TODO create flame graph diffs between profiled versions
+ *
+ * <p>TODO create flame graph diffs between profiled versions
  */
 class JfrFlameGraphGenerator {
     private JfrToStacksConverter stacksConverter = new JfrToStacksConverter();
@@ -32,15 +32,20 @@ class JfrFlameGraphGenerator {
             return;
         }
 
-        List<IItemCollection> recordings = Stream.of(
-            requireNonNull(jfrFile.getParentFile().listFiles((dir, name) -> name.endsWith(".jfr")))
-        ).map(file -> {
-            try {
-                return JfrLoaderToolkit.loadEvents(file);
-            } catch (IOException | CouldNotLoadRecordingException e) {
-                throw new RuntimeException(e);
-            }
-        }).collect(Collectors.toList());
+        List<IItemCollection> recordings =
+                Stream.of(
+                                requireNonNull(
+                                        jfrFile.getParentFile()
+                                                .listFiles((dir, name) -> name.endsWith(".jfr"))))
+                        .map(
+                                file -> {
+                                    try {
+                                        return JfrLoaderToolkit.loadEvents(file);
+                                    } catch (IOException | CouldNotLoadRecordingException e) {
+                                        throw new RuntimeException(e);
+                                    }
+                                })
+                        .collect(Collectors.toList());
 
         try {
             generateGraphs(jfrFile, recordings);
@@ -60,9 +65,14 @@ class JfrFlameGraphGenerator {
         }
     }
 
-    private File generateStacks(File baseDir, List<IItemCollection> recordings, EventType type, DetailLevel level) throws IOException {
+    private File generateStacks(
+            File baseDir, List<IItemCollection> recordings, EventType type, DetailLevel level)
+            throws IOException {
         File stacks = File.createTempFile("stacks", ".txt");
-        stacksConverter.convertToStacks(recordings, stacks, new Options(type, level.isShowArguments(), level.isShowLineNumbers()));
+        stacksConverter.convertToStacks(
+                recordings,
+                stacks,
+                new Options(type, level.isShowArguments(), level.isShowLineNumbers()));
         File sanitizedStacks = stacksFileName(baseDir, type, level);
         level.getSanitizer().sanitize(stacks, sanitizedStacks);
         stacks.delete();
@@ -80,7 +90,12 @@ class JfrFlameGraphGenerator {
         File flames = new File(stacks.getParentFile(), "flames.svg");
         List<String> options = new ArrayList<>();
         options.addAll(level.getFlameGraphOptions());
-        options.addAll(Arrays.asList("--title", type.getDisplayName() + " Flame Graph", "--countname", type.getUnitOfMeasure()));
+        options.addAll(
+                Arrays.asList(
+                        "--title",
+                        type.getDisplayName() + " Flame Graph",
+                        "--countname",
+                        type.getUnitOfMeasure()));
         flameGraphGenerator.generateFlameGraph(stacks, flames, options);
     }
 
@@ -91,25 +106,35 @@ class JfrFlameGraphGenerator {
         File icicles = new File(stacks.getParentFile(), "icicles.svg");
         List<String> options = new ArrayList<>();
         options.addAll(level.getIcicleGraphOptions());
-        options.addAll(Arrays.asList("--title", type.getDisplayName() + " Icicle Graph", "--countname", type.getUnitOfMeasure(), "--reverse", "--invert", "--colors", "aqua"));
+        options.addAll(
+                Arrays.asList(
+                        "--title",
+                        type.getDisplayName() + " Icicle Graph",
+                        "--countname",
+                        type.getUnitOfMeasure(),
+                        "--reverse",
+                        "--invert",
+                        "--colors",
+                        "aqua"));
         flameGraphGenerator.generateFlameGraph(stacks, icicles, options);
     }
 
     private enum DetailLevel {
         RAW(
-            true,
-            true,
-            Arrays.asList("--minwidth", "0.5"),
-            Arrays.asList("--minwidth", "1"),
-            new FlameGraphSanitizer(FlameGraphSanitizer.COLLAPSE_BUILD_SCRIPTS)
-        ),
+                true,
+                true,
+                Arrays.asList("--minwidth", "0.5"),
+                Arrays.asList("--minwidth", "1"),
+                new FlameGraphSanitizer(FlameGraphSanitizer.COLLAPSE_BUILD_SCRIPTS)),
         SIMPLIFIED(
-            false,
-            false,
-            Arrays.asList("--minwidth", "1"),
-            Arrays.asList("--minwidth", "2"),
-            new FlameGraphSanitizer(FlameGraphSanitizer.COLLAPSE_BUILD_SCRIPTS, FlameGraphSanitizer.COLLAPSE_GRADLE_INFRASTRUCTURE, FlameGraphSanitizer.SIMPLE_NAMES)
-        );
+                false,
+                false,
+                Arrays.asList("--minwidth", "1"),
+                Arrays.asList("--minwidth", "2"),
+                new FlameGraphSanitizer(
+                        FlameGraphSanitizer.COLLAPSE_BUILD_SCRIPTS,
+                        FlameGraphSanitizer.COLLAPSE_GRADLE_INFRASTRUCTURE,
+                        FlameGraphSanitizer.SIMPLE_NAMES));
 
         private final boolean showArguments;
         private final boolean showLineNumbers;
@@ -117,7 +142,12 @@ class JfrFlameGraphGenerator {
         private List<String> icicleGraphOptions;
         private FlameGraphSanitizer sanitizer;
 
-        DetailLevel(boolean showArguments, boolean showLineNumbers, List<String> flameGraphOptions, List<String> icicleGraphOptions, FlameGraphSanitizer sanitizer) {
+        DetailLevel(
+                boolean showArguments,
+                boolean showLineNumbers,
+                List<String> flameGraphOptions,
+                List<String> icicleGraphOptions,
+                FlameGraphSanitizer sanitizer) {
             this.showArguments = showArguments;
             this.showLineNumbers = showLineNumbers;
             this.flameGraphOptions = flameGraphOptions;
@@ -144,6 +174,5 @@ class JfrFlameGraphGenerator {
         public FlameGraphSanitizer getSanitizer() {
             return sanitizer;
         }
-
     }
 }

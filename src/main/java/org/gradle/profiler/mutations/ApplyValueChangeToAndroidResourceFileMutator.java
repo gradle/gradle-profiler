@@ -13,7 +13,8 @@ public class ApplyValueChangeToAndroidResourceFileMutator extends AbstractFileCh
     protected void applyChangeTo(BuildContext context, StringBuilder text) {
         int insertPos = text.lastIndexOf("</string>");
         if (insertPos < 0) {
-            throw new IllegalArgumentException("Cannot parse source file " + sourceFile + " to apply changes");
+            throw new IllegalArgumentException(
+                    "Cannot parse source file " + sourceFile + " to apply changes");
         }
         text.insert(insertPos, context.getUniqueBuildId());
     }

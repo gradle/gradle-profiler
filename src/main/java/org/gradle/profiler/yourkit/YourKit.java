@@ -6,9 +6,7 @@ public class YourKit {
     static final String ENIVONMENT_VARIABLE = "YOURKIT_HOME";
     private static final String YOURKIT_HOME = System.getenv(ENIVONMENT_VARIABLE);
 
-    /**
-     * Locates the user's YourKit installation. Returns null when not found.
-     */
+    /** Locates the user's YourKit installation. Returns null when not found. */
     public static File findYourKitHome() {
         if (YOURKIT_HOME != null) {
             File ykHome = new File(YOURKIT_HOME);
@@ -30,13 +28,20 @@ public class YourKit {
 
     public static File findControllerJar() {
         File yourKitHome = findYourKitHome();
-        return tryLocations(yourKitHome, "Contents/Resources/lib/yjp-controller-api-redist.jar", "lib/yjp-controller-api-redist.jar");
+        return tryLocations(
+                yourKitHome,
+                "Contents/Resources/lib/yjp-controller-api-redist.jar",
+                "lib/yjp-controller-api-redist.jar");
     }
 
     public static File findJniLib() {
         File yourKitHome = findYourKitHome();
         String macLibLocationPrefix = "Contents/Resources/bin/mac/libyjpagent.";
-        return tryLocations(yourKitHome, macLibLocationPrefix + "jnilib", macLibLocationPrefix + "dylib", "bin/linux-x86-64/libyjpagent.so");
+        return tryLocations(
+                yourKitHome,
+                macLibLocationPrefix + "jnilib",
+                macLibLocationPrefix + "dylib",
+                "bin/linux-x86-64/libyjpagent.so");
     }
 
     private static File tryLocations(File baseDir, String... candidates) {

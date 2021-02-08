@@ -8,9 +8,13 @@ import java.util.List;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
-public class BuckScenarioInvoker extends BuildToolCommandLineInvoker<BuckScenarioDefinition, BuildInvocationResult> {
+public class BuckScenarioInvoker
+        extends BuildToolCommandLineInvoker<BuckScenarioDefinition, BuildInvocationResult> {
     @Override
-    void doRun(BuckScenarioDefinition scenario, InvocationSettings settings, Consumer<BuildInvocationResult> resultConsumer) {
+    void doRun(
+            BuckScenarioDefinition scenario,
+            InvocationSettings settings,
+            Consumer<BuildInvocationResult> resultConsumer) {
         String buckwExe = settings.getProjectDir() + "/buckw";
         List<String> targets = new ArrayList<>(scenario.getTargets());
         if (scenario.getType() != null) {
@@ -22,8 +26,14 @@ public class BuckScenarioInvoker extends BuildToolCommandLineInvoker<BuckScenari
                 commandLine.add("--type");
                 commandLine.add(scenario.getType());
             }
-            String output = new CommandExec().inDir(settings.getProjectDir()).runAndCollectOutput(commandLine);
-            targets.addAll(Arrays.stream(output.split("\\n")).filter(s -> s.matches("//\\w+.*")).collect(Collectors.toList()));
+            String output =
+                    new CommandExec()
+                            .inDir(settings.getProjectDir())
+                            .runAndCollectOutput(commandLine);
+            targets.addAll(
+                    Arrays.stream(output.split("\\n"))
+                            .filter(s -> s.matches("//\\w+.*"))
+                            .collect(Collectors.toList()));
         }
 
         Logging.detailed().println("* Buck targets: " + targets);

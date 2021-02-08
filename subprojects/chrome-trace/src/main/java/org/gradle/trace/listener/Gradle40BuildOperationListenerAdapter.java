@@ -10,14 +10,21 @@ public class Gradle40BuildOperationListenerAdapter implements BuildOperationList
     private GradleInternal gradle;
     private Object listener;
 
-    public Gradle40BuildOperationListenerAdapter(Gradle gradle, InvocationHandler invocationHandler) {
+    public Gradle40BuildOperationListenerAdapter(
+            Gradle gradle, InvocationHandler invocationHandler) {
         this.gradle = (GradleInternal) gradle;
         register(invocationHandler);
     }
 
     private void register(InvocationHandler invocationHandler) {
         try {
-            listener = Proxy.newProxyInstance(gradle.getClass().getClassLoader(), new Class[]{Class.forName("org.gradle.internal.progress.BuildOperationListener")}, invocationHandler);
+            listener =
+                    Proxy.newProxyInstance(
+                            gradle.getClass().getClassLoader(),
+                            new Class[] {
+                                Class.forName("org.gradle.internal.progress.BuildOperationListener")
+                            },
+                            invocationHandler);
             runBuildOperationServiceMethodForListener("addListener");
         } catch (ReflectiveOperationException e) {
             throw new RuntimeException(e);
@@ -28,12 +35,18 @@ public class Gradle40BuildOperationListenerAdapter implements BuildOperationList
     public void remove() {
         runBuildOperationServiceMethodForListener("removeListener");
     }
-    
+
     private void runBuildOperationServiceMethodForListener(String method) {
         try {
-            Class<?> boServiceClass = Class.forName("org.gradle.internal.progress.BuildOperationListenerManager");
+            Class<?> boServiceClass =
+                    Class.forName("org.gradle.internal.progress.BuildOperationListenerManager");
             Object buildOperationService = gradle.getServices().get(boServiceClass);
-            buildOperationService.getClass().getMethod(method, Class.forName("org.gradle.internal.progress.BuildOperationListener")).invoke(buildOperationService, listener);
+            buildOperationService
+                    .getClass()
+                    .getMethod(
+                            method,
+                            Class.forName("org.gradle.internal.progress.BuildOperationListener"))
+                    .invoke(buildOperationService, listener);
         } catch (ReflectiveOperationException e) {
             throw new RuntimeException(e);
         }

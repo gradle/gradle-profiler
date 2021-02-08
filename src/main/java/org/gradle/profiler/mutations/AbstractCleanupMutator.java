@@ -24,7 +24,8 @@ public abstract class AbstractCleanupMutator implements BuildMutator {
     @Override
     public void validate(BuildInvoker invoker) {
         if (schedule != CleanupSchedule.SCENARIO && !invoker.allowsCleanupBetweenBuilds()) {
-            throw new IllegalStateException(this + " is not allowed to be executed between builds with invoker " + invoker);
+            throw new IllegalStateException(
+                    this + " is not allowed to be executed between builds with invoker " + invoker);
         }
     }
 
@@ -49,7 +50,7 @@ public abstract class AbstractCleanupMutator implements BuildMutator {
         }
     }
 
-    abstract protected void cleanup();
+    protected abstract void cleanup();
 
     protected static void delete(File f) {
         try {
@@ -63,17 +64,24 @@ public abstract class AbstractCleanupMutator implements BuildMutator {
         }
     }
 
-    protected static abstract class Configurator implements BuildMutatorConfigurator {
+    protected abstract static class Configurator implements BuildMutatorConfigurator {
         @Override
-        public BuildMutator configure(Config scenario, String scenarioName, InvocationSettings settings, String key) {
-            CleanupSchedule schedule = ConfigUtil.enumValue(scenario, key, CleanupSchedule.class, null);
+        public BuildMutator configure(
+                Config scenario, String scenarioName, InvocationSettings settings, String key) {
+            CleanupSchedule schedule =
+                    ConfigUtil.enumValue(scenario, key, CleanupSchedule.class, null);
             if (schedule == null) {
                 throw new IllegalArgumentException("Schedule for cleanup is not specified");
             }
             return newInstance(scenario, scenarioName, settings, key, schedule);
         }
 
-        protected abstract BuildMutator newInstance(Config scenario, String scenarioName, InvocationSettings settings, String key, CleanupSchedule schedule);
+        protected abstract BuildMutator newInstance(
+                Config scenario,
+                String scenarioName,
+                InvocationSettings settings,
+                String key,
+                CleanupSchedule schedule);
     }
 
     @Override
@@ -82,6 +90,8 @@ public abstract class AbstractCleanupMutator implements BuildMutator {
     }
 
     public enum CleanupSchedule {
-        SCENARIO, CLEANUP, BUILD
+        SCENARIO,
+        CLEANUP,
+        BUILD
     }
 }

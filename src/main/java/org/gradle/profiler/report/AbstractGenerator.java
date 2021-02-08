@@ -21,7 +21,9 @@ public abstract class AbstractGenerator {
         }
     }
 
-    protected abstract void write(InvocationSettings settings, BenchmarkResult result, BufferedWriter writer) throws IOException;
+    protected abstract void write(
+            InvocationSettings settings, BenchmarkResult result, BufferedWriter writer)
+            throws IOException;
 
     public void summarizeResults(Consumer<String> consumer) {
         consumer.accept(outputFile.getAbsolutePath());

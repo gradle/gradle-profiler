@@ -12,13 +12,19 @@ public class Gradle47BuildOperationListenerAdapter implements BuildOperationList
     private GradleInternal gradle;
     private BuildOperationListener listener;
 
-    public Gradle47BuildOperationListenerAdapter(Gradle gradle, InvocationHandler invocationHandler) {
+    public Gradle47BuildOperationListenerAdapter(
+            Gradle gradle, InvocationHandler invocationHandler) {
         this.gradle = (GradleInternal) gradle;
         register(invocationHandler);
     }
 
     private void register(InvocationHandler invocationHandler) {
-        listener = (BuildOperationListener) Proxy.newProxyInstance(gradle.getClass().getClassLoader(), new Class[]{BuildOperationListener.class}, invocationHandler);
+        listener =
+                (BuildOperationListener)
+                        Proxy.newProxyInstance(
+                                gradle.getClass().getClassLoader(),
+                                new Class[] {BuildOperationListener.class},
+                                invocationHandler);
         getListenerManager().addListener(listener);
     }
 

@@ -27,15 +27,34 @@ public class LauncherConfigurationParser {
             actualInstallDir = studioInstallDir;
         }
         Dict jvmOptions = entries.dict("JVMOptions");
-        List<Path> classPath = Arrays.stream(jvmOptions.string("ClassPath").split(":")).map(s -> FileSystems.getDefault().getPath(s.replace("$APP_PACKAGE", actualInstallDir.toString()))).collect(Collectors.toList());
+        List<Path> classPath =
+                Arrays.stream(jvmOptions.string("ClassPath").split(":"))
+                        .map(
+                                s ->
+                                        FileSystems.getDefault()
+                                                .getPath(
+                                                        s.replace(
+                                                                "$APP_PACKAGE",
+                                                                actualInstallDir.toString())))
+                        .collect(Collectors.toList());
         String mainClass = jvmOptions.string("MainClass");
-        Map<String, String> systemProperties = mapValues(jvmOptions.dict("Properties").toMap(), v -> v.replace("$APP_PACKAGE", actualInstallDir.toString()));
+        Map<String, String> systemProperties =
+                mapValues(
+                        jvmOptions.dict("Properties").toMap(),
+                        v -> v.replace("$APP_PACKAGE", actualInstallDir.toString()));
         Path javaCommand = actualInstallDir.resolve("Contents/jre/jdk/Contents/Home/bin/java");
         Path agentJar = GradleInstrumentation.unpackPlugin("studio-agent").toPath();
         Path asmJar = GradleInstrumentation.unpackPlugin("asm").toPath();
         Path supportJar = GradleInstrumentation.unpackPlugin("instrumentation-support").toPath();
         Path protocolJar = GradleInstrumentation.unpackPlugin("client-protocol").toPath();
-        return new LaunchConfiguration(javaCommand, classPath, systemProperties, mainClass, agentJar, supportJar, Arrays.asList(asmJar, protocolJar));
+        return new LaunchConfiguration(
+                javaCommand,
+                classPath,
+                systemProperties,
+                mainClass,
+                agentJar,
+                supportJar,
+                Arrays.asList(asmJar, protocolJar));
     }
 
     private static Dict parse(Path infoFile) {
@@ -76,7 +95,8 @@ public class LauncherConfigurationParser {
         private NSObject getEntry(String key) {
             NSObject value = contents.get(key);
             if (value == null) {
-                throw new IllegalArgumentException(String.format("Dictionary does not contain entry '%s'.", key));
+                throw new IllegalArgumentException(
+                        String.format("Dictionary does not contain entry '%s'.", key));
             }
             return value;
         }

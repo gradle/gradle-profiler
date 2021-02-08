@@ -38,8 +38,10 @@ public class BuildScanProfiler extends Profiler {
     }
 
     private static class LogParser implements Consumer<String> {
-        private static final Pattern RUNNING_SCENARIO = Pattern.compile("\\* Running scenario (.*) \\(scenario \\d+/\\d+\\)");
-        private static final Pattern RUNNING_BUILD = Pattern.compile("\\* Running measured build #(\\d+)");
+        private static final Pattern RUNNING_SCENARIO =
+                Pattern.compile("\\* Running scenario (.*) \\(scenario \\d+/\\d+\\)");
+        private static final Pattern RUNNING_BUILD =
+                Pattern.compile("\\* Running measured build #(\\d+)");
         private boolean nextLineIsBuildScanUrl;
         private String measuredBuildNumber = null;
         private final Consumer<String> results;
@@ -52,7 +54,10 @@ public class BuildScanProfiler extends Profiler {
         public void accept(String line) {
             if (nextLineIsBuildScanUrl) {
                 if (measuredBuildNumber != null) {
-                    results.accept(String.format("- Build scan for measured build #%s: %s", measuredBuildNumber, line));
+                    results.accept(
+                            String.format(
+                                    "- Build scan for measured build #%s: %s",
+                                    measuredBuildNumber, line));
                     measuredBuildNumber = null;
                 }
                 nextLineIsBuildScanUrl = false;
@@ -88,25 +93,31 @@ public class BuildScanProfiler extends Profiler {
     @Override
     public GradleArgsCalculator newGradleArgsCalculator(ScenarioSettings settings) {
         return gradleArgs -> {
-            GradleBuildConfiguration buildConfiguration = settings.getScenario().getBuildConfiguration();
+            GradleBuildConfiguration buildConfiguration =
+                    settings.getScenario().getBuildConfiguration();
             if (!buildConfiguration.isUsesScanPlugin()) {
                 String effectiveBuildScanVersion = getEffectiveBuildScanVersion(buildConfiguration);
-                GeneratedInitScript buildScanInitScript = (buildConfiguration.getGradleVersion().compareTo(GRADLE_6) < 0)
-                    ? new BuildScanInitScript(effectiveBuildScanVersion)
-                    : new GradleEnterpriseInitScript(effectiveBuildScanVersion);
+                GeneratedInitScript buildScanInitScript =
+                        (buildConfiguration.getGradleVersion().compareTo(GRADLE_6) < 0)
+                                ? new BuildScanInitScript(effectiveBuildScanVersion)
+                                : new GradleEnterpriseInitScript(effectiveBuildScanVersion);
                 buildScanInitScript.calculateGradleArgs(gradleArgs);
             }
         };
     }
 
     @Override
-    public GradleArgsCalculator newInstrumentedBuildsGradleArgsCalculator(ScenarioSettings settings) {
+    public GradleArgsCalculator newInstrumentedBuildsGradleArgsCalculator(
+            ScenarioSettings settings) {
         return gradleArgs -> {
-            GradleBuildConfiguration buildConfiguration = settings.getScenario().getBuildConfiguration();
+            GradleBuildConfiguration buildConfiguration =
+                    settings.getScenario().getBuildConfiguration();
             if (buildConfiguration.isUsesScanPlugin()) {
                 System.out.println("Using build scan plugin specified in the build");
             } else {
-                System.out.println("Using build scan plugin " + getEffectiveBuildScanVersion(buildConfiguration));
+                System.out.println(
+                        "Using build scan plugin "
+                                + getEffectiveBuildScanVersion(buildConfiguration));
             }
             if (buildConfiguration.getGradleVersion().compareTo(GRADLE_5) < 0) {
                 gradleArgs.add("-Dscan");
@@ -117,6 +128,8 @@ public class BuildScanProfiler extends Profiler {
     }
 
     private String getEffectiveBuildScanVersion(GradleBuildConfiguration buildConfiguration) {
-        return buildScanVersion != null ? buildScanVersion : defaultBuildScanVersion(buildConfiguration.getGradleVersion());
+        return buildScanVersion != null
+                ? buildScanVersion
+                : defaultBuildScanVersion(buildConfiguration.getGradleVersion());
     }
 }

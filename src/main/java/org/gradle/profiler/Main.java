@@ -44,7 +44,9 @@ public class Main {
             settings.printTo(System.out);
 
             DaemonControl daemonControl = new DaemonControl(settings.getGradleUserHome());
-            GradleBuildConfigurationReader gradleBuildConfigurationReader = new DefaultGradleBuildConfigurationReader(settings.getProjectDir(), settings.getGradleUserHome(), daemonControl);
+            GradleBuildConfigurationReader gradleBuildConfigurationReader =
+                    new DefaultGradleBuildConfigurationReader(
+                            settings.getProjectDir(), settings.getGradleUserHome(), daemonControl);
             ScenarioLoader scenarioLoader = new ScenarioLoader(gradleBuildConfigurationReader);
             List<ScenarioDefinition> scenarios = scenarioLoader.loadScenarios(settings);
             int totalScenarios = scenarios.size();
@@ -53,9 +55,13 @@ public class Main {
 
             File cvsFile = new File(settings.getOutputDir(), "benchmark.csv");
             File htmlFile = new File(settings.getOutputDir(), "benchmark.html");
-            BenchmarkResultCollector benchmarkResults = new BenchmarkResultCollector(new CsvGenerator(cvsFile, settings.getCsvFormat()), new HtmlGenerator(htmlFile));
+            BenchmarkResultCollector benchmarkResults =
+                    new BenchmarkResultCollector(
+                            new CsvGenerator(cvsFile, settings.getCsvFormat()),
+                            new HtmlGenerator(htmlFile));
             PidInstrumentation pidInstrumentation = new PidInstrumentation();
-            GradleScenarioInvoker gradleScenarioInvoker = new GradleScenarioInvoker(daemonControl, pidInstrumentation);
+            GradleScenarioInvoker gradleScenarioInvoker =
+                    new GradleScenarioInvoker(daemonControl, pidInstrumentation);
             BazelScenarioInvoker bazelScenarioInvoker = new BazelScenarioInvoker();
             BuckScenarioInvoker buckScenarioInvoker = new BuckScenarioInvoker();
             MavenScenarioInvoker mavenScenarioInvoker = new MavenScenarioInvoker();
@@ -65,15 +71,42 @@ public class Main {
 
             for (ScenarioDefinition scenario : scenarios) {
                 scenarioCount++;
-                Logging.startOperation("Running scenario " + scenario.getDisplayName() + " (scenario " + scenarioCount + "/" + totalScenarios + ")");
+                Logging.startOperation(
+                        "Running scenario "
+                                + scenario.getDisplayName()
+                                + " (scenario "
+                                + scenarioCount
+                                + "/"
+                                + totalScenarios
+                                + ")");
                 if (scenario instanceof BazelScenarioDefinition) {
-                    invoke(bazelScenarioInvoker, (BazelScenarioDefinition) scenario, settings, benchmarkResults, failures);
+                    invoke(
+                            bazelScenarioInvoker,
+                            (BazelScenarioDefinition) scenario,
+                            settings,
+                            benchmarkResults,
+                            failures);
                 } else if (scenario instanceof BuckScenarioDefinition) {
-                    invoke(buckScenarioInvoker, (BuckScenarioDefinition) scenario, settings, benchmarkResults, failures);
+                    invoke(
+                            buckScenarioInvoker,
+                            (BuckScenarioDefinition) scenario,
+                            settings,
+                            benchmarkResults,
+                            failures);
                 } else if (scenario instanceof MavenScenarioDefinition) {
-                    invoke(mavenScenarioInvoker, (MavenScenarioDefinition) scenario, settings, benchmarkResults, failures);
+                    invoke(
+                            mavenScenarioInvoker,
+                            (MavenScenarioDefinition) scenario,
+                            settings,
+                            benchmarkResults,
+                            failures);
                 } else if (scenario instanceof GradleScenarioDefinition) {
-                    invoke(gradleScenarioInvoker, (GradleScenarioDefinition) scenario, settings, benchmarkResults, failures);
+                    invoke(
+                            gradleScenarioInvoker,
+                            (GradleScenarioDefinition) scenario,
+                            settings,
+                            benchmarkResults,
+                            failures);
                 } else {
                     throw new IllegalArgumentException("Don't know how to run scenario.");
                 }
@@ -81,7 +114,8 @@ public class Main {
 
             if (settings.isBenchmark()) {
                 // Write the final results and generate the reports
-                // This overwrites the existing reports, so may leave them in a corrupted state if this process crashes during the generation.
+                // This overwrites the existing reports, so may leave them in a corrupted state if
+                // this process crashes during the generation.
                 benchmarkResults.write(settings);
             }
 
@@ -105,15 +139,23 @@ public class Main {
         }
     }
 
-    private <S extends ScenarioDefinition, R extends BuildInvocationResult> void invoke(ScenarioInvoker<S, R> invoker, S scenario, InvocationSettings settings, BenchmarkResultCollector benchmarkResults, List<Throwable> failures) throws IOException {
+    private <S extends ScenarioDefinition, R extends BuildInvocationResult> void invoke(
+            ScenarioInvoker<S, R> invoker,
+            S scenario,
+            InvocationSettings settings,
+            BenchmarkResultCollector benchmarkResults,
+            List<Throwable> failures)
+            throws IOException {
         try {
             invoker.run(scenario, settings, benchmarkResults);
         } catch (Throwable t) {
             t.printStackTrace();
             failures.add(t);
         } finally {
-            // Write the current results and generate the reports, so that if this process crashes the results (which may have taken quite some time to collect) are not lost.
-            // This overwrites the existing reports, so may leave them in a corrupted state if this process crashes during the generation.
+            // Write the current results and generate the reports, so that if this process crashes
+            // the results (which may have taken quite some time to collect) are not lost.
+            // This overwrites the existing reports, so may leave them in a corrupted state if this
+            // process crashes during the generation.
             // This is just intended to be a simple best effort solution
             if (settings.isBenchmark()) {
                 benchmarkResults.write(settings);
@@ -121,7 +163,8 @@ public class Main {
         }
     }
 
-    private void printReportSummary(InvocationSettings settings, BenchmarkResultCollector benchmarkResults) {
+    private void printReportSummary(
+            InvocationSettings settings, BenchmarkResultCollector benchmarkResults) {
         if (settings.isBenchmark()) {
             benchmarkResults.summarizeResults(line -> System.out.println("  " + line));
         }

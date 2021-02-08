@@ -18,7 +18,10 @@ public class JcmdRunner {
             jcmd = new File(javaHome.getParentFile(), jcmdPath());
         }
         if (!jcmd.isFile()) {
-            throw new RuntimeException("Could not find 'jcmd' executable for Java home directory " + javaHome + ". Make sure your JAVA_HOME variable points to a JDK.");
+            throw new RuntimeException(
+                    "Could not find 'jcmd' executable for Java home directory "
+                            + javaHome
+                            + ". Make sure your JAVA_HOME variable points to a JDK.");
         }
         this.jcmd = jcmd;
     }
@@ -34,5 +37,4 @@ public class JcmdRunner {
         commandLine.addAll(Arrays.asList(command));
         new CommandExec().run(commandLine);
     }
-
 }

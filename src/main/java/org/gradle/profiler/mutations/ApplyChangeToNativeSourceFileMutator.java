@@ -8,7 +8,9 @@ public class ApplyChangeToNativeSourceFileMutator extends AbstractFileChangeMuta
 
     public ApplyChangeToNativeSourceFileMutator(File file) {
         super(file);
-        if (!sourceFile.getName().endsWith(".cpp") && !sourceFile.getName().endsWith(".h") && !sourceFile.getName().endsWith(".hpp")) {
+        if (!sourceFile.getName().endsWith(".cpp")
+                && !sourceFile.getName().endsWith(".h")
+                && !sourceFile.getName().endsWith(".hpp")) {
             throw new IllegalArgumentException("Can only modify C++ source or header files");
         }
     }
@@ -22,7 +24,8 @@ public class ApplyChangeToNativeSourceFileMutator extends AbstractFileChangeMuta
         } else {
             insertPos = text.lastIndexOf("#endif");
             if (insertPos < 0) {
-                throw new IllegalArgumentException("Cannot parse header file " + sourceFile + " to apply changes");
+                throw new IllegalArgumentException(
+                        "Cannot parse header file " + sourceFile + " to apply changes");
             }
             applyHeaderChangeAt(context, text, insertPos);
         }

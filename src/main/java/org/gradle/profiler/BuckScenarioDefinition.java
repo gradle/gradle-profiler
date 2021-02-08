@@ -1,6 +1,7 @@
 package org.gradle.profiler;
 
 import javax.annotation.Nullable;
+
 import java.io.File;
 import java.io.PrintStream;
 import java.util.List;
@@ -9,17 +10,24 @@ public class BuckScenarioDefinition extends BuildToolCommandLineScenarioDefiniti
     private final String type;
 
     public BuckScenarioDefinition(
-        String scenarioName,
-        @Nullable String title,
-        List<String> targets,
-        String type,
-        List<BuildMutator> buildMutators,
-        int warmUpCount,
-        int buildCount,
-        File outputDir,
-        @Nullable File buckHome
-    ) {
-        super(scenarioName, title, targets, buildMutators, warmUpCount, buildCount, outputDir, buckHome);
+            String scenarioName,
+            @Nullable String title,
+            List<String> targets,
+            String type,
+            List<BuildMutator> buildMutators,
+            int warmUpCount,
+            int buildCount,
+            File outputDir,
+            @Nullable File buckHome) {
+        super(
+                scenarioName,
+                title,
+                targets,
+                buildMutators,
+                warmUpCount,
+                buildCount,
+                outputDir,
+                buckHome);
         this.type = type;
     }
 

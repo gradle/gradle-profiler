@@ -15,14 +15,21 @@ public class Gradle33BuildOperationListenerAdapter implements BuildOperationList
     private GradleInternal gradle;
     private Object listener;
 
-    public Gradle33BuildOperationListenerAdapter(Gradle gradle, InvocationHandler invocationHandler) {
+    public Gradle33BuildOperationListenerAdapter(
+            Gradle gradle, InvocationHandler invocationHandler) {
         this.gradle = (GradleInternal) gradle;
         register(invocationHandler);
     }
 
     private void register(InvocationHandler invocationHandler) {
         try {
-            listener = Proxy.newProxyInstance(gradle.getClass().getClassLoader(), new Class[]{Class.forName("org.gradle.internal.progress.InternalBuildListener")}, invocationHandler);
+            listener =
+                    Proxy.newProxyInstance(
+                            gradle.getClass().getClassLoader(),
+                            new Class[] {
+                                Class.forName("org.gradle.internal.progress.InternalBuildListener")
+                            },
+                            invocationHandler);
             getGlobalListenerManager().addListener(listener);
         } catch (ReflectiveOperationException e) {
             throw new RuntimeException(e);

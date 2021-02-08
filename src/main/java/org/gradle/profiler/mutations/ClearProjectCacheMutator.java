@@ -38,7 +38,12 @@ public class ClearProjectCacheMutator extends AbstractCleanupMutator {
 
     public static class Configurator extends AbstractCleanupMutator.Configurator {
         @Override
-        protected BuildMutator newInstance(Config scenario, String scenarioName, InvocationSettings settings, String key, CleanupSchedule schedule) {
+        protected BuildMutator newInstance(
+                Config scenario,
+                String scenarioName,
+                InvocationSettings settings,
+                String key,
+                CleanupSchedule schedule) {
             return new ClearProjectCacheMutator(settings.getProjectDir(), schedule);
         }
     }

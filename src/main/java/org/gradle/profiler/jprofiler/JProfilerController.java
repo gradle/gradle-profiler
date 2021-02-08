@@ -8,11 +8,13 @@ import javax.management.*;
 import javax.management.remote.JMXConnector;
 import javax.management.remote.JMXConnectorFactory;
 import javax.management.remote.JMXServiceURL;
+
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.Collections;
 
-public class JProfilerController implements InstrumentingProfiler.SnapshotCapturingProfilerController {
+public class JProfilerController
+        implements InstrumentingProfiler.SnapshotCapturingProfilerController {
 
     private final JProfilerConfig jProfilerConfig;
     private final ScenarioSettings settings;
@@ -36,8 +38,10 @@ public class JProfilerController implements InstrumentingProfiler.SnapshotCaptur
             invoke("startMonitorRecording");
         }
         for (String probeName : jProfilerConfig.getRecordedProbes()) {
-            boolean eventRecording = jProfilerConfig.getProbesWithEventRecording().contains(probeName);
-            boolean specialRecording = jProfilerConfig.getProbesWithSpecialRecording().contains(probeName);
+            boolean eventRecording =
+                    jProfilerConfig.getProbesWithEventRecording().contains(probeName);
+            boolean specialRecording =
+                    jProfilerConfig.getProbesWithSpecialRecording().contains(probeName);
             invoke("startProbeRecording", probeName, eventRecording, specialRecording);
         }
         if (jProfilerConfig.isHeapDump() && hasOperation("markHeap")) { // available in JProfiler 10
@@ -79,8 +83,13 @@ public class JProfilerController implements InstrumentingProfiler.SnapshotCaptur
     private void ensureConnected() throws IOException {
         if (connector == null) {
             try {
-                JMXServiceURL jmxUrl = new JMXServiceURL("service:jmx:rmi:///jndi/rmi://localhost:" + jProfilerConfig.getPort() + "/jmxrmi");
-                JMXConnector newConnector = JMXConnectorFactory.newJMXConnector(jmxUrl, Collections.emptyMap());
+                JMXServiceURL jmxUrl =
+                        new JMXServiceURL(
+                                "service:jmx:rmi:///jndi/rmi://localhost:"
+                                        + jProfilerConfig.getPort()
+                                        + "/jmxrmi");
+                JMXConnector newConnector =
+                        JMXConnectorFactory.newJMXConnector(jmxUrl, Collections.emptyMap());
                 newConnector.connect();
                 connection = newConnector.getMBeanServerConnection();
                 objectName = new ObjectName("com.jprofiler.api.agent.mbean:type=RemoteController");
@@ -108,11 +117,12 @@ public class JProfilerController implements InstrumentingProfiler.SnapshotCaptur
 
     private void invoke(String operationName, Object... parameterValues) throws IOException {
         ensureConnected();
-        String[] parameterTypes = Arrays.stream(parameterValues)
-                .map(Object::getClass)
-                .map(this::replaceWrapperWithPrimitive)
-                .map(Class::getName)
-                .toArray(String[]::new);
+        String[] parameterTypes =
+                Arrays.stream(parameterValues)
+                        .map(Object::getClass)
+                        .map(this::replaceWrapperWithPrimitive)
+                        .map(Class::getName)
+                        .toArray(String[]::new);
         try {
             connection.invoke(objectName, operationName, parameterValues, parameterTypes);
         } catch (InstanceNotFoundException | MBeanException | ReflectionException e) {

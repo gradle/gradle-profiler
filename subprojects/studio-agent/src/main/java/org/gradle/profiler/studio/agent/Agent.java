@@ -29,8 +29,10 @@ public class Agent {
     }
 
     private static class InstrumentingTransformer implements ClassFileTransformer {
-        static final Type INTERCEPTOR_TYPE = Type.getObjectType("org/gradle/profiler/studio/instrumented/Interceptor");
-        static final Type DEFAULT_GRADLE_CONNECTOR = Type.getObjectType("org/gradle/tooling/internal/consumer/DefaultGradleConnector");
+        static final Type INTERCEPTOR_TYPE =
+                Type.getObjectType("org/gradle/profiler/studio/instrumented/Interceptor");
+        static final Type DEFAULT_GRADLE_CONNECTOR =
+                Type.getObjectType("org/gradle/tooling/internal/consumer/DefaultGradleConnector");
 
         private boolean supportClassesInjected;
         private final Path supportClassesJar;
@@ -40,8 +42,14 @@ public class Agent {
         }
 
         @Override
-        public byte[] transform(ClassLoader loader, String className, Class<?> classBeingRedefined, ProtectionDomain protectionDomain, byte[] originalByteCode) {
-            if (className.equals("org/gradle/tooling/internal/consumer/DefaultPhasedBuildActionExecuter")) {
+        public byte[] transform(
+                ClassLoader loader,
+                String className,
+                Class<?> classBeingRedefined,
+                ProtectionDomain protectionDomain,
+                byte[] originalByteCode) {
+            if (className.equals(
+                    "org/gradle/tooling/internal/consumer/DefaultPhasedBuildActionExecuter")) {
                 maybeInjectSupportClasses(loader);
                 return instrumentBuildActionExecuter(originalByteCode);
             }
@@ -57,32 +65,47 @@ public class Agent {
 
             Type projectConnection = Type.getObjectType("org/gradle/tooling/ProjectConnection");
             String connectMethodDescriptor = Type.getMethodDescriptor(projectConnection);
-            String connectDescriptor = Type.getMethodDescriptor(Type.VOID_TYPE, DEFAULT_GRADLE_CONNECTOR);
+            String connectDescriptor =
+                    Type.getMethodDescriptor(Type.VOID_TYPE, DEFAULT_GRADLE_CONNECTOR);
 
             ClassReader reader = new ClassReader(originalByteCode);
             ClassWriter writer = new ClassWriter(0);
-            ClassVisitor visitor = new ClassVisitor(Opcodes.ASM8, writer) {
-                @Override
-                public MethodVisitor visitMethod(int access, String name, String descriptor, String signature, String[] exceptions) {
-                    MethodVisitor methodVisitor = super.visitMethod(access, name, descriptor, signature, exceptions);
-                    if (name.equals("connect") && descriptor.equals(connectMethodDescriptor)) {
-                        return new MethodVisitor(Opcodes.ASM8, methodVisitor) {
-                            @Override
-                            public void visitCode() {
-                                super.visitCode();
-                                visitVarInsn(Opcodes.ALOAD, 0);
-                                visitMethodInsn(Opcodes.INVOKESTATIC, INTERCEPTOR_TYPE.getInternalName(), "onConnect", connectDescriptor, false);
-                            }
+            ClassVisitor visitor =
+                    new ClassVisitor(Opcodes.ASM8, writer) {
+                        @Override
+                        public MethodVisitor visitMethod(
+                                int access,
+                                String name,
+                                String descriptor,
+                                String signature,
+                                String[] exceptions) {
+                            MethodVisitor methodVisitor =
+                                    super.visitMethod(
+                                            access, name, descriptor, signature, exceptions);
+                            if (name.equals("connect")
+                                    && descriptor.equals(connectMethodDescriptor)) {
+                                return new MethodVisitor(Opcodes.ASM8, methodVisitor) {
+                                    @Override
+                                    public void visitCode() {
+                                        super.visitCode();
+                                        visitVarInsn(Opcodes.ALOAD, 0);
+                                        visitMethodInsn(
+                                                Opcodes.INVOKESTATIC,
+                                                INTERCEPTOR_TYPE.getInternalName(),
+                                                "onConnect",
+                                                connectDescriptor,
+                                                false);
+                                    }
 
-                            @Override
-                            public void visitMaxs(int maxStack, int maxLocals) {
-                                super.visitMaxs(Math.max(1, maxStack), maxLocals);
+                                    @Override
+                                    public void visitMaxs(int maxStack, int maxLocals) {
+                                        super.visitMaxs(Math.max(1, maxStack), maxLocals);
+                                    }
+                                };
                             }
-                        };
-                    }
-                    return methodVisitor;
-                }
-            };
+                            return methodVisitor;
+                        }
+                    };
             reader.accept(visitor, 0);
 
             return writer.toByteArray();
@@ -92,36 +115,52 @@ public class Agent {
             System.out.println("* Instrumenting BuildExecuter");
 
             Type resultHandler = Type.getObjectType("org/gradle/tooling/ResultHandler");
-            Type abstractHandlerType = Type.getObjectType("org/gradle/tooling/internal/consumer/AbstractLongRunningOperation");
+            Type abstractHandlerType =
+                    Type.getObjectType(
+                            "org/gradle/tooling/internal/consumer/AbstractLongRunningOperation");
             String runMethodDescriptor = Type.getMethodDescriptor(Type.VOID_TYPE, resultHandler);
-            String startOperationDescriptor = Type.getMethodDescriptor(resultHandler, abstractHandlerType, resultHandler);
+            String startOperationDescriptor =
+                    Type.getMethodDescriptor(resultHandler, abstractHandlerType, resultHandler);
 
             ClassReader reader = new ClassReader(originalByteCode);
             ClassWriter writer = new ClassWriter(0);
-            ClassVisitor visitor = new ClassVisitor(Opcodes.ASM8, writer) {
-                @Override
-                public MethodVisitor visitMethod(int access, String name, String descriptor, String signature, String[] exceptions) {
-                    MethodVisitor methodVisitor = super.visitMethod(access, name, descriptor, signature, exceptions);
-                    if (name.equals("run") && descriptor.equals(runMethodDescriptor)) {
-                        return new MethodVisitor(Opcodes.ASM8, methodVisitor) {
-                            @Override
-                            public void visitCode() {
-                                super.visitCode();
-                                visitVarInsn(Opcodes.ALOAD, 0);
-                                visitVarInsn(Opcodes.ALOAD, 1);
-                                visitMethodInsn(Opcodes.INVOKESTATIC, INTERCEPTOR_TYPE.getInternalName(), "onStartOperation", startOperationDescriptor, false);
-                                visitVarInsn(Opcodes.ASTORE, 1);
-                            }
+            ClassVisitor visitor =
+                    new ClassVisitor(Opcodes.ASM8, writer) {
+                        @Override
+                        public MethodVisitor visitMethod(
+                                int access,
+                                String name,
+                                String descriptor,
+                                String signature,
+                                String[] exceptions) {
+                            MethodVisitor methodVisitor =
+                                    super.visitMethod(
+                                            access, name, descriptor, signature, exceptions);
+                            if (name.equals("run") && descriptor.equals(runMethodDescriptor)) {
+                                return new MethodVisitor(Opcodes.ASM8, methodVisitor) {
+                                    @Override
+                                    public void visitCode() {
+                                        super.visitCode();
+                                        visitVarInsn(Opcodes.ALOAD, 0);
+                                        visitVarInsn(Opcodes.ALOAD, 1);
+                                        visitMethodInsn(
+                                                Opcodes.INVOKESTATIC,
+                                                INTERCEPTOR_TYPE.getInternalName(),
+                                                "onStartOperation",
+                                                startOperationDescriptor,
+                                                false);
+                                        visitVarInsn(Opcodes.ASTORE, 1);
+                                    }
 
-                            @Override
-                            public void visitMaxs(int maxStack, int maxLocals) {
-                                super.visitMaxs(Math.max(2, maxStack), maxLocals);
+                                    @Override
+                                    public void visitMaxs(int maxStack, int maxLocals) {
+                                        super.visitMaxs(Math.max(2, maxStack), maxLocals);
+                                    }
+                                };
                             }
-                        };
-                    }
-                    return methodVisitor;
-                }
-            };
+                            return methodVisitor;
+                        }
+                    };
             reader.accept(visitor, 0);
 
             return writer.toByteArray();
@@ -143,7 +182,11 @@ public class Agent {
                             break;
                         }
                         if (entry.getName().endsWith(".class")) {
-                            injectClass(loader, entry.getName().substring(0, entry.getName().length() - 6), entry.getSize(), inputStream);
+                            injectClass(
+                                    loader,
+                                    entry.getName().substring(0, entry.getName().length() - 6),
+                                    entry.getSize(),
+                                    inputStream);
                         }
                     }
                 }
@@ -154,7 +197,9 @@ public class Agent {
             supportClassesInjected = true;
         }
 
-        private static void injectClass(ClassLoader loader, String internalName, long length, InputStream inputStream) throws IOException {
+        private static void injectClass(
+                ClassLoader loader, String internalName, long length, InputStream inputStream)
+                throws IOException {
             byte[] bytecode = new byte[(int) length];
             int remaining = bytecode.length;
             while (remaining > 0) {
@@ -164,7 +209,8 @@ public class Agent {
                 }
                 remaining -= nread;
             }
-            Unsafe.getUnsafe().defineClass(internalName, bytecode, 0, bytecode.length, loader, null);
+            Unsafe.getUnsafe()
+                    .defineClass(internalName, bytecode, 0, bytecode.length, loader, null);
         }
     }
 }

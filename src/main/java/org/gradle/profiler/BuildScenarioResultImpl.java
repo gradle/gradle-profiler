@@ -10,7 +10,8 @@ import java.util.Collections;
 import java.util.List;
 import java.util.function.Consumer;
 
-public class BuildScenarioResultImpl<T extends BuildInvocationResult> implements BuildScenarioResult<T>, Consumer<T> {
+public class BuildScenarioResultImpl<T extends BuildInvocationResult>
+        implements BuildScenarioResult<T>, Consumer<T> {
     private final ScenarioDefinition scenario;
     private final List<Sample<? super T>> samples;
     private final List<T> results = new ArrayList<>();

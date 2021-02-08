@@ -37,7 +37,14 @@ public class JProfilerProfiler extends InstrumentingProfiler {
     }
 
     @Override
-    protected JvmArgsCalculator jvmArgsWithInstrumentation(ScenarioSettings settings, boolean startRecordingOnProcessStart, boolean captureSnapshotOnProcessExit) {
-        return new JProfilerJvmArgsCalculator(jProfilerConfig, settings, startRecordingOnProcessStart, captureSnapshotOnProcessExit);
+    protected JvmArgsCalculator jvmArgsWithInstrumentation(
+            ScenarioSettings settings,
+            boolean startRecordingOnProcessStart,
+            boolean captureSnapshotOnProcessExit) {
+        return new JProfilerJvmArgsCalculator(
+                jProfilerConfig,
+                settings,
+                startRecordingOnProcessStart,
+                captureSnapshotOnProcessExit);
     }
 }

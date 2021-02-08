@@ -10,9 +10,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
-/**
- * Runs a single invocation of a Gradle build and collects the result.
- */
+/** Runs a single invocation of a Gradle build and collects the result. */
 public class BuildUnderTestInvoker {
     private final List<String> jvmArgs;
     private final List<String> gradleArgs;
@@ -21,7 +19,12 @@ public class BuildUnderTestInvoker {
     private final BuildOperationInstrumentation buildOperationInstrumentation;
     private final Map<String, Duration> previousGcTimes = new HashMap<>();
 
-    public BuildUnderTestInvoker(List<String> jvmArgs, List<String> gradleArgs, GradleClient gradleClient, PidInstrumentation pidInstrumentation, BuildOperationInstrumentation buildOperationInstrumentation) {
+    public BuildUnderTestInvoker(
+            List<String> jvmArgs,
+            List<String> gradleArgs,
+            GradleClient gradleClient,
+            PidInstrumentation pidInstrumentation,
+            BuildOperationInstrumentation buildOperationInstrumentation) {
         this.jvmArgs = jvmArgs;
         this.gradleArgs = gradleArgs;
         this.gradleClient = gradleClient;
@@ -61,28 +64,44 @@ public class BuildUnderTestInvoker {
             String pid = pidInstrumentation.getPidForLastBuild();
             Logging.detailed().printf("Used daemon with pid %s%n", pid);
 
-            Optional<Duration> garbageCollectionTime = buildOperationInstrumentation.getTotalGarbageCollectionTime()
-                .map(currentTotal -> {
-                    Duration previousTotal = previousGcTimes.getOrDefault(pid, Duration.ZERO);
-                    previousGcTimes.put(pid, currentTotal);
-                    return currentTotal.minus(previousTotal);
-                });
-            Optional<Duration> timeToTaskExecution = buildOperationInstrumentation.getTimeToTaskExecution();
+            Optional<Duration> garbageCollectionTime =
+                    buildOperationInstrumentation
+                            .getTotalGarbageCollectionTime()
+                            .map(
+                                    currentTotal -> {
+                                        Duration previousTotal =
+                                                previousGcTimes.getOrDefault(pid, Duration.ZERO);
+                                        previousGcTimes.put(pid, currentTotal);
+                                        return currentTotal.minus(previousTotal);
+                                    });
+            Optional<Duration> timeToTaskExecution =
+                    buildOperationInstrumentation.getTimeToTaskExecution();
 
-            Map<String, Duration> cumulativeBuildOperationTimes = buildOperationInstrumentation.getCumulativeBuildOperationTimes();
-            cumulativeBuildOperationTimes.forEach((opName, duration) -> {
-                Logging.detailed().printf("Cumulative build operation time %s ms for %s%n", duration.toMillis(), opName);
-            });
-            garbageCollectionTime.ifPresent(duration -> Logging.detailed().printf("Total GC time: %d ms%n", duration.toMillis()));
-            timeToTaskExecution.ifPresent(duration -> Logging.detailed().printf("Time to task execution %d ms%n", duration.toMillis()));
+            Map<String, Duration> cumulativeBuildOperationTimes =
+                    buildOperationInstrumentation.getCumulativeBuildOperationTimes();
+            cumulativeBuildOperationTimes.forEach(
+                    (opName, duration) -> {
+                        Logging.detailed()
+                                .printf(
+                                        "Cumulative build operation time %s ms for %s%n",
+                                        duration.toMillis(), opName);
+                    });
+            garbageCollectionTime.ifPresent(
+                    duration ->
+                            Logging.detailed()
+                                    .printf("Total GC time: %d ms%n", duration.toMillis()));
+            timeToTaskExecution.ifPresent(
+                    duration ->
+                            Logging.detailed()
+                                    .printf("Time to task execution %d ms%n", duration.toMillis()));
 
             return new GradleBuildInvocationResult(
-                buildContext,
-                executionTime,
-                garbageCollectionTime.orElse(null),
-                timeToTaskExecution.orElse(null),
-                cumulativeBuildOperationTimes,
-                pid);
+                    buildContext,
+                    executionTime,
+                    garbageCollectionTime.orElse(null),
+                    timeToTaskExecution.orElse(null),
+                    cumulativeBuildOperationTimes,
+                    pid);
         }
     }
 
@@ -101,6 +120,11 @@ public class BuildUnderTestInvoker {
     }
 
     private BuildUnderTestInvoker copy(List<String> jvmArgs, List<String> gradleArgs) {
-        return new BuildUnderTestInvoker(jvmArgs, gradleArgs, gradleClient, pidInstrumentation, buildOperationInstrumentation);
+        return new BuildUnderTestInvoker(
+                jvmArgs,
+                gradleArgs,
+                gradleClient,
+                pidInstrumentation,
+                buildOperationInstrumentation);
     }
 }

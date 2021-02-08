@@ -11,30 +11,26 @@ import org.gradle.tooling.internal.consumer.DefaultGradleConnector;
 import java.time.Duration;
 import java.util.concurrent.atomic.AtomicInteger;
 
-/**
- * Injected into Studio and called from instrumented classes.
- */
+/** Injected into Studio and called from instrumented classes. */
 public class Interceptor {
     private static final AtomicInteger COUNTER = new AtomicInteger();
 
     static ConnectionParameters connectionParameters;
 
-    /**
-     * Called when creating a connection.
-     */
+    /** Called when creating a connection. */
     public static void onConnect(DefaultGradleConnector connector) {
         System.out.println("* Creating project connection");
         if (connectionParameters == null) {
-            connectionParameters = Client.INSTANCE.receiveConnectionParameters(Duration.ofSeconds(60));
+            connectionParameters =
+                    Client.INSTANCE.receiveConnectionParameters(Duration.ofSeconds(60));
         }
         System.out.println("* Using Gradle home: " + connectionParameters.getGradleInstallation());
         connector.useInstallation(connectionParameters.getGradleInstallation());
     }
 
-    /**
-     * Called immediately prior to starting an operation.
-     */
-    public static ResultHandler<Object> onStartOperation(AbstractLongRunningOperation<?> operation, ResultHandler<Object> handler) {
+    /** Called immediately prior to starting an operation. */
+    public static ResultHandler<Object> onStartOperation(
+            AbstractLongRunningOperation<?> operation, ResultHandler<Object> handler) {
         System.out.println("* Starting tooling API operation " + operation);
         int id = COUNTER.incrementAndGet();
 

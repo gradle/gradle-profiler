@@ -7,7 +7,10 @@ public class StopDaemonAfterAction<T extends BuildInvocationResult> implements B
     private final DaemonControl daemonControl;
     private final GradleBuildConfiguration configuration;
 
-    public StopDaemonAfterAction(BuildStepAction<T> action, DaemonControl daemonControl, GradleBuildConfiguration configuration) {
+    public StopDaemonAfterAction(
+            BuildStepAction<T> action,
+            DaemonControl daemonControl,
+            GradleBuildConfiguration configuration) {
         this.action = action;
         this.daemonControl = daemonControl;
         this.configuration = configuration;

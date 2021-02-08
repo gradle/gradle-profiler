@@ -27,7 +27,9 @@ public abstract class GeneratedInitScript implements GradleArgsCalculator {
 
     public GeneratedInitScript() {
         try {
-            initScript = File.createTempFile("gradleProfiler" + getClass().getSimpleName(), ".gradle").getCanonicalFile();
+            initScript =
+                    File.createTempFile("gradleProfiler" + getClass().getSimpleName(), ".gradle")
+                            .getCanonicalFile();
         } catch (IOException e) {
             throw new RuntimeException(e);
         }

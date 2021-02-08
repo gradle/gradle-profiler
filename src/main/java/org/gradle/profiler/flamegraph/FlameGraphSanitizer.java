@@ -1,8 +1,5 @@
 package org.gradle.profiler.flamegraph;
 
-import static java.util.Arrays.asList;
-import static java.util.Collections.singletonList;
-
 import com.google.common.base.CharMatcher;
 import com.google.common.base.Joiner;
 import com.google.common.base.Splitter;
@@ -25,47 +22,79 @@ import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-/**
- * Simplifies stacks to make flame graphs more readable.
- */
+import static java.util.Arrays.asList;
+import static java.util.Collections.singletonList;
+
+/** Simplifies stacks to make flame graphs more readable. */
 public class FlameGraphSanitizer {
     private static final Splitter STACKTRACE_SPLITTER = Splitter.on(";").omitEmptyStrings();
     private static final Joiner STACKTRACE_JOINER = Joiner.on(";");
 
-    public static final SanitizeFunction COLLAPSE_BUILD_SCRIPTS = new ReplaceRegex(
-            ImmutableMap.of(
-                    Pattern.compile("build_[a-z0-9]+"), "build script",
-                    Pattern.compile("settings_[a-z0-9]+"), "settings script"
-            )
-    );
+    public static final SanitizeFunction COLLAPSE_BUILD_SCRIPTS =
+            new ReplaceRegex(
+                    ImmutableMap.of(
+                            Pattern.compile("build_[a-z0-9]+"), "build script",
+                            Pattern.compile("settings_[a-z0-9]+"), "settings script"));
 
-    public static final SanitizeFunction COLLAPSE_GRADLE_INFRASTRUCTURE = new CompositeSanitizeFunction(
-            new ChopPrefix("loadSettings"),
-            new ChopPrefix("configureBuild"),
-            new ChopPrefix("constructTaskGraph"),
-            new ChopPrefix("executeTasks"),
-            new ChopPrefix("org.gradle.api.internal.tasks.execution"),
-            new ReplaceContainment(singletonList("org.gradle.api.internal.tasks.execution"), "task execution_[j]"),
-            new ReplaceContainment(asList("DynamicObject", "Closure.call", "MetaClass", "MetaMethod", "CallSite", "ConfigureDelegate", "Method.invoke", "MethodAccessor", "Proxy", "ConfigureUtil", "Script.invoke", "ClosureBackedAction", "getProperty("), "dynamic invocation_[j]"),
-            new ReplaceContainment(asList("BuildOperation", "PluginManager", "ObjectConfigurationAction", "PluginTarget", "PluginAware", "Script.apply", "ScriptPlugin", "ScriptTarget", "ScriptRunner", "ProjectEvaluator", "Project.evaluate"), "Gradle infrastructure_[j]")
-    );
+    public static final SanitizeFunction COLLAPSE_GRADLE_INFRASTRUCTURE =
+            new CompositeSanitizeFunction(
+                    new ChopPrefix("loadSettings"),
+                    new ChopPrefix("configureBuild"),
+                    new ChopPrefix("constructTaskGraph"),
+                    new ChopPrefix("executeTasks"),
+                    new ChopPrefix("org.gradle.api.internal.tasks.execution"),
+                    new ReplaceContainment(
+                            singletonList("org.gradle.api.internal.tasks.execution"),
+                            "task execution_[j]"),
+                    new ReplaceContainment(
+                            asList(
+                                    "DynamicObject",
+                                    "Closure.call",
+                                    "MetaClass",
+                                    "MetaMethod",
+                                    "CallSite",
+                                    "ConfigureDelegate",
+                                    "Method.invoke",
+                                    "MethodAccessor",
+                                    "Proxy",
+                                    "ConfigureUtil",
+                                    "Script.invoke",
+                                    "ClosureBackedAction",
+                                    "getProperty("),
+                            "dynamic invocation_[j]"),
+                    new ReplaceContainment(
+                            asList(
+                                    "BuildOperation",
+                                    "PluginManager",
+                                    "ObjectConfigurationAction",
+                                    "PluginTarget",
+                                    "PluginAware",
+                                    "Script.apply",
+                                    "ScriptPlugin",
+                                    "ScriptTarget",
+                                    "ScriptRunner",
+                                    "ProjectEvaluator",
+                                    "Project.evaluate"),
+                            "Gradle infrastructure_[j]"));
 
     public static final SanitizeFunction SIMPLE_NAMES = new ToSimpleName();
 
     private final SanitizeFunction sanitizeFunction;
 
     public FlameGraphSanitizer(SanitizeFunction... sanitizeFunctions) {
-        ImmutableList<SanitizeFunction> functions = ImmutableList.<SanitizeFunction>builder()
-                .addAll(Arrays.asList(sanitizeFunctions))
-                .add(new CollapseDuplicateFrames())
-                .build();
+        ImmutableList<SanitizeFunction> functions =
+                ImmutableList.<SanitizeFunction>builder()
+                        .addAll(Arrays.asList(sanitizeFunctions))
+                        .add(new CollapseDuplicateFrames())
+                        .build();
         this.sanitizeFunction = new CompositeSanitizeFunction(functions);
     }
 
     public void sanitize(final File in, File out) {
         out.getParentFile().mkdirs();
         try (BufferedWriter writer = new BufferedWriter(new FileWriter(out))) {
-            try (BufferedReader reader = new BufferedReader(new InputStreamReader(new FileInputStream(in)))) {
+            try (BufferedReader reader =
+                    new BufferedReader(new InputStreamReader(new FileInputStream(in)))) {
                 String line;
                 StringBuilder sb = new StringBuilder();
                 while ((line = reader.readLine()) != null) {
@@ -90,7 +119,6 @@ public class FlameGraphSanitizer {
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
-
     }
 
     public interface SanitizeFunction {
@@ -119,7 +147,7 @@ public class FlameGraphSanitizer {
         }
     }
 
-    private static abstract class FrameWiseSanitizeFunction implements SanitizeFunction {
+    private abstract static class FrameWiseSanitizeFunction implements SanitizeFunction {
         @Override
         public final List<String> map(List<String> stack) {
             List<String> result = new ArrayList<>(stack.size());

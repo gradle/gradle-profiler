@@ -20,7 +20,8 @@ public class BenchmarkResultCollector {
         this.generators = Arrays.asList(generators);
     }
 
-    public <S extends ScenarioDefinition, T extends BuildInvocationResult> Consumer<T> scenario(S scenario, List<Sample<? super T>> samples) {
+    public <S extends ScenarioDefinition, T extends BuildInvocationResult> Consumer<T> scenario(
+            S scenario, List<Sample<? super T>> samples) {
         BuildScenarioResultImpl<T> buildScenario = new BuildScenarioResultImpl<>(scenario, samples);
         allBuilds.add(buildScenario);
         return buildScenario;
@@ -32,9 +33,7 @@ public class BenchmarkResultCollector {
         }
     }
 
-    /**
-     * Summarize the results for the user.
-     */
+    /** Summarize the results for the user. */
     public void summarizeResults(Consumer<String> consumer) {
         for (AbstractGenerator generator : generators) {
             generator.summarizeResults(consumer);

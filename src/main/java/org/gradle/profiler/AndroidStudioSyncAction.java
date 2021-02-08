@@ -5,12 +5,9 @@ import org.gradle.profiler.studio.StudioGradleClient;
 import java.time.Duration;
 import java.util.List;
 
-/**
- * A mock-up of Android studio sync.
- */
+/** A mock-up of Android studio sync. */
 public class AndroidStudioSyncAction implements BuildAction {
-    public AndroidStudioSyncAction() {
-    }
+    public AndroidStudioSyncAction() {}
 
     @Override
     public String getShortDisplayName() {

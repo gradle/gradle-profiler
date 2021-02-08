@@ -16,11 +16,12 @@ public class CliGradleClient implements GradleInvoker, GradleClient {
     private final boolean daemon;
     private final File buildLog;
 
-    public CliGradleClient(GradleBuildConfiguration gradleBuildConfiguration,
-                      File javaHome,
-                      File projectDir,
-                      boolean daemon,
-                      File buildLog) {
+    public CliGradleClient(
+            GradleBuildConfiguration gradleBuildConfiguration,
+            File javaHome,
+            File projectDir,
+            boolean daemon,
+            File buildLog) {
         this.gradleBuildConfiguration = gradleBuildConfiguration;
         this.javaHome = javaHome;
         this.projectDir = projectDir;
@@ -29,17 +30,27 @@ public class CliGradleClient implements GradleInvoker, GradleClient {
     }
 
     @Override
-    public void close() {
+    public void close() {}
+
+    @Override
+    public void loadToolingModel(
+            List<String> tasks,
+            List<String> gradleArgs,
+            List<String> jvmArgs,
+            Class<?> toolingModel) {
+        throw new UnsupportedOperationException(
+                "Cannot fetch a tooling API model using the Gradle CLI.");
     }
 
     @Override
-    public void loadToolingModel(List<String> tasks, List<String> gradleArgs, List<String> jvmArgs, Class<?> toolingModel) {
-        throw new UnsupportedOperationException("Cannot fetch a tooling API model using the Gradle CLI.");
-    }
-
-    @Override
-    public <T> T runToolingAction(List<String> tasks, List<String> gradleArgs, List<String> jvmArgs, BuildAction<T> action, Consumer<BuildActionExecuter<?>> configureAction) {
-        throw new UnsupportedOperationException("Cannot run a tooling API action using the Gradle CLI.");
+    public <T> T runToolingAction(
+            List<String> tasks,
+            List<String> gradleArgs,
+            List<String> jvmArgs,
+            BuildAction<T> action,
+            Consumer<BuildActionExecuter<?>> configureAction) {
+        throw new UnsupportedOperationException(
+                "Cannot run a tooling API action using the Gradle CLI.");
     }
 
     @Override
@@ -58,10 +69,12 @@ public class CliGradleClient implements GradleInvoker, GradleClient {
         ProcessBuilder builder = new ProcessBuilder(commandLine);
         builder.directory(projectDir);
         if (daemon) {
-            String orgGradleJvmArgs = jvmArgs.isEmpty()
-                ? ""
-                : " \"-Dorg.gradle.jvmargs=" + gradleOpts + "\"";
-            builder.environment().put("GRADLE_OPTS", "-Xmx128m -Xms128m -XX:+HeapDumpOnOutOfMemoryError" + orgGradleJvmArgs);
+            String orgGradleJvmArgs =
+                    jvmArgs.isEmpty() ? "" : " \"-Dorg.gradle.jvmargs=" + gradleOpts + "\"";
+            builder.environment()
+                    .put(
+                            "GRADLE_OPTS",
+                            "-Xmx128m -Xms128m -XX:+HeapDumpOnOutOfMemoryError" + orgGradleJvmArgs);
         } else {
             Logging.detailed().println("GRADLE_OPTS: " + gradleOpts);
             builder.environment().put("GRADLE_OPTS", gradleOpts);
@@ -86,12 +99,15 @@ public class CliGradleClient implements GradleInvoker, GradleClient {
     private static String quoteJvmArguments(boolean forSystemProperty, List<String> jvmArgs) {
         char quotes = forSystemProperty ? '\'' : '"';
         return jvmArgs.stream()
-            .peek(arg -> {
-                if (arg.contains("\"") || arg.contains("'")) {
-                    throw new IllegalArgumentException("jvmArgs must not contain quotes, but this argument does: " + arg);
-                }
-            })
-            .map(arg -> quotes + arg + quotes)
-            .collect(Collectors.joining(" "));
+                .peek(
+                        arg -> {
+                            if (arg.contains("\"") || arg.contains("'")) {
+                                throw new IllegalArgumentException(
+                                        "jvmArgs must not contain quotes, but this argument does: "
+                                                + arg);
+                            }
+                        })
+                .map(arg -> quotes + arg + quotes)
+                .collect(Collectors.joining(" "));
     }
 }

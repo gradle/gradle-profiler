@@ -1,4 +1,3 @@
 package org.gradle.trace;
 
-public interface TraceEvent {
-}
+public interface TraceEvent {}

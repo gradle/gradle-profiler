@@ -6,8 +6,9 @@ import java.util.List;
 public class ArgumentsSplitter {
 
     /**
-     * Splits the arguments string (for example, a program command line) into a collection.
-     * Only supports space-delimited and/or quoted command line arguments. This currently does not handle escaping characters such as quotes.
+     * Splits the arguments string (for example, a program command line) into a collection. Only
+     * supports space-delimited and/or quoted command line arguments. This currently does not handle
+     * escaping characters such as quotes.
      *
      * @param arguments the arguments, for example command line args.
      * @return separate command line arguments.

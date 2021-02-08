@@ -14,7 +14,7 @@ public class BuildScanProfilerFactory extends ProfilerFactory {
     @Override
     public void addOptions(final OptionParser parser) {
         parser.accepts("buildscan-version", "Version of the Build Scan plugin")
-            .availableIf("profile")
-            .withOptionalArg();
+                .availableIf("profile")
+                .withOptionalArg();
     }
 }

@@ -20,51 +20,53 @@ import java.util.function.Consumer;
 
 public class Profiler {
 
-    public static final Profiler NONE = new Profiler() {
-        @Override
-        public String toString() {
-            return "none";
-        }
-    };
+    public static final Profiler NONE =
+            new Profiler() {
+                @Override
+                public String toString() {
+                    return "none";
+                }
+            };
 
-    public void validate(ScenarioSettings settings, Consumer<String> reporter) {
-    }
+    public void validate(ScenarioSettings settings, Consumer<String> reporter) {}
 
     public ProfilerController newController(String pid, ScenarioSettings settings) {
         return ProfilerController.EMPTY;
     }
 
     /**
-     * Returns a calculator that provides JVM args that should be applied to all builds, including warm-up builds.
+     * Returns a calculator that provides JVM args that should be applied to all builds, including
+     * warm-up builds.
      */
     public JvmArgsCalculator newJvmArgsCalculator(ScenarioSettings settings) {
         return JvmArgsCalculator.DEFAULT;
     }
 
     /**
-     * Returns a calculator that provides JVM args that should be applied to instrumented builds, but not warm-up builds.
+     * Returns a calculator that provides JVM args that should be applied to instrumented builds,
+     * but not warm-up builds.
      */
     public JvmArgsCalculator newInstrumentedBuildsJvmArgsCalculator(ScenarioSettings settings) {
         return JvmArgsCalculator.DEFAULT;
     }
 
     /**
-     * Returns a calculator that provides Gradle args that should be applied to all builds, including warm-up builds.
+     * Returns a calculator that provides Gradle args that should be applied to all builds,
+     * including warm-up builds.
      */
     public GradleArgsCalculator newGradleArgsCalculator(ScenarioSettings settings) {
         return GradleArgsCalculator.DEFAULT;
     }
 
     /**
-     * Returns a calculator that provides Gradle args that should be applied to instrumented builds, but not warm-up builds.
+     * Returns a calculator that provides Gradle args that should be applied to instrumented builds,
+     * but not warm-up builds.
      */
-    public GradleArgsCalculator newInstrumentedBuildsGradleArgsCalculator(ScenarioSettings settings) {
+    public GradleArgsCalculator newInstrumentedBuildsGradleArgsCalculator(
+            ScenarioSettings settings) {
         return GradleArgsCalculator.DEFAULT;
     }
 
-    /**
-     * Describe the given file, if recognized and should be reported to the user.
-     */
-    public void summarizeResultFile(File resultFile, Consumer<String> consumer) {
-    }
+    /** Describe the given file, if recognized and should be reported to the user. */
+    public void summarizeResultFile(File resultFile, Consumer<String> consumer) {}
 }

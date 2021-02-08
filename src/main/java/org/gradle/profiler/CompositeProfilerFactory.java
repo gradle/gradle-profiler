@@ -20,7 +20,10 @@ class CompositeProfilerFactory extends ProfilerFactory {
 
     @Override
     public Profiler createFromOptions(OptionSet parsedOptions) {
-        return new CompositeProfiler(delegates.stream().map(profiler -> profiler.createFromOptions(parsedOptions)).collect(Collectors.toList()));
+        return new CompositeProfiler(
+                delegates.stream()
+                        .map(profiler -> profiler.createFromOptions(parsedOptions))
+                        .collect(Collectors.toList()));
     }
 
     @Override

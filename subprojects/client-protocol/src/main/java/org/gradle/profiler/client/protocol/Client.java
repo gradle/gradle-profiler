@@ -5,9 +5,7 @@ import java.net.InetAddress;
 import java.net.Socket;
 import java.time.Duration;
 
-/**
- * A singleton that runs inside a client process to communicate with the controller process.
- */
+/** A singleton that runs inside a client process to communicate with the controller process. */
 public class Client {
     public static final Client INSTANCE = new Client();
 

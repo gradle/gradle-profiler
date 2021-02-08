@@ -12,8 +12,6 @@ public class ApplyAbiChangeToKotlinSourceFileMutator extends AbstractKotlinSourc
 
     @Override
     protected void applyChangeTo(BuildContext context, StringBuilder text) {
-        text.append("fun _m")
-                .append(context.getUniqueBuildId())
-                .append("() {}");
+        text.append("fun _m").append(context.getUniqueBuildId()).append("() {}");
     }
 }

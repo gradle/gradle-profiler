@@ -16,12 +16,20 @@ public class ClearBuildCacheMutator extends AbstractCacheCleanupMutator {
 
     @Override
     protected void cleanupCacheDir(File cacheDir) {
-        Arrays.stream(Objects.requireNonNull(cacheDir.listFiles((file) -> file.getName().length() == 32))).forEach(AbstractCleanupMutator::delete);
+        Arrays.stream(
+                        Objects.requireNonNull(
+                                cacheDir.listFiles((file) -> file.getName().length() == 32)))
+                .forEach(AbstractCleanupMutator::delete);
     }
 
     public static class Configurator extends AbstractCleanupMutator.Configurator {
         @Override
-        protected BuildMutator newInstance(Config scenario, String scenarioName, InvocationSettings settings, String key, CleanupSchedule schedule) {
+        protected BuildMutator newInstance(
+                Config scenario,
+                String scenarioName,
+                InvocationSettings settings,
+                String key,
+                CleanupSchedule schedule) {
             return new ClearBuildCacheMutator(settings.getGradleUserHome(), schedule);
         }
     }

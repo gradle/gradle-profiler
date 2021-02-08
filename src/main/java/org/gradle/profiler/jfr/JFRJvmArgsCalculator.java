@@ -13,7 +13,8 @@ public class JFRJvmArgsCalculator implements JvmArgsCalculator {
     private final boolean captureOnExit;
     private final File outputFile;
 
-    public JFRJvmArgsCalculator(JFRArgs args, boolean profileOnStart, boolean captureOnExit, File outputFile) {
+    public JFRJvmArgsCalculator(
+            JFRArgs args, boolean profileOnStart, boolean captureOnExit, File outputFile) {
         this.args = args;
         this.profileOnStart = profileOnStart;
         this.captureOnExit = captureOnExit;
@@ -24,7 +25,8 @@ public class JFRJvmArgsCalculator implements JvmArgsCalculator {
     public void calculateJvmArgs(List<String> jvmArgs) {
         if (!JavaVersion.current().isJava11Compatible()) {
             if (!isOracleVm()) {
-                throw new IllegalArgumentException("JFR is only supported on OpenJDK since Java 11 and Oracle JDK since Java 7");
+                throw new IllegalArgumentException(
+                        "JFR is only supported on OpenJDK since Java 11 and Oracle JDK since Java 7");
             }
             jvmArgs.add("-XX:+UnlockCommercialFeatures");
         }
@@ -32,14 +34,16 @@ public class JFRJvmArgsCalculator implements JvmArgsCalculator {
         jvmArgs.add("-XX:+UnlockDiagnosticVMOptions");
         jvmArgs.add("-XX:+DebugNonSafepoints");
 
-        StringBuilder flightRecorderOptions = new StringBuilder("-XX:FlightRecorderOptions=stackdepth=1024");
+        StringBuilder flightRecorderOptions =
+                new StringBuilder("-XX:FlightRecorderOptions=stackdepth=1024");
 
         if (profileOnStart) {
             jvmArgs.add("-XX:StartFlightRecording=name=profile,settings=" + args.getJfrSettings());
             if (captureOnExit) {
-                flightRecorderOptions.append(",defaultrecording=true,dumponexit=true")
-                    .append(",dumponexitpath=")
-                    .append(outputFile.getParentFile().getAbsolutePath());
+                flightRecorderOptions
+                        .append(",defaultrecording=true,dumponexit=true")
+                        .append(",dumponexitpath=")
+                        .append(outputFile.getParentFile().getAbsolutePath());
             }
         }
 

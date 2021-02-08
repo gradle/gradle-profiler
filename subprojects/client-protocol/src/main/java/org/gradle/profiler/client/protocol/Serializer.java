@@ -67,26 +67,29 @@ public class Serializer {
 
     public <T extends Message> T receive(Class<T> type, Duration timeout) {
         BlockingQueue<Object> queue = new LinkedBlockingQueue<>();
-        Thread reader = new Thread(() -> {
-            try {
-                Object result;
-                try {
-                    result = receive();
-                } catch (RuntimeException e) {
-                    result = e;
-                }
-                queue.put(result);
-            } catch (InterruptedException e) {
-                throw new RuntimeException(e);
-            }
-        });
+        Thread reader =
+                new Thread(
+                        () -> {
+                            try {
+                                Object result;
+                                try {
+                                    result = receive();
+                                } catch (RuntimeException e) {
+                                    result = e;
+                                }
+                                queue.put(result);
+                            } catch (InterruptedException e) {
+                                throw new RuntimeException(e);
+                            }
+                        });
         reader.start();
         Object result;
         try {
             result = queue.poll(timeout.toMillis(), TimeUnit.MILLISECONDS);
             if (result == null) {
                 reader.interrupt();
-                throw new IllegalStateException(String.format("Timeout waiting to receive message from %s.", peerName));
+                throw new IllegalStateException(
+                        String.format("Timeout waiting to receive message from %s.", peerName));
             }
             reader.join();
         } catch (InterruptedException e) {
@@ -96,7 +99,8 @@ public class Serializer {
             throw (RuntimeException) result;
         }
         if (result == NULL) {
-            throw new IllegalStateException(String.format("Connection to %s has closed.", peerName));
+            throw new IllegalStateException(
+                    String.format("Connection to %s has closed.", peerName));
         }
         return type.cast(result);
     }
@@ -126,7 +130,8 @@ public class Serializer {
                     String gradleHome = connection.readString();
                     return new ConnectionParameters(new File(gradleHome));
                 default:
-                    throw new RuntimeException(String.format("Received unexpected message from %s.", peerName));
+                    throw new RuntimeException(
+                            String.format("Received unexpected message from %s.", peerName));
             }
         } catch (IOException e) {
             throw new RuntimeException(String.format("Could not read from %s.", peerName), e);

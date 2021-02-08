@@ -14,7 +14,12 @@ public class GradleBuildConfiguration {
     private final List<String> jvmArguments;
     private final boolean usesScanPlugin;
 
-    public GradleBuildConfiguration(GradleVersion gradleVersion, File gradleHome, File javaHome, List<String> jvmArguments, boolean usesScanPlugin) {
+    public GradleBuildConfiguration(
+            GradleVersion gradleVersion,
+            File gradleHome,
+            File javaHome,
+            List<String> jvmArguments,
+            boolean usesScanPlugin) {
         this.gradleVersion = gradleVersion;
         this.gradleHome = gradleHome;
         this.javaHome = javaHome;
@@ -59,9 +64,7 @@ public class GradleBuildConfiguration {
     }
 
     public void addGradleCommand(List<String> commandLine) {
-        String gradleScriptName = OperatingSystem.isWindows()
-            ? "gradle.bat"
-            : "gradle";
+        String gradleScriptName = OperatingSystem.isWindows() ? "gradle.bat" : "gradle";
         commandLine.add(new File(gradleHome, "bin/" + gradleScriptName).getAbsolutePath());
     }
 }

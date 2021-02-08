@@ -30,7 +30,8 @@ public class DefaultGradleBuildConfigurationReader implements GradleBuildConfigu
     private final Map<String, GradleBuildConfiguration> versions = new HashMap<>();
     private GradleBuildConfiguration defaultVersion;
 
-    public DefaultGradleBuildConfigurationReader(File projectDir, File gradleUserHome, DaemonControl daemonControl) throws IOException {
+    public DefaultGradleBuildConfigurationReader(
+            File projectDir, File gradleUserHome, DaemonControl daemonControl) throws IOException {
         this.projectDir = projectDir;
         this.gradleUserHome = gradleUserHome;
         this.daemonControl = daemonControl;
@@ -44,14 +45,15 @@ public class DefaultGradleBuildConfigurationReader implements GradleBuildConfigu
     private void generateInitScript() throws IOException {
         try (PrintWriter writer = new PrintWriter(new FileWriter(initScript))) {
             writer.println(
-                "rootProject {\n" +
-                    "  afterEvaluate {\n" +
-                    "    def detailsFile = new File(new URI('" + buildDetails.toURI() + "'))\n" +
-                    "    detailsFile.text = \"${gradle.gradleHomeDir}\\n\"\n" +
-                    "    detailsFile << plugins.hasPlugin('com.gradle.build-scan') << '\\n'\n" +
-                    "  }\n" +
-                    "}\n"
-            );
+                    "rootProject {\n"
+                            + "  afterEvaluate {\n"
+                            + "    def detailsFile = new File(new URI('"
+                            + buildDetails.toURI()
+                            + "'))\n"
+                            + "    detailsFile.text = \"${gradle.gradleHomeDir}\\n\"\n"
+                            + "    detailsFile << plugins.hasPlugin('com.gradle.build-scan') << '\\n'\n"
+                            + "  }\n"
+                            + "}\n");
         }
     }
 
@@ -77,9 +79,14 @@ public class DefaultGradleBuildConfigurationReader implements GradleBuildConfigu
                 return probe(connector().useGradleVersion(versionString));
             }
         } catch (IOException e) {
-            throw new RuntimeException("Could not locate Gradle distribution for requested version '" + versionString + "'.", e);
+            throw new RuntimeException(
+                    "Could not locate Gradle distribution for requested version '"
+                            + versionString
+                            + "'.",
+                    e);
         }
-        throw new IllegalArgumentException("Unrecognized Gradle version '" + versionString + "' specified.");
+        throw new IllegalArgumentException(
+                "Unrecognized Gradle version '" + versionString + "' specified.");
     }
 
     @Override
@@ -92,7 +99,8 @@ public class DefaultGradleBuildConfigurationReader implements GradleBuildConfigu
     }
 
     private GradleConnector connector() {
-        return GradleConnector.newConnector().useGradleUserHomeDir(gradleUserHome.getAbsoluteFile());
+        return GradleConnector.newConnector()
+                .useGradleUserHomeDir(gradleUserHome.getAbsoluteFile());
     }
 
     private List<String> readBuildDetails() {
@@ -107,18 +115,22 @@ public class DefaultGradleBuildConfigurationReader implements GradleBuildConfigu
         GradleBuildConfiguration version;
         try (ProjectConnection connection = connector.forProjectDirectory(projectDir).connect()) {
             BuildEnvironment buildEnvironment = connection.getModel(BuildEnvironment.class);
-            new ToolingApiGradleClient(connection).runTasks(ImmutableList.of("help"), ImmutableList.of("-I", initScript.getAbsolutePath()), ImmutableList.of());
+            new ToolingApiGradleClient(connection)
+                    .runTasks(
+                            ImmutableList.of("help"),
+                            ImmutableList.of("-I", initScript.getAbsolutePath()),
+                            ImmutableList.of());
             List<String> buildDetails = readBuildDetails();
             JavaEnvironment javaEnvironment = buildEnvironment.getJava();
             List<String> allJvmArgs = new ArrayList<>(javaEnvironment.getJvmArguments());
             allJvmArgs.addAll(readSystemPropertiesFromGradleProperties());
-            version = new GradleBuildConfiguration(
-                GradleVersion.version(buildEnvironment.getGradle().getGradleVersion()),
-                new File(buildDetails.get(0)),
-                javaEnvironment.getJavaHome(),
-                allJvmArgs,
-                Boolean.valueOf(buildDetails.get(1))
-            );
+            version =
+                    new GradleBuildConfiguration(
+                            GradleVersion.version(buildEnvironment.getGradle().getGradleVersion()),
+                            new File(buildDetails.get(0)),
+                            javaEnvironment.getJavaHome(),
+                            allJvmArgs,
+                            Boolean.valueOf(buildDetails.get(1)));
         }
         daemonControl.stop(version);
         return version;
@@ -132,7 +144,9 @@ public class DefaultGradleBuildConfigurationReader implements GradleBuildConfigu
         if (jvmArgs == null) {
             return Collections.emptyList();
         }
-        return ArgumentsSplitter.split(jvmArgs).stream().filter(arg -> arg.startsWith("-D")).collect(Collectors.toList());
+        return ArgumentsSplitter.split(jvmArgs).stream()
+                .filter(arg -> arg.startsWith("-D"))
+                .collect(Collectors.toList());
     }
 
     private String getJvmArgsProperty(File scope) {

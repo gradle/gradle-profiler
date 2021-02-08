@@ -34,10 +34,12 @@ class CompositeProfiler extends Profiler {
 
     @Override
     public ProfilerController newController(final String pid, final ScenarioSettings settings) {
-        List<ProfilerController> controllers = delegates.stream()
-            .map((Profiler prof) -> prof.newController(pid,
-                settingsFor(prof, settings)))
-            .collect(Collectors.toList());
+        List<ProfilerController> controllers =
+                delegates.stream()
+                        .map(
+                                (Profiler prof) ->
+                                        prof.newController(pid, settingsFor(prof, settings)))
+                        .collect(Collectors.toList());
         return new ProfilerController() {
             @Override
             public void startSession() throws IOException, InterruptedException {
@@ -69,38 +71,49 @@ class CompositeProfiler extends Profiler {
         };
     }
 
-    private ScenarioSettings settingsFor(final Profiler prof, final ScenarioSettings scenarioSettings) {
+    private ScenarioSettings settingsFor(
+            final Profiler prof, final ScenarioSettings scenarioSettings) {
         InvocationSettings settings = scenarioSettings.getInvocationSettings();
-        InvocationSettings newSettings = new InvocationSettings.InvocationSettingsBuilder()
-            .setProjectDir(settings.getProjectDir())
-            .setProfiler(prof)
-            .setBenchmark(settings.isBenchmark())
-            .setOutputDir(settings.getOutputDir())
-            .setInvoker(settings.getInvoker())
-            .setDryRun(settings.isDryRun())
-            .setScenarioFile(settings.getScenarioFile())
-            .setVersions(settings.getVersions())
-            .setTargets(settings.getTargets())
-            .setSysProperties(settings.getSystemProperties())
-            .setGradleUserHome(settings.getGradleUserHome())
-            .setWarmupCount(settings.getWarmUpCount())
-            .setIterations(settings.getBuildCount())
-            .setMeasureGarbageCollection(settings.isMeasureGarbageCollection())
-            .setMeasureConfigTime(settings.isMeasureConfigTime())
-            .setMeasuredBuildOperations(settings.getMeasuredBuildOperations())
-            .setCsvFormat(settings.getCsvFormat())
-            .build();
+        InvocationSettings newSettings =
+                new InvocationSettings.InvocationSettingsBuilder()
+                        .setProjectDir(settings.getProjectDir())
+                        .setProfiler(prof)
+                        .setBenchmark(settings.isBenchmark())
+                        .setOutputDir(settings.getOutputDir())
+                        .setInvoker(settings.getInvoker())
+                        .setDryRun(settings.isDryRun())
+                        .setScenarioFile(settings.getScenarioFile())
+                        .setVersions(settings.getVersions())
+                        .setTargets(settings.getTargets())
+                        .setSysProperties(settings.getSystemProperties())
+                        .setGradleUserHome(settings.getGradleUserHome())
+                        .setWarmupCount(settings.getWarmUpCount())
+                        .setIterations(settings.getBuildCount())
+                        .setMeasureGarbageCollection(settings.isMeasureGarbageCollection())
+                        .setMeasureConfigTime(settings.isMeasureConfigTime())
+                        .setMeasuredBuildOperations(settings.getMeasuredBuildOperations())
+                        .setCsvFormat(settings.getCsvFormat())
+                        .build();
         return new ScenarioSettings(newSettings, scenarioSettings.getScenario());
     }
 
     @Override
     public JvmArgsCalculator newJvmArgsCalculator(final ScenarioSettings settings) {
-        return jvmArgs -> delegates.forEach(prof -> prof.newJvmArgsCalculator(settingsFor(prof, settings)).calculateJvmArgs(jvmArgs));
+        return jvmArgs ->
+                delegates.forEach(
+                        prof ->
+                                prof.newJvmArgsCalculator(settingsFor(prof, settings))
+                                        .calculateJvmArgs(jvmArgs));
     }
 
     @Override
     public JvmArgsCalculator newInstrumentedBuildsJvmArgsCalculator(ScenarioSettings settings) {
-        return jvmArgs -> delegates.forEach(prof -> prof.newInstrumentedBuildsJvmArgsCalculator(settingsFor(prof, settings)).calculateJvmArgs(jvmArgs));
+        return jvmArgs ->
+                delegates.forEach(
+                        prof ->
+                                prof.newInstrumentedBuildsJvmArgsCalculator(
+                                                settingsFor(prof, settings))
+                                        .calculateJvmArgs(jvmArgs));
     }
 
     @Override
@@ -108,17 +121,25 @@ class CompositeProfiler extends Profiler {
         return new GradleArgsCalculator() {
             @Override
             public void calculateGradleArgs(List<String> gradleArgs) {
-                delegates.forEach(prof -> prof.newGradleArgsCalculator(settingsFor(prof, settings)).calculateGradleArgs(gradleArgs));
+                delegates.forEach(
+                        prof ->
+                                prof.newGradleArgsCalculator(settingsFor(prof, settings))
+                                        .calculateGradleArgs(gradleArgs));
             }
         };
     }
 
     @Override
-    public GradleArgsCalculator newInstrumentedBuildsGradleArgsCalculator(ScenarioSettings settings) {
+    public GradleArgsCalculator newInstrumentedBuildsGradleArgsCalculator(
+            ScenarioSettings settings) {
         return new GradleArgsCalculator() {
             @Override
             public void calculateGradleArgs(List<String> gradleArgs) {
-                delegates.forEach(prof -> prof.newInstrumentedBuildsGradleArgsCalculator(settingsFor(prof, settings)).calculateGradleArgs(gradleArgs));
+                delegates.forEach(
+                        prof ->
+                                prof.newInstrumentedBuildsGradleArgsCalculator(
+                                                settingsFor(prof, settings))
+                                        .calculateGradleArgs(gradleArgs));
             }
         };
     }

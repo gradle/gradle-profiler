@@ -7,25 +7,30 @@ import java.util.function.Consumer;
  * A profiler that can:
  *
  * <ul>
- * <li>Instrument a JVM using JVM args</li>
- * <li>Start recording on JVM start, using JVM args</li>
- * <li>Capture snapshot on JVM exit, using JVM args</li>
- * <li>Use some communication mechanism to start recording in an instrumented JVM that is currently running.</li>
- * <li>Use some communication mechanism to pause recording in an instrumented JVM that is currently running.</li>
- * <li>Use some communication mechanism to capture a snapshot from an instrumented JVM that is currently running.</li>
+ *   <li>Instrument a JVM using JVM args
+ *   <li>Start recording on JVM start, using JVM args
+ *   <li>Capture snapshot on JVM exit, using JVM args
+ *   <li>Use some communication mechanism to start recording in an instrumented JVM that is
+ *       currently running.
+ *   <li>Use some communication mechanism to pause recording in an instrumented JVM that is
+ *       currently running.
+ *   <li>Use some communication mechanism to capture a snapshot from an instrumented JVM that is
+ *       currently running.
  * </ul>
  *
- * <p>The profiler may support starting recording multiple times for a given JVM. The implementation should indicate this by overriding {@link #canRestartRecording(ScenarioSettings)}.</p>
+ * <p>The profiler may support starting recording multiple times for a given JVM. The implementation
+ * should indicate this by overriding {@link #canRestartRecording(ScenarioSettings)}.
  */
 public abstract class InstrumentingProfiler extends Profiler {
     /**
      * Calculates the JVM args for all builds, including warm-ups.
      *
-     * <p>When the daemon will not be reused, this does nothing as there is no need to instrument the warm-up
-     * builds in this case.
+     * <p>When the daemon will not be reused, this does nothing as there is no need to instrument
+     * the warm-up builds in this case.
      *
-     * <p>When the daemon will be reused for all builds, then instrument the daemon but do not start recording or capture snapshots yet.
-     * Recording and capture will be enabled later when the measured builds run.
+     * <p>When the daemon will be reused for all builds, then instrument the daemon but do not start
+     * recording or capture snapshots yet. Recording and capture will be enabled later when the
+     * measured builds run.
      */
     @Override
     public JvmArgsCalculator newJvmArgsCalculator(ScenarioSettings settings) {
@@ -38,11 +43,14 @@ public abstract class InstrumentingProfiler extends Profiler {
     /**
      * Calculates the JVM args for measured builds.
      *
-     * <p>When the daemon will be reused for all builds, this does nothing as the daemon is already instrumented (above).</p>
+     * <p>When the daemon will be reused for all builds, this does nothing as the daemon is already
+     * instrumented (above).
      *
-     * <p>When using a cold daemon, start the JVM with recording enabled but do not capture snapshots yet.</p>
+     * <p>When using a cold daemon, start the JVM with recording enabled but do not capture
+     * snapshots yet.
      *
-     * <p>When using no daemon, start the JVM with recording enabled and capture a snapshot when the JVM exits.</p>
+     * <p>When using no daemon, start the JVM with recording enabled and capture a snapshot when the
+     * JVM exits.
      */
     @Override
     public JvmArgsCalculator newInstrumentedBuildsJvmArgsCalculator(ScenarioSettings settings) {
@@ -56,14 +64,14 @@ public abstract class InstrumentingProfiler extends Profiler {
     /**
      * Creates a controller for this profiler.
      *
-     * <p>When the daemon will be reused for all builds, create a controller that starts and stops recording when
-     * requested, and that captures a snapshot at the end of the session.</p>
+     * <p>When the daemon will be reused for all builds, create a controller that starts and stops
+     * recording when requested, and that captures a snapshot at the end of the session.
      *
-     * <p>When using a cold daemon, create a controller that stops recording and captures a snapshot when requested,
-     * but does not start recording as this is already enabled when the JVM starts.</p>
+     * <p>When using a cold daemon, create a controller that stops recording and captures a snapshot
+     * when requested, but does not start recording as this is already enabled when the JVM starts.
      *
-     * <p>When using no daemon, return a controller that finishes the session only, as recording and snapshot capture
-     * are already enabled when the JVM starts.</p>
+     * <p>When using no daemon, return a controller that finishes the session only, as recording and
+     * snapshot capture are already enabled when the JVM starts.
      */
     @Override
     public ProfilerController newController(String pid, ScenarioSettings settings) {
@@ -83,42 +91,47 @@ public abstract class InstrumentingProfiler extends Profiler {
         validateMultipleDaemons(settings, reporter);
     }
 
-    protected void validateMultipleIterationsWithCleanupAction(ScenarioSettings settings, Consumer<String> reporter) {
+    protected void validateMultipleIterationsWithCleanupAction(
+            ScenarioSettings settings, Consumer<String> reporter) {
         GradleScenarioDefinition scenario = settings.getScenario();
-        if (scenario.getBuildCount() > 1 && !canRestartRecording(settings) && scenario.getCleanupAction().isDoesSomething()) {
-            reporter.accept("Profiler " + toString() + " does not support profiling multiple iterations with cleanup steps in between.");
+        if (scenario.getBuildCount() > 1
+                && !canRestartRecording(settings)
+                && scenario.getCleanupAction().isDoesSomething()) {
+            reporter.accept(
+                    "Profiler "
+                            + toString()
+                            + " does not support profiling multiple iterations with cleanup steps in between.");
         }
     }
 
     protected void validateMultipleDaemons(ScenarioSettings settings, Consumer<String> reporter) {
         GradleScenarioDefinition scenario = settings.getScenario();
         if (scenario.getBuildCount() > 1 && !scenario.getInvoker().isReuseDaemon()) {
-            reporter.accept("Profiler " + toString() + " does not support profiling multiple daemons.");
+            reporter.accept(
+                    "Profiler " + toString() + " does not support profiling multiple daemons.");
         }
     }
 
-    /**
-     * Can this profiler implementation restart recording, for the same JVM?
-     */
+    /** Can this profiler implementation restart recording, for the same JVM? */
     protected boolean canRestartRecording(ScenarioSettings settings) {
         return false;
     }
 
-    /**
-     * Creates JVM args to instrument that JVM with the given capabilities enabled.
-     */
-    protected abstract JvmArgsCalculator jvmArgsWithInstrumentation(ScenarioSettings settings, boolean startRecordingOnProcessStart, boolean captureSnapshotOnProcessExit);
+    /** Creates JVM args to instrument that JVM with the given capabilities enabled. */
+    protected abstract JvmArgsCalculator jvmArgsWithInstrumentation(
+            ScenarioSettings settings,
+            boolean startRecordingOnProcessStart,
+            boolean captureSnapshotOnProcessExit);
 
-    protected abstract SnapshotCapturingProfilerController doNewController(ScenarioSettings settings);
+    protected abstract SnapshotCapturingProfilerController doNewController(
+            ScenarioSettings settings);
 
     public interface SnapshotCapturingProfilerController {
         void startRecording(String pid) throws IOException, InterruptedException;
 
         void stopRecording(String pid) throws IOException, InterruptedException;
 
-        /**
-         * Capture snapshot, if not already performed on stop.
-         */
+        /** Capture snapshot, if not already performed on stop. */
         void captureSnapshot(String pid) throws IOException, InterruptedException;
 
         void stopSession() throws IOException, InterruptedException;
@@ -134,8 +147,7 @@ public abstract class InstrumentingProfiler extends Profiler {
         }
 
         @Override
-        public void startSession() throws IOException, InterruptedException {
-        }
+        public void startSession() throws IOException, InterruptedException {}
 
         @Override
         public void startRecording() throws IOException, InterruptedException {
@@ -156,7 +168,8 @@ public abstract class InstrumentingProfiler extends Profiler {
     private static class CaptureSnapshotOnSessionEndController extends DelegatingController {
         private String mostRecentPid;
 
-        public CaptureSnapshotOnSessionEndController(String pid, SnapshotCapturingProfilerController controller) {
+        public CaptureSnapshotOnSessionEndController(
+                String pid, SnapshotCapturingProfilerController controller) {
             super(pid, controller);
         }
 
@@ -174,7 +187,8 @@ public abstract class InstrumentingProfiler extends Profiler {
     }
 
     private static class RecordingAlreadyStartedController extends DelegatingController {
-        RecordingAlreadyStartedController(String pid, SnapshotCapturingProfilerController controller) {
+        RecordingAlreadyStartedController(
+                String pid, SnapshotCapturingProfilerController controller) {
             super(pid, controller);
         }
 
@@ -196,11 +210,9 @@ public abstract class InstrumentingProfiler extends Profiler {
         }
 
         @Override
-        public void startRecording() throws IOException, InterruptedException {
-        }
+        public void startRecording() throws IOException, InterruptedException {}
 
         @Override
-        public void stopRecording(String pid) throws IOException, InterruptedException {
-        }
+        public void stopRecording(String pid) throws IOException, InterruptedException {}
     }
 }

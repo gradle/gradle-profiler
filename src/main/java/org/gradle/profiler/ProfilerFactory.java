@@ -17,30 +17,36 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 /**
- * Represents some profiling strategy. Produces {@link Profiler} instances from a set of command-line options.
+ * Represents some profiling strategy. Produces {@link Profiler} instances from a set of
+ * command-line options.
  */
 public abstract class ProfilerFactory {
-    public static final ProfilerFactory NONE = new ProfilerFactory() {
-        @Override
-        public Profiler createFromOptions(OptionSet parsedOptions) {
-            return Profiler.NONE;
-        }
-    };
+    public static final ProfilerFactory NONE =
+            new ProfilerFactory() {
+                @Override
+                public Profiler createFromOptions(OptionSet parsedOptions) {
+                    return Profiler.NONE;
+                }
+            };
 
-    private final static Map<String, ProfilerFactory> AVAILABLE_PROFILERS = Collections.unmodifiableMap(
-        new LinkedHashMap<String, ProfilerFactory>() {{
-            put("buildscan", new BuildScanProfilerFactory());
-            put("jfr", new JfrProfilerFactory());
-            put("jprofiler", new JProfilerProfilerFactory());
-            put("yourkit", new YourKitSamplingProfilerFactory());
-            put("yourkit-tracing", new YourKitTracingProfilerFactory());
-            put("yourkit-heap", new YourKitHeapAllocationProfilerFactory());
-            put("async-profiler", AsyncProfilerFactory.INSTANCE);
-            put("async-profiler-heap", AsyncProfilerHeapAllocationProfilerFactory.INSTANCE);
-            put("heap-dump", new HeapDumpProfilerFactory());
-            put("chrome-trace", new ChromeTraceProfilerFactory());
-        }}
-    );
+    private static final Map<String, ProfilerFactory> AVAILABLE_PROFILERS =
+            Collections.unmodifiableMap(
+                    new LinkedHashMap<String, ProfilerFactory>() {
+                        {
+                            put("buildscan", new BuildScanProfilerFactory());
+                            put("jfr", new JfrProfilerFactory());
+                            put("jprofiler", new JProfilerProfilerFactory());
+                            put("yourkit", new YourKitSamplingProfilerFactory());
+                            put("yourkit-tracing", new YourKitTracingProfilerFactory());
+                            put("yourkit-heap", new YourKitHeapAllocationProfilerFactory());
+                            put("async-profiler", AsyncProfilerFactory.INSTANCE);
+                            put(
+                                    "async-profiler-heap",
+                                    AsyncProfilerHeapAllocationProfilerFactory.INSTANCE);
+                            put("heap-dump", new HeapDumpProfilerFactory());
+                            put("chrome-trace", new ChromeTraceProfilerFactory());
+                        }
+                    });
 
     public static Set<String> getAvailableProfilers() {
         return AVAILABLE_PROFILERS.keySet();
@@ -65,14 +71,12 @@ public abstract class ProfilerFactory {
             String first = profilersList.get(0);
             return of(first);
         }
-        return new CompositeProfilerFactory(profilersList.stream().map(ProfilerFactory::of).collect(Collectors.toList()));
+        return new CompositeProfilerFactory(
+                profilersList.stream().map(ProfilerFactory::of).collect(Collectors.toList()));
     }
 
-    /**
-     * Creates a profiler from the given options.
-     */
+    /** Creates a profiler from the given options. */
     public abstract Profiler createFromOptions(OptionSet parsedOptions);
 
-    public void addOptions(OptionParser parser) {
-    }
+    public void addOptions(OptionParser parser) {}
 }

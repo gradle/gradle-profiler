@@ -13,13 +13,14 @@ public class LaunchConfiguration {
     private final Path supportJar;
     private final List<Path> sharedJars;
 
-    public LaunchConfiguration(Path javaCommand,
-                               List<Path> classPath,
-                               Map<String, String> systemProperties,
-                               String mainClass,
-                               Path agentJar,
-                               Path supportJar,
-                               List<Path> sharedJars) {
+    public LaunchConfiguration(
+            Path javaCommand,
+            List<Path> classPath,
+            Map<String, String> systemProperties,
+            String mainClass,
+            Path agentJar,
+            Path supportJar,
+            List<Path> sharedJars) {
         this.javaCommand = javaCommand;
         this.classPath = classPath;
         this.systemProperties = systemProperties;

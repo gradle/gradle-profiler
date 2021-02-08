@@ -26,7 +26,7 @@ public class JProfiler {
         int i = 0;
         File snapshotFile;
         do {
-            snapshotFile = new File(outputDir, snapshotName  + ( i == 0 ? "" : ("_" + i)) + ".jps");
+            snapshotFile = new File(outputDir, snapshotName + (i == 0 ? "" : ("_" + i)) + ".jps");
             ++i;
         } while (snapshotFile.exists());
         return snapshotFile.getAbsolutePath();

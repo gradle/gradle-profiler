@@ -4,7 +4,8 @@ public class ScenarioSettings {
     private final InvocationSettings invocationSettings;
     private final GradleScenarioDefinition scenario;
 
-    public ScenarioSettings(InvocationSettings invocationSettings, GradleScenarioDefinition scenario) {
+    public ScenarioSettings(
+            InvocationSettings invocationSettings, GradleScenarioDefinition scenario) {
         this.invocationSettings = invocationSettings;
         this.scenario = scenario;
     }

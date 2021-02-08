@@ -16,7 +16,10 @@ public class AsyncProfiler extends InstrumentingProfiler {
     }
 
     @Override
-    protected JvmArgsCalculator jvmArgsWithInstrumentation(ScenarioSettings settings, boolean startRecordingOnProcessStart, boolean captureSnapshotOnProcessExit) {
+    protected JvmArgsCalculator jvmArgsWithInstrumentation(
+            ScenarioSettings settings,
+            boolean startRecordingOnProcessStart,
+            boolean captureSnapshotOnProcessExit) {
         if (!startRecordingOnProcessStart && !captureSnapshotOnProcessExit) {
             // Can attach later instead
             return JvmArgsCalculator.DEFAULT;

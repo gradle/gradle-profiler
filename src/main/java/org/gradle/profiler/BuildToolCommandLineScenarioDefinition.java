@@ -1,6 +1,7 @@
 package org.gradle.profiler;
 
 import javax.annotation.Nullable;
+
 import java.io.File;
 import java.io.PrintStream;
 import java.util.List;
@@ -10,15 +11,14 @@ public abstract class BuildToolCommandLineScenarioDefinition extends ScenarioDef
     private final File toolHome;
 
     public BuildToolCommandLineScenarioDefinition(
-        String name,
-        @Nullable String title,
-        List<String> targets,
-        List<BuildMutator> buildMutators,
-        int warmUpCount,
-        int buildCount,
-        File outputDir,
-        @Nullable File toolHome
-    ) {
+            String name,
+            @Nullable String title,
+            List<String> targets,
+            List<BuildMutator> buildMutators,
+            int warmUpCount,
+            int buildCount,
+            File outputDir,
+            @Nullable File toolHome) {
         super(name, title, buildMutators, warmUpCount, buildCount, outputDir);
         this.targets = targets;
         this.toolHome = toolHome;
@@ -34,8 +34,13 @@ public abstract class BuildToolCommandLineScenarioDefinition extends ScenarioDef
     }
 
     public String getExecutablePath() {
-        String toolHomePath = getToolHome() == null ? System.getenv(getToolHomeEnvName()) : getToolHome().getAbsolutePath();
-        return toolHomePath == null ? getExecutableName() : toolHomePath + "/bin/" + getExecutableName();
+        String toolHomePath =
+                getToolHome() == null
+                        ? System.getenv(getToolHomeEnvName())
+                        : getToolHome().getAbsolutePath();
+        return toolHomePath == null
+                ? getExecutableName()
+                : toolHomePath + "/bin/" + getExecutableName();
     }
 
     @Override

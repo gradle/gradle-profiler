@@ -29,8 +29,7 @@ public class JFRControl implements InstrumentingProfiler.SnapshotCapturingProfil
     }
 
     @Override
-    public void captureSnapshot(String pid) {
-    }
+    public void captureSnapshot(String pid) {}
 
     @Override
     public void stopSession() throws IOException, InterruptedException {

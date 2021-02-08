@@ -16,6 +16,7 @@ import org.gradle.profiler.result.Sample;
 
 import javax.annotation.Nullable;
 import javax.annotation.OverridingMethodsMustInvokeSuper;
+
 import java.io.Writer;
 import java.lang.reflect.Type;
 import java.time.Duration;
@@ -33,17 +34,31 @@ public class JsonResultWriter {
         this.pretty = pretty;
     }
 
-    public void write(@Nullable String title, Temporal reportDate, List<? extends BuildScenarioResult<?>> scenarios, Writer writer) {
+    public void write(
+            @Nullable String title,
+            Temporal reportDate,
+            List<? extends BuildScenarioResult<?>> scenarios,
+            Writer writer) {
         GsonBuilder builder = new GsonBuilder();
         if (pretty) {
             builder.setPrettyPrinting();
         }
-        Gson gson = builder
-            .registerTypeHierarchyAdapter(BuildScenarioResult.class, (JsonSerializer<? extends BuildScenarioResult<?>>) this::serializeScenarioResult)
-            .registerTypeHierarchyAdapter(ScenarioDefinition.class, new ScenarioSerializer<>())
-            .registerTypeHierarchyAdapter(GradleScenarioDefinition.class, new GradleScenarioSerializer())
-            .registerTypeHierarchyAdapter(Temporal.class, (JsonSerializer<Temporal>) (date, type, context) -> new JsonPrimitive(DateTimeFormatter.ISO_INSTANT.format(date)))
-            .create();
+        Gson gson =
+                builder.registerTypeHierarchyAdapter(
+                                BuildScenarioResult.class,
+                                (JsonSerializer<? extends BuildScenarioResult<?>>)
+                                        this::serializeScenarioResult)
+                        .registerTypeHierarchyAdapter(
+                                ScenarioDefinition.class, new ScenarioSerializer<>())
+                        .registerTypeHierarchyAdapter(
+                                GradleScenarioDefinition.class, new GradleScenarioSerializer())
+                        .registerTypeHierarchyAdapter(
+                                Temporal.class,
+                                (JsonSerializer<Temporal>)
+                                        (date, type, context) ->
+                                                new JsonPrimitive(
+                                                        DateTimeFormatter.ISO_INSTANT.format(date)))
+                        .create();
         gson.toJson(new Output(title, reportDate, new Environment(), scenarios), writer);
     }
 
@@ -64,11 +79,10 @@ public class JsonResultWriter {
         final List<? extends BuildScenarioResult<?>> scenarios;
 
         public Output(
-            String title,
-            Temporal date,
-            Environment environment,
-            List<? extends BuildScenarioResult<?>> scenarios
-        ) {
+                String title,
+                Temporal date,
+                Environment environment,
+                List<? extends BuildScenarioResult<?>> scenarios) {
             this.title = title;
             this.date = date;
             this.environment = environment;
@@ -76,15 +90,16 @@ public class JsonResultWriter {
         }
     }
 
-    private <T extends BuildInvocationResult> JsonObject serializeScenarioResult(BuildScenarioResult<T> scenarioResult, Type type, JsonSerializationContext context) {
+    private <T extends BuildInvocationResult> JsonObject serializeScenarioResult(
+            BuildScenarioResult<T> scenarioResult, Type type, JsonSerializationContext context) {
         JsonObject json = new JsonObject();
         List<T> results = scenarioResult.getResults();
 
         // TODO Expose this in a less awkward way
-        JsonObject jsonDefinition = (JsonObject) context.serialize(scenarioResult.getScenarioDefinition());
-        String scenarioId = results.isEmpty()
-            ? null
-            : results.get(0).getBuildContext().getUniqueScenarioId();
+        JsonObject jsonDefinition =
+                (JsonObject) context.serialize(scenarioResult.getScenarioDefinition());
+        String scenarioId =
+                results.isEmpty() ? null : results.get(0).getBuildContext().getUniqueScenarioId();
         jsonDefinition.addProperty("id", scenarioId);
         json.add("definition", jsonDefinition);
 
@@ -108,7 +123,8 @@ public class JsonResultWriter {
         return json;
     }
 
-    private <T extends BuildInvocationResult> JsonObject serializeIteration(T result, List<? extends Sample<? super T>> samples) {
+    private <T extends BuildInvocationResult> JsonObject serializeIteration(
+            T result, List<? extends Sample<? super T>> samples) {
         JsonObject json = new JsonObject();
         json.addProperty("id", result.getBuildContext().getUniqueBuildId());
         json.addProperty("phase", result.getBuildContext().getPhase().name());
@@ -123,7 +139,8 @@ public class JsonResultWriter {
         return json;
     }
 
-    private static class ScenarioSerializer<T extends ScenarioDefinition> implements JsonSerializer<T> {
+    private static class ScenarioSerializer<T extends ScenarioDefinition>
+            implements JsonSerializer<T> {
         @Override
         @OverridingMethodsMustInvokeSuper
         public JsonObject serialize(T scenario, Type typeOfSrc, JsonSerializationContext context) {
@@ -137,20 +154,34 @@ public class JsonResultWriter {
         }
     }
 
-    private static class GradleScenarioSerializer extends ScenarioSerializer<GradleScenarioDefinition> {
+    private static class GradleScenarioSerializer
+            extends ScenarioSerializer<GradleScenarioDefinition> {
         @Override
-        public JsonObject serialize(GradleScenarioDefinition scenario, Type typeOfSrc, JsonSerializationContext context) {
+        public JsonObject serialize(
+                GradleScenarioDefinition scenario,
+                Type typeOfSrc,
+                JsonSerializationContext context) {
             JsonObject json = super.serialize(scenario, typeOfSrc, context);
-            json.addProperty("version", scenario.getBuildConfiguration().getGradleVersion().getVersion());
-            json.addProperty("gradleHome", scenario.getBuildConfiguration().getGradleHome().getAbsolutePath());
-            json.addProperty("javaHome", scenario.getBuildConfiguration().getJavaHome().getAbsolutePath());
+            json.addProperty(
+                    "version", scenario.getBuildConfiguration().getGradleVersion().getVersion());
+            json.addProperty(
+                    "gradleHome",
+                    scenario.getBuildConfiguration().getGradleHome().getAbsolutePath());
+            json.addProperty(
+                    "javaHome", scenario.getBuildConfiguration().getJavaHome().getAbsolutePath());
             json.addProperty("usesScanPlugin", scenario.getBuildConfiguration().isUsesScanPlugin());
             json.addProperty("action", scenario.getAction().getDisplayName());
             json.addProperty("cleanup", scenario.getCleanupAction().getDisplayName());
             json.addProperty("invoker", scenario.getInvoker().toString());
-            json.add("mutators", toJson(scenario.getBuildMutators().stream().map(Object::toString)));
+            json.add(
+                    "mutators", toJson(scenario.getBuildMutators().stream().map(Object::toString)));
             json.add("args", toJson(scenario.getGradleArgs().stream()));
-            json.add("jvmArgs", toJson(Stream.concat(scenario.getBuildConfiguration().getJvmArguments().stream(), scenario.getJvmArgs().stream())));
+            json.add(
+                    "jvmArgs",
+                    toJson(
+                            Stream.concat(
+                                    scenario.getBuildConfiguration().getJvmArguments().stream(),
+                                    scenario.getJvmArgs().stream())));
             json.add("systemProperties", toJson(scenario.getSystemProperties()));
             return json;
         }

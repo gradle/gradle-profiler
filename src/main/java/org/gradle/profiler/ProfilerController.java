@@ -18,33 +18,25 @@ package org.gradle.profiler;
 import java.io.IOException;
 
 public interface ProfilerController {
-    ProfilerController EMPTY = new ProfilerController() {
-        @Override
-        public void startSession() {
+    ProfilerController EMPTY =
+            new ProfilerController() {
+                @Override
+                public void startSession() {}
 
-        }
+                @Override
+                public void startRecording() {}
 
-        @Override
-        public void startRecording() {
+                @Override
+                public void stopRecording(String pid) {}
 
-        }
-
-        @Override
-        public void stopRecording(String pid) {
-
-        }
-
-        @Override
-        public void stopSession() {
-
-        }
-    };
+                @Override
+                public void stopSession() {}
+            };
 
     /**
-     * Connects the profiler to the daemon and does any other one-time setup work.
-     * The profiler should not start collecting data yet. If the profiler cannot
-     * connect without starting data collection, it should defer startup to {@link #startRecording()}
-     * instead.
+     * Connects the profiler to the daemon and does any other one-time setup work. The profiler
+     * should not start collecting data yet. If the profiler cannot connect without starting data
+     * collection, it should defer startup to {@link #startRecording()} instead.
      */
     void startSession() throws IOException, InterruptedException;
 
@@ -55,17 +47,16 @@ public interface ProfilerController {
     void startRecording() throws IOException, InterruptedException;
 
     /**
-     * Tells the profiler to stop collecting data for now, e.g. so it doesn't
-     * profile cleanup tasks. If the data collection can only be stopped by
-     * stopping the session, the profiler should implement this as a no-op
-     * and throw an exception when {@link #startRecording()} is called another
-     * time.
+     * Tells the profiler to stop collecting data for now, e.g. so it doesn't profile cleanup tasks.
+     * If the data collection can only be stopped by stopping the session, the profiler should
+     * implement this as a no-op and throw an exception when {@link #startRecording()} is called
+     * another time.
      */
     void stopRecording(String pid) throws IOException, InterruptedException;
 
     /**
-     * Ends the profiling session, writing the collected results to disk
-     * and disconnecting the profiler from the daemon.
+     * Ends the profiling session, writing the collected results to disk and disconnecting the
+     * profiler from the daemon.
      */
     void stopSession() throws IOException, InterruptedException;
 }

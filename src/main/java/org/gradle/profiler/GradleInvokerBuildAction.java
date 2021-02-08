@@ -11,5 +11,6 @@ public abstract class GradleInvokerBuildAction implements BuildAction {
         return timer.elapsed();
     }
 
-    protected abstract void run(GradleInvoker buildInvoker, List<String> gradleArgs, List<String> jvmArgs);
+    protected abstract void run(
+            GradleInvoker buildInvoker, List<String> gradleArgs, List<String> jvmArgs);
 }

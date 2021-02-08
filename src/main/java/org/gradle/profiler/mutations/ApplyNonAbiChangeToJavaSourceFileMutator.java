@@ -18,14 +18,18 @@ public class ApplyNonAbiChangeToJavaSourceFileMutator extends AbstractJavaSource
     @Override
     protected void applyChangeTo(BuildContext context, CompilationUnit compilationUnit) {
         MethodDeclaration existingMethod = getExistingMethod(compilationUnit);
-        existingMethod.getBody()
-            .orElseThrow(() -> new RuntimeException("Method body not found"))
-            .addStatement(0, JavaParser.parseStatement("System.out.println(\"" + context.getUniqueBuildId() + "\");"));
+        existingMethod
+                .getBody()
+                .orElseThrow(() -> new RuntimeException("Method body not found"))
+                .addStatement(
+                        0,
+                        JavaParser.parseStatement(
+                                "System.out.println(\"" + context.getUniqueBuildId() + "\");"));
     }
 
     private MethodDeclaration getExistingMethod(CompilationUnit compilationUnit) {
         NodeList<TypeDeclaration<?>> types = compilationUnit.getTypes();
-        if (types.isEmpty()){
+        if (types.isEmpty()) {
             throw new IllegalArgumentException("No types to change in " + sourceFile);
         }
         TypeDeclaration<?> type = types.get(0);

@@ -1,13 +1,14 @@
 package org.gradle.trace;
 
+import org.gradle.api.logging.Logging;
+import org.gradle.internal.UncheckedException;
+import org.gradle.trace.stream.AsyncWriter;
+
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.io.Reader;
-import org.gradle.api.logging.Logging;
-import org.gradle.internal.UncheckedException;
-import org.gradle.trace.stream.AsyncWriter;
 
 public class AsynchronousTraceWriter {
 
@@ -19,11 +20,13 @@ public class AsynchronousTraceWriter {
         try {
             if (traceFile.exists()) {
                 if (!traceFile.delete()) {
-                    throw new RuntimeException("Unable to delete the old file " + traceFile.getAbsolutePath());
+                    throw new RuntimeException(
+                            "Unable to delete the old file " + traceFile.getAbsolutePath());
                 }
             }
             if (!traceFile.createNewFile()) {
-                throw new RuntimeException("Unable to create a file " + traceFile.getAbsolutePath());
+                throw new RuntimeException(
+                        "Unable to create a file " + traceFile.getAbsolutePath());
             }
         } catch (Exception e) {
             throw new RuntimeException(e);
@@ -40,7 +43,8 @@ public class AsynchronousTraceWriter {
         if (System.getProperty("trace") == null) {
             return;
         }
-        Logging.getLogger(AsynchronousTraceWriter.class).lifecycle("Trace written to file://" + traceFile.getAbsolutePath());
+        Logging.getLogger(AsynchronousTraceWriter.class)
+                .lifecycle("Trace written to file://" + traceFile.getAbsolutePath());
     }
 
     private void copyResourceToTraceFile(String resourcePath, PrintWriter writer) {
@@ -64,8 +68,7 @@ public class AsynchronousTraceWriter {
         @Override
         public void header(PrintWriter writer) {
             copyResourceToTraceFile("/trace-header.html", writer);
-            writer.println("{\n" +
-                "  \"traceEvents\": [\n");
+            writer.println("{\n" + "  \"traceEvents\": [\n");
         }
 
         @Override
@@ -80,13 +83,14 @@ public class AsynchronousTraceWriter {
 
         @Override
         public void footer(PrintWriter writer) {
-            writer.println("],\n" +
-                "  \"displayTimeUnit\": \"ns\",\n" +
-                "  \"systemTraceEvents\": \"SystemTraceData\",\n" +
-                "  \"otherData\": {\n" +
-                "    \"version\": \"My Application v1.0\"\n" +
-                "  }\n" +
-                "}\n");
+            writer.println(
+                    "],\n"
+                            + "  \"displayTimeUnit\": \"ns\",\n"
+                            + "  \"systemTraceEvents\": \"SystemTraceData\",\n"
+                            + "  \"otherData\": {\n"
+                            + "    \"version\": \"My Application v1.0\"\n"
+                            + "  }\n"
+                            + "}\n");
 
             copyResourceToTraceFile("/trace-footer.html", writer);
         }

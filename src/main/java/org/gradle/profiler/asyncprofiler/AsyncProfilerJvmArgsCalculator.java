@@ -13,7 +13,10 @@ class AsyncProfilerJvmArgsCalculator implements JvmArgsCalculator {
     private final ScenarioSettings scenarioSettings;
     private final boolean captureSnapshotOnProcessExit;
 
-    AsyncProfilerJvmArgsCalculator(AsyncProfilerConfig profilerConfig, ScenarioSettings scenarioSettings, boolean captureSnapshotOnProcessExit) {
+    AsyncProfilerJvmArgsCalculator(
+            AsyncProfilerConfig profilerConfig,
+            ScenarioSettings scenarioSettings,
+            boolean captureSnapshotOnProcessExit) {
         this.profilerConfig = profilerConfig;
         this.scenarioSettings = scenarioSettings;
         this.captureSnapshotOnProcessExit = captureSnapshotOnProcessExit;
@@ -21,14 +24,22 @@ class AsyncProfilerJvmArgsCalculator implements JvmArgsCalculator {
 
     @Override
     public void calculateJvmArgs(List<String> jvmArgs) {
-        StringBuilder agent = new StringBuilder()
-            .append("-agentpath:").append(profilerConfig.getProfilerHome()).append("/build/libasyncProfiler.so=start")
-            .append(",event=").append(profilerConfig.getEvent())
-            .append(",interval=").append(profilerConfig.getInterval())
-            .append(",jstackdepth=").append(profilerConfig.getStackDepth())
-            .append(",buffer=").append(profilerConfig.getFrameBuffer())
-            .append(",collapsed=").append(profilerConfig.getCounter().name().toLowerCase(Locale.ROOT))
-            .append(",ann");
+        StringBuilder agent =
+                new StringBuilder()
+                        .append("-agentpath:")
+                        .append(profilerConfig.getProfilerHome())
+                        .append("/build/libasyncProfiler.so=start")
+                        .append(",event=")
+                        .append(profilerConfig.getEvent())
+                        .append(",interval=")
+                        .append(profilerConfig.getInterval())
+                        .append(",jstackdepth=")
+                        .append(profilerConfig.getStackDepth())
+                        .append(",buffer=")
+                        .append(profilerConfig.getFrameBuffer())
+                        .append(",collapsed=")
+                        .append(profilerConfig.getCounter().name().toLowerCase(Locale.ROOT))
+                        .append(",ann");
 
         if (captureSnapshotOnProcessExit) {
             GradleScenarioDefinition scenario = scenarioSettings.getScenario();

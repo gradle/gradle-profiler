@@ -7,31 +7,29 @@ import java.util.Map;
 
 public class AdhocGradleScenarioDefinition extends GradleScenarioDefinition {
     public AdhocGradleScenarioDefinition(
-        GradleBuildConfiguration version,
-        GradleBuildInvoker invoker,
-        BuildAction buildAction,
-        Map<String, String> systemProperties,
-        int warmUpCount,
-        int buildCount,
-        File outputDir,
-        List<String> measuredBuildOperations
-    ) {
+            GradleBuildConfiguration version,
+            GradleBuildInvoker invoker,
+            BuildAction buildAction,
+            Map<String, String> systemProperties,
+            int warmUpCount,
+            int buildCount,
+            File outputDir,
+            List<String> measuredBuildOperations) {
         super(
-            "default",
-            null,
-            invoker,
-            version,
-            buildAction,
-            BuildAction.NO_OP,
-            Collections.emptyList(),
-            systemProperties,
-            Collections.emptyList(),
-            warmUpCount,
-            buildCount,
-            outputDir,
-            Collections.emptyList(),
-            measuredBuildOperations
-        );
+                "default",
+                null,
+                invoker,
+                version,
+                buildAction,
+                BuildAction.NO_OP,
+                Collections.emptyList(),
+                systemProperties,
+                Collections.emptyList(),
+                warmUpCount,
+                buildCount,
+                outputDir,
+                Collections.emptyList(),
+                measuredBuildOperations);
     }
 
     @Override

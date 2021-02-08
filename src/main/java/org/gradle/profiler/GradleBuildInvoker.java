@@ -1,15 +1,21 @@
 package org.gradle.profiler;
 
 public class GradleBuildInvoker extends BuildInvoker {
-    public static final GradleBuildInvoker ToolingApi = new GradleBuildInvoker(GradleClientSpec.ToolingApi, GradleDaemonReuse.WarmDaemonOnly);
-    public static final GradleBuildInvoker Cli = new GradleBuildInvoker(GradleClientSpec.GradleCli, GradleDaemonReuse.WarmDaemonOnly);
-    public static final GradleBuildInvoker CliNoDaemon = new GradleBuildInvoker(GradleClientSpec.GradleCliNoDaemon, GradleDaemonReuse.ColdDaemonOnly) {
-        @Override
-        public String toString() {
-            return "`gradle` command with --no-daemon";
-        }
-    };
-    static final GradleBuildInvoker AndroidStudio = new GradleBuildInvoker(GradleClientSpec.AndroidStudio, GradleDaemonReuse.WarmDaemonOnly);
+    public static final GradleBuildInvoker ToolingApi =
+            new GradleBuildInvoker(GradleClientSpec.ToolingApi, GradleDaemonReuse.WarmDaemonOnly);
+    public static final GradleBuildInvoker Cli =
+            new GradleBuildInvoker(GradleClientSpec.GradleCli, GradleDaemonReuse.WarmDaemonOnly);
+    public static final GradleBuildInvoker CliNoDaemon =
+            new GradleBuildInvoker(
+                    GradleClientSpec.GradleCliNoDaemon, GradleDaemonReuse.ColdDaemonOnly) {
+                @Override
+                public String toString() {
+                    return "`gradle` command with --no-daemon";
+                }
+            };
+    static final GradleBuildInvoker AndroidStudio =
+            new GradleBuildInvoker(
+                    GradleClientSpec.AndroidStudio, GradleDaemonReuse.WarmDaemonOnly);
 
     private final GradleClientSpec client;
     private final GradleDaemonReuse daemonReuse;

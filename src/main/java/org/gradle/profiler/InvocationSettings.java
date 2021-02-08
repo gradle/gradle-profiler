@@ -1,6 +1,7 @@
 package org.gradle.profiler;
 
 import javax.annotation.Nullable;
+
 import java.io.File;
 import java.io.PrintStream;
 import java.util.List;
@@ -30,35 +31,34 @@ public class InvocationSettings {
     private final Format csvFormat;
     private final String benchmarkTitle;
     /**
-     * The log file which the build should write stdout and stderr to.
-     * If {@code null}, the stdout and stderr are stored in memory.
+     * The log file which the build should write stdout and stderr to. If {@code null}, the stdout
+     * and stderr are stored in memory.
      */
     private final File buildLog;
 
     private final UUID invocationId = UUID.randomUUID();
 
     private InvocationSettings(
-        File projectDir,
-        Profiler profiler,
-        boolean benchmark,
-        File outputDir,
-        BuildInvoker invoker,
-        boolean dryRun,
-        File scenarioFile,
-        List<String> versions,
-        List<String> targets,
-        Map<String, String> sysProperties,
-        File gradleUserHome,
-        File studioInstallDir,
-        Integer warmupCount,
-        Integer iterations,
-        boolean measureGarbageCollection,
-        boolean measureConfigTime,
-        List<String> measuredBuildOperations,
-        Format csvFormat,
-        String benchmarkTitle,
-        File buildLog
-    ) {
+            File projectDir,
+            Profiler profiler,
+            boolean benchmark,
+            File outputDir,
+            BuildInvoker invoker,
+            boolean dryRun,
+            File scenarioFile,
+            List<String> versions,
+            List<String> targets,
+            Map<String, String> sysProperties,
+            File gradleUserHome,
+            File studioInstallDir,
+            Integer warmupCount,
+            Integer iterations,
+            boolean measureGarbageCollection,
+            boolean measureConfigTime,
+            List<String> measuredBuildOperations,
+            Format csvFormat,
+            String benchmarkTitle,
+            File buildLog) {
         this.benchmark = benchmark;
         this.projectDir = projectDir;
         this.profiler = profiler;
@@ -174,9 +174,7 @@ public class InvocationSettings {
         return csvFormat;
     }
 
-    /**
-     * The title of the benchmark. Shown on the HTML report and on the console.
-     */
+    /** The title of the benchmark. Shown on the HTML report and on the console. */
     public String getBenchmarkTitle() {
         return benchmarkTitle;
     }
@@ -302,7 +300,8 @@ public class InvocationSettings {
             return this;
         }
 
-        public InvocationSettingsBuilder setMeasureGarbageCollection(boolean measureGarbageCollection) {
+        public InvocationSettingsBuilder setMeasureGarbageCollection(
+                boolean measureGarbageCollection) {
             this.measureGarbageCollection = measureGarbageCollection;
             return this;
         }
@@ -312,7 +311,8 @@ public class InvocationSettings {
             return this;
         }
 
-        public InvocationSettingsBuilder setMeasuredBuildOperations(List<String> measuredBuildOperations) {
+        public InvocationSettingsBuilder setMeasuredBuildOperations(
+                List<String> measuredBuildOperations) {
             this.measuredBuildOperations = measuredBuildOperations;
             return this;
         }
@@ -322,9 +322,7 @@ public class InvocationSettings {
             return this;
         }
 
-        /**
-         * The title of the benchmark. Shown on the HTML report and on the console.
-         */
+        /** The title of the benchmark. Shown on the HTML report and on the console. */
         public InvocationSettingsBuilder setBenchmarkTitle(@Nullable String benchmarkTitle) {
             this.benchmarkTitle = benchmarkTitle;
             return this;
@@ -337,27 +335,26 @@ public class InvocationSettings {
 
         public InvocationSettings build() {
             return new InvocationSettings(
-                projectDir,
-                profiler,
-                benchmark,
-                outputDir,
-                invoker,
-                dryRun,
-                scenarioFile,
-                versions,
-                targets,
-                sysProperties,
-                gradleUserHome,
-                studioInstallDir,
-                warmupCount,
-                iterations,
-                measureGarbageCollection,
-                measureConfigTime,
-                measuredBuildOperations,
-                csvFormat,
-                benchmarkTitle,
-                buildLog
-            );
+                    projectDir,
+                    profiler,
+                    benchmark,
+                    outputDir,
+                    invoker,
+                    dryRun,
+                    scenarioFile,
+                    versions,
+                    targets,
+                    sysProperties,
+                    gradleUserHome,
+                    studioInstallDir,
+                    warmupCount,
+                    iterations,
+                    measureGarbageCollection,
+                    measureConfigTime,
+                    measuredBuildOperations,
+                    csvFormat,
+                    benchmarkTitle,
+                    buildLog);
         }
     }
 }

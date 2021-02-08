@@ -28,7 +28,9 @@ public class TraceResult {
     }
 
     public void start(String name, String category, long timestampNanos, String colorName) {
-        events.put(name, new DurationEvent(name, category, timestampNanos, new HashMap<>(), colorName));
+        events.put(
+                name,
+                new DurationEvent(name, category, timestampNanos, new HashMap<>(), colorName));
     }
 
     public void finish(String name, long timestampNanos, Map<String, String> info) {
@@ -47,5 +49,4 @@ public class TraceResult {
 
         traceWriter.finish();
     }
-
 }

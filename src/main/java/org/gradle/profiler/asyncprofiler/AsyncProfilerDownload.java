@@ -21,14 +21,13 @@ import java.util.Set;
 
 import static java.nio.file.StandardCopyOption.REPLACE_EXISTING;
 
-/**
- * Downloads a version of async profiler and installs into ~/.gradle-profiler-dist.
- */
+/** Downloads a version of async profiler and installs into ~/.gradle-profiler-dist. */
 public class AsyncProfilerDownload {
     private static final String ASYNC_PROFILER_VERSION = "1.8.2";
 
     /**
-     * Attempts to locate a default install of async profiler. Uses a previously downloaded installation, or downloads if not available.
+     * Attempts to locate a default install of async profiler. Uses a previously downloaded
+     * installation, or downloads if not available.
      *
      * @return null if not available.
      */
@@ -42,16 +41,27 @@ public class AsyncProfilerDownload {
             return null;
         }
 
-        File installDist = new File(new File(System.getProperty("user.home")), ".gradle-profiler-dist/" + ASYNC_PROFILER_VERSION + "-" + platformName);
+        File installDist =
+                new File(
+                        new File(System.getProperty("user.home")),
+                        ".gradle-profiler-dist/" + ASYNC_PROFILER_VERSION + "-" + platformName);
         File marker = new File(installDist, "ok");
-        File homeDir = new File(installDist, String.format("async-profiler-%s-%s", ASYNC_PROFILER_VERSION, platformName));
+        File homeDir =
+                new File(
+                        installDist,
+                        String.format(
+                                "async-profiler-%s-%s", ASYNC_PROFILER_VERSION, platformName));
 
         if (marker.isFile()) {
             return homeDir;
         }
 
         try {
-            URL download = new URL(String.format("https://github.com/jvm-profiling-tools/async-profiler/releases/download/v%s/async-profiler-%s-%s.tar.gz", ASYNC_PROFILER_VERSION, ASYNC_PROFILER_VERSION, platformName));
+            URL download =
+                    new URL(
+                            String.format(
+                                    "https://github.com/jvm-profiling-tools/async-profiler/releases/download/v%s/async-profiler-%s-%s.tar.gz",
+                                    ASYNC_PROFILER_VERSION, ASYNC_PROFILER_VERSION, platformName));
             Logging.startOperation("Download and install " + download);
 
             Files.createDirectories(installDist.toPath());
@@ -70,7 +80,9 @@ public class AsyncProfilerDownload {
     }
 
     private static void untarTo(File source, File destDir) throws IOException {
-        try (TarArchiveInputStream tarStream = new TarArchiveInputStream(new GzipCompressorInputStream(new FileInputStream(source)))) {
+        try (TarArchiveInputStream tarStream =
+                new TarArchiveInputStream(
+                        new GzipCompressorInputStream(new FileInputStream(source)))) {
             while (tarStream.getNextEntry() != null) {
                 if (tarStream.getCurrentEntry().isDirectory()) {
                     continue;
@@ -81,7 +93,8 @@ public class AsyncProfilerDownload {
                 Files.copy(tarStream, file.toPath(), REPLACE_EXISTING);
                 boolean executable = (tarStream.getCurrentEntry().getMode() & 0x40) != 0;
                 if (executable) {
-                    Set<PosixFilePermission> permissions = Files.getPosixFilePermissions(file.toPath());
+                    Set<PosixFilePermission> permissions =
+                            Files.getPosixFilePermissions(file.toPath());
                     ImmutableSet.Builder<PosixFilePermission> withExecute = ImmutableSet.builder();
                     withExecute.addAll(permissions);
                     withExecute.add(PosixFilePermission.OWNER_EXECUTE);
@@ -99,19 +112,23 @@ public class AsyncProfilerDownload {
 
     private static void deleteDir(File homeDir) throws IOException {
         if (homeDir.exists()) {
-            Files.walkFileTree(homeDir.toPath(), new SimpleFileVisitor<Path>() {
-                @Override
-                public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
-                    Files.delete(file);
-                    return FileVisitResult.CONTINUE;
-                }
+            Files.walkFileTree(
+                    homeDir.toPath(),
+                    new SimpleFileVisitor<Path>() {
+                        @Override
+                        public FileVisitResult visitFile(Path file, BasicFileAttributes attrs)
+                                throws IOException {
+                            Files.delete(file);
+                            return FileVisitResult.CONTINUE;
+                        }
 
-                @Override
-                public FileVisitResult postVisitDirectory(Path dir, IOException exc) throws IOException {
-                    Files.delete(dir);
-                    return FileVisitResult.CONTINUE;
-                }
-            });
+                        @Override
+                        public FileVisitResult postVisitDirectory(Path dir, IOException exc)
+                                throws IOException {
+                            Files.delete(dir);
+                            return FileVisitResult.CONTINUE;
+                        }
+                    });
         }
     }
 }

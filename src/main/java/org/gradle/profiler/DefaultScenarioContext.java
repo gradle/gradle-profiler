@@ -18,7 +18,8 @@ public class DefaultScenarioContext implements ScenarioContext {
 
     @Override
     public String getUniqueScenarioId() {
-        return String.format("_%s_%s", invocationId.toString().replaceAll("-", "_"), mangleName(scenarioName));
+        return String.format(
+                "_%s_%s", invocationId.toString().replaceAll("-", "_"), mangleName(scenarioName));
     }
 
     @Override
@@ -27,11 +28,12 @@ public class DefaultScenarioContext implements ScenarioContext {
     }
 
     /**
-     * This is to ensure that the scenario ID is a valid Java identifier part, and it is also (reasonably) unique.
+     * This is to ensure that the scenario ID is a valid Java identifier part, and it is also
+     * (reasonably) unique.
      */
     private static String mangleName(String scenarioName) {
         StringBuilder name = new StringBuilder();
-        for (char ch :scenarioName.toCharArray()){
+        for (char ch : scenarioName.toCharArray()) {
             name.append(Character.isJavaIdentifierPart(ch) ? ch : '_');
         }
         name.append('_');

@@ -34,13 +34,17 @@ public class GradleEnterpriseInitScript extends GeneratedInitScript {
         writer.write("      gradlePluginPortal()\n");
         writer.write("    }\n");
         writer.write("    dependencies {\n");
-        writer.write("        classpath \"com.gradle:gradle-enterprise-gradle-plugin:" + version + "\"\n");
+        writer.write(
+                "        classpath \"com.gradle:gradle-enterprise-gradle-plugin:"
+                        + version
+                        + "\"\n");
         writer.write("    }\n");
         writer.write("}\n");
         writer.write("\n");
         writer.write("settingsEvaluated {\n");
         writer.write("    if (!it.pluginManager.hasPlugin(\"com.gradle.enterprise\")) {\n");
-        writer.write("        it.pluginManager.apply(com.gradle.enterprise.gradleplugin.GradleEnterprisePlugin)\n");
+        writer.write(
+                "        it.pluginManager.apply(com.gradle.enterprise.gradleplugin.GradleEnterprisePlugin)\n");
         writer.write("    }\n");
         writer.write("    it.extensions[\"gradleEnterprise\"].buildScan.with {\n");
         writer.write("        termsOfServiceUrl = 'https://gradle.com/terms-of-service'\n");
@@ -48,6 +52,4 @@ public class GradleEnterpriseInitScript extends GeneratedInitScript {
         writer.write("    }\n");
         writer.write("}\n");
     }
-
-
 }

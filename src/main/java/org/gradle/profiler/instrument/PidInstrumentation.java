@@ -12,7 +12,10 @@ public class PidInstrumentation extends GradleInstrumentation {
 
     @Override
     protected void generateInitScriptBody(PrintWriter writer) {
-        writer.println("org.gradle.trace.pid.PidCollector.collect(gradle, new File(new URI('" + pidFile.toURI() + "')))");
+        writer.println(
+                "org.gradle.trace.pid.PidCollector.collect(gradle, new File(new URI('"
+                        + pidFile.toURI()
+                        + "')))");
     }
 
     public String getPidForLastBuild() {

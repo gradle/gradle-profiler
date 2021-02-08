@@ -11,7 +11,14 @@ public class AsyncProfilerConfig {
     private final int frameBuffer;
     private final boolean includeSystemThreads;
 
-    public AsyncProfilerConfig(File profilerHome, String event, Counter counter, int interval, int stackDepth, int frameBuffer, boolean includeSystemThreads) {
+    public AsyncProfilerConfig(
+            File profilerHome,
+            String event,
+            Counter counter,
+            int interval,
+            int stackDepth,
+            int frameBuffer,
+            boolean includeSystemThreads) {
         this.profilerHome = profilerHome;
         this.event = event;
         this.counter = counter;

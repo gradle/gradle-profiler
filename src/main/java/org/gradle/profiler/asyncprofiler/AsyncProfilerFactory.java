@@ -25,39 +25,54 @@ public class AsyncProfilerFactory extends ProfilerFactory {
 
     @Override
     public void addOptions(OptionParser parser) {
-        profilerHomeOption = parser.accepts("async-profiler-home", "Async Profiler home directory")
-            .availableIf("profile")
-            .withRequiredArg()
-            .ofType(File.class);
-        eventOption = parser.accepts("async-profiler-event", "The event to sample, e.g. 'cpu' or 'alloc'.")
-            .availableIf("profile")
-            .withRequiredArg()
-            .defaultsTo("cpu");
-        counterOption = parser.accepts("async-profiler-counter", "The counter to use, either 'samples' or 'totals'")
-            .availableIf("profile")
-            .withRequiredArg()
-            .withValuesConvertedBy(new CounterConverter())
-            .defaultsTo(AsyncProfilerConfig.Counter.SAMPLES);
-        intervalOption = parser.accepts("async-profiler-interval", "The sampling interval in nanoseconds.")
-            .availableIf("profile")
-            .withRequiredArg()
-            .ofType(Integer.class)
-            .defaultsTo(10_000_000);
-        stackDepthOption = parser.accepts("async-profiler-stackdepth", "The maximum Java stack depth.")
-            .availableIf("profile")
-            .withRequiredArg()
-            .ofType(Integer.class)
-            .defaultsTo(2048);
-        frameBufferOption = parser.accepts("async-profiler-framebuffer", "The size of the frame buffer in bytes.")
-            .availableIf("profile")
-            .withRequiredArg()
-            .ofType(Integer.class)
-            .defaultsTo(10_000_000);
-        systemThreadOption = parser.accepts("async-profiler-system-threads", "Whether to show system threads like GC and JIT compiler.")
-            .availableIf("profile")
-            .withRequiredArg()
-            .ofType(Boolean.class)
-            .defaultsTo(false);
+        profilerHomeOption =
+                parser.accepts("async-profiler-home", "Async Profiler home directory")
+                        .availableIf("profile")
+                        .withRequiredArg()
+                        .ofType(File.class);
+        eventOption =
+                parser.accepts(
+                                "async-profiler-event",
+                                "The event to sample, e.g. 'cpu' or 'alloc'.")
+                        .availableIf("profile")
+                        .withRequiredArg()
+                        .defaultsTo("cpu");
+        counterOption =
+                parser.accepts(
+                                "async-profiler-counter",
+                                "The counter to use, either 'samples' or 'totals'")
+                        .availableIf("profile")
+                        .withRequiredArg()
+                        .withValuesConvertedBy(new CounterConverter())
+                        .defaultsTo(AsyncProfilerConfig.Counter.SAMPLES);
+        intervalOption =
+                parser.accepts("async-profiler-interval", "The sampling interval in nanoseconds.")
+                        .availableIf("profile")
+                        .withRequiredArg()
+                        .ofType(Integer.class)
+                        .defaultsTo(10_000_000);
+        stackDepthOption =
+                parser.accepts("async-profiler-stackdepth", "The maximum Java stack depth.")
+                        .availableIf("profile")
+                        .withRequiredArg()
+                        .ofType(Integer.class)
+                        .defaultsTo(2048);
+        frameBufferOption =
+                parser.accepts(
+                                "async-profiler-framebuffer",
+                                "The size of the frame buffer in bytes.")
+                        .availableIf("profile")
+                        .withRequiredArg()
+                        .ofType(Integer.class)
+                        .defaultsTo(10_000_000);
+        systemThreadOption =
+                parser.accepts(
+                                "async-profiler-system-threads",
+                                "Whether to show system threads like GC and JIT compiler.")
+                        .availableIf("profile")
+                        .withRequiredArg()
+                        .ofType(Boolean.class)
+                        .defaultsTo(false);
     }
 
     @Override
@@ -74,7 +89,8 @@ public class AsyncProfilerFactory extends ProfilerFactory {
         int stackDepth = stackDepthOption.value(parsedOptions);
         int frameBuffer = frameBufferOption.value(parsedOptions);
         Boolean showSystemThreads = systemThreadOption.value(parsedOptions);
-        return new AsyncProfilerConfig(profilerHome, event, counter, interval, stackDepth, frameBuffer, showSystemThreads);
+        return new AsyncProfilerConfig(
+                profilerHome, event, counter, interval, stackDepth, frameBuffer, showSystemThreads);
     }
 
     private File getProfilerHome(OptionSet parsedOptions) {
@@ -90,7 +106,8 @@ public class AsyncProfilerFactory extends ProfilerFactory {
             profilerHome = AsyncProfilerDownload.defaultHome();
         }
         if (profilerHome == null) {
-            throw new IllegalStateException("Async profiler not supported on " + OperatingSystem.getId());
+            throw new IllegalStateException(
+                    "Async profiler not supported on " + OperatingSystem.getId());
         }
         return profilerHome;
     }

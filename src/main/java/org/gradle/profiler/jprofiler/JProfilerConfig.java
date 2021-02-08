@@ -17,7 +17,15 @@ public class JProfilerConfig {
 
     private int port;
 
-    public JProfilerConfig(String homeDir, String config, String sessionId, String configFile, boolean recordAlloc, boolean recordMonitors, boolean heapDump, List<String> recordedProbeSpecs) {
+    public JProfilerConfig(
+            String homeDir,
+            String config,
+            String sessionId,
+            String configFile,
+            boolean recordAlloc,
+            boolean recordMonitors,
+            boolean heapDump,
+            List<String> recordedProbeSpecs) {
         this.homeDir = homeDir;
         this.sessionId = sessionId;
         this.configFile = configFile;

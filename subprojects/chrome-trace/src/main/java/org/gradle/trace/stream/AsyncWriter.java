@@ -8,9 +8,7 @@ import java.nio.file.Path;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 
-/**
- * Writes (immutable) values of type {@link T} to a file.
- */
+/** Writes (immutable) values of type {@link T} to a file. */
 public class AsyncWriter<T> {
     private final Object EOS = new Object();
     private final BlockingQueue<Object> eventQueue = new LinkedBlockingQueue<>();
@@ -48,7 +46,8 @@ public class AsyncWriter<T> {
 
     private void run() {
         try {
-            try (PrintWriter writer = new PrintWriter(Files.newBufferedWriter(outPath, StandardCharsets.UTF_8))) {
+            try (PrintWriter writer =
+                    new PrintWriter(Files.newBufferedWriter(outPath, StandardCharsets.UTF_8))) {
                 renderer.header(writer);
                 while (true) {
                     Object next = eventQueue.take();
@@ -66,12 +65,10 @@ public class AsyncWriter<T> {
     }
 
     public interface Renderer<T> {
-        default void header(PrintWriter writer) {
-        }
+        default void header(PrintWriter writer) {}
 
         void write(T value, PrintWriter writer);
 
-        default void footer(PrintWriter writer) {
-        }
+        default void footer(PrintWriter writer) {}
     }
 }

@@ -33,11 +33,10 @@ import java.util.function.Consumer;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
 
-/**
- * Converts JFR recordings to the collapsed stacks format used by the FlameGraph tool.
- */
+/** Converts JFR recordings to the collapsed stacks format used by the FlameGraph tool. */
 class JfrToStacksConverter {
-    public void convertToStacks(List<IItemCollection> recordings, File targetFile, Options options) {
+    public void convertToStacks(
+            List<IItemCollection> recordings, File targetFile, Options options) {
         Map<String, Long> foldedStacks = foldStacks(recordings, options);
         writeFoldedStacks(foldedStacks, targetFile);
     }
@@ -45,17 +44,18 @@ class JfrToStacksConverter {
     private Map<String, Long> foldStacks(List<IItemCollection> recordings, Options options) {
         StackFolder folder = new StackFolder(options);
         recordings.stream()
-            .flatMap(recording -> StreamSupport.stream(recording.spliterator(), false))
-            .flatMap(eventStream -> StreamSupport.stream(eventStream.spliterator(), false))
-            .filter(options.eventType::matches)
-            .filter(event -> getStackTrace(event) != null)
-            .forEach(folder);
+                .flatMap(recording -> StreamSupport.stream(recording.spliterator(), false))
+                .flatMap(eventStream -> StreamSupport.stream(eventStream.spliterator(), false))
+                .filter(options.eventType::matches)
+                .filter(event -> getStackTrace(event) != null)
+                .forEach(folder);
         return folder.getFoldedStacks();
     }
 
     private void writeFoldedStacks(Map<String, Long> foldedStacks, File targetFile) {
         targetFile.getParentFile().mkdirs();
-        try (BufferedWriter writer = Files.newBufferedWriter(targetFile.toPath(), StandardCharsets.UTF_8)) {
+        try (BufferedWriter writer =
+                Files.newBufferedWriter(targetFile.toPath(), StandardCharsets.UTF_8)) {
             for (Map.Entry<String, Long> entry : foldedStacks.entrySet()) {
                 writer.write(String.format("%s %d%n", entry.getKey(), entry.getValue()));
             }
@@ -65,7 +65,9 @@ class JfrToStacksConverter {
     }
 
     private static IMCStackTrace getStackTrace(IItem event) {
-        return ItemToolkit.getItemType(event).getAccessor(JfrAttributes.EVENT_STACKTRACE.getKey()).getMember(event);
+        return ItemToolkit.getItemType(event)
+                .getAccessor(JfrAttributes.EVENT_STACKTRACE.getKey())
+                .getMember(event);
     }
 
     private static class StackFolder implements Consumer<IItem> {
@@ -93,22 +95,23 @@ class JfrToStacksConverter {
             IMCStackTrace stackTrace = getStackTrace(event);
             List<IMCFrame> reverseStacks = new ArrayList<>(stackTrace.getFrames());
             Collections.reverse(reverseStacks);
-            return reverseStacks.stream()
-                .map(this::frameName)
-                .collect(Collectors.joining(";"));
+            return reverseStacks.stream().map(this::frameName).collect(Collectors.joining(";"));
         }
 
         private String frameName(IMCFrame frame) {
             return StacktraceFormatToolkit.formatFrame(
-                frame,
-                new FrameSeparator(options.isShowLineNumbers() ? FrameCategorization.LINE : FrameCategorization.METHOD, false),
-                false,
-                false,
-                true,
-                true,
-                options.isShowArguments(),
-                true
-            );
+                    frame,
+                    new FrameSeparator(
+                            options.isShowLineNumbers()
+                                    ? FrameCategorization.LINE
+                                    : FrameCategorization.METHOD,
+                            false),
+                    false,
+                    false,
+                    true,
+                    true,
+                    options.isShowArguments(),
+                    true);
         }
 
         private long getValue(IItem event) {
@@ -145,11 +148,35 @@ class JfrToStacksConverter {
     }
 
     public enum EventType {
-
-        CPU("cpu", "CPU", "samples", ValueField.COUNT, "Method Profiling Sample", "Method Profiling Sample Native"),
-        ALLOCATION("allocation", "Allocation size", "kB", ValueField.ALLOCATION_SIZE, "Allocation in new TLAB", "Allocation outside TLAB"),
-        MONITOR_BLOCKED("monitor-blocked", "Java Monitor Blocked", "ms", ValueField.DURATION, "Java Monitor Blocked"),
-        IO("io", "File and Socket IO", "ms", ValueField.DURATION, "File Read", "File Write", "Socket Read", "Socket Write");
+        CPU(
+                "cpu",
+                "CPU",
+                "samples",
+                ValueField.COUNT,
+                "Method Profiling Sample",
+                "Method Profiling Sample Native"),
+        ALLOCATION(
+                "allocation",
+                "Allocation size",
+                "kB",
+                ValueField.ALLOCATION_SIZE,
+                "Allocation in new TLAB",
+                "Allocation outside TLAB"),
+        MONITOR_BLOCKED(
+                "monitor-blocked",
+                "Java Monitor Blocked",
+                "ms",
+                ValueField.DURATION,
+                "Java Monitor Blocked"),
+        IO(
+                "io",
+                "File and Socket IO",
+                "ms",
+                ValueField.DURATION,
+                "File Read",
+                "File Write",
+                "Socket Read",
+                "Socket Write");
 
         private final String id;
         private final String displayName;
@@ -157,7 +184,12 @@ class JfrToStacksConverter {
         private final ValueField valueField;
         private final Set<String> eventNames;
 
-        EventType(String id, String displayName, String unitOfMeasure, ValueField valueField, String... eventNames) {
+        EventType(
+                String id,
+                String displayName,
+                String unitOfMeasure,
+                ValueField valueField,
+                String... eventNames) {
             this.id = id;
             this.displayName = displayName;
             this.unitOfMeasure = unitOfMeasure;
@@ -196,10 +228,13 @@ class JfrToStacksConverter {
                 @Override
                 public long getValue(IItem event) {
                     IType<IItem> itemType = ItemToolkit.getItemType(event);
-                    IMemberAccessor<IQuantity, IItem> duration = itemType.getAccessor(JfrAttributes.DURATION.getKey());
+                    IMemberAccessor<IQuantity, IItem> duration =
+                            itemType.getAccessor(JfrAttributes.DURATION.getKey());
                     if (duration == null) {
-                        IMemberAccessor<IQuantity, IItem> startTime = itemType.getAccessor(JfrAttributes.START_TIME.getKey());
-                        IMemberAccessor<IQuantity, IItem> endTime = itemType.getAccessor(JfrAttributes.END_TIME.getKey());
+                        IMemberAccessor<IQuantity, IItem> startTime =
+                                itemType.getAccessor(JfrAttributes.START_TIME.getKey());
+                        IMemberAccessor<IQuantity, IItem> endTime =
+                                itemType.getAccessor(JfrAttributes.END_TIME.getKey());
                         duration = MemberAccessorToolkit.difference(endTime, startTime);
                     }
                     return duration.getMember(event).in(UnitLookup.MILLISECOND).longValue();
@@ -209,13 +244,14 @@ class JfrToStacksConverter {
                 @Override
                 public long getValue(IItem event) {
                     IType<IItem> itemType = ItemToolkit.getItemType(event);
-                    IMemberAccessor<IQuantity, IItem> accessor = itemType.getAccessor(JdkAttributes.TLAB_SIZE.getKey());
+                    IMemberAccessor<IQuantity, IItem> accessor =
+                            itemType.getAccessor(JdkAttributes.TLAB_SIZE.getKey());
                     if (accessor == null) {
                         accessor = itemType.getAccessor(JdkAttributes.ALLOCATION_SIZE.getKey());
                     }
                     return accessor.getMember(event)
-                        .in(UnitLookup.MEMORY.getUnit(BinaryPrefix.KIBI))
-                        .longValue();
+                            .in(UnitLookup.MEMORY.getUnit(BinaryPrefix.KIBI))
+                            .longValue();
                 }
             };
 

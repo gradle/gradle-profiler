@@ -18,18 +18,22 @@ import static org.gradle.profiler.BuildStep.CLEANUP;
 import static org.gradle.profiler.Phase.MEASURE;
 import static org.gradle.profiler.Phase.WARM_UP;
 
-public class GradleScenarioInvoker extends ScenarioInvoker<GradleScenarioDefinition, GradleBuildInvocationResult> {
+public class GradleScenarioInvoker
+        extends ScenarioInvoker<GradleScenarioDefinition, GradleBuildInvocationResult> {
     private final DaemonControl daemonControl;
     private final PidInstrumentation pidInstrumentation;
 
-    public GradleScenarioInvoker(DaemonControl daemonControl, PidInstrumentation pidInstrumentation) {
+    public GradleScenarioInvoker(
+            DaemonControl daemonControl, PidInstrumentation pidInstrumentation) {
         this.daemonControl = daemonControl;
         this.pidInstrumentation = pidInstrumentation;
     }
 
     @Override
-    public List<Sample<? super GradleBuildInvocationResult>> samplesFor(InvocationSettings settings, GradleScenarioDefinition scenario) {
-        ImmutableList.Builder<Sample<? super GradleBuildInvocationResult>> builder = ImmutableList.builder();
+    public List<Sample<? super GradleBuildInvocationResult>> samplesFor(
+            InvocationSettings settings, GradleScenarioDefinition scenario) {
+        ImmutableList.Builder<Sample<? super GradleBuildInvocationResult>> builder =
+                ImmutableList.builder();
         builder.add(BuildInvocationResult.EXECUTION_TIME);
         if (settings.isMeasureGarbageCollection()) {
             builder.add(GradleBuildInvocationResult.GARBAGE_COLLECTION_TIME);
@@ -38,30 +42,39 @@ public class GradleScenarioInvoker extends ScenarioInvoker<GradleScenarioDefinit
             builder.add(GradleBuildInvocationResult.TIME_TO_TASK_EXECUTION);
         }
         scenario.getMeasuredBuildOperations().stream()
-            .map(GradleBuildInvocationResult::sampleBuildOperation)
-            .forEach(builder::add);
+                .map(GradleBuildInvocationResult::sampleBuildOperation)
+                .forEach(builder::add);
         return builder.build();
     }
 
     @Override
-    public void doRun(GradleScenarioDefinition scenario, InvocationSettings settings, Consumer<GradleBuildInvocationResult> resultConsumer) throws IOException, InterruptedException {
+    public void doRun(
+            GradleScenarioDefinition scenario,
+            InvocationSettings settings,
+            Consumer<GradleBuildInvocationResult> resultConsumer)
+            throws IOException, InterruptedException {
         if (settings.isProfile() && scenario.getWarmUpCount() == 0) {
-            throw new IllegalStateException("Using the --profile option requires at least one warm-up");
+            throw new IllegalStateException(
+                    "Using the --profile option requires at least one warm-up");
         }
 
         ScenarioSettings scenarioSettings = new ScenarioSettings(settings, scenario);
         FileUtils.forceMkdir(scenario.getOutputDir());
-        JvmArgsCalculator allBuildsJvmArgsCalculator = settings.getProfiler().newJvmArgsCalculator(scenarioSettings);
+        JvmArgsCalculator allBuildsJvmArgsCalculator =
+                settings.getProfiler().newJvmArgsCalculator(scenarioSettings);
         GradleArgsCalculator allBuildsGradleArgsCalculator = pidInstrumentation;
-        allBuildsGradleArgsCalculator = allBuildsGradleArgsCalculator.plus(settings.getProfiler().newGradleArgsCalculator(scenarioSettings));
+        allBuildsGradleArgsCalculator =
+                allBuildsGradleArgsCalculator.plus(
+                        settings.getProfiler().newGradleArgsCalculator(scenarioSettings));
 
-        BuildOperationInstrumentation buildOperationInstrumentation = new BuildOperationInstrumentation(
-            settings.isMeasureGarbageCollection(),
-            settings.isMeasureConfigTime(),
-            scenario.getMeasuredBuildOperations()
-        );
+        BuildOperationInstrumentation buildOperationInstrumentation =
+                new BuildOperationInstrumentation(
+                        settings.isMeasureGarbageCollection(),
+                        settings.isMeasureConfigTime(),
+                        scenario.getMeasuredBuildOperations());
         if (buildOperationInstrumentation.requiresInitScript()) {
-            allBuildsGradleArgsCalculator = allBuildsGradleArgsCalculator.plus(buildOperationInstrumentation);
+            allBuildsGradleArgsCalculator =
+                    allBuildsGradleArgsCalculator.plus(buildOperationInstrumentation);
         }
 
         GradleBuildConfiguration buildConfiguration = scenario.getBuildConfiguration();
@@ -70,7 +83,8 @@ public class GradleScenarioInvoker extends ScenarioInvoker<GradleScenarioDefinit
 
         BuildMutator mutator = new CompositeBuildMutator(scenario.getBuildMutators());
         ScenarioContext scenarioContext = ScenarioContext.from(settings, scenario);
-        GradleClient gradleClient = scenario.getInvoker().getClient().create(buildConfiguration, settings);
+        GradleClient gradleClient =
+                scenario.getInvoker().getClient().create(buildConfiguration, settings);
         try {
             buildConfiguration.printVersionInfo();
 
@@ -97,10 +111,18 @@ public class GradleScenarioInvoker extends ScenarioInvoker<GradleScenarioDefinit
             allBuildsGradleArgsCalculator.calculateGradleArgs(allBuildsGradleArgs);
             logGradleArgs(allBuildsGradleArgs);
 
-            BuildUnderTestInvoker uninstrumented = new BuildUnderTestInvoker(allBuildsJvmArgs, allBuildsGradleArgs, gradleClient, pidInstrumentation, buildOperationInstrumentation);
+            BuildUnderTestInvoker uninstrumented =
+                    new BuildUnderTestInvoker(
+                            allBuildsJvmArgs,
+                            allBuildsGradleArgs,
+                            gradleClient,
+                            pidInstrumentation,
+                            buildOperationInstrumentation);
 
-            BuildStepAction<?> cleanupStep = cleanupStep(uninstrumented, mutator, scenario, buildConfiguration);
-            BuildStepAction<GradleBuildInvocationResult> warmupBuildStep = buildStep(uninstrumented, scenario);
+            BuildStepAction<?> cleanupStep =
+                    cleanupStep(uninstrumented, mutator, scenario, buildConfiguration);
+            BuildStepAction<GradleBuildInvocationResult> warmupBuildStep =
+                    buildStep(uninstrumented, scenario);
 
             mutator.beforeScenario(scenarioContext);
 
@@ -118,13 +140,18 @@ public class GradleScenarioInvoker extends ScenarioInvoker<GradleScenarioDefinit
                 }
             }
 
-            ProfilerController control = settings.getProfiler().newController(pid, scenarioSettings);
+            ProfilerController control =
+                    settings.getProfiler().newController(pid, scenarioSettings);
 
             List<String> instrumentedBuildJvmArgs = new ArrayList<>(allBuildsJvmArgs);
-            settings.getProfiler().newInstrumentedBuildsJvmArgsCalculator(scenarioSettings).calculateJvmArgs(instrumentedBuildJvmArgs);
+            settings.getProfiler()
+                    .newInstrumentedBuildsJvmArgsCalculator(scenarioSettings)
+                    .calculateJvmArgs(instrumentedBuildJvmArgs);
 
             List<String> instrumentedBuildGradleArgs = new ArrayList<>(allBuildsGradleArgs);
-            settings.getProfiler().newInstrumentedBuildsGradleArgsCalculator(scenarioSettings).calculateGradleArgs(instrumentedBuildGradleArgs);
+            settings.getProfiler()
+                    .newInstrumentedBuildsGradleArgsCalculator(scenarioSettings)
+                    .calculateGradleArgs(instrumentedBuildGradleArgs);
 
             Logging.detailed().println();
             Logging.detailed().println("* Using args for instrumented builds:");
@@ -135,9 +162,14 @@ public class GradleScenarioInvoker extends ScenarioInvoker<GradleScenarioDefinit
                 logGradleArgs(instrumentedBuildGradleArgs);
             }
 
-            BuildUnderTestInvoker instrumentedBuildInvoker = uninstrumented.withJvmArgs(instrumentedBuildJvmArgs).withGradleArgs(instrumentedBuildGradleArgs);
-            BuildStepAction<GradleBuildInvocationResult> measuredBuildStep = buildStep(instrumentedBuildInvoker, scenario);
-            RecordingBuildStepAction recordingBuildStep = new RecordingBuildStepAction(measuredBuildStep, cleanupStep, scenario, control);
+            BuildUnderTestInvoker instrumentedBuildInvoker =
+                    uninstrumented
+                            .withJvmArgs(instrumentedBuildJvmArgs)
+                            .withGradleArgs(instrumentedBuildGradleArgs);
+            BuildStepAction<GradleBuildInvocationResult> measuredBuildStep =
+                    buildStep(instrumentedBuildInvoker, scenario);
+            RecordingBuildStepAction recordingBuildStep =
+                    new RecordingBuildStepAction(measuredBuildStep, cleanupStep, scenario, control);
 
             control.startSession();
             for (int i = 1; i <= scenario.getBuildCount(); i++) {
@@ -156,14 +188,21 @@ public class GradleScenarioInvoker extends ScenarioInvoker<GradleScenarioDefinit
         }
     }
 
-    private BuildStepAction<GradleBuildInvocationResult> buildStep(BuildUnderTestInvoker invoker, GradleScenarioDefinition scenario) {
+    private BuildStepAction<GradleBuildInvocationResult> buildStep(
+            BuildUnderTestInvoker invoker, GradleScenarioDefinition scenario) {
         return invoker.create(scenario.getAction());
     }
 
-    private BuildStepAction<?> cleanupStep(BuildUnderTestInvoker invoker, BuildMutator buildMutator, GradleScenarioDefinition scenario, GradleBuildConfiguration buildConfiguration) {
-        BuildStepAction<GradleBuildInvocationResult> cleanupStep = invoker.create(scenario.getCleanupAction());
+    private BuildStepAction<?> cleanupStep(
+            BuildUnderTestInvoker invoker,
+            BuildMutator buildMutator,
+            GradleScenarioDefinition scenario,
+            GradleBuildConfiguration buildConfiguration) {
+        BuildStepAction<GradleBuildInvocationResult> cleanupStep =
+                invoker.create(scenario.getCleanupAction());
         if (scenario.getInvoker().isShouldCleanUpDaemon()) {
-            cleanupStep = new StopDaemonAfterAction<>(cleanupStep, daemonControl, buildConfiguration);
+            cleanupStep =
+                    new StopDaemonAfterAction<>(cleanupStep, daemonControl, buildConfiguration);
         }
         return new RunCleanupStepAction<>(cleanupStep, buildMutator);
     }

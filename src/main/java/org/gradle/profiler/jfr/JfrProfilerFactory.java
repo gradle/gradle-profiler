@@ -19,7 +19,8 @@ public class JfrProfilerFactory extends ProfilerFactory {
     private static File createDefaultConfig() {
         try {
             File jfcFile = File.createTempFile("gradle", ".jfc");
-            String jfcTemplateName = JavaVersion.current().isJava9Compatible() ? "gradle-java9.jfc" : "gradle.jfc";
+            String jfcTemplateName =
+                    JavaVersion.current().isJava9Compatible() ? "gradle-java9.jfc" : "gradle.jfc";
             URL jfcResource = JfrProfiler.class.getResource(jfcTemplateName);
             try (InputStream stream = jfcResource.openStream()) {
                 Files.copy(stream, jfcFile.toPath(), StandardCopyOption.REPLACE_EXISTING);
@@ -33,10 +34,12 @@ public class JfrProfilerFactory extends ProfilerFactory {
 
     @Override
     public void addOptions(final OptionParser parser) {
-        parser.accepts("jfr-settings", "JFR settings - Either a .jfc file or the name of a template known to your JFR installation")
-            .availableIf("profile")
-            .withOptionalArg()
-            .defaultsTo(defaultConfig.getAbsolutePath());
+        parser.accepts(
+                        "jfr-settings",
+                        "JFR settings - Either a .jfc file or the name of a template known to your JFR installation")
+                .availableIf("profile")
+                .withOptionalArg()
+                .defaultsTo(defaultConfig.getAbsolutePath());
     }
 
     @Override
