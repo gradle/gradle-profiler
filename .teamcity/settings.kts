@@ -23,7 +23,7 @@ To debug in IntelliJ Idea, open the 'Maven Projects' tool window (View
 import jetbrains.buildServer.configs.kotlin.v2019_2.project
 import jetbrains.buildServer.configs.kotlin.v2019_2.version
 
-version = "2020.1"
+version = "2020.2"
 
 project {
     configureGradleProfilerProject()
