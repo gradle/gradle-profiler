@@ -1,5 +1,6 @@
 plugins {
     id("java-library")
+    id("com.diffplug.spotless")
 }
 
 repositories {
@@ -12,6 +13,14 @@ repositories {
 java {
     toolchain {
         languageVersion.set(JavaLanguageVersion.of(8))
+    }
+}
+
+spotless {
+    java {
+        googleJavaFormat("1.8").aosp()
+        importOrder("", "javax", "java", "\\#")
+        removeUnusedImports()
     }
 }
 
