@@ -15,6 +15,7 @@ import org.gradle.profiler.mutations.ApplyChangeToPropertyResourceFileMutator;
 import org.gradle.profiler.mutations.ApplyNonAbiChangeToSourceFileMutator;
 import org.gradle.profiler.mutations.ApplyValueChangeToAndroidResourceFileMutator;
 import org.gradle.profiler.mutations.BuildMutatorConfigurator;
+import org.gradle.profiler.mutations.ExecuteCommandBuildMutator;
 import org.gradle.profiler.mutations.ClearArtifactTransformCacheMutator;
 import org.gradle.profiler.mutations.ClearBuildCacheMutator;
 import org.gradle.profiler.mutations.ClearConfigurationCacheStateMutator;
@@ -37,6 +38,10 @@ import java.util.TreeSet;
 import java.util.stream.Collectors;
 
 class ScenarioLoader {
+
+    static final String BAZEL = "bazel";
+    static final String BUCK = "buck";
+    static final String MAVEN = "maven";
     private static final String TITLE = "title";
     private static final String VERSIONS = "versions";
     private static final String TASKS = "tasks";
@@ -45,9 +50,6 @@ class ScenarioLoader {
     private static final String RUN_USING = "run-using";
     private static final String DAEMON = "daemon";
     private static final String SYSTEM_PROPERTIES = "system-properties";
-    private static final String BAZEL = "bazel";
-    private static final String BUCK = "buck";
-    private static final String MAVEN = "maven";
     private static final String TOOL_HOME = "home";
     private static final String WARM_UP_COUNT = "warm-ups";
     private static final String ITERATIONS = "iterations";
@@ -61,6 +63,7 @@ class ScenarioLoader {
     private static final String APPLY_ANDROID_MANIFEST_CHANGE_TO = "apply-android-manifest-change-to";
     private static final String APPLY_CPP_SOURCE_CHANGE_TO = "apply-cpp-change-to";
     private static final String APPLY_H_SOURCE_CHANGE_TO = "apply-h-change-to";
+    private static final String EXECUTE_COMMAND_BEFORE = "execute-command-before";
     private static final String CLEAR_BUILD_CACHE_BEFORE = "clear-build-cache-before";
     private static final String CLEAR_GRADLE_USER_HOME_BEFORE = "clear-gradle-user-home-before";
     private static final String CLEAR_INSTANT_EXECUTION_STATE_BEFORE = "clear-instant-execution-state-before";
@@ -97,6 +100,7 @@ class ScenarioLoader {
         .put(SHOW_BUILD_CACHE_SIZE, new ShowBuildCacheSizeMutator.Configurator())
         .put(GIT_CHECKOUT, new GitCheckoutMutator.Configurator())
         .put(GIT_REVERT, new GitRevertMutator.Configurator())
+        .put(EXECUTE_COMMAND_BEFORE, new ExecuteCommandBuildMutator.Configurator())
         .build();
 
     private static final List<String> ALL_SCENARIO_KEYS = ImmutableList.<String>builder()
@@ -105,6 +109,7 @@ class ScenarioLoader {
             TITLE,
             VERSIONS,
             TASKS,
+            EXECUTE_COMMAND_BEFORE,
             CLEANUP_TASKS,
             GRADLE_ARGS,
             RUN_USING,
@@ -123,9 +128,9 @@ class ScenarioLoader {
         ))
         .build();
 
-    private static final List<String> BAZEL_KEYS = Arrays.asList(TARGETS, TOOL_HOME);
-    private static final List<String> BUCK_KEYS = Arrays.asList(TARGETS, TYPE, TOOL_HOME);
-    private static final List<String> MAVEN_KEYS = Arrays.asList(TARGETS, TOOL_HOME);
+    private static final List<String> BAZEL_KEYS = Arrays.asList(TARGETS, TOOL_HOME, EXECUTE_COMMAND_BEFORE);
+    private static final List<String> BUCK_KEYS = Arrays.asList(TARGETS, TYPE, TOOL_HOME, EXECUTE_COMMAND_BEFORE);
+    private static final List<String> MAVEN_KEYS = Arrays.asList(TARGETS, TOOL_HOME, EXECUTE_COMMAND_BEFORE);
 
     private final GradleBuildConfigurationReader gradleBuildConfigurationReader;
 
