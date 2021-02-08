@@ -4,7 +4,6 @@ import jetbrains.buildServer.configs.kotlin.v2019_2.buildFeatures.commitStatusPu
 import jetbrains.buildServer.configs.kotlin.v2019_2.buildSteps.gradle
 import jetbrains.buildServer.configs.kotlin.v2019_2.failureConditions.BuildFailureOnText
 import jetbrains.buildServer.configs.kotlin.v2019_2.failureConditions.failOnText
-import jetbrains.buildServer.configs.kotlin.v2019_2.triggers.vcs
 import jetbrains.buildServer.configs.kotlin.v2019_2.ui.add
 
 open class GradleProfilerTest(os: Os, javaVersion: JavaVersion) : BuildType({
@@ -20,15 +19,6 @@ open class GradleProfilerTest(os: Os, javaVersion: JavaVersion) : BuildType({
             buildFile = ""
             gradleParams = "-s --build-cache ${toolchainConfiguration(os)}"
             param("org.jfrog.artifactory.selectedDeployableServer.defaultModuleVersionConfiguration", "GLOBAL")
-        }
-    }
-
-    triggers {
-        vcs {
-            branchFilter = """
-                +:*
-                -:pull/*
-            """.trimIndent()
         }
     }
 

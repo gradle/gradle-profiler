@@ -4,11 +4,16 @@ import jetbrains.buildServer.configs.kotlin.v2019_2.Project
 fun Project.configureGradleProfilerProject() {
     description = "Runs tests and integration tests of the Gradle Profiler (https://github.com/gradle/gradle-profiler)"
 
-    buildType(MacOSJava8)
-    buildType(WindowsJava8)
-    buildType(LinuxJava8)
-    buildType(LinuxJava11)
+    val testBuilds = listOf(
+        MacOSJava8,
+        WindowsJava8,
+        LinuxJava8,
+        LinuxJava11
+    )
 
+    testBuilds.forEach(this::buildType)
+
+    buildType(GradleProfilerTestTrigger(testBuilds))
     buildType(GradleProfilerPublishing)
 
     params {
