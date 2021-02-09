@@ -104,6 +104,13 @@ tasks.test {
     // For now assume that the current JVM has JFR support and that CI will inject the correct implementation
     javaLauncher.set(null as JavaLauncher?)
     javaLauncher.convention(null as JavaLauncher?)
+
+    // We had some build failures on macOS, where it seems to be a Socket was already closed when trying to download the Gradle distribution.
+    // The tests failing were consistenly in ProfilerIntegrationTest.
+    // Running only ProfilerIntegrationTest did not expose the failures.
+    // The problem went away when running every test class in its on JVM.
+    // So I suppose the problem is that the JVM shares the TAPI client, and one of the tests leave the client in a bad state.
+    // We now use forkEvery = 1 to run each test class in its own JVM, so we don't run into this problem any more.
     setForkEvery(1)
 }
 
