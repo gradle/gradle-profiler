@@ -5,6 +5,7 @@ import jetbrains.buildServer.configs.kotlin.v2019_2.triggers.vcs
 
 class GradleProfilerTestTrigger(testBuilds: List<BuildType>) : BuildType({
     name = "Tests (Trigger)"
+    type = Type.COMPOSITE
 
     gradleProfilerVcs()
     triggers {
