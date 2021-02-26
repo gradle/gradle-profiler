@@ -32,7 +32,7 @@ public class AsyncProfilerController implements InstrumentingProfiler.SnapshotCa
             sanitizers.add(new RemoveSystemThreads());
 
         }
-        sanitizers.add(COLLAPSE_BUILD_SCRIPTS, COLLAPSE_GRADLE_INFRASTRUCTURE, SIMPLE_NAMES);
+        sanitizers.add(COLLAPSE_BUILD_SCRIPTS, COLLAPSE_GRADLE_INFRASTRUCTURE, SIMPLE_NAMES, NORMALIZE_LAMBDA_NAMES);
         this.flamegraphSanitizer = new FlameGraphSanitizer(sanitizers.build().toArray(new SanitizeFunction[0]));
         this.flamegraphGenerator = new FlameGraphTool();
 
