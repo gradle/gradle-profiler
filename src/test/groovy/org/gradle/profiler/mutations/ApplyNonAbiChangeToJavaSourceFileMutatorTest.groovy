@@ -1,8 +1,6 @@
 package org.gradle.profiler.mutations
 
-import static com.github.javaparser.JavaParser.parse
-
-class ApplyNonAbiChangeToJavaSourceFileMutatorTest extends AbstractMutatorTest {
+class ApplyNonAbiChangeToJavaSourceFileMutatorTest extends AbstractMutatorTest implements JavaParserFixture {
 
     def "changes the first method in the source file"() {
         def sourceFile = tmpDir.newFile("Thing.java")

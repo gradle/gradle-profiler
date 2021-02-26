@@ -1,8 +1,6 @@
 package org.gradle.profiler.mutations
 
-import static com.github.javaparser.JavaParser.parse
-
-class ApplyAbiChangeToSourceFileMutatorTest extends AbstractMutatorTest {
+class ApplyAbiChangeToSourceFileMutatorTest extends AbstractMutatorTest implements JavaParserFixture {
 
     def "adds and replaces public method at end of Kotlin source file"() {
         def sourceFile = tmpDir.newFile("Thing.kt")
