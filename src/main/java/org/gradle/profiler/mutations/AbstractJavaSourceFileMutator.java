@@ -16,7 +16,7 @@ public abstract class AbstractJavaSourceFileMutator extends AbstractFileChangeMu
 
     @Override
     protected void applyChangeTo(BuildContext context, StringBuilder text) {
-        CompilationUnit compilationUnit = JavaParser.parse(text.toString());
+        CompilationUnit compilationUnit = new JavaParser().parse(text.toString()).getResult().get();
         applyChangeTo(context, compilationUnit);
         text.replace(0, text.length(), compilationUnit.toString());
     }

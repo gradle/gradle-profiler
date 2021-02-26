@@ -32,7 +32,7 @@ dependencies {
     implementation("net.sf.jopt-simple:jopt-simple:5.0.4")
     implementation("com.typesafe:config:1.3.3")
     implementation("org.apache.commons:commons-math3:3.6.1")
-    implementation("com.github.javaparser:javaparser-core:3.1.3")
+    implementation("com.github.javaparser:javaparser-core:3.18.0")
     implementation("org.apache.ant:ant-compress:1.5")
     implementation("commons-io:commons-io:2.6")
     implementation("org.gradle.org.openjdk.jmc:flightrecorder:7.0.0-alpha01")
