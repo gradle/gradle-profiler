@@ -4,6 +4,7 @@ import io.sdkman.vendors.tasks.SdkDefaultVersionTask
 import io.sdkman.vendors.tasks.SdkReleaseVersionTask
 import io.sdkman.vendors.tasks.SdkmanVendorBaseTask
 import java.net.URI
+import java.util.Locale
 
 plugins {
     id("profiler.java-library")
@@ -208,9 +209,13 @@ tasks.register("releaseToSdkMan") {
     //   - 1.3.RC5: not final
     //   - 1.3-alpha5: not final
     val isFinalRelease = Regex("""[0-9\.]*""").matchEntire(versionString) != null
-    dependsOn(tasks.withType<SdkReleaseVersionTask>())
-    if (isFinalRelease) {
-        dependsOn(tasks.withType<SdkDefaultVersionTask>())
-        dependsOn(tasks.withType<SdkAnnounceVersionTask>())
+    // We don't publish snapshots and alphas at all to SDKman.
+    val isSnapshotOrAlphaRelease = versionString.toLowerCase(Locale.US).run { contains("snapshot") || contains("alpha") }
+    if (!isSnapshotOrAlphaRelease) {
+        dependsOn(tasks.withType<SdkReleaseVersionTask>())
+        if (isFinalRelease) {
+            dependsOn(tasks.withType<SdkDefaultVersionTask>())
+            dependsOn(tasks.withType<SdkAnnounceVersionTask>())
+        }
     }
 }
