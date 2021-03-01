@@ -1,31 +1,31 @@
 package org.gradle.profiler.mutations;
 
+import com.google.common.collect.ImmutableSet;
+
 import org.apache.commons.io.FilenameUtils;
 import org.gradle.profiler.BuildContext;
 
 import java.io.File;
-import java.util.Arrays;
-import java.util.List;
-import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 public class ApplyChangeToNativeSourceFileMutator extends AbstractFileChangeMutator {
 
     // Both lists taken from https://gcc.gnu.org/onlinedocs/gcc/Overall-Options.html
-    private final List<String> nativeSourcecodeFileEndings = Arrays.asList(
-        ".c", ".cc", ".cp", ".cxx", ".cpp", ".CPP", ".c++", ".C"
+    private static final ImmutableSet<String> nativeSourcecodeFileEndings = ImmutableSet.of(
+        "c", "cc", "cp", "cxx", "cpp", "CPP", "c++", "C"
     );
 
-    private final List<String> nativeHeaderFileEndings = Arrays.asList(
-        ".h", ".hh", ".H", ".hp", ".hxx", ".hpp", ".HPP", ".h++", ".tcc"
+    private static final ImmutableSet<String> nativeHeaderFileEndings = ImmutableSet.of(
+        "h", "hh", "H", "hp", "hxx", "hpp", "HPP", "h++", "tcc"
     );
 
     public ApplyChangeToNativeSourceFileMutator(File file) {
         super(file);
-        String fileExtension = "." + FilenameUtils.getExtension(sourceFile.getName());
-        List<String> extensionList = Stream.concat(nativeSourcecodeFileEndings.stream(), nativeHeaderFileEndings.stream())
-            .collect(Collectors.toList());
-        if (extensionList.contains(fileExtension)) {
+        String fileExtension = FilenameUtils.getExtension(sourceFile.getName());
+        boolean isSupportedExtension = Stream.concat(nativeSourcecodeFileEndings.stream(), nativeHeaderFileEndings.stream())
+            .anyMatch(fileExtension::equals);
+
+        if (isSupportedExtension) {
             return;
         }
 
@@ -35,7 +35,7 @@ public class ApplyChangeToNativeSourceFileMutator extends AbstractFileChangeMuta
     @Override
     protected void applyChangeTo(BuildContext context, StringBuilder text) {
         int insertPos;
-        String fileExtension = "." + FilenameUtils.getExtension(sourceFile.getName());
+        String fileExtension = FilenameUtils.getExtension(sourceFile.getName());
         if (nativeSourcecodeFileEndings.contains(fileExtension)) {
             insertPos = text.length();
             applyChangeAt(context, text, insertPos);
