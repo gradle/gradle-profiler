@@ -200,19 +200,21 @@ tasks.withType<SdkAnnounceVersionTask>().configureEach {
 
 tasks.register("releaseToSdkMan") {
     val versionString = project.version.toString()
-    // We only announce and set the default version for final releases
-    // A release is not final if it contains things different to numbers and dots.
-    // For example:
-    //   - 1.3: final
-    //   - 1.3.25: final
-    //   - 1.3-rc-4: not final
-    //   - 1.3.RC5: not final
-    //   - 1.3-alpha5: not final
-    val isFinalRelease = Regex("""[0-9\.]*""").matchEntire(versionString) != null
+
     // We don't publish snapshots and alphas at all to SDKman.
     val isSnapshotOrAlphaRelease = versionString.toLowerCase(Locale.US).run { contains("snapshot") || contains("alpha") }
     if (!isSnapshotOrAlphaRelease) {
         dependsOn(tasks.withType<SdkReleaseVersionTask>())
+
+        // We only announce and set the default version for final releases
+        // A release is not final if it contains things different to numbers and dots.
+        // For example:
+        //   - 1.3: final
+        //   - 1.3.25: final
+        //   - 1.3-rc-4: not final
+        //   - 1.3.RC5: not final
+        //   - 1.3-milestone5: not final
+        val isFinalRelease = Regex("""[0-9\.]*""").matchEntire(versionString) != null
         if (isFinalRelease) {
             dependsOn(tasks.withType<SdkDefaultVersionTask>())
             dependsOn(tasks.withType<SdkAnnounceVersionTask>())
