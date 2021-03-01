@@ -28,7 +28,6 @@ public class ApplyChangeToNativeSourceFileMutator extends AbstractFileChangeMuta
         if (isSupportedExtension) {
             return;
         }
-
         throw new IllegalArgumentException("Can only modify C/C++ source or header files");
     }
 
