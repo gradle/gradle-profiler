@@ -70,4 +70,13 @@ class ApplyChangeToNativeSourceFileMutatorTest extends AbstractMutatorTest {
         sourceFileH.text == "#ifndef ABC\n\nint _m_276d92f3_16ac_4064_9a18_5f1dfd67992f_testScenario_3c4925d7_MEASURE_7();\n#endif"
     }
 
+    def "complains when a file with not-allowed file extension is specified"() {
+        def file = tmpDir.newFile("Thing.png")
+
+        when:
+        new ApplyChangeToNativeSourceFileMutator(file)
+
+        then:
+        thrown(IllegalArgumentException)
+    }
 }
