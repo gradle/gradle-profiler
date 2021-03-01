@@ -52,6 +52,8 @@ public class FlameGraphSanitizer {
 
     public static final SanitizeFunction SIMPLE_NAMES = new ToSimpleName();
 
+    public static final SanitizeFunction NORMALIZE_LAMBDA_NAMES = new NormalizeLambda();
+
     private final SanitizeFunction sanitizeFunction;
 
     public FlameGraphSanitizer(SanitizeFunction... sanitizeFunctions) {
@@ -210,6 +212,15 @@ public class FlameGraphSanitizer {
                 }
             }
             return stack;
+        }
+    }
+
+    private static class NormalizeLambda extends FrameWiseSanitizeFunction {
+        @Override
+        protected String mapFrame(String frame) {
+            // Lambdas contain a name that's based on an index + timestamp at runtime and changes build-to-build.
+            // This makes comparing two builds very difficult when a lambda is in the stack
+            return frame.replaceFirst(Pattern.quote("$$Lambda$")+"[0-9]+[./][0-9]+", "\\$\\$Lambda\\$");
         }
     }
 
