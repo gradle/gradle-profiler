@@ -930,8 +930,8 @@ classes {
         then:
         // Probe version, 6 warm up, 10 builds
         logFile.find("<src-length: ${srcFile.length()}>").size() == 1
-        logFile.find("<src-length: ${srcFile.length() + (OperatingSystem.windows ? 192 : 183)}>").size() == 6 /* WARM_UP #1..6 */ + 9 /* MEASURE #1..9*/
-        logFile.find("<src-length: ${srcFile.length() + (OperatingSystem.windows ? 194 : 185)}>").size() == 1 /* MEASURE #10 */
+        logFile.find("<src-length: ${srcFile.length() + 183}>").size() == 6 /* WARM_UP #1..6 */ + 9 /* MEASURE #1..9*/
+        logFile.find("<src-length: ${srcFile.length() + 185}>").size() == 1 /* MEASURE #10 */
         srcFile.text == originalText
     }
 
