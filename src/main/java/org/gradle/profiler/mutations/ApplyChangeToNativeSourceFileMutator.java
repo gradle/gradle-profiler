@@ -1,29 +1,27 @@
 package org.gradle.profiler.mutations;
 
 import com.google.common.collect.ImmutableSet;
-
 import org.apache.commons.io.FilenameUtils;
 import org.gradle.profiler.BuildContext;
 
 import java.io.File;
-import java.util.stream.Stream;
+import java.util.Locale;
 
 public class ApplyChangeToNativeSourceFileMutator extends AbstractFileChangeMutator {
 
     // Both lists taken from https://gcc.gnu.org/onlinedocs/gcc/Overall-Options.html
     private static final ImmutableSet<String> nativeSourcecodeFileEndings = ImmutableSet.of(
-        "c", "cc", "cp", "cxx", "cpp", "CPP", "c++", "C"
+        "c", "cc", "cp", "cxx", "cpp", "c++"
     );
 
     private static final ImmutableSet<String> nativeHeaderFileEndings = ImmutableSet.of(
-        "h", "hh", "H", "hp", "hxx", "hpp", "HPP", "h++", "tcc"
+        "h", "hh", "hp", "hxx", "hpp", "h++", "tcc"
     );
 
     public ApplyChangeToNativeSourceFileMutator(File file) {
         super(file);
-        String fileExtension = FilenameUtils.getExtension(sourceFile.getName());
-        boolean isSupportedExtension = Stream.concat(nativeSourcecodeFileEndings.stream(), nativeHeaderFileEndings.stream())
-            .anyMatch(fileExtension::equals);
+        String fileExtension = getSourceFileExtension();
+        boolean isSupportedExtension = nativeSourcecodeFileEndings.contains(fileExtension) || nativeHeaderFileEndings.contains(fileExtension);
 
         if (isSupportedExtension) {
             return;
@@ -34,8 +32,7 @@ public class ApplyChangeToNativeSourceFileMutator extends AbstractFileChangeMuta
     @Override
     protected void applyChangeTo(BuildContext context, StringBuilder text) {
         int insertPos;
-        String fileExtension = FilenameUtils.getExtension(sourceFile.getName());
-        if (nativeSourcecodeFileEndings.contains(fileExtension)) {
+        if (nativeSourcecodeFileEndings.contains(getSourceFileExtension())) {
             insertPos = text.length();
             applyChangeAt(context, text, insertPos);
         } else {
@@ -45,6 +42,10 @@ public class ApplyChangeToNativeSourceFileMutator extends AbstractFileChangeMuta
             }
             applyHeaderChangeAt(context, text, insertPos);
         }
+    }
+
+    private String getSourceFileExtension() {
+        return FilenameUtils.getExtension(sourceFile.getName()).toLowerCase(Locale.US);
     }
 
     protected String getFieldName(BuildContext context) {
