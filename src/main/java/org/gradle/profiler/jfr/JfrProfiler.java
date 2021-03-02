@@ -1,5 +1,6 @@
 package org.gradle.profiler.jfr;
 
+import org.gradle.profiler.GradleScenarioDefinition;
 import org.gradle.profiler.InstrumentingProfiler;
 import org.gradle.profiler.JvmArgsCalculator;
 import org.gradle.profiler.ScenarioSettings;
@@ -43,7 +44,9 @@ public class JfrProfiler extends InstrumentingProfiler {
     }
 
     private File getJfrFile(ScenarioSettings settings) {
-        return new File(settings.getScenario().getOutputDir(), settings.getScenario().getProfileName() + PROFILE_JFR_SUFFIX);
+        GradleScenarioDefinition scenario = settings.getScenario();
+        return new File(scenario.getOutputDir(),
+            scenario.getBuildConfiguration().getGradleVersion().getVersion() + "/" + scenario.getProfileName() + PROFILE_JFR_SUFFIX);
     }
 
     @Override

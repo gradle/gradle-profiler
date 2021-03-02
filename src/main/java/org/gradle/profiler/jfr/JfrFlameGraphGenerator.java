@@ -32,9 +32,11 @@ class JfrFlameGraphGenerator {
             return;
         }
 
-        List<IItemCollection> recordings = Stream.of(
-            requireNonNull(jfrFile.getParentFile().listFiles((dir, name) -> name.endsWith(".jfr")))
-        ).map(file -> {
+        Stream<File> jfrFiles = jfrFile.isDirectory() ?
+            Stream.of(requireNonNull(jfrFile.listFiles((dir, name) -> name.endsWith(".jfr")))) :
+            Stream.of(jfrFile);
+
+        List<IItemCollection> recordings = jfrFiles.map(file -> {
             try {
                 return JfrLoaderToolkit.loadEvents(file);
             } catch (IOException | CouldNotLoadRecordingException e) {
