@@ -165,11 +165,11 @@ val releaseTagName = "v$version"
 //    commandLine("git", "tag", releaseTagName)
 //}
 
-//val gitPushTag = tasks.register<Exec>("gitPushTag") {
+val gitPushTag = tasks.register("gitPushTag") {
 //    mustRunAfter("publishAllPublicationsToGradleBuildInternalRepository")
 //    dependsOn("gitTag")
 //    commandLine("git", "push", "https://bot-teamcity:${project.property("githubToken")}@github.com/gradle/gradle-profiler.git", releaseTagName)
-//}
+}
 
 //sdkman {
 //    api = "https://vendors.sdkman.io"
