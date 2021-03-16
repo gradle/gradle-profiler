@@ -47,7 +47,6 @@ public class AsyncProfilerController implements InstrumentingProfiler.SnapshotCa
             "-e", profilerConfig.getEvent(),
             "-i", String.valueOf(profilerConfig.getInterval()),
             "-j", String.valueOf(profilerConfig.getStackDepth()),
-            "-b", String.valueOf(profilerConfig.getFrameBuffer()),
             pid
         );
     }

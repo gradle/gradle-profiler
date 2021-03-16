@@ -18,7 +18,6 @@ public class AsyncProfilerFactory extends ProfilerFactory {
     private ArgumentAcceptingOptionSpec<File> profilerHomeOption;
     private ArgumentAcceptingOptionSpec<String> eventOption;
     private ArgumentAcceptingOptionSpec<AsyncProfilerConfig.Counter> counterOption;
-    private ArgumentAcceptingOptionSpec<Integer> frameBufferOption;
     private ArgumentAcceptingOptionSpec<Integer> intervalOption;
     private ArgumentAcceptingOptionSpec<Integer> stackDepthOption;
     private ArgumentAcceptingOptionSpec<Boolean> systemThreadOption;
@@ -48,11 +47,6 @@ public class AsyncProfilerFactory extends ProfilerFactory {
             .withRequiredArg()
             .ofType(Integer.class)
             .defaultsTo(2048);
-        frameBufferOption = parser.accepts("async-profiler-framebuffer", "The size of the frame buffer in bytes.")
-            .availableIf("profile")
-            .withRequiredArg()
-            .ofType(Integer.class)
-            .defaultsTo(10_000_000);
         systemThreadOption = parser.accepts("async-profiler-system-threads", "Whether to show system threads like GC and JIT compiler.")
             .availableIf("profile")
             .withRequiredArg()
@@ -72,9 +66,8 @@ public class AsyncProfilerFactory extends ProfilerFactory {
         AsyncProfilerConfig.Counter counter = counterOption.value(parsedOptions);
         int interval = intervalOption.value(parsedOptions);
         int stackDepth = stackDepthOption.value(parsedOptions);
-        int frameBuffer = frameBufferOption.value(parsedOptions);
         Boolean showSystemThreads = systemThreadOption.value(parsedOptions);
-        return new AsyncProfilerConfig(profilerHome, event, counter, interval, stackDepth, frameBuffer, showSystemThreads);
+        return new AsyncProfilerConfig(profilerHome, event, counter, interval, stackDepth, showSystemThreads);
     }
 
     private File getProfilerHome(OptionSet parsedOptions) {

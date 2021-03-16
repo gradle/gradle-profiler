@@ -26,7 +26,6 @@ class AsyncProfilerJvmArgsCalculator implements JvmArgsCalculator {
             .append(",event=").append(profilerConfig.getEvent())
             .append(",interval=").append(profilerConfig.getInterval())
             .append(",jstackdepth=").append(profilerConfig.getStackDepth())
-            .append(",buffer=").append(profilerConfig.getFrameBuffer())
             .append(",collapsed=").append(profilerConfig.getCounter().name().toLowerCase(Locale.ROOT))
             .append(",ann");
 

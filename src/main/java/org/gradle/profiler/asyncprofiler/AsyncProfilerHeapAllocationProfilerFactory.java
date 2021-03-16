@@ -16,7 +16,7 @@ public class AsyncProfilerHeapAllocationProfilerFactory extends ProfilerFactory 
     @Override
     public Profiler createFromOptions(OptionSet parsedOptions) {
         AsyncProfilerConfig config = asyncProfilerFactory.createConfig(parsedOptions);
-        AsyncProfilerConfig overrides = new AsyncProfilerConfig(config.getProfilerHome(), "alloc", AsyncProfilerConfig.Counter.TOTAL, 10, config.getStackDepth(), config.getFrameBuffer(), config.isIncludeSystemThreads());
+        AsyncProfilerConfig overrides = new AsyncProfilerConfig(config.getProfilerHome(), "alloc", AsyncProfilerConfig.Counter.TOTAL, 10, config.getStackDepth(), config.isIncludeSystemThreads());
         return new AsyncProfiler(overrides);
     }
 }

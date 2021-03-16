@@ -8,16 +8,14 @@ public class AsyncProfilerConfig {
     private final Counter counter;
     private final int interval;
     private final int stackDepth;
-    private final int frameBuffer;
     private final boolean includeSystemThreads;
 
-    public AsyncProfilerConfig(File profilerHome, String event, Counter counter, int interval, int stackDepth, int frameBuffer, boolean includeSystemThreads) {
+    public AsyncProfilerConfig(File profilerHome, String event, Counter counter, int interval, int stackDepth, boolean includeSystemThreads) {
         this.profilerHome = profilerHome;
         this.event = event;
         this.counter = counter;
         this.interval = interval;
         this.stackDepth = stackDepth;
-        this.frameBuffer = frameBuffer;
         this.includeSystemThreads = includeSystemThreads;
     }
 
@@ -39,10 +37,6 @@ public class AsyncProfilerConfig {
 
     public int getStackDepth() {
         return stackDepth;
-    }
-
-    public int getFrameBuffer() {
-        return frameBuffer;
     }
 
     public boolean isIncludeSystemThreads() {
