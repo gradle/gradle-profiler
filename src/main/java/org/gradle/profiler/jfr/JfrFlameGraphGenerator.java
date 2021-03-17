@@ -111,14 +111,14 @@ class JfrFlameGraphGenerator {
             true,
             Arrays.asList("--minwidth", "0.5"),
             Arrays.asList("--minwidth", "1"),
-            new FlameGraphSanitizer(FlameGraphSanitizer.COLLAPSE_BUILD_SCRIPTS, FlameGraphSanitizer.NORMALIZE_LAMBDA_NAMES)
+            FlameGraphSanitizer.raw()
         ),
         SIMPLIFIED(
             false,
             false,
             Arrays.asList("--minwidth", "1"),
             Arrays.asList("--minwidth", "2"),
-            new FlameGraphSanitizer(FlameGraphSanitizer.COLLAPSE_BUILD_SCRIPTS, FlameGraphSanitizer.COLLAPSE_GRADLE_INFRASTRUCTURE, FlameGraphSanitizer.SIMPLE_NAMES, FlameGraphSanitizer.NORMALIZE_LAMBDA_NAMES)
+            FlameGraphSanitizer.simplified()
         );
 
         private final boolean showArguments;

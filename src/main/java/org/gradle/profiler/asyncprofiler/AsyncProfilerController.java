@@ -1,6 +1,5 @@
 package org.gradle.profiler.asyncprofiler;
 
-import com.google.common.collect.ImmutableList;
 import org.gradle.profiler.CommandExec;
 import org.gradle.profiler.GradleScenarioDefinition;
 import org.gradle.profiler.InstrumentingProfiler;
@@ -15,27 +14,24 @@ import java.util.List;
 import java.util.Locale;
 
 import static org.gradle.profiler.asyncprofiler.AsyncProfilerConfig.Counter;
-import static org.gradle.profiler.flamegraph.FlameGraphSanitizer.*;
+import static org.gradle.profiler.flamegraph.FlameGraphSanitizer.SanitizeFunction;
 
 public class AsyncProfilerController implements InstrumentingProfiler.SnapshotCapturingProfilerController {
     private final AsyncProfilerConfig profilerConfig;
     private final ScenarioSettings scenarioSettings;
     private final FlameGraphTool flamegraphGenerator;
-    private final FlameGraphSanitizer flamegraphSanitizer;
+    private final FlameGraphSanitizer rawFlamegraphSanitizer;
+    private final FlameGraphSanitizer simplifiedFlamegraphSanitizer;
     private final File stacks;
 
     public AsyncProfilerController(AsyncProfilerConfig profilerConfig, ScenarioSettings scenarioSettings) {
         this.profilerConfig = profilerConfig;
         this.scenarioSettings = scenarioSettings;
-        ImmutableList.Builder<SanitizeFunction> sanitizers = ImmutableList.<SanitizeFunction>builder();
-        if (!profilerConfig.isIncludeSystemThreads()) {
-            sanitizers.add(new RemoveSystemThreads());
-
-        }
-        sanitizers.add(COLLAPSE_BUILD_SCRIPTS, COLLAPSE_GRADLE_INFRASTRUCTURE, SIMPLE_NAMES, NORMALIZE_LAMBDA_NAMES);
-        this.flamegraphSanitizer = new FlameGraphSanitizer(sanitizers.build().toArray(new SanitizeFunction[0]));
+        this.rawFlamegraphSanitizer = FlameGraphSanitizer.raw();
+        this.simplifiedFlamegraphSanitizer = profilerConfig.isIncludeSystemThreads()
+            ? FlameGraphSanitizer.simplified()
+            : FlameGraphSanitizer.simplified(new RemoveSystemThreads());
         this.flamegraphGenerator = new FlameGraphTool();
-
         this.stacks = AsyncProfiler.stacksFileFor(scenarioSettings.getScenario());
     }
 
@@ -74,32 +70,50 @@ public class AsyncProfilerController implements InstrumentingProfiler.SnapshotCa
 
     @Override
     public void stopSession() {
+        validateStacks();
         GradleScenarioDefinition scenario = scenarioSettings.getScenario();
         if (flamegraphGenerator.checkInstallation()) {
-            File simplifiedStacks = new File(scenario.getOutputDir(), scenario.getProfileName() + ".simplified-stacks.txt");
-            flamegraphSanitizer.sanitize(stacks, simplifiedStacks);
-
-            Counter counter = profilerConfig.getCounter();
-            String unit = counter == Counter.SAMPLES ? "samples" : "units";
-            String titlePrefix = profilerConfig.getEvent().toUpperCase(Locale.ROOT);
-            File flamegraph = new File(scenario.getOutputDir(), scenario.getProfileName() + "-flames.svg");
-            flamegraphGenerator.generateFlameGraph(
-                simplifiedStacks, flamegraph,
-                "--colors", "java",
-                "--minwidth", "1",
-                "--title", titlePrefix + " Flame Graph",
-                "--countname", unit
-            );
-            File iciclegraph = new File(scenario.getOutputDir(), scenario.getProfileName() + "-icicles.svg");
-            flamegraphGenerator.generateFlameGraph(
-                simplifiedStacks, iciclegraph,
-                "--reverse", "--invert",
-                "--colors", "java",
-                "--minwidth", "2",
-                "--title", titlePrefix + " Icicle Graph",
-                "--countname", unit
-            );
+            String outputBaseName = scenario.getProfileName() + "-" + profilerConfig.getEvent();
+            generateFlames(scenario.getOutputDir(), outputBaseName + "-raw", rawFlamegraphSanitizer);
+            generateFlames(scenario.getOutputDir(), outputBaseName + "-simplified", simplifiedFlamegraphSanitizer);
         }
+    }
+
+    private void validateStacks() {
+        if (!stacks.isFile() || stacks.length() == 0) {
+            throw new RuntimeException("No stacks have been capture by Async profiler. If you are on Linux, you may need to set two runtime variables:\n" +
+                "# sysctl kernel.perf_event_paranoid=1\n" +
+                "# sysctl kernel.kptr_restrict=0");
+        }
+    }
+
+    private void generateFlames(File outputDir, String outputBaseName, FlameGraphSanitizer flameGraphSanitizer) {
+        File processedStacks = new File(outputDir, outputBaseName + "-stacks.txt");
+        flameGraphSanitizer.sanitize(stacks, processedStacks);
+        generateGraphs(outputDir, outputBaseName, processedStacks);
+    }
+
+    private void generateGraphs(File outputDir, String flameBaseName, File stacks) {
+        Counter counter = profilerConfig.getCounter();
+        String unit = counter == Counter.SAMPLES ? "samples" : "units";
+        String titlePrefix = profilerConfig.getEvent().toUpperCase(Locale.ROOT);
+        File flamegraph = new File(outputDir, flameBaseName + "-flames.svg");
+        flamegraphGenerator.generateFlameGraph(
+            stacks, flamegraph,
+            "--colors", "java",
+            "--minwidth", "1",
+            "--title", titlePrefix + " Flame Graph",
+            "--countname", unit
+        );
+        File iciclegraph = new File(outputDir, flameBaseName + "-icicles.svg");
+        flamegraphGenerator.generateFlameGraph(
+            stacks, iciclegraph,
+            "--reverse", "--invert",
+            "--colors", "java",
+            "--minwidth", "2",
+            "--title", titlePrefix + " Icicle Graph",
+            "--countname", unit
+        );
     }
 
     private File getProfilerScript() {
