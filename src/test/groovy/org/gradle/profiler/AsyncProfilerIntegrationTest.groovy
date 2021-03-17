@@ -17,8 +17,15 @@ class AsyncProfilerIntegrationTest extends AbstractProfilerIntegrationTest {
         logFile.containsOne("<invocations: 3>")
 
         and:
-        new File(outputDir, "${latestSupportedGradleVersion}-flames.svg").file
-        new File(outputDir, "${latestSupportedGradleVersion}-icicles.svg").file
+        assertGraphsGenerated()
+    }
+
+    void assertGraphsGenerated(String event = "cpu") {
+        ["raw", "simplified"].each { type ->
+            assert new File(outputDir, "${latestSupportedGradleVersion}-${event}-${type}-flames.svg").file
+            assert new File(outputDir, "${latestSupportedGradleVersion}-${event}-${type}-icicles.svg").file
+        }
+
     }
 
     @Requires({ !OperatingSystem.isWindows() })
@@ -34,8 +41,7 @@ class AsyncProfilerIntegrationTest extends AbstractProfilerIntegrationTest {
         logFile.containsOne("<invocations: 3>")
 
         and:
-        new File(outputDir, "${latestSupportedGradleVersion}-flames.svg").file
-        new File(outputDir, "${latestSupportedGradleVersion}-icicles.svg").file
+        assertGraphsGenerated("alloc")
     }
 
     @Requires({ !OperatingSystem.isWindows() })
@@ -51,8 +57,7 @@ class AsyncProfilerIntegrationTest extends AbstractProfilerIntegrationTest {
         logFile.containsOne("<invocations: 4>")
 
         and:
-        new File(outputDir, "${latestSupportedGradleVersion}-flames.svg").file
-        new File(outputDir, "${latestSupportedGradleVersion}-icicles.svg").file
+        assertGraphsGenerated()
     }
 
     @Requires({ !OperatingSystem.isWindows() })
@@ -68,8 +73,7 @@ class AsyncProfilerIntegrationTest extends AbstractProfilerIntegrationTest {
         logFile.find("<invocations: 1>").size() == 3
 
         and:
-        new File(outputDir, "${latestSupportedGradleVersion}-flames.svg").file
-        new File(outputDir, "${latestSupportedGradleVersion}-icicles.svg").file
+        assertGraphsGenerated()
     }
 
     @Requires({ !OperatingSystem.isWindows() })
@@ -86,8 +90,7 @@ class AsyncProfilerIntegrationTest extends AbstractProfilerIntegrationTest {
         logFile.find("<invocations: 1>").size() == 3
 
         and:
-        new File(outputDir, "${latestSupportedGradleVersion}-flames.svg").file
-        new File(outputDir, "${latestSupportedGradleVersion}-icicles.svg").file
+        assertGraphsGenerated()
     }
 
     @Requires({ !OperatingSystem.isWindows() })
@@ -138,7 +141,9 @@ class AsyncProfilerIntegrationTest extends AbstractProfilerIntegrationTest {
         logFile.containsOne("<invocations: 3>")
 
         and:
-        new File(outputDir, "a-b/a-b-${latestSupportedGradleVersion}-flames.svg").file
-        new File(outputDir, "a-b/a-b-${latestSupportedGradleVersion}-icicles.svg").file
+        ["raw", "simplified"].each { type ->
+            assert new File(outputDir, "a-b/a-b-${latestSupportedGradleVersion}-cpu-${type}-flames.svg").file
+            assert new File(outputDir, "a-b/a-b-${latestSupportedGradleVersion}-cpu-${type}-icicles.svg").file
+        }
     }
 }
