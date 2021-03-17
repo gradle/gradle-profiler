@@ -38,7 +38,7 @@ public class JFRJvmArgsCalculator implements JvmArgsCalculator {
         if (profileOnStart) {
             if (java11OrLater) {
                 String dumpOnExit = captureOnExit
-                    ? ",dumponexit=true,filename=" + outputFile.getParentFile().getAbsolutePath()
+                    ? ",dumponexit=true,filename=" + outputFile.getAbsolutePath()
                     : "";
                 jvmArgs.add("-XX:StartFlightRecording=name=profile,settings=" + args.getJfrSettings() + dumpOnExit);
             } else {
@@ -46,7 +46,7 @@ public class JFRJvmArgsCalculator implements JvmArgsCalculator {
                 if (captureOnExit) {
                     flightRecorderOptions.append(",defaultrecording=true,dumponexit=true")
                         .append(",dumponexitpath=")
-                        .append(outputFile.getParentFile().getAbsolutePath());
+                        .append(outputFile.getAbsolutePath());
                 }
             }
         }

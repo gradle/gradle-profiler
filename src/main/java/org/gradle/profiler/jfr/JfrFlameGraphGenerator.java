@@ -6,6 +6,7 @@ import org.openjdk.jmc.common.item.IItemCollection;
 import org.openjdk.jmc.flightrecorder.CouldNotLoadRecordingException;
 import org.openjdk.jmc.flightrecorder.JfrLoaderToolkit;
 
+import javax.annotation.Nullable;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -32,15 +33,17 @@ class JfrFlameGraphGenerator {
             return;
         }
 
-        List<IItemCollection> recordings = Stream.of(
-            requireNonNull(jfrFile.getParentFile().listFiles((dir, name) -> name.endsWith(".jfr")))
-        ).map(file -> {
-            try {
-                return JfrLoaderToolkit.loadEvents(file);
-            } catch (IOException | CouldNotLoadRecordingException e) {
-                throw new RuntimeException(e);
-            }
-        }).collect(Collectors.toList());
+        Stream<File> jfrFiles = jfrFile.isDirectory()
+            ? Stream.of(requireNonNull(jfrFile.listFiles((dir, name) -> name.endsWith(".jfr"))))
+            : Stream.of(jfrFile);
+        List<IItemCollection> recordings = jfrFiles
+            .map(file -> {
+                try {
+                    return JfrLoaderToolkit.loadEvents(file);
+                } catch (IOException | CouldNotLoadRecordingException e) {
+                    throw new RuntimeException(e);
+                }
+            }).collect(Collectors.toList());
 
         try {
             generateGraphs(jfrFile, recordings);
@@ -54,15 +57,22 @@ class JfrFlameGraphGenerator {
         for (EventType type : EventType.values()) {
             for (DetailLevel level : DetailLevel.values()) {
                 File stacks = generateStacks(flamegraphDir, recordings, type, level);
-                generateFlameGraph(stacks, type, level);
-                generateIcicleGraph(stacks, type, level);
+                if (stacks != null) {
+                    generateFlameGraph(stacks, type, level);
+                    generateIcicleGraph(stacks, type, level);
+                }
             }
         }
     }
 
+    @Nullable
     private File generateStacks(File baseDir, List<IItemCollection> recordings, EventType type, DetailLevel level) throws IOException {
         File stacks = File.createTempFile("stacks", ".txt");
         stacksConverter.convertToStacks(recordings, stacks, new Options(type, level.isShowArguments(), level.isShowLineNumbers()));
+        if (stacks.length() == 0) {
+            stacks.delete();
+            return null;
+        }
         File sanitizedStacks = stacksFileName(baseDir, type, level);
         level.getSanitizer().sanitize(stacks, sanitizedStacks);
         stacks.delete();

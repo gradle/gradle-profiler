@@ -105,6 +105,13 @@ public class GradleScenarioDefinition extends ScenarioDefinition {
         return measuredBuildOperations;
     }
 
+    public boolean createsMultipleProcesses() {
+        if (getBuildCount() <= 1) {
+            return false;
+        }
+        return getInvoker().isDoesNotUseDaemon() || !getInvoker().isReuseDaemon();
+    }
+
     @Override
     public void visitProblems(InvocationSettings settings, Consumer<String> reporter) {
         if (getWarmUpCount() < 1) {

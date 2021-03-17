@@ -11,6 +11,7 @@ public class JFRControl implements InstrumentingProfiler.SnapshotCapturingProfil
     private final JcmdRunner jcmd;
     private final JFRArgs jfrArgs;
     private final File jfrFile;
+    private int counter;
 
     public JFRControl(JFRArgs args, File jfrFile) {
         this.jcmd = new JcmdRunner();
@@ -24,8 +25,11 @@ public class JFRControl implements InstrumentingProfiler.SnapshotCapturingProfil
     }
 
     @Override
-    public void stopRecording(String pid) throws IOException, InterruptedException {
-        jcmd.run(pid, "JFR.stop", "name=profile", "filename=" + jfrFile.getAbsolutePath());
+    public void stopRecording(String pid) {
+        File outputFile = jfrFile.isDirectory()
+            ? new File(jfrFile, "jfr-" + (counter++) + ".jfr")
+            : jfrFile;
+        jcmd.run(pid, "JFR.stop", "name=profile", "filename=" + outputFile.getAbsolutePath());
     }
 
     @Override
