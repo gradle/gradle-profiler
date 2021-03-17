@@ -1,10 +1,7 @@
 package org.gradle.profiler
 
-import org.gradle.api.JavaVersion
-import spock.lang.IgnoreIf
 import spock.lang.Unroll
 
-@IgnoreIf({ JavaVersion.current().isJava11Compatible() }) // JFR doesn't work on Java 11, yet
 class JFRProfilerIntegrationTest extends AbstractProfilerIntegrationTest {
     @Unroll
     def "can profile Gradle #versionUnderTest using JFR, tooling API and warm daemon"() {
