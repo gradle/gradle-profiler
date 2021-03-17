@@ -37,8 +37,10 @@ public class JFRControl implements InstrumentingProfiler.SnapshotCapturingProfil
     }
 
     @Override
-    public void stopSession() throws IOException, InterruptedException {
-        new JfrFlameGraphGenerator().generateGraphs(jfrFile);
+    public void stopSession() {
+        String jfrFileName = jfrFile.getName();
+        String outputBaseName = jfrFileName.substring(0, jfrFileName.length() - 4);
+        new JfrFlameGraphGenerator().generateGraphs(jfrFile, outputBaseName);
         System.out.println("Wrote profiling data to " + jfrFile.getPath());
     }
 

@@ -193,9 +193,14 @@ class JFRProfilerIntegrationTest extends AbstractProfilerIntegrationTest {
         logFile.find("<invocations: 1>").size() == 2 + iterations
 
         jfrFileDirectory.listFiles().findAll { it.name.endsWith(".jfr") }.size() == iterations
+        // No perl installed on Windows
         if (!OperatingSystem.isWindows()) {
-            // No perl installed on Windows
-            new File(outputDir, "${versionUnderTest}.jfr-flamegraphs").isDirectory()
+            // Events: alloc, cpu, monitor-locked / Type: raw, simplified
+            // Looks like no io stacks are in the JFR recording
+            int numberOfFlames = 3 * 2
+            assert outputDir.listFiles().findAll { it.name.endsWith("-flames.svg") }.size() == numberOfFlames
+            assert outputDir.listFiles().findAll { it.name.endsWith("-icicles.svg") }.size() == numberOfFlames
+            assert outputDir.listFiles().findAll { it.name.endsWith("-stacks.txt") }.size() == numberOfFlames
         }
         where:
         versionUnderTest              | iterations
