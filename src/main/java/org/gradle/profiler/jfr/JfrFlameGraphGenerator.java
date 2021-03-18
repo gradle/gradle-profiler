@@ -91,7 +91,7 @@ class JfrFlameGraphGenerator {
         }
         List<String> options = new ArrayList<>();
         options.addAll(level.getFlameGraphOptions());
-        options.addAll(Arrays.asList("--title", type.getDisplayName() + " Flame Graph", "--countname", type.getUnitOfMeasure()));
+        options.addAll(Arrays.asList("--title", type.getDisplayName() + " Flame Graph", "--countname", type.getUnitOfMeasure(), "--colors", "java"));
         flameGraphGenerator.generateFlameGraph(stacks, flames, options);
     }
 
@@ -101,7 +101,7 @@ class JfrFlameGraphGenerator {
         }
         List<String> options = new ArrayList<>();
         options.addAll(level.getIcicleGraphOptions());
-        options.addAll(Arrays.asList("--title", type.getDisplayName() + " Icicle Graph", "--countname", type.getUnitOfMeasure(), "--reverse", "--invert", "--colors", "aqua"));
+        options.addAll(Arrays.asList("--title", type.getDisplayName() + " Icicle Graph", "--countname", type.getUnitOfMeasure(), "--reverse", "--invert", "--colors", "java"));
         flameGraphGenerator.generateFlameGraph(stacks, icicles, options);
     }
 
