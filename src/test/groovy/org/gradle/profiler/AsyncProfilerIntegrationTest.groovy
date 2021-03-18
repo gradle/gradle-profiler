@@ -1,8 +1,9 @@
 package org.gradle.profiler
 
-
 import spock.lang.Requires
+import spock.lang.Unroll
 
+@Unroll
 class AsyncProfilerIntegrationTest extends AbstractProfilerIntegrationTest {
     @Requires({ !OperatingSystem.isWindows() })
     def "profiles build CPU usage using async-profiler with tooling API and warm daemon"() {
@@ -26,12 +27,7 @@ class AsyncProfilerIntegrationTest extends AbstractProfilerIntegrationTest {
         instrumentedBuildScript()
 
         when:
-        new Main().run("--project-dir", projectDir.absolutePath, "--output-dir", outputDir.absolutePath, "--gradle-version", latestSupportedGradleVersion,
-            "--profile", "async-profiler",
-            "--async-profiler-event", "cpu",
-            "--async-profiler-event", "alloc",
-            "--async-profiler-event", "lock",
-            "assemble"
+        new Main().run("--project-dir", projectDir.absolutePath, "--output-dir", outputDir.absolutePath, "--gradle-version", latestSupportedGradleVersion, "--profile", "async-profiler-all", "assemble"
         )
 
         then:
@@ -59,12 +55,12 @@ class AsyncProfilerIntegrationTest extends AbstractProfilerIntegrationTest {
     }
 
     @Requires({ !OperatingSystem.isWindows() })
-    def "profiles multiple iterations using async-profiler with tooling API and warm daemon"() {
+    def "profiles multiple iterations using #profiler with tooling API and warm daemon"() {
         given:
         instrumentedBuildScript()
 
         when:
-        new Main().run("--project-dir", projectDir.absolutePath, "--output-dir", outputDir.absolutePath, "--gradle-version", latestSupportedGradleVersion, "--profile", "async-profiler", "--iterations", "2", "assemble")
+        new Main().run("--project-dir", projectDir.absolutePath, "--output-dir", outputDir.absolutePath, "--gradle-version", latestSupportedGradleVersion, "--profile", profiler, "--iterations", "2", "assemble")
 
         then:
         logFile.find("<daemon: true").size() == 5
@@ -72,15 +68,18 @@ class AsyncProfilerIntegrationTest extends AbstractProfilerIntegrationTest {
 
         and:
         assertGraphsGenerated()
+
+        where:
+        profiler << ["async-profiler", "async-profiler-all"]
     }
 
     @Requires({ !OperatingSystem.isWindows() })
-    def "profiles build using async-profiler with tooling API and cold daemon"() {
+    def "profiles build using #profiler with tooling API and cold daemon"() {
         given:
         instrumentedBuildScript()
 
         when:
-        new Main().run("--project-dir", projectDir.absolutePath, "--output-dir", outputDir.absolutePath, "--gradle-version", latestSupportedGradleVersion, "--profile", "async-profiler", "--cold-daemon", "assemble")
+        new Main().run("--project-dir", projectDir.absolutePath, "--output-dir", outputDir.absolutePath, "--gradle-version", latestSupportedGradleVersion, "--profile", profiler, "--cold-daemon", "assemble")
 
         then:
         logFile.find("<daemon: true").size() == 3
@@ -88,15 +87,18 @@ class AsyncProfilerIntegrationTest extends AbstractProfilerIntegrationTest {
 
         and:
         assertGraphsGenerated()
+
+        where:
+        profiler << ["async-profiler", "async-profiler-all"]
     }
 
     @Requires({ !OperatingSystem.isWindows() })
-    def "profiles build using async-profiler with CLI and no daemon"() {
+    def "profiles build using #profiler with CLI and no daemon"() {
         given:
         instrumentedBuildScript()
 
         when:
-        new Main().run("--project-dir", projectDir.absolutePath, "--output-dir", outputDir.absolutePath, "--gradle-version", latestSupportedGradleVersion, "--profile", "async-profiler", "--no-daemon", "assemble")
+        new Main().run("--project-dir", projectDir.absolutePath, "--output-dir", outputDir.absolutePath, "--gradle-version", latestSupportedGradleVersion, "--profile", profiler, "--no-daemon", "assemble")
 
         then:
         logFile.find("<daemon: true").size() == 1
@@ -105,6 +107,9 @@ class AsyncProfilerIntegrationTest extends AbstractProfilerIntegrationTest {
 
         and:
         assertGraphsGenerated()
+
+        where:
+        profiler << ["async-profiler", "async-profiler-all"]
     }
 
     @Requires({ !OperatingSystem.isWindows() })
@@ -138,7 +143,7 @@ class AsyncProfilerIntegrationTest extends AbstractProfilerIntegrationTest {
     }
 
     @Requires({ !OperatingSystem.isWindows() })
-    def "scenario name can contain reserved characters"() {
+    def "scenario name when using #profiler can contain reserved characters"() {
         given:
         instrumentedBuildScript()
         def scenarios = file("performance.scenarios")
@@ -148,7 +153,7 @@ class AsyncProfilerIntegrationTest extends AbstractProfilerIntegrationTest {
         """
 
         when:
-        new Main().run("--project-dir", projectDir.absolutePath, "--output-dir", outputDir.absolutePath, "--gradle-version", latestSupportedGradleVersion, "--profile", "async-profiler", "--scenario-file", scenarios.absolutePath, "a/b")
+        new Main().run("--project-dir", projectDir.absolutePath, "--output-dir", outputDir.absolutePath, "--gradle-version", latestSupportedGradleVersion, "--profile", profiler, "--scenario-file", scenarios.absolutePath, "a/b")
 
         then:
         logFile.find("<daemon: true").size() == 4
@@ -159,6 +164,9 @@ class AsyncProfilerIntegrationTest extends AbstractProfilerIntegrationTest {
             assert new File(outputDir, "a-b/a-b-${latestSupportedGradleVersion}-cpu-${type}-flames.svg").file
             assert new File(outputDir, "a-b/a-b-${latestSupportedGradleVersion}-cpu-${type}-icicles.svg").file
         }
+
+        where:
+        profiler << ["async-profiler", "async-profiler-all"]
     }
 
     void assertGraphsGenerated(String... events = ["cpu"]) {

@@ -2,6 +2,7 @@ package org.gradle.profiler;
 
 import joptsimple.OptionParser;
 import joptsimple.OptionSet;
+import org.gradle.profiler.asyncprofiler.AsyncProfilerAllEventsProfilerFactory;
 import org.gradle.profiler.asyncprofiler.AsyncProfilerFactory;
 import org.gradle.profiler.asyncprofiler.AsyncProfilerHeapAllocationProfilerFactory;
 import org.gradle.profiler.buildscan.BuildScanProfilerFactory;
@@ -13,7 +14,11 @@ import org.gradle.profiler.yourkit.YourKitHeapAllocationProfilerFactory;
 import org.gradle.profiler.yourkit.YourKitSamplingProfilerFactory;
 import org.gradle.profiler.yourkit.YourKitTracingProfilerFactory;
 
-import java.util.*;
+import java.util.Collections;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 /**
@@ -37,6 +42,7 @@ public abstract class ProfilerFactory {
             put("yourkit-heap", new YourKitHeapAllocationProfilerFactory());
             put("async-profiler", AsyncProfilerFactory.INSTANCE);
             put("async-profiler-heap", AsyncProfilerHeapAllocationProfilerFactory.INSTANCE);
+            put("async-profiler-all", AsyncProfilerAllEventsProfilerFactory.INSTANCE);
             put("heap-dump", new HeapDumpProfilerFactory());
             put("chrome-trace", new ChromeTraceProfilerFactory());
         }}
