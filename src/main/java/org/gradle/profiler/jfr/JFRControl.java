@@ -40,7 +40,7 @@ public class JFRControl implements InstrumentingProfiler.SnapshotCapturingProfil
     public void stopSession() {
         String jfrFileName = jfrFile.getName();
         String outputBaseName = jfrFileName.substring(0, jfrFileName.length() - 4);
-        new JfrFlameGraphGenerator().generateGraphs(jfrFile, outputBaseName);
+        new JfrFlameGraphGenerator().generateStacksAndGraphs(jfrFile, outputBaseName);
         System.out.println("Wrote profiling data to " + jfrFile.getPath());
     }
 

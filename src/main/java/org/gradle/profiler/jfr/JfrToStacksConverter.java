@@ -36,7 +36,7 @@ import java.util.stream.StreamSupport;
 /**
  * Converts JFR recordings to the collapsed stacks format used by the FlameGraph tool.
  */
-class JfrToStacksConverter {
+public class JfrToStacksConverter {
     public void convertToStacks(List<IItemCollection> recordings, File targetFile, Options options) {
         Map<String, Long> foldedStacks = foldStacks(recordings, options);
         writeFoldedStacks(foldedStacks, targetFile);

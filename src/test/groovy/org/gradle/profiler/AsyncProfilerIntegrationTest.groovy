@@ -41,7 +41,7 @@ class AsyncProfilerIntegrationTest extends AbstractProfilerIntegrationTest {
         logFile.containsOne("<invocations: 3>")
 
         and:
-        assertGraphsGenerated("alloc")
+        assertGraphsGenerated("allocation")
     }
 
     @Requires({ !OperatingSystem.isWindows() })
