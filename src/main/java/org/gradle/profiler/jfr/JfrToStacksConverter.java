@@ -148,8 +148,8 @@ public class JfrToStacksConverter {
 
         CPU("cpu", "CPU", "samples", ValueField.COUNT, "Method Profiling Sample", "Method Profiling Sample Native"),
         ALLOCATION("allocation", "Allocation size", "kB", ValueField.ALLOCATION_SIZE, "Allocation in new TLAB", "Allocation outside TLAB"),
-        MONITOR_BLOCKED("monitor-blocked", "Java Monitor Blocked", "ms", ValueField.DURATION, "Java Monitor Blocked"),
-        IO("io", "File and Socket IO", "ms", ValueField.DURATION, "File Read", "File Write", "Socket Read", "Socket Write");
+        MONITOR_BLOCKED("monitor-blocked", "Java Monitor Blocked", "ns", ValueField.DURATION, "Java Monitor Blocked", "Java Thread Park"),
+        IO("io", "File and Socket IO", "ns", ValueField.DURATION, "File Read", "File Write", "Socket Read", "Socket Write");
 
         private final String id;
         private final String displayName;
@@ -202,7 +202,7 @@ public class JfrToStacksConverter {
                         IMemberAccessor<IQuantity, IItem> endTime = itemType.getAccessor(JfrAttributes.END_TIME.getKey());
                         duration = MemberAccessorToolkit.difference(endTime, startTime);
                     }
-                    return duration.getMember(event).in(UnitLookup.MILLISECOND).longValue();
+                    return duration.getMember(event).in(UnitLookup.NANOSECOND).longValue();
                 }
             },
             ALLOCATION_SIZE {
