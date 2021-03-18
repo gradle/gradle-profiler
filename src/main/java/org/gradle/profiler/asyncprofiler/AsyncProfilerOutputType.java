@@ -1,20 +1,21 @@
 package org.gradle.profiler.asyncprofiler;
 
 import org.gradle.profiler.GradleScenarioDefinition;
+import org.gradle.profiler.ScenarioSettings;
 
 import java.io.File;
 
 public enum AsyncProfilerOutputType {
     STACKS("collapsed") {
         @Override
-        File outputFileFor(GradleScenarioDefinition scenarioDefinition) {
-            return AsyncProfiler.stacksFileFor(scenarioDefinition);
+        File outputFileFor(ScenarioSettings settings) {
+            return settings.getProfilerOutputLocation(".stacks.txt");
         }
     },
     JFR("jfr") {
         @Override
-        File outputFileFor(GradleScenarioDefinition scenarioDefinition) {
-            return AsyncProfiler.jfrFileFor(scenarioDefinition);
+        File outputFileFor(ScenarioSettings settings) {
+            return settings.getJfrProfilerOutputLocation();
         }
     };
 
@@ -30,7 +31,7 @@ public enum AsyncProfilerOutputType {
         this.commandLineOption = commandLineOption;
     }
 
-    abstract File outputFileFor(GradleScenarioDefinition scenarioDefinition);
+    abstract File outputFileFor(ScenarioSettings settings);
 
     public String getCommandLineOption() {
         return commandLineOption;

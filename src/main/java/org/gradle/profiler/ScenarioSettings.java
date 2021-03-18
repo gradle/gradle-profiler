@@ -1,6 +1,11 @@
 package org.gradle.profiler;
 
+import java.io.File;
+
 public class ScenarioSettings {
+    private static final String PROFILE_JFR_SUFFIX = ".jfr";
+    private static final String PROFILE_JFR_DIRECTORY_SUFFIX = "-jfr";
+
     private final InvocationSettings invocationSettings;
     private final GradleScenarioDefinition scenario;
 
@@ -15,5 +20,28 @@ public class ScenarioSettings {
 
     public GradleScenarioDefinition getScenario() {
         return scenario;
+    }
+
+    public File getJfrProfilerOutputLocation() {
+        GradleScenarioDefinition scenario = getScenario();
+        if (scenario.createsMultipleProcesses()) {
+            File jfrFilesDirectory = getProfilerOutputLocation(PROFILE_JFR_DIRECTORY_SUFFIX);
+            jfrFilesDirectory.mkdirs();
+            return jfrFilesDirectory;
+        } else {
+            return getProfilerOutputLocation(PROFILE_JFR_SUFFIX);
+        }
+    }
+
+    public File getProfilerOutputLocation(String suffix) {
+        return new File(getProfilerOutputBaseDir(), getProfilerOutputBaseName() + suffix);
+    }
+
+    public File getProfilerOutputBaseDir() {
+        return scenario.getOutputDir();
+    }
+
+    public String getProfilerOutputBaseName() {
+        return scenario.getProfileName();
     }
 }

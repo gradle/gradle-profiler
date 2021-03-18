@@ -36,7 +36,7 @@ public class AsyncProfilerController implements InstrumentingProfiler.SnapshotCa
             : FlameGraphSanitizer.simplified(new RemoveSystemThreads());
         this.flameGraphGenerator = new JfrFlameGraphGenerator();
         this.outputType = AsyncProfilerOutputType.from(profilerConfig, scenarioSettings.getScenario());
-        this.outputFile = outputType.outputFileFor(scenarioSettings.getScenario());
+        this.outputFile = outputType.outputFileFor(scenarioSettings);
     }
 
     public String getName() {

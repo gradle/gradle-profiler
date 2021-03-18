@@ -1,6 +1,5 @@
 package org.gradle.profiler.asyncprofiler;
 
-import org.gradle.profiler.GradleScenarioDefinition;
 import org.gradle.profiler.InstrumentingProfiler;
 import org.gradle.profiler.JvmArgsCalculator;
 import org.gradle.profiler.ScenarioSettings;
@@ -39,13 +38,5 @@ public class AsyncProfiler extends InstrumentingProfiler {
     @Override
     public String toString() {
         return "async profiler";
-    }
-
-    static File stacksFileFor(GradleScenarioDefinition scenario) {
-        return new File(scenario.getOutputDir(), scenario.getProfileName() + ".stacks.txt");
-    }
-
-    static File jfrFileFor(GradleScenarioDefinition scenario) {
-        return new File(scenario.getOutputDir(), scenario.getProfileName() + ".jfr");
     }
 }

@@ -15,9 +15,8 @@
  */
 package org.gradle.profiler.chrometrace;
 
-import org.gradle.profiler.instrument.GradleInstrumentation;
-import org.gradle.profiler.GradleScenarioDefinition;
 import org.gradle.profiler.ScenarioSettings;
+import org.gradle.profiler.instrument.GradleInstrumentation;
 
 import java.io.File;
 import java.io.PrintWriter;
@@ -26,8 +25,7 @@ public class ChromeTraceInstrumentation extends GradleInstrumentation {
     private final File traceFile;
 
     public ChromeTraceInstrumentation(ScenarioSettings scenarioSettings) {
-        GradleScenarioDefinition scenario = scenarioSettings.getScenario();
-        traceFile = new File(scenario.getOutputDir(), scenario.getProfileName() + "-trace.html");
+        traceFile = scenarioSettings.getProfilerOutputLocation("-trace.html");
     }
 
     @Override

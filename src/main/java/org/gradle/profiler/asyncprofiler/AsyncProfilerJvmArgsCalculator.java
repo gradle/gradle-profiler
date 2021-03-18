@@ -1,6 +1,5 @@
 package org.gradle.profiler.asyncprofiler;
 
-import org.gradle.profiler.GradleScenarioDefinition;
 import org.gradle.profiler.JvmArgsCalculator;
 import org.gradle.profiler.ScenarioSettings;
 
@@ -20,7 +19,6 @@ class AsyncProfilerJvmArgsCalculator implements JvmArgsCalculator {
 
     @Override
     public void calculateJvmArgs(List<String> jvmArgs) {
-        GradleScenarioDefinition scenario = scenarioSettings.getScenario();
         StringBuilder agent = new StringBuilder()
             .append("-agentpath:").append(profilerConfig.getProfilerHome()).append("/build/libasyncProfiler.so=start")
             .append(",event=").append(profilerConfig.getJoinedEvents())
@@ -28,7 +26,7 @@ class AsyncProfilerJvmArgsCalculator implements JvmArgsCalculator {
             .append(",jstackdepth=").append(profilerConfig.getStackDepth())
             .append(",").append(outputType.getCommandLineOption())
             .append(",").append(profilerConfig.getCounter().name().toLowerCase(Locale.ROOT))
-            .append(",file=").append(outputType.outputFileFor(scenario))
+            .append(",file=").append(outputType.outputFileFor(scenarioSettings))
             .append(",ann");
 
         jvmArgs.add(agent.toString());
