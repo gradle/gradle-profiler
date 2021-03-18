@@ -1,10 +1,7 @@
 package org.gradle.profiler
 
-import org.gradle.api.JavaVersion
-import spock.lang.IgnoreIf
 import spock.lang.Unroll
 
-@IgnoreIf({ JavaVersion.current().isJava11Compatible() }) // JFR doesn't work on Java 11, yet
 class JFRProfilerIntegrationTest extends AbstractProfilerIntegrationTest {
     @Unroll
     def "can profile Gradle #versionUnderTest using JFR, tooling API and warm daemon"() {
@@ -142,6 +139,31 @@ class JFRProfilerIntegrationTest extends AbstractProfilerIntegrationTest {
     }
 
     @Unroll
+    def "can profile Gradle #versionUnderTest using JFR with #iterations iterations"() {
+        given:
+        instrumentedBuildScript()
+
+        when:
+        new Main().run("--project-dir", projectDir.absolutePath, "--output-dir", outputDir.absolutePath, "--gradle-version", versionUnderTest, "--profile", "jfr", "--iterations", iterations.toString(), "--cold-daemon", "--cli", "assemble")
+
+        def jfrFileDirectory = findJfrDirectory(iterations)
+
+        then:
+        // Probe version, 1 warm up, <iteration> builds
+        logFile.containsOne("* Running scenario using Gradle $versionUnderTest (scenario 1/1)")
+        logFile.find("* Running warm-up build").size() == 1
+        logFile.find("* Running measured build").size() == iterations
+        logFile.find("<invocations: 1>").size() == 2 + iterations
+
+        jfrFileDirectory.listFiles().findAll {it.name.endsWith(".jfr")}.size() == iterations
+
+        where:
+        versionUnderTest              | iterations
+        latestSupportedGradleVersion  | 1
+        latestSupportedGradleVersion  | 2
+    }
+
+    @Unroll
     def "can profile Gradle no daemon #versionUnderTest with #iterations iterations"(String versionUnderTest, int iterations) {
         given:
         instrumentedBuildScript()
@@ -157,6 +179,8 @@ class JFRProfilerIntegrationTest extends AbstractProfilerIntegrationTest {
             "--no-daemon",
             "assemble")
 
+        def jfrFileDirectory = findJfrDirectory(iterations)
+
         then:
         // Probe version, 1 warm up, 2 build
         logFile.containsOne("* Running scenario using Gradle $versionUnderTest (scenario 1/1)")
@@ -168,10 +192,15 @@ class JFRProfilerIntegrationTest extends AbstractProfilerIntegrationTest {
         logFile.find("<tasks: [assemble]>").size() == 1 + iterations
         logFile.find("<invocations: 1>").size() == 2 + iterations
 
-        outputDir.listFiles().findAll { it.name.endsWith(".jfr") }.size() == iterations
+        jfrFileDirectory.listFiles().findAll { it.name.endsWith(".jfr") }.size() == iterations
+        // No perl installed on Windows
         if (!OperatingSystem.isWindows()) {
-            // No perl installed on Windows
-            new File(outputDir, "${versionUnderTest}.jfr-flamegraphs").isDirectory()
+            // Events: alloc, cpu / Type: raw, simplified
+            // Looks like monitor-locked and io mostly aren't captured
+            int numberOfFlames = 2 * 2
+            assert outputDir.listFiles().findAll { it.name.endsWith("-flames.svg") }.size() >= numberOfFlames
+            assert outputDir.listFiles().findAll { it.name.endsWith("-icicles.svg") }.size() >= numberOfFlames
+            assert outputDir.listFiles().findAll { it.name.endsWith("-stacks.txt") }.size() >= numberOfFlames
         }
         where:
         versionUnderTest              | iterations
@@ -203,7 +232,7 @@ class JFRProfilerIntegrationTest extends AbstractProfilerIntegrationTest {
         new Main().run("--project-dir", projectDir.absolutePath, "--output-dir", outputDir.absolutePath, "--scenario-file", scenarioFile.absolutePath, "--gradle-version", minimalSupportedGradleVersion, "--profile", "jfr", "--iterations", "2", "--no-daemon", "assemble")
 
         then:
-        new File(outputDir, "assemble").listFiles().findAll { it.name.endsWith(".jfr") }.size() == 2
+        findJfrDirectory(2, new File(outputDir, "assemble")).listFiles().findAll { it.name.endsWith(".jfr") }.size() == 2
     }
 
     private File prepareBuild() {
@@ -216,5 +245,9 @@ class JFRProfilerIntegrationTest extends AbstractProfilerIntegrationTest {
             }
         """
         return scenarioFile
+    }
+
+    private File findJfrDirectory(int iterations, File outputDir = this.outputDir) {
+        return iterations == 1 ? outputDir : outputDir.listFiles().find { it.name.endsWith("-jfr") }
     }
 }

@@ -22,7 +22,8 @@ public class JFRJvmArgsCalculator implements JvmArgsCalculator {
 
     @Override
     public void calculateJvmArgs(List<String> jvmArgs) {
-        if (!JavaVersion.current().isJava11Compatible()) {
+        boolean java11OrLater = JavaVersion.current().isJava11Compatible();
+        if (!java11OrLater) {
             if (!isOracleVm()) {
                 throw new IllegalArgumentException("JFR is only supported on OpenJDK since Java 11 and Oracle JDK since Java 7");
             }
@@ -35,11 +36,18 @@ public class JFRJvmArgsCalculator implements JvmArgsCalculator {
         StringBuilder flightRecorderOptions = new StringBuilder("-XX:FlightRecorderOptions=stackdepth=1024");
 
         if (profileOnStart) {
-            jvmArgs.add("-XX:StartFlightRecording=name=profile,settings=" + args.getJfrSettings());
-            if (captureOnExit) {
-                flightRecorderOptions.append(",defaultrecording=true,dumponexit=true")
-                    .append(",dumponexitpath=")
-                    .append(outputFile.getParentFile().getAbsolutePath());
+            if (java11OrLater) {
+                String dumpOnExit = captureOnExit
+                    ? ",dumponexit=true,filename=" + outputFile.getAbsolutePath()
+                    : "";
+                jvmArgs.add("-XX:StartFlightRecording=name=profile,settings=" + args.getJfrSettings() + dumpOnExit);
+            } else {
+                jvmArgs.add("-XX:StartFlightRecording=name=profile,settings=" + args.getJfrSettings());
+                if (captureOnExit) {
+                    flightRecorderOptions.append(",defaultrecording=true,dumponexit=true")
+                        .append(",dumponexitpath=")
+                        .append(outputFile.getAbsolutePath());
+                }
             }
         }
 

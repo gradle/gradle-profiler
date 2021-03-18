@@ -1,8 +1,5 @@
 package org.gradle.profiler.flamegraph;
 
-import static java.util.Arrays.asList;
-import static java.util.Collections.singletonList;
-
 import com.google.common.base.CharMatcher;
 import com.google.common.base.Joiner;
 import com.google.common.base.Splitter;
@@ -24,6 +21,9 @@ import java.util.ListIterator;
 import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+
+import static java.util.Arrays.asList;
+import static java.util.Collections.singletonList;
 
 /**
  * Simplifies stacks to make flame graphs more readable.
@@ -56,12 +56,29 @@ public class FlameGraphSanitizer {
 
     private final SanitizeFunction sanitizeFunction;
 
-    public FlameGraphSanitizer(SanitizeFunction... sanitizeFunctions) {
-        ImmutableList<SanitizeFunction> functions = ImmutableList.<SanitizeFunction>builder()
-                .addAll(Arrays.asList(sanitizeFunctions))
-                .add(new CollapseDuplicateFrames())
-                .build();
-        this.sanitizeFunction = new CompositeSanitizeFunction(functions);
+    public static FlameGraphSanitizer simplified(SanitizeFunction... additionalSanitizers) {
+        ImmutableList.Builder<SanitizeFunction> builder = ImmutableList.builder();
+        builder.add(additionalSanitizers);
+        builder.add(
+            FlameGraphSanitizer.COLLAPSE_BUILD_SCRIPTS,
+            FlameGraphSanitizer.COLLAPSE_GRADLE_INFRASTRUCTURE,
+            FlameGraphSanitizer.SIMPLE_NAMES,
+            FlameGraphSanitizer.NORMALIZE_LAMBDA_NAMES
+        );
+        builder.add(new CollapseDuplicateFrames());
+        return new FlameGraphSanitizer(builder.build());
+    }
+
+    public static FlameGraphSanitizer raw(SanitizeFunction... additionalSanitizers) {
+        ImmutableList.Builder<SanitizeFunction> builder = ImmutableList.builder();
+        builder.add(additionalSanitizers);
+        builder.add(FlameGraphSanitizer.COLLAPSE_BUILD_SCRIPTS, FlameGraphSanitizer.NORMALIZE_LAMBDA_NAMES);
+        builder.add(new CollapseDuplicateFrames());
+        return new FlameGraphSanitizer(builder.build());
+    }
+
+    public FlameGraphSanitizer(ImmutableList<SanitizeFunction> sanitizeFunctions) {
+        this.sanitizeFunction = new CompositeSanitizeFunction(sanitizeFunctions);
     }
 
     public void sanitize(final File in, File out) {

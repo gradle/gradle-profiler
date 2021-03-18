@@ -1,5 +1,6 @@
 package org.gradle.profiler.jfr;
 
+import org.gradle.profiler.GradleScenarioDefinition;
 import org.gradle.profiler.InstrumentingProfiler;
 import org.gradle.profiler.JvmArgsCalculator;
 import org.gradle.profiler.ScenarioSettings;
@@ -9,6 +10,7 @@ import java.util.function.Consumer;
 
 public class JfrProfiler extends InstrumentingProfiler {
     private static final String PROFILE_JFR_SUFFIX = ".jfr";
+    private static final String PROFILE_JFR_DIRECTORY_SUFFIX = "-jfr";
 
     private final JFRArgs jfrArgs;
 
@@ -43,7 +45,14 @@ public class JfrProfiler extends InstrumentingProfiler {
     }
 
     private File getJfrFile(ScenarioSettings settings) {
-        return new File(settings.getScenario().getOutputDir(), settings.getScenario().getProfileName() + PROFILE_JFR_SUFFIX);
+        GradleScenarioDefinition scenario = settings.getScenario();
+        if (scenario.createsMultipleProcesses()) {
+            File jfrFilesDirectory = new File(scenario.getOutputDir(), scenario.getProfileName() + PROFILE_JFR_DIRECTORY_SUFFIX);
+            jfrFilesDirectory.mkdirs();
+            return jfrFilesDirectory;
+        } else {
+             return new File(scenario.getOutputDir(), scenario.getProfileName() + PROFILE_JFR_SUFFIX);
+        }
     }
 
     @Override
