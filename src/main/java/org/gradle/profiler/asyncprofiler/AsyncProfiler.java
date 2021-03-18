@@ -21,7 +21,7 @@ public class AsyncProfiler extends InstrumentingProfiler {
             // Can attach later instead
             return JvmArgsCalculator.DEFAULT;
         }
-        return new AsyncProfilerJvmArgsCalculator(config, settings, captureSnapshotOnProcessExit);
+        return new AsyncProfilerJvmArgsCalculator(config, settings);
     }
 
     @Override
@@ -43,5 +43,9 @@ public class AsyncProfiler extends InstrumentingProfiler {
 
     static File stacksFileFor(GradleScenarioDefinition scenario) {
         return new File(scenario.getOutputDir(), scenario.getProfileName() + ".stacks.txt");
+    }
+
+    static File jfrFileFor(GradleScenarioDefinition scenario) {
+        return new File(scenario.getOutputDir(), scenario.getProfileName() + ".jfr");
     }
 }

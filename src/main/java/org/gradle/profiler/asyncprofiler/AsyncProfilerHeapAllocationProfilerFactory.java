@@ -1,5 +1,6 @@
 package org.gradle.profiler.asyncprofiler;
 
+import com.google.common.collect.ImmutableList;
 import joptsimple.OptionSet;
 import org.gradle.profiler.Profiler;
 import org.gradle.profiler.ProfilerFactory;
@@ -16,7 +17,7 @@ public class AsyncProfilerHeapAllocationProfilerFactory extends ProfilerFactory 
     @Override
     public Profiler createFromOptions(OptionSet parsedOptions) {
         AsyncProfilerConfig config = asyncProfilerFactory.createConfig(parsedOptions);
-        AsyncProfilerConfig overrides = new AsyncProfilerConfig(config.getProfilerHome(), "alloc", AsyncProfilerConfig.Counter.TOTAL, 10, config.getStackDepth(), config.isIncludeSystemThreads());
+        AsyncProfilerConfig overrides = new AsyncProfilerConfig(config.getProfilerHome(), ImmutableList.of("alloc"), AsyncProfilerConfig.Counter.TOTAL, 10, config.getStackDepth(), config.isIncludeSystemThreads());
         return new AsyncProfiler(overrides);
     }
 }

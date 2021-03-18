@@ -1,6 +1,7 @@
 package org.gradle.profiler.jfr;
 
 import com.google.common.base.Joiner;
+import org.gradle.profiler.asyncprofiler.AsyncProfilerController;
 import org.gradle.profiler.flamegraph.FlameGraphSanitizer;
 import org.gradle.profiler.flamegraph.FlameGraphTool;
 import org.openjdk.jmc.common.item.IItemCollection;
@@ -160,7 +161,8 @@ public class JfrFlameGraphGenerator {
             false,
             Arrays.asList("--minwidth", "1"),
             Arrays.asList("--minwidth", "2"),
-            FlameGraphSanitizer.simplified()
+            // TODO: Use the value configured in the config.
+            FlameGraphSanitizer.simplified(new AsyncProfilerController.RemoveSystemThreads())
         );
 
         private final boolean showArguments;

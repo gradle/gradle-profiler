@@ -20,12 +20,26 @@ class AsyncProfilerIntegrationTest extends AbstractProfilerIntegrationTest {
         assertGraphsGenerated()
     }
 
-    void assertGraphsGenerated(String event = "cpu") {
-        ["raw", "simplified"].each { type ->
-            assert new File(outputDir, "${latestSupportedGradleVersion}-${event}-${type}-flames.svg").file
-            assert new File(outputDir, "${latestSupportedGradleVersion}-${event}-${type}-icicles.svg").file
-        }
+    @Requires({ !OperatingSystem.isWindows() })
+    def "profiles multiple events using async-profiler with tooling API and warm daemon"() {
+        given:
+        instrumentedBuildScript()
 
+        when:
+        new Main().run("--project-dir", projectDir.absolutePath, "--output-dir", outputDir.absolutePath, "--gradle-version", latestSupportedGradleVersion,
+            "--profile", "async-profiler",
+            "--async-profiler-event", "cpu",
+            "--async-profiler-event", "alloc",
+            "--async-profiler-event", "lock",
+            "assemble"
+        )
+
+        then:
+        logFile.find("<daemon: true").size() == 4
+        logFile.containsOne("<invocations: 3>")
+
+        and:
+        assertGraphsGenerated("allocation", "cpu", "monitor-blocked")
     }
 
     @Requires({ !OperatingSystem.isWindows() })
@@ -77,7 +91,7 @@ class AsyncProfilerIntegrationTest extends AbstractProfilerIntegrationTest {
     }
 
     @Requires({ !OperatingSystem.isWindows() })
-    def "profiles build using async-profiler with tooling API and no daemon"() {
+    def "profiles build using async-profiler with CLI and no daemon"() {
         given:
         instrumentedBuildScript()
 
@@ -144,6 +158,15 @@ class AsyncProfilerIntegrationTest extends AbstractProfilerIntegrationTest {
         ["raw", "simplified"].each { type ->
             assert new File(outputDir, "a-b/a-b-${latestSupportedGradleVersion}-cpu-${type}-flames.svg").file
             assert new File(outputDir, "a-b/a-b-${latestSupportedGradleVersion}-cpu-${type}-icicles.svg").file
+        }
+    }
+
+    void assertGraphsGenerated(String... events = ["cpu"]) {
+        events.each { event ->
+            ["raw", "simplified"].each { type ->
+                assert new File(outputDir, "${latestSupportedGradleVersion}-${event}-${type}-flames.svg").file
+                assert new File(outputDir, "${latestSupportedGradleVersion}-${event}-${type}-icicles.svg").file
+            }
         }
     }
 }

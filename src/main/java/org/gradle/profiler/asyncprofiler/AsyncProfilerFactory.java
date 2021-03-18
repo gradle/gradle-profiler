@@ -9,6 +9,7 @@ import org.gradle.profiler.Profiler;
 import org.gradle.profiler.ProfilerFactory;
 
 import java.io.File;
+import java.util.List;
 import java.util.Locale;
 
 public class AsyncProfilerFactory extends ProfilerFactory {
@@ -62,12 +63,12 @@ public class AsyncProfilerFactory extends ProfilerFactory {
 
     AsyncProfilerConfig createConfig(OptionSet parsedOptions) {
         File profilerHome = getProfilerHome(parsedOptions);
-        String event = eventOption.value(parsedOptions);
+        List<String> events = eventOption.values(parsedOptions);
         AsyncProfilerConfig.Counter counter = counterOption.value(parsedOptions);
         int interval = intervalOption.value(parsedOptions);
         int stackDepth = stackDepthOption.value(parsedOptions);
         Boolean showSystemThreads = systemThreadOption.value(parsedOptions);
-        return new AsyncProfilerConfig(profilerHome, event, counter, interval, stackDepth, showSystemThreads);
+        return new AsyncProfilerConfig(profilerHome, events, counter, interval, stackDepth, showSystemThreads);
     }
 
     private File getProfilerHome(OptionSet parsedOptions) {
