@@ -117,13 +117,13 @@ public class AsyncProfilerController implements InstrumentingProfiler.SnapshotCa
 
     private JfrFlameGraphGenerator.Stacks sanitizeStacks(File outputDir, String outputBaseName, File stacksFileToConvert, JfrToStacksConverter.EventType jfrEventType, JfrFlameGraphGenerator.DetailLevel level) {
         FlameGraphSanitizer flamegraphSanitizer = flameGraphSanitizers.get(level);
-        String eventFileBaseName = getEventFileBaseName(outputBaseName, jfrEventType, level);
+        String eventFileBaseName = eventFileBaseNameFor(outputBaseName, jfrEventType, level);
         File sanitizedStacksFile = new File(outputDir, eventFileBaseName + "-stacks.txt");
         flamegraphSanitizer.sanitize(stacksFileToConvert, sanitizedStacksFile);
         return new JfrFlameGraphGenerator.Stacks(sanitizedStacksFile, jfrEventType, level, eventFileBaseName);
     }
 
-    private String getEventFileBaseName(String outputBaseName, JfrToStacksConverter.EventType type, JfrFlameGraphGenerator.DetailLevel level) {
+    private String eventFileBaseNameFor(String outputBaseName, JfrToStacksConverter.EventType type, JfrFlameGraphGenerator.DetailLevel level) {
         return Joiner.on("-").join(outputBaseName, type.getId(), level.name().toLowerCase(Locale.ROOT));
     }
 

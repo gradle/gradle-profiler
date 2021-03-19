@@ -22,7 +22,7 @@ public class ScenarioSettings {
         return scenario;
     }
 
-    public File getJfrProfilerOutputLocation() {
+    public File computeJfrProfilerOutputLocation() {
         GradleScenarioDefinition scenario = getScenario();
         if (scenario.createsMultipleProcesses()) {
             File jfrFilesDirectory = getProfilerOutputLocation(PROFILE_JFR_DIRECTORY_SUFFIX);

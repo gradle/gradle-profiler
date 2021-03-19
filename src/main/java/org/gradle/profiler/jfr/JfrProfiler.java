@@ -30,12 +30,12 @@ public class JfrProfiler extends InstrumentingProfiler {
 
     @Override
     protected SnapshotCapturingProfilerController doNewController(ScenarioSettings settings) {
-        return new JFRControl(jfrArgs, settings.getJfrProfilerOutputLocation());
+        return new JFRControl(jfrArgs, settings.computeJfrProfilerOutputLocation());
     }
 
     @Override
     protected JvmArgsCalculator jvmArgsWithInstrumentation(ScenarioSettings settings, boolean startRecordingOnProcessStart, boolean captureSnapshotOnProcessExit) {
-        File jfrFile = settings.getJfrProfilerOutputLocation();
+        File jfrFile = settings.computeJfrProfilerOutputLocation();
         return new JFRJvmArgsCalculator(jfrArgs, startRecordingOnProcessStart, captureSnapshotOnProcessExit, jfrFile);
     }
 

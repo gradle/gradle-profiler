@@ -15,7 +15,7 @@ public enum AsyncProfilerOutputType {
     JFR("jfr") {
         @Override
         File outputFileFor(ScenarioSettings settings) {
-            return settings.getJfrProfilerOutputLocation();
+            return settings.computeJfrProfilerOutputLocation();
         }
     };
 
