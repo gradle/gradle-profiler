@@ -15,7 +15,7 @@ public class HeapDumpProfiler extends Profiler {
         return new GradleInstrumentation() {
             @Override
             protected void generateInitScriptBody(PrintWriter writer) {
-                File baseName = settings.getProfilerOutputLocation("");
+                File baseName = settings.profilerOutputLocationFor("");
                 writer.println("new org.gradle.trace.heapdump.HeapDump(gradle, new File(new URI('" + baseName.toURI() + "')))");
             }
         };

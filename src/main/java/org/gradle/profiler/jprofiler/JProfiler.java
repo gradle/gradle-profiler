@@ -23,7 +23,7 @@ public class JProfiler {
         int i = 0;
         File snapshotFile;
         do {
-            snapshotFile = settings.getProfilerOutputLocation(( i == 0 ? "" : ("_" + i)) + ".jps");
+            snapshotFile = settings.profilerOutputLocationFor(( i == 0 ? "" : ("_" + i)) + ".jps");
             ++i;
         } while (snapshotFile.exists());
         return snapshotFile.getAbsolutePath();

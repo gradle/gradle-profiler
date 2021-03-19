@@ -25,15 +25,15 @@ public class ScenarioSettings {
     public File computeJfrProfilerOutputLocation() {
         GradleScenarioDefinition scenario = getScenario();
         if (scenario.createsMultipleProcesses()) {
-            File jfrFilesDirectory = getProfilerOutputLocation(PROFILE_JFR_DIRECTORY_SUFFIX);
+            File jfrFilesDirectory = profilerOutputLocationFor(PROFILE_JFR_DIRECTORY_SUFFIX);
             jfrFilesDirectory.mkdirs();
             return jfrFilesDirectory;
         } else {
-            return getProfilerOutputLocation(PROFILE_JFR_SUFFIX);
+            return profilerOutputLocationFor(PROFILE_JFR_SUFFIX);
         }
     }
 
-    public File getProfilerOutputLocation(String suffix) {
+    public File profilerOutputLocationFor(String suffix) {
         return new File(getProfilerOutputBaseDir(), getProfilerOutputBaseName() + suffix);
     }
 

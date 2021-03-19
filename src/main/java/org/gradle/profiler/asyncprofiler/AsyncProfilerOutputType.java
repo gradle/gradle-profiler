@@ -9,7 +9,7 @@ public enum AsyncProfilerOutputType {
     STACKS("collapsed") {
         @Override
         File outputFileFor(ScenarioSettings settings) {
-            return settings.getProfilerOutputLocation(".stacks.txt");
+            return settings.profilerOutputLocationFor(".stacks.txt");
         }
     },
     JFR("jfr") {
