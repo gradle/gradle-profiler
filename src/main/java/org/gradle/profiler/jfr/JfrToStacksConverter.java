@@ -99,7 +99,7 @@ public class JfrToStacksConverter {
         }
 
         private String frameName(IMCFrame frame) {
-            return StacktraceFormatToolkit.formatFrame(
+            String frameName = StacktraceFormatToolkit.formatFrame(
                 frame,
                 new FrameSeparator(options.isShowLineNumbers() ? FrameCategorization.LINE : FrameCategorization.METHOD, false),
                 false,
@@ -109,6 +109,9 @@ public class JfrToStacksConverter {
                 options.isShowArguments(),
                 true
             );
+            return frame.getType() == IMCFrame.Type.UNKNOWN
+                ? frameName
+                : frameName + "_[j]";
         }
 
         private long getValue(IItem event) {
