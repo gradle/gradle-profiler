@@ -1,7 +1,6 @@
 package org.gradle.profiler.jfr;
 
 import com.google.common.base.Joiner;
-import org.gradle.profiler.asyncprofiler.AsyncProfilerController;
 import org.gradle.profiler.flamegraph.FlameGraphSanitizer;
 import org.gradle.profiler.flamegraph.FlameGraphTool;
 import org.openjdk.jmc.common.item.IItemCollection;
@@ -15,6 +14,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -30,6 +30,11 @@ import static org.gradle.profiler.jfr.JfrToStacksConverter.Options;
 public class JfrFlameGraphGenerator {
     private final JfrToStacksConverter stacksConverter = new JfrToStacksConverter();
     private final FlameGraphTool flameGraphGenerator = new FlameGraphTool();
+    private final Map<DetailLevel, FlameGraphSanitizer> sanitizers;
+
+    public JfrFlameGraphGenerator(Map<DetailLevel, FlameGraphSanitizer> sanitizers) {
+        this.sanitizers = sanitizers;
+    }
 
     public static class Stacks {
         private final File file;
@@ -119,7 +124,7 @@ public class JfrFlameGraphGenerator {
             return null;
         }
         File sanitizedStacks = new File(baseDir, eventFileBaseName + "-stacks.txt");
-        level.getSanitizer().sanitize(stacks, sanitizedStacks);
+        sanitizers.get(level).sanitize(stacks, sanitizedStacks);
         stacks.delete();
         return sanitizedStacks;
     }
@@ -153,30 +158,25 @@ public class JfrFlameGraphGenerator {
             true,
             true,
             Arrays.asList("--minwidth", "0.5"),
-            Arrays.asList("--minwidth", "1"),
-            FlameGraphSanitizer.raw()
+            Arrays.asList("--minwidth", "1")
         ),
         SIMPLIFIED(
             false,
             false,
             Arrays.asList("--minwidth", "1"),
-            Arrays.asList("--minwidth", "2"),
-            // TODO: Use the value configured in the config.
-            FlameGraphSanitizer.simplified(new AsyncProfilerController.RemoveSystemThreads())
+            Arrays.asList("--minwidth", "2")
         );
 
         private final boolean showArguments;
         private final boolean showLineNumbers;
         private final List<String> flameGraphOptions;
         private final List<String> icicleGraphOptions;
-        private final FlameGraphSanitizer sanitizer;
 
-        DetailLevel(boolean showArguments, boolean showLineNumbers, List<String> flameGraphOptions, List<String> icicleGraphOptions, FlameGraphSanitizer sanitizer) {
+        DetailLevel(boolean showArguments, boolean showLineNumbers, List<String> flameGraphOptions, List<String> icicleGraphOptions) {
             this.showArguments = showArguments;
             this.showLineNumbers = showLineNumbers;
             this.flameGraphOptions = flameGraphOptions;
             this.icicleGraphOptions = icicleGraphOptions;
-            this.sanitizer = sanitizer;
         }
 
         public boolean isShowArguments() {
@@ -194,10 +194,5 @@ public class JfrFlameGraphGenerator {
         public List<String> getIcicleGraphOptions() {
             return icicleGraphOptions;
         }
-
-        public FlameGraphSanitizer getSanitizer() {
-            return sanitizer;
-        }
-
     }
 }

@@ -2,6 +2,7 @@ package org.gradle.profiler.asyncprofiler;
 
 import com.google.common.base.Joiner;
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableMap;
 import org.gradle.profiler.CommandExec;
 import org.gradle.profiler.GradleScenarioDefinition;
 import org.gradle.profiler.InstrumentingProfiler;
@@ -23,19 +24,22 @@ public class AsyncProfilerController implements InstrumentingProfiler.SnapshotCa
     private final AsyncProfilerConfig profilerConfig;
     private final ScenarioSettings scenarioSettings;
     private final JfrFlameGraphGenerator flameGraphGenerator;
-    private final FlameGraphSanitizer rawFlamegraphSanitizer;
-    private final FlameGraphSanitizer simplifiedFlamegraphSanitizer;
+    private final ImmutableMap<JfrFlameGraphGenerator.DetailLevel, FlameGraphSanitizer> flameGraphSanitizers;
     private final File outputFile;
     private final AsyncProfilerOutputType outputType;
 
     public AsyncProfilerController(AsyncProfilerConfig profilerConfig, ScenarioSettings scenarioSettings) {
         this.profilerConfig = profilerConfig;
         this.scenarioSettings = scenarioSettings;
-        this.rawFlamegraphSanitizer = FlameGraphSanitizer.raw();
-        this.simplifiedFlamegraphSanitizer = profilerConfig.isIncludeSystemThreads()
+        FlameGraphSanitizer rawFlamegraphSanitizer = FlameGraphSanitizer.raw();
+        FlameGraphSanitizer simplifiedFlamegraphSanitizer = profilerConfig.isIncludeSystemThreads()
             ? FlameGraphSanitizer.simplified()
             : FlameGraphSanitizer.simplified(new RemoveSystemThreads());
-        this.flameGraphGenerator = new JfrFlameGraphGenerator();
+        this.flameGraphSanitizers = ImmutableMap.of(
+            JfrFlameGraphGenerator.DetailLevel.RAW, rawFlamegraphSanitizer,
+            JfrFlameGraphGenerator.DetailLevel.SIMPLIFIED, simplifiedFlamegraphSanitizer
+        );
+        this.flameGraphGenerator = new JfrFlameGraphGenerator(flameGraphSanitizers);
         this.outputType = AsyncProfilerOutputType.from(profilerConfig, scenarioSettings.getScenario());
         this.outputFile = outputType.outputFileFor(scenarioSettings);
     }
@@ -103,14 +107,16 @@ public class AsyncProfilerController implements InstrumentingProfiler.SnapshotCa
             List<JfrFlameGraphGenerator.Stacks> collectedStacks = new ArrayList<>();
             for (String event : profilerConfig.getEvents()) {
                 JfrToStacksConverter.EventType jfrEventType = convertAsyncEventToJfrEvent(event);
-                collectedStacks.add(sanitizeStacks(outputDir, outputBaseName, outputFile, jfrEventType, JfrFlameGraphGenerator.DetailLevel.RAW, rawFlamegraphSanitizer));
-                collectedStacks.add(sanitizeStacks(outputDir, outputBaseName, outputFile, jfrEventType, JfrFlameGraphGenerator.DetailLevel.SIMPLIFIED, simplifiedFlamegraphSanitizer));
+                for (JfrFlameGraphGenerator.DetailLevel level : JfrFlameGraphGenerator.DetailLevel.values()) {
+                    collectedStacks.add(sanitizeStacks(outputDir, outputBaseName, outputFile, jfrEventType, level));
+                }
             }
             return collectedStacks;
         }
     }
 
-    private JfrFlameGraphGenerator.Stacks sanitizeStacks(File outputDir, String outputBaseName, File stacksFileToConvert, JfrToStacksConverter.EventType jfrEventType, JfrFlameGraphGenerator.DetailLevel level, FlameGraphSanitizer flamegraphSanitizer) {
+    private JfrFlameGraphGenerator.Stacks sanitizeStacks(File outputDir, String outputBaseName, File stacksFileToConvert, JfrToStacksConverter.EventType jfrEventType, JfrFlameGraphGenerator.DetailLevel level) {
+        FlameGraphSanitizer flamegraphSanitizer = flameGraphSanitizers.get(level);
         String eventFileBaseName = getEventFileBaseName(outputBaseName, jfrEventType, level);
         File sanitizedStacksFile = new File(outputDir, eventFileBaseName + "-stacks.txt");
         flamegraphSanitizer.sanitize(stacksFileToConvert, sanitizedStacksFile);
@@ -152,7 +158,7 @@ public class AsyncProfilerController implements InstrumentingProfiler.SnapshotCa
         return new File(profilerConfig.getProfilerHome(), "profiler.sh");
     }
 
-    public static final class RemoveSystemThreads implements SanitizeFunction {
+    private static final class RemoveSystemThreads implements SanitizeFunction {
 
         @Override
         public List<String> map(List<String> stack) {
