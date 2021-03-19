@@ -33,6 +33,13 @@ public enum AsyncProfilerOutputType {
 
     abstract File outputFileFor(ScenarioSettings settings);
 
+    File individualOutputFileFor(ScenarioSettings settings) {
+        File outputFile = outputFileFor(settings);
+        return settings.getScenario().createsMultipleProcesses()
+            ? new File(outputFile, "profile-%t-%p.jfr")
+            : outputFile;
+    }
+
     public String getCommandLineOption() {
         return commandLineOption;
     }

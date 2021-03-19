@@ -26,7 +26,7 @@ class AsyncProfilerJvmArgsCalculator implements JvmArgsCalculator {
             .append(",jstackdepth=").append(profilerConfig.getStackDepth())
             .append(",").append(outputType.getCommandLineOption())
             .append(",").append(profilerConfig.getCounter().name().toLowerCase(Locale.ROOT))
-            .append(",file=").append(outputType.outputFileFor(scenarioSettings))
+            .append(",file=").append(outputType.individualOutputFileFor(scenarioSettings))
             .append(",ann");
 
         jvmArgs.add(agent.toString());

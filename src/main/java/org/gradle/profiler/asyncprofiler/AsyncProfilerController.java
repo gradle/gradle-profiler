@@ -52,7 +52,7 @@ public class AsyncProfilerController implements InstrumentingProfiler.SnapshotCa
             "-i", String.valueOf(profilerConfig.getInterval()),
             "-j", String.valueOf(profilerConfig.getStackDepth()),
             "-o", outputType.getCommandLineOption(),
-            "-f", outputFile.getAbsolutePath(),
+            "-f", outputType.individualOutputFileFor(scenarioSettings).getAbsolutePath(),
             pid
         );
     }
@@ -63,7 +63,7 @@ public class AsyncProfilerController implements InstrumentingProfiler.SnapshotCa
             getProfilerScript().getAbsolutePath(),
             "stop",
             "-o", outputType.getCommandLineOption(),
-            "-f", outputFile.getAbsolutePath(),
+            "-f", outputType.individualOutputFileFor(scenarioSettings).getAbsolutePath(),
             "-a",
             pid
         );

@@ -36,6 +36,11 @@ public class AsyncProfiler extends InstrumentingProfiler {
     }
 
     @Override
+    public void validate(ScenarioSettings settings, Consumer<String> reporter) {
+        validateMultipleIterationsWithCleanupAction(settings, reporter);
+    }
+
+    @Override
     public String toString() {
         return "async profiler";
     }

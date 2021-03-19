@@ -113,33 +113,42 @@ class AsyncProfilerIntegrationTest extends AbstractProfilerIntegrationTest {
     }
 
     @Requires({ !OperatingSystem.isWindows() })
-    def "cannot profile using async-profiler with multiple iterations and cold daemon"() {
+    def "profiles using #profiler with multiple iterations and cold daemon"() {
         given:
         instrumentedBuildScript()
 
         when:
-        new Main().run("--project-dir", projectDir.absolutePath, "--output-dir", outputDir.absolutePath, "--gradle-version", latestSupportedGradleVersion, "--profile", "async-profiler", "--iterations", "2", "--cold-daemon", "assemble")
+        new Main().run("--project-dir", projectDir.absolutePath, "--output-dir", outputDir.absolutePath, "--gradle-version", latestSupportedGradleVersion, "--profile", profiler, "--iterations", "2", "--cold-daemon", "assemble")
 
         then:
-        thrown(IllegalArgumentException)
+        logFile.find("<daemon: true").size() == 4
+        logFile.find("<invocations: 1>").size() == 4
 
         and:
-        output.contains("Scenario using Gradle ${latestSupportedGradleVersion}: Profiler async profiler does not support profiling multiple daemons.")
+        assertGraphsGenerated()
+
+        where:
+        profiler << ["async-profiler", "async-profiler-all"]
     }
 
     @Requires({ !OperatingSystem.isWindows() })
-    def "cannot profile using async-profiler with multiple iterations and no daemon"() {
+    def "profiles using #profiler with multiple iterations and no daemon"() {
         given:
         instrumentedBuildScript()
 
         when:
-        new Main().run("--project-dir", projectDir.absolutePath, "--output-dir", outputDir.absolutePath, "--gradle-version", latestSupportedGradleVersion, "--profile", "async-profiler", "--iterations", "2", "--no-daemon", "assemble")
+        new Main().run("--project-dir", projectDir.absolutePath, "--output-dir", outputDir.absolutePath, "--gradle-version", latestSupportedGradleVersion, "--profile", profiler, "--iterations", "2", "--no-daemon", "assemble")
 
         then:
-        thrown(IllegalArgumentException)
+        logFile.find("<daemon: true").size() == 1
+        logFile.find("<daemon: false").size() == 3
+        logFile.find("<invocations: 1>").size() == 4
 
         and:
-        output.contains("Scenario using Gradle ${latestSupportedGradleVersion}: Profiler async profiler does not support profiling multiple daemons.")
+        assertGraphsGenerated()
+
+        where:
+        profiler << ["async-profiler", "async-profiler-all"]
     }
 
     @Requires({ !OperatingSystem.isWindows() })
