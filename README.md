@@ -104,13 +104,13 @@ The output are flame and icicle graphs which show you the call tree and hotspots
 
 The following options are supported and closely mimic the options of Async profiler. Have a look at its readme to find out more about each option:
 
-- `--async-profiler-event`: The event to sample, e.g. `cpu` or `alloc`. Defaults to `cpu`
-- `--async-profiler-count`: The count to use when aggregating event data. Either `samples` or `total`. `total` is especially useful for allocation profiling. Defaults to `samples`
-- `--async-profiler-interval`: The sampling interval in ns, defaults to 10_000_000 (10ms)
+- `--async-profiler-event`: The event to sample, e.g. `cpu`, `wall`, `lock` or `alloc`. Defaults to `cpu`. Multiple events can be profiled by using this parameter multiple times.
+- `--async-profiler-count`: The count to use when aggregating event data. Either `samples` or `total`. `total` is especially useful for allocation profiling. Defaults to `samples`. Corresponds to the `--samples` and `--total` command line options for Async profiler.
+- `--async-profiler-interval`: The sampling interval in ns, defaults to 10_000_000 (10 ms).
 - `--async-profiler-alloc-interval`: The sampling interval in bytes for allocation profiling, defaults to 10 bytes. Corresponds to the `--alloc` command line option for Async profiler.
-- `--async-profiler-lock-threshold`: lock profiling threshold in nanoseconds, defaults to 1ns.
+- `--async-profiler-lock-threshold`: lock profiling threshold in nanoseconds, defaults to 1 ns. Corresponds to the `--lock` command line option for Async profiler.
 - `--async-profiler-stackdepth`: The maximum stack depth. Lower this if profiles with deep recursion get too large. Defaults to 2048.
-- `--async-profiler-system-threads`: Whether to show system threads like GC and JIT compilation in the profile. Usually makes them harder to read, but can be useful if you suspect problems in that area. Defaults to `false` 
+- `--async-profiler-system-threads`: Whether to show system threads like GC and JIT compilation in the profile. Usually makes them harder to read, but can be useful if you suspect problems in that area. Defaults to `false`. 
 
 You can also use either the `ASYNC_PROFILER_HOME` environment variable or the `--async-profiler-home` command line option to point to the Async profiler install directory.
 
