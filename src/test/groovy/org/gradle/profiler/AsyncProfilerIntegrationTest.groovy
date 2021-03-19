@@ -39,6 +39,26 @@ class AsyncProfilerIntegrationTest extends AbstractProfilerIntegrationTest {
     }
 
     @Requires({ !OperatingSystem.isWindows() })
+    def "profiles wall clock time using async-profiler with tooling API and warm daemon"() {
+        given:
+        instrumentedBuildScript()
+
+        when:
+        new Main().run("--project-dir", projectDir.absolutePath, "--output-dir", outputDir.absolutePath, "--gradle-version", latestSupportedGradleVersion, "--profile", "async-profiler",
+            "--async-profiler-event", "wall",
+            "--async-profiler-event", "alloc",
+            "assemble"
+        )
+
+        then:
+        logFile.find("<daemon: true").size() == 4
+        logFile.containsOne("<invocations: 3>")
+
+        and:
+        assertGraphsGenerated("allocation", "cpu")
+    }
+
+    @Requires({ !OperatingSystem.isWindows() })
     def "profiles heap allocation using async-profiler with tooling API and warm daemon"() {
         given:
         instrumentedBuildScript()
