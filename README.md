@@ -96,6 +96,8 @@ You can use async profiler to profile a Gradle build using `--profile async-prof
 
 Alternatively, you can also use `--profile async-profiler-heap` to profile heap allocations, with some reasonable default settings.
 
+Finally, you can also use `--profile async-profiler-all` to profile cpu, heap allocations, and locks with some reasonable default settings.
+
 By default, an Async profiler release will be downloaded from [Github](https://github.com/jvm-profiling-tools/async-profiler/releases) and installed, if not already available.
 
 The output are flame and icicle graphs which show you the call tree and hotspots of your code.
@@ -105,8 +107,9 @@ The following options are supported and closely mimic the options of Async profi
 - `--async-profiler-event`: The event to sample, e.g. `cpu` or `alloc`. Defaults to `cpu`
 - `--async-profiler-count`: The count to use when aggregating event data. Either `samples` or `total`. `total` is especially useful for allocation profiling. Defaults to `samples`
 - `--async-profiler-interval`: The sampling interval in ns, defaults to 10_000_000 (10ms)
+- `--async-profiler-alloc-interval`: The sampling interval in bytes for allocation profiling, defaults to 10 bytes. Corresponds to the `--alloc` command line option for Async profiler.
+- `--async-profiler-lock-threshold`: lock profiling threshold in nanoseconds, defaults to 1ns.
 - `--async-profiler-stackdepth`: The maximum stack depth. Lower this if profiles with deep recursion get too large. Defaults to 2048.
-- `--async-profiler-framebuffer`: The size of the frame buffer in bytes. Defaults to 10_000_000 (~10MB)
 - `--async-profiler-system-threads`: Whether to show system threads like GC and JIT compilation in the profile. Usually makes them harder to read, but can be useful if you suspect problems in that area. Defaults to `false` 
 
 You can also use either the `ASYNC_PROFILER_HOME` environment variable or the `--async-profiler-home` command line option to point to the Async profiler install directory.

@@ -6,18 +6,25 @@ import java.io.File;
 import java.util.List;
 
 public class AsyncProfilerConfig {
+    public static final String EVENT_ALLOC = "alloc";
+    public static final String EVENT_LOCK = "lock";
+
     private final File profilerHome;
     private final List<String> events;
     private final Counter counter;
     private final int interval;
+    private final int allocSampleSize;
+    private final int lockThreshold;
     private final int stackDepth;
     private final boolean includeSystemThreads;
 
-    public AsyncProfilerConfig(File profilerHome, List<String> events, Counter counter, int interval, int stackDepth, boolean includeSystemThreads) {
+    public AsyncProfilerConfig(File profilerHome, List<String> events, Counter counter, int interval, int allocSampleSize, int lockThreshold, int stackDepth, boolean includeSystemThreads) {
         this.profilerHome = profilerHome;
         this.events = events;
         this.counter = counter;
         this.interval = interval;
+        this.allocSampleSize = allocSampleSize;
+        this.lockThreshold = lockThreshold;
         this.stackDepth = stackDepth;
         this.includeSystemThreads = includeSystemThreads;
     }
@@ -40,6 +47,14 @@ public class AsyncProfilerConfig {
 
     public int getInterval() {
         return interval;
+    }
+
+    public int getAllocSampleSize() {
+        return allocSampleSize;
+    }
+
+    public int getLockThreshold() {
+        return lockThreshold;
     }
 
     public int getStackDepth() {

@@ -1,6 +1,7 @@
 package org.gradle.profiler.asyncprofiler;
 
 import com.google.common.base.Joiner;
+import com.google.common.collect.ImmutableList;
 import org.gradle.profiler.CommandExec;
 import org.gradle.profiler.GradleScenarioDefinition;
 import org.gradle.profiler.InstrumentingProfiler;
@@ -45,16 +46,26 @@ public class AsyncProfilerController implements InstrumentingProfiler.SnapshotCa
 
     @Override
     public void startRecording(String pid) throws IOException, InterruptedException {
-        new CommandExec().run(
+        ImmutableList.Builder<String> arguments = ImmutableList.builder();
+        arguments.add(
             getProfilerScript().getAbsolutePath(),
             "start",
             "-e", profilerConfig.getJoinedEvents(),
             "-i", String.valueOf(profilerConfig.getInterval()),
             "-j", String.valueOf(profilerConfig.getStackDepth()),
+            "--" + profilerConfig.getCounter().name().toLowerCase(Locale.ROOT),
+            "-a",
             "-o", outputType.getCommandLineOption(),
-            "-f", outputType.individualOutputFileFor(scenarioSettings).getAbsolutePath(),
-            pid
+            "-f", outputType.individualOutputFileFor(scenarioSettings).getAbsolutePath()
         );
+        if (profilerConfig.getEvents().contains(AsyncProfilerConfig.EVENT_ALLOC)) {
+            arguments.add("--alloc", String.valueOf(profilerConfig.getAllocSampleSize()));
+        }
+        if (profilerConfig.getEvents().contains(AsyncProfilerConfig.EVENT_LOCK)) {
+            arguments.add("--lock", String.valueOf(profilerConfig.getLockThreshold()));
+        }
+        arguments.add(pid);
+        new CommandExec().run(arguments.build());
     }
 
     @Override

@@ -17,7 +17,7 @@ public class AsyncProfilerAllEventsProfilerFactory extends ProfilerFactory {
     @Override
     public Profiler createFromOptions(OptionSet parsedOptions) {
         AsyncProfilerConfig config = asyncProfilerFactory.createConfig(parsedOptions);
-        AsyncProfilerConfig overrides = new AsyncProfilerConfig(config.getProfilerHome(), ImmutableList.of("cpu", "alloc", "lock"), AsyncProfilerConfig.Counter.SAMPLES, config.getInterval(), config.getStackDepth(), config.isIncludeSystemThreads());
+        AsyncProfilerConfig overrides = new AsyncProfilerConfig(config.getProfilerHome(), ImmutableList.of("cpu", "alloc", "lock"), AsyncProfilerConfig.Counter.SAMPLES, config.getInterval(), config.getAllocSampleSize(), config.getLockThreshold(), config.getStackDepth(), config.isIncludeSystemThreads());
         return new AsyncProfiler(overrides);
     }
 }

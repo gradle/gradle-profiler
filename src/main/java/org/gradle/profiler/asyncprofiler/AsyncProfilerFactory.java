@@ -20,6 +20,8 @@ public class AsyncProfilerFactory extends ProfilerFactory {
     private ArgumentAcceptingOptionSpec<String> eventOption;
     private ArgumentAcceptingOptionSpec<AsyncProfilerConfig.Counter> counterOption;
     private ArgumentAcceptingOptionSpec<Integer> intervalOption;
+    private ArgumentAcceptingOptionSpec<Integer> allocIntervalOption;
+    private ArgumentAcceptingOptionSpec<Integer> lockThresholdOption;
     private ArgumentAcceptingOptionSpec<Integer> stackDepthOption;
     private ArgumentAcceptingOptionSpec<Boolean> systemThreadOption;
 
@@ -43,6 +45,16 @@ public class AsyncProfilerFactory extends ProfilerFactory {
             .withRequiredArg()
             .ofType(Integer.class)
             .defaultsTo(10_000_000);
+        allocIntervalOption = parser.accepts("async-profiler-alloc-interval", "The sampling interval in bytes for allocation profiling.")
+            .availableIf("profile")
+            .withRequiredArg()
+            .ofType(Integer.class)
+            .defaultsTo(10);
+        lockThresholdOption = parser.accepts("async-profiler-lock-threshold", "lock profiling threshold in nanoseconds")
+            .availableIf("profile")
+            .withRequiredArg()
+            .ofType(Integer.class)
+            .defaultsTo(1);
         stackDepthOption = parser.accepts("async-profiler-stackdepth", "The maximum Java stack depth.")
             .availableIf("profile")
             .withRequiredArg()
@@ -66,9 +78,11 @@ public class AsyncProfilerFactory extends ProfilerFactory {
         List<String> events = eventOption.values(parsedOptions);
         AsyncProfilerConfig.Counter counter = counterOption.value(parsedOptions);
         int interval = intervalOption.value(parsedOptions);
+        int allocInterval = allocIntervalOption.value(parsedOptions);
+        int lockThreshold = lockThresholdOption.value(parsedOptions);
         int stackDepth = stackDepthOption.value(parsedOptions);
         Boolean showSystemThreads = systemThreadOption.value(parsedOptions);
-        return new AsyncProfilerConfig(profilerHome, events, counter, interval, stackDepth, showSystemThreads);
+        return new AsyncProfilerConfig(profilerHome, events, counter, interval, allocInterval, lockThreshold, stackDepth, showSystemThreads);
     }
 
     private File getProfilerHome(OptionSet parsedOptions) {

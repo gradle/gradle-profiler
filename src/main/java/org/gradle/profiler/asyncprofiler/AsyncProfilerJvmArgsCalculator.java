@@ -29,6 +29,13 @@ class AsyncProfilerJvmArgsCalculator implements JvmArgsCalculator {
             .append(",file=").append(outputType.individualOutputFileFor(scenarioSettings))
             .append(",ann");
 
+        if (profilerConfig.getEvents().contains(AsyncProfilerConfig.EVENT_ALLOC)) {
+            agent.append(",alloc=").append(profilerConfig.getAllocSampleSize());
+        }
+        if (profilerConfig.getEvents().contains(AsyncProfilerConfig.EVENT_LOCK)) {
+            agent.append(",lock=").append(profilerConfig.getLockThreshold());
+        }
+
         jvmArgs.add(agent.toString());
     }
 }
