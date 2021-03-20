@@ -4,7 +4,6 @@ import com.google.common.base.Joiner;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import org.gradle.profiler.CommandExec;
-import org.gradle.profiler.GradleScenarioDefinition;
 import org.gradle.profiler.InstrumentingProfiler;
 import org.gradle.profiler.ScenarioSettings;
 import org.gradle.profiler.flamegraph.FlameGraphSanitizer;
@@ -90,9 +89,8 @@ public class AsyncProfilerController implements InstrumentingProfiler.SnapshotCa
 
     @Override
     public void stopSession() {
-        GradleScenarioDefinition scenario = scenarioSettings.getScenario();
-        List<JfrFlameGraphGenerator.Stacks> stacks = generateStacks(scenario.getOutputDir(), scenario.getProfileName());
-        flameGraphGenerator.generateGraphs(scenario.getOutputDir(), stacks);
+        List<JfrFlameGraphGenerator.Stacks> stacks = generateStacks(scenarioSettings.getProfilerOutputBaseDir(), scenarioSettings.getProfilerOutputBaseName());
+        flameGraphGenerator.generateGraphs(scenarioSettings.getProfilerOutputBaseDir(), stacks);
     }
 
     private List<JfrFlameGraphGenerator.Stacks> generateStacks(File outputDir, String outputBaseName) {
