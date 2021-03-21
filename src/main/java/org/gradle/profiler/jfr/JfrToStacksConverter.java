@@ -1,23 +1,23 @@
 package org.gradle.profiler.jfr;
 
-import com.google.common.collect.ImmutableSet;
+import com.google.common.base.Joiner;
+import org.gradle.profiler.flamegraph.DetailLevel;
+import org.gradle.profiler.flamegraph.EventType;
+import org.gradle.profiler.flamegraph.FlameGraphSanitizer;
+import org.gradle.profiler.flamegraph.Stacks;
 import org.openjdk.jmc.common.IMCFrame;
 import org.openjdk.jmc.common.IMCStackTrace;
 import org.openjdk.jmc.common.item.IItem;
 import org.openjdk.jmc.common.item.IItemCollection;
-import org.openjdk.jmc.common.item.IMemberAccessor;
-import org.openjdk.jmc.common.item.IType;
 import org.openjdk.jmc.common.item.ItemToolkit;
-import org.openjdk.jmc.common.unit.BinaryPrefix;
-import org.openjdk.jmc.common.unit.IQuantity;
-import org.openjdk.jmc.common.unit.UnitLookup;
-import org.openjdk.jmc.common.util.MemberAccessorToolkit;
+import org.openjdk.jmc.flightrecorder.CouldNotLoadRecordingException;
 import org.openjdk.jmc.flightrecorder.JfrAttributes;
-import org.openjdk.jmc.flightrecorder.jdk.JdkAttributes;
+import org.openjdk.jmc.flightrecorder.JfrLoaderToolkit;
 import org.openjdk.jmc.flightrecorder.stacktrace.FrameSeparator;
 import org.openjdk.jmc.flightrecorder.stacktrace.FrameSeparator.FrameCategorization;
 import org.openjdk.jmc.flightrecorder.stacktrace.StacktraceFormatToolkit;
 
+import javax.annotation.Nullable;
 import java.io.BufferedWriter;
 import java.io.File;
 import java.io.IOException;
@@ -27,17 +27,70 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
-import java.util.Set;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
+
+import static java.util.Objects.requireNonNull;
 
 /**
  * Converts JFR recordings to the collapsed stacks format used by the FlameGraph tool.
  */
 public class JfrToStacksConverter {
-    public void convertToStacks(List<IItemCollection> recordings, File targetFile, Options options) {
+    private final Map<DetailLevel, FlameGraphSanitizer> sanitizers;
+
+    public JfrToStacksConverter(Map<DetailLevel, FlameGraphSanitizer> sanitizers) {
+        this.sanitizers = sanitizers;
+    }
+
+    public List<Stacks> generateStacks(File jfrFile, String outputBaseName) {
+        Stream<File> jfrFiles = jfrFile.isDirectory()
+            ? Stream.of(requireNonNull(jfrFile.listFiles((dir, name) -> name.endsWith(".jfr"))))
+            : Stream.of(jfrFile);
+        List<IItemCollection> recordings = jfrFiles
+            .map(file -> {
+                try {
+                    return JfrLoaderToolkit.loadEvents(file);
+                } catch (IOException | CouldNotLoadRecordingException e) {
+                    throw new RuntimeException(e);
+                }
+            }).collect(Collectors.toList());
+
+        List<Stacks> stacks = new ArrayList<>();
+        try {
+            for (EventType type : EventType.values()) {
+                for (DetailLevel level : DetailLevel.values()) {
+                    String eventFileBaseName = Joiner.on("-").join(outputBaseName, type.getId(), level.name().toLowerCase(Locale.ROOT));
+                    File stacksFile = generateStacks(jfrFile.getParentFile(), eventFileBaseName, recordings, type, level);
+                    if (stacksFile != null) {
+                        stacks.add(new Stacks(stacksFile, type, level, eventFileBaseName));
+                    }
+                }
+            }
+            return stacks;
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    @Nullable
+    private File generateStacks(File baseDir, String eventFileBaseName, List<IItemCollection> recordings, EventType type, DetailLevel level) throws IOException {
+        File stacks = File.createTempFile("stacks", ".txt");
+        convertToStacks(recordings, stacks, new Options(type, level.isShowArguments(), level.isShowLineNumbers()));
+        if (stacks.length() == 0) {
+            stacks.delete();
+            return null;
+        }
+        File sanitizedStacks = new File(baseDir, eventFileBaseName + "-stacks.txt");
+        sanitizers.get(level).sanitize(stacks, sanitizedStacks);
+        stacks.delete();
+        return sanitizedStacks;
+    }
+
+    private void convertToStacks(List<IItemCollection> recordings, File targetFile, Options options) {
         Map<String, Long> foldedStacks = foldStacks(recordings, options);
         writeFoldedStacks(foldedStacks, targetFile);
     }
@@ -147,82 +200,4 @@ public class JfrToStacksConverter {
         }
     }
 
-    public enum EventType {
-
-        CPU("cpu", "CPU", "samples", ValueField.COUNT, "Method Profiling Sample", "Method Profiling Sample Native"),
-        ALLOCATION("allocation", "Allocation size", "kB", ValueField.ALLOCATION_SIZE, "Allocation in new TLAB", "Allocation outside TLAB"),
-        MONITOR_BLOCKED("monitor-blocked", "Java Monitor Blocked", "ns", ValueField.DURATION, "Java Monitor Blocked", "Java Thread Park"),
-        IO("io", "File and Socket IO", "ns", ValueField.DURATION, "File Read", "File Write", "Socket Read", "Socket Write");
-
-        private final String id;
-        private final String displayName;
-        private final String unitOfMeasure;
-        private final ValueField valueField;
-        private final Set<String> eventNames;
-
-        EventType(String id, String displayName, String unitOfMeasure, ValueField valueField, String... eventNames) {
-            this.id = id;
-            this.displayName = displayName;
-            this.unitOfMeasure = unitOfMeasure;
-            this.eventNames = ImmutableSet.copyOf(eventNames);
-            this.valueField = valueField;
-        }
-
-        public boolean matches(IItem event) {
-            return eventNames.contains(event.getType().getName());
-        }
-
-        public long getValue(IItem event) {
-            return valueField.getValue(event);
-        }
-
-        public String getId() {
-            return id;
-        }
-
-        public String getDisplayName() {
-            return displayName;
-        }
-
-        public String getUnitOfMeasure() {
-            return unitOfMeasure;
-        }
-
-        private enum ValueField {
-            COUNT {
-                @Override
-                public long getValue(IItem event) {
-                    return 1;
-                }
-            },
-            DURATION {
-                @Override
-                public long getValue(IItem event) {
-                    IType<IItem> itemType = ItemToolkit.getItemType(event);
-                    IMemberAccessor<IQuantity, IItem> duration = itemType.getAccessor(JfrAttributes.DURATION.getKey());
-                    if (duration == null) {
-                        IMemberAccessor<IQuantity, IItem> startTime = itemType.getAccessor(JfrAttributes.START_TIME.getKey());
-                        IMemberAccessor<IQuantity, IItem> endTime = itemType.getAccessor(JfrAttributes.END_TIME.getKey());
-                        duration = MemberAccessorToolkit.difference(endTime, startTime);
-                    }
-                    return duration.getMember(event).in(UnitLookup.NANOSECOND).longValue();
-                }
-            },
-            ALLOCATION_SIZE {
-                @Override
-                public long getValue(IItem event) {
-                    IType<IItem> itemType = ItemToolkit.getItemType(event);
-                    IMemberAccessor<IQuantity, IItem> accessor = itemType.getAccessor(JdkAttributes.TLAB_SIZE.getKey());
-                    if (accessor == null) {
-                        accessor = itemType.getAccessor(JdkAttributes.ALLOCATION_SIZE.getKey());
-                    }
-                    return accessor.getMember(event)
-                        .in(UnitLookup.MEMORY.getUnit(BinaryPrefix.KIBI))
-                        .longValue();
-                }
-            };
-
-            public abstract long getValue(IItem event);
-        }
-    }
 }

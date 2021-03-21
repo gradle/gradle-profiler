@@ -2,8 +2,6 @@ package org.gradle.profiler.flamegraph;
 
 import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableList;
-import org.gradle.profiler.jfr.JfrFlameGraphGenerator.DetailLevel;
-import org.gradle.profiler.jfr.JfrToStacksConverter.EventType;
 
 import java.io.File;
 import java.io.IOException;

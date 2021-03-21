@@ -6,8 +6,11 @@ import com.google.common.collect.ImmutableMap;
 import org.gradle.profiler.CommandExec;
 import org.gradle.profiler.InstrumentingProfiler;
 import org.gradle.profiler.ScenarioSettings;
+import org.gradle.profiler.flamegraph.DetailLevel;
+import org.gradle.profiler.flamegraph.EventType;
+import org.gradle.profiler.flamegraph.FlameGraphGenerator;
 import org.gradle.profiler.flamegraph.FlameGraphSanitizer;
-import org.gradle.profiler.jfr.JfrFlameGraphGenerator;
+import org.gradle.profiler.flamegraph.Stacks;
 import org.gradle.profiler.jfr.JfrToStacksConverter;
 
 import java.io.File;
@@ -22,8 +25,9 @@ import static org.gradle.profiler.flamegraph.FlameGraphSanitizer.SanitizeFunctio
 public class AsyncProfilerController implements InstrumentingProfiler.SnapshotCapturingProfilerController {
     private final AsyncProfilerConfig profilerConfig;
     private final ScenarioSettings scenarioSettings;
-    private final JfrFlameGraphGenerator flameGraphGenerator;
-    private final ImmutableMap<JfrFlameGraphGenerator.DetailLevel, FlameGraphSanitizer> flameGraphSanitizers;
+    private final JfrToStacksConverter stacksConverter;
+    private final FlameGraphGenerator flameGraphGenerator;
+    private final ImmutableMap<DetailLevel, FlameGraphSanitizer> flameGraphSanitizers;
     private final File outputFile;
     private final AsyncProfilerOutputType outputType;
 
@@ -35,10 +39,11 @@ public class AsyncProfilerController implements InstrumentingProfiler.SnapshotCa
             ? FlameGraphSanitizer.simplified()
             : FlameGraphSanitizer.simplified(new RemoveSystemThreads());
         this.flameGraphSanitizers = ImmutableMap.of(
-            JfrFlameGraphGenerator.DetailLevel.RAW, rawFlamegraphSanitizer,
-            JfrFlameGraphGenerator.DetailLevel.SIMPLIFIED, simplifiedFlamegraphSanitizer
+            DetailLevel.RAW, rawFlamegraphSanitizer,
+            DetailLevel.SIMPLIFIED, simplifiedFlamegraphSanitizer
         );
-        this.flameGraphGenerator = new JfrFlameGraphGenerator(flameGraphSanitizers);
+        this.stacksConverter = new JfrToStacksConverter(flameGraphSanitizers);
+        this.flameGraphGenerator = new FlameGraphGenerator();
         this.outputType = AsyncProfilerOutputType.from(profilerConfig, scenarioSettings.getScenario());
         this.outputFile = outputType.outputFileFor(scenarioSettings);
     }
@@ -89,23 +94,23 @@ public class AsyncProfilerController implements InstrumentingProfiler.SnapshotCa
 
     @Override
     public void stopSession() {
-        List<JfrFlameGraphGenerator.Stacks> stacks = generateStacks(scenarioSettings.getProfilerOutputBaseDir(), scenarioSettings.getProfilerOutputBaseName());
+        List<Stacks> stacks = generateStacks(scenarioSettings.getProfilerOutputBaseDir(), scenarioSettings.getProfilerOutputBaseName());
         flameGraphGenerator.generateGraphs(scenarioSettings.getProfilerOutputBaseDir(), stacks);
     }
 
-    private List<JfrFlameGraphGenerator.Stacks> generateStacks(File outputDir, String outputBaseName) {
+    private List<Stacks> generateStacks(File outputDir, String outputBaseName) {
         if (outputType == AsyncProfilerOutputType.JFR) {
-            List<JfrFlameGraphGenerator.Stacks> stacks = flameGraphGenerator.generateStacks(outputFile, outputBaseName);
+            List<Stacks> stacks = stacksConverter.generateStacks(outputFile, outputBaseName);
             if (stacks.isEmpty()) {
                 failOnEmptyStacks();
             }
             return stacks;
         } else {
             validateStacks();
-            List<JfrFlameGraphGenerator.Stacks> collectedStacks = new ArrayList<>();
+            List<Stacks> collectedStacks = new ArrayList<>();
             for (String event : profilerConfig.getEvents()) {
-                JfrToStacksConverter.EventType jfrEventType = convertAsyncEventToJfrEvent(event);
-                for (JfrFlameGraphGenerator.DetailLevel level : JfrFlameGraphGenerator.DetailLevel.values()) {
+                EventType jfrEventType = convertAsyncEventToJfrEvent(event);
+                for (DetailLevel level : DetailLevel.values()) {
                     collectedStacks.add(sanitizeStacks(outputDir, outputBaseName, outputFile, jfrEventType, level));
                 }
             }
@@ -113,30 +118,30 @@ public class AsyncProfilerController implements InstrumentingProfiler.SnapshotCa
         }
     }
 
-    private JfrFlameGraphGenerator.Stacks sanitizeStacks(File outputDir, String outputBaseName, File stacksFileToConvert, JfrToStacksConverter.EventType jfrEventType, JfrFlameGraphGenerator.DetailLevel level) {
+    private Stacks sanitizeStacks(File outputDir, String outputBaseName, File stacksFileToConvert, EventType jfrEventType, DetailLevel level) {
         FlameGraphSanitizer flamegraphSanitizer = flameGraphSanitizers.get(level);
         String eventFileBaseName = eventFileBaseNameFor(outputBaseName, jfrEventType, level);
         File sanitizedStacksFile = new File(outputDir, eventFileBaseName + "-stacks.txt");
         flamegraphSanitizer.sanitize(stacksFileToConvert, sanitizedStacksFile);
-        return new JfrFlameGraphGenerator.Stacks(sanitizedStacksFile, jfrEventType, level, eventFileBaseName);
+        return new Stacks(sanitizedStacksFile, jfrEventType, level, eventFileBaseName);
     }
 
-    private String eventFileBaseNameFor(String outputBaseName, JfrToStacksConverter.EventType type, JfrFlameGraphGenerator.DetailLevel level) {
+    private String eventFileBaseNameFor(String outputBaseName, EventType type, DetailLevel level) {
         return Joiner.on("-").join(outputBaseName, type.getId(), level.name().toLowerCase(Locale.ROOT));
     }
 
-    private JfrToStacksConverter.EventType convertAsyncEventToJfrEvent(String event) {
+    private EventType convertAsyncEventToJfrEvent(String event) {
         switch (event) {
             case "cpu":
-                return JfrToStacksConverter.EventType.CPU;
+                return EventType.CPU;
             case "wall":
-                return JfrToStacksConverter.EventType.CPU;
+                return EventType.CPU;
             case "alloc":
-                return JfrToStacksConverter.EventType.ALLOCATION;
+                return EventType.ALLOCATION;
             case "lock":
-                return JfrToStacksConverter.EventType.MONITOR_BLOCKED;
+                return EventType.MONITOR_BLOCKED;
             default:
-                return JfrToStacksConverter.EventType.CPU;
+                return EventType.CPU;
         }
     }
 
