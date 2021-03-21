@@ -36,7 +36,7 @@ import java.util.stream.StreamSupport;
 /**
  * Converts JFR recordings to the collapsed stacks format used by the FlameGraph tool.
  */
-class JfrToStacksConverter {
+public class JfrToStacksConverter {
     public void convertToStacks(List<IItemCollection> recordings, File targetFile, Options options) {
         Map<String, Long> foldedStacks = foldStacks(recordings, options);
         writeFoldedStacks(foldedStacks, targetFile);
@@ -99,7 +99,7 @@ class JfrToStacksConverter {
         }
 
         private String frameName(IMCFrame frame) {
-            return StacktraceFormatToolkit.formatFrame(
+            String frameName = StacktraceFormatToolkit.formatFrame(
                 frame,
                 new FrameSeparator(options.isShowLineNumbers() ? FrameCategorization.LINE : FrameCategorization.METHOD, false),
                 false,
@@ -109,6 +109,9 @@ class JfrToStacksConverter {
                 options.isShowArguments(),
                 true
             );
+            return frame.getType() == IMCFrame.Type.UNKNOWN
+                ? frameName
+                : frameName + "_[j]";
         }
 
         private long getValue(IItem event) {
@@ -148,8 +151,8 @@ class JfrToStacksConverter {
 
         CPU("cpu", "CPU", "samples", ValueField.COUNT, "Method Profiling Sample", "Method Profiling Sample Native"),
         ALLOCATION("allocation", "Allocation size", "kB", ValueField.ALLOCATION_SIZE, "Allocation in new TLAB", "Allocation outside TLAB"),
-        MONITOR_BLOCKED("monitor-blocked", "Java Monitor Blocked", "ms", ValueField.DURATION, "Java Monitor Blocked"),
-        IO("io", "File and Socket IO", "ms", ValueField.DURATION, "File Read", "File Write", "Socket Read", "Socket Write");
+        MONITOR_BLOCKED("monitor-blocked", "Java Monitor Blocked", "ns", ValueField.DURATION, "Java Monitor Blocked", "Java Thread Park"),
+        IO("io", "File and Socket IO", "ns", ValueField.DURATION, "File Read", "File Write", "Socket Read", "Socket Write");
 
         private final String id;
         private final String displayName;
@@ -202,7 +205,7 @@ class JfrToStacksConverter {
                         IMemberAccessor<IQuantity, IItem> endTime = itemType.getAccessor(JfrAttributes.END_TIME.getKey());
                         duration = MemberAccessorToolkit.difference(endTime, startTime);
                     }
-                    return duration.getMember(event).in(UnitLookup.MILLISECOND).longValue();
+                    return duration.getMember(event).in(UnitLookup.NANOSECOND).longValue();
                 }
             },
             ALLOCATION_SIZE {

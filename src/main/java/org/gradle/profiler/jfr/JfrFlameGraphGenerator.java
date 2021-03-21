@@ -14,6 +14,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -26,15 +27,55 @@ import static org.gradle.profiler.jfr.JfrToStacksConverter.Options;
  * <p>
  * TODO create flame graph diffs between profiled versions
  */
-class JfrFlameGraphGenerator {
+public class JfrFlameGraphGenerator {
     private final JfrToStacksConverter stacksConverter = new JfrToStacksConverter();
     private final FlameGraphTool flameGraphGenerator = new FlameGraphTool();
+    private final Map<DetailLevel, FlameGraphSanitizer> sanitizers;
 
-    public void generateGraphs(File jfrFile, String outputBaseName) {
-        if (!flameGraphGenerator.checkInstallation()) {
-            return;
+    public JfrFlameGraphGenerator(Map<DetailLevel, FlameGraphSanitizer> sanitizers) {
+        this.sanitizers = sanitizers;
+    }
+
+    public static class Stacks {
+        private final File file;
+        private final EventType type;
+        private final DetailLevel level;
+        private final String fileBaseName;
+
+        public Stacks(File file, EventType type, DetailLevel level, String fileBaseName) {
+            this.file = file;
+            this.type = type;
+            this.level = level;
+            this.fileBaseName = fileBaseName;
         }
 
+        public File getFile() {
+            return file;
+        }
+
+        public EventType getType() {
+            return type;
+        }
+
+        public DetailLevel getLevel() {
+            return level;
+        }
+
+        public boolean isEmpty() {
+            return file.length() == 0;
+        }
+
+        public String getFileBaseName() {
+            return fileBaseName;
+        }
+    }
+
+    public void generateStacksAndGraphs(File jfrFile, String outputBaseName) {
+        List<Stacks> stackFiles = generateStacks(jfrFile, outputBaseName);
+        generateGraphs(jfrFile.getParentFile(), stackFiles);
+    }
+
+    public List<Stacks> generateStacks(File jfrFile, String outputBaseName) {
         Stream<File> jfrFiles = jfrFile.isDirectory()
             ? Stream.of(requireNonNull(jfrFile.listFiles((dir, name) -> name.endsWith(".jfr"))))
             : Stream.of(jfrFile);
@@ -47,23 +88,30 @@ class JfrFlameGraphGenerator {
                 }
             }).collect(Collectors.toList());
 
+        List<Stacks> stacks = new ArrayList<>();
         try {
-            generateGraphs(jfrFile.getParentFile(), outputBaseName, recordings);
+            for (EventType type : EventType.values()) {
+                for (DetailLevel level : DetailLevel.values()) {
+                    String eventFileBaseName = Joiner.on("-").join(outputBaseName, type.getId(), level.name().toLowerCase(Locale.ROOT));
+                    File stacksFile = generateStacks(jfrFile.getParentFile(), eventFileBaseName, recordings, type, level);
+                    if (stacksFile != null) {
+                        stacks.add(new Stacks(stacksFile, type, level, eventFileBaseName));
+                    }
+                }
+            }
+            return stacks;
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
     }
 
-    private void generateGraphs(File flameGraphDirectory, String outputBaseName, List<IItemCollection> recordings) throws IOException {
-        for (EventType type : EventType.values()) {
-            for (DetailLevel level : DetailLevel.values()) {
-                String eventFileBaseName = Joiner.on("-").join(outputBaseName, type.getId(), level.name().toLowerCase(Locale.ROOT));
-                File stacks = generateStacks(flameGraphDirectory, eventFileBaseName, recordings, type, level);
-                if (stacks != null) {
-                    generateFlameGraph(stacks, new File(flameGraphDirectory, eventFileBaseName + "-flames.svg"), type, level);
-                    generateIcicleGraph(stacks, new File(flameGraphDirectory, eventFileBaseName + "-icicles.svg"), type, level);
-                }
-            }
+    public void generateGraphs(File flameGraphDirectory, List<Stacks> stackFiles) {
+        if (!flameGraphGenerator.checkInstallation()) {
+            return;
+        }
+        for (Stacks stacks : stackFiles) {
+            generateFlameGraph(flameGraphDirectory, stacks);
+            generateIcicleGraph(flameGraphDirectory, stacks);
         }
     }
 
@@ -75,64 +123,60 @@ class JfrFlameGraphGenerator {
             stacks.delete();
             return null;
         }
-        File sanitizedStacks = stacksFileName(baseDir, eventFileBaseName);
-        level.getSanitizer().sanitize(stacks, sanitizedStacks);
+        File sanitizedStacks = new File(baseDir, eventFileBaseName + "-stacks.txt");
+        sanitizers.get(level).sanitize(stacks, sanitizedStacks);
         stacks.delete();
         return sanitizedStacks;
     }
 
-    private File stacksFileName(File baseDir, String eventFileBaseName) {
-        return new File(baseDir, eventFileBaseName + "-stacks.txt");
-    }
-
-    private void generateFlameGraph(File stacks, File flames, EventType type, DetailLevel level) {
-        if (stacks.length() == 0) {
+    private void generateFlameGraph(File flameGraphDirectory, Stacks stacks) {
+        if (stacks.isEmpty()) {
             return;
         }
+        DetailLevel level = stacks.getLevel();
+        EventType type = stacks.getType();
         List<String> options = new ArrayList<>();
         options.addAll(level.getFlameGraphOptions());
-        options.addAll(Arrays.asList("--title", type.getDisplayName() + " Flame Graph", "--countname", type.getUnitOfMeasure()));
-        flameGraphGenerator.generateFlameGraph(stacks, flames, options);
+        options.addAll(Arrays.asList("--title", type.getDisplayName() + " Flame Graph", "--countname", type.getUnitOfMeasure(), "--colors", "java"));
+        flameGraphGenerator.generateFlameGraph(stacks.getFile(), new File(flameGraphDirectory, stacks.getFileBaseName() + "-flames.svg"), options);
     }
 
-    private void generateIcicleGraph(File stacks, File icicles, EventType type, DetailLevel level) {
-        if (stacks.length() == 0) {
+    private void generateIcicleGraph(File flameGraphDirectory, Stacks stacks) {
+        if (stacks.isEmpty()) {
             return;
         }
+        DetailLevel level = stacks.getLevel();
+        EventType type = stacks.getType();
         List<String> options = new ArrayList<>();
         options.addAll(level.getIcicleGraphOptions());
-        options.addAll(Arrays.asList("--title", type.getDisplayName() + " Icicle Graph", "--countname", type.getUnitOfMeasure(), "--reverse", "--invert", "--colors", "aqua"));
-        flameGraphGenerator.generateFlameGraph(stacks, icicles, options);
+        options.addAll(Arrays.asList("--title", type.getDisplayName() + " Icicle Graph", "--countname", type.getUnitOfMeasure(), "--reverse", "--invert", "--colors", "java"));
+        flameGraphGenerator.generateFlameGraph(stacks.getFile(), new File(flameGraphDirectory, stacks.getFileBaseName() + "-icicles.svg"), options);
     }
 
-    private enum DetailLevel {
+    public enum DetailLevel {
         RAW(
             true,
             true,
             Arrays.asList("--minwidth", "0.5"),
-            Arrays.asList("--minwidth", "1"),
-            FlameGraphSanitizer.raw()
+            Arrays.asList("--minwidth", "1")
         ),
         SIMPLIFIED(
             false,
             false,
             Arrays.asList("--minwidth", "1"),
-            Arrays.asList("--minwidth", "2"),
-            FlameGraphSanitizer.simplified()
+            Arrays.asList("--minwidth", "2")
         );
 
         private final boolean showArguments;
         private final boolean showLineNumbers;
         private final List<String> flameGraphOptions;
         private final List<String> icicleGraphOptions;
-        private final FlameGraphSanitizer sanitizer;
 
-        DetailLevel(boolean showArguments, boolean showLineNumbers, List<String> flameGraphOptions, List<String> icicleGraphOptions, FlameGraphSanitizer sanitizer) {
+        DetailLevel(boolean showArguments, boolean showLineNumbers, List<String> flameGraphOptions, List<String> icicleGraphOptions) {
             this.showArguments = showArguments;
             this.showLineNumbers = showLineNumbers;
             this.flameGraphOptions = flameGraphOptions;
             this.icicleGraphOptions = icicleGraphOptions;
-            this.sanitizer = sanitizer;
         }
 
         public boolean isShowArguments() {
@@ -150,10 +194,5 @@ class JfrFlameGraphGenerator {
         public List<String> getIcicleGraphOptions() {
             return icicleGraphOptions;
         }
-
-        public FlameGraphSanitizer getSanitizer() {
-            return sanitizer;
-        }
-
     }
 }

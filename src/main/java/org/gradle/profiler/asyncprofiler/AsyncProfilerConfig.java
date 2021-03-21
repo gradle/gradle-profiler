@@ -1,23 +1,31 @@
 package org.gradle.profiler.asyncprofiler;
 
+import com.google.common.base.Joiner;
+
 import java.io.File;
+import java.util.List;
 
 public class AsyncProfilerConfig {
+    public static final String EVENT_ALLOC = "alloc";
+    public static final String EVENT_LOCK = "lock";
+
     private final File profilerHome;
-    private final String event;
+    private final List<String> events;
     private final Counter counter;
     private final int interval;
+    private final int allocSampleSize;
+    private final int lockThreshold;
     private final int stackDepth;
-    private final int frameBuffer;
     private final boolean includeSystemThreads;
 
-    public AsyncProfilerConfig(File profilerHome, String event, Counter counter, int interval, int stackDepth, int frameBuffer, boolean includeSystemThreads) {
+    public AsyncProfilerConfig(File profilerHome, List<String> events, Counter counter, int interval, int allocSampleSize, int lockThreshold, int stackDepth, boolean includeSystemThreads) {
         this.profilerHome = profilerHome;
-        this.event = event;
+        this.events = events;
         this.counter = counter;
         this.interval = interval;
+        this.allocSampleSize = allocSampleSize;
+        this.lockThreshold = lockThreshold;
         this.stackDepth = stackDepth;
-        this.frameBuffer = frameBuffer;
         this.includeSystemThreads = includeSystemThreads;
     }
 
@@ -25,8 +33,12 @@ public class AsyncProfilerConfig {
         return profilerHome;
     }
 
-    public String getEvent() {
-        return event;
+    public String getJoinedEvents() {
+        return Joiner.on(",").join(events);
+    }
+
+    public List<String> getEvents() {
+        return events;
     }
 
     public Counter getCounter() {
@@ -37,12 +49,16 @@ public class AsyncProfilerConfig {
         return interval;
     }
 
-    public int getStackDepth() {
-        return stackDepth;
+    public int getAllocSampleSize() {
+        return allocSampleSize;
     }
 
-    public int getFrameBuffer() {
-        return frameBuffer;
+    public int getLockThreshold() {
+        return lockThreshold;
+    }
+
+    public int getStackDepth() {
+        return stackDepth;
     }
 
     public boolean isIncludeSystemThreads() {
