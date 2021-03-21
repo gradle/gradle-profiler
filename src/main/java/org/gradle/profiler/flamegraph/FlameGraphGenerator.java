@@ -11,10 +11,13 @@ import java.util.List;
  * TODO create flame graph diffs between profiled versions
  */
 public class FlameGraphGenerator {
-    private final FlameGraphTool flameGraphGenerator = new FlameGraphTool();
+    public static final String FLAME_FILE_SUFFIX = "-flames.svg";
+    public static final String ICICLE_FILE_SUFFIX = "-icicles.svg";
+
+    private final FlameGraphTool flameGraphTool = new FlameGraphTool();
 
     public void generateGraphs(File flameGraphDirectory, List<Stacks> stackFiles) {
-        if (!flameGraphGenerator.checkInstallation()) {
+        if (!flameGraphTool.checkInstallation()) {
             return;
         }
         for (Stacks stacks : stackFiles) {
@@ -32,7 +35,7 @@ public class FlameGraphGenerator {
         List<String> options = new ArrayList<>();
         options.addAll(level.getFlameGraphOptions());
         options.addAll(Arrays.asList("--title", type.getDisplayName() + " Flame Graph", "--countname", type.getUnitOfMeasure(), "--colors", "java"));
-        flameGraphGenerator.generateFlameGraph(stacks.getFile(), new File(flameGraphDirectory, stacks.getFileBaseName() + "-flames.svg"), options);
+        flameGraphTool.generateFlameGraph(stacks.getFile(), new File(flameGraphDirectory, stacks.getFileBaseName() + FLAME_FILE_SUFFIX), options);
     }
 
     private void generateIcicleGraph(File flameGraphDirectory, Stacks stacks) {
@@ -44,7 +47,7 @@ public class FlameGraphGenerator {
         List<String> options = new ArrayList<>();
         options.addAll(level.getIcicleGraphOptions());
         options.addAll(Arrays.asList("--title", type.getDisplayName() + " Icicle Graph", "--countname", type.getUnitOfMeasure(), "--reverse", "--invert", "--colors", "java"));
-        flameGraphGenerator.generateFlameGraph(stacks.getFile(), new File(flameGraphDirectory, stacks.getFileBaseName() + "-icicles.svg"), options);
+        flameGraphTool.generateFlameGraph(stacks.getFile(), new File(flameGraphDirectory, stacks.getFileBaseName() + ICICLE_FILE_SUFFIX), options);
     }
 
 }

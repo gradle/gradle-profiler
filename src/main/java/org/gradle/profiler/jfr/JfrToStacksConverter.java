@@ -1,6 +1,5 @@
 package org.gradle.profiler.jfr;
 
-import com.google.common.base.Joiner;
 import org.gradle.profiler.flamegraph.DetailLevel;
 import org.gradle.profiler.flamegraph.EventType;
 import org.gradle.profiler.flamegraph.FlameGraphSanitizer;
@@ -27,7 +26,6 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
-import java.util.Locale;
 import java.util.Map;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
@@ -63,7 +61,7 @@ public class JfrToStacksConverter {
         try {
             for (EventType type : EventType.values()) {
                 for (DetailLevel level : DetailLevel.values()) {
-                    String eventFileBaseName = Joiner.on("-").join(outputBaseName, type.getId(), level.name().toLowerCase(Locale.ROOT));
+                    String eventFileBaseName = outputBaseName + Stacks.postFixFor(type, level);
                     File stacksFile = generateStacks(jfrFile.getParentFile(), eventFileBaseName, recordings, type, level);
                     if (stacksFile != null) {
                         stacks.add(new Stacks(stacksFile, type, level, eventFileBaseName));
@@ -84,7 +82,7 @@ public class JfrToStacksConverter {
             stacks.delete();
             return null;
         }
-        File sanitizedStacks = new File(baseDir, eventFileBaseName + "-stacks.txt");
+        File sanitizedStacks = new File(baseDir, eventFileBaseName + Stacks.STACKS_FILE_SUFFIX);
         sanitizers.get(level).sanitize(stacks, sanitizedStacks);
         stacks.delete();
         return sanitizedStacks;

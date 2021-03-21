@@ -1,6 +1,5 @@
 package org.gradle.profiler.asyncprofiler;
 
-import com.google.common.base.Joiner;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import org.gradle.profiler.CommandExec;
@@ -120,14 +119,10 @@ public class AsyncProfilerController implements InstrumentingProfiler.SnapshotCa
 
     private Stacks sanitizeStacks(File outputDir, String outputBaseName, File stacksFileToConvert, EventType jfrEventType, DetailLevel level) {
         FlameGraphSanitizer flamegraphSanitizer = flameGraphSanitizers.get(level);
-        String eventFileBaseName = eventFileBaseNameFor(outputBaseName, jfrEventType, level);
-        File sanitizedStacksFile = new File(outputDir, eventFileBaseName + "-stacks.txt");
+        String eventFileBaseName = outputBaseName + Stacks.postFixFor(jfrEventType, level);
+        File sanitizedStacksFile = new File(outputDir, eventFileBaseName + Stacks.STACKS_FILE_SUFFIX);
         flamegraphSanitizer.sanitize(stacksFileToConvert, sanitizedStacksFile);
         return new Stacks(sanitizedStacksFile, jfrEventType, level, eventFileBaseName);
-    }
-
-    private String eventFileBaseNameFor(String outputBaseName, EventType type, DetailLevel level) {
-        return Joiner.on("-").join(outputBaseName, type.getId(), level.name().toLowerCase(Locale.ROOT));
     }
 
     private EventType convertAsyncEventToJfrEvent(String event) {

@@ -9,7 +9,6 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.List;
-import java.util.Locale;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -18,9 +17,12 @@ import java.util.stream.Stream;
  */
 public class DifferentialFlameGraphGenerator {
 
-    private final FlameGraphTool flameGraphGenerator = new FlameGraphTool();
+    private final FlameGraphTool flameGraphTool = new FlameGraphTool();
 
     public void generateDifferentialGraphs(File baseOutputDir) throws IOException {
+        if (!flameGraphTool.checkInstallation()) {
+            return;
+        }
         try (Stream<Path> list = Files.list(baseOutputDir.toPath())) {
             List<Path> experiments = list
                 .filter(Files::isDirectory)
@@ -59,13 +61,13 @@ public class DifferentialFlameGraphGenerator {
             final String baselineTestBasename = stacksBasename(baselineStacks, type, level);
             final String commonPrefix = Strings.commonPrefix(underTestBasename, baselineTestBasename);
             final String commonSuffix = Strings.commonSuffix(underTestBasename, baselineTestBasename);
-            final String diffBaseName = underTestBasename + "-vs-" + baselineTestBasename.substring(0, baselineTestBasename.length() - commonSuffix.length()).substring(commonPrefix.length()) + DifferentialFlameGraphGenerator.postFixFor(type, level) + "-" + (negate ? "forward-" : "backward-") + "diff";
-            File diff = new File(underTestStacks.getParentFile(), "diffs/" + diffBaseName + "-stacks.txt");
+            final String diffBaseName = underTestBasename + "-vs-" + baselineTestBasename.substring(0, baselineTestBasename.length() - commonSuffix.length()).substring(commonPrefix.length()) + Stacks.postFixFor(type, level) + "-" + (negate ? "forward-" : "backward-") + "diff";
+            File diff = new File(underTestStacks.getParentFile(), "diffs/" + diffBaseName + Stacks.STACKS_FILE_SUFFIX);
             diff.getParentFile().mkdirs();
             if (negate) {
-                flameGraphGenerator.generateDiff(underTestStacks, baselineStacks, diff);
+                flameGraphTool.generateDiff(underTestStacks, baselineStacks, diff);
             } else {
-                flameGraphGenerator.generateDiff(baselineStacks, underTestStacks, diff);
+                flameGraphTool.generateDiff(baselineStacks, underTestStacks, diff);
             }
 
             return diff;
@@ -75,7 +77,7 @@ public class DifferentialFlameGraphGenerator {
     }
 
     private static String stacksBasename(File underTestStacks, final EventType type, final DetailLevel level) {
-        String postfix = postFixFor(type, level) + "-stacks.txt";
+        String postfix = Stacks.postFixFor(type, level) + Stacks.STACKS_FILE_SUFFIX;
         String underTestStacksName = underTestStacks.getName();
         if (!underTestStacksName.endsWith(postfix)) {
             throw new RuntimeException("Stacks file '" + underTestStacks.getAbsolutePath() + "' doesn't follow the naming convention and does not end with " + postfix);
@@ -84,7 +86,7 @@ public class DifferentialFlameGraphGenerator {
     }
 
     private static File stacksFileName(File baseDir, final EventType type, final DetailLevel level) {
-        String suffix = postFixFor(type, level) + "-stacks.txt";
+        String suffix = Stacks.postFixFor(type, level) + Stacks.STACKS_FILE_SUFFIX;
         File[] stackFiles = baseDir.listFiles((dir, name) -> name.endsWith(suffix));
         if (stackFiles.length == 1) {
             return stackFiles[0];
@@ -92,12 +94,8 @@ public class DifferentialFlameGraphGenerator {
         throw new RuntimeException("More than one matching stacks file found: " + Arrays.asList(stackFiles));
     }
 
-    private static String postFixFor(final EventType type, final DetailLevel level) {
-        return "-" + type.getId() + "-" + level.name().toLowerCase(Locale.ROOT);
-    }
-
-    private void generateDifferentialFlameGraph(File stacks, EventType type, DetailLevel level, final boolean negate) {
-        File flames = new File(stacks.getParentFile(), stacks.getName().replace("-stacks.txt", "-flames.svg"));
+    private void generateDifferentialFlameGraph(File stacks, EventType type, DetailLevel level, boolean negate) {
+        File flames = new File(stacks.getParentFile(), stacks.getName().replace(Stacks.STACKS_FILE_SUFFIX, FlameGraphGenerator.FLAME_FILE_SUFFIX));
         ImmutableList.Builder<String> options = ImmutableList.builder();
         options
             .add("--title", type.getDisplayName() + (negate ? " Forward " : " Backward " + "Differential Flame Graph"))
@@ -107,11 +105,11 @@ public class DifferentialFlameGraphGenerator {
             options.add("--negate");
         }
 
-        flameGraphGenerator.generateFlameGraph(stacks, flames, options.build());
+        flameGraphTool.generateFlameGraph(stacks, flames, options.build());
     }
 
-    private void generateDifferentialIcicleGraph(File stacks, EventType type, DetailLevel level, final boolean negate) {
-        File icicles = new File(stacks.getParentFile(), stacks.getName().replace("-stacks.txt", "-icicles.svg"));
+    private void generateDifferentialIcicleGraph(File stacks, EventType type, DetailLevel level, boolean negate) {
+        File icicles = new File(stacks.getParentFile(), stacks.getName().replace(Stacks.STACKS_FILE_SUFFIX, FlameGraphGenerator.ICICLE_FILE_SUFFIX));
         ImmutableList.Builder<String> options = ImmutableList.builder();
         options
             .add("--title", type.getDisplayName() + (negate ? " Forward " : " Backward " + "Differential Icicle Graph"))
@@ -123,6 +121,6 @@ public class DifferentialFlameGraphGenerator {
             options.add("--negate");
         }
 
-        flameGraphGenerator.generateFlameGraph(stacks, icicles, options.build());
+        flameGraphTool.generateFlameGraph(stacks, icicles, options.build());
     }
 }
