@@ -122,4 +122,9 @@ class CompositeProfiler extends Profiler {
             }
         };
     }
+
+    @Override
+    public boolean isCreatesStacksFiles() {
+        return delegates.stream().anyMatch(Profiler::isCreatesStacksFiles);
+    }
 }

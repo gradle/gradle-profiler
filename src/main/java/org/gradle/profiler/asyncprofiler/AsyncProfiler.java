@@ -41,6 +41,11 @@ public class AsyncProfiler extends InstrumentingProfiler {
     }
 
     @Override
+    public boolean isCreatesStacksFiles() {
+        return true;
+    }
+
+    @Override
     public String toString() {
         return "async profiler";
     }

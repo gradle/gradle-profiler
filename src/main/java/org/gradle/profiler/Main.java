@@ -1,5 +1,6 @@
 package org.gradle.profiler;
 
+import org.gradle.profiler.flamegraph.DifferentialFlameGraphGenerator;
 import org.gradle.profiler.instrument.PidInstrumentation;
 import org.gradle.profiler.report.CsvGenerator;
 import org.gradle.profiler.report.HtmlGenerator;
@@ -83,6 +84,9 @@ public class Main {
                 // Write the final results and generate the reports
                 // This overwrites the existing reports, so may leave them in a corrupted state if this process crashes during the generation.
                 benchmarkResults.write(settings);
+            }
+            if (settings.isProfile() && settings.getProfiler().isCreatesStacksFiles() && scenarios.size() > 1) {
+                new DifferentialFlameGraphGenerator().generateDifferentialGraphs(settings.getOutputDir());
             }
 
             System.out.println();

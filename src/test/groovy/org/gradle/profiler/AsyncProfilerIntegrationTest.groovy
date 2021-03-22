@@ -4,7 +4,7 @@ import spock.lang.Requires
 import spock.lang.Unroll
 
 @Unroll
-class AsyncProfilerIntegrationTest extends AbstractProfilerIntegrationTest {
+class AsyncProfilerIntegrationTest extends AbstractProfilerIntegrationTest implements FlameGraphFixture {
     @Requires({ !OperatingSystem.isWindows() })
     def "profiles build CPU usage using async-profiler with tooling API and warm daemon"() {
         given:
@@ -196,14 +196,5 @@ class AsyncProfilerIntegrationTest extends AbstractProfilerIntegrationTest {
 
         where:
         profiler << ["async-profiler", "async-profiler-all"]
-    }
-
-    void assertGraphsGenerated(String... events = ["cpu"]) {
-        events.each { event ->
-            ["raw", "simplified"].each { type ->
-                assert new File(outputDir, "${latestSupportedGradleVersion}-${event}-${type}-flames.svg").file
-                assert new File(outputDir, "${latestSupportedGradleVersion}-${event}-${type}-icicles.svg").file
-            }
-        }
     }
 }

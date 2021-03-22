@@ -1,13 +1,17 @@
 package org.gradle.profiler.flamegraph;
 
-import com.google.common.base.Strings;
+import com.google.common.base.Joiner;
 import com.google.common.collect.ImmutableList;
 
+import javax.annotation.Nullable;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.ArrayDeque;
 import java.util.Arrays;
+import java.util.Collections;
+import java.util.Deque;
 import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -59,9 +63,8 @@ public class DifferentialFlameGraphGenerator {
         if (underTestStacks != null && baselineStacks != null) {
             final String underTestBasename = stacksBasename(underTestStacks, type, level);
             final String baselineTestBasename = stacksBasename(baselineStacks, type, level);
-            final String commonPrefix = Strings.commonPrefix(underTestBasename, baselineTestBasename);
-            final String commonSuffix = Strings.commonSuffix(underTestBasename, baselineTestBasename);
-            final String diffBaseName = underTestBasename + "-vs-" + baselineTestBasename.substring(0, baselineTestBasename.length() - commonSuffix.length()).substring(commonPrefix.length()) + Stacks.postFixFor(type, level) + "-" + (negate ? "forward-" : "backward-") + "diff";
+            String differentNamePart = computeDifferenceOfBaselineToCurrentName(underTestBasename, baselineTestBasename);
+            final String diffBaseName = underTestBasename + "-vs-" + differentNamePart + Stacks.postFixFor(type, level) + "-" + (negate ? "forward-" : "backward-") + "diff";
             File diff = new File(underTestStacks.getParentFile(), "diffs/" + diffBaseName + Stacks.STACKS_FILE_SUFFIX);
             diff.getParentFile().mkdirs();
             if (negate) {
@@ -76,6 +79,30 @@ public class DifferentialFlameGraphGenerator {
         return null;
     }
 
+    private String computeDifferenceOfBaselineToCurrentName(String underTestBasename, String baselineTestBasename) {
+        List<String> underTestParts = Arrays.asList(underTestBasename.split("-"));
+        Deque<String> remainderOfBaseline = new ArrayDeque<>(Arrays.asList(baselineTestBasename.split("-")));
+
+        for (String underTestPart : underTestParts) {
+            if (!remainderOfBaseline.isEmpty() && underTestPart.equals(remainderOfBaseline.getFirst())) {
+                remainderOfBaseline.removeFirst();
+            } else {
+                break;
+            }
+        }
+
+        Collections.reverse(underTestParts);
+        for (String underTestPart : underTestParts) {
+            if (!remainderOfBaseline.isEmpty() && underTestPart.equals(remainderOfBaseline.getLast())) {
+                remainderOfBaseline.removeLast();
+            } else {
+                break;
+            }
+        }
+
+        return Joiner.on("-").join(remainderOfBaseline);
+    }
+
     private static String stacksBasename(File underTestStacks, final EventType type, final DetailLevel level) {
         String postfix = Stacks.postFixFor(type, level) + Stacks.STACKS_FILE_SUFFIX;
         String underTestStacksName = underTestStacks.getName();
@@ -85,9 +112,13 @@ public class DifferentialFlameGraphGenerator {
         return underTestStacksName.substring(0, underTestStacksName.length() - postfix.length());
     }
 
+    @Nullable
     private static File stacksFileName(File baseDir, final EventType type, final DetailLevel level) {
         String suffix = Stacks.postFixFor(type, level) + Stacks.STACKS_FILE_SUFFIX;
         File[] stackFiles = baseDir.listFiles((dir, name) -> name.endsWith(suffix));
+        if (stackFiles == null || stackFiles.length == 0) {
+            return null;
+        }
         if (stackFiles.length == 1) {
             return stackFiles[0];
         }

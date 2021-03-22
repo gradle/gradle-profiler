@@ -48,4 +48,9 @@ public class JfrProfiler extends InstrumentingProfiler {
     protected boolean canRestartRecording(ScenarioSettings settings) {
         return !settings.getScenario().getInvoker().isReuseDaemon();
     }
+
+    @Override
+    public boolean isCreatesStacksFiles() {
+        return true;
+    }
 }
