@@ -4,8 +4,8 @@ import spock.lang.Requires
 import spock.lang.Unroll
 
 @Unroll
+@Requires({ !OperatingSystem.isWindows() })
 class AsyncProfilerIntegrationTest extends AbstractProfilerIntegrationTest implements FlameGraphFixture {
-    @Requires({ !OperatingSystem.isWindows() })
     def "profiles build CPU usage using async-profiler with tooling API and warm daemon"() {
         given:
         instrumentedBuildScript()
@@ -18,27 +18,29 @@ class AsyncProfilerIntegrationTest extends AbstractProfilerIntegrationTest imple
         logFile.containsOne("<invocations: 3>")
 
         and:
-        assertGraphsGenerated()
+        assertGraphsGeneratedForScenario()
     }
 
-    @Requires({ !OperatingSystem.isWindows() })
     def "profiles multiple events using async-profiler with tooling API and warm daemon"() {
         given:
         instrumentedBuildScript()
 
         when:
-        new Main().run("--project-dir", projectDir.absolutePath, "--output-dir", outputDir.absolutePath, "--gradle-version", latestSupportedGradleVersion, "--profile", "async-profiler-all", "assemble"
+        new Main().run("--project-dir", projectDir.absolutePath, "--output-dir", outputDir.absolutePath,
+            "--gradle-version", latestSupportedGradleVersion,
+            "--iterations", "2",
+            "--profile", "async-profiler-all",
+            "assemble"
         )
 
         then:
-        logFile.find("<daemon: true").size() == 4
+        logFile.find("<daemon: true").size() == 5
         logFile.containsOne("<invocations: 3>")
 
         and:
-        assertGraphsGenerated("allocation", "cpu", "monitor-blocked")
+        assertGraphsGeneratedForScenario("allocation", "cpu", "monitor-blocked")
     }
 
-    @Requires({ !OperatingSystem.isWindows() })
     def "profiles wall clock time using async-profiler with tooling API and warm daemon"() {
         given:
         instrumentedBuildScript()
@@ -55,10 +57,9 @@ class AsyncProfilerIntegrationTest extends AbstractProfilerIntegrationTest imple
         logFile.containsOne("<invocations: 3>")
 
         and:
-        assertGraphsGenerated("allocation", "cpu")
+        assertGraphsGeneratedForScenario("allocation", "cpu")
     }
 
-    @Requires({ !OperatingSystem.isWindows() })
     def "profiles heap allocation using async-profiler with tooling API and warm daemon"() {
         given:
         instrumentedBuildScript()
@@ -71,10 +72,9 @@ class AsyncProfilerIntegrationTest extends AbstractProfilerIntegrationTest imple
         logFile.containsOne("<invocations: 3>")
 
         and:
-        assertGraphsGenerated("allocation")
+        assertGraphsGeneratedForScenario("allocation")
     }
 
-    @Requires({ !OperatingSystem.isWindows() })
     def "profiles multiple iterations using #profiler with tooling API and warm daemon"() {
         given:
         instrumentedBuildScript()
@@ -87,13 +87,12 @@ class AsyncProfilerIntegrationTest extends AbstractProfilerIntegrationTest imple
         logFile.containsOne("<invocations: 4>")
 
         and:
-        assertGraphsGenerated()
+        assertGraphsGeneratedForScenario()
 
         where:
         profiler << ["async-profiler", "async-profiler-all"]
     }
 
-    @Requires({ !OperatingSystem.isWindows() })
     def "profiles build using #profiler with tooling API and cold daemon"() {
         given:
         instrumentedBuildScript()
@@ -106,13 +105,12 @@ class AsyncProfilerIntegrationTest extends AbstractProfilerIntegrationTest imple
         logFile.find("<invocations: 1>").size() == 3
 
         and:
-        assertGraphsGenerated()
+        assertGraphsGeneratedForScenario()
 
         where:
         profiler << ["async-profiler", "async-profiler-all"]
     }
 
-    @Requires({ !OperatingSystem.isWindows() })
     def "profiles build using #profiler with CLI and no daemon"() {
         given:
         instrumentedBuildScript()
@@ -126,13 +124,12 @@ class AsyncProfilerIntegrationTest extends AbstractProfilerIntegrationTest imple
         logFile.find("<invocations: 1>").size() == 3
 
         and:
-        assertGraphsGenerated()
+        assertGraphsGeneratedForScenario()
 
         where:
         profiler << ["async-profiler", "async-profiler-all"]
     }
 
-    @Requires({ !OperatingSystem.isWindows() })
     def "profiles using #profiler with multiple iterations and cold daemon"() {
         given:
         instrumentedBuildScript()
@@ -145,13 +142,12 @@ class AsyncProfilerIntegrationTest extends AbstractProfilerIntegrationTest imple
         logFile.find("<invocations: 1>").size() == 4
 
         and:
-        assertGraphsGenerated()
+        assertGraphsGeneratedForScenario()
 
         where:
         profiler << ["async-profiler", "async-profiler-all"]
     }
 
-    @Requires({ !OperatingSystem.isWindows() })
     def "profiles using #profiler with multiple iterations and no daemon"() {
         given:
         instrumentedBuildScript()
@@ -165,13 +161,12 @@ class AsyncProfilerIntegrationTest extends AbstractProfilerIntegrationTest imple
         logFile.find("<invocations: 1>").size() == 4
 
         and:
-        assertGraphsGenerated()
+        assertGraphsGeneratedForScenario()
 
         where:
         profiler << ["async-profiler", "async-profiler-all"]
     }
 
-    @Requires({ !OperatingSystem.isWindows() })
     def "scenario name when using #profiler can contain reserved characters"() {
         given:
         instrumentedBuildScript()
@@ -189,10 +184,7 @@ class AsyncProfilerIntegrationTest extends AbstractProfilerIntegrationTest imple
         logFile.containsOne("<invocations: 3>")
 
         and:
-        ["raw", "simplified"].each { type ->
-            assert new File(outputDir, "a-b/a-b-${latestSupportedGradleVersion}-cpu-${type}-flames.svg").file
-            assert new File(outputDir, "a-b/a-b-${latestSupportedGradleVersion}-cpu-${type}-icicles.svg").file
-        }
+        assertGraphsGenerated(['a-b'], [latestSupportedGradleVersion], ['cpu'])
 
         where:
         profiler << ["async-profiler", "async-profiler-all"]

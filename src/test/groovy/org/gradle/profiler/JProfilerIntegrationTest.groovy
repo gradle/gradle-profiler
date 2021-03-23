@@ -43,7 +43,7 @@ class JProfilerIntegrationTest extends AbstractProfilerIntegrationTest {
         logFile.containsOne("<invocations: 8>")
 
         and:
-        new File(outputDir, "assemble").listFiles().find { it.name.matches("assemble-${minimalSupportedGradleVersion}.jps") }
+        outputDir.listFiles().find { it.name.matches("assemble-${minimalSupportedGradleVersion}.jps") }
     }
 
     @Requires({ new File(JProfiler.getDefaultHomeDir()).exists() })

@@ -4,28 +4,32 @@ import spock.lang.Requires
 import spock.lang.Unroll
 
 @Unroll
+@Requires({ !OperatingSystem.isWindows() })
 class DifferentialFlameGraphIntegrationTest extends AbstractProfilerIntegrationTest implements FlameGraphFixture {
-    @Requires({ !OperatingSystem.isWindows() })
     def "generates differential flame graphs with #profiler"() {
         given:
         instrumentedBuildScript()
 
         when:
-        new Main().run("--project-dir", projectDir.absolutePath, "--output-dir", outputDir.absolutePath, "--gradle-version", latestSupportedGradleVersion, "--gradle-version", minimalSupportedGradleVersion, "--profile", profiler, "assemble")
+        new Main().run("--project-dir", projectDir.absolutePath, "--output-dir", outputDir.absolutePath,
+            "--gradle-version", latestSupportedGradleVersion,
+            "--gradle-version", minimalSupportedGradleVersion,
+            "--iterations", "2",
+            "--profile", profiler,
+            "assemble")
 
         then:
-        logFile.find("<daemon: true").size() == 8
+        logFile.find("<daemon: true").size() == 10
         logFile.find("<invocations: 3>").size() == 2
 
         and:
-        assertGraphsGenerated()
+        assertGraphsGeneratedForVersions(latestSupportedGradleVersion, minimalSupportedGradleVersion)
         assertDifferentialGraphsGenerated([latestSupportedGradleVersion, minimalSupportedGradleVersion])
 
         where:
         profiler << ["async-profiler", "jfr"]
     }
 
-    @Requires({ !OperatingSystem.isWindows() })
     def "generates differential flame graphs with #profiler for scenario file"() {
         given:
         instrumentedBuildScript()
@@ -39,16 +43,17 @@ class DifferentialFlameGraphIntegrationTest extends AbstractProfilerIntegrationT
         when:
         new Main().run("--project-dir", projectDir.absolutePath, "--output-dir", outputDir.absolutePath, "--gradle-version", latestSupportedGradleVersion, "--gradle-version", minimalSupportedGradleVersion,
             "--scenario-file", scenarioFile.absolutePath,
+            "--iterations", "2",
             "--profile", profiler,
             "upToDate"
         )
 
         then:
-        logFile.find("<daemon: true").size() == 8
+        logFile.find("<daemon: true").size() == 10
         logFile.find("<invocations: 3>").size() == 2
 
         and:
-        assertGraphsGenerated('upToDate')
+        assertGraphsGenerated(['upToDate'], [latestSupportedGradleVersion, minimalSupportedGradleVersion], ['cpu'])
         assertDifferentialGraphsGenerated(['upToDate'], [latestSupportedGradleVersion, minimalSupportedGradleVersion])
 
 
@@ -56,7 +61,6 @@ class DifferentialFlameGraphIntegrationTest extends AbstractProfilerIntegrationT
         profiler << ["async-profiler", "jfr"]
     }
 
-    @Requires({ !OperatingSystem.isWindows() })
     def "generates differential flame graphs with #profiler for cross-build scenarios"() {
         given:
         instrumentedBuildScript()
@@ -73,16 +77,17 @@ class DifferentialFlameGraphIntegrationTest extends AbstractProfilerIntegrationT
         when:
         new Main().run("--project-dir", projectDir.absolutePath, "--output-dir", outputDir.absolutePath, "--gradle-version", latestSupportedGradleVersion,
             "--scenario-file", scenarioFile.absolutePath,
+            "--iterations", "2",
             "--profile", profiler,
             "upToDate", "help"
         )
 
         then:
-        logFile.find("<daemon: true").size() == 7
+        logFile.find("<daemon: true").size() == 9
         logFile.find("<invocations: 3>").size() == 2
 
         and:
-        assertGraphsGenerated(['upToDate', 'help'])
+        assertGraphsGeneratedForScenarios('upToDate', 'help')
         assertDifferentialGraphsGenerated(['upToDate', 'help'], [latestSupportedGradleVersion])
 
 

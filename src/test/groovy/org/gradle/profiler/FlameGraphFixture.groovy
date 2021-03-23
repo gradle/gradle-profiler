@@ -5,21 +5,35 @@ import groovy.transform.SelfType
 @SelfType(AbstractProfilerIntegrationTest)
 trait FlameGraphFixture {
 
-    void assertGraphsGenerated(String scenarioName = null, boolean multipleScenarios = false, String... events = ["cpu"]) {
-        String scenarioPrefix = scenarioName ? "${scenarioName}-" : ""
-        assert !(multipleScenarios && scenarioName == null)
-        def outputBaseDir = multipleScenarios ? new File(outputDir, scenarioName) : outputDir
-        events.each { event ->
-            ["raw", "simplified"].each { type ->
-                assert new File(outputBaseDir, "${scenarioPrefix}${latestSupportedGradleVersion}-${event}-${type}-flames.svg").file
-                assert new File(outputBaseDir, "${scenarioPrefix}${latestSupportedGradleVersion}-${event}-${type}-icicles.svg").file
-            }
-        }
+    void assertGraphsGeneratedForScenarios(String... scenarios) {
+        assertGraphsGenerated(scenarios as List<String>, [latestSupportedGradleVersion], ['cpu'])
     }
 
-    void assertGraphsGenerated(List<String> scenarios, String... events = ["cpu"]) {
-        scenarios.each { scenario ->
-            assertGraphsGenerated(scenario, true, events)
+    void assertGraphsGeneratedForScenario(String... events = ["cpu"]) {
+        assertGraphsGenerated([null], [latestSupportedGradleVersion], events as List<String>)
+    }
+
+    void assertGraphsGeneratedForVersions(String... versions) {
+        assertGraphsGenerated([null], versions as List<String>, ['cpu'])
+    }
+
+    void assertGraphsGenerated(List<String> scenarios, List<String> versions, List<String> events) {
+        assert !scenarios.empty
+        assert !versions.empty
+        boolean multipleScenarios = scenarios.size() > 1
+        boolean multipleVersions = versions.size() > 1
+        scenarios.each { scenarioName ->
+            String scenarioPrefix = scenarioName ? "${scenarioName}-" : ""
+            versions.each { version ->
+                def outputBaseDir = multipleScenarios ? new File(outputDir, scenarioName) : outputDir
+                outputBaseDir = multipleVersions ? new File(outputBaseDir, version) : outputBaseDir
+                events.each { event ->
+                    ["raw", "simplified"].each { type ->
+                        assert new File(outputBaseDir, "${scenarioPrefix}${version}-${event}-${type}-flames.svg").file
+                        assert new File(outputBaseDir, "${scenarioPrefix}${version}-${event}-${type}-icicles.svg").file
+                    }
+                }
+            }
         }
     }
 
@@ -33,8 +47,8 @@ trait FlameGraphFixture {
                 ["backward", "forward"].each { diffType ->
                     events.each { event ->
                         ["simplified"].each { type ->
-                            def scenarioPrefix = multipleScenarios ? "${current}-" : (scenarios.get(0) == null ? "" : "${scenario.get(0)}-")
-                            def versionPostfix = multipleVersions ? ${current} : versions.get(0)
+                            def scenarioPrefix = multipleScenarios ? "${current}-" : (scenarios.get(0) == null ? "" : "${scenarios.get(0)}-")
+                            def versionPostfix = multipleVersions ? current : versions.get(0)
                             assert new File(outputDir, "${current}/diffs/${scenarioPrefix}${versionPostfix}-vs-${baseline}-${event}-${type}-${diffType}-diff-flames.svg").file
                             assert new File(outputDir, "${current}/diffs/${scenarioPrefix}${versionPostfix}-vs-${baseline}-${event}-${type}-${diffType}-diff-icicles.svg").file
                         }
