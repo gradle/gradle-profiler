@@ -1,6 +1,8 @@
 package org.gradle.profiler;
 
-import org.gradle.profiler.flamegraph.DifferentialFlameGraphGenerator;
+import org.gradle.profiler.flamegraph.DifferentialStacksCreator;
+import org.gradle.profiler.flamegraph.FlameGraphGenerator;
+import org.gradle.profiler.flamegraph.Stacks;
 import org.gradle.profiler.instrument.PidInstrumentation;
 import org.gradle.profiler.report.CsvGenerator;
 import org.gradle.profiler.report.HtmlGenerator;
@@ -86,7 +88,8 @@ public class Main {
                 benchmarkResults.write(settings);
             }
             if (settings.isGenerateDiffs() && scenarios.size() > 1) {
-                new DifferentialFlameGraphGenerator().generateDifferentialGraphs(settings.getOutputDir());
+                List<Stacks> stacks = new DifferentialStacksCreator().generateDifferentialStacks(settings.getOutputDir());
+                new FlameGraphGenerator().generateDifferentialGraphs(stacks);
             }
 
             System.out.println();

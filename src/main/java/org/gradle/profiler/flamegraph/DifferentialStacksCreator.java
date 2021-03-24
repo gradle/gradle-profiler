@@ -1,7 +1,6 @@
 package org.gradle.profiler.flamegraph;
 
 import com.google.common.base.Joiner;
-import com.google.common.collect.ImmutableList;
 
 import javax.annotation.Nullable;
 import java.io.File;
@@ -9,6 +8,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayDeque;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Deque;
@@ -17,16 +17,16 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 /**
- * Generates flame graphs based on JFR recordings.
+ * Generates differential stacks.
  */
-public class DifferentialFlameGraphGenerator {
-
+public class DifferentialStacksCreator {
     private final FlameGraphTool flameGraphTool = new FlameGraphTool();
 
-    public void generateDifferentialGraphs(File baseOutputDir) throws IOException {
+    public List<Stacks> generateDifferentialStacks(File baseOutputDir) throws IOException {
         if (!flameGraphTool.checkInstallation()) {
-            return;
+            return Collections.emptyList();
         }
+        List<Stacks> stacks = new ArrayList<>();
         try (Stream<Path> list = Files.list(baseOutputDir.toPath())) {
             List<Path> experiments = list
                 .filter(Files::isDirectory)
@@ -38,23 +38,22 @@ public class DifferentialFlameGraphGenerator {
                     for (EventType type : EventType.values()) {
                         // Only create diffs for simplified stacks, diffs for raw stacks don't make much sense
                         DetailLevel level = DetailLevel.SIMPLIFIED;
-                        File backwardDiff = generateDiff(experiment.toFile(), baseline.toFile(), type, level, false);
+                        Stacks backwardDiff = generateDiff(experiment.toFile(), baseline.toFile(), type, level, false);
                         if (backwardDiff != null) {
-                            generateDifferentialFlameGraph(backwardDiff, type, level, false);
-                            generateDifferentialIcicleGraph(backwardDiff, type, level, false);
+                            stacks.add(backwardDiff);
                         }
 
-                        File forwardDiff = generateDiff(experiment.toFile(), baseline.toFile(), type, level, true);
+                        Stacks forwardDiff = generateDiff(experiment.toFile(), baseline.toFile(), type, level, true);
                         if (forwardDiff != null) {
-                            generateDifferentialFlameGraph(forwardDiff, type, level, true);
-                            generateDifferentialIcicleGraph(forwardDiff, type, level, true);
+                            stacks.add(forwardDiff);
                         }
                     }
                 }));
         }
+        return stacks;
     }
 
-    private File generateDiff(File versionUnderTest, File baseline, final EventType type, final DetailLevel level, final boolean negate) {
+    private Stacks generateDiff(File versionUnderTest, File baseline, final EventType type, final DetailLevel level, final boolean negate) {
         File underTestStacks = stacksFileName(versionUnderTest, type, level);
         File baselineStacks = stacksFileName(baseline, type, level);
         if (underTestStacks != null && baselineStacks != null) {
@@ -70,7 +69,7 @@ public class DifferentialFlameGraphGenerator {
                 flameGraphTool.generateDiff(baselineStacks, underTestStacks, diff);
             }
 
-            return diff;
+            return new Stacks(diff, type, level, diffBaseName, negate);
         }
 
         return null;
@@ -120,35 +119,5 @@ public class DifferentialFlameGraphGenerator {
             return stackFiles[0];
         }
         throw new RuntimeException("More than one matching stacks file found: " + Arrays.asList(stackFiles));
-    }
-
-    private void generateDifferentialFlameGraph(File stacks, EventType type, DetailLevel level, boolean negate) {
-        File flames = new File(stacks.getParentFile(), stacks.getName().replace(Stacks.STACKS_FILE_SUFFIX, FlameGraphGenerator.FLAME_FILE_SUFFIX));
-        ImmutableList.Builder<String> options = ImmutableList.builder();
-        options
-            .add("--title", type.getDisplayName() + (negate ? " Forward " : " Backward " + "Differential Flame Graph"))
-            .add("--countname", type.getUnitOfMeasure())
-            .addAll(level.getFlameGraphOptions());
-        if (negate) {
-            options.add("--negate");
-        }
-
-        flameGraphTool.generateFlameGraph(stacks, flames, options.build());
-    }
-
-    private void generateDifferentialIcicleGraph(File stacks, EventType type, DetailLevel level, boolean negate) {
-        File icicles = new File(stacks.getParentFile(), stacks.getName().replace(Stacks.STACKS_FILE_SUFFIX, FlameGraphGenerator.ICICLE_FILE_SUFFIX));
-        ImmutableList.Builder<String> options = ImmutableList.builder();
-        options
-            .add("--title", type.getDisplayName() + (negate ? " Forward " : " Backward " + "Differential Icicle Graph"))
-            .add("--countname", type.getUnitOfMeasure())
-            .add("--reverse")
-            .add("--invert")
-            .addAll(level.getIcicleGraphOptions());
-        if (negate) {
-            options.add("--negate");
-        }
-
-        flameGraphTool.generateFlameGraph(stacks, icicles, options.build());
     }
 }
