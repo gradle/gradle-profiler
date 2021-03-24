@@ -54,7 +54,7 @@ public class AsyncProfilerFactory extends ProfilerFactory {
             .availableIf("profile")
             .withRequiredArg()
             .ofType(Integer.class)
-            .defaultsTo(1);
+            .defaultsTo(250_000);
         stackDepthOption = parser.accepts("async-profiler-stackdepth", "The maximum Java stack depth.")
             .availableIf("profile")
             .withRequiredArg()

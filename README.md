@@ -79,6 +79,9 @@ To run the `gradle-profiler` app to profile a build use:
 The app will run the build several times to warm up a daemon, then enable the profiler and run the build.
 Once complete, the results are available under `profile-out/`.
 
+If you use Async profiler or JFR for profiling, Gradle profiler will also create flame graphs for each scenario.
+If you profile multiple scenarios or multiple versions, then Gradle profiler will create differential flame graphs as well.
+
 ### Gradle build scans
 
 [Gradle build scans](https://gradle.com) are a powerful tool to investigate the structure of your build and quickly find bottlenecks. 
@@ -108,7 +111,7 @@ The following options are supported and closely mimic the options of Async profi
 - `--async-profiler-count`: The count to use when aggregating event data. Either `samples` or `total`. `total` is especially useful for allocation profiling. Defaults to `samples`. Corresponds to the `--samples` and `--total` command line options for Async profiler.
 - `--async-profiler-interval`: The sampling interval in ns, defaults to 10_000_000 (10 ms).
 - `--async-profiler-alloc-interval`: The sampling interval in bytes for allocation profiling, defaults to 10 bytes. Corresponds to the `--alloc` command line option for Async profiler.
-- `--async-profiler-lock-threshold`: lock profiling threshold in nanoseconds, defaults to 1 ns. Corresponds to the `--lock` command line option for Async profiler.
+- `--async-profiler-lock-threshold`: lock profiling threshold in nanoseconds, defaults to 250 microseconds. Corresponds to the `--lock` command line option for Async profiler.
 - `--async-profiler-stackdepth`: The maximum stack depth. Lower this if profiles with deep recursion get too large. Defaults to 2048.
 - `--async-profiler-system-threads`: Whether to show system threads like GC and JIT compilation in the profile. Usually makes them harder to read, but can be useful if you suspect problems in that area. Defaults to `false`. 
 
@@ -195,6 +198,7 @@ The following command line options only apply when measuring Gradle builds:
 - `--measure-build-op`: Additionally measure the cumulative time spent in the given build operation. Only supported for Gradle 6.1 and later.
 - `-D<key>=<value>`: Defines a system property when running the build, overriding the default for the build.
 - `--studio-install-dir`: The Android Studio installation directory. Required when measuring Android Studio sync.
+- `--no-diffs`: Do not generate differential flame graphs.
 
 ## Advanced profiling scenarios
 

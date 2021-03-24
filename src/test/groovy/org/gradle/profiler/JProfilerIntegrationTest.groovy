@@ -4,8 +4,8 @@ import org.gradle.profiler.jprofiler.JProfiler
 import spock.lang.Requires
 
 
+@Requires({ new File(JProfiler.getDefaultHomeDir()).exists() })
 class JProfilerIntegrationTest extends AbstractProfilerIntegrationTest {
-    @Requires({ new File(JProfiler.getDefaultHomeDir()).exists() })
     def "profiles build using JProfiler with tooling API and warm daemon"() {
         given:
         instrumentedBuildScript()
@@ -21,7 +21,6 @@ class JProfilerIntegrationTest extends AbstractProfilerIntegrationTest {
         outputDir.listFiles().find { it.name.matches("${minimalSupportedGradleVersion}.jps") }
     }
 
-    @Requires({ new File(JProfiler.getDefaultHomeDir()).exists() })
     def "profiles build using JProfiler with multiple iterations and cleanup steps"() {
         given:
         instrumentedBuildScript()
@@ -43,10 +42,9 @@ class JProfilerIntegrationTest extends AbstractProfilerIntegrationTest {
         logFile.containsOne("<invocations: 8>")
 
         and:
-        new File(outputDir, "assemble").listFiles().find { it.name.matches("assemble-${minimalSupportedGradleVersion}.jps") }
+        outputDir.listFiles().find { it.name.matches("assemble-${minimalSupportedGradleVersion}.jps") }
     }
 
-    @Requires({ new File(JProfiler.getDefaultHomeDir()).exists() })
     def "profiles build using JProfiler with tooling API and cold daemon"() {
         given:
         instrumentedBuildScript()
@@ -62,7 +60,6 @@ class JProfilerIntegrationTest extends AbstractProfilerIntegrationTest {
         outputDir.listFiles().find { it.name.matches("${minimalSupportedGradleVersion}.jps") }
     }
 
-    @Requires({ new File(JProfiler.getDefaultHomeDir()).exists() })
     def "profiles build using JProfile with `gradle` command and no daemon"() {
         given:
         instrumentedBuildScript()
@@ -79,7 +76,6 @@ class JProfilerIntegrationTest extends AbstractProfilerIntegrationTest {
         outputDir.listFiles().find { it.name.matches("${minimalSupportedGradleVersion}.jps") }
     }
 
-    @Requires({ new File(JProfiler.getDefaultHomeDir()).exists() })
     def "profiles build using JProfiler with all supported options"() {
         given:
         instrumentedBuildScript()

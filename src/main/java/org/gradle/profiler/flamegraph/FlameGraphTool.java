@@ -15,6 +15,7 @@ import java.util.List;
  */
 public class FlameGraphTool {
     private final File flamegraphScript;
+    private final File diffScript;
 
     private static File createScript(String scriptName) {
         try (InputStream stream = FlameGraphTool.class.getResource(scriptName + ".pl").openStream()) {
@@ -30,10 +31,12 @@ public class FlameGraphTool {
 
     public FlameGraphTool() {
         flamegraphScript = createScript("flamegraph");
+        diffScript = createScript("difffolded");
     }
 
     public FlameGraphTool(File flamegraphHome) {
         flamegraphScript = new File(flamegraphHome, "flamegraph.pl");
+        diffScript = new File(flamegraphHome, "difffolded.pl");
     }
 
     public boolean checkInstallation() {
@@ -55,4 +58,12 @@ public class FlameGraphTool {
         new CommandExec().runAndCollectOutput(flames, allArgs);
     }
 
+    public void generateDiff(File versionUnderTest, File baseline, File diff) {
+        List<String> args = new ArrayList<>();
+        args.add("perl");
+        args.add(diffScript.getAbsolutePath());
+        args.add(baseline.getAbsolutePath());
+        args.add(versionUnderTest.getAbsolutePath());
+        new CommandExec().runAndCollectOutput(diff, args);
+    }
 }

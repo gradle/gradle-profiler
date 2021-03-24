@@ -67,4 +67,8 @@ public class Profiler {
      */
     public void summarizeResultFile(File resultFile, Consumer<String> consumer) {
     }
+
+    public boolean isCreatesStacksFiles() {
+        return false;
+    }
 }

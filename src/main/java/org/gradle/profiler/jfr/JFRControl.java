@@ -3,20 +3,25 @@ package org.gradle.profiler.jfr;
 import com.google.common.collect.ImmutableMap;
 import org.gradle.profiler.CommandExec;
 import org.gradle.profiler.InstrumentingProfiler;
+import org.gradle.profiler.flamegraph.DetailLevel;
+import org.gradle.profiler.flamegraph.FlameGraphGenerator;
 import org.gradle.profiler.flamegraph.FlameGraphSanitizer;
+import org.gradle.profiler.flamegraph.Stacks;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.List;
 
 public class JFRControl implements InstrumentingProfiler.SnapshotCapturingProfilerController {
 
     private final JcmdRunner jcmd;
     private final JFRArgs jfrArgs;
     private final File jfrFile;
-    private final JfrFlameGraphGenerator jfrFlameGraphGenerator = new JfrFlameGraphGenerator(ImmutableMap.of(
-        JfrFlameGraphGenerator.DetailLevel.RAW, FlameGraphSanitizer.raw(),
-        JfrFlameGraphGenerator.DetailLevel.SIMPLIFIED, FlameGraphSanitizer.simplified()
+    private final JfrToStacksConverter stacksConverter = new JfrToStacksConverter(ImmutableMap.of(
+        DetailLevel.RAW, FlameGraphSanitizer.raw(),
+        DetailLevel.SIMPLIFIED, FlameGraphSanitizer.simplified()
     ));
+    private final FlameGraphGenerator flameGraphGenerator = new FlameGraphGenerator();
     private int counter;
 
     public JFRControl(JFRArgs args, File jfrFile) {
@@ -46,7 +51,8 @@ public class JFRControl implements InstrumentingProfiler.SnapshotCapturingProfil
     public void stopSession() {
         String jfrFileName = jfrFile.getName();
         String outputBaseName = jfrFileName.substring(0, jfrFileName.length() - 4);
-        jfrFlameGraphGenerator.generateStacksAndGraphs(jfrFile, outputBaseName);
+        List<Stacks> stackFiles = stacksConverter.generateStacks(jfrFile, outputBaseName);
+        flameGraphGenerator.generateGraphs(jfrFile.getParentFile(), stackFiles);
         System.out.println("Wrote profiling data to " + jfrFile.getPath());
     }
 

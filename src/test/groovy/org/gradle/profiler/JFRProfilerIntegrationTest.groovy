@@ -232,7 +232,7 @@ class JFRProfilerIntegrationTest extends AbstractProfilerIntegrationTest {
         new Main().run("--project-dir", projectDir.absolutePath, "--output-dir", outputDir.absolutePath, "--scenario-file", scenarioFile.absolutePath, "--gradle-version", minimalSupportedGradleVersion, "--profile", "jfr", "--iterations", "2", "--no-daemon", "assemble")
 
         then:
-        findJfrDirectory(2, new File(outputDir, "assemble")).listFiles().findAll { it.name.endsWith(".jfr") }.size() == 2
+        findJfrDirectory(2, outputDir).listFiles().findAll { it.name.endsWith(".jfr") }.size() == 2
     }
 
     private File prepareBuild() {

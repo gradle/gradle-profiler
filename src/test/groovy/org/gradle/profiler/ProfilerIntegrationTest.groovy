@@ -505,7 +505,7 @@ plugins.withId("idea") {
         logFile.containsOne("* Running scenario ideaModel using Gradle $minimalSupportedGradleVersion (scenario 1/2)")
         logFile.containsOne("* Running scenario ideaModel using Gradle $latestSupportedGradleVersion (scenario 2/2)")
 
-        def profileFile = new File(outputDir, "ideaModel/$minimalSupportedGradleVersion/ideaModel-${minimalSupportedGradleVersion}.jfr")
+        def profileFile = new File(outputDir, "$minimalSupportedGradleVersion/ideaModel-${minimalSupportedGradleVersion}.jfr")
         profileFile.isFile()
     }
 
