@@ -53,6 +53,7 @@ class CommandLineParser {
             .withRequiredArg()
             .defaultsTo("jfr");
         ProfilerFactory.configureParser(parser);
+        OptionSpecBuilder noDifferentialFlamegraphOption = parser.accepts("no-diffs", "Do not generate differential flame graphs");
         OptionSpecBuilder benchmarkOption = parser.accepts("benchmark", "Collect benchmark metrics");
         ArgumentAcceptingOptionSpec<String> benchmarkBuildOperation = parser.accepts(
             "measure-build-op",
@@ -101,6 +102,7 @@ class CommandLineParser {
             profilerFactory = ProfilerFactory.of(profilersList);
         }
         Profiler profiler = profilerFactory.createFromOptions(parsedOptions);
+        boolean generateDiffs = !parsedOptions.has(noDifferentialFlamegraphOption) && hasProfiler && profiler.isCreatesStacksFiles();
         boolean benchmark = parsedOptions.has(benchmarkOption);
         if (!benchmark && !hasProfiler) {
             return fail(parser, "Neither --profile or --benchmark specified.");
@@ -157,6 +159,7 @@ class CommandLineParser {
         return new InvocationSettings.InvocationSettingsBuilder()
             .setProjectDir(projectDir)
             .setProfiler(profiler)
+            .setGenerateDiffs(generateDiffs)
             .setBenchmark(benchmark)
             .setOutputDir(outputDir)
             .setInvoker(invoker)

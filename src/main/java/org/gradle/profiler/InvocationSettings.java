@@ -12,6 +12,7 @@ import static org.gradle.profiler.report.CsvGenerator.Format;
 public class InvocationSettings {
     private final File projectDir;
     private final Profiler profiler;
+    private final boolean generateDiffs;
     private final boolean benchmark;
     private final boolean dryRun;
     private final File scenarioFile;
@@ -40,6 +41,7 @@ public class InvocationSettings {
     private InvocationSettings(
         File projectDir,
         Profiler profiler,
+        boolean generateDiffs,
         boolean benchmark,
         File outputDir,
         BuildInvoker invoker,
@@ -62,6 +64,7 @@ public class InvocationSettings {
         this.benchmark = benchmark;
         this.projectDir = projectDir;
         this.profiler = profiler;
+        this.generateDiffs = generateDiffs;
         this.outputDir = outputDir;
         this.invoker = invoker;
         this.dryRun = dryRun;
@@ -120,6 +123,10 @@ public class InvocationSettings {
 
     public Profiler getProfiler() {
         return profiler;
+    }
+
+    public boolean isGenerateDiffs() {
+        return generateDiffs;
     }
 
     public File getScenarioFile() {
@@ -189,6 +196,7 @@ public class InvocationSettings {
         return new InvocationSettings.InvocationSettingsBuilder()
             .setProjectDir(projectDir)
             .setProfiler(profiler)
+            .setGenerateDiffs(generateDiffs)
             .setBenchmark(benchmark)
             .setDryRun(dryRun)
             .setScenarioFile(scenarioFile)
@@ -237,6 +245,7 @@ public class InvocationSettings {
     public static final class InvocationSettingsBuilder {
         private File projectDir;
         private Profiler profiler;
+        private boolean generateDiffs;
         private boolean benchmark;
         private boolean dryRun;
         private File scenarioFile;
@@ -263,6 +272,11 @@ public class InvocationSettings {
 
         public InvocationSettingsBuilder setProfiler(Profiler profiler) {
             this.profiler = profiler;
+            return this;
+        }
+
+        public InvocationSettingsBuilder setGenerateDiffs(boolean generateDiffs) {
+            this.generateDiffs = generateDiffs;
             return this;
         }
 
@@ -363,6 +377,7 @@ public class InvocationSettings {
             return new InvocationSettings(
                 projectDir,
                 profiler,
+                generateDiffs,
                 benchmark,
                 outputDir,
                 invoker,

@@ -85,7 +85,7 @@ public class Main {
                 // This overwrites the existing reports, so may leave them in a corrupted state if this process crashes during the generation.
                 benchmarkResults.write(settings);
             }
-            if (settings.isProfile() && settings.getProfiler().isCreatesStacksFiles() && scenarios.size() > 1) {
+            if (settings.isGenerateDiffs() && scenarios.size() > 1) {
                 new DifferentialFlameGraphGenerator().generateDifferentialGraphs(settings.getOutputDir());
             }
 

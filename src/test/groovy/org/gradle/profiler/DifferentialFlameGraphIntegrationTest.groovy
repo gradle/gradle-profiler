@@ -94,4 +94,26 @@ class DifferentialFlameGraphIntegrationTest extends AbstractProfilerIntegrationT
         where:
         profiler << ["async-profiler", "jfr"]
     }
+
+    def "can disable generation of differential flame graphs"() {
+        given:
+        instrumentedBuildScript()
+
+        when:
+        new Main().run("--project-dir", projectDir.absolutePath, "--output-dir", outputDir.absolutePath,
+            "--gradle-version", latestSupportedGradleVersion,
+            "--gradle-version", minimalSupportedGradleVersion,
+            "--no-diffs",
+            "--iterations", "2",
+            "--profile", "async-profiler",
+            "assemble")
+
+        then:
+        logFile.find("<daemon: true").size() == 10
+        logFile.find("<invocations: 3>").size() == 2
+
+        and:
+        assertGraphsGeneratedForVersions(latestSupportedGradleVersion, minimalSupportedGradleVersion)
+        assertNoDifferentialFlameGraphsGenerated()
+    }
 }

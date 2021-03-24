@@ -57,4 +57,10 @@ trait FlameGraphFixture {
             }
         }
     }
+
+    void assertNoDifferentialFlameGraphsGenerated() {
+        outputDir.listFiles()?.each { scenario ->
+            assert !(new File(scenario, "diffs").exists())
+        }
+    }
 }
