@@ -185,6 +185,30 @@ public class InvocationSettings {
         return invocationId;
     }
 
+    public InvocationSettingsBuilder newBuilder() {
+        return new InvocationSettings.InvocationSettingsBuilder()
+            .setProjectDir(projectDir)
+            .setProfiler(profiler)
+            .setBenchmark(benchmark)
+            .setDryRun(dryRun)
+            .setScenarioFile(scenarioFile)
+            .setOutputDir(outputDir)
+            .setInvoker(invoker)
+            .setVersions(versions)
+            .setTargets(targets)
+            .setSysProperties(sysProperties)
+            .setGradleUserHome(gradleUserHome)
+            .setStudioInstallDir(studioInstallDir)
+            .setWarmupCount(warmupCount)
+            .setIterations(iterations)
+            .setMeasureGarbageCollection(measureGarbageCollection)
+            .setMeasureConfigTime(measureConfigTime)
+            .setMeasuredBuildOperations(measuredBuildOperations)
+            .setCsvFormat(csvFormat)
+            .setBenchmarkTitle(benchmarkTitle)
+            .setBuildLog(buildLog);
+    }
+
     public void printTo(PrintStream out) {
         if (benchmarkTitle != null) {
             out.println("Title: " + benchmarkTitle);

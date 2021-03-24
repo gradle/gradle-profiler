@@ -71,24 +71,8 @@ class CompositeProfiler extends Profiler {
 
     private ScenarioSettings settingsFor(final Profiler prof, final ScenarioSettings scenarioSettings) {
         InvocationSettings settings = scenarioSettings.getInvocationSettings();
-        InvocationSettings newSettings = new InvocationSettings.InvocationSettingsBuilder()
-            .setProjectDir(settings.getProjectDir())
+        InvocationSettings newSettings = settings.newBuilder()
             .setProfiler(prof)
-            .setBenchmark(settings.isBenchmark())
-            .setOutputDir(settings.getOutputDir())
-            .setInvoker(settings.getInvoker())
-            .setDryRun(settings.isDryRun())
-            .setScenarioFile(settings.getScenarioFile())
-            .setVersions(settings.getVersions())
-            .setTargets(settings.getTargets())
-            .setSysProperties(settings.getSystemProperties())
-            .setGradleUserHome(settings.getGradleUserHome())
-            .setWarmupCount(settings.getWarmUpCount())
-            .setIterations(settings.getBuildCount())
-            .setMeasureGarbageCollection(settings.isMeasureGarbageCollection())
-            .setMeasureConfigTime(settings.isMeasureConfigTime())
-            .setMeasuredBuildOperations(settings.getMeasuredBuildOperations())
-            .setCsvFormat(settings.getCsvFormat())
             .build();
         return new ScenarioSettings(newSettings, scenarioSettings.getScenario());
     }
