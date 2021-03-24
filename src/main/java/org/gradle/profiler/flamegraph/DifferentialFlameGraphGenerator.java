@@ -32,29 +32,26 @@ public class DifferentialFlameGraphGenerator {
                 .filter(Files::isDirectory)
                 .collect(Collectors.toList());
 
-            experiments.forEach(experiment -> {
-                experiments.stream()
-                    .filter(it -> !experiment.equals(it))
-                    .forEach(baseline -> {
-                        for (EventType type : EventType.values()) {
-                            // Only create diffs for simplified stacks, diffs for raw stacks don't make much sense
-                            DetailLevel level = DetailLevel.SIMPLIFIED;
-                            File backwardDiff = generateDiff(experiment.toFile(), baseline.toFile(), type, level, false);
-                            if (backwardDiff != null) {
-                                generateDifferentialFlameGraph(backwardDiff, type, level, false);
-                                generateDifferentialIcicleGraph(backwardDiff, type, level, false);
-                            }
-
-                            File forwardDiff = generateDiff(experiment.toFile(), baseline.toFile(), type, level, true);
-                            if (forwardDiff != null) {
-                                generateDifferentialFlameGraph(forwardDiff, type, level, true);
-                                generateDifferentialIcicleGraph(forwardDiff, type, level, true);
-                            }
+            experiments.forEach(experiment -> experiments.stream()
+                .filter(it -> !experiment.equals(it))
+                .forEach(baseline -> {
+                    for (EventType type : EventType.values()) {
+                        // Only create diffs for simplified stacks, diffs for raw stacks don't make much sense
+                        DetailLevel level = DetailLevel.SIMPLIFIED;
+                        File backwardDiff = generateDiff(experiment.toFile(), baseline.toFile(), type, level, false);
+                        if (backwardDiff != null) {
+                            generateDifferentialFlameGraph(backwardDiff, type, level, false);
+                            generateDifferentialIcicleGraph(backwardDiff, type, level, false);
                         }
-                    });
-            });
-        }
 
+                        File forwardDiff = generateDiff(experiment.toFile(), baseline.toFile(), type, level, true);
+                        if (forwardDiff != null) {
+                            generateDifferentialFlameGraph(forwardDiff, type, level, true);
+                            generateDifferentialIcicleGraph(forwardDiff, type, level, true);
+                        }
+                    }
+                }));
+        }
     }
 
     private File generateDiff(File versionUnderTest, File baseline, final EventType type, final DetailLevel level, final boolean negate) {

@@ -7,8 +7,6 @@ import java.util.List;
 
 /**
  * Generates flame graphs based on JFR recordings.
- * <p>
- * TODO create flame graph diffs between profiled versions
  */
 public class FlameGraphGenerator {
     public static final String FLAME_FILE_SUFFIX = "-flames.svg";
