@@ -15,7 +15,7 @@ public class ChromeTraceProfiler extends Profiler {
 
     @Override
     public void summarizeResultFile(File resultFile, Consumer<String> consumer) {
-        if (resultFile.getName().endsWith(".html")) {
+        if (resultFile.getName().endsWith("-trace.json")) {
             consumer.accept(resultFile.getAbsolutePath());
         }
     }

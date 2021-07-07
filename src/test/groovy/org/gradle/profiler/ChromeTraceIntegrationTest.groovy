@@ -14,7 +14,7 @@ class ChromeTraceIntegrationTest extends AbstractProfilerIntegrationTest {
             run("--project-dir", projectDir.absolutePath, "--output-dir", outputDir.absolutePath, "--gradle-version", versionUnderTest, "--profile", "chrome-trace", "assemble")
 
         then:
-        new File(outputDir, "${versionUnderTest}-trace.html").isFile()
+        new File(outputDir, "${versionUnderTest}-trace.json").isFile()
 
         where:
         versionUnderTest << supportedGradleVersions
@@ -30,7 +30,7 @@ class ChromeTraceIntegrationTest extends AbstractProfilerIntegrationTest {
             run("--project-dir", projectDir.absolutePath, "--output-dir", outputDir.absolutePath, "--gradle-version", versionUnderTest, "--profile", "chrome-trace", "--cold-daemon", "assemble")
 
         then:
-        new File(outputDir, "${versionUnderTest}-trace.html").isFile()
+        new File(outputDir, "${versionUnderTest}-trace.json").isFile()
 
         where:
         versionUnderTest << supportedGradleVersions
@@ -46,7 +46,7 @@ class ChromeTraceIntegrationTest extends AbstractProfilerIntegrationTest {
             run("--project-dir", projectDir.absolutePath, "--output-dir", outputDir.absolutePath, "--gradle-version", versionUnderTest, "--profile", "chrome-trace", "--no-daemon", "assemble")
 
         then:
-        new File(outputDir, "${versionUnderTest}-trace.html").isFile()
+        new File(outputDir, "${versionUnderTest}-trace.json").isFile()
 
         where:
         versionUnderTest << supportedGradleVersions
