@@ -1,13 +1,10 @@
 package org.gradle.trace;
 
-import java.io.File;
-import java.io.IOException;
-import java.io.InputStreamReader;
-import java.io.PrintWriter;
-import java.io.Reader;
 import org.gradle.api.logging.Logging;
-import org.gradle.internal.UncheckedException;
 import org.gradle.trace.stream.AsyncWriter;
+
+import java.io.File;
+import java.io.PrintWriter;
 
 public class AsynchronousTraceWriter {
 
@@ -43,27 +40,11 @@ public class AsynchronousTraceWriter {
         Logging.getLogger(AsynchronousTraceWriter.class).lifecycle("Trace written to file://" + traceFile.getAbsolutePath());
     }
 
-    private void copyResourceToTraceFile(String resourcePath, PrintWriter writer) {
-        try (Reader in = new InputStreamReader(getClass().getResourceAsStream(resourcePath))) {
-            char[] buffer = new char[1024];
-            while (true) {
-                int nread = in.read(buffer);
-                if (nread < 0) {
-                    break;
-                }
-                writer.write(buffer, 0, nread);
-            }
-        } catch (IOException e) {
-            throw UncheckedException.throwAsUncheckedException(e);
-        }
-    }
-
     private class TraceEventRenderer implements AsyncWriter.Renderer<TraceEvent> {
         boolean hasEvents;
 
         @Override
         public void header(PrintWriter writer) {
-            copyResourceToTraceFile("/trace-header.html", writer);
             writer.println("{\n" +
                 "  \"traceEvents\": [\n");
         }
@@ -87,8 +68,6 @@ public class AsynchronousTraceWriter {
                 "    \"version\": \"My Application v1.0\"\n" +
                 "  }\n" +
                 "}\n");
-
-            copyResourceToTraceFile("/trace-footer.html", writer);
         }
     }
 }

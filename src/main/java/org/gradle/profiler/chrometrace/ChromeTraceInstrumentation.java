@@ -25,7 +25,7 @@ public class ChromeTraceInstrumentation extends GradleInstrumentation {
     private final File traceFile;
 
     public ChromeTraceInstrumentation(ScenarioSettings scenarioSettings) {
-        traceFile = scenarioSettings.profilerOutputLocationFor("-trace.html");
+        traceFile = scenarioSettings.profilerOutputLocationFor("-trace.json");
     }
 
     @Override

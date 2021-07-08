@@ -172,7 +172,7 @@ Chrome traces are a low-level event dump (e.g. projects being evaluated, tasks b
 They are useful when you can't create a build scan, but need to look at the overall structure of a build.
 It also displays CPU load, memory usage and GC activity. Using chrome-trace requires Gradle 3.3+.
 
-Add the `--profile chrome-trace` option and open the result in Google Chrome. 
+Add the `--profile chrome-trace` option and open the result in Google Chrome in chrome://tracing. 
 
 ## Command line options
 
