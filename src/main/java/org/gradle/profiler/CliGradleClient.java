@@ -5,27 +5,37 @@ import org.gradle.tooling.BuildActionExecuter;
 
 import java.io.File;
 import java.util.ArrayList;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
-public class CliGradleClient implements GradleInvoker, GradleClient {
+class CliGradleClient implements GradleInvoker, GradleClient {
     private final GradleBuildConfiguration gradleBuildConfiguration;
     private final File javaHome;
     private final File projectDir;
     private final boolean daemon;
     private final File buildLog;
+    /**
+     * The GRADLE_OPTS environment variable passed to configure the client VM.
+     * See https://docs.gradle.org/current/userguide/build_environment.html#sec:gradle_environment_variables
+     * <p>
+     * This is used only for --daemon. Use GradleBuildConfiguration.jvmArguments for --no-daemon.
+     */
+    private final List<String> gradleOpts;
 
-    public CliGradleClient(GradleBuildConfiguration gradleBuildConfiguration,
-                      File javaHome,
-                      File projectDir,
-                      boolean daemon,
-                      File buildLog) {
+    CliGradleClient(GradleBuildConfiguration gradleBuildConfiguration,
+                    File javaHome,
+                    File projectDir,
+                    boolean daemon,
+                    File buildLog,
+                    List<String> gradleOpts) {
         this.gradleBuildConfiguration = gradleBuildConfiguration;
         this.javaHome = javaHome;
         this.projectDir = projectDir;
         this.daemon = daemon;
         this.buildLog = buildLog;
+        this.gradleOpts = gradleOpts;
     }
 
     @Override
@@ -44,7 +54,7 @@ public class CliGradleClient implements GradleInvoker, GradleClient {
 
     @Override
     public void runTasks(List<String> tasks, List<String> gradleArgs, List<String> jvmArgs) {
-        String gradleOpts = quoteJvmArguments(daemon, jvmArgs);
+        String daemonJvmArgs = quoteJvmArguments(daemon, jvmArgs);
 
         List<String> commandLine = new ArrayList<>();
         gradleBuildConfiguration.addGradleCommand(commandLine);
@@ -60,11 +70,13 @@ public class CliGradleClient implements GradleInvoker, GradleClient {
         if (daemon) {
             String orgGradleJvmArgs = jvmArgs.isEmpty()
                 ? ""
-                : " \"-Dorg.gradle.jvmargs=" + gradleOpts + "\"";
-            builder.environment().put("GRADLE_OPTS", "-Xmx128m -Xms128m -XX:+HeapDumpOnOutOfMemoryError" + orgGradleJvmArgs);
+                : " \"-Dorg.gradle.jvmargs=" + daemonJvmArgs + "\"";
+            LinkedHashSet<String> gradleOptsSet = new LinkedHashSet<>(gradleOpts);
+            gradleOptsSet.add("-XX:+HeapDumpOnOutOfMemoryError");
+            builder.environment().put("GRADLE_OPTS", String.join(" ", gradleOptsSet) + orgGradleJvmArgs);
         } else {
-            Logging.detailed().println("GRADLE_OPTS: " + gradleOpts);
-            builder.environment().put("GRADLE_OPTS", gradleOpts);
+            Logging.detailed().println("GRADLE_OPTS: " + daemonJvmArgs);
+            builder.environment().put("GRADLE_OPTS", daemonJvmArgs);
         }
         Logging.detailed().println("JAVA_HOME: " + javaHome.getAbsolutePath());
         builder.environment().put("JAVA_HOME", javaHome.getAbsolutePath());

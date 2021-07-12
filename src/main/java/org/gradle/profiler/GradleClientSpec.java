@@ -4,6 +4,8 @@ import org.gradle.profiler.studio.StudioGradleClient;
 import org.gradle.tooling.GradleConnector;
 import org.gradle.tooling.ProjectConnection;
 
+import java.util.Collections;
+
 /**
  * Specifies a client to be used to invoke Gradle builds.
  */
@@ -32,7 +34,7 @@ public abstract class GradleClientSpec {
 
         @Override
         public GradleClient create(GradleBuildConfiguration buildConfiguration, InvocationSettings invocationSettings) {
-            return new CliGradleClient(buildConfiguration, buildConfiguration.getJavaHome(), invocationSettings.getProjectDir(), true, invocationSettings.getBuildLog());
+            return new CliGradleClient(buildConfiguration, buildConfiguration.getJavaHome(), invocationSettings.getProjectDir(), true, invocationSettings.getBuildLog(), Collections.emptyList());
         }
     };
 
@@ -49,7 +51,7 @@ public abstract class GradleClientSpec {
 
         @Override
         public GradleClient create(GradleBuildConfiguration buildConfiguration, InvocationSettings invocationSettings) {
-            return new CliGradleClient(buildConfiguration, buildConfiguration.getJavaHome(), invocationSettings.getProjectDir(), false, invocationSettings.getBuildLog());
+            return new CliGradleClient(buildConfiguration, buildConfiguration.getJavaHome(), invocationSettings.getProjectDir(), false, invocationSettings.getBuildLog(), Collections.emptyList());
         }
     };
 
