@@ -63,7 +63,7 @@ public class CliGradleClient implements GradleInvoker, GradleClient {
             String orgGradleJvmArgs = jvmArgs.isEmpty()
                 ? ""
                 : " \"-Dorg.gradle.jvmargs=" + daemonJvmArgs + "\"";
-            LinkedHashSet<String> gradleOptsSet = new LinkedHashSet<>(gradleBuildConfiguration.getGradleOpts());
+            LinkedHashSet<String> gradleOptsSet = new LinkedHashSet<>(gradleBuildConfiguration.getClientJvmArguments());
             gradleOptsSet.add("-XX:+HeapDumpOnOutOfMemoryError");
             builder.environment().put("GRADLE_OPTS", quoteJvmArguments(false, gradleOptsSet) + orgGradleJvmArgs);
         } else {

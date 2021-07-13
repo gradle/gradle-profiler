@@ -14,13 +14,7 @@ public class GradleBuildConfiguration {
     private final File javaHome;
     private final List<String> jvmArguments;
     private final boolean usesScanPlugin;
-    /**
-     * The GRADLE_OPTS environment variable passed to configure the client VM.
-     * See https://docs.gradle.org/current/userguide/build_environment.html#sec:gradle_environment_variables
-     * <p>
-     * This is used only for --daemon. Use jvmArguments for --no-daemon.
-     */
-    private final List<String> gradleOpts;
+    private final List<String> clientJvmArguments;
 
     public GradleBuildConfiguration(
         GradleVersion gradleVersion,
@@ -45,7 +39,7 @@ public class GradleBuildConfiguration {
         this.javaHome = javaHome;
         this.usesScanPlugin = usesScanPlugin;
         this.jvmArguments = jvmArguments;
-        this.gradleOpts = gradleOpts;
+        this.clientJvmArguments = gradleOpts;
     }
 
     public GradleVersion getGradleVersion() {
@@ -68,8 +62,16 @@ public class GradleBuildConfiguration {
         return usesScanPlugin;
     }
 
-    public List<String> getGradleOpts() {
-        return gradleOpts;
+    /**
+     * The JVM arguments passed to configure the client VM.
+     * See https://docs.gradle.org/current/userguide/build_environment.html#sec:gradle_environment_variables
+     * <p>
+     * Note:
+     * 1. This is only for {@link CliGradleClient}, not for TAPI clients.
+     * 2. This is used only for --daemon. Use jvmArguments for --no-daemon.
+     */
+    public List<String> getClientJvmArguments() {
+        return clientJvmArguments;
     }
 
     public void printVersionInfo() {
