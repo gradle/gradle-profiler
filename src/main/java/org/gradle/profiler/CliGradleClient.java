@@ -5,6 +5,8 @@ import org.gradle.tooling.BuildActionExecuter;
 
 import java.io.File;
 import java.util.ArrayList;
+import java.util.Collection;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
@@ -44,7 +46,7 @@ public class CliGradleClient implements GradleInvoker, GradleClient {
 
     @Override
     public void runTasks(List<String> tasks, List<String> gradleArgs, List<String> jvmArgs) {
-        String gradleOpts = quoteJvmArguments(daemon, jvmArgs);
+        String daemonJvmArgs = quoteJvmArguments(daemon, jvmArgs);
 
         List<String> commandLine = new ArrayList<>();
         gradleBuildConfiguration.addGradleCommand(commandLine);
@@ -60,11 +62,13 @@ public class CliGradleClient implements GradleInvoker, GradleClient {
         if (daemon) {
             String orgGradleJvmArgs = jvmArgs.isEmpty()
                 ? ""
-                : " \"-Dorg.gradle.jvmargs=" + gradleOpts + "\"";
-            builder.environment().put("GRADLE_OPTS", "-Xmx128m -Xms128m -XX:+HeapDumpOnOutOfMemoryError" + orgGradleJvmArgs);
+                : " \"-Dorg.gradle.jvmargs=" + daemonJvmArgs + "\"";
+            LinkedHashSet<String> gradleOptsSet = new LinkedHashSet<>(gradleBuildConfiguration.getGradleOpts());
+            gradleOptsSet.add("-XX:+HeapDumpOnOutOfMemoryError");
+            builder.environment().put("GRADLE_OPTS", quoteJvmArguments(false, gradleOptsSet) + orgGradleJvmArgs);
         } else {
-            Logging.detailed().println("GRADLE_OPTS: " + gradleOpts);
-            builder.environment().put("GRADLE_OPTS", gradleOpts);
+            Logging.detailed().println("GRADLE_OPTS: " + daemonJvmArgs);
+            builder.environment().put("GRADLE_OPTS", daemonJvmArgs);
         }
         Logging.detailed().println("JAVA_HOME: " + javaHome.getAbsolutePath());
         builder.environment().put("JAVA_HOME", javaHome.getAbsolutePath());
@@ -83,7 +87,7 @@ public class CliGradleClient implements GradleInvoker, GradleClient {
         }
     }
 
-    private static String quoteJvmArguments(boolean forSystemProperty, List<String> jvmArgs) {
+    private static String quoteJvmArguments(boolean forSystemProperty, Collection<String> jvmArgs) {
         char quotes = forSystemProperty ? '\'' : '"';
         return jvmArgs.stream()
             .peek(arg -> {
