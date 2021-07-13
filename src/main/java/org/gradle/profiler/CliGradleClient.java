@@ -16,13 +16,6 @@ class CliGradleClient implements GradleInvoker, GradleClient {
     private final File projectDir;
     private final boolean daemon;
     private final File buildLog;
-    /**
-     * The GRADLE_OPTS environment variable passed to configure the client VM.
-     * See https://docs.gradle.org/current/userguide/build_environment.html#sec:gradle_environment_variables
-     * <p>
-     * This is used only for --daemon. Use GradleBuildConfiguration.jvmArguments for --no-daemon.
-     */
-    private final List<String> gradleOpts;
 
     CliGradleClient(GradleBuildConfiguration gradleBuildConfiguration,
                     File javaHome,
@@ -35,7 +28,6 @@ class CliGradleClient implements GradleInvoker, GradleClient {
         this.projectDir = projectDir;
         this.daemon = daemon;
         this.buildLog = buildLog;
-        this.gradleOpts = gradleOpts;
     }
 
     @Override
@@ -71,7 +63,7 @@ class CliGradleClient implements GradleInvoker, GradleClient {
             String orgGradleJvmArgs = jvmArgs.isEmpty()
                 ? ""
                 : " \"-Dorg.gradle.jvmargs=" + daemonJvmArgs + "\"";
-            LinkedHashSet<String> gradleOptsSet = new LinkedHashSet<>(gradleOpts);
+            LinkedHashSet<String> gradleOptsSet = new LinkedHashSet<>(gradleBuildConfiguration.getGradleOpts());
             gradleOptsSet.add("-XX:+HeapDumpOnOutOfMemoryError");
             builder.environment().put("GRADLE_OPTS", String.join(" ", gradleOptsSet) + orgGradleJvmArgs);
         } else {
