@@ -5,6 +5,7 @@ import org.gradle.util.GradleVersion;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 
 public class GradleBuildConfiguration {
@@ -13,13 +14,32 @@ public class GradleBuildConfiguration {
     private final File javaHome;
     private final List<String> jvmArguments;
     private final boolean usesScanPlugin;
+    private final List<String> clientJvmArguments;
 
-    public GradleBuildConfiguration(GradleVersion gradleVersion, File gradleHome, File javaHome, List<String> jvmArguments, boolean usesScanPlugin) {
+    public GradleBuildConfiguration(
+        GradleVersion gradleVersion,
+        File gradleHome,
+        File javaHome,
+        List<String> jvmArguments,
+        boolean usesScanPlugin
+    ) {
+       this(gradleVersion, gradleHome, javaHome, jvmArguments, usesScanPlugin, Collections.emptyList());
+    }
+
+    public GradleBuildConfiguration(
+        GradleVersion gradleVersion,
+        File gradleHome,
+        File javaHome,
+        List<String> jvmArguments,
+        boolean usesScanPlugin,
+        List<String> gradleOpts
+    ) {
         this.gradleVersion = gradleVersion;
         this.gradleHome = gradleHome;
         this.javaHome = javaHome;
         this.usesScanPlugin = usesScanPlugin;
         this.jvmArguments = jvmArguments;
+        this.clientJvmArguments = gradleOpts;
     }
 
     public GradleVersion getGradleVersion() {
@@ -40,6 +60,18 @@ public class GradleBuildConfiguration {
 
     public boolean isUsesScanPlugin() {
         return usesScanPlugin;
+    }
+
+    /**
+     * The JVM arguments passed to configure the client VM.
+     * See https://docs.gradle.org/current/userguide/build_environment.html#sec:gradle_environment_variables
+     * <p>
+     * Note:
+     * 1. This is only for {@link CliGradleClient}, not for TAPI clients.
+     * 2. This is used only for --daemon. Use jvmArguments for --no-daemon.
+     */
+    public List<String> getClientJvmArguments() {
+        return clientJvmArguments;
     }
 
     public void printVersionInfo() {
