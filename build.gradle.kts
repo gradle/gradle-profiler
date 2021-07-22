@@ -157,7 +157,7 @@ publishing {
 fun Project.gradleInternalRepositoryUrl(): URI {
     val isSnapshot = version.toString().endsWith("-SNAPSHOT")
     val repositoryQualifier = if (isSnapshot) "snapshots" else "releases"
-    return uri("https://repo.gradle.org/gradle/ext-$repositoryQualifier-local/")
+    return uri("https://repo.grdev.net/artifactory/ext-$repositoryQualifier-local/")
 }
 
 buildScan {
