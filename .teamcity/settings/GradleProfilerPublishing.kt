@@ -12,11 +12,8 @@ object GradleProfilerPublishing : BuildType({
 
     params {
         javaHome(Os.linux, JavaVersion.ORACLE_JAVA_8)
-        text("ARTIFACTORY_USERNAME", "bot-build-tool", allowEmpty = true)
-        password("ARTIFACTORY_PASSWORD", "credentialsJSON:d94612fb-3291-41f5-b043-e2b3994aeeb4", display = ParameterDisplay.HIDDEN)
-
-        param("env.ORG_GRADLE_PROJECT_artifactoryUsername", "%ARTIFACTORY_USERNAME%")
-        param("env.ORG_GRADLE_PROJECT_artifactoryPassword", "%ARTIFACTORY_PASSWORD%")
+        param("env.ORG_GRADLE_PROJECT_artifactoryUsername", "bot-build-tool")
+        param("env.ORG_GRADLE_PROJECT_artifactoryPassword", "%artifactoryUserPassword%")
         param("env.ORG_GRADLE_PROJECT_githubToken", "%github.bot-teamcity.token%")
         param("env.ORG_GRADLE_PROJECT_sdkmanKey", "%gradleprofiler.sdkman.key%")
         param("env.ORG_GRADLE_PROJECT_sdkmanToken", "%gradleprofiler.sdkman.token%")
