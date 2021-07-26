@@ -1,9 +1,18 @@
 package org.gradle.profiler
 
+import org.gradle.util.GradleVersion
+import spock.lang.Shared
 import spock.lang.Unroll
 
 
 class ChromeTraceIntegrationTest extends AbstractProfilerIntegrationTest {
+    static final MINIMAL_SUPPORTED_VERSION_FOR_CHROME_TRACE = GradleVersion.version("3.5")
+
+    @Shared
+    List<String> supportedGradleVersions = super.supportedGradleVersions.findAll { gradleVersion ->
+        GradleVersion.version(gradleVersion) >= MINIMAL_SUPPORTED_VERSION_FOR_CHROME_TRACE
+    }
+
     @Unroll
     def "profiles build to produce chrome trace output for Gradle #versionUnderTest using Tooling API and warm daemon"() {
         given:
