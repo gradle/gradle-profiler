@@ -14,6 +14,8 @@ object GradleProfilerPublishing : BuildType({
         javaHome(Os.linux, JavaVersion.ORACLE_JAVA_8)
         text("ARTIFACTORY_USERNAME", "bot-build-tool", allowEmpty = true)
         password("ARTIFACTORY_PASSWORD", "credentialsJSON:d94612fb-3291-41f5-b043-e2b3994aeeb4", display = ParameterDisplay.HIDDEN)
+        password("pgpSigningKey", "credentialsJSON:ae6de222-f77d-4c71-b94e-fac6da485143", display = ParameterDisplay.HIDDEN)
+        password("pgpSigningPassphrase", "credentialsJSON:f75db3bd-4f5b-4591-b5cb-2e76d91f57f5", display = ParameterDisplay.HIDDEN)
 
         param("env.ORG_GRADLE_PROJECT_artifactoryUsername", "%ARTIFACTORY_USERNAME%")
         param("env.ORG_GRADLE_PROJECT_artifactoryPassword", "%ARTIFACTORY_PASSWORD%")
@@ -22,6 +24,8 @@ object GradleProfilerPublishing : BuildType({
         param("env.ORG_GRADLE_PROJECT_sdkmanToken", "%gradleprofiler.sdkman.token%")
         param("env.GRADLE_CACHE_REMOTE_USERNAME", "%gradle.cache.remote.username%")
         param("env.GRADLE_CACHE_REMOTE_PASSWORD", "%gradle.cache.remote.password%")
+        param("env.PGP_SIGNING_KEY", "%pgpSigningKey%")
+        param("env.PGP_SIGNING_KEY_PASSPHRASE", "%pgpSigningPassphrase%")
     }
 
     steps {
