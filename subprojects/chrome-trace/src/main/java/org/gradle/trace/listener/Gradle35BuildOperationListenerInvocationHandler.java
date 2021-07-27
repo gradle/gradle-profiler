@@ -1,13 +1,13 @@
 package org.gradle.trace.listener;
 
-import static org.gradle.trace.util.ReflectionUtil.invokerGetter;
-
 import org.gradle.api.internal.TaskInternal;
 import org.gradle.trace.TraceResult;
 
-public class Gradle33BuildOperationListenerInvocationHandler extends BuildOperationListenerInvocationHandler {
+import static org.gradle.trace.util.ReflectionUtil.invokerGetter;
 
-    public Gradle33BuildOperationListenerInvocationHandler(TraceResult traceResult) {
+public class Gradle35BuildOperationListenerInvocationHandler extends BuildOperationListenerInvocationHandler {
+
+    public Gradle35BuildOperationListenerInvocationHandler(TraceResult traceResult) {
         super(traceResult);
     }
 
