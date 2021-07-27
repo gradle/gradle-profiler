@@ -15,3 +15,5 @@ include("studio-agent")
 rootProject.children.forEach {
     it.projectDir = rootDir.resolve( "subprojects/${it.name}")
 }
+
+enableFeaturePreview("VERSION_CATALOGS")

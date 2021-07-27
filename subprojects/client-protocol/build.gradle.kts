@@ -5,6 +5,5 @@ plugins {
 }
 
 dependencies {
-    testImplementation(versions.groovy)
-    testImplementation(versions.spock)
+    testImplementation(libs.bundles.testDependencies)
 }
