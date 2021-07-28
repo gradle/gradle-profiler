@@ -39,12 +39,15 @@ fun Project.gradleInternalRepositoryUrl(): URI {
     return uri("https://repo.gradle.org/gradle/ext-$repositoryQualifier-local")
 }
 
-val signArtifacts: Boolean = !System.getenv("PGP_SIGNING_KEY").isNullOrEmpty()
+val pgpSigningKey: Provider<String> = providers.environmentVariable("PGP_SIGNING_KEY").forUseAtConfigurationTime()
+val signArtifacts: Boolean = !pgpSigningKey.orNull.isNullOrEmpty()
+
 tasks.withType<Sign>().configureEach { isEnabled = signArtifacts }
+
 signing {
     useInMemoryPgpKeys(
-        System.getenv("PGP_SIGNING_KEY"),
-        System.getenv("PGP_SIGNING_KEY_PASSPHRASE")
+        project.providers.environmentVariable("PGP_SIGNING_KEY").orNull,
+        project.providers.environmentVariable("PGP_SIGNING_KEY_PASSPHRASE").orNull
     )
     publishing.publications.configureEach {
         if (signArtifacts) {
