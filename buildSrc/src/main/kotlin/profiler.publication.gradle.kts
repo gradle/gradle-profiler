@@ -2,6 +2,7 @@ import java.net.URI
 
 plugins {
     id("maven-publish")
+    id("signing")
 }
 
 publishing {
@@ -37,3 +38,21 @@ fun Project.gradleInternalRepositoryUrl(): URI {
     val repositoryQualifier = if (isSnapshot) "snapshots" else "releases"
     return uri("https://repo.gradle.org/gradle/ext-$repositoryQualifier-local")
 }
+
+val pgpSigningKey: Provider<String> = providers.environmentVariable("PGP_SIGNING_KEY").forUseAtConfigurationTime()
+val signArtifacts: Boolean = !pgpSigningKey.orNull.isNullOrEmpty()
+
+tasks.withType<Sign>().configureEach { isEnabled = signArtifacts }
+
+signing {
+    useInMemoryPgpKeys(
+        project.providers.environmentVariable("PGP_SIGNING_KEY").orNull,
+        project.providers.environmentVariable("PGP_SIGNING_KEY_PASSPHRASE").orNull
+    )
+    publishing.publications.configureEach {
+        if (signArtifacts) {
+            signing.sign(this)
+        }
+    }
+}
+
