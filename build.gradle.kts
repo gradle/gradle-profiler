@@ -21,6 +21,8 @@ allprojects {
     version = property("profiler.version") as String
 }
 
+description = "A tool to profile and benchmark Gradle builds"
+
 val gradleRuntime by configurations.creating
 val profilerPlugins by configurations.creating
 
@@ -60,10 +62,6 @@ dependencies {
     testImplementation(versions.spockJunit4)
     testRuntimeOnly("cglib:cglib:3.2.6")
     testRuntimeOnly("org.objenesis:objenesis:2.6")
-}
-
-java {
-    withSourcesJar()
 }
 
 tasks.withType<Jar>().configureEach {
