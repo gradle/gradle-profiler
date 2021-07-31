@@ -14,6 +14,7 @@ plugins {
     id("profiler.publication")
     id("com.github.node-gradle.node") version "2.2.4"
     id("io.sdkman.vendors") version "2.0.0"
+    id("io.github.gradle-nexus.publish-plugin") version "1.1.0"
 }
 
 allprojects {
@@ -150,6 +151,18 @@ publishing {
     publications {
         named<MavenPublication>("mavenJava") {
             artifact(profilerDistribution)
+        }
+    }
+}
+
+nexusPublishing {
+    packageGroup.set(project.group.toString())
+    repositories {
+        sonatype {
+            nexusUrl.set(uri("https://s01.oss.sonatype.org/service/local/"))
+            snapshotRepositoryUrl.set(uri("https://s01.oss.sonatype.org/content/repositories/snapshots/"))
+            username.set(System.getenv("MAVEN_CENTRAL_STAGING_REPO_USER"))
+            password.set(System.getenv("MAVEN_CENTRAL_STAGING_REPO_PASSWORD"))
         }
     }
 }
