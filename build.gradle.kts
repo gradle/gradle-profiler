@@ -173,7 +173,7 @@ tasks.register<Exec>("gitTag") {
 val gitPushTag = tasks.register<Exec>("gitPushTag") {
     mustRunAfter("publishAllPublicationsToGradleBuildInternalRepository")
     dependsOn("gitTag")
-    commandLine("git", "push", "https://bot-teamcity:${project.property("githubToken")}@github.com/gradle/gradle-profiler.git", releaseTagName)
+    commandLine("git", "push", "https://bot-teamcity:${project.findProperty("githubToken")}@github.com/gradle/gradle-profiler.git", releaseTagName)
 }
 
 sdkman {
