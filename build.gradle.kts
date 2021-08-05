@@ -196,7 +196,7 @@ sdkman {
     candidate = "gradleprofiler"
     hashtag = "#gradleprofiler"
     version = project.version.toString()
-    url = project.gradleInternalRepositoryUrl().resolve("org/gradle/profiler/gradle-profiler/$version/gradle-profiler-$version.zip").toString()
+    url = "https://repo1.maven.org/maven2/org/gradle/profiler/gradle-profiler/$version/gradle-profiler-$version.zip"
     consumerKey = project.findProperty("sdkmanKey") as String?
     consumerToken = project.findProperty("sdkmanToken") as String?
 }
