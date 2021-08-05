@@ -151,6 +151,10 @@ publishing {
     publications {
         named<MavenPublication>("mavenJava") {
             artifact(profilerDistribution)
+            pom {
+                // For some reason adding the zip artifact changes the packaging to "pom"
+                packaging = "jar"
+            }
         }
     }
 }
