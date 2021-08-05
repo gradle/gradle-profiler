@@ -3,7 +3,6 @@ import io.sdkman.vendors.tasks.SdkAnnounceVersionTask
 import io.sdkman.vendors.tasks.SdkDefaultVersionTask
 import io.sdkman.vendors.tasks.SdkReleaseVersionTask
 import io.sdkman.vendors.tasks.SdkmanVendorBaseTask
-import java.net.URI
 import java.util.Locale
 
 plugins {
@@ -167,12 +166,6 @@ nexusPublishing {
             snapshotRepositoryUrl.set(uri("https://s01.oss.sonatype.org/content/repositories/snapshots/"))
         }
     }
-}
-
-fun Project.gradleInternalRepositoryUrl(): URI {
-    val isSnapshot = version.toString().endsWith("-SNAPSHOT")
-    val repositoryQualifier = if (isSnapshot) "snapshots" else "releases"
-    return uri("https://repo.gradle.org/gradle/ext-$repositoryQualifier-local/")
 }
 
 buildScan {
