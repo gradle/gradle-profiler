@@ -28,8 +28,8 @@ object GradleProfilerPublishing : BuildType({
         param("env.GRADLE_CACHE_REMOTE_PASSWORD", "%gradle.cache.remote.password%")
         param("env.PGP_SIGNING_KEY", "%pgpSigningKey%")
         param("env.PGP_SIGNING_KEY_PASSPHRASE", "%pgpSigningPassphrase%")
-        param("env.MAVEN_CENTRAL_STAGING_REPO_USER", "%mavenCentralStagingRepoUser%")
-        param("env.MAVEN_CENTRAL_STAGING_REPO_PASSWORD", "%mavenCentralStagingRepoPassword%")
+        param("env.ORG_GRADLE_PROJECT_sonatypeUsername", "%mavenCentralStagingRepoUser%")
+        param("env.ORG_GRADLE_PROJECT_sonatypePassword", "%mavenCentralStagingRepoPassword%")
     }
 
     steps {
