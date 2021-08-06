@@ -1,5 +1,3 @@
-import java.net.URI
-
 plugins {
     id("java")
     id("maven-publish")
@@ -60,24 +58,6 @@ publishing {
 
         }
     }
-
-    repositories {
-        maven {
-            name = "GradleBuildInternal"
-            url = gradleInternalRepositoryUrl()
-            credentials {
-                username = project.findProperty("artifactoryUsername") as String?
-                password = project.findProperty("artifactoryPassword") as String?
-            }
-        }
-    }
-}
-
-
-fun Project.gradleInternalRepositoryUrl(): URI {
-    val isSnapshot = property("profiler.version").toString().endsWith("-SNAPSHOT")
-    val repositoryQualifier = if (isSnapshot) "snapshots" else "releases"
-    return uri("https://repo.gradle.org/gradle/ext-$repositoryQualifier-local")
 }
 
 val pgpSigningKey: Provider<String> = providers.environmentVariable("PGP_SIGNING_KEY").forUseAtConfigurationTime()

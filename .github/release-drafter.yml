@@ -20,7 +20,7 @@ exclude-labels:
 template: |
     $CHANGES
 
-    Prebuilt version available from [here](https://repo.gradle.org/gradle/ext-releases-local/org/gradle/profiler/gradle-profiler/$NEXT_MINOR_VERSION/gradle-profiler-$NEXT_MINOR_VERSION.zip)
+    Prebuilt version available from [here](https://repo1.maven.org/maven2/org/gradle/profiler/gradle-profiler/$NEXT_MINOR_VERSION/gradle-profiler-$NEXT_MINOR_VERSION.zip)
 
     Install Gradle profiler $NEXT_MINOR_VERSION with [SDKMAN!](http://sdkman.io/):
 

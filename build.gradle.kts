@@ -3,7 +3,6 @@ import io.sdkman.vendors.tasks.SdkAnnounceVersionTask
 import io.sdkman.vendors.tasks.SdkDefaultVersionTask
 import io.sdkman.vendors.tasks.SdkReleaseVersionTask
 import io.sdkman.vendors.tasks.SdkmanVendorBaseTask
-import java.net.URI
 import java.util.Locale
 
 plugins {
@@ -14,6 +13,7 @@ plugins {
     id("profiler.publication")
     id("com.github.node-gradle.node") version "2.2.4"
     id("io.sdkman.vendors") version "2.0.0"
+    id("io.github.gradle-nexus.publish-plugin") version "1.1.0"
 }
 
 allprojects {
@@ -150,14 +150,22 @@ publishing {
     publications {
         named<MavenPublication>("mavenJava") {
             artifact(profilerDistribution)
+            pom {
+                // For some reason adding the zip artifact changes the packaging to "pom"
+                packaging = "jar"
+            }
         }
     }
 }
 
-fun Project.gradleInternalRepositoryUrl(): URI {
-    val isSnapshot = version.toString().endsWith("-SNAPSHOT")
-    val repositoryQualifier = if (isSnapshot) "snapshots" else "releases"
-    return uri("https://repo.gradle.org/gradle/ext-$repositoryQualifier-local/")
+nexusPublishing {
+    packageGroup.set(project.group.toString())
+    repositories {
+        sonatype {
+            nexusUrl.set(uri("https://s01.oss.sonatype.org/service/local/"))
+            snapshotRepositoryUrl.set(uri("https://s01.oss.sonatype.org/content/repositories/snapshots/"))
+        }
+    }
 }
 
 buildScan {
@@ -171,7 +179,7 @@ tasks.register<Exec>("gitTag") {
 }
 
 val gitPushTag = tasks.register<Exec>("gitPushTag") {
-    mustRunAfter("publishAllPublicationsToGradleBuildInternalRepository")
+    mustRunAfter("closeSonatypeStagingRepository")
     dependsOn("gitTag")
     commandLine("git", "push", "https://bot-teamcity:${project.findProperty("githubToken")}@github.com/gradle/gradle-profiler.git", releaseTagName)
 }
@@ -181,7 +189,7 @@ sdkman {
     candidate = "gradleprofiler"
     hashtag = "#gradleprofiler"
     version = project.version.toString()
-    url = project.gradleInternalRepositoryUrl().resolve("org/gradle/profiler/gradle-profiler/$version/gradle-profiler-$version.zip").toString()
+    url = "https://repo1.maven.org/maven2/org/gradle/profiler/gradle-profiler/$version/gradle-profiler-$version.zip"
     consumerKey = project.findProperty("sdkmanKey") as String?
     consumerToken = project.findProperty("sdkmanToken") as String?
 }
