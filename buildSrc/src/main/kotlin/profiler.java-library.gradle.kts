@@ -5,10 +5,14 @@ plugins {
 }
 
 repositories {
-    mavenCentral()
     maven {
-        url = uri("https://repo.gradle.org/gradle/repo")
+        name = "Gradle public repository"
+        url = uri("https://repo.gradle.org/gradle/public")
+        content {
+            includeModule("org.gradle", "gradle-tooling-api")
+        }
     }
+    mavenCentral()
 }
 
 java {
