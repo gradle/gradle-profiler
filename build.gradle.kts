@@ -27,7 +27,7 @@ val gradleRuntime by configurations.creating
 val profilerPlugins by configurations.creating
 
 dependencies {
-    implementation(versions.toolingApi)
+    implementation(libs.toolingApi)
     implementation("com.google.code.findbugs:annotations:3.0.1")
     implementation("com.google.guava:guava:27.1-android") {
         because("Gradle uses the android variant as well and we are running the same code there.")
@@ -48,7 +48,7 @@ dependencies {
     implementation(project(":client-protocol"))
 
     gradleRuntime(gradleApi())
-    gradleRuntime(versions.toolingApi)
+    gradleRuntime(libs.toolingApi)
     profilerPlugins(project(":chrome-trace"))
     profilerPlugins(project(":build-operations"))
     profilerPlugins(project(":instrumentation-support"))
@@ -56,10 +56,8 @@ dependencies {
     profilerPlugins(project(":heap-dump"))
 
     runtimeOnly("org.slf4j:slf4j-simple:1.7.10")
-    testImplementation(versions.groovy)
-    testImplementation(versions.groovyXml)
-    testImplementation(versions.spock)
-    testImplementation(versions.spockJunit4)
+    testImplementation(libs.bundles.testDependencies)
+    testImplementation(libs.groovy.xml)
     testRuntimeOnly("cglib:cglib:3.2.6")
     testRuntimeOnly("org.objenesis:objenesis:2.6")
 }

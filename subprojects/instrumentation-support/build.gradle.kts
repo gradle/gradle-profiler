@@ -3,6 +3,6 @@ plugins {
 }
 
 dependencies {
-    implementation(versions.toolingApi)
+    implementation(libs.toolingApi)
     implementation(project(":client-protocol"))
 }
