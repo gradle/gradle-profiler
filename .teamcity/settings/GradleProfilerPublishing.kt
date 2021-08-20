@@ -17,8 +17,6 @@ object GradleProfilerPublishing : BuildType({
         password("mavenCentralStagingRepoUser", "credentialsJSON:ce6ff00a-dc06-4b9b-aa1f-7b01bea2eb2f", display = ParameterDisplay.HIDDEN)
         password("mavenCentralStagingRepoPassword", "credentialsJSON:f3c71885-0cec-49c9-adcf-d21536fcf1ca", display = ParameterDisplay.HIDDEN)
 
-        param("env.ORG_GRADLE_PROJECT_artifactoryUsername", "%gradle.internal.repository.build-tool.publish.username%")
-        param("env.ORG_GRADLE_PROJECT_artifactoryPassword", "%gradle.internal.repository.build-tool.publish.password%")
         param("env.ORG_GRADLE_PROJECT_githubToken", "%github.bot-teamcity.token%")
         param("env.ORG_GRADLE_PROJECT_sdkmanKey", "%gradleprofiler.sdkman.key%")
         param("env.ORG_GRADLE_PROJECT_sdkmanToken", "%gradleprofiler.sdkman.token%")
