@@ -1,25 +1,25 @@
 name: CI Build
 
 on:
-    push:
-        branches:
-            - main
-    pull_request:
+  push:
+    branches:
+      - main
+  pull_request:
 
 
 jobs:
-    build:
-        name: "Build Gradle profiler"
-        runs-on: ubuntu-20.04
-        steps:
-            -   name: git clone
-                uses: actions/checkout@v2
-            -   name: setup java
-                uses: actions/setup-java@v2
-                with:
-                    distribution: temurin
-                    java-version: 11
-            -   name: assemble
-                uses: gradle/gradle-build-action@v2
-                with:
-                    arguments: assemble
+  build:
+    name: "Build Gradle profiler"
+    runs-on: ubuntu-20.04
+    steps:
+      - name: git clone
+        uses: actions/checkout@v2
+      - name: setup java
+        uses: actions/setup-java@v2
+        with:
+          distribution: temurin
+          java-version: 11
+      - name: assemble
+        uses: gradle/gradle-build-action@v2
+        with:
+          arguments: assemble
