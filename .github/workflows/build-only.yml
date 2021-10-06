@@ -41,4 +41,4 @@ jobs:
       - name: assemble
         uses: gradle/gradle-build-action@v2
         with:
-          arguments: test --tests org.gradle.profiler.CommandLineIntegrationTest
+          arguments: :test --tests org.gradle.profiler.CommandLineIntegrationTest
