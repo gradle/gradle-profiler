@@ -26,6 +26,7 @@ jobs:
   test:
     name: "Test Gradle profiler"
     runs-on: ${{ matrix.os }}
+    needs: build
     strategy:
       matrix:
         os: [ubuntu-latest, windows-latest, macos-latest]
