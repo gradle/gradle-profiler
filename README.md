@@ -277,6 +277,7 @@ A scenario can define changes that should be applied to the source before each b
 - `clear-project-cache-before`: Deletes the contents of the `.gradle` and `buildSrc/.gradle` project cache directories before the scenario is executed (`SCENARIO`), before cleanup (`CLEANUP`) or before the build is executed (`BUILD`).
 - `clear-transform-cache-before`: Deletes the contents of the transform cache before the scenario is executed (`SCENARIO`), before cleanup (`CLEANUP`) or before the build is executed (`BUILD`).
 - `clear-jars-cache-before`: Deletes the contents of the instrumented jars cache before the scenario is executed (`SCENARIO`), before cleanup (`CLEANUP`) or before the build is executed (`BUILD`).
+- `execute-command-before`: Execute a command before the scenario is executed (SCENARIO) or before the build is executed (BUILD). This can be applied to Gradle, Bazel, Buck, or Maven builds.
 - `git-checkout`: Checks out a specific commit for the build step, and a different one for the cleanup step.
 - `git-revert`: Reverts a given set of commits before the build and resets it afterward.
 - `iterations`: Number of builds to actually measure
@@ -332,11 +333,43 @@ You can compare Gradle against Bazel, Buck, and Maven by specifying their equiva
 
     build_some_target {
         tasks = ["assemble"]
+        execute-command-before = [
+            # Gradle specific executions
+            # Execute a command in the bash shell
+            {
+                schedule = BUILD
+                commands = ["/bin/bash","-c","echo helloworld"]
+            },
+        }
 
         bazel {
             # If empty, it will be infered from BAZEL_HOME environment variable
             home = "/path/to/bazel/home"
             targets = ["build" "//some/target"]
+            execute-command-before = [
+                # Bazel specific executions
+                # execute a command prior to the scenario running.
+                {
+                    schedule = SCENARIO
+                    # Note: Ensure that this is calling the same Bazel that is used in the benchmarks
+                    commands = ["bazel","clean","--expunge"]
+                },
+                # Execute a command in the bash shell
+                {
+                    schedule = BUILD
+                    commands = ["/bin/bash","-c","echo helloworld"]
+                },
+                # Remove the contents of the remote cache Bazel bucket
+                {	
+                    schedule = BUILD
+                    commands = ["gsutil","-o","Credentials:gs_service_key_file=bazel-benchmark-bucket.json","-m","rm","gs://bazel-benchmark-bucket/**"]	
+                },	
+                # Display the total size of the bucket	
+                {	
+                    schedule = BUILD	
+                    commands = ["gsutil","-o","Credentials:gs_service_key_file=bazel-benchmark-bucket.json","du","-sh","gs://bazel-benchmark-bucket"]	
+                },
+            ]
         }
     }
     
@@ -351,6 +384,14 @@ You can compare Gradle against Bazel, Buck, and Maven by specifying their equiva
             # If empty, it will be infered from BUCK_HOME environment variable
             home = "/path/to/buck/home"
             type = "android_binary" // can be a Buck build rule type or "all"
+            execute-command-before = [
+                # Buck specific executions
+                # Execute a command in the bash shell
+                {
+                    schedule = BUILD
+                    commands = ["/bin/bash","-c","echo helloworld"]
+                },
+            }
         }
     }
     build_resources {
