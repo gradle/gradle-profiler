@@ -6,34 +6,10 @@ import com.google.common.collect.ImmutableSet;
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
 import com.typesafe.config.ConfigParseOptions;
-import org.gradle.profiler.mutations.ApplyAbiChangeToSourceFileMutator;
-import org.gradle.profiler.mutations.ApplyChangeToAndroidLayoutFileMutator;
-import org.gradle.profiler.mutations.ApplyChangeToAndroidManifestFileMutator;
-import org.gradle.profiler.mutations.ApplyChangeToAndroidResourceFileMutator;
-import org.gradle.profiler.mutations.ApplyChangeToNativeSourceFileMutator;
-import org.gradle.profiler.mutations.ApplyChangeToPropertyResourceFileMutator;
-import org.gradle.profiler.mutations.ApplyNonAbiChangeToSourceFileMutator;
-import org.gradle.profiler.mutations.ApplyValueChangeToAndroidResourceFileMutator;
-import org.gradle.profiler.mutations.BuildMutatorConfigurator;
-import org.gradle.profiler.mutations.ClearArtifactTransformCacheMutator;
-import org.gradle.profiler.mutations.ClearBuildCacheMutator;
-import org.gradle.profiler.mutations.ClearConfigurationCacheStateMutator;
-import org.gradle.profiler.mutations.ClearGradleUserHomeMutator;
-import org.gradle.profiler.mutations.ClearJarsCacheMutator;
-import org.gradle.profiler.mutations.ClearProjectCacheMutator;
-import org.gradle.profiler.mutations.FileChangeMutatorConfigurator;
-import org.gradle.profiler.mutations.GitCheckoutMutator;
-import org.gradle.profiler.mutations.GitRevertMutator;
-import org.gradle.profiler.mutations.ShowBuildCacheSizeMutator;
+import org.gradle.profiler.mutations.*;
 
 import java.io.File;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.LinkedHashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.TreeSet;
+import java.util.*;
 import java.util.stream.Collectors;
 
 class ScenarioLoader {
@@ -52,6 +28,7 @@ class ScenarioLoader {
     private static final String WARM_UP_COUNT = "warm-ups";
     private static final String ITERATIONS = "iterations";
     private static final String MEASURED_BUILD_OPERATIONS = "measured-build-ops";
+    private static final String APPLY_BUILD_SCRIPT_CHANGE_TO = "apply-build-script-change-to";
     private static final String APPLY_ABI_CHANGE_TO = "apply-abi-change-to";
     private static final String APPLY_NON_ABI_CHANGE_TO = "apply-non-abi-change-to";
     private static final String APPLY_ANDROID_RESOURCE_CHANGE_TO = "apply-android-resource-change-to";
@@ -78,6 +55,7 @@ class ScenarioLoader {
     private static final String JVM_ARGS = "jvm-args";
 
     private static final Map<String, BuildMutatorConfigurator> BUILD_MUTATOR_CONFIGURATORS = ImmutableMap.<String, BuildMutatorConfigurator>builder()
+        .put(APPLY_BUILD_SCRIPT_CHANGE_TO, new FileChangeMutatorConfigurator(ApplyBuildScriptChangeFileMutator.class))
         .put(APPLY_ABI_CHANGE_TO, new FileChangeMutatorConfigurator(ApplyAbiChangeToSourceFileMutator.class))
         .put(APPLY_NON_ABI_CHANGE_TO, new FileChangeMutatorConfigurator(ApplyNonAbiChangeToSourceFileMutator.class))
         .put(APPLY_ANDROID_RESOURCE_CHANGE_TO, new FileChangeMutatorConfigurator(ApplyChangeToAndroidResourceFileMutator.class))
