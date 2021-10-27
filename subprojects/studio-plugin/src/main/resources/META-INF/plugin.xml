@@ -1,0 +1,40 @@
+<idea-plugin>
+    <id>org.gradle.profiler.studio.plugin</id>
+    <name>Gradle Profiler IntelliJ/Android Studio Plugin</name>
+    <version>1.0</version>
+    <vendor url="https://gradle.org">Grad;e</vendor>
+    <description>Runs IntelliJ/Android Studio functionalities with Gradle profiler</description>
+    <change-notes>>Runs IntelliJ/Android Studio functionalities with Gradle profiler</change-notes>
+
+    <!-- please see http://www.jetbrains.org/intellij/sdk/docs/basics/getting_started/build_number_ranges.html for description -->
+    <idea-version since-build="211.0"/>
+
+    <!--suppress PluginXmlValidity -->
+    <depends>org.jetbrains.plugins.gradle</depends>
+    <!--suppress PluginXmlValidity -->
+    <depends>com.intellij.modules.java</depends>
+
+
+    <!-- please see http://www.jetbrains.org/intellij/sdk/docs/basics/getting_started/plugin_compatibility.html
+         on how to target different products -->
+    <!-- uncomment to enable plugin in all products
+    <depends>com.intellij.modules.lang</depends>
+    -->
+
+    <extensions defaultExtensionNs="com.intellij">
+<!--        <appStarter implementation="org.gradle.profiler.studio.plugin.HeadlessStarter"/>-->
+        <applicationInitializedListener implementation="org.gradle.profiler.studio.plugin.GradleProfilerManagerListener"/>
+        <externalSystemTaskNotificationListener implementation="org.gradle.profiler.studio.plugin.GradleExternalSystemTaskNotificationListener"/>
+    </extensions>
+
+    <applicationListeners>
+        <listener class="org.gradle.profiler.studio.plugin.GradleProfilerManagerListener"
+                  topic="com.intellij.openapi.project.ProjectManagerListener"/>
+    </applicationListeners>
+
+
+    <actions>
+        <!-- Add your actions here -->
+    </actions>
+
+</idea-plugin>

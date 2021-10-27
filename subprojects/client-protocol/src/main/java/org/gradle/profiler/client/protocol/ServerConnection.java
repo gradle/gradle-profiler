@@ -1,5 +1,7 @@
 package org.gradle.profiler.client.protocol;
 
+import org.gradle.profiler.client.protocol.messages.SyncRequest;
+
 import java.io.Closeable;
 import java.io.IOException;
 import java.time.Duration;
@@ -20,6 +22,10 @@ public class ServerConnection implements Closeable {
 
     public void send(SyncParameters syncParameters) {
         serializer.send(syncParameters);
+    }
+
+    public void send(SyncRequest syncRequest) {
+        serializer.send(syncRequest);
     }
 
     public void send(ConnectionParameters connectionParameters) {

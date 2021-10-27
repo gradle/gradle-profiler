@@ -1,5 +1,8 @@
 package org.gradle.profiler.client.protocol;
 
+import org.gradle.profiler.client.protocol.messages.SyncRequest;
+import org.gradle.profiler.client.protocol.messages.SyncRequestCompleted;
+
 import java.io.EOFException;
 import java.io.File;
 import java.io.IOException;
@@ -55,6 +58,27 @@ public class Serializer {
         try {
             connection.writeByte((byte) 4);
             connection.writeString(message.getGradleInstallation().getPath());
+            connection.flush();
+        } catch (IOException e) {
+            throw couldNotWrite(e);
+        }
+    }
+
+    public void send(SyncRequest message) {
+        try {
+            connection.writeByte((byte) 5);
+            connection.writeInt(message.getId());
+            connection.flush();
+        } catch (IOException e) {
+            throw couldNotWrite(e);
+        }
+    }
+
+    public void send(SyncRequestCompleted message) {
+        try {
+            connection.writeByte((byte) 6);
+            connection.writeInt(message.getId());
+            connection.writeLong(message.getDurationMillis());
             connection.flush();
         } catch (IOException e) {
             throw couldNotWrite(e);
@@ -125,6 +149,9 @@ public class Serializer {
                 case 4:
                     String gradleHome = connection.readString();
                     return new ConnectionParameters(new File(gradleHome));
+                case 5:
+                    int syncId = connection.readInt();
+                    return new SyncRequest(syncId);
                 default:
                     throw new RuntimeException(String.format("Received unexpected message from %s.", peerName));
             }

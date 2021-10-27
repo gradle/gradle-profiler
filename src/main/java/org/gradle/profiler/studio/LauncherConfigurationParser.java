@@ -17,7 +17,7 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 
 public class LauncherConfigurationParser {
-    public LaunchConfiguration calculate(Path studioInstallDir) {
+    public LaunchConfiguration calculate(Path studioInstallDir, String pluginPort) {
         Dict entries = parse(studioInstallDir.resolve("Contents/Info.plist"));
         Path actualInstallDir;
         if ("jetbrains-toolbox-launcher".equals(entries.string("CFBundleExecutable"))) {
@@ -30,7 +30,15 @@ public class LauncherConfigurationParser {
         List<Path> classPath = Arrays.stream(jvmOptions.string("ClassPath").split(":")).map(s -> FileSystems.getDefault().getPath(s.replace("$APP_PACKAGE", actualInstallDir.toString()))).collect(Collectors.toList());
         String mainClass = jvmOptions.string("MainClass");
         Map<String, String> systemProperties = mapValues(jvmOptions.dict("Properties").toMap(), v -> v.replace("$APP_PACKAGE", actualInstallDir.toString()));
-        Path javaCommand = actualInstallDir.resolve("Contents/jre/jdk/Contents/Home/bin/java");
+        systemProperties.put("idea.config.path", "/Users/asodja/workspace/gradle-profiler/subprojects/studio-plugin/build/idea-sandbox/config");
+        systemProperties.put("idea.system.path", "/Users/asodja/workspace/gradle-profiler/subprojects/studio-plugin/build/idea-sandbox/system");
+        systemProperties.put("idea.plugins.path", "/Users/asodja/workspace/gradle-profiler/subprojects/studio-plugin/build/idea-sandbox/plugins");
+        systemProperties.put("gradle.profiler.port", pluginPort);
+        systemProperties.put("idea.classpath.index.enabled", "false");
+        systemProperties.put("idea.trust.all.projects", "true");
+        systemProperties.put("idea.skip.indices.initialization", "true");
+        systemProperties.put("idea.is.internal", "true");
+        Path javaCommand = actualInstallDir.resolve("Contents/jre/Contents/Home/bin/java");
         Path agentJar = GradleInstrumentation.unpackPlugin("studio-agent").toPath();
         Path asmJar = GradleInstrumentation.unpackPlugin("asm").toPath();
         Path supportJar = GradleInstrumentation.unpackPlugin("instrumentation-support").toPath();

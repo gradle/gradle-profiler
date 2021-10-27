@@ -11,6 +11,7 @@ import java.nio.channels.SocketChannel;
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.Future;
 
 /**
  * An endpoint for communicating with a single client process.

@@ -1,16 +1,23 @@
 package org.gradle.profiler.client.protocol;
 
+import org.gradle.profiler.client.protocol.messages.SyncRequest;
+import org.gradle.profiler.client.protocol.messages.SyncRequestCompleted;
+
 import java.io.IOException;
 import java.net.InetAddress;
 import java.net.Socket;
 import java.time.Duration;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.function.Consumer;
 
 /**
  * A singleton that runs inside a client process to communicate with the controller process.
  */
-public class Client {
-    public static final Client INSTANCE = new Client();
+public enum Client {
+    INSTANCE;
 
+    private final ExecutorService executor = Executors.newCachedThreadPool();
     private final Object lock = new Object();
     private Connection connection;
     private Serializer serializer;
@@ -42,6 +49,12 @@ public class Client {
         }
     }
 
+    public void send(SyncRequestCompleted message) {
+        synchronized (lock) {
+            serializer.send(message);
+        }
+    }
+
     public SyncParameters receiveSyncParameters(Duration timeout) {
         synchronized (lock) {
             return serializer.receive(SyncParameters.class, timeout);
@@ -52,6 +65,16 @@ public class Client {
         synchronized (lock) {
             return serializer.receive(ConnectionParameters.class, timeout);
         }
+    }
+
+    public SyncRequest receiveSyncRequest(Duration timeout) {
+        synchronized (lock) {
+            return serializer.receive(SyncRequest.class, timeout);
+        }
+    }
+
+    public void listenAsync(Consumer<Client> runnable) {
+        executor.execute(() -> runnable.accept(this));
     }
 
     public void disconnect() throws IOException {
