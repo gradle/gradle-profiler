@@ -214,8 +214,8 @@ println "<gradle-version: " + gradle.gradleVersion + ">"
 
         when:
         new Main().
-                run("--project-dir", projectDir.absolutePath, "--output-dir", outputDir.absolutePath, "--gradle-version", latestSupportedGradleVersion, "--profile", "buildscan",
-                        "assemble")
+            run("--project-dir", projectDir.absolutePath, "--output-dir", outputDir.absolutePath, "--gradle-version", latestSupportedGradleVersion, "--profile", "buildscan",
+                "assemble")
 
         then:
         logFile.find("<gradle-version: $latestSupportedGradleVersion>").size() == 4
@@ -275,7 +275,8 @@ println "<daemon: " + gradle.services.get(org.gradle.internal.environment.Gradle
         assertBuildScanPublished(requestedBuildScanVersion)
     }
 
-    @IgnoreIf({ JavaVersion.current().isJava11Compatible() }) // JFR doesn't work on Java 11, yet
+    @IgnoreIf({ JavaVersion.current().isJava11Compatible() })
+    // JFR doesn't work on Java 11, yet
     def "profiles build using JFR, Build Scans, specified Gradle version and tasks"() {
         given:
         buildFile.text = """
@@ -898,6 +899,34 @@ println "<parallel: " + gradle.startParameter.parallelProjectExecutionEnabled + 
         isParallel | arg          | name
         false      | ""           | "disable"
         true       | "--parallel" | "enable"
+    }
+
+    def "applies changes to Groovy build scripts while running benchmark"() {
+        given:
+        buildFile.text = """
+apply plugin: BasePlugin
+println "<src-length: \${file('build.gradle').length()}>"
+"""
+        def originalText = buildFile.text
+
+        def scenarioFile = file("scenarios.conf")
+        scenarioFile << """
+classes {
+    tasks = "help"
+    apply-build-script-change-to = "build.gradle"
+}
+"""
+
+        when:
+        new Main().run("--project-dir", projectDir.absolutePath, "--output-dir", outputDir.absolutePath, "--gradle-version", minimalSupportedGradleVersion,
+            "--benchmark", "--scenario-file", scenarioFile.absolutePath)
+
+        then:
+        // Probe version, 6 warm up, 10 builds
+        logFile.find("<src-length: ${buildFile.length()}>").size() == 1
+        logFile.find("<src-length: ${buildFile.length() + 77}>").size() == 6 /* WARM_UP #1..6 */ + 9 /* MEASURE #1..9*/
+        logFile.find("<src-length: ${buildFile.length() + 78}>").size() == 1 /* MEASURE #10 */
+        buildFile.text == originalText
     }
 
     def "applies changes to Java source file while running benchmark"() {
@@ -1589,7 +1618,7 @@ buildTarget {
         def repoDir = new File(projectDir, "repo")
         def repo = new TestGitRepo(repoDir)
 
-        new File(repoDir, "settings.gradle")  << ''
+        new File(repoDir, "settings.gradle") << ''
         new File(repoDir, "build.gradle") << """
             task cleanTest {
                 doFirst {
@@ -1624,7 +1653,7 @@ buildTarget {
         def repoDir = new File(projectDir, "repo")
         def repo = new TestGitRepo(repoDir)
 
-        new File(repoDir, "settings.gradle")  << ''
+        new File(repoDir, "settings.gradle") << ''
         new File(repoDir, "build.gradle") << """
             task cleanTest {
                 doFirst {
@@ -1663,7 +1692,7 @@ buildTarget {
         def repoDir = new File(projectDir, "repo")
         def repo = new TestGitRepo(repoDir)
 
-        new File(repoDir, "settings.gradle")  << ''
+        new File(repoDir, "settings.gradle") << ''
         new File(repoDir, "build.gradle") << """
             task cleanTest {
                 doFirst {
