@@ -3,7 +3,7 @@ groovy = "3.0.8"
 spock = "2.0-groovy-3.0"
 
 [libraries]
-toolingApi = "org.gradle:gradle-tooling-api:6.6.1"
+toolingApi = "org.gradle:gradle-tooling-api:7.2"
 
 spock-core = { module = "org.spockframework:spock-core", version.ref = "spock" }
 spock-junit4 = { module = "org.spockframework:spock-junit4", version.ref = "spock" }

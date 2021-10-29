@@ -243,7 +243,18 @@ Here is an example:
     ideaModel {
         title = "IDEA model"
         # Fetch the IDEA tooling model
-        model = "org.gradle.tooling.model.idea.IdeaProject"
+        tooling-api {
+            model = "org.gradle.tooling.model.idea.IdeaProject"
+        }
+        # Can also run tasks
+        # tasks = ["assemble"]
+    }
+    toolingAction {
+        title = "IDEA model"
+        # Fetch the IDEA tooling model
+        tooling-api {
+            action = "org.gradle.profiler.toolingapi.FetchProjectPublications"
+        }
         # Can also run tasks
         # tasks = ["assemble"]
     }
@@ -290,6 +301,7 @@ They can be added to a scenario file like this:
     incremental_build {
         tasks = ["assemble"]
 
+        apply-build-script-change-to = "build.gradle.kts"
         apply-abi-change-to = "src/main/java/MyThing.java"
         apply-non-abi-change-to = ["src/main/java/MyThing.java", "src/main/java/MyOtherThing.java"]
         apply-h-change-to = "src/main/headers/app.h"

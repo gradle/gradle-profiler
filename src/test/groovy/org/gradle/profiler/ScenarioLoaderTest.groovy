@@ -2,6 +2,7 @@ package org.gradle.profiler
 
 import org.gradle.profiler.mutations.AbstractCleanupMutator
 import org.gradle.profiler.report.CsvGenerator
+import org.gradle.profiler.toolingapi.FetchProjectPublications
 import org.gradle.tooling.model.idea.IdeaProject
 import org.junit.Rule
 import org.junit.rules.TemporaryFolder
@@ -9,9 +10,7 @@ import spock.lang.Specification
 import spock.lang.Unroll
 
 import static org.gradle.profiler.ScenarioLoader.loadScenarios
-import static org.gradle.profiler.mutations.AbstractCleanupMutator.CleanupSchedule.BUILD
-import static org.gradle.profiler.mutations.AbstractCleanupMutator.CleanupSchedule.CLEANUP
-import static org.gradle.profiler.mutations.AbstractCleanupMutator.CleanupSchedule.SCENARIO
+import static org.gradle.profiler.mutations.AbstractCleanupMutator.CleanupSchedule.*
 
 class ScenarioLoaderTest extends Specification {
     @Rule
@@ -306,15 +305,19 @@ class ScenarioLoaderTest extends Specification {
         benchmarkScenario.measuredBuildOperations == ["BuildOpCmdLine", "BuildOp1", "BuildOp2"]
     }
 
-    def "can load tooling model scenarios"() {
+    def "can load scenarios that fetch tooling models"() {
         def settings = settings()
 
         scenarioFile << """
             one {
-                model = "${IdeaProject.class.name}"
+                tooling-api {
+                    model = "${IdeaProject.class.name}"
+                }
             }
             two {
-                model = "${IdeaProject.class.name}"
+                tooling-api {
+                    model = "${IdeaProject.class.name}"
+                }
                 tasks = ["help"]
             }
         """
@@ -328,6 +331,35 @@ class ScenarioLoaderTest extends Specification {
         def scenario2 = scenarios[1] as GradleScenarioDefinition
         scenario2.action instanceof LoadToolingModelAction
         scenario2.action.toolingModel == IdeaProject
+        scenario2.action.tasks == ["help"]
+    }
+
+    def "can load scenarios that run tooling actions"() {
+        def settings = settings()
+
+        scenarioFile << """
+            one {
+                tooling-api {
+                    action = "${FetchProjectPublications.class.name}"
+                }
+            }
+            two {
+                tooling-api {
+                    action = "${FetchProjectPublications.class.name}"
+                }
+                tasks = ["help"]
+            }
+        """
+        def scenarios = loadScenarios(scenarioFile, settings, Mock(GradleBuildConfigurationReader))
+        expect:
+        scenarios*.name == ["one", "two"]
+        def scenario1 = scenarios[0] as GradleScenarioDefinition
+        scenario1.action instanceof RunToolingAction
+        scenario1.action.action instanceof FetchProjectPublications
+        scenario1.action.tasks == []
+        def scenario2 = scenarios[1] as GradleScenarioDefinition
+        scenario2.action instanceof RunToolingAction
+        scenario2.action.action instanceof FetchProjectPublications
         scenario2.action.tasks == ["help"]
     }
 
