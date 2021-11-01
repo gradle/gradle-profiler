@@ -42,7 +42,7 @@ public class Interceptor {
         try {
             Client client = Client.INSTANCE;
             client.send(new SyncStarted(id));
-            syncParameters = client.receiveSyncParameters(Duration.ofSeconds(60));
+            syncParameters = client.receiveSyncParameters(Duration.ofSeconds(300));
         } catch (Throwable throwable) {
             throwable.printStackTrace();
             // Continue with original handler

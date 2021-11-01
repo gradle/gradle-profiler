@@ -18,9 +18,10 @@ dependencies {
 }
 
 intellij {
-    pluginName.set("test-plugin")
+    pluginName.set("gradle-profiler-studio-plugin")
     version.set("2021.1.1")
-    plugins.set(listOf("java", "gradle"))
+    // Any plugin here must be also added to resources/META-INF/plugin.xml
+    plugins.set(listOf("java", "gradle", "android"))
 
     // Plugin Dependencies. Uses `platformPlugins` property from the gradle.properties file.
 //    plugins.set(properties("platformPlugins").split(',').map(String::trim).filter(String::isNotEmpty))

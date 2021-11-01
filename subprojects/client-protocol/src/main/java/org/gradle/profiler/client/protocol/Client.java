@@ -1,6 +1,6 @@
 package org.gradle.profiler.client.protocol;
 
-import org.gradle.profiler.client.protocol.messages.SyncRequest;
+import org.gradle.profiler.client.protocol.messages.StudioRequest;
 import org.gradle.profiler.client.protocol.messages.SyncRequestCompleted;
 
 import java.io.IOException;
@@ -67,9 +67,9 @@ public enum Client {
         }
     }
 
-    public SyncRequest receiveSyncRequest(Duration timeout) {
+    public StudioRequest receiveStudioRequest(Duration timeout) {
         synchronized (lock) {
-            return serializer.receive(SyncRequest.class, timeout);
+            return serializer.receive(StudioRequest.class, timeout);
         }
     }
 

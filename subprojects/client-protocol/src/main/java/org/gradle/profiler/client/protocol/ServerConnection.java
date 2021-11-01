@@ -1,6 +1,7 @@
 package org.gradle.profiler.client.protocol;
 
-import org.gradle.profiler.client.protocol.messages.SyncRequest;
+import org.gradle.profiler.client.protocol.messages.StudioRequest;
+import org.gradle.profiler.client.protocol.messages.SyncRequestCompleted;
 
 import java.io.Closeable;
 import java.io.IOException;
@@ -24,7 +25,7 @@ public class ServerConnection implements Closeable {
         serializer.send(syncParameters);
     }
 
-    public void send(SyncRequest syncRequest) {
+    public void send(StudioRequest syncRequest) {
         serializer.send(syncRequest);
     }
 
@@ -38,5 +39,9 @@ public class ServerConnection implements Closeable {
 
     public SyncCompleted receiveSyncCompeted(Duration timeout) {
         return serializer.receive(SyncCompleted.class, timeout);
+    }
+
+    public SyncRequestCompleted receiveSyncRequestCompeted(Duration timeout) {
+        return serializer.receive(SyncRequestCompleted.class, timeout);
     }
 }

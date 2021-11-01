@@ -1,6 +1,7 @@
 package org.gradle.profiler.client.protocol;
 
-import org.gradle.profiler.client.protocol.messages.SyncRequest;
+import org.gradle.profiler.client.protocol.messages.StudioRequest;
+import org.gradle.profiler.client.protocol.messages.StudioRequest.RequestType;
 import org.gradle.profiler.client.protocol.messages.SyncRequestCompleted;
 
 import java.io.EOFException;
@@ -11,6 +12,8 @@ import java.util.List;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
+
+import static org.gradle.profiler.client.protocol.messages.StudioRequest.RequestType.*;
 
 public class Serializer {
     private static final Object NULL = new Object();
@@ -64,10 +67,11 @@ public class Serializer {
         }
     }
 
-    public void send(SyncRequest message) {
+    public void send(StudioRequest message) {
         try {
             connection.writeByte((byte) 5);
             connection.writeInt(message.getId());
+            connection.writeString(message.getType().toString());
             connection.flush();
         } catch (IOException e) {
             throw couldNotWrite(e);
@@ -151,7 +155,12 @@ public class Serializer {
                     return new ConnectionParameters(new File(gradleHome));
                 case 5:
                     int syncId = connection.readInt();
-                    return new SyncRequest(syncId);
+                    RequestType requestType = valueOf(connection.readString());
+                    return new StudioRequest(syncId, requestType);
+                case 6:
+                    int syncRequestCompletedId = connection.readInt();
+                    long syncRequestCompletedDurationMillis = connection.readLong();
+                    return new SyncRequestCompleted(syncRequestCompletedId, syncRequestCompletedDurationMillis);
                 default:
                     throw new RuntimeException(String.format("Received unexpected message from %s.", peerName));
             }

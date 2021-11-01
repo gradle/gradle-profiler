@@ -9,11 +9,10 @@
     <!-- please see http://www.jetbrains.org/intellij/sdk/docs/basics/getting_started/build_number_ranges.html for description -->
     <idea-version since-build="211.0"/>
 
-    <!--suppress PluginXmlValidity -->
+    <!-- Plugin dependencies -->
     <depends>org.jetbrains.plugins.gradle</depends>
-    <!--suppress PluginXmlValidity -->
     <depends>com.intellij.modules.java</depends>
-
+    <depends>org.jetbrains.android</depends>
 
     <!-- please see http://www.jetbrains.org/intellij/sdk/docs/basics/getting_started/plugin_compatibility.html
          on how to target different products -->
@@ -23,7 +22,7 @@
 
     <extensions defaultExtensionNs="com.intellij">
 <!--        <appStarter implementation="org.gradle.profiler.studio.plugin.HeadlessStarter"/>-->
-        <applicationInitializedListener implementation="org.gradle.profiler.studio.plugin.GradleProfilerManagerListener"/>
+<!--        <applicationInitializedListener implementation="org.gradle.profiler.studio.plugin.GradleProfilerManagerListener"/>-->
         <externalSystemTaskNotificationListener implementation="org.gradle.profiler.studio.plugin.GradleExternalSystemTaskNotificationListener"/>
     </extensions>
 

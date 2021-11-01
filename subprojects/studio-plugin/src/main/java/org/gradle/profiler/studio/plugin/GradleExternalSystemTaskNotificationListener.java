@@ -4,6 +4,7 @@ import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId;
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskNotificationEvent;
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskNotificationListener;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.plugins.gradle.util.GradleConstants;
 
 public class GradleExternalSystemTaskNotificationListener implements ExternalSystemTaskNotificationListener {
 
@@ -28,17 +29,23 @@ public class GradleExternalSystemTaskNotificationListener implements ExternalSys
 
     @Override
     public void onEnd(@NotNull ExternalSystemTaskId id) {
-
+        if (GradleConstants.SYSTEM_ID.equals(id.getProjectSystemId())) {
+            System.out.println("On end: " + GradleConstants.SYSTEM_ID);
+        }
     }
 
     @Override
     public void onSuccess(@NotNull ExternalSystemTaskId id) {
-
+        if (GradleConstants.SYSTEM_ID.equals(id.getProjectSystemId())) {
+            System.out.println("On onSuccess: " + GradleConstants.SYSTEM_ID);
+        }
     }
 
     @Override
     public void onFailure(@NotNull ExternalSystemTaskId id, @NotNull Exception e) {
-
+        if (GradleConstants.SYSTEM_ID.equals(id.getProjectSystemId())) {
+            System.out.println("On onFailure: " + GradleConstants.SYSTEM_ID);
+        }
     }
 
     @Override

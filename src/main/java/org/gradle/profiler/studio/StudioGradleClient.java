@@ -3,7 +3,8 @@ package org.gradle.profiler.studio;
 import com.google.common.base.Joiner;
 import org.gradle.profiler.*;
 import org.gradle.profiler.client.protocol.*;
-import org.gradle.profiler.client.protocol.messages.SyncRequest;
+import org.gradle.profiler.client.protocol.messages.StudioRequest;
+import org.gradle.profiler.client.protocol.messages.SyncRequestCompleted;
 
 import java.io.File;
 import java.io.IOException;
@@ -12,6 +13,9 @@ import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+
+import static org.gradle.profiler.client.protocol.messages.StudioRequest.RequestType.EXIT;
+import static org.gradle.profiler.client.protocol.messages.StudioRequest.RequestType.SYNC;
 
 public class StudioGradleClient implements GradleClient {
     private final Server server;
@@ -45,7 +49,9 @@ public class StudioGradleClient implements GradleClient {
 
         studioProcess = startStudio(launchConfiguration, studioInstallDir, invocationSettings, server);
         pluginAgentConnection = pluginServer.waitForIncoming(Duration.ofMinutes(2));
+        System.out.println("Plugin connected");
         agentConnection = server.waitForIncoming(Duration.ofMinutes(2));
+        System.out.println("Agent connected");
         agentConnection.send(new ConnectionParameters(buildConfiguration.getGradleHome()));
     }
 
@@ -70,10 +76,11 @@ public class StudioGradleClient implements GradleClient {
 
     @Override
     public void close() throws IOException {
-        System.out.println("* PLEASE STOP ANDROID STUDIO....");
+        System.out.println("* STOPPING ANDROID STUDIO....");
+        pluginAgentConnection.send(new StudioRequest(EXIT));
         studioProcess.waitForSuccess();
         System.out.println("* Android Studio stopped.");
-
+        pluginServer.close();
         server.close();
     }
 
@@ -85,19 +92,17 @@ public class StudioGradleClient implements GradleClient {
             System.out.println("* PLEASE RUN SYNC IN ANDROID STUDIO....");
         }
 
+
         // Use a long time out because it can take quite some time between the tapi action completing and studio finishing the sync
-        try {
-            Thread.sleep(5000);
-        } catch (InterruptedException e) {
-            throw new RuntimeException(e);
-        }
-        pluginAgentConnection.send(new SyncRequest());
+        pluginAgentConnection.send(new StudioRequest(SYNC));
         System.out.println("Sent sync request");
-        SyncStarted started = agentConnection.receiveSyncStarted(Duration.ofMinutes(2));
+        SyncStarted started = agentConnection.receiveSyncStarted(Duration.ofMinutes(10));
         agentConnection.send(new SyncParameters(gradleArgs, jvmArgs));
         System.out.println("* Sync has started, waiting for it to complete...");
-        SyncCompleted completed = agentConnection.receiveSyncCompeted(Duration.ofHours(1));
-        System.out.println("* Sync has completed");
-        return Duration.ofMillis(completed.getDurationMillis());
+        SyncCompleted completed = agentConnection.receiveSyncCompeted(Duration.ofHours(10));
+        System.out.println("* Gradle Sync has completed in: " + completed.getDurationMillis() + "ms");
+        SyncRequestCompleted syncRequestCompleted = pluginAgentConnection.receiveSyncRequestCompeted(Duration.ofMinutes(10));
+        System.out.println("* Full Sync has completed in: " + syncRequestCompleted.getDurationMillis() + "ms");
+        return Duration.ofMillis(syncRequestCompleted.getDurationMillis());
     }
 }
