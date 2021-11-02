@@ -8,19 +8,19 @@ public class StudioRequest extends Message {
 
     private static final AtomicInteger ID_GENERATOR = new AtomicInteger();
 
-    public enum RequestType {
+    public enum StudioRequestType {
         SYNC,
         EXIT
     }
 
     private final int id;
-    private final RequestType type;
+    private final StudioRequestType type;
 
-    public StudioRequest(RequestType type) {
+    public StudioRequest(StudioRequestType type) {
         this(ID_GENERATOR.incrementAndGet(), type);
     }
 
-    public StudioRequest(int requestId, RequestType type) {
+    public StudioRequest(int requestId, StudioRequestType type) {
         this.id = requestId;
         this.type = type;
     }
@@ -29,7 +29,7 @@ public class StudioRequest extends Message {
         return id;
     }
 
-    public RequestType getType() {
+    public StudioRequestType getType() {
         return type;
     }
 }

@@ -4,7 +4,7 @@ import com.google.common.base.Joiner;
 import org.gradle.profiler.*;
 import org.gradle.profiler.client.protocol.*;
 import org.gradle.profiler.client.protocol.messages.StudioRequest;
-import org.gradle.profiler.client.protocol.messages.SyncRequestCompleted;
+import org.gradle.profiler.client.protocol.messages.StudioSyncRequestCompleted;
 
 import java.io.File;
 import java.io.IOException;
@@ -14,8 +14,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
-import static org.gradle.profiler.client.protocol.messages.StudioRequest.RequestType.EXIT;
-import static org.gradle.profiler.client.protocol.messages.StudioRequest.RequestType.SYNC;
+import static org.gradle.profiler.client.protocol.messages.StudioRequest.StudioRequestType.EXIT;
+import static org.gradle.profiler.client.protocol.messages.StudioRequest.StudioRequestType.SYNC;
 
 public class StudioGradleClient implements GradleClient {
     private final Server server;
@@ -101,7 +101,7 @@ public class StudioGradleClient implements GradleClient {
         System.out.println("* Sync has started, waiting for it to complete...");
         SyncCompleted completed = agentConnection.receiveSyncCompeted(Duration.ofHours(10));
         System.out.println("* Gradle Sync has completed in: " + completed.getDurationMillis() + "ms");
-        SyncRequestCompleted syncRequestCompleted = pluginAgentConnection.receiveSyncRequestCompeted(Duration.ofMinutes(10));
+        StudioSyncRequestCompleted syncRequestCompleted = pluginAgentConnection.receiveSyncRequestCompeted(Duration.ofMinutes(10));
         System.out.println("* Full Sync has completed in: " + syncRequestCompleted.getDurationMillis() + "ms");
         return Duration.ofMillis(syncRequestCompleted.getDurationMillis());
     }

@@ -1,8 +1,9 @@
 package org.gradle.profiler.client.protocol;
 
 import org.gradle.profiler.client.protocol.messages.StudioRequest;
-import org.gradle.profiler.client.protocol.messages.StudioRequest.RequestType;
-import org.gradle.profiler.client.protocol.messages.SyncRequestCompleted;
+import org.gradle.profiler.client.protocol.messages.StudioRequest.StudioRequestType;
+import org.gradle.profiler.client.protocol.messages.StudioSyncRequestCompleted;
+import org.gradle.profiler.client.protocol.messages.StudioSyncRequestCompleted.StudioSyncRequestResult;
 
 import java.io.EOFException;
 import java.io.File;
@@ -13,7 +14,7 @@ import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
 
-import static org.gradle.profiler.client.protocol.messages.StudioRequest.RequestType.*;
+import static org.gradle.profiler.client.protocol.messages.StudioRequest.StudioRequestType.*;
 
 public class Serializer {
     private static final Object NULL = new Object();
@@ -78,11 +79,12 @@ public class Serializer {
         }
     }
 
-    public void send(SyncRequestCompleted message) {
+    public void send(StudioSyncRequestCompleted message) {
         try {
             connection.writeByte((byte) 6);
             connection.writeInt(message.getId());
             connection.writeLong(message.getDurationMillis());
+            connection.writeString(message.getResult().toString());
             connection.flush();
         } catch (IOException e) {
             throw couldNotWrite(e);
@@ -155,12 +157,13 @@ public class Serializer {
                     return new ConnectionParameters(new File(gradleHome));
                 case 5:
                     int syncId = connection.readInt();
-                    RequestType requestType = valueOf(connection.readString());
+                    StudioRequestType requestType = StudioRequestType.valueOf(connection.readString());
                     return new StudioRequest(syncId, requestType);
                 case 6:
                     int syncRequestCompletedId = connection.readInt();
                     long syncRequestCompletedDurationMillis = connection.readLong();
-                    return new SyncRequestCompleted(syncRequestCompletedId, syncRequestCompletedDurationMillis);
+                    StudioSyncRequestResult result = StudioSyncRequestResult.valueOf(connection.readString());
+                    return new StudioSyncRequestCompleted(syncRequestCompletedId, syncRequestCompletedDurationMillis, result);
                 default:
                     throw new RuntimeException(String.format("Received unexpected message from %s.", peerName));
             }

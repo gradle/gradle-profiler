@@ -1,7 +1,7 @@
 package org.gradle.profiler.client.protocol;
 
 import org.gradle.profiler.client.protocol.messages.StudioRequest;
-import org.gradle.profiler.client.protocol.messages.SyncRequestCompleted;
+import org.gradle.profiler.client.protocol.messages.StudioSyncRequestCompleted;
 
 import java.io.IOException;
 import java.net.InetAddress;
@@ -49,7 +49,7 @@ public enum Client {
         }
     }
 
-    public void send(SyncRequestCompleted message) {
+    public void send(StudioSyncRequestCompleted message) {
         synchronized (lock) {
             serializer.send(message);
         }
