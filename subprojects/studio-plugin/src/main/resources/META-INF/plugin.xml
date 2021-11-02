@@ -14,26 +14,9 @@
     <depends>com.intellij.modules.java</depends>
     <depends>org.jetbrains.android</depends>
 
-    <!-- please see http://www.jetbrains.org/intellij/sdk/docs/basics/getting_started/plugin_compatibility.html
-         on how to target different products -->
-    <!-- uncomment to enable plugin in all products
-    <depends>com.intellij.modules.lang</depends>
-    -->
-
-    <extensions defaultExtensionNs="com.intellij">
-<!--        <appStarter implementation="org.gradle.profiler.studio.plugin.HeadlessStarter"/>-->
-        <applicationInitializedListener implementation="org.gradle.profiler.studio.plugin.GradleProfilerProjectManagerListener"/>
-        <externalSystemTaskNotificationListener implementation="org.gradle.profiler.studio.plugin.GradleExternalSystemTaskNotificationListener"/>
-    </extensions>
-
     <applicationListeners>
         <listener class="org.gradle.profiler.studio.plugin.GradleProfilerProjectManagerListener"
                   topic="com.intellij.openapi.project.ProjectManagerListener"/>
     </applicationListeners>
-
-
-    <actions>
-        <!-- Add your actions here -->
-    </actions>
 
 </idea-plugin>
