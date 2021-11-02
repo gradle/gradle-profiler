@@ -102,7 +102,7 @@ public class StudioGradleClient implements GradleClient {
         SyncCompleted completed = agentConnection.receiveSyncCompeted(Duration.ofHours(10));
         System.out.println("* Gradle Sync has completed in: " + completed.getDurationMillis() + "ms");
         StudioSyncRequestCompleted syncRequestCompleted = pluginAgentConnection.receiveSyncRequestCompeted(Duration.ofMinutes(10));
-        System.out.println("* Full Sync has completed in: " + syncRequestCompleted.getDurationMillis() + "ms");
+        System.out.println("* Full Sync has completed in: " + syncRequestCompleted.getDurationMillis() + "ms and it " + syncRequestCompleted.getResult().name().toLowerCase());
         return Duration.ofMillis(syncRequestCompleted.getDurationMillis());
     }
 }
