@@ -17,7 +17,7 @@ public class StudioRequest extends Message {
     private final RequestType type;
 
     public StudioRequest(RequestType type) {
-        this(ID_GENERATOR.get(), type);
+        this(ID_GENERATOR.incrementAndGet(), type);
     }
 
     public StudioRequest(int requestId, RequestType type) {

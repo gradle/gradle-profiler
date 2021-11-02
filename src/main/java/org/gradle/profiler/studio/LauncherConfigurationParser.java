@@ -36,8 +36,8 @@ public class LauncherConfigurationParser {
         List<Path> classPath = Arrays.stream(jvmOptions.string("ClassPath").split(":")).map(s -> FileSystems.getDefault().getPath(s.replace("$APP_PACKAGE", actualInstallDir.toString()))).collect(Collectors.toList());
         String mainClass = jvmOptions.string("MainClass");
         Map<String, String> systemProperties = mapValues(jvmOptions.dict("Properties").toMap(), v -> v.replace("$APP_PACKAGE", actualInstallDir.toString()));
-//        systemProperties.put("idea.config.path", "/Users/asodja/workspace/gradle-profiler/subprojects/studio-plugin/build/idea-sandbox/config");
-//        systemProperties.put("idea.system.path", "/Users/asodja/workspace/gradle-profiler/subprojects/studio-plugin/build/idea-sandbox/system");
+        systemProperties.put("idea.config.path", "/Users/asodja/workspace/gradle-profiler/subprojects/studio-plugin/build/idea-sandbox/config");
+        systemProperties.put("idea.system.path", "/Users/asodja/workspace/gradle-profiler/subprojects/studio-plugin/build/idea-sandbox/system");
         systemProperties.put("idea.log.path", "/Users/asodja/workspace/gradle-profiler/subprojects/studio-plugin/build/idea-sandbox/log");
         systemProperties.put("gradle.profiler.port", pluginPort);
 //        systemProperties.put("idea.classpath.index.enabled", "false");

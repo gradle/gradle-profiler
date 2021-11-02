@@ -22,12 +22,12 @@
 
     <extensions defaultExtensionNs="com.intellij">
 <!--        <appStarter implementation="org.gradle.profiler.studio.plugin.HeadlessStarter"/>-->
-<!--        <applicationInitializedListener implementation="org.gradle.profiler.studio.plugin.GradleProfilerManagerListener"/>-->
+<!--        <applicationInitializedListener implementation="org.gradle.profiler.studio.plugin.GradleProfilerProjectManagerListener"/>-->
         <externalSystemTaskNotificationListener implementation="org.gradle.profiler.studio.plugin.GradleExternalSystemTaskNotificationListener"/>
     </extensions>
 
     <applicationListeners>
-        <listener class="org.gradle.profiler.studio.plugin.GradleProfilerManagerListener"
+        <listener class="org.gradle.profiler.studio.plugin.GradleProfilerProjectManagerListener"
                   topic="com.intellij.openapi.project.ProjectManagerListener"/>
     </applicationListeners>
 
