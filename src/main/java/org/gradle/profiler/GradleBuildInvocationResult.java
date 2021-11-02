@@ -86,7 +86,7 @@ public class GradleBuildInvocationResult extends BuildInvocationResult {
 
         @Override
         public Duration extractFrom(GradleBuildInvocationResult result) {
-            return result.studioExecutionTime;
+            return result.gradleToolingAgentExecutionTime;
         }
     };
 

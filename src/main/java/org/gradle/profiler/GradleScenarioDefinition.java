@@ -105,6 +105,10 @@ public class GradleScenarioDefinition extends ScenarioDefinition {
         return measuredBuildOperations;
     }
 
+    public boolean isAndroidStudioSync() {
+        return buildAction instanceof AndroidStudioSyncAction;
+    }
+
     public boolean createsMultipleProcesses() {
         if (getBuildCount() <= 1) {
             return false;
