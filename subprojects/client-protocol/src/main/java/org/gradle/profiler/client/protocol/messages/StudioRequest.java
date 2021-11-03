@@ -4,12 +4,12 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 public class StudioRequest extends Message {
 
-    private static final AtomicInteger ID_GENERATOR = new AtomicInteger();
-
     public enum StudioRequestType {
         SYNC,
         EXIT
     }
+
+    private static final AtomicInteger ID_GENERATOR = new AtomicInteger();
 
     private final int id;
     private final StudioRequestType type;

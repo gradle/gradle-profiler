@@ -1,6 +1,0 @@
-    androidStudioSync {
-        title = "Android Studio Sync"
-        # Measure an Android studio sync
-        android-studio-sync {
-        }
-    }

@@ -12,6 +12,7 @@ import org.gradle.profiler.studio.plugin.StudioPluginInstaller;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
@@ -21,7 +22,7 @@ import static org.gradle.profiler.client.protocol.messages.StudioRequest.StudioR
 import static org.gradle.profiler.client.protocol.messages.StudioRequest.StudioRequestType.SYNC;
 
 public class StudioGradleClient implements GradleClient {
-    private final Server server;
+    private final Server agentServer;
     private final Server pluginServer;
     private final CommandExec.RunHandle studioProcess;
     private final ServerConnection agentConnection;
@@ -35,7 +36,7 @@ public class StudioGradleClient implements GradleClient {
         Logging.startOperation("Starting Android Studio at " + studioInstallDir);
 
         pluginServer = new Server("plugin");
-        server = new Server("agent");
+        agentServer = new Server("agent");
         LaunchConfiguration launchConfiguration = new LauncherConfigurationParser().calculate(studioInstallDir, Integer.toString(pluginServer.getPort()));
         System.out.println();
         System.out.println("* Java command: " + launchConfiguration.getJavaCommand());
@@ -49,9 +50,9 @@ public class StudioGradleClient implements GradleClient {
         }
         System.out.println("* Main class: " + launchConfiguration.getMainClass());
 
-        studioProcess = startStudio(launchConfiguration, studioInstallDir, invocationSettings, server);
+        studioProcess = startStudio(launchConfiguration, studioInstallDir, invocationSettings, agentServer);
         pluginAgentConnection = pluginServer.waitForIncoming(Duration.ofMinutes(1));
-        agentConnection = server.waitForIncoming(Duration.ofMinutes(1));
+        agentConnection = agentServer.waitForIncoming(Duration.ofMinutes(1));
         agentConnection.send(new ConnectionParameters(buildConfiguration.getGradleHome()));
     }
 
@@ -69,6 +70,7 @@ public class StudioGradleClient implements GradleClient {
         commandLine.add("-Xbootclasspath/a:" + Joiner.on(File.pathSeparator).join(launchConfiguration.getSharedJars()));
         commandLine.add(launchConfiguration.getMainClass());
         commandLine.add(invocationSettings.getProjectDir().getAbsolutePath());
+        System.out.println("* Android Studio logs can be found at: " + Paths.get(launchConfiguration.getStudioPluginsDir().toString(), "idea.log"));
         System.out.println("* Using command line: " + commandLine);
 
         new StudioPluginInstaller().installPlugin(launchConfiguration);
@@ -82,7 +84,7 @@ public class StudioGradleClient implements GradleClient {
         studioProcess.waitForSuccess();
         System.out.println("* Android Studio stopped.");
         pluginServer.close();
-        server.close();
+        agentServer.close();
     }
 
     public BuildActionResult sync(List<String> gradleArgs, List<String> jvmArgs) {
@@ -91,12 +93,12 @@ public class StudioGradleClient implements GradleClient {
         System.out.println("* Sent sync request");
         // Use a long time out because it can take quite some time
         // between the tapi action completing and studio finishing the sync
-        agentConnection.receiveSyncStarted(Duration.ofMinutes(2));
+        agentConnection.receiveSyncStarted(Duration.ofMinutes(10));
         agentConnection.send(new SyncParameters(gradleArgs, jvmArgs));
         System.out.println("* Sync has started, waiting for it to complete...");
-        SyncCompleted agentCompleted = agentConnection.receiveSyncCompeted(Duration.ofHours(2));
+        SyncCompleted agentCompleted = agentConnection.receiveSyncCompleted(Duration.ofHours(1));
         System.out.println("* Gradle Sync has completed in: " + agentCompleted.getDurationMillis() + "ms");
-        StudioSyncRequestCompleted syncRequestCompleted = pluginAgentConnection.receiveSyncRequestCompeted(Duration.ofMinutes(10));
+        StudioSyncRequestCompleted syncRequestCompleted = pluginAgentConnection.receiveSyncRequestCompleted(Duration.ofMinutes(20));
         System.out.println("* Full Sync has completed in: " + syncRequestCompleted.getDurationMillis() + "ms and it " + syncRequestCompleted.getResult().name().toLowerCase());
         return BuildActionResult.of(
             Duration.ofMillis(syncRequestCompleted.getDurationMillis()),

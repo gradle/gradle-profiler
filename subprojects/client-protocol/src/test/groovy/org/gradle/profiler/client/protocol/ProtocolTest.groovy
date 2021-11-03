@@ -25,7 +25,7 @@ class ProtocolTest extends Specification {
         def m3 = client.receiveSyncParameters(timeout)
 
         client.send(new SyncCompleted(1, 123))
-        def m4 = serverConnection.receiveSyncCompeted(timeout)
+        def m4 = serverConnection.receiveSyncCompleted(timeout)
 
         then:
         m1.gradleInstallation.path == "gradle-home"

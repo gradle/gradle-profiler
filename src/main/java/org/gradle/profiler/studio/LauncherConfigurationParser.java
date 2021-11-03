@@ -45,31 +45,10 @@ public class LauncherConfigurationParser {
         Path protocolJar = GradleInstrumentation.unpackPlugin("client-protocol").toPath();
         Path studioPlugin = GradleInstrumentation.unpackPlugin("studio-plugin").toPath();
         Path studioPluginsDir = newPluginTempDir();
+
         systemProperties.put("idea.plugins.path", studioPluginsDir.toAbsolutePath().toString());
+        systemProperties.put("idea.log.path", studioPluginsDir.toAbsolutePath().toString());
         return new LaunchConfiguration(javaCommand, classPath, systemProperties, mainClass, agentJar, supportJar, Arrays.asList(asmJar, protocolJar), Arrays.asList(studioPlugin, protocolJar), studioPluginsDir);
-    }
-
-    private static void copyJarsToDirectory(Path directory, Path... jars) {
-        try {
-            for (Path jar : jars) {
-                String jarName = jar.getFileName().toString().endsWith(".jar")
-                    ? jar.getFileName().toString()
-                    : jar.getFileName() + ".jar";
-                FileUtils.copyFile(jar.toFile(), new File(directory.toFile(), jarName));
-            }
-        } catch (IOException e) {
-            throw new UncheckedIOException(e);
-        }
-    }
-
-    private static void deleteDirectory(Path directory, Path... jars) {
-        try {
-            for (Path jar : jars) {
-                FileUtils.copyFileToDirectory(jar.toFile(), directory.toFile());
-            }
-        } catch (IOException e) {
-            throw new UncheckedIOException(e);
-        }
     }
 
     private static Path newPluginTempDir() {

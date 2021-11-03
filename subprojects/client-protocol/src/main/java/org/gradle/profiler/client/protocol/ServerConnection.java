@@ -39,11 +39,11 @@ public class ServerConnection implements Closeable {
         return serializer.receive(SyncStarted.class, timeout);
     }
 
-    public SyncCompleted receiveSyncCompeted(Duration timeout) {
+    public SyncCompleted receiveSyncCompleted(Duration timeout) {
         return serializer.receive(SyncCompleted.class, timeout);
     }
 
-    public StudioSyncRequestCompleted receiveSyncRequestCompeted(Duration timeout) {
+    public StudioSyncRequestCompleted receiveSyncRequestCompleted(Duration timeout) {
         return serializer.receive(StudioSyncRequestCompleted.class, timeout);
     }
 }

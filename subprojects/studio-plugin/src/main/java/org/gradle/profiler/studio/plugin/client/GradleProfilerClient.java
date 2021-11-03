@@ -4,8 +4,8 @@ import com.android.tools.idea.gradle.project.sync.GradleSyncInvoker;
 import com.android.tools.idea.gradle.project.sync.GradleSyncState;
 import com.google.common.base.Stopwatch;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
-import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.openapi.wm.ex.StatusBarEx;
@@ -24,8 +24,10 @@ import static org.gradle.profiler.client.protocol.messages.StudioRequest.StudioR
 
 public class GradleProfilerClient {
 
+    private static final Logger LOG = Logger.getInstance(GradleProfilerClient.class);
+    public static final String PROFILER_PORT_PROPERTY = "gradle.profiler.port";
+    public static final String INTEGRATION_TEST_PROPERTY = "gradle.profiler.is.integration.test";
     private static final long WAIT_ON_PROCESS_SLEEP_TIME = 10;
-    private static final String PROFILER_PORT_PROPERTY = "gradle.profiler.port";
 
     public void connectToProfilerAsync(Project project) {
         if (System.getProperty(PROFILER_PORT_PROPERTY) == null) {
@@ -34,15 +36,21 @@ public class GradleProfilerClient {
 
         int port = Integer.parseInt(System.getProperty(PROFILER_PORT_PROPERTY));
         Client.INSTANCE.connect(port);
-        System.out.println("Connected to port: " + System.getProperty(PROFILER_PORT_PROPERTY));
+        LOG.info("Connected to port: " + System.getProperty(PROFILER_PORT_PROPERTY));
 
         Client.INSTANCE.listenAsync(it -> {
             StudioRequest request;
             while ((request = it.receiveStudioRequest(Duration.ofDays(1))).getType() != EXIT) {
                 handleGradleProfilerRequest(request, project);
             }
-            ApplicationManager.getApplication().exit(true, true, false);
+            exit();
         });
+    }
+
+    private void exit() {
+        if (!Boolean.getBoolean(INTEGRATION_TEST_PROPERTY)) {
+            ApplicationManager.getApplication().exit(true, true, false);
+        }
     }
 
     private void handleGradleProfilerRequest(StudioRequest request, Project project) {
@@ -58,21 +66,29 @@ public class GradleProfilerClient {
     }
 
     private void handleSyncRequest(StudioRequest request, Project project) {
-        System.out.println("Received sync request with id: " + request.getId());
+        LOG.info("Received sync request with id: " + request.getId());
 
         // In some cases sync could happen before we trigger it,
         // for example when we open a project for the first time.
         waitOnAndroidStudioBuildInProgress(project);
-        maybeWaitOnPreviousSyncFinish(project);
+        waitOnPreviousGradleSyncFinish(project);
 
         Stopwatch stopwatch = Stopwatch.createStarted();
-        System.out.printf("[SYNC REQUEST %s] Sync has started%n", request.getId());
-        GradleProfilerGradleSyncListener syncListener = new GradleProfilerGradleSyncListener();
-        GradleSyncInvoker.getInstance().requestProjectSync(project, TRIGGER_USER_SYNC_ACTION, syncListener);
-        GradleSyncResult result = syncListener.waitAndGetResult();
+        LOG.info(String.format("[SYNC REQUEST %s] Sync has started%n", request.getId()));
+        GradleSyncResult result = doSync(project).waitAndGetResult();
         waitOnAndroidStudioBuildInProgress(project);
-        System.out.printf("[SYNC REQUEST %s] '%s': '%s'%n", request.getId(), result.getResult(), result.getErrorMessage().isEmpty() ? "no message" : result.getErrorMessage());
+        LOG.info(String.format("[SYNC REQUEST %s] '%s': '%s'%n", request.getId(), result.getResult(), result.getErrorMessage().isEmpty() ? "no message" : result.getErrorMessage()));
         Client.INSTANCE.send(new StudioSyncRequestCompleted(request.getId(), stopwatch.elapsed(TimeUnit.MILLISECONDS), result.getResult()));
+    }
+
+    private GradleProfilerGradleSyncListener doSync(Project project) {
+        GradleProfilerGradleSyncListener syncListener = new GradleProfilerGradleSyncListener();
+        if (Boolean.getBoolean(INTEGRATION_TEST_PROPERTY)) {
+            syncListener.syncSucceeded(project);
+        } else {
+            GradleSyncInvoker.getInstance().requestProjectSync(project, TRIGGER_USER_SYNC_ACTION, syncListener);
+        }
+        return syncListener;
     }
 
     /**
@@ -99,7 +115,7 @@ public class GradleProfilerClient {
         }
     }
 
-    private void maybeWaitOnPreviousSyncFinish(Project project) {
+    private void waitOnPreviousGradleSyncFinish(Project project) {
         GradleProfilerGradleSyncListener syncListener = new GradleProfilerGradleSyncListener();
         MessageBusConnection connection = GradleSyncState.subscribe(project, syncListener);
         if (!GradleSyncState.getInstance(project).isSyncInProgress()) {

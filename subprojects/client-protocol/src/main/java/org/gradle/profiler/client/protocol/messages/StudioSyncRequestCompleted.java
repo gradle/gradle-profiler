@@ -18,11 +18,6 @@ public class StudioSyncRequestCompleted extends Message {
         this.result = result;
     }
 
-    @Override
-    public String toString() {
-        return "sync completed " + id + " in " + durationMillis + "ms with result: " + result;
-    }
-
     public int getId() {
         return id;
     }
