@@ -28,7 +28,7 @@ public class AndroidStudioSyncAction implements BuildAction {
     }
 
     @Override
-    public Duration run(GradleClient gradleClient, List<String> gradleArgs, List<String> jvmArgs) {
+    public BuildActionResult run(GradleClient gradleClient, List<String> gradleArgs, List<String> jvmArgs) {
         StudioGradleClient studioGradleClient = (StudioGradleClient) gradleClient;
         return studioGradleClient.sync(gradleArgs, jvmArgs);
     }

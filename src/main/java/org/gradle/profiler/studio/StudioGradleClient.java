@@ -2,6 +2,7 @@ package org.gradle.profiler.studio;
 
 import com.google.common.base.Joiner;
 import org.gradle.profiler.*;
+import org.gradle.profiler.BuildAction.BuildActionResult;
 import org.gradle.profiler.client.protocol.*;
 import org.gradle.profiler.client.protocol.messages.StudioRequest;
 import org.gradle.profiler.client.protocol.messages.StudioSyncRequestCompleted;
@@ -84,7 +85,7 @@ public class StudioGradleClient implements GradleClient {
         server.close();
     }
 
-    public Duration sync(List<String> gradleArgs, List<String> jvmArgs) {
+    public BuildActionResult sync(List<String> gradleArgs, List<String> jvmArgs) {
         if (!hasRun) {
             System.out.println("* PLEASE RUN SYNC IN ANDROID STUDIO (once it has finished starting up)....");
             hasRun = true;
@@ -93,16 +94,21 @@ public class StudioGradleClient implements GradleClient {
         }
 
 
-        // Use a long time out because it can take quite some time between the tapi action completing and studio finishing the sync
+        // Use a long time out because it can take quite some time
+        // between the tapi action completing and studio finishing the sync
         pluginAgentConnection.send(new StudioRequest(SYNC));
         System.out.println("Sent sync request");
-        SyncStarted started = agentConnection.receiveSyncStarted(Duration.ofMinutes(10));
+        agentConnection.receiveSyncStarted(Duration.ofMinutes(2));
         agentConnection.send(new SyncParameters(gradleArgs, jvmArgs));
         System.out.println("* Sync has started, waiting for it to complete...");
-        SyncCompleted completed = agentConnection.receiveSyncCompeted(Duration.ofHours(10));
-        System.out.println("* Gradle Sync has completed in: " + completed.getDurationMillis() + "ms");
+        SyncCompleted agentCompleted = agentConnection.receiveSyncCompeted(Duration.ofHours(2));
+        System.out.println("* Gradle Sync has completed in: " + agentCompleted.getDurationMillis() + "ms");
         StudioSyncRequestCompleted syncRequestCompleted = pluginAgentConnection.receiveSyncRequestCompeted(Duration.ofMinutes(10));
         System.out.println("* Full Sync has completed in: " + syncRequestCompleted.getDurationMillis() + "ms and it " + syncRequestCompleted.getResult().name().toLowerCase());
-        return Duration.ofMillis(syncRequestCompleted.getDurationMillis());
+        return BuildActionResult.of(
+            Duration.ofMillis(syncRequestCompleted.getDurationMillis()),
+            Duration.ofMillis(agentCompleted.getDurationMillis()),
+            Duration.ofMillis(syncRequestCompleted.getDurationMillis() - agentCompleted.getDurationMillis())
+        );
     }
 }

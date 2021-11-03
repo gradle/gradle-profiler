@@ -1,5 +1,6 @@
 package org.gradle.profiler;
 
+import javax.annotation.Nullable;
 import java.time.Duration;
 import java.util.List;
 
@@ -24,8 +25,8 @@ public interface BuildAction {
         }
 
         @Override
-        public Duration run(GradleClient gradleClient, List<String> gradleArgs, List<String> jvmArgs) {
-            return Duration.ZERO;
+        public BuildActionResult run(GradleClient gradleClient, List<String> gradleArgs, List<String> jvmArgs) {
+            return BuildActionResult.of(Duration.ZERO);
         }
     };
 
@@ -44,5 +45,39 @@ public interface BuildAction {
     /**
      * Runs the work of this action and returns the result.
      */
-    Duration run(GradleClient gradleClient, List<String> gradleArgs, List<String> jvmArgs);
+    BuildActionResult run(GradleClient gradleClient, List<String> gradleArgs, List<String> jvmArgs);
+
+    class BuildActionResult {
+
+        private final Duration executionTime;
+        private final Duration gradleToolingAgentExecutionTime;
+        private final Duration studioExecutionTime;
+
+        private BuildActionResult(Duration executionTime, @Nullable Duration gradleToolingAgentExecutionTime, @Nullable Duration studioExecutionTime) {
+            this.executionTime = executionTime;
+            this.gradleToolingAgentExecutionTime = gradleToolingAgentExecutionTime;
+            this.studioExecutionTime = studioExecutionTime;
+        }
+
+        public Duration getExecutionTime() {
+            return executionTime;
+        }
+
+        public Duration getGradleToolingAgentExecutionTime() {
+            return gradleToolingAgentExecutionTime;
+        }
+
+        public Duration getStudioExecutionTime() {
+            return studioExecutionTime;
+        }
+
+        public static BuildActionResult of(Duration executionTime) {
+            return new BuildActionResult(executionTime, null, null);
+        }
+
+        public static BuildActionResult of(Duration executionTime, @Nullable Duration gradleToolingAgentExecutionTime, @Nullable Duration studioExecutionTime) {
+            return new BuildActionResult(executionTime, gradleToolingAgentExecutionTime, studioExecutionTime);
+        }
+    }
+
 }

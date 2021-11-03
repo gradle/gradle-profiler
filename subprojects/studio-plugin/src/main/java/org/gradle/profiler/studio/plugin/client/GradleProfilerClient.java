@@ -5,6 +5,7 @@ import com.android.tools.idea.gradle.project.sync.GradleSyncState;
 import com.google.common.base.Stopwatch;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.openapi.wm.ex.StatusBarEx;
