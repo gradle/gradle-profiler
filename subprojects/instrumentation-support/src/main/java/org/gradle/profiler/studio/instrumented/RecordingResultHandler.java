@@ -1,7 +1,7 @@
 package org.gradle.profiler.studio.instrumented;
 
 import org.gradle.profiler.client.protocol.Client;
-import org.gradle.profiler.client.protocol.SyncCompleted;
+import org.gradle.profiler.client.protocol.messages.SyncCompleted;
 import org.gradle.tooling.GradleConnectionException;
 import org.gradle.tooling.ResultHandler;
 

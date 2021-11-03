@@ -1,7 +1,5 @@
 package org.gradle.profiler.client.protocol.messages;
 
-import org.gradle.profiler.client.protocol.Message;
-
 import java.util.concurrent.atomic.AtomicInteger;
 
 public class StudioRequest extends Message {

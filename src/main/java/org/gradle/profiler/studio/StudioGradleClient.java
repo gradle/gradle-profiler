@@ -6,6 +6,8 @@ import org.gradle.profiler.BuildAction.BuildActionResult;
 import org.gradle.profiler.client.protocol.*;
 import org.gradle.profiler.client.protocol.messages.StudioRequest;
 import org.gradle.profiler.client.protocol.messages.StudioSyncRequestCompleted;
+import org.gradle.profiler.client.protocol.messages.SyncCompleted;
+import org.gradle.profiler.studio.plugin.StudioPluginInstaller;
 
 import java.io.File;
 import java.io.IOException;
@@ -24,7 +26,6 @@ public class StudioGradleClient implements GradleClient {
     private final CommandExec.RunHandle studioProcess;
     private final ServerConnection agentConnection;
     private final ServerConnection pluginAgentConnection;
-    private boolean hasRun;
 
     public StudioGradleClient(GradleBuildConfiguration buildConfiguration, InvocationSettings invocationSettings) {
         if (!OperatingSystem.isMacOS()) {
@@ -49,10 +50,8 @@ public class StudioGradleClient implements GradleClient {
         System.out.println("* Main class: " + launchConfiguration.getMainClass());
 
         studioProcess = startStudio(launchConfiguration, studioInstallDir, invocationSettings, server);
-        pluginAgentConnection = pluginServer.waitForIncoming(Duration.ofMinutes(2));
-        System.out.println("Plugin connected");
-        agentConnection = server.waitForIncoming(Duration.ofMinutes(2));
-        System.out.println("Agent connected");
+        pluginAgentConnection = pluginServer.waitForIncoming(Duration.ofMinutes(1));
+        agentConnection = server.waitForIncoming(Duration.ofMinutes(1));
         agentConnection.send(new ConnectionParameters(buildConfiguration.getGradleHome()));
     }
 
@@ -72,6 +71,7 @@ public class StudioGradleClient implements GradleClient {
         commandLine.add(invocationSettings.getProjectDir().getAbsolutePath());
         System.out.println("* Using command line: " + commandLine);
 
+        new StudioPluginInstaller().installPlugin(launchConfiguration);
         return new CommandExec().inDir(studioInstallDir.toFile()).start(commandLine);
     }
 
@@ -86,18 +86,11 @@ public class StudioGradleClient implements GradleClient {
     }
 
     public BuildActionResult sync(List<String> gradleArgs, List<String> jvmArgs) {
-        if (!hasRun) {
-            System.out.println("* PLEASE RUN SYNC IN ANDROID STUDIO (once it has finished starting up)....");
-            hasRun = true;
-        } else {
-            System.out.println("* PLEASE RUN SYNC IN ANDROID STUDIO....");
-        }
-
-
+        System.out.println("* PLEASE WAIT TO RUN SYNC IN ANDROID STUDIO...");
+        pluginAgentConnection.send(new StudioRequest(SYNC));
+        System.out.println("* Sent sync request");
         // Use a long time out because it can take quite some time
         // between the tapi action completing and studio finishing the sync
-        pluginAgentConnection.send(new StudioRequest(SYNC));
-        System.out.println("Sent sync request");
         agentConnection.receiveSyncStarted(Duration.ofMinutes(2));
         agentConnection.send(new SyncParameters(gradleArgs, jvmArgs));
         System.out.println("* Sync has started, waiting for it to complete...");

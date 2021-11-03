@@ -1,5 +1,7 @@
 package org.gradle.profiler.client.protocol
 
+import org.gradle.profiler.client.protocol.messages.SyncCompleted
+import org.gradle.profiler.client.protocol.messages.SyncStarted
 import spock.lang.Specification
 
 import java.time.Duration

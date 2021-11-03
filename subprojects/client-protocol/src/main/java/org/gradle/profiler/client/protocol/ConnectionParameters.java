@@ -1,5 +1,7 @@
 package org.gradle.profiler.client.protocol;
 
+import org.gradle.profiler.client.protocol.messages.Message;
+
 import java.io.File;
 
 public class ConnectionParameters extends Message {

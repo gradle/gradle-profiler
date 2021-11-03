@@ -2,6 +2,8 @@ package org.gradle.profiler.client.protocol;
 
 import org.gradle.profiler.client.protocol.messages.StudioRequest;
 import org.gradle.profiler.client.protocol.messages.StudioSyncRequestCompleted;
+import org.gradle.profiler.client.protocol.messages.SyncCompleted;
+import org.gradle.profiler.client.protocol.messages.SyncStarted;
 
 import java.io.Closeable;
 import java.io.IOException;

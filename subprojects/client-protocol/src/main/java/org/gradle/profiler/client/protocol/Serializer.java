@@ -1,8 +1,7 @@
 package org.gradle.profiler.client.protocol;
 
-import org.gradle.profiler.client.protocol.messages.StudioRequest;
+import org.gradle.profiler.client.protocol.messages.*;
 import org.gradle.profiler.client.protocol.messages.StudioRequest.StudioRequestType;
-import org.gradle.profiler.client.protocol.messages.StudioSyncRequestCompleted;
 import org.gradle.profiler.client.protocol.messages.StudioSyncRequestCompleted.StudioSyncRequestResult;
 
 import java.io.EOFException;
@@ -13,8 +12,6 @@ import java.util.List;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
-
-import static org.gradle.profiler.client.protocol.messages.StudioRequest.StudioRequestType.*;
 
 public class Serializer {
     private static final Object NULL = new Object();

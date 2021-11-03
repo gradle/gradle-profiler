@@ -75,6 +75,11 @@ public class GradleProfilerClient {
         Client.INSTANCE.send(new StudioSyncRequestCompleted(request.getId(), stopwatch.elapsed(TimeUnit.MILLISECONDS), result.getResult()));
     }
 
+    /**
+     * We wait on Android Studio indexing and similar tasks to finish.
+     *
+     * It seems there is no better way to do it atm.
+     */
     private void waitOnAndroidStudioBuildInProgress(Project project) {
         IdeFrame frame = WindowManagerEx.getInstanceEx().findFrameFor(project);
         StatusBarEx statusBar = frame == null ? null : (StatusBarEx) frame.getStatusBar();

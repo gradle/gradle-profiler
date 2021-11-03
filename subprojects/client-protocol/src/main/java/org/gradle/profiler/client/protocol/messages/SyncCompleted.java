@@ -1,4 +1,4 @@
-package org.gradle.profiler.client.protocol;
+package org.gradle.profiler.client.protocol.messages;
 
 public class SyncCompleted extends Message {
     private final int id;

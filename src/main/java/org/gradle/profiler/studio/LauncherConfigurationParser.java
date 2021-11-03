@@ -36,31 +36,17 @@ public class LauncherConfigurationParser {
         List<Path> classPath = Arrays.stream(jvmOptions.string("ClassPath").split(":")).map(s -> FileSystems.getDefault().getPath(s.replace("$APP_PACKAGE", actualInstallDir.toString()))).collect(Collectors.toList());
         String mainClass = jvmOptions.string("MainClass");
         Map<String, String> systemProperties = mapValues(jvmOptions.dict("Properties").toMap(), v -> v.replace("$APP_PACKAGE", actualInstallDir.toString()));
-        systemProperties.put("idea.config.path", "/Users/asodja/workspace/gradle-profiler/subprojects/studio-plugin/build/idea-sandbox/config");
-        systemProperties.put("idea.system.path", "/Users/asodja/workspace/gradle-profiler/subprojects/studio-plugin/build/idea-sandbox/system");
-        systemProperties.put("idea.log.path", "/Users/asodja/workspace/gradle-profiler/subprojects/studio-plugin/build/idea-sandbox/log");
         systemProperties.put("gradle.profiler.port", pluginPort);
-//        systemProperties.put("idea.classpath.index.enabled", "false");
         systemProperties.put("idea.trust.all.projects", "true");
-//        systemProperties.put("idea.skip.indices.initialization", "true");
-        systemProperties.put("idea.is.internal", "true");
         Path javaCommand = actualInstallDir.resolve("Contents/jre/Contents/Home/bin/java");
         Path agentJar = GradleInstrumentation.unpackPlugin("studio-agent").toPath();
         Path asmJar = GradleInstrumentation.unpackPlugin("asm").toPath();
         Path supportJar = GradleInstrumentation.unpackPlugin("instrumentation-support").toPath();
         Path protocolJar = GradleInstrumentation.unpackPlugin("client-protocol").toPath();
         Path studioPlugin = GradleInstrumentation.unpackPlugin("studio-plugin").toPath();
-        Path pluginDir = newPluginTempDir();
-//        pluginDir = actualInstallDir.resolve("Contents/plugins");
-        try {
-            FileUtils.deleteDirectory(Paths.get(pluginDir.toString(), "gradle-profiler-studio-plugin").toFile());
-        } catch (IOException e) {
-            throw new UncheckedIOException(e);
-        }
-        copyJarsToDirectory(Paths.get(pluginDir.toString(), "gradle-profiler-studio-plugin", "lib"), studioPlugin, protocolJar);
-        systemProperties.put("idea.plugins.path", pluginDir.toAbsolutePath().toString());
-//        systemProperties.put("idea.plugins.path", "/Users/asodja/workspace/gradle-profiler/subprojects/studio-plugin/build/idea-sandbox/plugins");
-        return new LaunchConfiguration(javaCommand, classPath, systemProperties, mainClass, agentJar, supportJar, Arrays.asList(asmJar, protocolJar));
+        Path studioPluginsDir = newPluginTempDir();
+        systemProperties.put("idea.plugins.path", studioPluginsDir.toAbsolutePath().toString());
+        return new LaunchConfiguration(javaCommand, classPath, systemProperties, mainClass, agentJar, supportJar, Arrays.asList(asmJar, protocolJar), Arrays.asList(studioPlugin, protocolJar), studioPluginsDir);
     }
 
     private static void copyJarsToDirectory(Path directory, Path... jars) {
