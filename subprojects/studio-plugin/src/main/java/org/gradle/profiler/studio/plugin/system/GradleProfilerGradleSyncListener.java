@@ -1,4 +1,4 @@
-package org.gradle.profiler.studio.plugin.client;
+package org.gradle.profiler.studio.plugin.system;
 
 import com.android.tools.idea.gradle.project.sync.GradleSyncListener;
 import com.intellij.openapi.project.Project;

@@ -11,7 +11,6 @@ import java.time.Duration
 import static org.gradle.profiler.client.protocol.messages.StudioRequest.StudioRequestType.EXIT
 import static org.gradle.profiler.client.protocol.messages.StudioRequest.StudioRequestType.SYNC
 import static org.gradle.profiler.client.protocol.messages.StudioSyncRequestCompleted.StudioSyncRequestResult.SUCCEEDED
-import static org.gradle.profiler.studio.plugin.client.GradleProfilerClient.INTEGRATION_TEST_PROPERTY
 import static org.gradle.profiler.studio.plugin.client.GradleProfilerClient.PROFILER_PORT_PROPERTY
 
 /**
