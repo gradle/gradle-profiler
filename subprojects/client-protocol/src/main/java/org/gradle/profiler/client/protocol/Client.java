@@ -37,13 +37,13 @@ public enum Client {
         }
     }
 
-    public void send(SyncStarted message) {
+    public void send(GradleInvocationStarted message) {
         synchronized (lock) {
             serializer.send(message);
         }
     }
 
-    public void send(SyncCompleted message) {
+    public void send(GradleInvocationCompleted message) {
         synchronized (lock) {
             serializer.send(message);
         }
@@ -55,15 +55,15 @@ public enum Client {
         }
     }
 
-    public SyncParameters receiveSyncParameters(Duration timeout) {
+    public GradleInvocationParameters receiveSyncParameters(Duration timeout) {
         synchronized (lock) {
-            return serializer.receive(SyncParameters.class, timeout);
+            return serializer.receive(GradleInvocationParameters.class, timeout);
         }
     }
 
-    public ConnectionParameters receiveConnectionParameters(Duration timeout) {
+    public StudioAgentConnectionParameters receiveConnectionParameters(Duration timeout) {
         synchronized (lock) {
-            return serializer.receive(ConnectionParameters.class, timeout);
+            return serializer.receive(StudioAgentConnectionParameters.class, timeout);
         }
     }
 

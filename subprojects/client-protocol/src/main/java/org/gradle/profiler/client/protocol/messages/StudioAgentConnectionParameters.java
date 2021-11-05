@@ -1,13 +1,11 @@
 package org.gradle.profiler.client.protocol.messages;
 
-import org.gradle.profiler.client.protocol.messages.Message;
-
 import java.io.File;
 
-public class ConnectionParameters implements Message {
+public class StudioAgentConnectionParameters implements Message {
     private final File gradleInstallation;
 
-    public ConnectionParameters(File gradleInstallation) {
+    public StudioAgentConnectionParameters(File gradleInstallation) {
         this.gradleInstallation = gradleInstallation;
     }
 

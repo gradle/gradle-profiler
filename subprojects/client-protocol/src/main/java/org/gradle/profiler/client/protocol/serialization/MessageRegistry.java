@@ -14,59 +14,59 @@ import java.util.List;
  * Registry that contains classes to id mappings and all message mappers.
  */
 public enum MessageRegistry {
-    SYNC_STARTED((byte) 1, SyncStarted.class, new MessageReaderWriter() {
+    GRADLE_INVOCATION_STARTED((byte) 1, GradleInvocationStarted.class, new MessageReaderWriter() {
         @Override
         public void writeTo(Connection connection, Message message) throws IOException {
-            SyncStarted syncStarted = (SyncStarted) message;
-            connection.writeInt(syncStarted.getId());
+            GradleInvocationStarted gradleInvocationStarted = (GradleInvocationStarted) message;
+            connection.writeInt(gradleInvocationStarted.getId());
         }
 
         @Override
         public Message readFrom(Connection connection) throws IOException {
             int startId = connection.readInt();
-            return new SyncStarted(startId);
+            return new GradleInvocationStarted(startId);
         }
     }),
-    SYNC_COMPLETED((byte) 2, SyncCompleted.class, new MessageReaderWriter() {
+    GRADLE_INVOCATION_COMPLETED((byte) 2, GradleInvocationCompleted.class, new MessageReaderWriter() {
         @Override
         public void writeTo(Connection connection, Message message) throws IOException {
-            SyncCompleted syncCompleted = (SyncCompleted) message;
-            connection.writeInt(syncCompleted.getId());
-            connection.writeLong(syncCompleted.getDurationMillis());
+            GradleInvocationCompleted gradleInvocationCompleted = (GradleInvocationCompleted) message;
+            connection.writeInt(gradleInvocationCompleted.getId());
+            connection.writeLong(gradleInvocationCompleted.getDurationMillis());
         }
 
         @Override
         public Message readFrom(Connection connection) throws IOException {
             int completeId = connection.readInt();
             long durationMillis = connection.readLong();
-            return new SyncCompleted(completeId, durationMillis);
+            return new GradleInvocationCompleted(completeId, durationMillis);
         }
     }),
-    SYNC_PARAMETERS((byte) 3, SyncParameters.class, new MessageReaderWriter() {
+    GRADLE_INVOCATION_PARAMETERS((byte) 3, GradleInvocationParameters.class, new MessageReaderWriter() {
         @Override
         public void writeTo(Connection connection, Message message) throws IOException {
-            SyncParameters syncParameters = (SyncParameters) message;
-            connection.writeStrings(syncParameters.getGradleArgs());
-            connection.writeStrings(syncParameters.getJvmArgs());
+            GradleInvocationParameters gradleInvocationParameters = (GradleInvocationParameters) message;
+            connection.writeStrings(gradleInvocationParameters.getGradleArgs());
+            connection.writeStrings(gradleInvocationParameters.getJvmArgs());
         }
 
         @Override
         public Message readFrom(Connection connection) throws IOException {
             List<String> gradleArgs = connection.readStrings();
             List<String> jvmArgs = connection.readStrings();
-            return new SyncParameters(gradleArgs, jvmArgs);
+            return new GradleInvocationParameters(gradleArgs, jvmArgs);
         }
     }),
-    CONNECTION_PARAMETERS((byte) 4, ConnectionParameters.class, new MessageReaderWriter() {
+    STUDIO_AGENT_CONNECTION_PARAMETERS((byte) 4, StudioAgentConnectionParameters.class, new MessageReaderWriter() {
         @Override
         public void writeTo(Connection connection, Message message) throws IOException {
-            ConnectionParameters connectionParameters = (ConnectionParameters) message;
-            connection.writeString(connectionParameters.getGradleInstallation().getPath());
+            StudioAgentConnectionParameters studioAgentConnectionParameters = (StudioAgentConnectionParameters) message;
+            connection.writeString(studioAgentConnectionParameters.getGradleInstallation().getPath());
         }
         @Override
         public Message readFrom(Connection connection) throws IOException {
             String gradleHome = connection.readString();
-            return new ConnectionParameters(new File(gradleHome));
+            return new StudioAgentConnectionParameters(new File(gradleHome));
         }
     }),
     STUDIO_REQUEST((byte) 5, StudioRequest.class, new MessageReaderWriter() {

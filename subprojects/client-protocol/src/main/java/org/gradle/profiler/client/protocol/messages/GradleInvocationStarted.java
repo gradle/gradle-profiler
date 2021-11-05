@@ -1,15 +1,15 @@
 package org.gradle.profiler.client.protocol.messages;
 
-public class SyncStarted implements Message {
+public class GradleInvocationStarted implements Message {
     private final int id;
 
-    public SyncStarted(int id) {
+    public GradleInvocationStarted(int id) {
         this.id = id;
     }
 
     @Override
     public String toString() {
-        return "sync started " + id;
+        return "gradle invocation started " + id;
     }
 
     public int getId() {

@@ -1,9 +1,9 @@
 package org.gradle.profiler.studio.instrumented;
 
 import org.gradle.profiler.client.protocol.Client;
-import org.gradle.profiler.client.protocol.messages.ConnectionParameters;
-import org.gradle.profiler.client.protocol.messages.SyncParameters;
-import org.gradle.profiler.client.protocol.messages.SyncStarted;
+import org.gradle.profiler.client.protocol.messages.StudioAgentConnectionParameters;
+import org.gradle.profiler.client.protocol.messages.GradleInvocationParameters;
+import org.gradle.profiler.client.protocol.messages.GradleInvocationStarted;
 import org.gradle.tooling.ResultHandler;
 import org.gradle.tooling.internal.consumer.AbstractLongRunningOperation;
 import org.gradle.tooling.internal.consumer.DefaultGradleConnector;
@@ -17,7 +17,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 public class Interceptor {
     private static final AtomicInteger COUNTER = new AtomicInteger();
 
-    static ConnectionParameters connectionParameters;
+    static StudioAgentConnectionParameters connectionParameters;
 
     /**
      * Called when creating a connection.
@@ -38,10 +38,10 @@ public class Interceptor {
         System.out.println("* Starting tooling API operation " + operation);
         int id = COUNTER.incrementAndGet();
 
-        SyncParameters syncParameters;
+        GradleInvocationParameters syncParameters;
         try {
             Client client = Client.INSTANCE;
-            client.send(new SyncStarted(id));
+            client.send(new GradleInvocationStarted(id));
             syncParameters = client.receiveSyncParameters(Duration.ofSeconds(300));
         } catch (Throwable throwable) {
             throwable.printStackTrace();

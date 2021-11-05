@@ -21,7 +21,7 @@ public class ServerConnection implements Closeable {
         connection.close();
     }
 
-    public void send(SyncParameters syncParameters) {
+    public void send(GradleInvocationParameters syncParameters) {
         serializer.send(syncParameters);
     }
 
@@ -29,16 +29,16 @@ public class ServerConnection implements Closeable {
         serializer.send(syncRequest);
     }
 
-    public void send(ConnectionParameters connectionParameters) {
+    public void send(StudioAgentConnectionParameters connectionParameters) {
         serializer.send(connectionParameters);
     }
 
-    public SyncStarted receiveSyncStarted(Duration timeout) {
-        return serializer.receive(SyncStarted.class, timeout);
+    public GradleInvocationStarted receiveSyncStarted(Duration timeout) {
+        return serializer.receive(GradleInvocationStarted.class, timeout);
     }
 
-    public SyncCompleted receiveSyncCompleted(Duration timeout) {
-        return serializer.receive(SyncCompleted.class, timeout);
+    public GradleInvocationCompleted receiveSyncCompleted(Duration timeout) {
+        return serializer.receive(GradleInvocationCompleted.class, timeout);
     }
 
     public StudioSyncRequestCompleted receiveSyncRequestCompleted(Duration timeout) {

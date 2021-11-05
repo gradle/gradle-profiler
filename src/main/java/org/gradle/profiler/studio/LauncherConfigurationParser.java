@@ -23,7 +23,7 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 
 public class LauncherConfigurationParser {
-    public LaunchConfiguration calculate(Path studioInstallDir, String pluginPort) {
+    public LaunchConfiguration calculate(Path studioInstallDir, int studioPluginPort) {
         Dict entries = parse(studioInstallDir.resolve("Contents/Info.plist"));
         Path actualInstallDir;
         if ("jetbrains-toolbox-launcher".equals(entries.string("CFBundleExecutable"))) {
@@ -36,7 +36,7 @@ public class LauncherConfigurationParser {
         List<Path> classPath = Arrays.stream(jvmOptions.string("ClassPath").split(":")).map(s -> FileSystems.getDefault().getPath(s.replace("$APP_PACKAGE", actualInstallDir.toString()))).collect(Collectors.toList());
         String mainClass = jvmOptions.string("MainClass");
         Map<String, String> systemProperties = mapValues(jvmOptions.dict("Properties").toMap(), v -> v.replace("$APP_PACKAGE", actualInstallDir.toString()));
-        systemProperties.put("gradle.profiler.port", pluginPort);
+        systemProperties.put("gradle.profiler.port", String.valueOf(studioPluginPort));
         systemProperties.put("idea.trust.all.projects", "true");
         Path javaCommand = actualInstallDir.resolve("Contents/jre/Contents/Home/bin/java");
         Path agentJar = GradleInstrumentation.unpackPlugin("studio-agent").toPath();
@@ -46,9 +46,12 @@ public class LauncherConfigurationParser {
         Path studioPlugin = GradleInstrumentation.unpackPlugin("studio-plugin").toPath();
         Path studioPluginsDir = newPluginTempDir();
 
-        systemProperties.put("idea.plugins.path", studioPluginsDir.toAbsolutePath().toString());
-        systemProperties.put("idea.log.path", studioPluginsDir.toAbsolutePath().toString());
-        return new LaunchConfiguration(javaCommand, classPath, systemProperties, mainClass, agentJar, supportJar, Arrays.asList(asmJar, protocolJar), Arrays.asList(studioPlugin, protocolJar), studioPluginsDir);
+        String studioPluginsDirPath = studioPluginsDir.toAbsolutePath().toString();
+        List<Path> sharedJars = Arrays.asList(asmJar, protocolJar);
+        List<Path> studioPluginJars = Arrays.asList(studioPlugin, protocolJar);
+        systemProperties.put("idea.plugins.path", studioPluginsDirPath);
+        systemProperties.put("idea.log.path", studioPluginsDirPath);
+        return new LaunchConfiguration(javaCommand, classPath, systemProperties, mainClass, agentJar, supportJar, sharedJars, studioPluginJars, studioPluginsDir);
     }
 
     private static Path newPluginTempDir() {

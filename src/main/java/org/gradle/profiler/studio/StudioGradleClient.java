@@ -20,11 +20,11 @@ import static org.gradle.profiler.client.protocol.messages.StudioRequest.StudioR
 import static org.gradle.profiler.client.protocol.messages.StudioRequest.StudioRequestType.SYNC;
 
 public class StudioGradleClient implements GradleClient {
-    private final Server agentServer;
-    private final Server pluginServer;
+    private final Server studioAgentServer;
+    private final Server studioPluginServer;
     private final CommandExec.RunHandle studioProcess;
-    private final ServerConnection agentConnection;
-    private final ServerConnection pluginAgentConnection;
+    private final ServerConnection studioAgentConnection;
+    private final ServerConnection studioPluginConnection;
 
     public StudioGradleClient(GradleBuildConfiguration buildConfiguration, InvocationSettings invocationSettings) {
         if (!OperatingSystem.isMacOS()) {
@@ -33,9 +33,9 @@ public class StudioGradleClient implements GradleClient {
         Path studioInstallDir = invocationSettings.getStudioInstallDir().toPath();
         Logging.startOperation("Starting Android Studio at " + studioInstallDir);
 
-        pluginServer = new Server("plugin");
-        agentServer = new Server("agent");
-        LaunchConfiguration launchConfiguration = new LauncherConfigurationParser().calculate(studioInstallDir, Integer.toString(pluginServer.getPort()));
+        studioPluginServer = new Server("plugin");
+        studioAgentServer = new Server("agent");
+        LaunchConfiguration launchConfiguration = new LauncherConfigurationParser().calculate(studioInstallDir, studioPluginServer.getPort());
         System.out.println();
         System.out.println("* Java command: " + launchConfiguration.getJavaCommand());
         System.out.println("* Classpath:");
@@ -48,10 +48,10 @@ public class StudioGradleClient implements GradleClient {
         }
         System.out.println("* Main class: " + launchConfiguration.getMainClass());
 
-        studioProcess = startStudio(launchConfiguration, studioInstallDir, invocationSettings, agentServer);
-        pluginAgentConnection = pluginServer.waitForIncoming(Duration.ofMinutes(1));
-        agentConnection = agentServer.waitForIncoming(Duration.ofMinutes(1));
-        agentConnection.send(new ConnectionParameters(buildConfiguration.getGradleHome()));
+        studioProcess = startStudio(launchConfiguration, studioInstallDir, invocationSettings, studioAgentServer);
+        studioPluginConnection = studioPluginServer.waitForIncoming(Duration.ofMinutes(1));
+        studioAgentConnection = studioAgentServer.waitForIncoming(Duration.ofMinutes(1));
+        studioAgentConnection.send(new StudioAgentConnectionParameters(buildConfiguration.getGradleHome()));
     }
 
     private CommandExec.RunHandle startStudio(LaunchConfiguration launchConfiguration, Path studioInstallDir, InvocationSettings invocationSettings, Server server) {
@@ -77,28 +77,28 @@ public class StudioGradleClient implements GradleClient {
 
     @Override
     public void close() throws IOException {
-        System.out.println("* STOPPING ANDROID STUDIO....");
-        pluginAgentConnection.send(new StudioRequest(EXIT));
+        System.out.println("* Stopping Android Studio....");
+        studioPluginConnection.send(new StudioRequest(EXIT));
         studioProcess.waitForSuccess();
         System.out.println("* Android Studio stopped.");
-        pluginServer.close();
-        agentServer.close();
+        studioPluginServer.close();
+        studioAgentServer.close();
     }
 
     public BuildActionResult sync(List<String> gradleArgs, List<String> jvmArgs) {
-        System.out.println("* PLEASE WAIT TO RUN SYNC IN ANDROID STUDIO...");
-        pluginAgentConnection.send(new StudioRequest(SYNC));
+        System.out.println("* Running sync in Android Studio...");
+        studioPluginConnection.send(new StudioRequest(SYNC));
         System.out.println("* Sent sync request");
         // Use a long time out because it can take quite some time
         // between the tapi action completing and studio finishing the sync
-        agentConnection.receiveSyncStarted(Duration.ofMinutes(10));
-        agentConnection.send(new SyncParameters(gradleArgs, jvmArgs));
+        studioAgentConnection.receiveSyncStarted(Duration.ofMinutes(10));
+        studioAgentConnection.send(new GradleInvocationParameters(gradleArgs, jvmArgs));
         System.out.println("* Sync has started, waiting for it to complete...");
-        SyncCompleted agentCompleted = agentConnection.receiveSyncCompleted(Duration.ofHours(1));
-        System.out.println("* Gradle Sync has completed in: " + agentCompleted.getDurationMillis() + "ms");
-        StudioSyncRequestCompleted syncRequestCompleted = pluginAgentConnection.receiveSyncRequestCompleted(Duration.ofMinutes(20));
-        System.out.println("* Full Sync has completed in: " + syncRequestCompleted.getDurationMillis() + "ms and it " + syncRequestCompleted.getResult().name().toLowerCase());
-        return BuildActionResult.of(
+        GradleInvocationCompleted agentCompleted = studioAgentConnection.receiveSyncCompleted(Duration.ofHours(1));
+        System.out.println("* Gradle invocation has completed in: " + agentCompleted.getDurationMillis() + "ms");
+        StudioSyncRequestCompleted syncRequestCompleted = studioPluginConnection.receiveSyncRequestCompleted(Duration.ofMinutes(20));
+        System.out.println("* Full sync has completed in: " + syncRequestCompleted.getDurationMillis() + "ms and it " + syncRequestCompleted.getResult().name().toLowerCase());
+        return BuildActionResult.withIdeTimings(
             Duration.ofMillis(syncRequestCompleted.getDurationMillis()),
             Duration.ofMillis(agentCompleted.getDurationMillis()),
             Duration.ofMillis(syncRequestCompleted.getDurationMillis() - agentCompleted.getDurationMillis())

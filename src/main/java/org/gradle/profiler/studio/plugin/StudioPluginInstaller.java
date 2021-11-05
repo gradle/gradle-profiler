@@ -16,8 +16,8 @@ import java.util.List;
 public class StudioPluginInstaller {
 
     /**
-     * Note: if you change that, and you load plugins always from the same location,
-     * then you will have also "old plugin" on the classpath, and it might override your new classes.
+     * Note: if you change this constant, and you load plugins always from the same location,
+     * then you will have also a plugin installed before on the classpath, and it might override your new classes.
      */
     private static final String PLUGIN_INSTALL_FOLDER_NAME = "gradle-profiler-studio-plugin";
 
