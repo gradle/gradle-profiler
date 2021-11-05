@@ -1,6 +1,7 @@
 package org.gradle.profiler.client.protocol;
 
 import org.gradle.profiler.client.protocol.messages.*;
+import org.gradle.profiler.client.protocol.serialization.MessageSerializer;
 
 import java.io.Closeable;
 import java.io.IOException;
@@ -8,11 +9,11 @@ import java.time.Duration;
 
 public class ServerConnection implements Closeable {
     private final Connection connection;
-    private final Serializer serializer;
+    private final MessageSerializer serializer;
 
     public ServerConnection(String peerName, Connection connection) {
         this.connection = connection;
-        this.serializer = new Serializer(peerName, connection);
+        this.serializer = new MessageSerializer(peerName, connection);
     }
 
     @Override

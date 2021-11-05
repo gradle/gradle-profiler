@@ -1,6 +1,7 @@
 package org.gradle.profiler.client.protocol;
 
 import org.gradle.profiler.client.protocol.messages.*;
+import org.gradle.profiler.client.protocol.serialization.MessageSerializer;
 
 import java.io.IOException;
 import java.net.InetAddress;
@@ -19,7 +20,7 @@ public enum Client {
     private final ExecutorService executor = Executors.newCachedThreadPool();
     private final Object lock = new Object();
     private Connection connection;
-    private Serializer serializer;
+    private MessageSerializer serializer;
 
     public void connect(int port) {
         synchronized (lock) {
@@ -29,7 +30,7 @@ public enum Client {
             try {
                 Socket socket = new Socket(InetAddress.getLoopbackAddress(), port);
                 connection = new Connection(socket);
-                serializer = new Serializer("controller process", connection);
+                serializer = new MessageSerializer("controller process", connection);
             } catch (IOException e) {
                 throw new RuntimeException("Could not connect to controller process.", e);
             }
