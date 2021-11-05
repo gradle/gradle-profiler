@@ -1,6 +1,6 @@
 package org.gradle.profiler.client.protocol.messages;
 
-public class StudioSyncRequestCompleted extends Message {
+public class StudioSyncRequestCompleted implements Message {
 
     public enum StudioSyncRequestResult {
         SUCCEEDED,

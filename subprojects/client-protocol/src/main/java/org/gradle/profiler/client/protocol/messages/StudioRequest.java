@@ -2,7 +2,7 @@ package org.gradle.profiler.client.protocol.messages;
 
 import java.util.concurrent.atomic.AtomicInteger;
 
-public class StudioRequest extends Message {
+public class StudioRequest implements Message {
 
     public enum StudioRequestType {
         SYNC,

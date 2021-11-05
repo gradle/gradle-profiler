@@ -1,6 +1,6 @@
 package org.gradle.profiler.client.protocol.messages;
 
-public class SyncStarted extends Message {
+public class SyncStarted implements Message {
     private final int id;
 
     public SyncStarted(int id) {

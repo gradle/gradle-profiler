@@ -1,10 +1,8 @@
-package org.gradle.profiler.client.protocol;
-
-import org.gradle.profiler.client.protocol.messages.Message;
+package org.gradle.profiler.client.protocol.messages;
 
 import java.util.List;
 
-public class SyncParameters extends Message {
+public class SyncParameters implements Message {
     private final List<String> gradleArgs;
     private final List<String> jvmArgs;
 

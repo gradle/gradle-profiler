@@ -1,8 +1,8 @@
 package org.gradle.profiler.studio.instrumented;
 
 import org.gradle.profiler.client.protocol.Client;
-import org.gradle.profiler.client.protocol.ConnectionParameters;
-import org.gradle.profiler.client.protocol.SyncParameters;
+import org.gradle.profiler.client.protocol.messages.ConnectionParameters;
+import org.gradle.profiler.client.protocol.messages.SyncParameters;
 import org.gradle.profiler.client.protocol.messages.SyncStarted;
 import org.gradle.tooling.ResultHandler;
 import org.gradle.tooling.internal.consumer.AbstractLongRunningOperation;

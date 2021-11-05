@@ -1,6 +1,6 @@
 package org.gradle.profiler.client.protocol.messages;
 
-public class SyncCompleted extends Message {
+public class SyncCompleted implements Message {
     private final int id;
     private final long durationMillis;
 
