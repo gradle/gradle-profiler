@@ -31,11 +31,14 @@ public class StudioGradleClient implements GradleClient {
             throw new IllegalArgumentException("Support for Android studio is currently only implemented on macOS.");
         }
         Path studioInstallDir = invocationSettings.getStudioInstallDir().toPath();
+        Path studioSandboxDir = invocationSettings.getStudioSandboxDir() != null
+            ? invocationSettings.getStudioSandboxDir().toPath()
+            : null;
         Logging.startOperation("Starting Android Studio at " + studioInstallDir);
 
         studioPluginServer = new Server("plugin");
         studioAgentServer = new Server("agent");
-        LaunchConfiguration launchConfiguration = new LauncherConfigurationParser().calculate(studioInstallDir, studioPluginServer.getPort());
+        LaunchConfiguration launchConfiguration = new LauncherConfigurationParser().calculate(studioInstallDir, studioSandboxDir, studioPluginServer.getPort());
         System.out.println();
         System.out.println("* Java command: " + launchConfiguration.getJavaCommand());
         System.out.println("* Classpath:");

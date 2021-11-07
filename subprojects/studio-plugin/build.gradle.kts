@@ -18,7 +18,7 @@ java {
 
 intellij {
     pluginName.set("gradle-profiler-studio-plugin")
-    version.set("2021.2.1")
+    version.set("2021.1.1")
     // Any plugin here must be also added to resources/META-INF/plugin.xml
     plugins.set(listOf("java", "gradle", "android"))
 }

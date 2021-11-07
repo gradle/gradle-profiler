@@ -23,7 +23,7 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 
 public class LauncherConfigurationParser {
-    public LaunchConfiguration calculate(Path studioInstallDir, int studioPluginPort) {
+    public LaunchConfiguration calculate(Path studioInstallDir, Path studioSandboxDir, int studioPluginPort) {
         Dict entries = parse(studioInstallDir.resolve("Contents/Info.plist"));
         Path actualInstallDir;
         if ("jetbrains-toolbox-launcher".equals(entries.string("CFBundleExecutable"))) {
@@ -44,13 +44,30 @@ public class LauncherConfigurationParser {
         Path supportJar = GradleInstrumentation.unpackPlugin("instrumentation-support").toPath();
         Path protocolJar = GradleInstrumentation.unpackPlugin("client-protocol").toPath();
         Path studioPlugin = GradleInstrumentation.unpackPlugin("studio-plugin").toPath();
-        Path studioPluginsDir = newPluginTempDir();
 
-        String studioPluginsDirPath = studioPluginsDir.toAbsolutePath().toString();
+        Path studioPluginsDir;
+        String studioPluginsDirPath;
+        String studioLogDirPath;
+        if (studioSandboxDir != null) {
+            new File(studioSandboxDir.toFile(), "plugins").mkdirs();
+            studioPluginsDir = new File(studioSandboxDir.toFile(), "plugins").toPath();
+            studioPluginsDirPath = studioPluginsDir.toAbsolutePath().toString();
+            studioLogDirPath = studioSandboxDir.toAbsolutePath().toString();
+            File studioConfigDir = new File(studioSandboxDir.toFile(), "config");
+            studioConfigDir.mkdirs();
+            File studioSystemDir = new File(studioSandboxDir.toFile(), "system");
+            studioSystemDir.mkdirs();
+            systemProperties.put("idea.config.path", studioConfigDir.toPath().toAbsolutePath().toString());
+            systemProperties.put("idea.system.path", studioSystemDir.toPath().toAbsolutePath().toString());
+        } else {
+            studioPluginsDir = newPluginTempDir();
+            studioPluginsDirPath = studioPluginsDir.toAbsolutePath().toString();
+            studioLogDirPath = studioPluginsDirPath;
+        }
+        systemProperties.put("idea.plugins.path", studioPluginsDirPath);
+        systemProperties.put("idea.log.path", studioLogDirPath);
         List<Path> sharedJars = Arrays.asList(asmJar, protocolJar);
         List<Path> studioPluginJars = Arrays.asList(studioPlugin, protocolJar);
-        systemProperties.put("idea.plugins.path", studioPluginsDirPath);
-        systemProperties.put("idea.log.path", studioPluginsDirPath);
         return new LaunchConfiguration(javaCommand, classPath, systemProperties, mainClass, agentJar, supportJar, sharedJars, studioPluginJars, studioPluginsDir);
     }
 
