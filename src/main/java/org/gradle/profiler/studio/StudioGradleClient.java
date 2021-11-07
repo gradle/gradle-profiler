@@ -16,7 +16,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
-import static org.gradle.profiler.client.protocol.messages.StudioRequest.StudioRequestType.EXIT;
+import static org.gradle.profiler.client.protocol.messages.StudioRequest.StudioRequestType.EXIT_IDE;
 import static org.gradle.profiler.client.protocol.messages.StudioRequest.StudioRequestType.SYNC;
 
 public class StudioGradleClient implements GradleClient {
@@ -78,7 +78,7 @@ public class StudioGradleClient implements GradleClient {
     @Override
     public void close() throws IOException {
         System.out.println("* Stopping Android Studio....");
-        studioPluginConnection.send(new StudioRequest(EXIT));
+        studioPluginConnection.send(new StudioRequest(EXIT_IDE));
         studioProcess.waitForSuccess();
         System.out.println("* Android Studio stopped.");
         studioPluginServer.close();

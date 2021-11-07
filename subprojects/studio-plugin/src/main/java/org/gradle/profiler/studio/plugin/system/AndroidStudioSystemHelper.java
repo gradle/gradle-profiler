@@ -15,20 +15,18 @@ import static com.google.wireless.android.sdk.stats.GradleSyncStats.Trigger.TRIG
 
 public class AndroidStudioSystemHelper {
 
-    public static final String INTEGRATION_TEST_PROPERTY = "gradle.profiler.is.integration.test";
     private static final long WAIT_ON_PROCESS_SLEEP_TIME = 10;
 
     /**
      * Does a Gradle sync.
-     *
-     * Note: In case of integration tests, it will be a no-op, since currently Gradle sync stops the application and test do not finish.
      */
     public GradleSyncResult doGradleSync(Project project) {
         GradleProfilerGradleSyncListener syncListener = new GradleProfilerGradleSyncListener();
-        if (Boolean.getBoolean(INTEGRATION_TEST_PROPERTY)) {
-            syncListener.syncSucceeded(project);
-        } else {
+        try {
             GradleSyncInvoker.getInstance().requestProjectSync(project, TRIGGER_USER_SYNC_ACTION, syncListener);
+        } catch (Exception e) {
+            e.printStackTrace();
+            syncListener.syncFailed(project, e.getMessage());
         }
         return syncListener.waitAndGetResult();
     }
@@ -77,13 +75,9 @@ public class AndroidStudioSystemHelper {
 
     /**
      * Exit the application.
-     *
-     * In case of integration tests, intellij-gradle-plugin will close the application for us.
      */
     public void exit() {
-        if (!Boolean.getBoolean(INTEGRATION_TEST_PROPERTY)) {
-            ApplicationManager.getApplication().exit(true, true, false);
-        }
+        ApplicationManager.getApplication().exit(true, true, false);
     }
 
 }
