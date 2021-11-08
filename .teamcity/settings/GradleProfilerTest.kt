@@ -24,7 +24,6 @@ open class GradleProfilerTest(os: Os, javaVersion: JavaVersion) : BuildType({
                 " -PtestJavaVersion=${javaVersion.majorVersion}" +
                 " -PtestJavaVendor=${javaVersion.vendor}"
             param("org.jfrog.artifactory.selectedDeployableServer.defaultModuleVersionConfiguration", "GLOBAL")
-            param("org.jfrog.artifactory.selectedDeployableServer.defaultModuleVersionConfiguration", "GLOBAL")
         }
     }
 
