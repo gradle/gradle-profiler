@@ -10,14 +10,20 @@ open class GradleProfilerTest(os: Os, javaVersion: JavaVersion) : BuildType({
     gradleProfilerVcs()
 
     params {
-        javaHome(os, javaVersion)
+        // Java home must always use Java11
+        // since intellij-gradle-plugin is not compatible with Java8
+        javaHome(os, JavaVersion.OPENJDK_11)
     }
 
     steps {
         gradle {
             tasks = "clean :test"
             buildFile = ""
-            gradleParams = "-s --build-cache ${toolchainConfiguration(os)}"
+            gradleParams = "-s" +
+                " --build-cache ${toolchainConfiguration(os)}" +
+                " -PtestJavaVersion=${javaVersion.majorVersion}" +
+                " -PtestJavaVendor=${javaVersion.vendor}"
+            param("org.jfrog.artifactory.selectedDeployableServer.defaultModuleVersionConfiguration", "GLOBAL")
             param("org.jfrog.artifactory.selectedDeployableServer.defaultModuleVersionConfiguration", "GLOBAL")
         }
     }
