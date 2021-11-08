@@ -115,6 +115,8 @@ tasks.test {
         }.getOrNull()
     }
     javaLauncher.set(launcher)
+    // So processes started from test also use same Java version
+    environment = mapOf("JAVA_HOME" to javaLauncher.get().metadata.installationPath)
 
     // We had some build failures on macOS, where it seems to be a Socket was already closed when trying to download the Gradle distribution.
     // The tests failing were consistenly in ProfilerIntegrationTest.
