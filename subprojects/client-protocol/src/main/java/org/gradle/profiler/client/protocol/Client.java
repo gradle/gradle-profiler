@@ -4,12 +4,10 @@ import org.gradle.profiler.client.protocol.messages.*;
 import org.gradle.profiler.client.protocol.serialization.MessageSerializer;
 
 import java.io.IOException;
+import java.io.UncheckedIOException;
 import java.net.InetAddress;
 import java.net.Socket;
 import java.time.Duration;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.function.Consumer;
 
 /**
  * A singleton that runs inside a client process to communicate with the controller process.
@@ -17,7 +15,6 @@ import java.util.function.Consumer;
 public enum Client {
     INSTANCE;
 
-    private final ExecutorService executor = Executors.newCachedThreadPool();
     private final Object lock = new Object();
     private Connection connection;
     private MessageSerializer serializer;
@@ -73,16 +70,14 @@ public enum Client {
         }
     }
 
-    public void listenAsync(Consumer<Client> runnable) {
-        executor.execute(() -> runnable.accept(this));
-    }
-
-    public void disconnect() throws IOException {
+    public void disconnect() {
         synchronized (lock) {
             try {
                 if (connection != null) {
                     connection.close();
                 }
+            } catch (IOException e) {
+                throw new UncheckedIOException(e);
             } finally {
                 connection = null;
             }

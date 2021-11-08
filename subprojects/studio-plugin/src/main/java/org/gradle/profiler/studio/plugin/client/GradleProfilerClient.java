@@ -38,6 +38,7 @@ public class GradleProfilerClient {
                 handleGradleProfilerRequest(request, project);
                 request = receiveNextEvent();
             }
+            Client.INSTANCE.disconnect();
             if (request.getType() == EXIT_IDE) {
                 systemHelper.exit();
             }
