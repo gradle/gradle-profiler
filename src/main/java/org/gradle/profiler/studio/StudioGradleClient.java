@@ -5,7 +5,9 @@ import org.gradle.profiler.*;
 import org.gradle.profiler.BuildAction.BuildActionResult;
 import org.gradle.profiler.client.protocol.*;
 import org.gradle.profiler.client.protocol.messages.*;
-import org.gradle.profiler.studio.plugin.StudioPluginInstaller;
+import org.gradle.profiler.studio.tools.StudioPluginInstaller;
+import org.gradle.profiler.studio.tools.StudioSandboxCreator;
+import org.gradle.profiler.studio.tools.StudioSandboxCreator.StudioSandbox;
 
 import java.io.File;
 import java.io.IOException;
@@ -38,7 +40,8 @@ public class StudioGradleClient implements GradleClient {
 
         studioPluginServer = new Server("plugin");
         studioAgentServer = new Server("agent");
-        LaunchConfiguration launchConfiguration = new LauncherConfigurationParser().calculate(studioInstallDir, studioSandboxDir, studioPluginServer.getPort());
+        StudioSandbox sandbox = new StudioSandboxCreator().createSandbox(studioSandboxDir);
+        LaunchConfiguration launchConfiguration = new LauncherConfigurationParser().calculate(studioInstallDir, sandbox, studioPluginServer.getPort());
         System.out.println();
         System.out.println("* Java command: " + launchConfiguration.getJavaCommand());
         System.out.println("* Classpath:");

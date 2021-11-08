@@ -1,6 +1,7 @@
 
 plugins {
     groovy
+    id("java-test-fixtures")
     id("org.jetbrains.intellij") version "1.2.1"
 }
 
