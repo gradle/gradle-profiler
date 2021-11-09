@@ -30,12 +30,10 @@ public class GradleScenarioInvoker extends ScenarioInvoker<GradleScenarioDefinit
     @Override
     public List<Sample<? super GradleBuildInvocationResult>> samplesFor(InvocationSettings settings, GradleScenarioDefinition scenario) {
         ImmutableList.Builder<Sample<? super GradleBuildInvocationResult>> builder = ImmutableList.builder();
+        builder.add(BuildInvocationResult.EXECUTION_TIME);
         if (scenario.isAndroidStudioSync()) {
-            builder.add(GradleBuildInvocationResult.TOTAL_EXECUTION_TIME);
             builder.add(GradleBuildInvocationResult.GRADLE_TOOLING_AGENT_EXECUTION_TIME);
             builder.add(GradleBuildInvocationResult.STUDIO_EXECUTION_TIME);
-        } else {
-            builder.add(BuildInvocationResult.EXECUTION_TIME);
         }
         if (settings.isMeasureGarbageCollection()) {
             builder.add(GradleBuildInvocationResult.GARBAGE_COLLECTION_TIME);

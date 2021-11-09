@@ -78,18 +78,6 @@ public class GradleBuildInvocationResult extends BuildInvocationResult {
         }
     };
 
-    public static final Sample<GradleBuildInvocationResult> TOTAL_EXECUTION_TIME = new Sample<GradleBuildInvocationResult>() {
-        @Override
-        public String getName() {
-            return "total execution time";
-        }
-
-        @Override
-        public Duration extractFrom(GradleBuildInvocationResult result) {
-            return result.getExecutionTime();
-        }
-    };
-
     public static final Sample<GradleBuildInvocationResult> GRADLE_TOOLING_AGENT_EXECUTION_TIME = new Sample<GradleBuildInvocationResult>() {
         @Override
         public String getName() {
