@@ -99,10 +99,24 @@ tasks.processResources {
 }
 
 tasks.test {
-    // Use the current JVM. Some tests require JFR, which is only available in some JVM implementations
-    // For now assume that the current JVM has JFR support and that CI will inject the correct implementation
-    javaLauncher.set(null as JavaLauncher?)
-    javaLauncher.convention(null as JavaLauncher?)
+    // If testJavaVersion is not set use the current JVM. Some tests require JFR, which is only available
+    // in some JVM implementations. For now assume that the current JVM has JFR support.
+    // CI will inject the correct implementation.
+    val launcher = project.javaToolchains.launcherFor {
+        val javaVersion = providers
+            .gradleProperty("testJavaVersion")
+            .getOrElse(JavaVersion.current().majorVersion)
+        languageVersion.set(JavaLanguageVersion.of(javaVersion))
+        providers.gradleProperty("testJavaVendor").map {
+            when (it.toLowerCase()) {
+                "oracle" -> vendor.set(JvmVendorSpec.ORACLE)
+                "openjdk" -> vendor.set(JvmVendorSpec.ADOPTOPENJDK)
+            }
+        }.getOrNull()
+    }
+    javaLauncher.set(launcher)
+    // So processes started from test also use same Java version
+    environment("JAVA_HOME" to javaLauncher.get().metadata.installationPath)
 
     // We had some build failures on macOS, where it seems to be a Socket was already closed when trying to download the Gradle distribution.
     // The tests failing were consistenly in ProfilerIntegrationTest.
