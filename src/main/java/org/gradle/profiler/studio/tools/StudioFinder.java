@@ -24,7 +24,6 @@ public class StudioFinder {
             return null;
         }
         for (File file : applicationsDir.listFiles()) {
-            System.out.println(file.getAbsolutePath());
             if (file.getName().matches("Android Studio.*\\.app")) {
                 return file;
             }

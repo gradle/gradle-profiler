@@ -1,5 +1,6 @@
 package org.gradle.profiler.studio.tools;
 
+import javax.annotation.Nullable;
 import java.io.File;
 import java.io.IOException;
 import java.io.UncheckedIOException;
@@ -15,18 +16,19 @@ public class StudioSandboxCreator {
      * If sandboxDir is not specified only plugins and logs sandbox will be created, but config and system folder won't be.
      * In that case Android Studio will use configs from default folder, additionally it will write to default folder.
      */
-    public StudioSandbox createSandbox(Path sandboxDir) {
+    public StudioSandbox createSandbox(@Nullable Path sandboxDir) {
         if (shouldCreatePartialSandbox(sandboxDir)) {
             Path path = newTempDir();
             Path pluginsDir = createDir(new File(path.toFile(), "plugins").toPath());
             Path logsDir = createDir(new File(path.toFile(), "logs").toPath());
-            return new StudioSandbox(Optional.empty(), Optional.empty(), pluginsDir, logsDir);
+            return StudioSandbox.partialSandbox(pluginsDir, logsDir);
         }
-        Path configDir = createDir(new File(sandboxDir.toFile(), "config").toPath());
-        Path systemDir = createDir(new File(sandboxDir.toFile(), "system").toPath());
-        Path pluginsDir = createDir(new File(sandboxDir.toFile(), "plugins").toPath());
-        Path logDir = createDir(new File(sandboxDir.toFile(), "logs").toPath());
-        return new StudioSandbox(Optional.of(configDir), Optional.of(systemDir), pluginsDir, logDir);
+        File sandboxDirFile = sandboxDir.toFile();
+        Path configDir = createDir(new File(sandboxDirFile, "config").toPath());
+        Path systemDir = createDir(new File(sandboxDirFile, "system").toPath());
+        Path pluginsDir = createDir(new File(sandboxDirFile, "plugins").toPath());
+        Path logDir = createDir(new File(sandboxDirFile, "logs").toPath());
+        return StudioSandbox.fullSandbox(configDir, systemDir, pluginsDir, logDir);
     }
 
     private boolean shouldCreatePartialSandbox(Path sandboxDir) {
@@ -46,15 +48,14 @@ public class StudioSandboxCreator {
         }
     }
 
-    @SuppressWarnings("OptionalUsedAsFieldOrParameterType")
     public static class StudioSandbox {
 
-        private final Optional<Path> configDir;
-        private final Optional<Path> systemDir;
+        private final Path configDir;
+        private final Path systemDir;
         private final Path pluginsDir;
         private final Path logsDir;
 
-        public StudioSandbox(Optional<Path> configDir, Optional<Path> systemDir, Path pluginsDir, Path logsDir) {
+        private StudioSandbox(@Nullable Path configDir, @Nullable Path systemDir, Path pluginsDir, Path logsDir) {
             this.configDir = configDir;
             this.systemDir = systemDir;
             this.pluginsDir = pluginsDir;
@@ -62,11 +63,11 @@ public class StudioSandboxCreator {
         }
 
         public Optional<Path> getConfigDir() {
-            return configDir;
+            return Optional.ofNullable(configDir);
         }
 
         public Optional<Path> getSystemDir() {
-            return systemDir;
+            return Optional.ofNullable(systemDir);
         }
 
         public Path getLogsDir() {
@@ -75,6 +76,14 @@ public class StudioSandboxCreator {
 
         public Path getPluginsDir() {
             return pluginsDir;
+        }
+
+        public static StudioSandbox fullSandbox(Path configDir, Path systemDir, Path pluginsDir, Path logsDir) {
+            return new StudioSandbox(configDir, systemDir, pluginsDir, logsDir);
+        }
+
+        public static StudioSandbox partialSandbox(Path pluginsDir, Path logsDir) {
+            return new StudioSandbox(null, null, pluginsDir, logsDir);
         }
     }
 }

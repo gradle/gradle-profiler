@@ -8,7 +8,7 @@ class AndroidStudioIntegrationTest extends AbstractProfilerIntegrationTest {
     @Requires({ StudioFinder.findStudioHome() })
     def "benchmarks Android Studio sync with latest gradle version"() {
         given:
-        File sandbox = File.createTempDir('android-studio-test', 'sandbox')
+        File sandbox = tmpDir.newFolder('sandbox')
         File studioHome = StudioFinder.findStudioHome()
         def scenarioFile = file("performance.scenarios") << """
             s1 {
@@ -36,7 +36,7 @@ class AndroidStudioIntegrationTest extends AbstractProfilerIntegrationTest {
 
         and:
         File benchmarkCsv = outputDir.listFiles().find { it.name.matches("benchmark.csv") }
-        benchmarkCsv.text.contains("value,execution,Gradle Tooling Agent execution time,Android Studio execution time")
+        benchmarkCsv.text.contains("value,total execution time,Gradle execution time,Android Studio execution time")
     }
 
 }

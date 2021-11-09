@@ -28,6 +28,7 @@ import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.gradle.profiler.client.protocol.messages.StudioRequest.StudioRequestType.EXIT_IDE;
@@ -52,14 +53,12 @@ public class StudioGradleClient implements GradleClient {
             throw new IllegalArgumentException("Support for Android studio is currently only implemented on macOS.");
         }
         Path studioInstallDir = invocationSettings.getStudioInstallDir().toPath();
-        Path studioSandboxDir = invocationSettings.getStudioSandboxDir() != null
-            ? invocationSettings.getStudioSandboxDir().toPath()
-            : null;
+        Optional<File> studioSandboxDir = invocationSettings.getStudioSandboxDir();
         Logging.startOperation("Starting Android Studio at " + studioInstallDir);
 
         studioPluginServer = new Server("plugin");
         studioAgentServer = new Server("agent");
-        StudioSandbox sandbox = new StudioSandboxCreator().createSandbox(studioSandboxDir);
+        StudioSandbox sandbox = new StudioSandboxCreator().createSandbox(studioSandboxDir.map(File::toPath).orElse(null));
         LaunchConfiguration launchConfiguration = new LauncherConfigurationParser().calculate(studioInstallDir, sandbox, studioPluginServer.getPort());
         System.out.println();
         System.out.println("* Java command: " + launchConfiguration.getJavaCommand());
@@ -93,7 +92,7 @@ public class StudioGradleClient implements GradleClient {
         commandLine.add("-Xbootclasspath/a:" + Joiner.on(File.pathSeparator).join(launchConfiguration.getSharedJars()));
         commandLine.add(launchConfiguration.getMainClass());
         commandLine.add(invocationSettings.getProjectDir().getAbsolutePath());
-        System.out.println("* Android Studio logs can be found at: " + Paths.get(launchConfiguration.getStudioPluginsDir().toString(), "idea.log"));
+        System.out.println("* Android Studio logs can be found at: " + Paths.get(launchConfiguration.getStudioLogsDir().toString(), "idea.log"));
         System.out.println("* Using command line: " + commandLine);
 
         new StudioPluginInstaller().installPlugin(launchConfiguration);

@@ -5,6 +5,7 @@ import java.io.File;
 import java.io.PrintStream;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.UUID;
 
 import static org.gradle.profiler.report.CsvGenerator.Format;
@@ -52,7 +53,7 @@ public class InvocationSettings {
         List<String> targets,
         Map<String, String> sysProperties,
         File gradleUserHome,
-        File studioInstallDir,
+        @Nullable File studioInstallDir,
         File studioSandboxDir,
         Integer warmupCount,
         Integer iterations,
@@ -168,8 +169,8 @@ public class InvocationSettings {
         return studioInstallDir;
     }
 
-    public File getStudioSandboxDir() {
-        return studioSandboxDir;
+    public Optional<File> getStudioSandboxDir() {
+        return Optional.ofNullable(studioSandboxDir);
     }
 
     public boolean isMeasureGarbageCollection() {
@@ -338,7 +339,7 @@ public class InvocationSettings {
             return this;
         }
 
-        public InvocationSettingsBuilder setStudioSandboxDir(File studioSandboxDir) {
+        public InvocationSettingsBuilder setStudioSandboxDir(@Nullable File studioSandboxDir) {
             this.studioSandboxDir = studioSandboxDir;
             return this;
         }

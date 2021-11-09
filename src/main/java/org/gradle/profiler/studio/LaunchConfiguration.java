@@ -14,6 +14,7 @@ public class LaunchConfiguration {
     private final List<Path> sharedJars;
     private final List<Path> studioPluginJars;
     private final Path studioPluginsDir;
+    private final Path studioLogsDir;
 
     public LaunchConfiguration(Path javaCommand,
                                List<Path> classPath,
@@ -23,7 +24,8 @@ public class LaunchConfiguration {
                                Path supportJar,
                                List<Path> sharedJars,
                                List<Path> studioPluginJars,
-                               Path studioPluginsDir) {
+                               Path studioPluginsDir,
+                               Path studioLogsDir) {
         this.javaCommand = javaCommand;
         this.classPath = classPath;
         this.systemProperties = systemProperties;
@@ -33,6 +35,7 @@ public class LaunchConfiguration {
         this.sharedJars = sharedJars;
         this.studioPluginJars = studioPluginJars;
         this.studioPluginsDir = studioPluginsDir;
+        this.studioLogsDir = studioLogsDir;
     }
 
     public Path getJavaCommand() {
@@ -69,5 +72,9 @@ public class LaunchConfiguration {
 
     public Path getStudioPluginsDir() {
         return studioPluginsDir;
+    }
+
+    public Path getStudioLogsDir() {
+        return studioLogsDir;
     }
 }

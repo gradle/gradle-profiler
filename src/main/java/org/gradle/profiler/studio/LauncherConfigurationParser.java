@@ -40,15 +40,16 @@ public class LauncherConfigurationParser {
         Path protocolJar = GradleInstrumentation.unpackPlugin("client-protocol").toPath();
         Path studioPlugin = GradleInstrumentation.unpackPlugin("studio-plugin").toPath();
 
-        Path studioPluginsDir = studioSandbox.getPluginsDir();
-        Path studioLogsDir = studioSandbox.getLogsDir();
         studioSandbox.getConfigDir().ifPresent(path -> systemProperties.put("idea.config.path", path.toString()));
         studioSandbox.getSystemDir().ifPresent(path -> systemProperties.put("idea.system.path", path.toString()));
+        Path studioPluginsDir = studioSandbox.getPluginsDir();
         systemProperties.put("idea.plugins.path", studioPluginsDir.toString());
+        Path studioLogsDir = studioSandbox.getLogsDir();
         systemProperties.put("idea.log.path", studioLogsDir.toString());
         List<Path> sharedJars = Arrays.asList(asmJar, protocolJar);
         List<Path> studioPluginJars = Arrays.asList(studioPlugin, protocolJar);
-        return new LaunchConfiguration(javaCommand, classPath, systemProperties, mainClass, agentJar, supportJar, sharedJars, studioPluginJars, studioPluginsDir);
+        return new LaunchConfiguration(javaCommand, classPath, systemProperties, mainClass, agentJar, supportJar,
+            sharedJars, studioPluginJars, studioPluginsDir, studioLogsDir);
     }
 
     private static Dict parse(Path infoFile) {
