@@ -20,6 +20,7 @@ import org.gradle.profiler.studio.plugin.StudioPluginInstaller;
 import java.io.Closeable;
 import java.io.File;
 import java.io.IOException;
+import java.io.UncheckedIOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.Duration;
@@ -44,6 +45,7 @@ public class StudioGradleClient implements GradleClient {
     private final CommandExec.RunHandle studioProcess;
     private final ServerConnection studioAgentConnection;
     private final ServerConnection studioPluginConnection;
+    private final StudioPluginInstaller studioPluginInstaller;
 
     public StudioGradleClient(GradleBuildConfiguration buildConfiguration, InvocationSettings invocationSettings) {
         if (!OperatingSystem.isMacOS()) {
@@ -51,7 +53,6 @@ public class StudioGradleClient implements GradleClient {
         }
         Path studioInstallDir = invocationSettings.getStudioInstallDir().toPath();
         Logging.startOperation("Starting Android Studio at " + studioInstallDir);
-
         studioPluginServer = new Server("plugin");
         studioAgentServer = new Server("agent");
         LaunchConfiguration launchConfiguration = new LauncherConfigurationParser().calculate(studioInstallDir, studioPluginServer.getPort());
@@ -67,6 +68,7 @@ public class StudioGradleClient implements GradleClient {
         }
         System.out.println("* Main class: " + launchConfiguration.getMainClass());
 
+        studioPluginInstaller = new StudioPluginInstaller(launchConfiguration.getStudioPluginsDir());
         studioProcess = startStudio(launchConfiguration, studioInstallDir, invocationSettings, studioAgentServer);
         studioPluginConnection = studioPluginServer.waitForIncoming(AGENT_CONNECT_TIMEOUT);
         studioAgentConnection = studioAgentServer.waitForIncoming(AGENT_CONNECT_TIMEOUT);
@@ -90,7 +92,7 @@ public class StudioGradleClient implements GradleClient {
         System.out.println("* Android Studio logs can be found at: " + Paths.get(launchConfiguration.getStudioPluginsDir().toString(), "idea.log"));
         System.out.println("* Using command line: " + commandLine);
 
-        new StudioPluginInstaller().installPlugin(launchConfiguration);
+        studioPluginInstaller.installPlugin(launchConfiguration.getStudioPluginJars());
         return new CommandExec().inDir(studioInstallDir.toFile()).start(commandLine);
     }
 
@@ -103,8 +105,9 @@ public class StudioGradleClient implements GradleClient {
             System.out.println("* Android Studio stopped.");
         } catch (Exception e) {
             e.printStackTrace();
-            System.out.println("* Android Studio did not stopped successfully, you will have to close it manually.");
+            System.out.println("* Android Studio did not finish successfully, you will have to close it manually.");
         } finally {
+            tryClose(studioPluginInstaller::uninstallPlugin);
             tryClose(studioPluginServer);
             tryClose(studioAgentServer);
         }
@@ -113,7 +116,7 @@ public class StudioGradleClient implements GradleClient {
     private void tryClose(Closeable closeable) {
         try {
             closeable.close();
-        } catch (IOException e) {
+        } catch (UncheckedIOException | IOException e) {
             e.printStackTrace();
         }
     }
