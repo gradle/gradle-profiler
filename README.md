@@ -281,6 +281,7 @@ A scenario can define changes that should be applied to the source before each b
 - `apply-android-resource-value-change-to`: Change a string resource in an Android resource file.
 - `apply-android-manifest-change-to`: Add a permission to an Android manifest file.
 - `apply-android-layout-change-to`: Add a hidden view with id to an Android layout file. Supports traditional layouts as well as Databinding layouts with a ViewGroup as the root element.
+- `apply-kotlin-composable-change-to`: Add a `@Composable` function to a Kotlin source file.
 - `clear-build-cache-before`: Deletes the contents of the build cache before the scenario is executed (`SCENARIO`), before cleanup (`CLEANUP`) or before the build is executed (`BUILD`).
 - `clear-gradle-user-home-before`: Deletes the contents of the Gradle user home directory before the scenario is executed (`SCENARIO`), before cleanup (`CLEANUP`) or before the build is executed (`BUILD`).
    The mutator retains the `wrapper` cache in the Gradle user home, since the downloaded wrapper in that location is used to run Gradle.
