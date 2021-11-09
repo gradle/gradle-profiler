@@ -1,12 +1,10 @@
 package org.gradle.profiler.client.protocol;
 
-import org.gradle.profiler.client.protocol.messages.GradleInvocationCompleted;
 import org.gradle.profiler.client.protocol.messages.GradleInvocationParameters;
-import org.gradle.profiler.client.protocol.messages.GradleInvocationStarted;
+import org.gradle.profiler.client.protocol.messages.Message;
 import org.gradle.profiler.client.protocol.messages.StudioAgentConnectionParameters;
 import org.gradle.profiler.client.protocol.messages.StudioRequest;
-import org.gradle.profiler.client.protocol.messages.StudioSyncRequestCompleted;
-import org.gradle.profiler.client.protocol.serialization.MessageSerializer;
+import org.gradle.profiler.client.protocol.serialization.MessageProtocolHandler;
 
 import java.io.IOException;
 import java.net.InetAddress;
@@ -25,7 +23,7 @@ public enum Client {
     private final ExecutorService executor = Executors.newCachedThreadPool();
     private final Object lock = new Object();
     private Connection connection;
-    private MessageSerializer serializer;
+    private MessageProtocolHandler serializer;
 
     public void connect(int port) {
         synchronized (lock) {
@@ -35,26 +33,14 @@ public enum Client {
             try {
                 Socket socket = new Socket(InetAddress.getLoopbackAddress(), port);
                 connection = new Connection(socket);
-                serializer = new MessageSerializer("controller process", connection);
+                serializer = new MessageProtocolHandler("controller process", connection);
             } catch (IOException e) {
                 throw new RuntimeException("Could not connect to controller process.", e);
             }
         }
     }
 
-    public void send(GradleInvocationStarted message) {
-        synchronized (lock) {
-            serializer.send(message);
-        }
-    }
-
-    public void send(GradleInvocationCompleted message) {
-        synchronized (lock) {
-            serializer.send(message);
-        }
-    }
-
-    public void send(StudioSyncRequestCompleted message) {
+    public void send(Message message) {
         synchronized (lock) {
             serializer.send(message);
         }

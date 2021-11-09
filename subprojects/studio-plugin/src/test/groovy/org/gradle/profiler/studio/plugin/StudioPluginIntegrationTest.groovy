@@ -12,7 +12,7 @@ import static org.gradle.profiler.client.protocol.messages.StudioRequest.StudioR
 import static org.gradle.profiler.client.protocol.messages.StudioRequest.StudioRequestType.SYNC
 import static org.gradle.profiler.client.protocol.messages.StudioSyncRequestCompleted.StudioSyncRequestResult.SUCCEEDED
 import static org.gradle.profiler.studio.plugin.client.GradleProfilerClient.PROFILER_PORT_PROPERTY
-
+import static org.gradle.profiler.studio.plugin.system.AndroidStudioSystemHelper.INTEGRATION_TEST_PROPERTY
 /**
  * Note: This class uses Junit3 so every test should start with "test"
  */
@@ -24,7 +24,7 @@ class StudioPluginIntegrationTest extends LightJavaCodeInsightFixtureTestCase {
     void setUp() throws Exception {
         server = new Server("plugin")
         System.setProperty(PROFILER_PORT_PROPERTY, Integer.toString(server.getPort()))
-        System.setProperty(INTEGRATION_TEST_PROPERTY, "true");
+        System.setProperty(INTEGRATION_TEST_PROPERTY, "true")
         super.setUp()
     }
 

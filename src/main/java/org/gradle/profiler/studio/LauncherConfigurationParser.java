@@ -4,11 +4,8 @@ import com.dd.plist.NSDictionary;
 import com.dd.plist.NSObject;
 import com.dd.plist.NSString;
 import com.dd.plist.PropertyListParser;
-import org.apache.commons.io.FileUtils;
 import org.gradle.profiler.instrument.GradleInstrumentation;
-import sun.tools.jar.resources.jar;
 
-import java.io.File;
 import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.nio.file.FileSystems;
@@ -48,8 +45,8 @@ public class LauncherConfigurationParser {
 
         String studioPluginsDirPath = studioPluginsDir.toAbsolutePath().toString();
         List<Path> sharedJars = Arrays.asList(asmJar, protocolJar);
-        List<Path> studioPluginJars = Arrays.asList(studioPlugin, protocolJar);
         systemProperties.put("idea.plugins.path", studioPluginsDirPath);
+        List<Path> studioPluginJars = Arrays.asList(studioPlugin, protocolJar);
         systemProperties.put("idea.log.path", studioPluginsDirPath);
         return new LaunchConfiguration(javaCommand, classPath, systemProperties, mainClass, agentJar, supportJar, sharedJars, studioPluginJars, studioPluginsDir);
     }
