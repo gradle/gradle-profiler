@@ -10,13 +10,16 @@ import java.util.Optional;
 
 public class StudioSandboxCreator {
 
+    private StudioSandboxCreator() {
+    }
+
     /**
      * Creates sandbox for Android Studio.
      *
      * If sandboxDir is not specified only plugins and logs sandbox will be created, but config and system folder won't be.
      * In that case Android Studio will use configs from default folder, additionally it will write to default folder.
      */
-    public StudioSandbox createSandbox(@Nullable Path sandboxDir) {
+    public static StudioSandbox createSandbox(@Nullable Path sandboxDir) {
         if (shouldCreatePartialSandbox(sandboxDir)) {
             Path path = newTempDir();
             Path pluginsDir = createDir(new File(path.toFile(), "plugins").toPath());
@@ -31,7 +34,7 @@ public class StudioSandboxCreator {
         return StudioSandbox.fullSandbox(configDir, systemDir, pluginsDir, logDir);
     }
 
-    private boolean shouldCreatePartialSandbox(Path sandboxDir) {
+    private static boolean shouldCreatePartialSandbox(Path sandboxDir) {
         return sandboxDir == null;
     }
 

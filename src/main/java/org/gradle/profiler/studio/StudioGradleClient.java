@@ -58,7 +58,7 @@ public class StudioGradleClient implements GradleClient {
 
         studioPluginServer = new Server("plugin");
         studioAgentServer = new Server("agent");
-        StudioSandbox sandbox = new StudioSandboxCreator().createSandbox(studioSandboxDir.map(File::toPath).orElse(null));
+        StudioSandbox sandbox = StudioSandboxCreator.createSandbox(studioSandboxDir.map(File::toPath).orElse(null));
         LaunchConfiguration launchConfiguration = new LauncherConfigurationParser().calculate(studioInstallDir, sandbox, studioPluginServer.getPort());
         System.out.println();
         System.out.println("* Java command: " + launchConfiguration.getJavaCommand());
