@@ -67,7 +67,11 @@ public class ToolingApiGradleClient implements GradleInvoker, GradleClient {
     @Override
     public <T> T runToolingAction(List<String> tasks, List<String> gradleArgs, List<String> jvmArgs, BuildAction<T> action, Consumer<BuildActionExecuter<?>> configureAction) {
         return runOperation(connection -> connection.action(action), build -> {
-            build.forTasks(tasks.toArray(new String[0]));
+            if (!tasks.isEmpty()) {
+                // forTasks(empty-array) means "run default tasks", not "don't run any tasks"
+                // Assume here that empty "tasks" parameter means "don't run any tasks"
+                build.forTasks(tasks.toArray(new String[0]));
+            }
             build.withArguments(gradleArgs);
             build.setJvmArguments(jvmArgs);
             configureAction.accept(build);

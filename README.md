@@ -245,7 +245,18 @@ Here is an example:
     ideaModel {
         title = "IDEA model"
         # Fetch the IDEA tooling model
-        model = "org.gradle.tooling.model.idea.IdeaProject"
+        tooling-api {
+            model = "org.gradle.tooling.model.idea.IdeaProject"
+        }
+        # Can also run tasks
+        # tasks = ["assemble"]
+    }
+    toolingAction {
+        title = "IDEA model"
+        # Fetch the IDEA tooling model
+        tooling-api {
+            action = "org.gradle.profiler.toolingapi.FetchProjectPublications"
+        }
         # Can also run tasks
         # tasks = ["assemble"]
     }
@@ -262,6 +273,7 @@ Values are optional and default to the values provided on the command-line or de
 
 A scenario can define changes that should be applied to the source before each build. You can use this to benchmark or profile an incremental build. The following mutations are available:
 
+- `apply-build-script-change-to`: Add a statement to a Groovy or Kotlin DSL build script, init script or settings script. Each iteration adds a new statement and removes the statement added by the previous iteration.
 - `apply-abi-change-to`: Add a public method to a Java or Kotlin source class. Each iteration adds a new method and removes the method added by the previous iteration.
 - `apply-non-abi-change-to`: Change the body of a public method in a Java or Kotlin source class.
 - `apply-h-change-to`: Add a function to a C/C++ header file. Each iteration adds a new function declaration and removes the function added by the previous iteration. 
@@ -291,6 +303,7 @@ They can be added to a scenario file like this:
     incremental_build {
         tasks = ["assemble"]
 
+        apply-build-script-change-to = "build.gradle.kts"
         apply-abi-change-to = "src/main/java/MyThing.java"
         apply-non-abi-change-to = ["src/main/java/MyThing.java", "src/main/java/MyOtherThing.java"]
         apply-h-change-to = "src/main/headers/app.h"

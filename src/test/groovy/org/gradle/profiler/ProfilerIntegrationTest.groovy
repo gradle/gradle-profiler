@@ -214,8 +214,8 @@ println "<gradle-version: " + gradle.gradleVersion + ">"
 
         when:
         new Main().
-                run("--project-dir", projectDir.absolutePath, "--output-dir", outputDir.absolutePath, "--gradle-version", latestSupportedGradleVersion, "--profile", "buildscan",
-                        "assemble")
+            run("--project-dir", projectDir.absolutePath, "--output-dir", outputDir.absolutePath, "--gradle-version", latestSupportedGradleVersion, "--profile", "buildscan",
+                "assemble")
 
         then:
         logFile.find("<gradle-version: $latestSupportedGradleVersion>").size() == 4
@@ -275,7 +275,8 @@ println "<daemon: " + gradle.services.get(org.gradle.internal.environment.Gradle
         assertBuildScanPublished(requestedBuildScanVersion)
     }
 
-    @IgnoreIf({ JavaVersion.current().isJava11Compatible() }) // JFR doesn't work on Java 11, yet
+    @IgnoreIf({ JavaVersion.current().isJava11Compatible() })
+    // JFR doesn't work on Java 11, yet
     def "profiles build using JFR, Build Scans, specified Gradle version and tasks"() {
         given:
         buildFile.text = """
@@ -423,90 +424,6 @@ println "<tasks: " + gradle.startParameter.taskNames + ">"
 
         new File(outputDir, "assemble/assemble-${minimalSupportedGradleVersion}.jfr").file
         new File(outputDir, "help/help-${minimalSupportedGradleVersion}.jfr").file
-    }
-
-    def "runs benchmarks fetching tooling model"() {
-        given:
-        def scenarioFile = file("benchmark.conf")
-        scenarioFile.text = """
-ideaModel {
-    versions = ["$minimalSupportedGradleVersion", "$latestSupportedGradleVersion"]
-    model = "org.gradle.tooling.model.idea.IdeaProject"
-}
-"""
-
-        buildFile.text = """
-apply plugin: BasePlugin
-println "<gradle-version: " + gradle.gradleVersion + ">"
-println "<tasks: " + gradle.startParameter.taskNames + ">"
-println "<daemon: " + gradle.services.get(org.gradle.internal.environment.GradleBuildEnvironment).longLivingProcess + ">"
-plugins.withId("idea") {
-    // most likely due to IDEA model builder
-    println("<idea>")
-}
-"""
-
-        when:
-        new Main().run("--project-dir", projectDir.absolutePath, "--output-dir", outputDir.absolutePath, "--scenario-file", scenarioFile.absolutePath,
-            "--benchmark", "ideaModel")
-
-        then:
-        // Probe version, 6 warm up, 10 builds
-        logFile.find("<gradle-version: $minimalSupportedGradleVersion>").size() == 17
-        logFile.find("<gradle-version: $latestSupportedGradleVersion").size() == 17
-        logFile.find("<daemon: true").size() == 17 * 2
-        logFile.find("<tasks: []>").size() == 16 * 2
-        logFile.find("<idea>").size() == 16 * 2
-
-        logFile.containsOne("* Running scenario ideaModel using Gradle $minimalSupportedGradleVersion (scenario 1/2)")
-        logFile.containsOne("* Running scenario ideaModel using Gradle $latestSupportedGradleVersion (scenario 2/2)")
-
-        def lines = resultFile.lines
-        lines.size() == totalLinesForExecutions(16)
-        lines.get(0) == "scenario,ideaModel,ideaModel"
-        lines.get(1) == "version,Gradle $minimalSupportedGradleVersion,Gradle $latestSupportedGradleVersion"
-        lines.get(2) == "tasks,model IdeaProject,model IdeaProject"
-        lines.get(3) == "value,execution,execution"
-    }
-
-    def "profiles fetching tooling model using JFR"() {
-        given:
-        def scenarioFile = file("benchmark.conf")
-        scenarioFile.text = """
-ideaModel {
-    versions = ["$minimalSupportedGradleVersion", "$latestSupportedGradleVersion"]
-    model = "org.gradle.tooling.model.idea.IdeaProject"
-}
-"""
-
-        buildFile.text = """
-apply plugin: BasePlugin
-println "<gradle-version: " + gradle.gradleVersion + ">"
-println "<tasks: " + gradle.startParameter.taskNames + ">"
-println "<daemon: " + gradle.services.get(org.gradle.internal.environment.GradleBuildEnvironment).longLivingProcess + ">"
-plugins.withId("idea") {
-    // most likely due to IDEA model builder
-    println("<idea>")
-}
-"""
-
-        when:
-        new Main().run("--project-dir", projectDir.absolutePath, "--output-dir", outputDir.absolutePath, "--scenario-file", scenarioFile.absolutePath,
-            "--profile", "jfr", "ideaModel")
-
-        then:
-        // Probe version, 2 warm up, 1 profiled build
-        logFile.find("<gradle-version: $minimalSupportedGradleVersion>").size() == 4
-        logFile.find("<gradle-version: $latestSupportedGradleVersion>").size() == 4
-        logFile.find("<daemon: true").size() == 8
-        logFile.find("<tasks: []>").size() == 6
-        logFile.find("<idea>").size() == 6
-
-        logFile.containsOne("* Running scenario ideaModel using Gradle $minimalSupportedGradleVersion (scenario 1/2)")
-        logFile.containsOne("* Running scenario ideaModel using Gradle $latestSupportedGradleVersion (scenario 2/2)")
-
-        def profileFile = new File(outputDir, "$minimalSupportedGradleVersion/ideaModel-${minimalSupportedGradleVersion}.jfr")
-        profileFile.isFile()
     }
 
     def "profiles scenarios defined in scenario file using multiple Gradle versions"() {
@@ -898,6 +815,34 @@ println "<parallel: " + gradle.startParameter.parallelProjectExecutionEnabled + 
         isParallel | arg          | name
         false      | ""           | "disable"
         true       | "--parallel" | "enable"
+    }
+
+    def "applies changes to Groovy build scripts while running benchmark"() {
+        given:
+        buildFile.text = """
+apply plugin: BasePlugin
+println "<src-length: \${file('build.gradle').length()}>"
+"""
+        def originalText = buildFile.text
+
+        def scenarioFile = file("scenarios.conf")
+        scenarioFile << """
+classes {
+    tasks = "help"
+    apply-build-script-change-to = "build.gradle"
+}
+"""
+
+        when:
+        new Main().run("--project-dir", projectDir.absolutePath, "--output-dir", outputDir.absolutePath, "--gradle-version", minimalSupportedGradleVersion,
+            "--benchmark", "--scenario-file", scenarioFile.absolutePath)
+
+        then:
+        // Probe version, 6 warm up, 10 builds
+        logFile.find("<src-length: ${buildFile.length()}>").size() == 1
+        logFile.find("<src-length: ${buildFile.length() + 77}>").size() == 6 /* WARM_UP #1..6 */ + 9 /* MEASURE #1..9*/
+        logFile.find("<src-length: ${buildFile.length() + 78}>").size() == 1 /* MEASURE #10 */
+        buildFile.text == originalText
     }
 
     def "applies changes to Java source file while running benchmark"() {
@@ -1589,7 +1534,7 @@ buildTarget {
         def repoDir = new File(projectDir, "repo")
         def repo = new TestGitRepo(repoDir)
 
-        new File(repoDir, "settings.gradle")  << ''
+        new File(repoDir, "settings.gradle") << ''
         new File(repoDir, "build.gradle") << """
             task cleanTest {
                 doFirst {
@@ -1624,7 +1569,7 @@ buildTarget {
         def repoDir = new File(projectDir, "repo")
         def repo = new TestGitRepo(repoDir)
 
-        new File(repoDir, "settings.gradle")  << ''
+        new File(repoDir, "settings.gradle") << ''
         new File(repoDir, "build.gradle") << """
             task cleanTest {
                 doFirst {
@@ -1663,7 +1608,7 @@ buildTarget {
         def repoDir = new File(projectDir, "repo")
         def repo = new TestGitRepo(repoDir)
 
-        new File(repoDir, "settings.gradle")  << ''
+        new File(repoDir, "settings.gradle") << ''
         new File(repoDir, "build.gradle") << """
             task cleanTest {
                 doFirst {
