@@ -6,18 +6,17 @@ import org.gradle.profiler.client.protocol.messages.*;
 import java.io.EOFException;
 import java.io.IOException;
 import java.time.Duration;
-import java.util.concurrent.BlockingQueue;
-import java.util.concurrent.LinkedBlockingQueue;
-import java.util.concurrent.TimeUnit;
+import java.util.concurrent.*;
 
 public class MessageSerializer {
-    private static final Object NULL = new Object();
     private final String peerName;
     private final Connection connection;
+    private final ExecutorService executorService;
 
     public MessageSerializer(String peerName, Connection connection) {
         this.peerName = peerName;
         this.connection = connection;
+        this.executorService = Executors.newCachedThreadPool();
     }
 
     public void send(Message message) {
@@ -33,39 +32,15 @@ public class MessageSerializer {
     }
 
     public <T extends Message> T receive(Class<T> type, Duration timeout) {
-        BlockingQueue<Object> queue = new LinkedBlockingQueue<>();
-        Thread reader = new Thread(() -> {
-            try {
-                Object result;
-                try {
-                    result = receive();
-                } catch (RuntimeException e) {
-                    result = e;
-                }
-                queue.put(result);
-            } catch (InterruptedException e) {
-                throw new RuntimeException(e);
-            }
-        });
-        reader.start();
-        Object result;
         try {
-            result = queue.poll(timeout.toMillis(), TimeUnit.MILLISECONDS);
-            if (result == null) {
-                reader.interrupt();
-                throw new IllegalStateException(String.format("Timeout waiting to receive message from %s.", peerName));
-            }
-            reader.join();
-        } catch (InterruptedException e) {
+            Future<Object> future = executorService.submit((Callable<Object>) this::receive);
+            Object result = future.get(timeout.toMillis(), TimeUnit.MILLISECONDS);
+            return type.cast(result);
+        } catch (TimeoutException e) {
+            throw new IllegalStateException(String.format("Timeout waiting to receive message from %s.", peerName));
+        } catch (ExecutionException | InterruptedException e) {
             throw new RuntimeException(e);
         }
-        if (result instanceof RuntimeException) {
-            throw (RuntimeException) result;
-        }
-        if (result == NULL) {
-            throw new IllegalStateException(String.format("Connection to %s has closed.", peerName));
-        }
-        return type.cast(result);
     }
 
     private Object receive() {
@@ -74,7 +49,7 @@ public class MessageSerializer {
             MessageReaderWriter readerWriter = MessageRegistry.findMessageReaderWriter(tag);
             return readerWriter.readFrom(connection);
         } catch (EOFException e) {
-            return NULL;
+            throw new IllegalStateException(String.format("Connection to %s has closed.", peerName));
         } catch (IOException e) {
             throw new RuntimeException(String.format("Could not read from %s.", peerName), e);
         }

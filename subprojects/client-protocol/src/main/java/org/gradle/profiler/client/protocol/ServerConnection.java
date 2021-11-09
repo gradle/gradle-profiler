@@ -37,7 +37,7 @@ public class ServerConnection implements Closeable {
         return serializer.receive(GradleInvocationStarted.class, timeout);
     }
 
-    public GradleInvocationCompleted receiveSyncCompleted(Duration timeout) {
+    public GradleInvocationCompleted receiveGradleInvocationCompleted(Duration timeout) {
         return serializer.receive(GradleInvocationCompleted.class, timeout);
     }
 

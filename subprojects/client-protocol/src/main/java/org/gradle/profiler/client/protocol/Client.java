@@ -1,6 +1,11 @@
 package org.gradle.profiler.client.protocol;
 
-import org.gradle.profiler.client.protocol.messages.*;
+import org.gradle.profiler.client.protocol.messages.GradleInvocationCompleted;
+import org.gradle.profiler.client.protocol.messages.GradleInvocationParameters;
+import org.gradle.profiler.client.protocol.messages.GradleInvocationStarted;
+import org.gradle.profiler.client.protocol.messages.StudioAgentConnectionParameters;
+import org.gradle.profiler.client.protocol.messages.StudioRequest;
+import org.gradle.profiler.client.protocol.messages.StudioSyncRequestCompleted;
 import org.gradle.profiler.client.protocol.serialization.MessageSerializer;
 
 import java.io.IOException;

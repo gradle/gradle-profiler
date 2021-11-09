@@ -3,12 +3,13 @@ package org.gradle.profiler.studio.plugin;
 import org.apache.commons.io.FileUtils;
 import org.gradle.profiler.studio.LaunchConfiguration;
 
-import java.io.File;
 import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.List;
+
+import static com.google.common.base.Preconditions.checkArgument;
 
 /**
  * Installs the Android Studio plugin into the plugins directory.
@@ -33,9 +34,8 @@ public class StudioPluginInstaller {
     private static void installPluginToDirectory(Path directory, List<Path> jars) {
         try {
             for (Path jar : jars) {
-                String jarName = jar.getFileName().toString().endsWith(".jar")
-                    ? jar.getFileName().toString()
-                    : jar.getFileName() + ".jar";
+                String jarName = jar.getFileName().toString();
+                checkArgument(jarName.endsWith(".jar"), "Expected jar file: %s to end with .jar", jar);
                 FileUtils.copyFile(jar.toFile(), Paths.get(directory.toAbsolutePath().toString(), PLUGIN_INSTALL_FOLDER_NAME, "lib", jarName).toFile());
             }
         } catch (IOException e) {

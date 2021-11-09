@@ -13,7 +13,7 @@ public class GradleBuildInvocationResult extends BuildInvocationResult {
     private final Duration garbageCollectionTime;
     private final Duration timeToTaskExecution;
     private final Duration gradleToolingAgentExecutionTime;
-    private final Duration studioExecutionTime;
+    private final Duration ideExecutionTime;
     private final Map<String, Duration> cumulativeBuildOperationTimes;
     private final String daemonPid;
 
@@ -31,7 +31,7 @@ public class GradleBuildInvocationResult extends BuildInvocationResult {
         this.garbageCollectionTime = garbageCollectionTime;
         this.timeToTaskExecution = timeToTaskExecution;
         this.gradleToolingAgentExecutionTime = gradleToolingAgentExecutionTime;
-        this.studioExecutionTime = ideExecutionTime;
+        this.ideExecutionTime = ideExecutionTime;
         this.cumulativeBuildOperationTimes = cumulativeBuildOperationTimes;
         this.daemonPid = daemonPid;
     }
@@ -98,7 +98,7 @@ public class GradleBuildInvocationResult extends BuildInvocationResult {
 
         @Override
         public Duration extractFrom(GradleBuildInvocationResult result) {
-            return result.studioExecutionTime;
+            return result.ideExecutionTime;
         }
     };
 

@@ -5,9 +5,12 @@ import java.io.*;
 import java.lang.reflect.Field;
 import java.util.Collection;
 import java.util.List;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 import java.util.function.Supplier;
 
 public class CommandExec {
@@ -203,6 +206,11 @@ public class CommandExec {
             if (result != 0) {
                 throw new RuntimeException(commandErrorMessage(processBuilder, diagnosticOutput.get()));
             }
+        }
+
+        public void waitForSuccess(long timeout, TimeUnit unit) throws ExecutionException, InterruptedException, TimeoutException {
+            Future<?> future = executor.submit((Runnable) this::waitForSuccess);
+            future.get(timeout, unit);
         }
 
         public void interrupt() {
