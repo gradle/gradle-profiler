@@ -3,6 +3,8 @@ plugins {
     id("com.gradle.enterprise.gradle-enterprise-conventions-plugin").version("0.7.2")
 }
 
+checkIfCurrentJavaIsCompatible()
+
 rootProject.name = "gradle-profiler"
 
 include("chrome-trace")
@@ -18,3 +20,12 @@ rootProject.children.forEach {
 }
 
 enableFeaturePreview("VERSION_CATALOGS")
+
+/**
+ * Intellij-gradle-plugin requires Java 11.
+ */
+fun checkIfCurrentJavaIsCompatible() {
+    if (!JavaVersion.current().isCompatibleWith(JavaVersion.VERSION_11)) {
+        throw GradleException("This project should be run with Java 11 or later, but it was run with Java ${JavaVersion.current()}.")
+    }
+}

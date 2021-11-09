@@ -6,34 +6,11 @@ import com.google.common.collect.ImmutableSet;
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
 import com.typesafe.config.ConfigParseOptions;
-import org.gradle.profiler.mutations.ApplyAbiChangeToSourceFileMutator;
-import org.gradle.profiler.mutations.ApplyChangeToAndroidLayoutFileMutator;
-import org.gradle.profiler.mutations.ApplyChangeToAndroidManifestFileMutator;
-import org.gradle.profiler.mutations.ApplyChangeToAndroidResourceFileMutator;
-import org.gradle.profiler.mutations.ApplyChangeToNativeSourceFileMutator;
-import org.gradle.profiler.mutations.ApplyChangeToPropertyResourceFileMutator;
-import org.gradle.profiler.mutations.ApplyNonAbiChangeToSourceFileMutator;
-import org.gradle.profiler.mutations.ApplyValueChangeToAndroidResourceFileMutator;
-import org.gradle.profiler.mutations.BuildMutatorConfigurator;
-import org.gradle.profiler.mutations.ClearArtifactTransformCacheMutator;
-import org.gradle.profiler.mutations.ClearBuildCacheMutator;
-import org.gradle.profiler.mutations.ClearConfigurationCacheStateMutator;
-import org.gradle.profiler.mutations.ClearGradleUserHomeMutator;
-import org.gradle.profiler.mutations.ClearJarsCacheMutator;
-import org.gradle.profiler.mutations.ClearProjectCacheMutator;
-import org.gradle.profiler.mutations.FileChangeMutatorConfigurator;
-import org.gradle.profiler.mutations.GitCheckoutMutator;
-import org.gradle.profiler.mutations.GitRevertMutator;
-import org.gradle.profiler.mutations.ShowBuildCacheSizeMutator;
+import org.gradle.profiler.mutations.*;
 
+import javax.annotation.Nullable;
 import java.io.File;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.LinkedHashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.TreeSet;
+import java.util.*;
 import java.util.stream.Collectors;
 
 class ScenarioLoader {
@@ -52,6 +29,7 @@ class ScenarioLoader {
     private static final String WARM_UP_COUNT = "warm-ups";
     private static final String ITERATIONS = "iterations";
     private static final String MEASURED_BUILD_OPERATIONS = "measured-build-ops";
+    private static final String APPLY_BUILD_SCRIPT_CHANGE_TO = "apply-build-script-change-to";
     private static final String APPLY_ABI_CHANGE_TO = "apply-abi-change-to";
     private static final String APPLY_NON_ABI_CHANGE_TO = "apply-non-abi-change-to";
     private static final String APPLY_ANDROID_RESOURCE_CHANGE_TO = "apply-android-resource-change-to";
@@ -74,10 +52,13 @@ class ScenarioLoader {
     private static final String TARGETS = "targets";
     private static final String TYPE = "type";
     private static final String MODEL = "model";
+    private static final String ACTION = "action";
+    private static final String TOOLING_API = "tooling-api";
     private static final String ANDROID_STUDIO_SYNC = "android-studio-sync";
     private static final String JVM_ARGS = "jvm-args";
 
     private static final Map<String, BuildMutatorConfigurator> BUILD_MUTATOR_CONFIGURATORS = ImmutableMap.<String, BuildMutatorConfigurator>builder()
+        .put(APPLY_BUILD_SCRIPT_CHANGE_TO, new FileChangeMutatorConfigurator(ApplyBuildScriptChangeFileMutator.class))
         .put(APPLY_ABI_CHANGE_TO, new FileChangeMutatorConfigurator(ApplyAbiChangeToSourceFileMutator.class))
         .put(APPLY_NON_ABI_CHANGE_TO, new FileChangeMutatorConfigurator(ApplyNonAbiChangeToSourceFileMutator.class))
         .put(APPLY_ANDROID_RESOURCE_CHANGE_TO, new FileChangeMutatorConfigurator(ApplyChangeToAndroidResourceFileMutator.class))
@@ -115,7 +96,7 @@ class ScenarioLoader {
             BAZEL,
             BUCK,
             MAVEN,
-            MODEL,
+            TOOLING_API,
             TOOL_HOME,
             ANDROID_STUDIO_SYNC,
             DAEMON,
@@ -251,7 +232,7 @@ class ScenarioLoader {
                 }
 
                 List<String> gradleArgs = ConfigUtil.strings(scenario, GRADLE_ARGS);
-                BuildAction buildAction = getBuildAction(scenario, scenarioFile, settings);
+                BuildAction buildAction = getBuildAction(scenario, scenarioName, scenarioFile, settings);
                 GradleBuildInvoker invoker = invoker(scenario, (GradleBuildInvoker) settings.getInvoker(), buildAction);
                 int warmUpCount = getWarmUpCount(settings, invoker, scenario);
                 List<String> measuredBuildOperations = getMeasuredBuildOperations(settings, scenario);
@@ -406,17 +387,17 @@ class ScenarioLoader {
         return new RunTasksAction(tasks);
     }
 
-    private static BuildAction getBuildAction(Config scenario, File scenarioFile, InvocationSettings invocationSettings) {
-        Class<?> toolingModel = getToolingModelClass(scenario, scenarioFile);
+    private static BuildAction getBuildAction(Config scenario, String scenarioName, File scenarioFile, InvocationSettings invocationSettings) {
+        Config toolingApi = scenario.hasPath(TOOLING_API) ? scenario.getConfig(TOOLING_API) : null;
         boolean sync = scenario.hasPath(ANDROID_STUDIO_SYNC);
         List<String> tasks = ConfigUtil.strings(scenario, TASKS);
 
         if (sync) {
-            if (toolingModel != null) {
-                throw new IllegalArgumentException("Cannot load tooling model and Android studio sync in same scenario.");
+            if (toolingApi != null) {
+                throw new IllegalArgumentException(String.format("Scenario '%s': Cannot load tooling model and Android studio sync in same scenario.", scenarioName));
             }
             if (!tasks.isEmpty()) {
-                throw new IllegalArgumentException("Cannot run tasks and Android studio sync in same scenario.");
+                throw new IllegalArgumentException(String.format("Scenario '%s': Cannot run tasks and Android studio sync in same scenario.", scenarioName));
             }
             if (invocationSettings.getStudioInstallDir() == null) {
                 throw new IllegalArgumentException("Android Studio installation directory should be specified using --studio-install-dir when measuring Android studio sync.");
@@ -424,22 +405,51 @@ class ScenarioLoader {
             return new AndroidStudioSyncAction();
         }
 
-        if (toolingModel != null) {
-            return new LoadToolingModelAction(toolingModel, tasks);
+        if (toolingApi != null) {
+            Class<?> toolingModel = getToolingModelClass(toolingApi, scenarioFile);
+            org.gradle.tooling.BuildAction<?> action = getToolingAction(toolingApi, scenarioFile);
+            if (toolingModel == null && action == null) {
+                throw new IllegalArgumentException(String.format("Scenario '%s': Should define either a '%s' or an '%s'", scenarioName, MODEL, ACTION));
+            }
+            if (toolingModel != null && action != null) {
+                throw new IllegalArgumentException(String.format("Scenario '%s': Cannot define both a '%s' and an '%s'", scenarioName, MODEL, ACTION));
+            }
+            if (toolingModel != null) {
+                return new LoadToolingModelAction(toolingModel, tasks);
+            } else {
+                return new RunToolingAction(action, tasks);
+            }
         } else {
             return new RunTasksAction(tasks);
         }
     }
 
-    private static Class<?> getToolingModelClass(Config scenario, File scenarioFile) {
-        String toolingModelName = ConfigUtil.string(scenario, MODEL, null);
-        if (toolingModelName == null) {
+    private static org.gradle.tooling.BuildAction<?> getToolingAction(Config config, File scenarioFile) {
+        Class<?> actionType = loadType(config, ACTION, "tooling action", scenarioFile);
+        if (actionType == null) {
             return null;
         }
         try {
-            return Class.forName(toolingModelName);
+            return (org.gradle.tooling.BuildAction<?>) actionType.getConstructor().newInstance();
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    @Nullable
+    private static Class<?> getToolingModelClass(Config config, File scenarioFile) {
+        return loadType(config, MODEL, "tooling model", scenarioFile);
+    }
+
+    private static Class<?> loadType(Config config, String key, String description, File scenarioFile) {
+        String typeName = ConfigUtil.string(config, key, null);
+        if (typeName == null) {
+            return null;
+        }
+        try {
+            return Class.forName(typeName);
         } catch (ClassNotFoundException e) {
-            throw new IllegalArgumentException("Unrecognized tooling model '" + toolingModelName + "' defined in scenario file " + scenarioFile);
+            throw new IllegalArgumentException("Unrecognized " + description + " '" + typeName + "' defined in scenario file " + scenarioFile);
         }
     }
 }

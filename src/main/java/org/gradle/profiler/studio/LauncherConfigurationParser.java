@@ -7,10 +7,7 @@ import com.dd.plist.PropertyListParser;
 import org.gradle.profiler.instrument.GradleInstrumentation;
 import org.gradle.profiler.studio.tools.StudioSandboxCreator.StudioSandbox;
 
-import java.io.IOException;
-import java.io.UncheckedIOException;
 import java.nio.file.FileSystems;
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Arrays;
@@ -21,6 +18,7 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 
 public class LauncherConfigurationParser {
+
     public LaunchConfiguration calculate(Path studioInstallDir, StudioSandbox studioSandbox, int studioPluginPort) {
         Dict entries = parse(studioInstallDir.resolve("Contents/Info.plist"));
         Path actualInstallDir;
@@ -35,7 +33,6 @@ public class LauncherConfigurationParser {
         String mainClass = jvmOptions.string("MainClass");
         Map<String, String> systemProperties = mapValues(jvmOptions.dict("Properties").toMap(), v -> v.replace("$APP_PACKAGE", actualInstallDir.toString()));
         systemProperties.put("gradle.profiler.port", String.valueOf(studioPluginPort));
-        systemProperties.put("idea.trust.all.projects", "true");
         Path javaCommand = actualInstallDir.resolve("Contents/jre/Contents/Home/bin/java");
         Path agentJar = GradleInstrumentation.unpackPlugin("studio-agent").toPath();
         Path asmJar = GradleInstrumentation.unpackPlugin("asm").toPath();

@@ -13,15 +13,15 @@ public class GradleBuildInvocationResult extends BuildInvocationResult {
     private final Duration garbageCollectionTime;
     private final Duration timeToTaskExecution;
     private final Duration gradleToolingAgentExecutionTime;
-    private final Duration studioExecutionTime;
+    private final Duration ideExecutionTime;
     private final Map<String, Duration> cumulativeBuildOperationTimes;
     private final String daemonPid;
 
     public GradleBuildInvocationResult(
         BuildContext buildContext,
         Duration executionTime,
-        Duration gradleToolingAgentExecutionTime,
-        Duration ideExecutionTime,
+        @Nullable Duration gradleToolingAgentExecutionTime,
+        @Nullable Duration ideExecutionTime,
         @Nullable Duration garbageCollectionTime,
         @Nullable Duration timeToTaskExecution,
         Map<String, Duration> cumulativeBuildOperationTimes,
@@ -31,7 +31,7 @@ public class GradleBuildInvocationResult extends BuildInvocationResult {
         this.garbageCollectionTime = garbageCollectionTime;
         this.timeToTaskExecution = timeToTaskExecution;
         this.gradleToolingAgentExecutionTime = gradleToolingAgentExecutionTime;
-        this.studioExecutionTime = ideExecutionTime;
+        this.ideExecutionTime = ideExecutionTime;
         this.cumulativeBuildOperationTimes = cumulativeBuildOperationTimes;
         this.daemonPid = daemonPid;
     }
@@ -78,10 +78,22 @@ public class GradleBuildInvocationResult extends BuildInvocationResult {
         }
     };
 
+    public static final Sample<GradleBuildInvocationResult> TOTAL_EXECUTION_TIME = new Sample<GradleBuildInvocationResult>() {
+        @Override
+        public String getName() {
+            return "total execution time";
+        }
+
+        @Override
+        public Duration extractFrom(GradleBuildInvocationResult result) {
+            return result.getExecutionTime();
+        }
+    };
+
     public static final Sample<GradleBuildInvocationResult> GRADLE_TOOLING_AGENT_EXECUTION_TIME = new Sample<GradleBuildInvocationResult>() {
         @Override
         public String getName() {
-            return "Gradle Tooling Agent execution time";
+            return "Gradle execution time";
         }
 
         @Override
@@ -98,7 +110,7 @@ public class GradleBuildInvocationResult extends BuildInvocationResult {
 
         @Override
         public Duration extractFrom(GradleBuildInvocationResult result) {
-            return result.studioExecutionTime;
+            return result.ideExecutionTime;
         }
     };
 

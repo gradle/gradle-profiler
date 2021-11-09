@@ -16,6 +16,8 @@ import java.util.concurrent.atomic.AtomicInteger;
  */
 public class Interceptor {
     private static final AtomicInteger COUNTER = new AtomicInteger();
+    private static final Duration RECEIVE_CONNECTION_PARAMS_TIMEOUT = Duration.ofSeconds(60);
+    private static final Duration RECEIVE_SYNC_PARAMS_TIMEOUT = Duration.ofSeconds(60);
 
     static StudioAgentConnectionParameters connectionParameters;
 
@@ -25,7 +27,7 @@ public class Interceptor {
     public static void onConnect(DefaultGradleConnector connector) {
         System.out.println("* Creating project connection");
         if (connectionParameters == null) {
-            connectionParameters = Client.INSTANCE.receiveConnectionParameters(Duration.ofSeconds(60));
+            connectionParameters = Client.INSTANCE.receiveConnectionParameters(RECEIVE_CONNECTION_PARAMS_TIMEOUT);
         }
         System.out.println("* Using Gradle home: " + connectionParameters.getGradleInstallation());
         connector.useInstallation(connectionParameters.getGradleInstallation());
@@ -42,7 +44,7 @@ public class Interceptor {
         try {
             Client client = Client.INSTANCE;
             client.send(new GradleInvocationStarted(id));
-            syncParameters = client.receiveSyncParameters(Duration.ofSeconds(300));
+            syncParameters = client.receiveSyncParameters(RECEIVE_SYNC_PARAMS_TIMEOUT);
         } catch (Throwable throwable) {
             throwable.printStackTrace();
             // Continue with original handler

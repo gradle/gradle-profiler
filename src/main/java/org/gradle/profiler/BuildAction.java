@@ -1,5 +1,6 @@
 package org.gradle.profiler;
 
+import javax.annotation.Nullable;
 import java.time.Duration;
 import java.util.List;
 import java.util.Optional;
@@ -53,7 +54,7 @@ public interface BuildAction {
         private final Duration gradleToolingAgentExecutionTime;
         private final Duration ideExecutionTime;
 
-        private BuildActionResult(Duration executionTime, Duration gradleToolingAgentExecutionTime, Duration ideExecutionTime) {
+        private BuildActionResult(Duration executionTime, @Nullable Duration gradleToolingAgentExecutionTime, @Nullable Duration ideExecutionTime) {
             this.executionTime = executionTime;
             this.gradleToolingAgentExecutionTime = gradleToolingAgentExecutionTime;
             this.ideExecutionTime = ideExecutionTime;
@@ -63,16 +64,16 @@ public interface BuildAction {
             return executionTime;
         }
 
-        public Duration getGradleToolingAgentExecutionTime() {
-            return gradleToolingAgentExecutionTime;
+        public Optional<Duration> getGradleToolingAgentExecutionTime() {
+            return Optional.ofNullable(gradleToolingAgentExecutionTime);
         }
 
-        public Duration getIdeExecutionTime() {
-            return ideExecutionTime;
+        public Optional<Duration> getIdeExecutionTime() {
+            return Optional.ofNullable(ideExecutionTime);
         }
 
         public static BuildActionResult withExecutionTimeOnly(Duration executionTime) {
-            return new BuildActionResult(executionTime, Duration.ZERO, Duration.ZERO);
+            return new BuildActionResult(executionTime, null, null);
         }
 
         public static BuildActionResult withIdeTimings(Duration executionTime, Duration gradleToolingAgentExecutionTime, Duration ideExecutionTime) {

@@ -10,6 +10,7 @@
     <idea-version since-build="211.0"/>
 
     <!-- Plugin dependencies -->
+    <!-- Any dependency here should also be added to build.gradle.kts intellij extension -->
     <depends>org.jetbrains.plugins.gradle</depends>
     <depends>com.intellij.modules.java</depends>
     <depends>org.jetbrains.android</depends>

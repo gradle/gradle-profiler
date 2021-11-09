@@ -5,20 +5,12 @@ import org.gradle.tooling.GradleConnector;
 import org.gradle.tooling.ProjectConnection;
 import org.gradle.tooling.model.build.BuildEnvironment;
 import org.gradle.tooling.model.build.JavaEnvironment;
-import org.gradle.util.GUtil;
 import org.gradle.util.GradleVersion;
 
-import java.io.File;
-import java.io.FileWriter;
-import java.io.IOException;
-import java.io.PrintWriter;
+import java.io.*;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.stream.Collectors;
 
 public class DefaultGradleBuildConfigurationReader implements GradleBuildConfigurationReader {
@@ -140,6 +132,14 @@ public class DefaultGradleBuildConfigurationReader implements GradleBuildConfigu
         if (!propertyFile.exists()) {
             return null;
         }
-        return GUtil.loadProperties(propertyFile).getProperty("org.gradle.jvmargs");
+        Properties properties = new Properties();
+        try {
+            try (FileReader reader = new FileReader(propertyFile)) {
+                properties.load(reader);
+            }
+        } catch (IOException e) {
+            throw new RuntimeException("Could not load properties from '" + propertyFile + "'.", e);
+        }
+        return properties.getProperty("org.gradle.jvmargs");
     }
 }

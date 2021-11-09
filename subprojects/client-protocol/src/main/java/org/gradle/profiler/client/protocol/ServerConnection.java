@@ -1,7 +1,7 @@
 package org.gradle.profiler.client.protocol;
 
 import org.gradle.profiler.client.protocol.messages.*;
-import org.gradle.profiler.client.protocol.serialization.MessageSerializer;
+import org.gradle.profiler.client.protocol.serialization.MessageProtocolHandler;
 
 import java.io.Closeable;
 import java.io.IOException;
@@ -9,11 +9,11 @@ import java.time.Duration;
 
 public class ServerConnection implements Closeable {
     private final Connection connection;
-    private final MessageSerializer serializer;
+    private final MessageProtocolHandler serializer;
 
     public ServerConnection(String peerName, Connection connection) {
         this.connection = connection;
-        this.serializer = new MessageSerializer(peerName, connection);
+        this.serializer = new MessageProtocolHandler(peerName, connection);
     }
 
     @Override
@@ -21,23 +21,15 @@ public class ServerConnection implements Closeable {
         connection.close();
     }
 
-    public void send(GradleInvocationParameters syncParameters) {
-        serializer.send(syncParameters);
-    }
-
-    public void send(StudioRequest syncRequest) {
-        serializer.send(syncRequest);
-    }
-
-    public void send(StudioAgentConnectionParameters connectionParameters) {
-        serializer.send(connectionParameters);
+    public void send(Message message) {
+        serializer.send(message);
     }
 
     public GradleInvocationStarted receiveSyncStarted(Duration timeout) {
         return serializer.receive(GradleInvocationStarted.class, timeout);
     }
 
-    public GradleInvocationCompleted receiveSyncCompleted(Duration timeout) {
+    public GradleInvocationCompleted receiveGradleInvocationCompleted(Duration timeout) {
         return serializer.receive(GradleInvocationCompleted.class, timeout);
     }
 
