@@ -200,6 +200,7 @@ The following command line options only apply when measuring Gradle builds:
 - `--measure-build-op`: Additionally measure the cumulative time spent in the given build operation. Only supported for Gradle 6.1 and later.
 - `-D<key>=<value>`: Defines a system property when running the build, overriding the default for the build.
 - `--studio-install-dir`: The Android Studio installation directory. Required when measuring Android Studio sync.
+- `--studio-sandbox-dir`: The Android Studio sandbox directory. Optional but recommended when measuring Android Studio sync. It's recommended to use it since it isolates the Android Studio process from your other Android Studio processes. To always use a new sandbox you can use it as `--studio-sandbox-dir $(mktemp -d)`.
 - `--no-diffs`: Do not generate differential flame graphs.
 
 ## Advanced profiling scenarios
