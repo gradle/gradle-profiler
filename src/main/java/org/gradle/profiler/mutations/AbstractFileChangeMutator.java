@@ -14,11 +14,7 @@ public abstract class AbstractFileChangeMutator implements BuildMutator {
 
     protected AbstractFileChangeMutator(File sourceFile) {
         this.sourceFile = sourceFile;
-        try {
-            originalText = new String(Files.readAllBytes(sourceFile.toPath()));
-        } catch (IOException e) {
-            throw new RuntimeException("Could not read contents of source file " + sourceFile, e);
-        }
+        this.originalText = readText(sourceFile);
     }
 
     @Override
@@ -32,19 +28,27 @@ public abstract class AbstractFileChangeMutator implements BuildMutator {
         }
     }
 
-    protected abstract void applyChangeTo(BuildContext context, StringBuilder text);
-
-    private void revert() {
+    protected String readText(File file) {
         try {
-            Files.write(sourceFile.toPath(), originalText.getBytes());
+            return new String(Files.readAllBytes(file.toPath()));
         } catch (IOException e) {
-            throw new RuntimeException(e);
+            throw new RuntimeException("Could not read contents of source file " + sourceFile, e);
         }
     }
 
+    protected abstract void applyChangeTo(BuildContext context, StringBuilder text);
+
     @Override
     public void afterScenario(ScenarioContext context) {
-        revert();
+        revert(sourceFile, originalText);
+    }
+
+    protected void revert(File file, String originalText) {
+        try {
+            Files.write(file.toPath(), originalText.getBytes());
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     @Override

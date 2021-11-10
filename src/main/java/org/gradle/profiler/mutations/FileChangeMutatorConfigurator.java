@@ -24,28 +24,28 @@ public class FileChangeMutatorConfigurator implements BuildMutatorConfigurator {
 	public BuildMutator configure(Config scenario, String scenarioName, InvocationSettings settings, String key) {
 		List<BuildMutator> mutatorsForKey = new ArrayList<>();
 		for (File sourceFileToChange : sourceFiles(scenario, scenarioName, settings.getProjectDir(), key)) {
-			mutatorsForKey.add(getBuildMutatorForFile(sourceFileToChange));
+			mutatorsForKey.add(getBuildMutatorForFile(scenario, settings, sourceFileToChange));
 		}
 
 		return new CompositeBuildMutator(mutatorsForKey);
 	}
 
-	private BuildMutator getBuildMutatorForFile(File sourceFileToChange) {
-		if (sourceFileToChange != null) {
-			try {
-				try {
-					return mutatorClass.getConstructor(File.class).newInstance(sourceFileToChange);
-				} catch (InvocationTargetException e) {
-					throw e.getCause();
-				}
-			} catch (Throwable e) {
-				throw new RuntimeException("Could not create instance of mutator " + mutatorClass.getSimpleName(), e);
-			}
-
-		} else {
-			return null;
-		}
+	private BuildMutator getBuildMutatorForFile(Config scenario, InvocationSettings settings, File sourceFileToChange) {
+		if (sourceFileToChange == null) {
+            return null;
+        }
+        try {
+            return newBuildMutator(scenario, settings, sourceFileToChange);
+        } catch (Throwable e) {
+            Throwable throwable = (e instanceof InvocationTargetException) ? e.getCause() : e;
+            throw new RuntimeException("Could not create instance of mutator " + mutatorClass.getSimpleName(), throwable);
+        }
 	}
+
+    protected BuildMutator newBuildMutator(Config scenario, InvocationSettings settings, File sourceFileToChange)
+            throws NoSuchMethodException, InvocationTargetException, InstantiationException, IllegalAccessException {
+        return mutatorClass.getConstructor(File.class).newInstance(sourceFileToChange);
+    }
 
 	private static List<File> sourceFiles(Config config, String scenarioName, File projectDir, String key) {
 		return ConfigUtil.strings(config, key)
@@ -60,6 +60,7 @@ public class FileChangeMutatorConfigurator implements BuildMutatorConfigurator {
 			return null;
 		} else {
 			File file = new File(projectDir, fileName);
+            System.out.println(file.toPath().toAbsolutePath());
 			if (!file.isFile()) {
 				throw new IllegalArgumentException("Source file " + file.getName() + " specified for scenario " + scenarioName + " does not exist.");
 			}

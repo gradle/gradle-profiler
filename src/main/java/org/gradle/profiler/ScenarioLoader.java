@@ -13,7 +13,7 @@ import java.io.File;
 import java.util.*;
 import java.util.stream.Collectors;
 
-class ScenarioLoader {
+public class ScenarioLoader {
     private static final String TITLE = "title";
     private static final String VERSIONS = "versions";
     private static final String TASKS = "tasks";
@@ -30,6 +30,7 @@ class ScenarioLoader {
     private static final String ITERATIONS = "iterations";
     private static final String MEASURED_BUILD_OPERATIONS = "measured-build-ops";
     private static final String APPLY_BUILD_SCRIPT_CHANGE_TO = "apply-build-script-change-to";
+    private static final String APPLY_DEPENDENCY_CHANGE_CHANGE_TO = "apply-dependency-change-to";
     private static final String APPLY_ABI_CHANGE_TO = "apply-abi-change-to";
     private static final String APPLY_NON_ABI_CHANGE_TO = "apply-non-abi-change-to";
     private static final String APPLY_ANDROID_RESOURCE_CHANGE_TO = "apply-android-resource-change-to";
@@ -60,6 +61,7 @@ class ScenarioLoader {
 
     private static final Map<String, BuildMutatorConfigurator> BUILD_MUTATOR_CONFIGURATORS = ImmutableMap.<String, BuildMutatorConfigurator>builder()
         .put(APPLY_BUILD_SCRIPT_CHANGE_TO, new FileChangeMutatorConfigurator(ApplyBuildScriptChangeFileMutator.class))
+        .put(APPLY_DEPENDENCY_CHANGE_CHANGE_TO, new ApplyAddDependencyMutator.Configurator())
         .put(APPLY_ABI_CHANGE_TO, new FileChangeMutatorConfigurator(ApplyAbiChangeToSourceFileMutator.class))
         .put(APPLY_NON_ABI_CHANGE_TO, new FileChangeMutatorConfigurator(ApplyNonAbiChangeToSourceFileMutator.class))
         .put(APPLY_ANDROID_RESOURCE_CHANGE_TO, new FileChangeMutatorConfigurator(ApplyChangeToAndroidResourceFileMutator.class))
@@ -293,7 +295,7 @@ class ScenarioLoader {
         return getBuildCount(settings, (Integer) null);
     }
 
-    private static int getBuildCount(InvocationSettings settings, Config scenario) {
+    public static int getBuildCount(InvocationSettings settings, Config scenario) {
         return getBuildCount(settings, ConfigUtil.optionalInteger(scenario, ITERATIONS));
     }
 
@@ -319,7 +321,7 @@ class ScenarioLoader {
         return homeString == null ? null : new File(homeString);
     }
 
-    private static int getWarmUpCount(InvocationSettings settings, Config scenario) {
+    public static int getWarmUpCount(InvocationSettings settings, Config scenario) {
         return getWarmUpCount(settings, settings.getInvoker(), ConfigUtil.optionalInteger(scenario, WARM_UP_COUNT));
     }
 
