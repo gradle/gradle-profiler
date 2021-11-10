@@ -19,8 +19,6 @@ import org.gradle.profiler.studio.plugin.StudioPluginInstaller;
 
 import java.io.Closeable;
 import java.io.File;
-import java.io.IOException;
-import java.io.UncheckedIOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.Duration;
@@ -98,7 +96,9 @@ public class StudioGradleClient implements GradleClient {
 
     @Override
     public void close() {
-        try {
+        try (Server studioPluginServer = this.studioPluginServer;
+             Server studioAgentServer = this.studioAgentServer;
+             Closeable uninstallPlugin = studioPluginInstaller::uninstallPlugin) {
             System.out.println("* Stopping Android Studio....");
             studioPluginConnection.send(new StudioRequest(EXIT));
             studioProcess.waitForSuccess(STUDIO_EXIT_TIMEOUT_SECONDS, SECONDS);
@@ -106,18 +106,6 @@ public class StudioGradleClient implements GradleClient {
         } catch (Exception e) {
             e.printStackTrace();
             System.out.println("* Android Studio did not finish successfully, you will have to close it manually.");
-        } finally {
-            tryClose(studioPluginInstaller::uninstallPlugin);
-            tryClose(studioPluginServer);
-            tryClose(studioAgentServer);
-        }
-    }
-
-    private void tryClose(Closeable closeable) {
-        try {
-            closeable.close();
-        } catch (UncheckedIOException | IOException e) {
-            e.printStackTrace();
         }
     }
 

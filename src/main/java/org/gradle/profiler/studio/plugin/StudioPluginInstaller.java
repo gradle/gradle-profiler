@@ -34,7 +34,6 @@ public class StudioPluginInstaller {
         try {
             for (Path jar : jars) {
                 String jarName = jar.getFileName().toString();
-                checkArgument(jarName.endsWith(".jar"), "Expected jar file: %s to end with .jar", jar);
                 FileUtils.copyFile(jar.toFile(), Paths.get(pluginInstallDir.toAbsolutePath().toString(), "lib", jarName).toFile());
             }
         } catch (IOException e) {
