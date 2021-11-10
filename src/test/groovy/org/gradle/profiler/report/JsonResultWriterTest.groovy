@@ -11,6 +11,7 @@ import org.gradle.profiler.OperatingSystem
 import org.gradle.profiler.Phase
 import org.gradle.profiler.RunTasksAction
 import org.gradle.profiler.ScenarioContext
+import org.gradle.profiler.ScenarioDefinition
 import org.gradle.profiler.mutations.ApplyAbiChangeToKotlinSourceFileMutator
 import org.gradle.profiler.result.BuildInvocationResult
 import org.gradle.profiler.result.Sample
@@ -68,7 +69,7 @@ class JsonResultWriterTest extends Specification {
             ["-Xmx1024m"],
             ["some-build-op"]
         )
-        def scenarioContext1 = new TestScenarioContext("release@0")
+        def scenarioContext1 = new TestScenarioContext("release@0", scenario1)
         def scenario2 = new GradleScenarioDefinition(
             "debug",
             "Assemble Debug",
@@ -85,7 +86,7 @@ class JsonResultWriterTest extends Specification {
             ["-Xmx1024m"],
             ["some-build-op"]
         )
-        def scenarioContext2 = new TestScenarioContext("debug@1")
+        def scenarioContext2 = new TestScenarioContext("debug@1", scenario2)
         def result1 = new BuildScenarioResultImpl<BuildInvocationResult>(scenario1, [BuildInvocationResult.EXECUTION_TIME, TestSample.INSTANCE])
         result1.accept(new GradleInvocationResult(scenarioContext1.withBuild(Phase.WARM_UP, 1), 100, 120))
         result1.accept(new GradleInvocationResult(scenarioContext1.withBuild(Phase.WARM_UP, 2),  80, 100))
@@ -317,9 +318,16 @@ class JsonResultWriterTest extends Specification {
 
     class TestScenarioContext implements ScenarioContext {
         final String uniqueScenarioId
+        final ScenarioDefinition scenarioDefinition
 
-        TestScenarioContext(String uniqueScenarioId) {
+        TestScenarioContext(String uniqueScenarioId, ScenarioDefinition scenarioDefinition) {
             this.uniqueScenarioId = uniqueScenarioId
+            this.scenarioDefinition = scenarioDefinition
+        }
+
+        @Override
+        ScenarioDefinition getScenarioDefinition() {
+            return scenarioDefinition
         }
 
         @Override

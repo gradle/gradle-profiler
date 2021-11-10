@@ -8,17 +8,25 @@ import java.util.UUID;
 
 public class DefaultScenarioContext implements ScenarioContext {
     private final UUID invocationId;
-    private final String scenarioName;
+    private final ScenarioDefinition scenarioDefinition;
 
     @VisibleForTesting
-    public DefaultScenarioContext(UUID invocationId, String scenarioName) {
+    public DefaultScenarioContext(UUID invocationId, ScenarioDefinition scenarioDefinition) {
         this.invocationId = invocationId;
-        this.scenarioName = scenarioName;
+        this.scenarioDefinition = scenarioDefinition;
     }
 
     @Override
     public String getUniqueScenarioId() {
-        return String.format("_%s_%s", invocationId.toString().replaceAll("-", "_"), mangleName(scenarioName));
+        return String.format("_%s_%s",
+            invocationId.toString().replaceAll("-", "_"),
+            mangleName(scenarioDefinition.getName())
+        );
+    }
+
+    @Override
+    public ScenarioDefinition getScenarioDefinition() {
+        return scenarioDefinition;
     }
 
     @Override
