@@ -90,10 +90,10 @@ public class GradleBuildInvocationResult extends BuildInvocationResult {
         }
     };
 
-    public static final Sample<GradleBuildInvocationResult> STUDIO_EXECUTION_TIME = new Sample<GradleBuildInvocationResult>() {
+    public static final Sample<GradleBuildInvocationResult> IDE_EXECUTION_TIME = new Sample<GradleBuildInvocationResult>() {
         @Override
         public String getName() {
-            return "Android Studio execution time";
+            return "IDE execution time";
         }
 
         @Override
