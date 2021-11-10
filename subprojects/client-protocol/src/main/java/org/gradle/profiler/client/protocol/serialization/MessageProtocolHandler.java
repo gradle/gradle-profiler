@@ -21,7 +21,7 @@ public class MessageProtocolHandler {
 
     public void send(Message message) {
         try {
-            MessageSerializer serializer = MessageSerializer.findMessageSerializer(message.getClass());
+            MessageSerializer serializer = MessageSerializer.getMessageSerializer(message.getClass());
             serializer.writeTo(connection, message);
             connection.flush();
         } catch (IOException e) {
@@ -44,7 +44,7 @@ public class MessageProtocolHandler {
     private Object receive() {
         try {
             byte tag = connection.readByte();
-            MessageSerializer serializer = MessageSerializer.findMessageSerializer(tag);
+            MessageSerializer serializer = MessageSerializer.getMessageSerializer(tag);
             return serializer.readFrom(connection);
         } catch (EOFException e) {
             throw new IllegalStateException(String.format("Connection to %s has closed.", peerName));

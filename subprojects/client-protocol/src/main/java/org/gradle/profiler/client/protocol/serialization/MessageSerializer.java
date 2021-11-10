@@ -145,18 +145,18 @@ public enum MessageSerializer {
         doWriteTo(connection, message);
     }
 
-    public static MessageSerializer findMessageSerializer(Class<? extends Message> messageClass) {
+    public static MessageSerializer getMessageSerializer(Class<? extends Message> messageClass) {
         MessageSerializer serializer = SERIALIZERS_BY_CLASS.get(messageClass);
         if (serializer == null) {
-            throw new RuntimeException("No message reader writer is declared in the " + MessageSerializer.class + " for message class: " + messageClass);
+            throw new IllegalArgumentException("No message reader writer is declared in the " + MessageSerializer.class + " for message class: " + messageClass);
         }
         return serializer;
     }
 
-    public static MessageSerializer findMessageSerializer(byte messageId) {
+    public static MessageSerializer getMessageSerializer(byte messageId) {
         MessageSerializer serializer = SERIALIZERS_BY_MESSAGE_ID.get(messageId);
         if (serializer == null) {
-            throw new RuntimeException("No message reader writer is declared in the " + MessageSerializer.class + " for message class: " + messageId);
+            throw new IllegalArgumentException("No message reader writer is declared in the " + MessageSerializer.class + " for message class: " + messageId);
         }
         return serializer;
     }

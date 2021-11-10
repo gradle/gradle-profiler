@@ -141,7 +141,7 @@ class JsonResultWriterTest extends Specification {
       },
       "samples": [
         {
-          "name": "execution"
+          "name": "total execution time"
         },
         {
           "name": "Test sample"
@@ -154,7 +154,7 @@ class JsonResultWriterTest extends Specification {
           "iteration": 1,
           "title": "warm-up build #1",
           "values": {
-            "execution": 100.0,
+            "total execution time": 100.0,
             "Test sample": 120.0
           }
         },
@@ -164,7 +164,7 @@ class JsonResultWriterTest extends Specification {
           "iteration": 2,
           "title": "warm-up build #2",
           "values": {
-            "execution": 80.0,
+            "total execution time": 80.0,
             "Test sample": 100.0
           }
         },
@@ -174,7 +174,7 @@ class JsonResultWriterTest extends Specification {
           "iteration": 1,
           "title": "measured build #1",
           "values": {
-            "execution": 75.0,
+            "total execution time": 75.0,
             "Test sample": 90.0
           }
         },
@@ -184,7 +184,7 @@ class JsonResultWriterTest extends Specification {
           "iteration": 2,
           "title": "measured build #2",
           "values": {
-            "execution": 70.0,
+            "total execution time": 70.0,
             "Test sample": 85.0
           }
         },
@@ -194,7 +194,7 @@ class JsonResultWriterTest extends Specification {
           "iteration": 3,
           "title": "measured build #3",
           "values": {
-            "execution": 72.0,
+            "total execution time": 72.0,
             "Test sample": 80.0
           }
         },
@@ -204,7 +204,7 @@ class JsonResultWriterTest extends Specification {
           "iteration": 4,
           "title": "measured build #4",
           "values": {
-            "execution": 68.0,
+            "total execution time": 68.0,
             "Test sample": 88.0
           }
         }
@@ -241,7 +241,7 @@ class JsonResultWriterTest extends Specification {
       },
       "samples": [
         {
-          "name": "execution"
+          "name": "total execution time"
         },
         {
           "name": "Test sample"
@@ -254,7 +254,7 @@ class JsonResultWriterTest extends Specification {
           "iteration": 1,
           "title": "warm-up build #1",
           "values": {
-            "execution": 110.0,
+            "total execution time": 110.0,
             "Test sample": 220.0
           }
         },
@@ -264,7 +264,7 @@ class JsonResultWriterTest extends Specification {
           "iteration": 2,
           "title": "warm-up build #2",
           "values": {
-            "execution": 90.0,
+            "total execution time": 90.0,
             "Test sample": 200.0
           }
         },
@@ -274,7 +274,7 @@ class JsonResultWriterTest extends Specification {
           "iteration": 1,
           "title": "measured build #1",
           "values": {
-            "execution": 85.0,
+            "total execution time": 85.0,
             "Test sample": 190.0
           }
         },
@@ -284,7 +284,7 @@ class JsonResultWriterTest extends Specification {
           "iteration": 2,
           "title": "measured build #2",
           "values": {
-            "execution": 80.0,
+            "total execution time": 80.0,
             "Test sample": 185.0
           }
         }

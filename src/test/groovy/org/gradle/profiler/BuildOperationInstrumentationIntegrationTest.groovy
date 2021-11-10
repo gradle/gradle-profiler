@@ -46,7 +46,7 @@ class BuildOperationInstrumentationIntegrationTest extends AbstractProfilerInteg
         lines.get(0) == "scenario,default,default"
         lines.get(1) == "version,Gradle ${gradleVersion},Gradle ${gradleVersion}"
         lines.get(2) == "tasks,assemble,assemble"
-        lines.get(3) == "value,execution,garbage collection time"
+        lines.get(3) == "value,total execution time,garbage collection time"
         lines.get(4).matches("warm-up build #1,\\d+,\\d+")
         lines.get(9).matches("warm-up build #6,\\d+,\\d+")
         lines.get(10).matches("measured build #1,\\d+,\\d+")
@@ -92,7 +92,7 @@ class BuildOperationInstrumentationIntegrationTest extends AbstractProfilerInteg
         lines.get(0) == "scenario,default,default"
         lines.get(1) == "version,Gradle ${gradleVersion},Gradle ${gradleVersion}"
         lines.get(2) == "tasks,assemble,assemble"
-        lines.get(3) == "value,execution,task start"
+        lines.get(3) == "value,total execution time,task start"
         lines.get(4).matches("warm-up build #1,\\d+,\\d+")
         lines.get(9).matches("warm-up build #6,\\d+,\\d+")
         lines.get(10).matches("measured build #1,\\d+,\\d+")
@@ -148,7 +148,7 @@ class BuildOperationInstrumentationIntegrationTest extends AbstractProfilerInteg
         lines.get(0) == "scenario,default,default"
         lines.get(1) == "version,Gradle ${gradleVersion},Gradle ${gradleVersion}"
         lines.get(2) == "tasks,assemble,assemble"
-        lines.get(3) == "value,execution,SnapshotTaskInputsBuildOperationType"
+        lines.get(3) == "value,total execution time,SnapshotTaskInputsBuildOperationType"
 
         def firstWarmup = lines.get(4)
         def snapshottingDuration = firstWarmup =~ /warm-up build #1,\d+,(\d+)/
@@ -219,7 +219,7 @@ class BuildOperationInstrumentationIntegrationTest extends AbstractProfilerInteg
         lines.get(0) == "scenario,default,default,default"
         lines.get(1) == "version,Gradle ${gradleVersion},Gradle ${gradleVersion},Gradle ${gradleVersion}"
         lines.get(2) == "tasks,assemble,assemble,assemble"
-        lines.get(3) == "value,execution,task start,SnapshotTaskInputsBuildOperationType"
+        lines.get(3) == "value,total execution time,task start,SnapshotTaskInputsBuildOperationType"
         lines.get(4).matches("warm-up build #1,\\d+,\\d+,\\d+")
         lines.get(9).matches("warm-up build #6,\\d+,\\d+,\\d+")
         lines.get(10).matches("measured build #1,\\d+,\\d+,\\d+")
@@ -268,7 +268,7 @@ class BuildOperationInstrumentationIntegrationTest extends AbstractProfilerInteg
         lines.get(0) == "scenario,default,default,default"
         lines.get(1) == "version,Gradle ${gradleVersion},Gradle ${gradleVersion},Gradle ${gradleVersion}"
         lines.get(2) == "tasks,assemble,assemble,assemble"
-        lines.get(3) == "value,execution,NonExistentBuildOperationType,SnapshotTaskInputsBuildOperationType"
+        lines.get(3) == "value,total execution time,NonExistentBuildOperationType,SnapshotTaskInputsBuildOperationType"
         lines.get(4).matches("warm-up build #1,\\d+,\\d+,\\d+")
         lines.get(9).matches("warm-up build #6,\\d+,\\d+,\\d+")
         lines.get(10).matches("measured build #1,\\d+,\\d+,\\d+")

@@ -190,7 +190,7 @@ genrule(
             assert lines.get(0) == "scenario,${name}"
             assert lines.get(1) == "version,Gradle ${gradleVersion}"
             assert lines.get(2) == "tasks,${tasks.join(", ")}"
-            assert lines.get(3) == "value,execution"
+            assert lines.get(3) == "value,total execution time"
             assert lines.get(4).matches("warm-up build #1,\\d+")
             assert lines.get(9).matches("warm-up build #6,\\d+")
             assert lines.get(10).matches("measured build #1,\\d+")
@@ -207,7 +207,7 @@ genrule(
             assert lines.get(0) == "scenario,${name}"
             assert lines.get(1) == "version,Gradle ${gradleVersion}"
             assert lines.get(2) == "tasks,${tasks.join(", ")}"
-            assert lines.get(3) == "value,execution"
+            assert lines.get(3) == "value,total execution time"
             assert lines.get(4).matches("warm-up build #1,\\d+")
             assert lines.get(5).matches("measured build #1,\\d+")
             assert lines.get(6).matches("measured build #2,\\d+")
@@ -223,7 +223,7 @@ genrule(
             assert lines.get(0) == "scenario,${name}"
             assert lines.get(1) == "version,Gradle ${gradleVersion}"
             assert lines.get(2) == "tasks,${tasks.join(", ")}"
-            assert lines.get(3) == "value,execution"
+            assert lines.get(3) == "value,total execution time"
             assert lines.get(4).matches("warm-up build #1,\\d+")
             assert lines.get(5).matches("measured build #1,\\d+")
             assert lines.get(6).matches("measured build #2,\\d+")

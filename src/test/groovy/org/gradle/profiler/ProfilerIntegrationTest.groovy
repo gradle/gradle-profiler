@@ -348,7 +348,7 @@ println "<daemon: " + gradle.services.get(org.gradle.internal.environment.Gradle
         lines.get(0) == "scenario,assemble,assemble,help"
         lines.get(1) == "version,Gradle $latestSupportedGradleVersion,Gradle ${minimalSupportedGradleVersion},Gradle ${minimalSupportedGradleVersion}"
         lines.get(2) == "tasks,assemble,assemble,help"
-        lines.get(3) == "value,execution,execution,execution"
+        lines.get(3) == "value,total execution time,total execution time,total execution time"
     }
 
     def "runs benchmarks using scenario provided on command line and defined in scenario file"() {
@@ -389,7 +389,7 @@ println "<daemon: " + gradle.services.get(org.gradle.internal.environment.Gradle
         lines.get(0) == "scenario,xyz"
         lines.get(1) == "version,Gradle ${minimalSupportedGradleVersion}"
         lines.get(2) == "tasks,default tasks"
-        lines.get(3) == "value,execution"
+        lines.get(3) == "value,total execution time"
     }
 
     def "profiles scenarios defined in scenario file"() {
@@ -543,7 +543,7 @@ println "<daemon: " + gradle.services.get(org.gradle.internal.environment.Gradle
         lines.get(0) == "scenario,help"
         lines.get(1) == "version,Gradle ${minimalSupportedGradleVersion}"
         lines.get(2) == "tasks,help"
-        lines.get(3) == "value,execution"
+        lines.get(3) == "value,total execution time"
         lines.get(4).matches("warm-up build #1,\\d+")
         lines.get(9).matches("warm-up build #6,\\d+")
         lines.get(10).matches("measured build #1,\\d+")
@@ -620,7 +620,7 @@ println "<dry-run: " + gradle.startParameter.dryRun + ">"
         lines.get(0) == "scenario,s1,s1,s2"
         lines.get(1) == "version,Gradle ${latestSupportedGradleVersion},Gradle ${minimalSupportedGradleVersion},Gradle ${minimalSupportedGradleVersion}"
         lines.get(2) == "tasks,assemble,assemble,clean assemble"
-        lines.get(3) == "value,execution,execution,execution"
+        lines.get(3) == "value,total execution time,total execution time,total execution time"
         lines.get(4).matches("warm-up build #1,\\d+,\\d+,\\d+")
         lines.get(5).matches("measured build #1,\\d+,\\d+,\\d+")
     }
@@ -1059,7 +1059,7 @@ help {
         lines.get(0) == "scenario,buildAll,buildTarget,buildType"
         lines.get(1) == "version,buck,buck,buck"
         lines.get(2) == "tasks,,//some/target,"
-        lines.get(3) == "value,execution,execution,execution"
+        lines.get(3) == "value,total execution time,total execution time,total execution time"
         lines.get(4).matches("warm-up build #1,\\d+,\\d+,\\d+")
         lines.get(9).matches("warm-up build #6,\\d+,\\d+,\\d+")
         lines.get(10).matches("measured build #1,\\d+,\\d+,\\d+")
@@ -1159,7 +1159,7 @@ buildTarget {
         lines.get(0) == "scenario,buildTarget"
         lines.get(1) == "version,bazel"
         lines.get(2) == "tasks,some:assemble"
-        lines.get(3) == "value,execution"
+        lines.get(3) == "value,total execution time"
         lines.get(4).matches("warm-up build #1,\\d+")
         lines.get(9).matches("warm-up build #6,\\d+")
         lines.get(10).matches("measured build #1,\\d+")
@@ -1254,7 +1254,7 @@ buildGoal {
         lines.get(0) == "scenario,buildGoal"
         lines.get(1) == "version,maven"
         lines.get(2) == "tasks,-v"
-        lines.get(3) == "value,execution"
+        lines.get(3) == "value,total execution time"
         lines.get(4).matches("warm-up build #1,\\d+")
         lines.get(9).matches("warm-up build #6,\\d+")
         lines.get(10).matches("measured build #1,\\d+")
