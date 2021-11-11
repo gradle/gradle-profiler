@@ -201,7 +201,7 @@ The following command line options only apply when measuring Gradle builds:
 - `-D<key>=<value>`: Defines a system property when running the build, overriding the default for the build.
 - `--studio-install-dir`: The Android Studio installation directory. Required when measuring Android Studio sync.
 - `--studio-sandbox-dir`: The Android Studio sandbox directory. It's recommended to use it since it isolates the Android Studio process from your other Android Studio processes. By default, this will be set to `<output-dir>/studio-sandbox`. If you want Android Studio to keep old data (e.g. indexes) you should set and reuse your own folder. 
-- `--disable-studio-sandbox`: Disables the Android Studio sandbox and uses the default Android Studio folders for the Android Studio data.
+- `--no-studio-sandbox`: Do not use the Android Studio sandbox but use the default Android Studio folders for the Android Studio data.
 - `--no-diffs`: Do not generate differential flame graphs.
 
 ## Advanced profiling scenarios
