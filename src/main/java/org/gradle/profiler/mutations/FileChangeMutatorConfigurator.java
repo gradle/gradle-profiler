@@ -30,7 +30,7 @@ public class FileChangeMutatorConfigurator implements BuildMutatorConfigurator {
 		return new CompositeBuildMutator(mutatorsForKey);
 	}
 
-	private BuildMutator getBuildMutatorForFile(Config scenario, InvocationSettings settings, File sourceFileToChange) {
+	protected BuildMutator getBuildMutatorForFile(Config scenario, InvocationSettings settings, File sourceFileToChange) {
 		if (sourceFileToChange == null) {
             return null;
         }
@@ -47,7 +47,7 @@ public class FileChangeMutatorConfigurator implements BuildMutatorConfigurator {
         return mutatorClass.getConstructor(File.class).newInstance(sourceFileToChange);
     }
 
-	private static List<File> sourceFiles(Config config, String scenarioName, File projectDir, String key) {
+	protected static List<File> sourceFiles(Config config, String scenarioName, File projectDir, String key) {
 		return ConfigUtil.strings(config, key)
 				.stream()
 				.map(fileName -> openFile(fileName, projectDir, scenarioName))

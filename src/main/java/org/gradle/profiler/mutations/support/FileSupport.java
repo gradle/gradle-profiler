@@ -20,4 +20,12 @@ public class FileSupport {
         }
     }
 
+    public static String readUnchecked(Path path) {
+        try {
+            return new String(Files.readAllBytes(path), StandardCharsets.UTF_8.toString());
+        } catch (IOException e) {
+            throw new UncheckedIOException("Could not read contents of file " + path, e);
+        }
+    }
+
 }
