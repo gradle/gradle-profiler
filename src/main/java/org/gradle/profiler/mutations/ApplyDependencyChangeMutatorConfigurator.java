@@ -44,14 +44,14 @@ public class ApplyDependencyChangeMutatorConfigurator implements BuildMutatorCon
     }
 
     private int getProjectsToGenerate(Config config) {
-        return config.hasPath("generated-projects-dependencies")
-            ? config.getInt("generated-projects-dependencies")
+        return config.hasPath("projects-set-size")
+            ? config.getInt("projects-set-size")
             : DEFAULT_GENERATED_PROJECTS_COUNT;
     }
 
     private int getAppliedProjectDependencies(Config config) {
-        return config.hasPath("applied-projects-dependencies")
-            ? config.getInt("applied-projects-dependencies")
+        return config.hasPath("applied-projects-size")
+            ? config.getInt("applied-projects-size")
             : DEFAULT_APPLIED_PROJECTS_COUNT;
     }
 }

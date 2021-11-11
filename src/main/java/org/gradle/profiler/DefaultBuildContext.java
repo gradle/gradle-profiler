@@ -17,11 +17,6 @@ public class DefaultBuildContext implements BuildContext {
     }
 
     @Override
-    public ScenarioDefinition getScenarioDefinition() {
-        return scenarioContext.getScenarioDefinition();
-    }
-
-    @Override
     public BuildContext withBuild(Phase phase, int count) {
         return scenarioContext.withBuild(phase, count);
     }
