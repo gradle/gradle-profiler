@@ -20,6 +20,7 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 class CommandLineParser {
+
     public static class SettingsNotAvailableException extends RuntimeException {
     }
 
@@ -42,6 +43,8 @@ class CommandLineParser {
             .ofType(File.class)
             .defaultsTo(new File("gradle-user-home"));
         ArgumentAcceptingOptionSpec<File> studioHomeOption = parser.accepts("studio-install-dir", "The Studio installation to use").withRequiredArg().ofType(File.class);
+        ArgumentAcceptingOptionSpec<File> studioSandboxOption = parser.accepts("studio-sandbox-dir", "The Studio sandbox dir to use").withRequiredArg().ofType(File.class);
+        OptionSpecBuilder disableStudioSandbox = parser.accepts("no-studio-sandbox", "Marks that Android Studio should not use sandbox");
         ArgumentAcceptingOptionSpec<File> scenarioFileOption = parser.accepts("scenario-file", "Scenario definition file to use").withRequiredArg().ofType(File.class);
         ArgumentAcceptingOptionSpec<String> sysPropOption = parser.accepts("D", "Defines a system property").withRequiredArg();
         ArgumentAcceptingOptionSpec<File> outputDirOption = parser.accepts("output-dir", "Directory to write results to").withRequiredArg()
@@ -120,6 +123,12 @@ class CommandLineParser {
         List<String> gradleVersions = parsedOptions.valuesOf(gradleVersionOption);
         File scenarioFile = parsedOptions.valueOf(scenarioFileOption);
         File studioInstallDir = parsedOptions.valueOf(studioHomeOption);
+        File studioSandboxDir = parsedOptions.valueOf(studioSandboxOption);
+        if (parsedOptions.has(disableStudioSandbox)) {
+            studioSandboxDir = null;
+        } else if (studioSandboxDir == null) {
+            studioSandboxDir = new File(outputDir, "studio-sandbox");
+        }
 
         // TODO - should validate the various combinations of invocation options
         GradleBuildInvoker gradleInvoker = GradleBuildInvoker.ToolingApi;
@@ -170,6 +179,7 @@ class CommandLineParser {
             .setSysProperties(sysProperties)
             .setGradleUserHome(gradleUserHome)
             .setStudioInstallDir(studioInstallDir)
+            .setStudioSandboxDir(studioSandboxDir)
             .setWarmupCount(warmups)
             .setIterations(iterations)
             .setMeasureGarbageCollection(measureGarbageCollection)

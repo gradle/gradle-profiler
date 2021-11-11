@@ -1,4 +1,4 @@
-package org.gradle.profiler.studio.plugin;
+package org.gradle.profiler.studio.tools;
 
 import org.apache.commons.io.FileUtils;
 

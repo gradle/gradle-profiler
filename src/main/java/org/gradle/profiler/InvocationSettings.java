@@ -5,6 +5,7 @@ import java.io.File;
 import java.io.PrintStream;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.UUID;
 
 import static org.gradle.profiler.report.CsvGenerator.Format;
@@ -23,6 +24,7 @@ public class InvocationSettings {
     private final Map<String, String> sysProperties;
     private final File gradleUserHome;
     private final File studioInstallDir;
+    private final File studioSandboxDir;
     private final Integer warmupCount;
     private final Integer iterations;
     private final boolean measureGarbageCollection;
@@ -51,7 +53,8 @@ public class InvocationSettings {
         List<String> targets,
         Map<String, String> sysProperties,
         File gradleUserHome,
-        File studioInstallDir,
+        @Nullable File studioInstallDir,
+        File studioSandboxDir,
         Integer warmupCount,
         Integer iterations,
         boolean measureGarbageCollection,
@@ -74,6 +77,7 @@ public class InvocationSettings {
         this.sysProperties = sysProperties;
         this.gradleUserHome = gradleUserHome;
         this.studioInstallDir = studioInstallDir;
+        this.studioSandboxDir = studioSandboxDir;
         this.warmupCount = warmupCount;
         this.iterations = iterations;
         this.measureGarbageCollection = measureGarbageCollection;
@@ -163,6 +167,10 @@ public class InvocationSettings {
 
     public File getStudioInstallDir() {
         return studioInstallDir;
+    }
+
+    public Optional<File> getStudioSandboxDir() {
+        return Optional.ofNullable(studioSandboxDir);
     }
 
     public boolean isMeasureGarbageCollection() {
@@ -256,6 +264,7 @@ public class InvocationSettings {
         private Map<String, String> sysProperties;
         private File gradleUserHome;
         private File studioInstallDir;
+        private File studioSandboxDir;
         private Integer warmupCount;
         private Integer iterations;
         private boolean measureGarbageCollection;
@@ -330,6 +339,11 @@ public class InvocationSettings {
             return this;
         }
 
+        public InvocationSettingsBuilder setStudioSandboxDir(@Nullable File studioSandboxDir) {
+            this.studioSandboxDir = studioSandboxDir;
+            return this;
+        }
+
         public InvocationSettingsBuilder setWarmupCount(Integer warmupCount) {
             this.warmupCount = warmupCount;
             return this;
@@ -388,6 +402,7 @@ public class InvocationSettings {
                 sysProperties,
                 gradleUserHome,
                 studioInstallDir,
+                studioSandboxDir,
                 warmupCount,
                 iterations,
                 measureGarbageCollection,

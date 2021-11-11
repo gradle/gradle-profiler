@@ -181,7 +181,7 @@ Add the `--profile chrome-trace` option and open the result in Google Chrome in 
 - `--project-dir`: Directory containing the build to run (required).
 - `--benchmark`: Benchmark the build. Runs the builds more times and writes the results to a CSV file.
 - `--profile <profiler>`: Profile the build using the specified profiler. See above for details on each profiler.
-- `--output-dir <dir>`: Directory to write results to.
+- `--output-dir <dir>`: Directory to write results to. Default value is `profile-out`. If profile-out directory already exists, it tries to find a `profile-out-<index>` directory, that does not exist.
 - `--warmups`: Specifies the number of warm-up builds to run for each scenario. Defaults to 2 for profiling, 6 for benchmarking, and 1 when not using a warm daemon.
 - `--iterations`: Specifies the number of builds to run for each scenario. Defaults to 1 for profiling, 10 for benchmarking.
 - `--bazel`: Benchmark scenarios using Bazel instead of Gradle. By default, only Gradle scenarios are run. You cannot profile a Bazel build using this tool.
@@ -200,6 +200,8 @@ The following command line options only apply when measuring Gradle builds:
 - `--measure-build-op`: Additionally measure the cumulative time spent in the given build operation. Only supported for Gradle 6.1 and later.
 - `-D<key>=<value>`: Defines a system property when running the build, overriding the default for the build.
 - `--studio-install-dir`: The Android Studio installation directory. Required when measuring Android Studio sync.
+- `--studio-sandbox-dir`: The Android Studio sandbox directory. It's recommended to use it since it isolates the Android Studio process from your other Android Studio processes. By default, this will be set to `<output-dir>/studio-sandbox`. If you want Android Studio to keep old data (e.g. indexes) you should set and reuse your own folder. 
+- `--no-studio-sandbox`: Do not use the Android Studio sandbox but use the default Android Studio folders for the Android Studio data.
 - `--no-diffs`: Do not generate differential flame graphs.
 
 ## Advanced profiling scenarios

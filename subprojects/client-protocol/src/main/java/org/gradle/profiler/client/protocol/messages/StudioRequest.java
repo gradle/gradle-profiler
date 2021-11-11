@@ -6,7 +6,8 @@ public class StudioRequest implements Message {
 
     public enum StudioRequestType {
         SYNC,
-        EXIT
+        EXIT_IDE,
+        STOP_RECEIVING_EVENTS
     }
 
     private static final AtomicInteger ID_GENERATOR = new AtomicInteger();

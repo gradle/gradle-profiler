@@ -5,11 +5,9 @@ import com.dd.plist.NSObject;
 import com.dd.plist.NSString;
 import com.dd.plist.PropertyListParser;
 import org.gradle.profiler.instrument.GradleInstrumentation;
+import org.gradle.profiler.studio.tools.StudioSandboxCreator.StudioSandbox;
 
-import java.io.IOException;
-import java.io.UncheckedIOException;
 import java.nio.file.FileSystems;
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Arrays;
@@ -21,7 +19,7 @@ import java.util.stream.Collectors;
 
 public class LauncherConfigurationParser {
 
-    public LaunchConfiguration calculate(Path studioInstallDir, int studioPluginPort) {
+    public LaunchConfiguration calculate(Path studioInstallDir, StudioSandbox studioSandbox, int studioPluginPort) {
         Dict entries = parse(studioInstallDir.resolve("Contents/Info.plist"));
         Path actualInstallDir;
         if ("jetbrains-toolbox-launcher".equals(entries.string("CFBundleExecutable"))) {
@@ -41,22 +39,17 @@ public class LauncherConfigurationParser {
         Path supportJar = GradleInstrumentation.unpackPlugin("instrumentation-support").toPath();
         Path protocolJar = GradleInstrumentation.unpackPlugin("client-protocol").toPath();
         Path studioPlugin = GradleInstrumentation.unpackPlugin("studio-plugin").toPath();
-        Path studioPluginsDir = newPluginTempDir();
 
-        String studioPluginsDirPath = studioPluginsDir.toAbsolutePath().toString();
+        studioSandbox.getConfigDir().ifPresent(path -> systemProperties.put("idea.config.path", path.toString()));
+        studioSandbox.getSystemDir().ifPresent(path -> systemProperties.put("idea.system.path", path.toString()));
+        Path studioPluginsDir = studioSandbox.getPluginsDir();
+        systemProperties.put("idea.plugins.path", studioPluginsDir.toString());
+        Path studioLogsDir = studioSandbox.getLogsDir();
+        systemProperties.put("idea.log.path", studioLogsDir.toString());
         List<Path> sharedJars = Arrays.asList(asmJar, protocolJar);
-        systemProperties.put("idea.plugins.path", studioPluginsDirPath);
         List<Path> studioPluginJars = Arrays.asList(studioPlugin, protocolJar);
-        systemProperties.put("idea.log.path", studioPluginsDirPath);
-        return new LaunchConfiguration(javaCommand, classPath, systemProperties, mainClass, agentJar, supportJar, sharedJars, studioPluginJars, studioPluginsDir);
-    }
-
-    private static Path newPluginTempDir() {
-        try {
-            return Files.createTempDirectory("plugins");
-        } catch (IOException e) {
-            throw new UncheckedIOException(e);
-        }
+        return new LaunchConfiguration(javaCommand, classPath, systemProperties, mainClass, agentJar, supportJar,
+            sharedJars, studioPluginJars, studioPluginsDir, studioLogsDir);
     }
 
     private static Dict parse(Path infoFile) {

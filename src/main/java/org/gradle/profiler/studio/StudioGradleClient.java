@@ -15,7 +15,9 @@ import org.gradle.profiler.client.protocol.messages.GradleInvocationParameters;
 import org.gradle.profiler.client.protocol.messages.StudioAgentConnectionParameters;
 import org.gradle.profiler.client.protocol.messages.StudioRequest;
 import org.gradle.profiler.client.protocol.messages.StudioSyncRequestCompleted;
-import org.gradle.profiler.studio.plugin.StudioPluginInstaller;
+import org.gradle.profiler.studio.tools.StudioPluginInstaller;
+import org.gradle.profiler.studio.tools.StudioSandboxCreator;
+import org.gradle.profiler.studio.tools.StudioSandboxCreator.StudioSandbox;
 
 import java.io.Closeable;
 import java.io.File;
@@ -25,9 +27,10 @@ import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 import static java.util.concurrent.TimeUnit.SECONDS;
-import static org.gradle.profiler.client.protocol.messages.StudioRequest.StudioRequestType.EXIT;
+import static org.gradle.profiler.client.protocol.messages.StudioRequest.StudioRequestType.EXIT_IDE;
 import static org.gradle.profiler.client.protocol.messages.StudioRequest.StudioRequestType.SYNC;
 
 public class StudioGradleClient implements GradleClient {
@@ -35,7 +38,7 @@ public class StudioGradleClient implements GradleClient {
     private static final Duration AGENT_CONNECT_TIMEOUT = Duration.ofMinutes(1);
     private static final Duration SYNC_STARTED_TIMEOUT = Duration.ofMinutes(10);
     private static final Duration GRADLE_INVOCATION_COMPLETED_TIMEOUT = Duration.ofMinutes(60);
-    private static final Duration SYNC_REQUEST_COMPLETED_TIMEOUT = Duration.ofMinutes(20);
+    private static final Duration SYNC_REQUEST_COMPLETED_TIMEOUT = Duration.ofMinutes(60);
     private static final long STUDIO_EXIT_TIMEOUT_SECONDS = 60;
 
     private final Server studioAgentServer;
@@ -50,10 +53,12 @@ public class StudioGradleClient implements GradleClient {
             throw new IllegalArgumentException("Support for Android studio is currently only implemented on macOS.");
         }
         Path studioInstallDir = invocationSettings.getStudioInstallDir().toPath();
+        Optional<File> studioSandboxDir = invocationSettings.getStudioSandboxDir();
         Logging.startOperation("Starting Android Studio at " + studioInstallDir);
         studioPluginServer = new Server("plugin");
         studioAgentServer = new Server("agent");
-        LaunchConfiguration launchConfiguration = new LauncherConfigurationParser().calculate(studioInstallDir, studioPluginServer.getPort());
+        StudioSandbox sandbox = StudioSandboxCreator.createSandbox(studioSandboxDir.map(File::toPath).orElse(null));
+        LaunchConfiguration launchConfiguration = new LauncherConfigurationParser().calculate(studioInstallDir, sandbox, studioPluginServer.getPort());
         System.out.println();
         System.out.println("* Java command: " + launchConfiguration.getJavaCommand());
         System.out.println("* Classpath:");
@@ -87,7 +92,7 @@ public class StudioGradleClient implements GradleClient {
         commandLine.add("-Xbootclasspath/a:" + Joiner.on(File.pathSeparator).join(launchConfiguration.getSharedJars()));
         commandLine.add(launchConfiguration.getMainClass());
         commandLine.add(invocationSettings.getProjectDir().getAbsolutePath());
-        System.out.println("* Android Studio logs can be found at: " + Paths.get(launchConfiguration.getStudioPluginsDir().toString(), "idea.log"));
+        System.out.println("* Android Studio logs can be found at: " + Paths.get(launchConfiguration.getStudioLogsDir().toString(), "idea.log"));
         System.out.println("* Using command line: " + commandLine);
 
         studioPluginInstaller.installPlugin(launchConfiguration.getStudioPluginJars());
@@ -100,7 +105,7 @@ public class StudioGradleClient implements GradleClient {
              Server studioAgentServer = this.studioAgentServer;
              Closeable uninstallPlugin = studioPluginInstaller::uninstallPlugin) {
             System.out.println("* Stopping Android Studio....");
-            studioPluginConnection.send(new StudioRequest(EXIT));
+            studioPluginConnection.send(new StudioRequest(EXIT_IDE));
             studioProcess.waitForSuccess(STUDIO_EXIT_TIMEOUT_SECONDS, SECONDS);
             System.out.println("* Android Studio stopped.");
         } catch (Exception e) {
