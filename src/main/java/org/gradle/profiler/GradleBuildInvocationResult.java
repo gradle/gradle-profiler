@@ -12,8 +12,47 @@ import static org.gradle.profiler.buildops.BuildOperationUtil.getSimpleBuildOper
 public class GradleBuildInvocationResult extends BuildInvocationResult {
     private final Duration garbageCollectionTime;
     private final Duration timeToTaskExecution;
+    private final Duration gradleToolingAgentExecutionTime;
+    private final Duration ideExecutionTime;
     private final Map<String, Duration> cumulativeBuildOperationTimes;
     private final String daemonPid;
+
+    public GradleBuildInvocationResult(
+        BuildContext buildContext,
+        Duration executionTime,
+        @Nullable Duration gradleToolingAgentExecutionTime,
+        @Nullable Duration ideExecutionTime,
+        @Nullable Duration garbageCollectionTime,
+        @Nullable Duration timeToTaskExecution,
+        Map<String, Duration> cumulativeBuildOperationTimes,
+        String daemonPid
+    ) {
+        super(buildContext, executionTime);
+        this.garbageCollectionTime = garbageCollectionTime;
+        this.timeToTaskExecution = timeToTaskExecution;
+        this.gradleToolingAgentExecutionTime = gradleToolingAgentExecutionTime;
+        this.ideExecutionTime = ideExecutionTime;
+        this.cumulativeBuildOperationTimes = cumulativeBuildOperationTimes;
+        this.daemonPid = daemonPid;
+    }
+
+    public String getDaemonPid() {
+        return daemonPid;
+    }
+
+    public static Sample<GradleBuildInvocationResult> sampleBuildOperation(String buildOperationDetailsClass) {
+        return new Sample<GradleBuildInvocationResult>() {
+            @Override
+            public String getName() {
+                return getSimpleBuildOperationName(buildOperationDetailsClass);
+            }
+
+            @Override
+            public Duration extractFrom(GradleBuildInvocationResult result) {
+                return result.cumulativeBuildOperationTimes.getOrDefault(buildOperationDetailsClass, Duration.ZERO);
+            }
+        };
+    }
 
     public static final Sample<GradleBuildInvocationResult> GARBAGE_COLLECTION_TIME = new Sample<GradleBuildInvocationResult>() {
         @Override
@@ -39,36 +78,28 @@ public class GradleBuildInvocationResult extends BuildInvocationResult {
         }
     };
 
-    public static Sample<GradleBuildInvocationResult> sampleBuildOperation(String buildOperationDetailsClass) {
-        return new Sample<GradleBuildInvocationResult>() {
-            @Override
-            public String getName() {
-                return getSimpleBuildOperationName(buildOperationDetailsClass);
-            }
+    public static final Sample<GradleBuildInvocationResult> GRADLE_TOOLING_AGENT_EXECUTION_TIME = new Sample<GradleBuildInvocationResult>() {
+        @Override
+        public String getName() {
+            return "Gradle execution time";
+        }
 
-            @Override
-            public Duration extractFrom(GradleBuildInvocationResult result) {
-                return result.cumulativeBuildOperationTimes.getOrDefault(buildOperationDetailsClass, Duration.ZERO);
-            }
-        };
-    }
+        @Override
+        public Duration extractFrom(GradleBuildInvocationResult result) {
+            return result.gradleToolingAgentExecutionTime;
+        }
+    };
 
-    public GradleBuildInvocationResult(
-        BuildContext buildContext,
-        Duration executionTime,
-        @Nullable Duration garbageCollectionTime,
-        @Nullable Duration timeToTaskExecution,
-        Map<String, Duration> cumulativeBuildOperationTimes,
-        String daemonPid
-    ) {
-        super(buildContext, executionTime);
-        this.garbageCollectionTime = garbageCollectionTime;
-        this.timeToTaskExecution = timeToTaskExecution;
-        this.cumulativeBuildOperationTimes = cumulativeBuildOperationTimes;
-        this.daemonPid = daemonPid;
-    }
+    public static final Sample<GradleBuildInvocationResult> IDE_EXECUTION_TIME = new Sample<GradleBuildInvocationResult>() {
+        @Override
+        public String getName() {
+            return "IDE execution time";
+        }
 
-    public String getDaemonPid() {
-        return daemonPid;
-    }
+        @Override
+        public Duration extractFrom(GradleBuildInvocationResult result) {
+            return result.ideExecutionTime;
+        }
+    };
+
 }

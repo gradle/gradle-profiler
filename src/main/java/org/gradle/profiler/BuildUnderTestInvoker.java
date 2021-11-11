@@ -1,5 +1,6 @@
 package org.gradle.profiler;
 
+import org.gradle.profiler.BuildAction.BuildActionResult;
 import org.gradle.profiler.buildops.BuildOperationInstrumentation;
 import org.gradle.profiler.instrument.PidInstrumentation;
 
@@ -56,7 +57,7 @@ public class BuildUnderTestInvoker {
             jvmArgs.add("-Dorg.gradle.profiler.number=" + buildContext.getIteration());
             jvmArgs.add("-Dorg.gradle.profiler.step=" + buildStep);
 
-            Duration executionTime = action.run(gradleClient, gradleArgs, jvmArgs);
+            BuildActionResult buildActionResult = action.run(gradleClient, gradleArgs, jvmArgs);
 
             String pid = pidInstrumentation.getPidForLastBuild();
             Logging.detailed().printf("Used daemon with pid %s%n", pid);
@@ -78,7 +79,9 @@ public class BuildUnderTestInvoker {
 
             return new GradleBuildInvocationResult(
                 buildContext,
-                executionTime,
+                buildActionResult.getExecutionTime(),
+                buildActionResult.getGradleToolingAgentExecutionTime().orElse(null),
+                buildActionResult.getIdeExecutionTime().orElse(null),
                 garbageCollectionTime.orElse(null),
                 timeToTaskExecution.orElse(null),
                 cumulativeBuildOperationTimes,

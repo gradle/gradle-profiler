@@ -11,7 +11,7 @@ public class BuildInvocationResult {
     public static final Sample<BuildInvocationResult> EXECUTION_TIME = new Sample<BuildInvocationResult>() {
         @Override
         public String getName() {
-            return "execution";
+            return "total execution time";
         }
 
         @Override

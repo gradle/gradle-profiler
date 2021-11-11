@@ -6,7 +6,10 @@ import com.dd.plist.NSString;
 import com.dd.plist.PropertyListParser;
 import org.gradle.profiler.instrument.GradleInstrumentation;
 
+import java.io.IOException;
+import java.io.UncheckedIOException;
 import java.nio.file.FileSystems;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Arrays;
@@ -17,7 +20,8 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 
 public class LauncherConfigurationParser {
-    public LaunchConfiguration calculate(Path studioInstallDir) {
+
+    public LaunchConfiguration calculate(Path studioInstallDir, int studioPluginPort) {
         Dict entries = parse(studioInstallDir.resolve("Contents/Info.plist"));
         Path actualInstallDir;
         if ("jetbrains-toolbox-launcher".equals(entries.string("CFBundleExecutable"))) {
@@ -30,12 +34,29 @@ public class LauncherConfigurationParser {
         List<Path> classPath = Arrays.stream(jvmOptions.string("ClassPath").split(":")).map(s -> FileSystems.getDefault().getPath(s.replace("$APP_PACKAGE", actualInstallDir.toString()))).collect(Collectors.toList());
         String mainClass = jvmOptions.string("MainClass");
         Map<String, String> systemProperties = mapValues(jvmOptions.dict("Properties").toMap(), v -> v.replace("$APP_PACKAGE", actualInstallDir.toString()));
+        systemProperties.put("gradle.profiler.port", String.valueOf(studioPluginPort));
         Path javaCommand = actualInstallDir.resolve("Contents/jre/Contents/Home/bin/java");
         Path agentJar = GradleInstrumentation.unpackPlugin("studio-agent").toPath();
         Path asmJar = GradleInstrumentation.unpackPlugin("asm").toPath();
         Path supportJar = GradleInstrumentation.unpackPlugin("instrumentation-support").toPath();
         Path protocolJar = GradleInstrumentation.unpackPlugin("client-protocol").toPath();
-        return new LaunchConfiguration(javaCommand, classPath, systemProperties, mainClass, agentJar, supportJar, Arrays.asList(asmJar, protocolJar));
+        Path studioPlugin = GradleInstrumentation.unpackPlugin("studio-plugin").toPath();
+        Path studioPluginsDir = newPluginTempDir();
+
+        String studioPluginsDirPath = studioPluginsDir.toAbsolutePath().toString();
+        List<Path> sharedJars = Arrays.asList(asmJar, protocolJar);
+        systemProperties.put("idea.plugins.path", studioPluginsDirPath);
+        List<Path> studioPluginJars = Arrays.asList(studioPlugin, protocolJar);
+        systemProperties.put("idea.log.path", studioPluginsDirPath);
+        return new LaunchConfiguration(javaCommand, classPath, systemProperties, mainClass, agentJar, supportJar, sharedJars, studioPluginJars, studioPluginsDir);
+    }
+
+    private static Path newPluginTempDir() {
+        try {
+            return Files.createTempDirectory("plugins");
+        } catch (IOException e) {
+            throw new UncheckedIOException(e);
+        }
     }
 
     private static Dict parse(Path infoFile) {

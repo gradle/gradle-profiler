@@ -33,6 +33,8 @@ First, build and install the `gradle-profiler` app using:
 
 This will install the executable into `./build/install/gradle-profiler/bin`. The examples below assume that you add this location to your PATH or create a `gradle-profiler` alias for it.
 
+NOTE: You have to use Java 11 or later to build this project.
+
 ## Benchmarking a build
 
 Benchmarking simply records the time it takes to execute your build several times and calculates a mean and standard error for it.

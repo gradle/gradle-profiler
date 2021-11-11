@@ -1,17 +1,17 @@
-package org.gradle.profiler.client.protocol;
+package org.gradle.profiler.client.protocol.messages;
 
-public class SyncCompleted extends Message {
+public class GradleInvocationCompleted implements Message {
     private final int id;
     private final long durationMillis;
 
-    public SyncCompleted(int id, long durationMillis) {
+    public GradleInvocationCompleted(int id, long durationMillis) {
         this.id = id;
         this.durationMillis = durationMillis;
     }
 
     @Override
     public String toString() {
-        return "sync completed " + id + " in " + durationMillis + "ms";
+        return "gradle invocation completed " + id + " in " + durationMillis + "ms";
     }
 
     public int getId() {

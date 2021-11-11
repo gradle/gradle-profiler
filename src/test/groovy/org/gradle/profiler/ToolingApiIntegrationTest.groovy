@@ -44,7 +44,7 @@ plugins.withId("idea") {
         lines.get(0) == "scenario,ideaModel,ideaModel"
         lines.get(1) == "version,Gradle $minimalSupportedGradleVersion,Gradle $latestSupportedGradleVersion"
         lines.get(2) == "tasks,model IdeaProject,model IdeaProject"
-        lines.get(3) == "value,execution,execution"
+        lines.get(3) == "value,total execution time,total execution time"
     }
 
     def "runs benchmarks running tooling action"() {
@@ -85,7 +85,7 @@ println "<daemon: " + gradle.services.get(org.gradle.internal.environment.Gradle
         lines.get(0) == "scenario,fetchModel,fetchModel"
         lines.get(1) == "version,Gradle $minimalSupportedGradleVersion,Gradle $latestSupportedGradleVersion"
         lines.get(2) == "tasks,action FetchProjectPublications,action FetchProjectPublications"
-        lines.get(3) == "value,execution,execution"
+        lines.get(3) == "value,total execution time,total execution time"
     }
 
     def "profiles fetching tooling model using JFR"() {
