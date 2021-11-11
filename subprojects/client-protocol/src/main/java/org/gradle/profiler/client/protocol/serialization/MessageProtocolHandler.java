@@ -1,14 +1,20 @@
 package org.gradle.profiler.client.protocol.serialization;
 
 import org.gradle.profiler.client.protocol.Connection;
-import org.gradle.profiler.client.protocol.messages.*;
+import org.gradle.profiler.client.protocol.messages.Message;
 
+import java.io.Closeable;
 import java.io.EOFException;
 import java.io.IOException;
 import java.time.Duration;
-import java.util.concurrent.*;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 
-public class MessageProtocolHandler {
+public class MessageProtocolHandler implements Closeable {
     private final String peerName;
     private final Connection connection;
     private final ExecutorService executorService;
@@ -31,7 +37,7 @@ public class MessageProtocolHandler {
 
     public <T extends Message> T receive(Class<T> type, Duration timeout) {
         try {
-            Future<Object> future = executorService.submit((Callable<Object>) this::receive);
+            CompletableFuture<Object> future = CompletableFuture.supplyAsync(this::receive, executorService);
             Object result = future.get(timeout.toMillis(), TimeUnit.MILLISECONDS);
             return type.cast(result);
         } catch (TimeoutException e) {
@@ -50,6 +56,15 @@ public class MessageProtocolHandler {
             throw new IllegalStateException(String.format("Connection to %s has closed.", peerName));
         } catch (IOException e) {
             throw new RuntimeException(String.format("Could not read from %s.", peerName), e);
+        }
+    }
+
+    @Override
+    public void close() throws IOException {
+        try {
+            executorService.shutdown();
+            executorService.awaitTermination(10, TimeUnit.SECONDS);
+        } catch (InterruptedException ignored) {
         }
     }
 }

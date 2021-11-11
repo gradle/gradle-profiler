@@ -9,31 +9,33 @@ import java.time.Duration;
 
 public class ServerConnection implements Closeable {
     private final Connection connection;
-    private final MessageProtocolHandler serializer;
+    private final MessageProtocolHandler protocolHandler;
 
     public ServerConnection(String peerName, Connection connection) {
         this.connection = connection;
-        this.serializer = new MessageProtocolHandler(peerName, connection);
+        this.protocolHandler = new MessageProtocolHandler(peerName, connection);
     }
 
     @Override
     public void close() throws IOException {
-        connection.close();
+        try(MessageProtocolHandler protocolHandler = this.protocolHandler) {
+            connection.close();
+        }
     }
 
     public void send(Message message) {
-        serializer.send(message);
+        protocolHandler.send(message);
     }
 
     public GradleInvocationStarted receiveSyncStarted(Duration timeout) {
-        return serializer.receive(GradleInvocationStarted.class, timeout);
+        return protocolHandler.receive(GradleInvocationStarted.class, timeout);
     }
 
     public GradleInvocationCompleted receiveGradleInvocationCompleted(Duration timeout) {
-        return serializer.receive(GradleInvocationCompleted.class, timeout);
+        return protocolHandler.receive(GradleInvocationCompleted.class, timeout);
     }
 
     public StudioSyncRequestCompleted receiveSyncRequestCompleted(Duration timeout) {
-        return serializer.receive(StudioSyncRequestCompleted.class, timeout);
+        return protocolHandler.receive(StudioSyncRequestCompleted.class, timeout);
     }
 }

@@ -20,7 +20,7 @@ public enum Client {
 
     private final Object lock = new Object();
     private Connection connection;
-    private MessageProtocolHandler serializer;
+    private MessageProtocolHandler protocolHandler;
 
     public void connect(int port) {
         synchronized (lock) {
@@ -30,7 +30,7 @@ public enum Client {
             try {
                 Socket socket = new Socket(InetAddress.getLoopbackAddress(), port);
                 connection = new Connection(socket);
-                serializer = new MessageProtocolHandler("controller process", connection);
+                protocolHandler = new MessageProtocolHandler("controller process", connection);
             } catch (IOException e) {
                 throw new RuntimeException("Could not connect to controller process.", e);
             }
@@ -39,31 +39,31 @@ public enum Client {
 
     public void send(Message message) {
         synchronized (lock) {
-            serializer.send(message);
+            protocolHandler.send(message);
         }
     }
 
     public GradleInvocationParameters receiveSyncParameters(Duration timeout) {
         synchronized (lock) {
-            return serializer.receive(GradleInvocationParameters.class, timeout);
+            return protocolHandler.receive(GradleInvocationParameters.class, timeout);
         }
     }
 
     public StudioAgentConnectionParameters receiveConnectionParameters(Duration timeout) {
         synchronized (lock) {
-            return serializer.receive(StudioAgentConnectionParameters.class, timeout);
+            return protocolHandler.receive(StudioAgentConnectionParameters.class, timeout);
         }
     }
 
     public StudioRequest receiveStudioRequest(Duration timeout) {
         synchronized (lock) {
-            return serializer.receive(StudioRequest.class, timeout);
+            return protocolHandler.receive(StudioRequest.class, timeout);
         }
     }
 
     public void disconnect() {
         synchronized (lock) {
-            try {
+            try (MessageProtocolHandler protocolHandler = this.protocolHandler) {
                 if (connection != null) {
                     connection.close();
                 }
@@ -71,6 +71,7 @@ public enum Client {
                 throw new UncheckedIOException(e);
             } finally {
                 connection = null;
+                protocolHandler = null;
             }
         }
     }

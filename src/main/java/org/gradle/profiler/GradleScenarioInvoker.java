@@ -33,7 +33,7 @@ public class GradleScenarioInvoker extends ScenarioInvoker<GradleScenarioDefinit
         builder.add(BuildInvocationResult.EXECUTION_TIME);
         if (scenario.isAndroidStudioSync()) {
             builder.add(GradleBuildInvocationResult.GRADLE_TOOLING_AGENT_EXECUTION_TIME);
-            builder.add(GradleBuildInvocationResult.STUDIO_EXECUTION_TIME);
+            builder.add(GradleBuildInvocationResult.IDE_EXECUTION_TIME);
         }
         if (settings.isMeasureGarbageCollection()) {
             builder.add(GradleBuildInvocationResult.GARBAGE_COLLECTION_TIME);
