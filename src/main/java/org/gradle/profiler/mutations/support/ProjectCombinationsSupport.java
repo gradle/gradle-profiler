@@ -17,7 +17,8 @@ public class ProjectCombinationsSupport {
     }
 
     public static ProjectCombinations createProjectCombinations(int projectsToGenerate, int appliedProjectDependencies) {
-        checkArgument(projectsToGenerate >= appliedProjectDependencies, "Projects to generate should be at least equal to applied project dependencies ");
+        checkArgument(projectsToGenerate > 0 && appliedProjectDependencies > 0, "Projects-set-size and applied-project-size should be greater than 0.");
+        checkArgument(projectsToGenerate >= appliedProjectDependencies, "Projects-set-size should be at least equal to applied-project-size.");
         String salt = UUID.randomUUID().toString().substring(0, 5);
         List<String> projectNames = IntStream.range(0, projectsToGenerate)
             .mapToObj(it -> String.format("project-%s-%s", salt, it))

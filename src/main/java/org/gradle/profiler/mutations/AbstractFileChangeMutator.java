@@ -23,7 +23,7 @@ public abstract class AbstractFileChangeMutator implements BuildMutator {
         FileSupport.writeUnchecked(sourceFile.toPath(), modifiedText.toString());
     }
 
-    protected String readText(File file) {
+    private String readText(File file) {
         return FileSupport.readUnchecked(file.toPath());
     }
 
@@ -34,7 +34,7 @@ public abstract class AbstractFileChangeMutator implements BuildMutator {
         revert(sourceFile, originalText);
     }
 
-    protected void revert(File file, String originalText) {
+    private void revert(File file, String originalText) {
         FileSupport.writeUnchecked(file.toPath(), originalText);
     }
 

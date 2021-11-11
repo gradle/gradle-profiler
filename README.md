@@ -309,11 +309,12 @@ They can be added to a scenario file like this:
 
         apply-build-script-change-to = "build.gradle.kts"
         apply-dependency-change-to {
-            files = ['build.gradle']
+            files = ["build.gradle"]
             // Example: This will apply a unique combination of 5 projects from a set of 10 projects.
             // Number of combinations can be calculated by typing "10 choosen 5" in your favorite search engine.
-            // Default values are 10 and 5. When values are equal there is just one combination to apply, so all
-            // runs will have same dependencies applied.
+            // When both values are equal there is just one combination possible, so all
+            // runs will have the same combination of the projects applied as dependency.
+            // Default values are 10 and 5. 
             projects-set-size = 10
             applied-projects-size = 5
         }

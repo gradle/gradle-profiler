@@ -13,7 +13,7 @@ import java.io.File;
 import java.util.*;
 import java.util.stream.Collectors;
 
-public class ScenarioLoader {
+class ScenarioLoader {
     private static final String TITLE = "title";
     private static final String VERSIONS = "versions";
     private static final String TASKS = "tasks";
@@ -295,7 +295,7 @@ public class ScenarioLoader {
         return getBuildCount(settings, (Integer) null);
     }
 
-    public static int getBuildCount(InvocationSettings settings, Config scenario) {
+    private static int getBuildCount(InvocationSettings settings, Config scenario) {
         return getBuildCount(settings, ConfigUtil.optionalInteger(scenario, ITERATIONS));
     }
 
@@ -321,7 +321,7 @@ public class ScenarioLoader {
         return homeString == null ? null : new File(homeString);
     }
 
-    public static int getWarmUpCount(InvocationSettings settings, Config scenario) {
+    private static int getWarmUpCount(InvocationSettings settings, Config scenario) {
         return getWarmUpCount(settings, settings.getInvoker(), ConfigUtil.optionalInteger(scenario, WARM_UP_COUNT));
     }
 
