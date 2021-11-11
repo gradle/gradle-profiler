@@ -38,7 +38,7 @@ public class StudioGradleClient implements GradleClient {
     private static final Duration AGENT_CONNECT_TIMEOUT = Duration.ofMinutes(1);
     private static final Duration SYNC_STARTED_TIMEOUT = Duration.ofMinutes(10);
     private static final Duration GRADLE_INVOCATION_COMPLETED_TIMEOUT = Duration.ofMinutes(60);
-    private static final Duration SYNC_REQUEST_COMPLETED_TIMEOUT = Duration.ofMinutes(20);
+    private static final Duration SYNC_REQUEST_COMPLETED_TIMEOUT = Duration.ofMinutes(60);
     private static final long STUDIO_EXIT_TIMEOUT_SECONDS = 60;
 
     private final Server studioAgentServer;
