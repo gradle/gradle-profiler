@@ -73,7 +73,7 @@ class AndroidStudioIntegrationTest extends AbstractProfilerIntegrationTest {
 
         then:
         def e = thrown(Main.ScenarioFailedException)
-        e.getCause().message == "Timeout waiting for incoming connection from plugin."
+        e.getCause().message == "Timeout waiting for incoming connection from studioStartDetector."
         logFile.containsOne("* ERROR")
         logFile.containsOne("* Could not connect to Android Studio process started by the gradle-profiler.")
         logFile.containsOne("* This might indicate that you are already running an Android Studio process in the same sandbox.")

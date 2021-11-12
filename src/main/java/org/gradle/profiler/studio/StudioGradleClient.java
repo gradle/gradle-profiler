@@ -32,8 +32,8 @@ import static org.gradle.profiler.client.protocol.messages.StudioRequest.StudioR
 
 public class StudioGradleClient implements GradleClient {
 
+    private static final Duration STUDIO_START_TIMEOUT = Duration.ofSeconds(15);
     private static final Duration PLUGIN_CONNECT_TIMEOUT = Duration.ofMinutes(1);
-    private static final Duration PROJECT_OPENED_TIMEOUT = Duration.ofMinutes(1);
     private static final Duration AGENT_CONNECT_TIMEOUT = Duration.ofMinutes(1);
     private static final Duration SYNC_STARTED_TIMEOUT = Duration.ofMinutes(10);
     private static final Duration GRADLE_INVOCATION_COMPLETED_TIMEOUT = Duration.ofMinutes(60);
@@ -42,7 +42,6 @@ public class StudioGradleClient implements GradleClient {
 
     private final Server studioAgentServer;
     private final Server studioPluginServer;
-    private final Server studioStartDetectorServer;
     private final RunHandle studioProcess;
     private final ServerConnection studioAgentConnection;
     private final ServerConnection studioPluginConnection;
@@ -57,24 +56,25 @@ public class StudioGradleClient implements GradleClient {
         Logging.startOperation("Starting Android Studio at " + studioInstallDir);
         studioPluginServer = new Server("plugin");
         studioAgentServer = new Server("agent");
-        studioStartDetectorServer = new Server("studioStartDetector");
+        Server studioStartDetectorServer = new Server("studioStartDetector");
         StudioSandbox sandbox = StudioSandboxCreator.createSandbox(studioSandboxDir.map(File::toPath).orElse(null));
         LaunchConfiguration launchConfiguration = new LauncherConfigurationParser(studioInstallDir, sandbox)
-            .installStudioPlugin(studioPluginServer.getPort())
+            .installStudioPlugin(studioStartDetectorServer.getPort(), studioPluginServer.getPort())
             .installStudioAgent(studioAgentServer.getPort())
             .calculate();
 
         studioPluginInstaller = new StudioPluginInstaller(launchConfiguration.getStudioPluginsDir());
         studioPluginInstaller.installPlugin(launchConfiguration.getStudioPluginJars());
         studioProcess = StudioLauncher.launchStudio(launchConfiguration, invocationSettings.getProjectDir());
-        studioPluginConnection = waitOnSuccessfulPluginConnection(studioProcess);
+        waitOnSuccessfulIdeStart(studioProcess, studioStartDetectorServer);
+        studioPluginConnection = studioPluginServer.waitForIncoming(PLUGIN_CONNECT_TIMEOUT);
         studioAgentConnection = studioAgentServer.waitForIncoming(AGENT_CONNECT_TIMEOUT);
         studioAgentConnection.send(new StudioAgentConnectionParameters(buildConfiguration.getGradleHome()));
     }
 
-    private ServerConnection waitOnSuccessfulPluginConnection(RunHandle runHandle) {
-        try {
-            return studioPluginServer.waitForIncoming(PLUGIN_CONNECT_TIMEOUT);
+    private void waitOnSuccessfulIdeStart(RunHandle runHandle, Server studioStartDetectorServer) {
+        try (Server server = studioStartDetectorServer) {
+            server.waitForIncoming(STUDIO_START_TIMEOUT);
         } catch (Exception e) {
             System.err.println("\n* ERROR\n" +
                 "* Could not connect to Android Studio process started by the gradle-profiler.\n" +

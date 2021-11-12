@@ -20,7 +20,6 @@ public class StudioLauncher {
         return new CommandExec().inDir(launchConfiguration.studioInstallDir().toFile()).start(commandLine);
     }
 
-
     private static void logLauncherConfiguration(LaunchConfiguration launchConfiguration, List<String> commandLine) {
         System.out.println();
         System.out.println("* Java command: " + launchConfiguration.getJavaCommand());

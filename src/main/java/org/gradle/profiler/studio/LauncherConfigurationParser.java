@@ -29,14 +29,16 @@ public class LauncherConfigurationParser {
     private int studioPluginPort;
     private boolean isInstallStudioAgent;
     private int studioAgentPort;
+    private int studioStartDetectorPort;
 
     public LauncherConfigurationParser(Path studioInstallDir, StudioSandbox studioSandbox) {
         this.studioInstallDir = studioInstallDir;
         this.studioSandbox = studioSandbox;
     }
 
-    public LauncherConfigurationParser installStudioPlugin(int studioPluginPort) {
+    public LauncherConfigurationParser installStudioPlugin(int studioStartDetectorPort, int studioPluginPort) {
         this.isInstallStudioPlugin = true;
+        this.studioStartDetectorPort = studioStartDetectorPort;
         this.studioPluginPort = studioPluginPort;
         return this;
     }
@@ -69,48 +71,13 @@ public class LauncherConfigurationParser {
         Path studioPluginsDir = studioSandbox.getPluginsDir();
         Path studioLogsDir = studioSandbox.getLogsDir();
         List<Path> sharedJars = Arrays.asList(asmJar, protocolJar);
-
-        List<String> commandLine = buildCommandLine(
-            javaCommand,
-            classPath,
-            mainClass,
-            systemProperties,
-            agentJar,
-            supportJar,
-            sharedJars
-        );
-
         List<Path> studioPluginJars = isInstallStudioPlugin ? Arrays.asList(studioPlugin, protocolJar) : Collections.emptyList();
-        return new LaunchConfiguration(javaCommand, studioInstallDir, classPath, systemProperties, mainClass, agentJar, supportJar,
-            sharedJars, studioPluginJars, studioPluginsDir, studioLogsDir, commandLine);
-    }
 
-    private Map<String, String> buildSystemProperties(Dict jvmOptions, Path actualInstallDir) {
-        Map<String, String> systemProperties = mapValues(jvmOptions.dict("Properties").toMap(), v -> v.replace("$APP_PACKAGE", actualInstallDir.toString()));
-        if (isInstallStudioPlugin) {
-            systemProperties.put("gradle.profiler.port", String.valueOf(studioPluginPort));
-        }
-        studioSandbox.getConfigDir().ifPresent(path -> systemProperties.put("idea.config.path", path.toString()));
-        studioSandbox.getSystemDir().ifPresent(path -> systemProperties.put("idea.system.path", path.toString()));
-        systemProperties.put("idea.plugins.path", studioSandbox.getPluginsDir().toString());
-        systemProperties.put("idea.log.path", studioSandbox.getLogsDir().toString());
-        return systemProperties;
-    }
-
-    private List<String> buildCommandLine(Path javaCommand,
-                                          List<Path> classPath,
-                                          String mainClass,
-                                          Map<String, String> systemProperties,
-                                          Path agentJar,
-                                          Path supportJar,
-                                          List<Path> sharedJars) {
         List<String> commandLine = new ArrayList<>();
         commandLine.add(javaCommand.toString());
         commandLine.add("-cp");
         commandLine.add(Joiner.on(File.pathSeparator).join(classPath));
-        for (Map.Entry<String, String> systemProperty : systemProperties.entrySet()) {
-            commandLine.add(String.format("-D%s=%s", systemProperty.getKey(), systemProperty.getValue()));
-        }
+        systemProperties.forEach((key, value) -> commandLine.add(String.format("-D%s=%s", key, value)));
         if (isInstallStudioAgent) {
             commandLine.add(String.format("-javaagent:%s=%s,%s", agentJar, studioAgentPort, supportJar));
             commandLine.add("--add-exports");
@@ -118,7 +85,22 @@ public class LauncherConfigurationParser {
             commandLine.add("-Xbootclasspath/a:" + Joiner.on(File.pathSeparator).join(sharedJars));
         }
         commandLine.add(mainClass);
-        return commandLine;
+
+        return new LaunchConfiguration(javaCommand, studioInstallDir, classPath, systemProperties, mainClass, agentJar, supportJar,
+            sharedJars, studioPluginJars, studioPluginsDir, studioLogsDir, commandLine);
+    }
+
+    private Map<String, String> buildSystemProperties(Dict jvmOptions, Path actualInstallDir) {
+        Map<String, String> systemProperties = mapValues(jvmOptions.dict("Properties").toMap(), v -> v.replace("$APP_PACKAGE", actualInstallDir.toString()));
+        if (isInstallStudioPlugin) {
+            systemProperties.put("gradle.profiler.startup.port", String.valueOf(studioStartDetectorPort));
+            systemProperties.put("gradle.profiler.port", String.valueOf(studioPluginPort));
+        }
+        studioSandbox.getConfigDir().ifPresent(path -> systemProperties.put("idea.config.path", path.toString()));
+        studioSandbox.getSystemDir().ifPresent(path -> systemProperties.put("idea.system.path", path.toString()));
+        systemProperties.put("idea.plugins.path", studioSandbox.getPluginsDir().toString());
+        systemProperties.put("idea.log.path", studioSandbox.getLogsDir().toString());
+        return systemProperties;
     }
 
     private static Dict parse(Path infoFile) {

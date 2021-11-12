@@ -1,13 +1,7 @@
 package org.gradle.profiler;
 
 import javax.annotation.Nullable;
-import java.io.ByteArrayOutputStream;
-import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
+import java.io.*;
 import java.lang.reflect.Field;
 import java.util.Collection;
 import java.util.List;
@@ -215,42 +209,8 @@ public class CommandExec {
         }
 
         public void waitForSuccess(long timeout, TimeUnit unit) throws ExecutionException, InterruptedException, TimeoutException {
-            int result = 0;
-            Exception failure = null;
-            boolean isDone = false;
-            try {
-                isDone = process.waitFor(timeout, unit);
-            } catch (Exception e) {
-                failure = e;
-            } finally {
-                shutdownExecutor();
-            }
-            if (failure != null) {
-                throw new RuntimeException(commandErrorMessage(processBuilder, diagnosticOutput.get()), failure);
-            }
-            if (!isDone) {
-                throw new TimeoutException("Process did not finish in it.");
-            } else {
-                result = process.exitValue();
-            }
-            if (result != 0) {
-                throw new RuntimeException(commandErrorMessage(processBuilder, diagnosticOutput.get()));
-            }
             Future<?> future = executor.submit((Runnable) this::waitForSuccess);
             future.get(timeout, unit);
-        }
-
-        /**
-         * Wait for process to finish, but it does not shutdown executor.
-         *
-         * It returns true if process finished in time and false if it did not.
-         */
-        public boolean waitForWithoutShutdown(long timeout, TimeUnit unit) {
-            try {
-                return process.waitFor(timeout, unit);
-            } catch (InterruptedException e) {
-                throw new RuntimeException(e);
-            }
         }
 
         public void interrupt() {
