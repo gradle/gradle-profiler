@@ -8,7 +8,6 @@ import org.gradle.profiler.client.protocol.Client;
 import org.gradle.profiler.client.protocol.messages.StudioRequest;
 import org.gradle.profiler.client.protocol.messages.StudioSyncRequestCompleted;
 import org.gradle.profiler.studio.plugin.system.AndroidStudioSystemHelper;
-import org.gradle.profiler.studio.plugin.system.GradleProfilerGradleSyncListener;
 import org.gradle.profiler.studio.plugin.system.GradleProfilerGradleSyncListener.GradleSyncResult;
 
 import java.time.Duration;
@@ -22,23 +21,22 @@ public class GradleProfilerClient {
     private static final Logger LOG = Logger.getInstance(GradleProfilerClient.class);
     public static final String PROFILER_PORT_PROPERTY = "gradle.profiler.port";
 
-    private final AndroidStudioSystemHelper systemHelper = new AndroidStudioSystemHelper();
+    private final Client client;
+    private final AndroidStudioSystemHelper systemHelper;
 
-    public void connectToProfilerAsync(Project project) {
-        if (System.getProperty(PROFILER_PORT_PROPERTY) == null) {
-            return;
-        }
+    public GradleProfilerClient(Client client) {
+        this.client = client;
+        this.systemHelper = new AndroidStudioSystemHelper();
+    }
 
-        int port = Integer.parseInt(System.getProperty(PROFILER_PORT_PROPERTY));
-        Client.INSTANCE.connect(port);
-        LOG.info("Connected to port: " + System.getProperty(PROFILER_PORT_PROPERTY));
+    public void listenForSyncRequests(Project project) {
         ApplicationManager.getApplication().executeOnPooledThread(() -> {
             StudioRequest request = receiveNextEvent();
             while (shouldHandleNextEvent(request)) {
                 handleGradleProfilerRequest(request, project);
                 request = receiveNextEvent();
             }
-            Client.INSTANCE.disconnect();
+            client.disconnect();
             if (request.getType() == EXIT_IDE) {
                 systemHelper.exit();
             }
@@ -78,7 +76,7 @@ public class GradleProfilerClient {
         GradleSyncResult result = systemHelper.doGradleSync(project);
         systemHelper.waitOnBackgroundProcessesFinish(project);
         LOG.info(String.format("[SYNC REQUEST %s] '%s': '%s'%n", request.getId(), result.getResult(), result.getErrorMessage().isEmpty() ? "no message" : result.getErrorMessage()));
-        Client.INSTANCE.send(new StudioSyncRequestCompleted(request.getId(), stopwatch.elapsed(TimeUnit.MILLISECONDS), result.getResult()));
+        client.send(new StudioSyncRequestCompleted(request.getId(), stopwatch.elapsed(TimeUnit.MILLISECONDS), result.getResult()));
     }
 
 }

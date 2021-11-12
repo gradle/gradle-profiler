@@ -15,8 +15,11 @@ public class LaunchConfiguration {
     private final List<Path> studioPluginJars;
     private final Path studioPluginsDir;
     private final Path studioLogsDir;
+    private final List<String> commandLine;
+    private final Path studioInstallDir;
 
     public LaunchConfiguration(Path javaCommand,
+                               Path studioInstallDir,
                                List<Path> classPath,
                                Map<String, String> systemProperties,
                                String mainClass,
@@ -25,8 +28,10 @@ public class LaunchConfiguration {
                                List<Path> sharedJars,
                                List<Path> studioPluginJars,
                                Path studioPluginsDir,
-                               Path studioLogsDir) {
+                               Path studioLogsDir,
+                               List<String> commandLine) {
         this.javaCommand = javaCommand;
+        this.studioInstallDir = studioInstallDir;
         this.classPath = classPath;
         this.systemProperties = systemProperties;
         this.mainClass = mainClass;
@@ -36,10 +41,15 @@ public class LaunchConfiguration {
         this.studioPluginJars = studioPluginJars;
         this.studioPluginsDir = studioPluginsDir;
         this.studioLogsDir = studioLogsDir;
+        this.commandLine = commandLine;
     }
 
     public Path getJavaCommand() {
         return javaCommand;
+    }
+
+    public Path studioInstallDir() {
+        return studioInstallDir;
     }
 
     public List<Path> getClassPath() {
@@ -76,5 +86,9 @@ public class LaunchConfiguration {
 
     public Path getStudioLogsDir() {
         return studioLogsDir;
+    }
+
+    public List<String> getCommandLine() {
+        return commandLine;
     }
 }
