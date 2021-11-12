@@ -1,51 +1,65 @@
 package org.gradle.profiler.studio.plugin;
 
-import com.google.common.base.Suppliers;
 import com.intellij.ide.impl.TrustedProjects;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PreloadingActivity;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.ProjectManagerListener;
 import org.gradle.profiler.client.protocol.Client;
+import org.gradle.profiler.client.protocol.messages.StudioRequest;
 import org.gradle.profiler.studio.plugin.client.GradleProfilerClient;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.Optional;
-import java.util.function.Supplier;
+import java.io.IOException;
+import java.io.UncheckedIOException;
 
-import static org.gradle.profiler.studio.plugin.client.GradleProfilerClient.PROFILER_PORT_PROPERTY;
+import static org.gradle.profiler.client.protocol.messages.StudioRequest.StudioRequestType.EXIT_IDE;
+import static org.gradle.profiler.studio.plugin.system.AndroidStudioSystemHelper.exit;
 
 public class GradleProfilerProjectManagerListener extends PreloadingActivity implements ProjectManagerListener {
 
     private static final Logger LOG = Logger.getInstance(GradleProfilerProjectManagerListener.class);
-    private static final Supplier<Optional<Client>> CLIENT_PROVIDER = Suppliers.memoize(GradleProfilerProjectManagerListener::getConnectedClient);
+
+    public static final String PROFILER_PORT_PROPERTY = "gradle.profiler.port";
+    private static final String STARTUP_PORT_PROPERTY = "gradle.profiler.startup.port";
 
     /**
-     * Preload is started as soon as possible of IDE start. It's used so we don't have to wait long for client connection.
+     * Preload is started as soon as IDE starts. We use it, so we can detect fast if IDE was started or not.
      */
     @Override
     public void preload(@NotNull ProgressIndicator indicator) {
-        CLIENT_PROVIDER.get();
+        if (System.getProperty(STARTUP_PORT_PROPERTY) != null) {
+            int port = Integer.getInteger(PROFILER_PORT_PROPERTY);
+            try (Client ignored = new Client(port)) {
+                LOG.info("Startup check connected to port: " + port);
+            } catch (IOException e) {
+                throw new UncheckedIOException(e);
+            }
+        }
     }
 
     @Override
-    public void projectOpened(com.intellij.openapi.project.Project project) {
+    public void projectOpened(@NotNull com.intellij.openapi.project.Project project) {
         LOG.info("Project opened");
-        if (CLIENT_PROVIDER.get().isPresent()) {
+        if (System.getProperty(PROFILER_PORT_PROPERTY) != null) {
             TrustedProjects.setTrusted(project, true);
-            new GradleProfilerClient(CLIENT_PROVIDER.get().get()).listenForSyncRequests(project);
+            ApplicationManager.getApplication().executeOnPooledThread(() -> {
+                StudioRequest lastRequest = listenForSyncRequests(project);
+                if (lastRequest.getType() == EXIT_IDE) {
+                    exit();
+                }
+            });
         }
     }
 
-    private static Optional<Client> getConnectedClient() {
-        if (System.getProperty(PROFILER_PORT_PROPERTY) == null) {
-            return Optional.empty();
+    private StudioRequest listenForSyncRequests(@NotNull com.intellij.openapi.project.Project project) {
+        int port = Integer.getInteger(PROFILER_PORT_PROPERTY);
+        try (Client client = new Client(port)) {
+            return new GradleProfilerClient(client).listenForSyncRequests(project);
+        } catch (IOException e) {
+            throw new UncheckedIOException(e);
         }
-
-        int port = Integer.parseInt(System.getProperty(PROFILER_PORT_PROPERTY));
-        Client.INSTANCE.connect(port);
-        LOG.info("Connected to port: " + System.getProperty(PROFILER_PORT_PROPERTY));
-        return Optional.of(Client.INSTANCE);
     }
 
 }

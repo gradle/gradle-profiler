@@ -19,13 +19,12 @@ class StudioPluginIntegrationTest extends StudioPluginTestCase {
     void "should successfully sync Gradle project"() {
         given:
         ServerConnection connection = server.waitForIncoming(Duration.ofSeconds(10))
-        connection.receiveProjectOpened(Duration.ofSeconds(10));
 
         when:
         connection.send(new StudioRequest(SYNC))
 
         then:
-        StudioSyncRequestCompleted requestCompleted = connection.receiveSyncRequestCompleted(Duration.ofSeconds(60))
+        StudioSyncRequestCompleted requestCompleted = connection.receiveSyncRequestCompleted(Duration.ofSeconds(90))
         requestCompleted.result == SUCCEEDED
 
         and:
@@ -36,7 +35,6 @@ class StudioPluginIntegrationTest extends StudioPluginTestCase {
     void "should report error if Gradle sync is not successful"() {
         given:
         ServerConnection connection = server.waitForIncoming(Duration.ofSeconds(10))
-        connection.receiveProjectOpened(Duration.ofSeconds(10))
         // Fail Gradle build by removing settings file
         settingsFile.delete()
 
@@ -44,7 +42,7 @@ class StudioPluginIntegrationTest extends StudioPluginTestCase {
         connection.send(new StudioRequest(SYNC))
 
         then:
-        StudioSyncRequestCompleted requestCompleted = connection.receiveSyncRequestCompleted(Duration.ofSeconds(60))
+        StudioSyncRequestCompleted requestCompleted = connection.receiveSyncRequestCompleted(Duration.ofSeconds(90))
         requestCompleted.result == FAILED
 
         and:

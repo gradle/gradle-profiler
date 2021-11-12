@@ -9,19 +9,16 @@ import com.intellij.testFramework.EdtTestUtil
 import com.intellij.testFramework.HeavyPlatformTestCase
 import com.intellij.testFramework.OpenProjectTaskBuilder
 import org.gradle.profiler.client.protocol.Server
-import org.gradle.profiler.client.protocol.ServerConnection
 import org.jetbrains.annotations.NotNull
 import org.junit.runner.RunWith
 import org.junit.runners.JUnit4
 
 import java.nio.file.Path
-import java.time.Duration
 
 @RunWith(JUnit4.class)
 class StudioPluginTestCase extends HeavyPlatformTestCase {
 
     Server server
-    ServerConnection connection
     File buildFile
     File settingsFile
     File projectDir
@@ -29,7 +26,6 @@ class StudioPluginTestCase extends HeavyPlatformTestCase {
     @Override
     protected void setUp() throws Exception {
         server = new Server("plugin")
-        connection = server.waitForIncoming(Duration.ofSeconds(10))
         System.setProperty("gradle.profiler.port", server.getPort() as String)
         // We must run this on Edt otherwise the exception is thrown since runInDispatchThread is set to false
         EdtTestUtil.runInEdtAndWait { super.setUp() }
@@ -63,7 +59,6 @@ class StudioPluginTestCase extends HeavyPlatformTestCase {
     protected void createGradleProject() {
         projectDir = getProjectDirOrFile().parent.toFile()
         projectDir.mkdirs()
-        println(projectDir.absolutePath)
         buildFile = new File(projectDir, "build.gradle")
         settingsFile = new File(projectDir, "settings.gradle")
         buildFile.createNewFile()

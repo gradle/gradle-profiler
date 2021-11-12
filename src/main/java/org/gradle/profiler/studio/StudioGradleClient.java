@@ -32,7 +32,7 @@ import static org.gradle.profiler.client.protocol.messages.StudioRequest.StudioR
 
 public class StudioGradleClient implements GradleClient {
 
-    private static final Duration PLUGIN_CONNECT_TIMEOUT = Duration.ofSeconds(12);
+    private static final Duration PLUGIN_CONNECT_TIMEOUT = Duration.ofMinutes(1);
     private static final Duration PROJECT_OPENED_TIMEOUT = Duration.ofMinutes(1);
     private static final Duration AGENT_CONNECT_TIMEOUT = Duration.ofMinutes(1);
     private static final Duration SYNC_STARTED_TIMEOUT = Duration.ofMinutes(10);
@@ -42,9 +42,10 @@ public class StudioGradleClient implements GradleClient {
 
     private final Server studioAgentServer;
     private final Server studioPluginServer;
+    private final Server studioStartDetectorServer;
     private final RunHandle studioProcess;
-    private ServerConnection studioAgentConnection;
-    private ServerConnection studioPluginConnection;
+    private final ServerConnection studioAgentConnection;
+    private final ServerConnection studioPluginConnection;
     private final StudioPluginInstaller studioPluginInstaller;
 
     public StudioGradleClient(GradleBuildConfiguration buildConfiguration, InvocationSettings invocationSettings) {
@@ -56,6 +57,7 @@ public class StudioGradleClient implements GradleClient {
         Logging.startOperation("Starting Android Studio at " + studioInstallDir);
         studioPluginServer = new Server("plugin");
         studioAgentServer = new Server("agent");
+        studioStartDetectorServer = new Server("studioStartDetector");
         StudioSandbox sandbox = StudioSandboxCreator.createSandbox(studioSandboxDir.map(File::toPath).orElse(null));
         LaunchConfiguration launchConfiguration = new LauncherConfigurationParser(studioInstallDir, sandbox)
             .installStudioPlugin(studioPluginServer.getPort())

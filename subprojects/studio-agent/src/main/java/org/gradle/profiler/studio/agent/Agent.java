@@ -2,6 +2,7 @@ package org.gradle.profiler.studio.agent;
 
 import jdk.internal.misc.Unsafe;
 import org.gradle.profiler.client.protocol.Client;
+import org.gradle.profiler.client.protocol.agent.AgentClientContainer;
 import org.objectweb.asm.*;
 
 import java.io.IOException;
@@ -22,7 +23,7 @@ public class Agent {
         String[] args = agentArgs.split(",");
         int port = Integer.parseInt(args[0]);
         Path supportClasses = FileSystems.getDefault().getPath(args[1]);
-        Client.INSTANCE.connect(port);
+        AgentClientContainer.INSTANCE.init(new Client(port));
         System.out.println("* Connected to controller process");
 
         inst.addTransformer(new InstrumentingTransformer(supportClasses));
