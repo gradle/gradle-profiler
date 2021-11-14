@@ -4,7 +4,7 @@ import org.gradle.profiler.mutations.support.ProjectCombinations
 
 import static org.gradle.profiler.mutations.support.ProjectCombinationsSupport.*
 
-class ApplyDependencyChangeMutatorTest extends AbstractMutatorTest {
+class ApplyProjectDependencyChangeMutatorTest extends AbstractMutatorTest {
 
     ProjectCombinations combinations
     String salt
@@ -17,7 +17,7 @@ class ApplyDependencyChangeMutatorTest extends AbstractMutatorTest {
     def "adds projects dependency at the end of the build script"() {
         def sourceFile = tmpDir.newFile("build.gradle")
         sourceFile.text = "plugins { id 'java' }"
-        def mutator = new ApplyDependencyChangeMutator(sourceFile, combinations)
+        def mutator = new ApplyProjectDependencyChangeMutator(sourceFile, combinations)
 
         when:
         mutator.beforeBuild(buildContext)
@@ -33,7 +33,7 @@ dependencies {
     def "reverts projects dependency changes"() {
         def sourceFile = tmpDir.newFile("build.gradle")
         sourceFile.text = "plugins { id 'java' }"
-        def mutator = new ApplyDependencyChangeMutator(sourceFile, combinations)
+        def mutator = new ApplyProjectDependencyChangeMutator(sourceFile, combinations)
 
         when:
         mutator.beforeScenario(scenarioContext)

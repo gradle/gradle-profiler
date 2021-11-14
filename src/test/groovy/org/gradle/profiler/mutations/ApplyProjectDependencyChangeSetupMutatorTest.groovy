@@ -4,7 +4,7 @@ import org.gradle.profiler.mutations.support.ProjectCombinations
 
 import static org.gradle.profiler.mutations.support.ProjectCombinationsSupport.createProjectCombinations
 
-class ApplyDependencyChangeSetupMutatorTest extends AbstractMutatorTest {
+class ApplyProjectDependencyChangeSetupMutatorTest extends AbstractMutatorTest {
 
     ProjectCombinations combinations
     String salt
@@ -18,7 +18,7 @@ class ApplyDependencyChangeSetupMutatorTest extends AbstractMutatorTest {
         def combinations = createProjectCombinations(2, 1)
 
         when:
-        new ApplyDependencyChangeSetupMutator(tmpDir.root, combinations)
+        new ApplyProjectDependencyChangeSetupMutator(tmpDir.root, combinations)
 
         then:
         def e = thrown(IllegalStateException)
@@ -27,7 +27,7 @@ class ApplyDependencyChangeSetupMutatorTest extends AbstractMutatorTest {
 
     def "generates projects to gradle-profiler-generated-projects folder"() {
         tmpDir.newFile("settings.gradle")
-        def mutator = new ApplyDependencyChangeSetupMutator(tmpDir.root, combinations)
+        def mutator = new ApplyProjectDependencyChangeSetupMutator(tmpDir.root, combinations)
 
         when:
         mutator.beforeScenario(scenarioContext)
@@ -43,7 +43,7 @@ class ApplyDependencyChangeSetupMutatorTest extends AbstractMutatorTest {
 
     def "removes projects after scenario"() {
         tmpDir.newFile("settings.gradle")
-        def mutator = new ApplyDependencyChangeSetupMutator(tmpDir.root, combinations)
+        def mutator = new ApplyProjectDependencyChangeSetupMutator(tmpDir.root, combinations)
 
         when:
         mutator.beforeScenario(scenarioContext)
@@ -56,7 +56,7 @@ class ApplyDependencyChangeSetupMutatorTest extends AbstractMutatorTest {
     def "adds generated projects and it's location at the end of the settings scripts"() {
         def settingsFile = tmpDir.newFile("settings.gradle")
         settingsFile.text = "rootProject.name = 'test-project'"
-        def mutator = new ApplyDependencyChangeSetupMutator(tmpDir.root, combinations)
+        def mutator = new ApplyProjectDependencyChangeSetupMutator(tmpDir.root, combinations)
 
         when:
         mutator.beforeScenario(scenarioContext)
@@ -72,7 +72,7 @@ project(":project-$salt-1").projectDir = file("gradle-profiler-generated-project
     def "reverts settings file changes"() {
         def sourceFile = tmpDir.newFile("settings.gradle")
         sourceFile.text = "rootProject.name = 'test-project'"
-        def mutator = new ApplyDependencyChangeSetupMutator(tmpDir.root, combinations)
+        def mutator = new ApplyProjectDependencyChangeSetupMutator(tmpDir.root, combinations)
 
         when:
         mutator.beforeScenario(scenarioContext)

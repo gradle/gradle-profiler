@@ -12,7 +12,7 @@ import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-public class ApplyDependencyChangeSetupMutator implements BuildMutator {
+public class ApplyProjectDependencyChangeSetupMutator implements BuildMutator {
 
     private final String originalText;
     private final File projectDir;
@@ -20,7 +20,7 @@ public class ApplyDependencyChangeSetupMutator implements BuildMutator {
     private final ProjectCombinations combinations;
     private final File generatedProjectsDir;
 
-    protected ApplyDependencyChangeSetupMutator(File projectDir, ProjectCombinations combinations) {
+    protected ApplyProjectDependencyChangeSetupMutator(File projectDir, ProjectCombinations combinations) {
         this.projectDir = projectDir;
         this.settingsFile = getSettingsFile();
         this.originalText = FileSupport.readUnchecked(settingsFile.toPath());

@@ -276,7 +276,7 @@ Values are optional and default to the values provided on the command-line or de
 A scenario can define changes that should be applied to the source before each build. You can use this to benchmark or profile an incremental build. The following mutations are available:
 
 - `apply-build-script-change-to`: Add a statement to a Groovy or Kotlin DSL build script, init script or settings script. Each iteration adds a new statement and removes the statement added by the previous iteration.
-- `apply-dependency-change-to`: Add dependencies as projects to a Groovy or a Kotlin DSL build script. Each iteration adds a new combinations of projects as dependencies and removes the projects added by the previous iteration.
+- `apply-project-dependency-change-to`: Add dependencies as projects to a Groovy or a Kotlin DSL build script. Each iteration adds a new combinations of projects as dependencies and removes the projects added by the previous iteration.
 - `apply-abi-change-to`: Add a public method to a Java or Kotlin source class. Each iteration adds a new method and removes the method added by the previous iteration.
 - `apply-non-abi-change-to`: Change the body of a public method in a Java or Kotlin source class.
 - `apply-h-change-to`: Add a function to a C/C++ header file. Each iteration adds a new function declaration and removes the function added by the previous iteration. 
@@ -308,7 +308,7 @@ They can be added to a scenario file like this:
         tasks = ["assemble"]
 
         apply-build-script-change-to = "build.gradle.kts"
-        apply-dependency-change-to {
+        apply-project-dependency-change-to {
             files = ["build.gradle"]
             // Example: This will apply a unique combination of 5 projects from a set of 10 projects.
             // Number of combinations can be calculated by typing "10 choosen 5" in your favorite search engine.
@@ -316,7 +316,7 @@ They can be added to a scenario file like this:
             // runs will have the same combination of the projects applied as dependency.
             // Default values are 10 and 5. 
             projects-set-size = 10
-            applied-projects-size = 5
+            applied-projects-set-size = 5
         }
         apply-abi-change-to = "src/main/java/MyThing.java"
         apply-non-abi-change-to = ["src/main/java/MyThing.java", "src/main/java/MyOtherThing.java"]

@@ -30,7 +30,7 @@ class ScenarioLoader {
     private static final String ITERATIONS = "iterations";
     private static final String MEASURED_BUILD_OPERATIONS = "measured-build-ops";
     private static final String APPLY_BUILD_SCRIPT_CHANGE_TO = "apply-build-script-change-to";
-    private static final String APPLY_DEPENDENCY_CHANGE_CHANGE_TO = "apply-dependency-change-to";
+    private static final String APPLY_PROJECT_DEPENDENCY_CHANGE_TO = "apply-project-dependency-change-to";
     private static final String APPLY_ABI_CHANGE_TO = "apply-abi-change-to";
     private static final String APPLY_NON_ABI_CHANGE_TO = "apply-non-abi-change-to";
     private static final String APPLY_ANDROID_RESOURCE_CHANGE_TO = "apply-android-resource-change-to";
@@ -61,7 +61,7 @@ class ScenarioLoader {
 
     private static final Map<String, BuildMutatorConfigurator> BUILD_MUTATOR_CONFIGURATORS = ImmutableMap.<String, BuildMutatorConfigurator>builder()
         .put(APPLY_BUILD_SCRIPT_CHANGE_TO, new FileChangeMutatorConfigurator(ApplyBuildScriptChangeFileMutator.class))
-        .put(APPLY_DEPENDENCY_CHANGE_CHANGE_TO, new ApplyDependencyChangeMutatorConfigurator())
+        .put(APPLY_PROJECT_DEPENDENCY_CHANGE_TO, new ApplyProjectDependencyChangeMutatorConfigurator())
         .put(APPLY_ABI_CHANGE_TO, new FileChangeMutatorConfigurator(ApplyAbiChangeToSourceFileMutator.class))
         .put(APPLY_NON_ABI_CHANGE_TO, new FileChangeMutatorConfigurator(ApplyNonAbiChangeToSourceFileMutator.class))
         .put(APPLY_ANDROID_RESOURCE_CHANGE_TO, new FileChangeMutatorConfigurator(ApplyChangeToAndroidResourceFileMutator.class))

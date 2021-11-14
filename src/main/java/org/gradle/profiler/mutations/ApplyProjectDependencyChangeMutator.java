@@ -8,11 +8,11 @@ import org.gradle.profiler.mutations.support.ProjectCombinations;
 import java.io.File;
 import java.util.Set;
 
-public class ApplyDependencyChangeMutator extends AbstractFileChangeMutator {
+public class ApplyProjectDependencyChangeMutator extends AbstractFileChangeMutator {
 
     private final ProjectCombinations projectCombinations;
 
-    protected ApplyDependencyChangeMutator(File sourceFile, ProjectCombinations projectCombinations) {
+    protected ApplyProjectDependencyChangeMutator(File sourceFile, ProjectCombinations projectCombinations) {
         super(sourceFile);
         this.projectCombinations = projectCombinations;
     }

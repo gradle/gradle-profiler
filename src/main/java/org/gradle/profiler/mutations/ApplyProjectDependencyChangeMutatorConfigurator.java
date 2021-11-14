@@ -13,7 +13,10 @@ import java.util.List;
 import static org.gradle.profiler.mutations.FileChangeMutatorConfigurator.sourceFiles;
 import static org.gradle.profiler.mutations.support.ProjectCombinationsSupport.createProjectCombinations;
 
-public class ApplyDependencyChangeMutatorConfigurator implements BuildMutatorConfigurator {
+public class ApplyProjectDependencyChangeMutatorConfigurator implements BuildMutatorConfigurator {
+
+    public static String PROJECTS_SET_SIZE = "projects-set-size";
+    public static String APPLIED_PROJECTS_SET_SIZE = "applied-projects-set-size";
 
     private static final int DEFAULT_GENERATED_PROJECTS_COUNT = 10;
     private static final int DEFAULT_APPLIED_PROJECTS_COUNT = 5;
@@ -33,25 +36,25 @@ public class ApplyDependencyChangeMutatorConfigurator implements BuildMutatorCon
         }
 
         if (!mutatorsForKey.isEmpty()) {
-            mutatorsForKey.add(0, new ApplyDependencyChangeSetupMutator(settings.getProjectDir(), combinations));
+            mutatorsForKey.add(0, new ApplyProjectDependencyChangeSetupMutator(settings.getProjectDir(), combinations));
         }
 
         return new CompositeBuildMutator(mutatorsForKey);
     }
 
     private BuildMutator newBuildMutator(File sourceFileToChange, ProjectCombinations projectCombinations) {
-        return new ApplyDependencyChangeMutator(sourceFileToChange, projectCombinations);
+        return new ApplyProjectDependencyChangeMutator(sourceFileToChange, projectCombinations);
     }
 
     private int getProjectsToGenerate(Config config) {
-        return config.hasPath("projects-set-size")
-            ? config.getInt("projects-set-size")
+        return config.hasPath(PROJECTS_SET_SIZE)
+            ? config.getInt(PROJECTS_SET_SIZE)
             : DEFAULT_GENERATED_PROJECTS_COUNT;
     }
 
     private int getAppliedProjectDependencies(Config config) {
-        return config.hasPath("applied-projects-size")
-            ? config.getInt("applied-projects-size")
+        return config.hasPath(APPLIED_PROJECTS_SET_SIZE)
+            ? config.getInt(APPLIED_PROJECTS_SET_SIZE)
             : DEFAULT_APPLIED_PROJECTS_COUNT;
     }
 }
