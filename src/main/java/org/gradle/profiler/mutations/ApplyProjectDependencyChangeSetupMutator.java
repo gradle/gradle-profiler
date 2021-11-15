@@ -42,8 +42,7 @@ public class ApplyProjectDependencyChangeSetupMutator implements BuildMutator {
         String includeProjects = combinations.getProjectNames().stream()
             .map(it -> {
                 String include = String.format("\ninclude(\"%s\")", it);
-                String projectPath = new File(generatedProjectsDir.getName(), it).toString();
-                String projectDir = String.format("\nproject(\":%s\").projectDir = file(\"%s\")", it, projectPath);
+                String projectDir = String.format("\nproject(\":%s\").projectDir = file(\"%s/%s\")", it, generatedProjectsDir.getName(), it);
                 return include + projectDir;
             })
             .collect(Collectors.joining());

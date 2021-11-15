@@ -64,9 +64,9 @@ class ApplyProjectDependencyChangeSetupMutatorTest extends AbstractMutatorTest {
         then:
         settingsFile.text == """rootProject.name = 'test-project'
 include("project-$salt-0")
-project(":project-$salt-0").projectDir = file("gradle-profiler-generated-projects${File.separator}project-$salt-0")
+project(":project-$salt-0").projectDir = file("gradle-profiler-generated-projects/project-$salt-0")
 include("project-$salt-1")
-project(":project-$salt-1").projectDir = file("gradle-profiler-generated-projects${File.separator}project-$salt-1")"""
+project(":project-$salt-1").projectDir = file("gradle-profiler-generated-projects/project-$salt-1")"""
     }
 
     def "reverts settings file changes"() {
