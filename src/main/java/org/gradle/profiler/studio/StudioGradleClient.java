@@ -14,7 +14,6 @@ import org.gradle.profiler.client.protocol.messages.GradleInvocationParameters;
 import org.gradle.profiler.client.protocol.messages.StudioAgentConnectionParameters;
 import org.gradle.profiler.client.protocol.messages.StudioRequest;
 import org.gradle.profiler.client.protocol.messages.StudioSyncRequestCompleted;
-import org.gradle.profiler.studio.tools.StudioLauncher;
 import org.gradle.profiler.studio.tools.StudioPluginInstaller;
 import org.gradle.profiler.studio.tools.StudioSandboxCreator;
 import org.gradle.profiler.studio.tools.StudioSandboxCreator.StudioSandbox;
@@ -65,7 +64,7 @@ public class StudioGradleClient implements GradleClient {
 
         studioPluginInstaller = new StudioPluginInstaller(launchConfiguration.getStudioPluginsDir());
         studioPluginInstaller.installPlugin(launchConfiguration.getStudioPluginJars());
-        studioProcess = StudioLauncher.launchStudio(launchConfiguration, invocationSettings.getProjectDir());
+        studioProcess = launchConfiguration.launchStudio(invocationSettings.getProjectDir());
         waitOnSuccessfulIdeStart(studioProcess, studioStartDetectorServer);
         studioPluginConnection = studioPluginServer.waitForIncoming(PLUGIN_CONNECT_TIMEOUT);
         studioAgentConnection = studioAgentServer.waitForIncoming(AGENT_CONNECT_TIMEOUT);
@@ -104,7 +103,6 @@ public class StudioGradleClient implements GradleClient {
             Duration.ofMillis(syncRequestCompleted.getDurationMillis() - agentCompleted.getDurationMillis())
         );
     }
-
 
     @Override
     public void close() {

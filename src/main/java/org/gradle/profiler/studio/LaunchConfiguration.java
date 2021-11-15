@@ -1,6 +1,11 @@
 package org.gradle.profiler.studio;
 
+import org.gradle.profiler.CommandExec;
+
+import java.io.File;
 import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
@@ -90,5 +95,24 @@ public class LaunchConfiguration {
 
     public List<String> getCommandLine() {
         return commandLine;
+    }
+
+    public CommandExec.RunHandle launchStudio(File projectDir) {
+        List<String> commandLine = new ArrayList<>(getCommandLine());
+        commandLine.add(projectDir.getAbsolutePath());
+        logLauncherConfiguration(commandLine);
+        return new CommandExec().inDir(studioInstallDir().toFile()).start(commandLine);
+    }
+
+    private void logLauncherConfiguration(List<String> commandLine) {
+        System.out.println();
+        System.out.println("* Java command: " + getJavaCommand());
+        System.out.println("* Classpath:");
+        getClassPath().stream().map(entry -> "  " + entry).forEach(System.out::println);
+        System.out.println("* System properties:");
+        getSystemProperties().forEach((key, value) -> System.out.printf("  %s -> %s%n", key, value));
+        System.out.println("* Main class: " + getMainClass());
+        System.out.println("* Android Studio logs can be found at: " + Paths.get(getStudioLogsDir().toString(), "idea.log"));
+        System.out.printf("* Using command line: %s%n%n", commandLine);
     }
 }

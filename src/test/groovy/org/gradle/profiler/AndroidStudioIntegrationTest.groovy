@@ -4,7 +4,6 @@ import org.gradle.profiler.studio.LaunchConfiguration
 import org.gradle.profiler.studio.LauncherConfigurationParser
 import org.gradle.profiler.studio.tools.StudioFinder
 import org.gradle.profiler.studio.tools.StudioSandboxCreator
-import org.gradle.profiler.studio.tools.StudioLauncher
 import spock.lang.Requires
 
 class AndroidStudioIntegrationTest extends AbstractProfilerIntegrationTest {
@@ -59,7 +58,7 @@ class AndroidStudioIntegrationTest extends AbstractProfilerIntegrationTest {
         """
 
         when:
-        CommandExec.RunHandle process = StudioLauncher.launchStudio(launchConfiguration, otherStudioProjectDir)
+        CommandExec.RunHandle process = launchConfiguration.launchStudio(otherStudioProjectDir)
         new Main().run(
             "--project-dir", projectDir.absolutePath,
             "--output-dir", outputDir.absolutePath,
@@ -102,7 +101,7 @@ class AndroidStudioIntegrationTest extends AbstractProfilerIntegrationTest {
         """
 
         when:
-        CommandExec.RunHandle process = StudioLauncher.launchStudio(launchConfiguration, otherStudioProjectDir)
+        CommandExec.RunHandle process = launchConfiguration.launchStudio(otherStudioProjectDir)
         new Main().run(
             "--project-dir", projectDir.absolutePath,
             "--output-dir", outputDir.absolutePath,

@@ -146,5 +146,4 @@ public class LauncherConfigurationParser {
             return value;
         }
     }
-
 }
