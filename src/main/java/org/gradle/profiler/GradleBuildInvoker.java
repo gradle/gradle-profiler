@@ -10,6 +10,7 @@ public class GradleBuildInvoker extends BuildInvoker {
         }
     };
     static final GradleBuildInvoker AndroidStudio = new GradleBuildInvoker(GradleClientSpec.AndroidStudio, GradleDaemonReuse.WarmDaemonOnly);
+    static final GradleBuildInvoker AndroidStudioCleanCache = new GradleBuildInvoker(GradleClientSpec.AndroidStudioWithCleanCache, GradleDaemonReuse.ColdDaemonOnly);
 
     private final GradleClientSpec client;
     private final GradleDaemonReuse daemonReuse;

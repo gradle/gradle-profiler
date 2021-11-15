@@ -1,6 +1,7 @@
 package org.gradle.profiler.studio.plugin.client;
 
 import com.google.common.base.Stopwatch;
+import com.intellij.ide.caches.CachesInvalidator;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
@@ -8,7 +9,6 @@ import org.gradle.profiler.client.protocol.Client;
 import org.gradle.profiler.client.protocol.messages.StudioRequest;
 import org.gradle.profiler.client.protocol.messages.StudioSyncRequestCompleted;
 import org.gradle.profiler.studio.plugin.system.AndroidStudioSystemHelper;
-import org.gradle.profiler.studio.plugin.system.GradleProfilerGradleSyncListener;
 import org.gradle.profiler.studio.plugin.system.GradleProfilerGradleSyncListener.GradleSyncResult;
 
 import java.time.Duration;
@@ -40,7 +40,7 @@ public class GradleProfilerClient {
             }
             Client.INSTANCE.disconnect();
             if (request.getType() == EXIT_IDE) {
-                systemHelper.exit();
+                systemHelper.exit(project);
             }
         });
     }
@@ -57,6 +57,9 @@ public class GradleProfilerClient {
         switch (request.getType()) {
             case SYNC:
                 handleSyncRequest(request, project);
+                break;
+            case CLEANUP_CACHE:
+                cleanupCache();
                 break;
             case EXIT_IDE:
                 throw new IllegalArgumentException("Type: '" + request.getType() + "' should not be handled in 'handleGradleProfilerRequest()'.");
@@ -79,6 +82,20 @@ public class GradleProfilerClient {
         systemHelper.waitOnBackgroundProcessesFinish(project);
         LOG.info(String.format("[SYNC REQUEST %s] '%s': '%s'%n", request.getId(), result.getResult(), result.getErrorMessage().isEmpty() ? "no message" : result.getErrorMessage()));
         Client.INSTANCE.send(new StudioSyncRequestCompleted(request.getId(), stopwatch.elapsed(TimeUnit.MILLISECONDS), result.getResult()));
+    }
+
+    /**
+     * This code is similar to one in com.intellij.ide.InvalidateCacheService in IntelliJ Community project,
+     * it just does not make a dialog to restart IDE.
+     */
+    private void cleanupCache() {
+        CachesInvalidator.EP_NAME.getExtensionList().forEach(it -> {
+            try {
+                it.invalidateCaches();
+            } catch (Throwable t) {
+                LOG.warn("Failed to invalidate caches with " + it.getClass().getName() + ". " + t.getMessage(), t);
+            }
+        });
     }
 
 }

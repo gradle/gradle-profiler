@@ -4,6 +4,9 @@ import org.gradle.profiler.studio.StudioGradleClient;
 import org.gradle.tooling.GradleConnector;
 import org.gradle.tooling.ProjectConnection;
 
+import static org.gradle.profiler.studio.StudioGradleClient.SyncMode.CLEAN_CACHE_AND_SYNC;
+import static org.gradle.profiler.studio.StudioGradleClient.SyncMode.SYNC_ONLY;
+
 /**
  * Specifies a client to be used to invoke Gradle builds.
  */
@@ -61,7 +64,19 @@ public abstract class GradleClientSpec {
 
         @Override
         public GradleClient create(GradleBuildConfiguration buildConfiguration, InvocationSettings invocationSettings) {
-            return new StudioGradleClient(buildConfiguration, invocationSettings);
+            return new StudioGradleClient(buildConfiguration, invocationSettings, SYNC_ONLY);
+        }
+    };
+
+    public static final GradleClientSpec AndroidStudioWithCleanCache = new GradleClientSpec() {
+        @Override
+        public String toString() {
+            return "Android Studio with clean cache";
+        }
+
+        @Override
+        public GradleClient create(GradleBuildConfiguration buildConfiguration, InvocationSettings invocationSettings) {
+            return new StudioGradleClient(buildConfiguration, invocationSettings, CLEAN_CACHE_AND_SYNC);
         }
     };
 

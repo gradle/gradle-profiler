@@ -76,8 +76,13 @@ public class AndroidStudioSystemHelper {
     /**
      * Exit the application.
      */
-    public void exit() {
+    public void exit(Project project) {
+        waitOnBackgroundProcessesFinish(project);
         ApplicationManager.getApplication().exit(true, true, false);
+    }
+
+    public void restart() {
+        ApplicationManager.getApplication().exit(true, true, true);
     }
 
 }

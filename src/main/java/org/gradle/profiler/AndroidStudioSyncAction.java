@@ -2,13 +2,13 @@ package org.gradle.profiler;
 
 import org.gradle.profiler.studio.StudioGradleClient;
 
-import java.time.Duration;
 import java.util.List;
 
 /**
  * A mock-up of Android studio sync.
  */
 public class AndroidStudioSyncAction implements BuildAction {
+
     public AndroidStudioSyncAction() {
     }
 
