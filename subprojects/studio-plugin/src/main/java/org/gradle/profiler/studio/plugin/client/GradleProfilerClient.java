@@ -6,6 +6,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import org.gradle.profiler.client.protocol.Client;
+import org.gradle.profiler.client.protocol.messages.StudioCacheCleanupCompleted;
 import org.gradle.profiler.client.protocol.messages.StudioRequest;
 import org.gradle.profiler.client.protocol.messages.StudioSyncRequestCompleted;
 import org.gradle.profiler.studio.plugin.system.AndroidStudioSystemHelper;
@@ -59,7 +60,7 @@ public class GradleProfilerClient {
                 handleSyncRequest(request, project);
                 break;
             case CLEANUP_CACHE:
-                cleanupCache();
+                cleanupCache(request);
                 break;
             case EXIT_IDE:
                 throw new IllegalArgumentException("Type: '" + request.getType() + "' should not be handled in 'handleGradleProfilerRequest()'.");
@@ -87,8 +88,9 @@ public class GradleProfilerClient {
     /**
      * This code is similar to one in com.intellij.ide.InvalidateCacheService in IntelliJ Community project,
      * it just does not make a dialog to restart IDE.
+     * @param request
      */
-    private void cleanupCache() {
+    private void cleanupCache(StudioRequest request) {
         CachesInvalidator.EP_NAME.getExtensionList().forEach(it -> {
             try {
                 it.invalidateCaches();
@@ -96,6 +98,7 @@ public class GradleProfilerClient {
                 LOG.warn("Failed to invalidate caches with " + it.getClass().getName() + ". " + t.getMessage(), t);
             }
         });
+        Client.INSTANCE.send(new StudioCacheCleanupCompleted(request.getId()));
     }
 
 }

@@ -6,6 +6,7 @@ import org.gradle.profiler.client.protocol.messages.GradleInvocationParameters;
 import org.gradle.profiler.client.protocol.messages.GradleInvocationStarted;
 import org.gradle.profiler.client.protocol.messages.Message;
 import org.gradle.profiler.client.protocol.messages.StudioAgentConnectionParameters;
+import org.gradle.profiler.client.protocol.messages.StudioCacheCleanupCompleted;
 import org.gradle.profiler.client.protocol.messages.StudioRequest;
 import org.gradle.profiler.client.protocol.messages.StudioRequest.StudioRequestType;
 import org.gradle.profiler.client.protocol.messages.StudioSyncRequestCompleted;
@@ -94,7 +95,7 @@ public enum MessageSerializer {
             return new StudioRequest(syncId, requestType);
         }
     },
-    STUDIO_SYNC_REQUEST((byte) 6, StudioSyncRequestCompleted.class) {
+    STUDIO_SYNC_REQUEST_COMPLETED((byte) 6, StudioSyncRequestCompleted.class) {
         @Override
         public void doWriteTo(Connection connection, Message message) throws IOException {
             StudioSyncRequestCompleted request = (StudioSyncRequestCompleted) message;
@@ -109,6 +110,19 @@ public enum MessageSerializer {
             long syncRequestCompletedDurationMillis = connection.readLong();
             StudioSyncRequestResult result = StudioSyncRequestResult.valueOf(connection.readString());
             return new StudioSyncRequestCompleted(syncRequestCompletedId, syncRequestCompletedDurationMillis, result);
+        }
+    },
+    STUDIO_CACHE_CLEANUP_COMPLETED((byte) 7, StudioCacheCleanupCompleted.class) {
+        @Override
+        public void doWriteTo(Connection connection, Message message) throws IOException {
+            StudioCacheCleanupCompleted request = (StudioCacheCleanupCompleted) message;
+            connection.writeInt(request.getId());
+        }
+
+        @Override
+        public Message doReadFrom(Connection connection) throws IOException {
+            int cacheCompletedId = connection.readInt();
+            return new StudioCacheCleanupCompleted(cacheCompletedId);
         }
     }
     ;

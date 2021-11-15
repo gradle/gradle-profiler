@@ -80,9 +80,4 @@ public class AndroidStudioSystemHelper {
         waitOnBackgroundProcessesFinish(project);
         ApplicationManager.getApplication().exit(true, true, false);
     }
-
-    public void restart() {
-        ApplicationManager.getApplication().exit(true, true, true);
-    }
-
 }

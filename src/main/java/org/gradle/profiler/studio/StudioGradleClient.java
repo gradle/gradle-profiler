@@ -34,6 +34,7 @@ public class StudioGradleClient implements GradleClient {
     }
 
     private static final Duration SYNC_STARTED_TIMEOUT = Duration.ofMinutes(10);
+    private static final Duration CACHE_CLEANUP_COMPLETED_TIMEOUT = Duration.ofSeconds(60);
     private static final Duration GRADLE_INVOCATION_COMPLETED_TIMEOUT = Duration.ofMinutes(60);
     private static final Duration SYNC_REQUEST_COMPLETED_TIMEOUT = Duration.ofMinutes(60);
 
@@ -78,6 +79,7 @@ public class StudioGradleClient implements GradleClient {
             processController.runAndWaitToStop((connections) -> {
                 System.out.println("* Cleaning Android Studio cache, this will require a restart...");
                 connections.getPluginConnection().send(new StudioRequest(CLEANUP_CACHE));
+                connections.getPluginConnection().receiveCacheCleanupCompleted(CACHE_CLEANUP_COMPLETED_TIMEOUT);
                 connections.getPluginConnection().send(new StudioRequest(EXIT_IDE));
             });
         }

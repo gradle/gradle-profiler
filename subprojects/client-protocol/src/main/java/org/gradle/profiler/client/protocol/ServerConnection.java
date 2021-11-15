@@ -38,4 +38,8 @@ public class ServerConnection implements Closeable {
     public StudioSyncRequestCompleted receiveSyncRequestCompleted(Duration timeout) {
         return protocolHandler.receive(StudioSyncRequestCompleted.class, timeout);
     }
+
+    public StudioCacheCleanupCompleted receiveCacheCleanupCompleted(Duration timeout) {
+        return protocolHandler.receive(StudioCacheCleanupCompleted.class, timeout);
+    }
 }
