@@ -23,7 +23,7 @@ public class ProjectCombinationsSupport {
         checkArgument(projectsToGenerate > 0 && appliedProjectDependencies > 0, String.format("Values '%s' and '%s' should be greater than 0.", PROJECTS_SET_SIZE, APPLIED_PROJECTS_SET_SIZE));
         checkArgument(projectsToGenerate >= appliedProjectDependencies, String.format("Value '%s' should be at least equal to '%s'.", PROJECTS_SET_SIZE, APPLIED_PROJECTS_SET_SIZE));
         List<String> projectNames = IntStream.range(0, projectsToGenerate)
-            .mapToObj(it -> String.format("project-%s-%s", PROJECT_HASH, it))
+            .mapToObj(index -> String.format("project-%s-%s", PROJECT_HASH, index))
             .collect(Collectors.toList());
         Set<Set<String>> combinations = Sets.combinations(new LinkedHashSet<>(projectNames), appliedProjectDependencies);
         return new ProjectCombinations(projectNames, combinations);

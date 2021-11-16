@@ -276,7 +276,7 @@ Values are optional and default to the values provided on the command-line or de
 A scenario can define changes that should be applied to the source before each build. You can use this to benchmark or profile an incremental build. The following mutations are available:
 
 - `apply-build-script-change-to`: Add a statement to a Groovy or Kotlin DSL build script, init script or settings script. Each iteration adds a new statement and removes the statement added by the previous iteration.
-- `apply-project-dependency-change-to`: Add dependencies as projects to a Groovy or a Kotlin DSL build script. Each iteration adds a new combinations of projects as dependencies and removes the projects added by the previous iteration.
+- `apply-project-dependency-change-to`: Add project dependencies to a Groovy or a Kotlin DSL build script. Each iteration adds a new combination of projects as dependencies and removes the projects added by the previous iteration.
 - `apply-abi-change-to`: Add a public method to a Java or Kotlin source class. Each iteration adds a new method and removes the method added by the previous iteration.
 - `apply-non-abi-change-to`: Change the body of a public method in a Java or Kotlin source class.
 - `apply-h-change-to`: Add a function to a C/C++ header file. Each iteration adds a new function declaration and removes the function added by the previous iteration. 
