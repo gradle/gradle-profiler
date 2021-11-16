@@ -1,7 +1,5 @@
 package org.gradle.profiler.mutations.support;
 
-import com.google.common.collect.Iterables;
-
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
@@ -14,7 +12,7 @@ public class ProjectCombinations {
 
     public ProjectCombinations(List<String> projectNames, Set<Set<String>> combinations) {
         this.projectNames = Collections.unmodifiableList(projectNames);
-        this.combinations = Iterables.cycle(combinations).iterator();
+        this.combinations = combinations.iterator();
     }
 
     public List<String> getProjectNames() {

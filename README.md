@@ -310,13 +310,11 @@ They can be added to a scenario file like this:
         apply-build-script-change-to = "build.gradle.kts"
         apply-project-dependency-change-to {
             files = ["build.gradle"]
-            // Example: This will apply a unique combination of 5 projects from a set of 10 projects.
-            // Number of combinations can be calculated by typing "10 choosen 5" in your favorite search engine.
-            // When both values are equal there is just one combination possible, so all
-            // runs will have the same combination of the projects applied as dependency.
-            // Default values are 10 and 5. 
-            projects-set-size = 10
-            applied-projects-set-size = 5
+            # Default number of applied-projects-count is 3.
+            # Gradle-profiler will generate minimal number of projects to have a unique combination of project dependencies every run.
+            # Note: Number of projects is calculated as binomial coffiecient: "X choose applied-projects-count = iterations * files",
+            # due to that, higher the applied-projects-count is, less projects will be generated.
+            applied-projects-count = 3
         }
         apply-abi-change-to = "src/main/java/MyThing.java"
         apply-non-abi-change-to = ["src/main/java/MyThing.java", "src/main/java/MyOtherThing.java"]

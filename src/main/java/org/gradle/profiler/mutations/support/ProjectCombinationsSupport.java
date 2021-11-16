@@ -1,6 +1,7 @@
 package org.gradle.profiler.mutations.support;
 
 import com.google.common.collect.Sets;
+import com.google.common.math.IntMath;
 
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -9,8 +10,7 @@ import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
 import static com.google.common.base.Preconditions.checkArgument;
-import static org.gradle.profiler.mutations.ApplyProjectDependencyChangeMutatorConfigurator.APPLIED_PROJECTS_SET_SIZE;
-import static org.gradle.profiler.mutations.ApplyProjectDependencyChangeMutatorConfigurator.PROJECTS_SET_SIZE;
+import static org.gradle.profiler.mutations.ApplyProjectDependencyChangeMutatorConfigurator.APPLIED_PROJECTS_COUNT_KEY;
 
 public class ProjectCombinationsSupport {
 
@@ -19,14 +19,26 @@ public class ProjectCombinationsSupport {
      */
     public static final String PROJECT_HASH = "4b038a";
 
-    public static ProjectCombinations createProjectCombinations(int projectsToGenerate, int appliedProjectDependencies) {
-        checkArgument(projectsToGenerate > 0 && appliedProjectDependencies > 0, String.format("Values '%s' and '%s' should be greater than 0.", PROJECTS_SET_SIZE, APPLIED_PROJECTS_SET_SIZE));
-        checkArgument(projectsToGenerate >= appliedProjectDependencies, String.format("Value '%s' should be at least equal to '%s'.", PROJECTS_SET_SIZE, APPLIED_PROJECTS_SET_SIZE));
+    public static ProjectCombinations createProjectCombinations(int numberOfRequiredCombinations, int appliedProjectsCount) {
+        checkArgument(appliedProjectsCount > 0, String.format("Value '%s' should be greater than 0.", APPLIED_PROJECTS_COUNT_KEY));
+        int projectsToGenerate = calculateNumberOfProjectsToGenerate(numberOfRequiredCombinations, appliedProjectsCount);
         List<String> projectNames = IntStream.range(0, projectsToGenerate)
             .mapToObj(index -> String.format("project-%s-%s", PROJECT_HASH, index))
             .collect(Collectors.toList());
-        Set<Set<String>> combinations = Sets.combinations(new LinkedHashSet<>(projectNames), appliedProjectDependencies);
+        Set<Set<String>> combinations = Sets.combinations(new LinkedHashSet<>(projectNames), appliedProjectsCount);
         return new ProjectCombinations(projectNames, combinations);
     }
 
+    private static int calculateNumberOfProjectsToGenerate(int numberOfRequiredCombinations, int appliedProjectsCount) {
+        if (appliedProjectsCount == 1) {
+            return numberOfRequiredCombinations;
+        }
+        int projectsToGenerate = appliedProjectsCount;
+        while (IntMath.binomial(projectsToGenerate, appliedProjectsCount) < numberOfRequiredCombinations) {
+            // We could be smarter but this is good enough
+            // unless we have more billions of iterations
+            projectsToGenerate++;
+        }
+        return projectsToGenerate;
+    }
 }

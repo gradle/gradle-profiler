@@ -5,7 +5,11 @@ import org.gradle.profiler.Main
 
 class ApplyProjectDependencyChangeMutatorIntegrationTest extends AbstractProfilerIntegrationTest {
 
-    def scenarioName = "scenario"
+    String scenarioName
+
+    def setup() {
+        scenarioName = "scenario"
+    }
 
     def "successfully benchmarks gradle projects with dependency mutations with default values"() {
         given:
@@ -34,8 +38,7 @@ class ApplyProjectDependencyChangeMutatorIntegrationTest extends AbstractProfile
                 tasks = assemble
                 apply-project-dependency-change-to {
                     files = ["build.gradle"]
-                    projects-set-size = 2
-                    applied-projects-set-size = 1
+                    applied-projects-count = 2
                 }
             }
         """
@@ -47,29 +50,7 @@ class ApplyProjectDependencyChangeMutatorIntegrationTest extends AbstractProfile
         resultFile.containsWarmDaemonScenario(latestSupportedGradleVersion, scenarioName, ["assemble"])
     }
 
-    def "fails benchmarks gradle projects if projects set size is less than applied projects size"() {
-        given:
-        instrumentedBuildScript()
-        def scenarioFile = file("performance.scenarios") << """
-            $scenarioName {
-                tasks = assemble
-                apply-project-dependency-change-to {
-                    files = ["build.gradle"]
-                    projects-set-size = 2
-                    applied-projects-set-size = 3
-                }
-            }
-        """
-
-        when:
-        runBenchmark(scenarioFile)
-
-        then:
-        def e = thrown(IllegalArgumentException)
-        e.message == "Value 'projects-set-size' should be at least equal to 'applied-projects-set-size'."
-    }
-
-    def "fails benchmarks gradle projects if projects set size or applied-projects-set-size are not greater than 0"() {
+    def "fails benchmarks gradle projects if applied-projects-count is less or equal to 0"() {
         given:
         instrumentedBuildScript()
         def scenarioFile = file("performance.scenarios") << """
@@ -77,8 +58,7 @@ class ApplyProjectDependencyChangeMutatorIntegrationTest extends AbstractProfile
                 tasks = assemble
                 apply-project-dependency-change-to {
                     files = ["build.gradle"]
-                    projects-set-size = $projectsSetSize
-                    applied-projects-set-size = $appliedProjectsSetSize
+                    applied-projects-count = 0
                 }
             }
         """
@@ -88,12 +68,7 @@ class ApplyProjectDependencyChangeMutatorIntegrationTest extends AbstractProfile
 
         then:
         def e = thrown(IllegalArgumentException)
-        e.message == "Values 'projects-set-size' and 'applied-projects-set-size' should be greater than 0."
-
-        where:
-        projectsSetSize | appliedProjectsSetSize
-        0               | 1
-        1               | 0
+        e.message == "Value 'applied-projects-count' should be greater than 0."
     }
 
     def runBenchmark(File scenarioFile) {

@@ -1,6 +1,5 @@
 package org.gradle.profiler.mutations;
 
-import com.typesafe.config.Config;
 import org.gradle.profiler.BuildMutator;
 import org.gradle.profiler.CompositeBuildMutator;
 import org.gradle.profiler.InvocationSettings;
@@ -13,24 +12,25 @@ import java.util.List;
 import static org.gradle.profiler.mutations.support.ScenarioSupport.sourceFiles;
 
 public class FileChangeMutatorConfigurator implements BuildMutatorConfigurator {
-	private final Class<? extends AbstractFileChangeMutator> mutatorClass;
+    private final Class<? extends AbstractFileChangeMutator> mutatorClass;
 
-	public FileChangeMutatorConfigurator(Class<? extends AbstractFileChangeMutator> mutatorClass) {
-		this.mutatorClass = mutatorClass;
-	}
+    public FileChangeMutatorConfigurator(Class<? extends AbstractFileChangeMutator> mutatorClass) {
+        this.mutatorClass = mutatorClass;
+    }
 
-	@Override
-	public BuildMutator configure(Config scenario, String scenarioName, InvocationSettings settings, String key) {
-		List<BuildMutator> mutatorsForKey = new ArrayList<>();
-		for (File sourceFileToChange : sourceFiles(scenario, scenarioName, settings.getProjectDir(), key)) {
-			mutatorsForKey.add(getBuildMutatorForFile(sourceFileToChange));
-		}
+    @Override
+    public BuildMutator configure(String key, BuildMutatorConfiguratorSpec spec) {
+        List<BuildMutator> mutatorsForKey = new ArrayList<>();
+        InvocationSettings settings = spec.getInvocationSettings();
+        for (File sourceFileToChange : sourceFiles(spec.getScenario(), spec.getScenarioName(), settings.getProjectDir(), key)) {
+            mutatorsForKey.add(getBuildMutatorForFile(sourceFileToChange));
+        }
 
-		return new CompositeBuildMutator(mutatorsForKey);
-	}
+        return new CompositeBuildMutator(mutatorsForKey);
+    }
 
-	private BuildMutator getBuildMutatorForFile(File sourceFileToChange) {
-		if (sourceFileToChange == null) {
+    private BuildMutator getBuildMutatorForFile(File sourceFileToChange) {
+        if (sourceFileToChange == null) {
             return null;
         }
         try {
@@ -39,5 +39,5 @@ public class FileChangeMutatorConfigurator implements BuildMutatorConfigurator {
             Throwable throwable = (e instanceof InvocationTargetException) ? e.getCause() : e;
             throw new RuntimeException("Could not create instance of mutator " + mutatorClass.getSimpleName(), throwable);
         }
-	}
+    }
 }
