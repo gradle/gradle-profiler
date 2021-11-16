@@ -10,9 +10,6 @@ import java.util.Optional;
 
 public class StudioSandboxCreator {
 
-    private StudioSandboxCreator() {
-    }
-
     /**
      * Creates sandbox for Android Studio.
      *

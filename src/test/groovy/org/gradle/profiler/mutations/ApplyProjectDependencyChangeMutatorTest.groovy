@@ -7,11 +7,9 @@ import static org.gradle.profiler.mutations.support.ProjectCombinationsSupport.*
 class ApplyProjectDependencyChangeMutatorTest extends AbstractMutatorTest {
 
     ProjectCombinations combinations
-    String salt
 
     def setup() {
         combinations = createProjectCombinations(2, 2)
-        salt = combinations.getSalt()
     }
 
     def "adds projects dependency at the end of the build script"() {
@@ -25,8 +23,8 @@ class ApplyProjectDependencyChangeMutatorTest extends AbstractMutatorTest {
         then:
         sourceFile.text == """plugins { id 'java' }
 dependencies {
-    project(":project-$salt-0")
-    project(":project-$salt-1")
+    project(":project-$PROJECT_HASH-0")
+    project(":project-$PROJECT_HASH-1")
 }"""
     }
 

@@ -2,16 +2,15 @@ package org.gradle.profiler.mutations
 
 import org.gradle.profiler.mutations.support.ProjectCombinations
 
+import static org.gradle.profiler.mutations.support.ProjectCombinationsSupport.PROJECT_HASH
 import static org.gradle.profiler.mutations.support.ProjectCombinationsSupport.createProjectCombinations
 
 class ApplyProjectDependencyChangeSetupMutatorTest extends AbstractMutatorTest {
 
     ProjectCombinations combinations
-    String salt
 
     def setup() {
         combinations = createProjectCombinations(2, 1)
-        salt = combinations.getSalt()
     }
 
     def "throws exception is settings file does not exist"() {
@@ -33,10 +32,10 @@ class ApplyProjectDependencyChangeSetupMutatorTest extends AbstractMutatorTest {
         mutator.beforeScenario(scenarioContext)
 
         then:
-        File project1BuildScript = file(tmpDir.root, "gradle-profiler-generated-projects", "project-$salt-0", "build.gradle")
+        File project1BuildScript = new File(tmpDir.root, "gradle-profiler-generated-projects/project-$PROJECT_HASH-0/build.gradle")
         project1BuildScript.exists()
         project1BuildScript.text == "plugins { id 'java' }"
-        File project2BuildScript = file(tmpDir.root, "gradle-profiler-generated-projects", "project-$salt-1", "build.gradle")
+        File project2BuildScript = new File(tmpDir.root, "gradle-profiler-generated-projects/project-$PROJECT_HASH-1/build.gradle")
         project2BuildScript.exists()
         project2BuildScript.text == "plugins { id 'java' }"
     }
@@ -50,7 +49,7 @@ class ApplyProjectDependencyChangeSetupMutatorTest extends AbstractMutatorTest {
         mutator.afterScenario(scenarioContext)
 
         then:
-        !file(tmpDir.root, "gradle-profiler-generated-projects").exists()
+        !new File(tmpDir.root, "gradle-profiler-generated-projects").exists()
     }
 
     def "adds generated projects and it's location at the end of the settings scripts"() {
@@ -63,10 +62,10 @@ class ApplyProjectDependencyChangeSetupMutatorTest extends AbstractMutatorTest {
 
         then:
         settingsFile.text == """rootProject.name = 'test-project'
-include("project-$salt-0")
-project(":project-$salt-0").projectDir = file("gradle-profiler-generated-projects/project-$salt-0")
-include("project-$salt-1")
-project(":project-$salt-1").projectDir = file("gradle-profiler-generated-projects/project-$salt-1")"""
+include("project-$PROJECT_HASH-0")
+project(":project-$PROJECT_HASH-0").projectDir = file("gradle-profiler-generated-projects/project-$PROJECT_HASH-0")
+include("project-$PROJECT_HASH-1")
+project(":project-$PROJECT_HASH-1").projectDir = file("gradle-profiler-generated-projects/project-$PROJECT_HASH-1")"""
     }
 
     def "reverts settings file changes"() {

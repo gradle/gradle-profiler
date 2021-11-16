@@ -10,8 +10,8 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 
-import static org.gradle.profiler.mutations.FileChangeMutatorConfigurator.sourceFiles;
 import static org.gradle.profiler.mutations.support.ProjectCombinationsSupport.createProjectCombinations;
+import static org.gradle.profiler.mutations.support.ScenarioSupport.sourceFiles;
 
 public class ApplyProjectDependencyChangeMutatorConfigurator implements BuildMutatorConfigurator {
 

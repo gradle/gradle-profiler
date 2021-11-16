@@ -9,14 +9,11 @@ import java.nio.file.Path;
 
 public class FileSupport {
 
-    private FileSupport() {
-    }
-
     public static void writeUnchecked(Path path, String text, OpenOption... options) {
         try {
             Files.write(path, text.getBytes(StandardCharsets.UTF_8), options);
         } catch (IOException e) {
-            throw new UncheckedIOException(e);
+            throw new UncheckedIOException("Could not write content to a file: " + path, e);
         }
     }
 
@@ -24,8 +21,7 @@ public class FileSupport {
         try {
             return new String(Files.readAllBytes(path), StandardCharsets.UTF_8.toString());
         } catch (IOException e) {
-            throw new UncheckedIOException("Could not read contents of file " + path, e);
+            throw new UncheckedIOException("Could not read contents of a file: " + path, e);
         }
     }
-
 }

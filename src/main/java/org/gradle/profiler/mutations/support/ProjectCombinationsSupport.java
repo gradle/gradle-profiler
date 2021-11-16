@@ -5,7 +5,6 @@ import com.google.common.collect.Sets;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
-import java.util.UUID;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
@@ -15,18 +14,19 @@ import static org.gradle.profiler.mutations.ApplyProjectDependencyChangeMutatorC
 
 public class ProjectCombinationsSupport {
 
-    private ProjectCombinationsSupport() {
-    }
+    /**
+     * Just to prevent some collisions with user's projects
+     */
+    public static final String PROJECT_HASH = "4b038a";
 
     public static ProjectCombinations createProjectCombinations(int projectsToGenerate, int appliedProjectDependencies) {
         checkArgument(projectsToGenerate > 0 && appliedProjectDependencies > 0, String.format("Values '%s' and '%s' should be greater than 0.", PROJECTS_SET_SIZE, APPLIED_PROJECTS_SET_SIZE));
         checkArgument(projectsToGenerate >= appliedProjectDependencies, String.format("Value '%s' should be at least equal to '%s'.", PROJECTS_SET_SIZE, APPLIED_PROJECTS_SET_SIZE));
-        String salt = UUID.randomUUID().toString().substring(0, 5);
         List<String> projectNames = IntStream.range(0, projectsToGenerate)
-            .mapToObj(it -> String.format("project-%s-%s", salt, it))
+            .mapToObj(it -> String.format("project-%s-%s", PROJECT_HASH, it))
             .collect(Collectors.toList());
         Set<Set<String>> combinations = Sets.combinations(new LinkedHashSet<>(projectNames), appliedProjectDependencies);
-        return new ProjectCombinations(salt, projectNames, combinations);
+        return new ProjectCombinations(projectNames, combinations);
     }
 
 }

@@ -11,16 +11,10 @@ public class ProjectCombinations {
 
     private final List<String> projectNames;
     private final Iterator<Set<String>> combinations;
-    private final String salt;
 
-    public ProjectCombinations(String salt, List<String> projectNames, Set<Set<String>> combinations) {
-        this.salt = salt;
+    public ProjectCombinations(List<String> projectNames, Set<Set<String>> combinations) {
         this.projectNames = Collections.unmodifiableList(projectNames);
         this.combinations = Iterables.cycle(combinations).iterator();
-    }
-
-    public String getSalt() {
-        return salt;
     }
 
     public List<String> getProjectNames() {

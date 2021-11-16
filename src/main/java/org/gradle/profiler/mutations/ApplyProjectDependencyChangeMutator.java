@@ -12,7 +12,7 @@ public class ApplyProjectDependencyChangeMutator extends AbstractFileChangeMutat
 
     private final ProjectCombinations projectCombinations;
 
-    protected ApplyProjectDependencyChangeMutator(File sourceFile, ProjectCombinations projectCombinations) {
+    public ApplyProjectDependencyChangeMutator(File sourceFile, ProjectCombinations projectCombinations) {
         super(sourceFile);
         this.projectCombinations = projectCombinations;
     }

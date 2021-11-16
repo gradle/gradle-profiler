@@ -5,12 +5,13 @@ import org.gradle.profiler.Main
 
 class ApplyProjectDependencyChangeMutatorIntegrationTest extends AbstractProfilerIntegrationTest {
 
+    def scenarioName = "scenario"
+
     def "successfully benchmarks gradle projects with dependency mutations with default values"() {
         given:
         instrumentedBuildScript()
-        println buildFile
         def scenarioFile = file("performance.scenarios") << """
-            s1 {
+            $scenarioName {
                 tasks = assemble
                 apply-project-dependency-change-to {
                     files = ["build.gradle"]
@@ -19,18 +20,17 @@ class ApplyProjectDependencyChangeMutatorIntegrationTest extends AbstractProfile
         """
 
         when:
-        new Main().run("--project-dir", projectDir.absolutePath, "--output-dir", outputDir.absolutePath, "--gradle-version", latestSupportedGradleVersion, "--scenario-file", scenarioFile.absolutePath, "--benchmark", "s1")
+        runBenchmark(scenarioFile)
 
         then:
-        resultFile.containsWarmDaemonScenario(latestSupportedGradleVersion, "s1", ["assemble"])
+        resultFile.containsWarmDaemonScenario(latestSupportedGradleVersion, scenarioName, ["assemble"])
     }
 
     def "successfully benchmarks gradle projects with dependency mutations"() {
         given:
         instrumentedBuildScript()
-        println buildFile
         def scenarioFile = file("performance.scenarios") << """
-            s1 {
+            $scenarioName {
                 tasks = assemble
                 apply-project-dependency-change-to {
                     files = ["build.gradle"]
@@ -41,18 +41,17 @@ class ApplyProjectDependencyChangeMutatorIntegrationTest extends AbstractProfile
         """
 
         when:
-        new Main().run("--project-dir", projectDir.absolutePath, "--output-dir", outputDir.absolutePath, "--gradle-version", latestSupportedGradleVersion, "--scenario-file", scenarioFile.absolutePath, "--benchmark", "s1")
+        runBenchmark(scenarioFile)
 
         then:
-        resultFile.containsWarmDaemonScenario(latestSupportedGradleVersion, "s1", ["assemble"])
+        resultFile.containsWarmDaemonScenario(latestSupportedGradleVersion, scenarioName, ["assemble"])
     }
 
     def "fails benchmarks gradle projects if projects set size is less than applied projects size"() {
         given:
         instrumentedBuildScript()
-        println buildFile
         def scenarioFile = file("performance.scenarios") << """
-            s1 {
+            $scenarioName {
                 tasks = assemble
                 apply-project-dependency-change-to {
                     files = ["build.gradle"]
@@ -63,7 +62,7 @@ class ApplyProjectDependencyChangeMutatorIntegrationTest extends AbstractProfile
         """
 
         when:
-        new Main().run("--project-dir", projectDir.absolutePath, "--output-dir", outputDir.absolutePath, "--gradle-version", latestSupportedGradleVersion, "--scenario-file", scenarioFile.absolutePath, "--benchmark", "s1")
+        runBenchmark(scenarioFile)
 
         then:
         def e = thrown(IllegalArgumentException)
@@ -73,9 +72,8 @@ class ApplyProjectDependencyChangeMutatorIntegrationTest extends AbstractProfile
     def "fails benchmarks gradle projects if projects set size or applied-projects-set-size are not greater than 0"() {
         given:
         instrumentedBuildScript()
-        println buildFile
         def scenarioFile = file("performance.scenarios") << """
-            s1 {
+            scenario {
                 tasks = assemble
                 apply-project-dependency-change-to {
                     files = ["build.gradle"]
@@ -86,7 +84,7 @@ class ApplyProjectDependencyChangeMutatorIntegrationTest extends AbstractProfile
         """
 
         when:
-        new Main().run("--project-dir", projectDir.absolutePath, "--output-dir", outputDir.absolutePath, "--gradle-version", latestSupportedGradleVersion, "--scenario-file", scenarioFile.absolutePath, "--benchmark", "s1")
+        runBenchmark(scenarioFile)
 
         then:
         def e = thrown(IllegalArgumentException)
@@ -98,4 +96,13 @@ class ApplyProjectDependencyChangeMutatorIntegrationTest extends AbstractProfile
         1               | 0
     }
 
+    def runBenchmark(File scenarioFile) {
+        new Main().run(
+            "--project-dir", projectDir.absolutePath,
+            "--output-dir", outputDir.absolutePath,
+            "--gradle-version", latestSupportedGradleVersion,
+            "--scenario-file", scenarioFile.absolutePath,
+            "--benchmark", scenarioName
+        )
+    }
 }

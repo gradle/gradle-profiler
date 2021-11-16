@@ -2,6 +2,8 @@ package org.gradle.profiler.mutations.support
 
 import spock.lang.Specification
 
+import static org.gradle.profiler.mutations.support.ProjectCombinationsSupport.PROJECT_HASH
+
 class ProjectCombinationsSupportTest extends Specification {
 
     def "creates combinations for given number of projects"() {
@@ -9,14 +11,13 @@ class ProjectCombinationsSupportTest extends Specification {
         def combinations = ProjectCombinationsSupport.createProjectCombinations(3, 2)
 
         then:
-        def salt = combinations.getSalt()
-        combinations.nextCombination == ["project-$salt-0", "project-$salt-1"] as Set<String>
-        combinations.nextCombination == ["project-$salt-0", "project-$salt-2"] as Set<String>
-        combinations.nextCombination == ["project-$salt-1", "project-$salt-2"] as Set<String>
+        combinations.nextCombination == ["project-$PROJECT_HASH-0", "project-$PROJECT_HASH-1"] as Set<String>
+        combinations.nextCombination == ["project-$PROJECT_HASH-0", "project-$PROJECT_HASH-2"] as Set<String>
+        combinations.nextCombination == ["project-$PROJECT_HASH-1", "project-$PROJECT_HASH-2"] as Set<String>
         // Combinations repeats circular
-        combinations.nextCombination == ["project-$salt-0", "project-$salt-1"] as Set<String>
-        combinations.nextCombination == ["project-$salt-0", "project-$salt-2"] as Set<String>
-        combinations.nextCombination == ["project-$salt-1", "project-$salt-2"] as Set<String>
+        combinations.nextCombination == ["project-$PROJECT_HASH-0", "project-$PROJECT_HASH-1"] as Set<String>
+        combinations.nextCombination == ["project-$PROJECT_HASH-0", "project-$PROJECT_HASH-2"] as Set<String>
+        combinations.nextCombination == ["project-$PROJECT_HASH-1", "project-$PROJECT_HASH-2"] as Set<String>
     }
 
 }
