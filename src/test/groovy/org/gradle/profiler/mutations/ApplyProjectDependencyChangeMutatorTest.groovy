@@ -18,6 +18,7 @@ class ApplyProjectDependencyChangeMutatorTest extends AbstractMutatorTest {
         def mutator = new ApplyProjectDependencyChangeMutator(sourceFile, combinations)
 
         when:
+        mutator.beforeScenario(scenarioContext)
         mutator.beforeBuild(buildContext)
 
         then:

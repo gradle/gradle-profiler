@@ -8,6 +8,7 @@ class ApplyChangeToAndroidManifestFileMutatorTest extends AbstractMutatorTest {
         def mutator = new ApplyChangeToAndroidManifestFileMutator(sourceFile)
 
         when:
+        mutator.beforeScenario(scenarioContext)
         mutator.beforeBuild(buildContext)
 
         then:
@@ -20,6 +21,7 @@ class ApplyChangeToAndroidManifestFileMutatorTest extends AbstractMutatorTest {
         def mutator = new ApplyChangeToAndroidManifestFileMutator(sourceFile)
 
         when:
+        mutator.beforeScenario(scenarioContext)
         mutator.afterScenario(scenarioContext)
 
         then:
@@ -32,6 +34,7 @@ class ApplyChangeToAndroidManifestFileMutatorTest extends AbstractMutatorTest {
         def mutator = new ApplyChangeToAndroidManifestFileMutator(sourceFile)
 
         when:
+        mutator.beforeScenario(scenarioContext)
         mutator.beforeBuild(buildContext)
         mutator.afterScenario(scenarioContext)
 

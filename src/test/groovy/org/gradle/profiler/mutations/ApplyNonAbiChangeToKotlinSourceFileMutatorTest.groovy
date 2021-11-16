@@ -38,6 +38,7 @@ class ApplyNonAbiChangeToKotlinSourceFileMutatorTest extends AbstractMutatorTest
         def mutator = new ApplyNonAbiChangeToKotlinSourceFileMutator(sourceFile)
 
         when:
+        mutator.beforeScenario(scenarioContext)
         mutator.afterScenario(scenarioContext)
 
         then:

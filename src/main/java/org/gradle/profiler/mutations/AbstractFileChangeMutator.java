@@ -9,10 +9,14 @@ import java.io.File;
 
 public abstract class AbstractFileChangeMutator implements BuildMutator {
     protected final File sourceFile;
-    private final String originalText;
+    private String originalText;
 
     protected AbstractFileChangeMutator(File sourceFile) {
         this.sourceFile = sourceFile;
+    }
+
+    @Override
+    public void beforeScenario(ScenarioContext context) {
         this.originalText = readText(sourceFile);
     }
 

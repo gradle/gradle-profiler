@@ -8,6 +8,7 @@ class ApplyAbiChangeToJavaSourceFileMutatorTest extends AbstractMutatorTest impl
         def mutator = new ApplyAbiChangeToJavaSourceFileMutator(sourceFile)
 
         when:
+        mutator.beforeScenario(scenarioContext)
         mutator.beforeBuild(buildContext)
 
         then:
@@ -20,6 +21,7 @@ class ApplyAbiChangeToJavaSourceFileMutatorTest extends AbstractMutatorTest impl
         def mutator = new ApplyAbiChangeToJavaSourceFileMutator(sourceFile)
 
         when:
+        mutator.beforeScenario(scenarioContext)
         mutator.afterScenario(scenarioContext)
 
         then:
@@ -38,6 +40,7 @@ class ApplyAbiChangeToJavaSourceFileMutatorTest extends AbstractMutatorTest impl
         def mutator = new ApplyAbiChangeToJavaSourceFileMutator(sourceFile)
 
         when:
+        mutator.beforeScenario(scenarioContext)
         mutator.beforeBuild(buildContext)
         mutator.afterScenario(scenarioContext)
 

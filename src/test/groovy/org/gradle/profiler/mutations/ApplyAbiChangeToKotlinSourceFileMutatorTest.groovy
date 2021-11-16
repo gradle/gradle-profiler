@@ -8,6 +8,7 @@ class ApplyAbiChangeToKotlinSourceFileMutatorTest extends AbstractMutatorTest {
         def mutator = new ApplyAbiChangeToKotlinSourceFileMutator(sourceFile)
 
         when:
+        mutator.beforeScenario(scenarioContext)
         mutator.beforeBuild(buildContext)
 
         then:
@@ -20,6 +21,7 @@ class ApplyAbiChangeToKotlinSourceFileMutatorTest extends AbstractMutatorTest {
         def mutator = new ApplyAbiChangeToKotlinSourceFileMutator(sourceFile)
 
         when:
+        mutator.beforeScenario(scenarioContext)
         mutator.afterScenario(scenarioContext)
 
         then:
@@ -38,6 +40,7 @@ class ApplyAbiChangeToKotlinSourceFileMutatorTest extends AbstractMutatorTest {
         def mutator = new ApplyAbiChangeToKotlinSourceFileMutator(sourceFile)
 
         when:
+        mutator.beforeScenario(scenarioContext)
         mutator.beforeBuild(buildContext)
         mutator.afterScenario(scenarioContext)
 

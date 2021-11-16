@@ -14,16 +14,15 @@ import java.util.stream.Stream;
 
 public class ApplyProjectDependencyChangeSetupMutator implements BuildMutator {
 
-    private final String originalText;
     private final File projectDir;
     private final File settingsFile;
     private final ProjectCombinations combinations;
     private final File generatedProjectsDir;
+    private String originalText;
 
     protected ApplyProjectDependencyChangeSetupMutator(File projectDir, ProjectCombinations combinations) {
         this.projectDir = projectDir;
         this.settingsFile = getSettingsFile();
-        this.originalText = FileSupport.readUnchecked(settingsFile.toPath());
         this.generatedProjectsDir = new File(projectDir, "gradle-profiler-generated-projects");
         this.combinations = combinations;
     }
@@ -38,6 +37,8 @@ public class ApplyProjectDependencyChangeSetupMutator implements BuildMutator {
 
     @Override
     public void beforeScenario(ScenarioContext context) {
+        this.originalText = FileSupport.readUnchecked(settingsFile.toPath());
+        FileUtils.deleteQuietly(generatedProjectsDir);
         createProjects(combinations.getProjectNames());
         String includeProjects = combinations.getProjectNames().stream()
             .map(it -> {

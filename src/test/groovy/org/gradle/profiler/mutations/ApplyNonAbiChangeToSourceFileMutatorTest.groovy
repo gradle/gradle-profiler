@@ -21,6 +21,7 @@ class ApplyNonAbiChangeToSourceFileMutatorTest extends AbstractMutatorTest imple
         def mutator = new ApplyNonAbiChangeToSourceFileMutator(sourceFile)
 
         when:
+        mutator.beforeScenario(scenarioContext)
         mutator.beforeBuild(buildContext)
 
         then:
