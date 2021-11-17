@@ -30,7 +30,7 @@ public class GradleProfilerProjectManagerListener extends PreloadingActivity imp
     @Override
     public void preload(@NotNull ProgressIndicator indicator) {
         if (System.getProperty(STARTUP_PORT_PROPERTY) != null) {
-            int port = Integer.getInteger(PROFILER_PORT_PROPERTY);
+            int port = Integer.getInteger(STARTUP_PORT_PROPERTY);
             try (Client ignored = new Client(port)) {
                 LOG.info("Startup check connected to port: " + port);
             } catch (IOException e) {
