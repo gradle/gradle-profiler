@@ -4,13 +4,17 @@ import com.dd.plist.NSDictionary;
 import com.dd.plist.NSObject;
 import com.dd.plist.NSString;
 import com.dd.plist.PropertyListParser;
+import com.google.common.base.Joiner;
 import org.gradle.profiler.instrument.GradleInstrumentation;
 import org.gradle.profiler.studio.tools.StudioSandboxCreator.StudioSandbox;
 
+import java.io.File;
 import java.nio.file.FileSystems;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -19,7 +23,33 @@ import java.util.stream.Collectors;
 
 public class LauncherConfigurationParser {
 
-    public LaunchConfiguration calculate(Path studioInstallDir, StudioSandbox studioSandbox, int studioPluginPort) {
+    private final Path studioInstallDir;
+    private final StudioSandbox studioSandbox;
+    private boolean isInstallStudioPlugin;
+    private int studioPluginPort;
+    private boolean isInstallStudioAgent;
+    private int studioAgentPort;
+    private int studioStartDetectorPort;
+
+    public LauncherConfigurationParser(Path studioInstallDir, StudioSandbox studioSandbox) {
+        this.studioInstallDir = studioInstallDir;
+        this.studioSandbox = studioSandbox;
+    }
+
+    public LauncherConfigurationParser installStudioPlugin(int studioStartDetectorPort, int studioPluginPort) {
+        this.isInstallStudioPlugin = true;
+        this.studioStartDetectorPort = studioStartDetectorPort;
+        this.studioPluginPort = studioPluginPort;
+        return this;
+    }
+
+    public LauncherConfigurationParser installStudioAgent(int studioAgentPort) {
+        this.isInstallStudioAgent = true;
+        this.studioAgentPort = studioAgentPort;
+        return this;
+    }
+
+    public LaunchConfiguration calculate() {
         Dict entries = parse(studioInstallDir.resolve("Contents/Info.plist"));
         Path actualInstallDir;
         if ("jetbrains-toolbox-launcher".equals(entries.string("CFBundleExecutable"))) {
@@ -31,25 +61,46 @@ public class LauncherConfigurationParser {
         Dict jvmOptions = entries.dict("JVMOptions");
         List<Path> classPath = Arrays.stream(jvmOptions.string("ClassPath").split(":")).map(s -> FileSystems.getDefault().getPath(s.replace("$APP_PACKAGE", actualInstallDir.toString()))).collect(Collectors.toList());
         String mainClass = jvmOptions.string("MainClass");
-        Map<String, String> systemProperties = mapValues(jvmOptions.dict("Properties").toMap(), v -> v.replace("$APP_PACKAGE", actualInstallDir.toString()));
-        systemProperties.put("gradle.profiler.port", String.valueOf(studioPluginPort));
+        Map<String, String> systemProperties = buildSystemProperties(jvmOptions, actualInstallDir);
         Path javaCommand = actualInstallDir.resolve("Contents/jre/Contents/Home/bin/java");
         Path agentJar = GradleInstrumentation.unpackPlugin("studio-agent").toPath();
         Path asmJar = GradleInstrumentation.unpackPlugin("asm").toPath();
         Path supportJar = GradleInstrumentation.unpackPlugin("instrumentation-support").toPath();
         Path protocolJar = GradleInstrumentation.unpackPlugin("client-protocol").toPath();
         Path studioPlugin = GradleInstrumentation.unpackPlugin("studio-plugin").toPath();
+        Path studioPluginsDir = studioSandbox.getPluginsDir();
+        Path studioLogsDir = studioSandbox.getLogsDir();
+        List<Path> sharedJars = Arrays.asList(asmJar, protocolJar);
+        List<Path> studioPluginJars = isInstallStudioPlugin ? Arrays.asList(studioPlugin, protocolJar) : Collections.emptyList();
 
+        List<String> commandLine = new ArrayList<>();
+        commandLine.add(javaCommand.toString());
+        commandLine.add("-cp");
+        commandLine.add(Joiner.on(File.pathSeparator).join(classPath));
+        systemProperties.forEach((key, value) -> commandLine.add(String.format("-D%s=%s", key, value)));
+        if (isInstallStudioAgent) {
+            commandLine.add(String.format("-javaagent:%s=%s,%s", agentJar, studioAgentPort, supportJar));
+            commandLine.add("--add-exports");
+            commandLine.add("java.base/jdk.internal.misc=ALL-UNNAMED");
+            commandLine.add("-Xbootclasspath/a:" + Joiner.on(File.pathSeparator).join(sharedJars));
+        }
+        commandLine.add(mainClass);
+
+        return new LaunchConfiguration(javaCommand, studioInstallDir, classPath, systemProperties, mainClass, agentJar, supportJar,
+            sharedJars, studioPluginJars, studioPluginsDir, studioLogsDir, commandLine);
+    }
+
+    private Map<String, String> buildSystemProperties(Dict jvmOptions, Path actualInstallDir) {
+        Map<String, String> systemProperties = mapValues(jvmOptions.dict("Properties").toMap(), v -> v.replace("$APP_PACKAGE", actualInstallDir.toString()));
+        if (isInstallStudioPlugin) {
+            systemProperties.put("gradle.profiler.startup.port", String.valueOf(studioStartDetectorPort));
+            systemProperties.put("gradle.profiler.port", String.valueOf(studioPluginPort));
+        }
         studioSandbox.getConfigDir().ifPresent(path -> systemProperties.put("idea.config.path", path.toString()));
         studioSandbox.getSystemDir().ifPresent(path -> systemProperties.put("idea.system.path", path.toString()));
-        Path studioPluginsDir = studioSandbox.getPluginsDir();
-        systemProperties.put("idea.plugins.path", studioPluginsDir.toString());
-        Path studioLogsDir = studioSandbox.getLogsDir();
-        systemProperties.put("idea.log.path", studioLogsDir.toString());
-        List<Path> sharedJars = Arrays.asList(asmJar, protocolJar);
-        List<Path> studioPluginJars = Arrays.asList(studioPlugin, protocolJar);
-        return new LaunchConfiguration(javaCommand, classPath, systemProperties, mainClass, agentJar, supportJar,
-            sharedJars, studioPluginJars, studioPluginsDir, studioLogsDir);
+        systemProperties.put("idea.plugins.path", studioSandbox.getPluginsDir().toString());
+        systemProperties.put("idea.log.path", studioSandbox.getLogsDir().toString());
+        return systemProperties;
     }
 
     private static Dict parse(Path infoFile) {

@@ -15,6 +15,7 @@ import org.gradle.profiler.studio.tools.StudioPluginInstaller;
 import org.gradle.profiler.studio.tools.StudioSandboxCreator;
 import org.gradle.profiler.studio.tools.StudioSandboxCreator.StudioSandbox;
 
+import java.io.Closeable;
 import java.io.File;
 import java.nio.file.Path;
 import java.time.Duration;
@@ -105,5 +106,4 @@ public class StudioGradleClient implements GradleClient {
             );
         });
     }
-
 }

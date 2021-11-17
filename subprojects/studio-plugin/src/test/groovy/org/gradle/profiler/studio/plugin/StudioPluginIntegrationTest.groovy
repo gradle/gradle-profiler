@@ -26,7 +26,7 @@ class StudioPluginIntegrationTest extends StudioPluginTestCase {
         connection.send(new StudioRequest(SYNC))
 
         then:
-        StudioSyncRequestCompleted requestCompleted = connection.receiveSyncRequestCompleted(Duration.ofSeconds(60))
+        StudioSyncRequestCompleted requestCompleted = connection.receiveSyncRequestCompleted(Duration.ofSeconds(90))
         requestCompleted.result == SUCCEEDED
 
         and:
@@ -44,7 +44,7 @@ class StudioPluginIntegrationTest extends StudioPluginTestCase {
         connection.send(new StudioRequest(SYNC))
 
         then:
-        StudioSyncRequestCompleted requestCompleted = connection.receiveSyncRequestCompleted(Duration.ofSeconds(60))
+        StudioSyncRequestCompleted requestCompleted = connection.receiveSyncRequestCompleted(Duration.ofSeconds(90))
         requestCompleted.result == FAILED
 
         and:

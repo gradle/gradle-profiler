@@ -13,8 +13,7 @@ class ProtocolTest extends Specification {
         when:
         def server = new Server("some client")
         def timeout = Duration.ofSeconds(20)
-        def client = Client.INSTANCE
-        client.connect(server.port)
+        def client = new Client(server.port)
         def serverConnection = server.waitForIncoming(timeout)
 
         serverConnection.send(new StudioAgentConnectionParameters(new File("gradle-home")))
@@ -38,7 +37,7 @@ class ProtocolTest extends Specification {
         m4.durationMillis == 123
 
         cleanup:
-        client?.disconnect()
+        client?.close()
         server?.close()
     }
 }

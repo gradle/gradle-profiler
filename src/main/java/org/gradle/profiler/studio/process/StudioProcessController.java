@@ -1,10 +1,8 @@
 package org.gradle.profiler.studio.process;
 
-import com.google.common.base.Joiner;
 import org.gradle.profiler.CommandExec;
 import org.gradle.profiler.GradleBuildConfiguration;
 import org.gradle.profiler.InvocationSettings;
-import org.gradle.profiler.Logging;
 import org.gradle.profiler.client.protocol.Server;
 import org.gradle.profiler.client.protocol.ServerConnection;
 import org.gradle.profiler.client.protocol.messages.StudioAgentConnectionParameters;
@@ -12,15 +10,10 @@ import org.gradle.profiler.studio.LaunchConfiguration;
 import org.gradle.profiler.studio.LauncherConfigurationParser;
 import org.gradle.profiler.studio.tools.StudioSandboxCreator.StudioSandbox;
 
-import java.io.File;
 import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.time.Duration;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
@@ -29,6 +22,8 @@ import java.util.function.Function;
  */
 public class StudioProcessController {
 
+    private static final Duration STUDIO_START_TIMEOUT = Duration.ofSeconds(15);
+    private static final Duration PLUGIN_CONNECT_TIMEOUT = Duration.ofMinutes(1);
     private static final Duration AGENT_CONNECT_TIMEOUT = Duration.ofMinutes(1);
 
     private final Path studioInstallDir;
@@ -83,18 +78,15 @@ public class StudioProcessController {
      */
     public void maybeStartProcess() {
         if (process == null) {
+            Server studioStartDetectorServer = new Server("start-detector");
             this.studioPluginServer = new Server("plugin");
             this.studioAgentServer = new Server("agent");
-            LaunchConfiguration launchConfiguration = new LauncherConfigurationParser().calculate(studioInstallDir, sandbox, studioPluginServer.getPort());
-            Logging.startOperation("Starting Android Studio at " + studioInstallDir);
-            System.out.println();
-            System.out.println("* Java command: " + launchConfiguration.getJavaCommand());
-            System.out.println("* Classpath:");
-            launchConfiguration.getClassPath().stream().map(entry -> "  " + entry).forEach(System.out::println);
-            System.out.println("* System properties:");
-            launchConfiguration.getSystemProperties().forEach((key, value) -> System.out.println("  " + key + " -> " + value));
-            System.out.println("* Main class: " + launchConfiguration.getMainClass());
-            this.process = startStudio(launchConfiguration, studioInstallDir, invocationSettings, studioAgentServer);
+            LaunchConfiguration launchConfiguration = new LauncherConfigurationParser(studioInstallDir, sandbox)
+                .installStudioPlugin(studioStartDetectorServer.getPort(), studioPluginServer.getPort())
+                .installStudioAgent(studioAgentServer.getPort())
+                .calculate();
+            this.process = launchConfiguration.launchStudio(invocationSettings.getProjectDir());
+            waitOnSuccessfulIdeStart(process, studioStartDetectorServer);
             ServerConnection studioPluginConnection = studioPluginServer.waitForIncoming(AGENT_CONNECT_TIMEOUT);
             ServerConnection studioAgentConnection = studioAgentServer.waitForIncoming(AGENT_CONNECT_TIMEOUT);
             this.connections = new StudioConnections(studioPluginConnection, studioAgentConnection);
@@ -102,23 +94,17 @@ public class StudioProcessController {
         }
     }
 
-    private CommandExec.RunHandle startStudio(LaunchConfiguration launchConfiguration, Path studioInstallDir, InvocationSettings invocationSettings, Server server) {
-        List<String> commandLine = new ArrayList<>();
-        commandLine.add(launchConfiguration.getJavaCommand().toString());
-        commandLine.add("-cp");
-        commandLine.add(Joiner.on(File.pathSeparator).join(launchConfiguration.getClassPath()));
-        for (Map.Entry<String, String> systemProperty : launchConfiguration.getSystemProperties().entrySet()) {
-            commandLine.add("-D" + systemProperty.getKey() + "=" + systemProperty.getValue());
+    private void waitOnSuccessfulIdeStart(CommandExec.RunHandle runHandle, Server studioStartDetectorServer) {
+        try (Server server = studioStartDetectorServer) {
+            server.waitForIncoming(STUDIO_START_TIMEOUT);
+        } catch (Exception e) {
+            System.err.println("\n* ERROR\n" +
+                "* Could not connect to Android Studio process started by the gradle-profiler.\n" +
+                "* This might indicate that you are already running an Android Studio process in the same sandbox.\n" +
+                "* Stop Android Studio manually in the used sandbox or use a different sandbox with --studio-sandbox-dir to isolate the process.\n");
+            runHandle.kill();
+            throw new IllegalStateException(e.getMessage(), e);
         }
-        commandLine.add("-javaagent:" + launchConfiguration.getAgentJar() + "=" + server.getPort() + "," + launchConfiguration.getSupportJar());
-        commandLine.add("--add-exports");
-        commandLine.add("java.base/jdk.internal.misc=ALL-UNNAMED");
-        commandLine.add("-Xbootclasspath/a:" + Joiner.on(File.pathSeparator).join(launchConfiguration.getSharedJars()));
-        commandLine.add(launchConfiguration.getMainClass());
-        commandLine.add(invocationSettings.getProjectDir().getAbsolutePath());
-        System.out.println("* Android Studio logs can be found at: " + Paths.get(launchConfiguration.getStudioLogsDir().toString(), "idea.log"));
-        System.out.println("* Using command line: " + commandLine);
-        return new CommandExec().inDir(studioInstallDir.toFile()).start(commandLine);
     }
 
     public static class StudioConnections {

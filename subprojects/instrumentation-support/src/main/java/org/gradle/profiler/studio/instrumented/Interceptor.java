@@ -1,9 +1,10 @@
 package org.gradle.profiler.studio.instrumented;
 
 import org.gradle.profiler.client.protocol.Client;
-import org.gradle.profiler.client.protocol.messages.StudioAgentConnectionParameters;
+import org.gradle.profiler.client.protocol.agent.AgentClientContainer;
 import org.gradle.profiler.client.protocol.messages.GradleInvocationParameters;
 import org.gradle.profiler.client.protocol.messages.GradleInvocationStarted;
+import org.gradle.profiler.client.protocol.messages.StudioAgentConnectionParameters;
 import org.gradle.tooling.ResultHandler;
 import org.gradle.tooling.internal.consumer.AbstractLongRunningOperation;
 import org.gradle.tooling.internal.consumer.DefaultGradleConnector;
@@ -27,7 +28,7 @@ public class Interceptor {
     public static void onConnect(DefaultGradleConnector connector) {
         System.out.println("* Creating project connection");
         if (connectionParameters == null) {
-            connectionParameters = Client.INSTANCE.receiveConnectionParameters(RECEIVE_CONNECTION_PARAMS_TIMEOUT);
+            connectionParameters = AgentClientContainer.INSTANCE.getClient().receiveConnectionParameters(RECEIVE_CONNECTION_PARAMS_TIMEOUT);
         }
         System.out.println("* Using Gradle home: " + connectionParameters.getGradleInstallation());
         connector.useInstallation(connectionParameters.getGradleInstallation());
@@ -42,7 +43,7 @@ public class Interceptor {
 
         GradleInvocationParameters syncParameters;
         try {
-            Client client = Client.INSTANCE;
+            Client client = AgentClientContainer.INSTANCE.getClient();
             client.send(new GradleInvocationStarted(id));
             syncParameters = client.receiveSyncParameters(RECEIVE_SYNC_PARAMS_TIMEOUT);
         } catch (Throwable throwable) {
