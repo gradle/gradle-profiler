@@ -15,7 +15,6 @@ import org.gradle.profiler.studio.tools.StudioPluginInstaller;
 import org.gradle.profiler.studio.tools.StudioSandboxCreator;
 import org.gradle.profiler.studio.tools.StudioSandboxCreator.StudioSandbox;
 
-import java.io.Closeable;
 import java.io.File;
 import java.nio.file.Path;
 import java.time.Duration;
@@ -61,11 +60,13 @@ public class StudioGradleClient implements GradleClient {
     @Override
     public void close() {
         try {
-            processController.runAndWaitToStop((connections) -> {
-                System.out.println("* Stopping Android Studio....");
-                connections.getPluginConnection().send(new StudioRequest(EXIT_IDE));
-                System.out.println("* Android Studio stopped.");
-            });
+            if (processController.isProcessRunning()) {
+                processController.runAndWaitToStop((connections) -> {
+                    System.out.println("* Stopping Android Studio....");
+                    connections.getPluginConnection().send(new StudioRequest(EXIT_IDE));
+                    System.out.println("* Android Studio stopped.");
+                });
+            }
         } catch (Exception e) {
             e.printStackTrace();
             System.out.println("* Android Studio did not finish successfully, you will have to close it manually.");
@@ -75,7 +76,6 @@ public class StudioGradleClient implements GradleClient {
     }
 
     public BuildActionResult sync(List<String> gradleArgs, List<String> jvmArgs) {
-        processController.maybeStartProcess();
         if (syncMode == SyncMode.CLEAN_CACHE_AND_SYNC) {
             processController.runAndWaitToStop((connections) -> {
                 System.out.println("* Cleaning Android Studio cache, this will require a restart...");
@@ -85,7 +85,6 @@ public class StudioGradleClient implements GradleClient {
             });
         }
 
-        processController.maybeStartProcess();
         return processController.run((connections) -> {
             System.out.println("* Running sync in Android Studio...");
             connections.getPluginConnection().send(new StudioRequest(SYNC));

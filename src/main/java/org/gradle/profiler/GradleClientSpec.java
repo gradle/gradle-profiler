@@ -68,10 +68,10 @@ public abstract class GradleClientSpec {
         }
     };
 
-    public static final GradleClientSpec AndroidStudioWithCleanCache = new GradleClientSpec() {
+    public static final GradleClientSpec AndroidStudioFirstSync = new GradleClientSpec() {
         @Override
         public String toString() {
-            return "Android Studio with clean cache";
+            return "Android Studio first sync";
         }
 
         @Override

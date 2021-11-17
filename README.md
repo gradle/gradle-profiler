@@ -266,8 +266,8 @@ Here is an example:
         title = "Android Studio Sync"
         # Measure an Android studio sync
         android-studio-sync {
-            # Enable cleaning ide cache before very sync
-            # clean-ide-cache-before-sync = false
+            # Enable first sync scenario with clean IDE cache
+            # first-sync = true
         }
     }
 

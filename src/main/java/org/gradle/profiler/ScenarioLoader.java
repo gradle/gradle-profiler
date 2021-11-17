@@ -56,7 +56,7 @@ class ScenarioLoader {
     private static final String ACTION = "action";
     private static final String TOOLING_API = "tooling-api";
     private static final String ANDROID_STUDIO_SYNC = "android-studio-sync";
-    private static final String ANDROID_STUDIO_CLEAN_CACHE = "clean-ide-cache-before-sync";
+    private static final String ANDROID_STUDIO_FIRST_SYNC = "first-sync";
     private static final String JVM_ARGS = "jvm-args";
 
     private static final Map<String, BuildMutatorConfigurator> BUILD_MUTATOR_CONFIGURATORS = ImmutableMap.<String, BuildMutatorConfigurator>builder()
@@ -350,8 +350,8 @@ class ScenarioLoader {
         boolean sync = buildAction instanceof AndroidStudioSyncAction;
         if (sync) {
             Config androidStudioSyncConfig = config.getConfig(ANDROID_STUDIO_SYNC);
-            boolean isCleanCacheEnabled = ConfigUtil.bool(androidStudioSyncConfig, ANDROID_STUDIO_CLEAN_CACHE, false);
-            invoker = isCleanCacheEnabled ? GradleBuildInvoker.AndroidStudioCleanCache : GradleBuildInvoker.AndroidStudio;
+            boolean isFirstSync = ConfigUtil.bool(androidStudioSyncConfig, ANDROID_STUDIO_FIRST_SYNC, false);
+            invoker = isFirstSync ? GradleBuildInvoker.AndroidStudioFirstSync : GradleBuildInvoker.AndroidStudio;
         }
 
         if (config.hasPath(RUN_USING)) {
