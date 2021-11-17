@@ -1,8 +1,7 @@
 package org.gradle.profiler.studio;
 
-import com.google.common.base.Joiner;
 import org.gradle.profiler.BuildAction.BuildActionResult;
-import org.gradle.profiler.CommandExec;
+import org.gradle.profiler.CommandExec.RunHandle;
 import org.gradle.profiler.GradleBuildConfiguration;
 import org.gradle.profiler.GradleClient;
 import org.gradle.profiler.InvocationSettings;
@@ -22,11 +21,8 @@ import org.gradle.profiler.studio.tools.StudioSandboxCreator.StudioSandbox;
 import java.io.Closeable;
 import java.io.File;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.time.Duration;
-import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 
 import static java.util.concurrent.TimeUnit.SECONDS;
@@ -35,6 +31,8 @@ import static org.gradle.profiler.client.protocol.messages.StudioRequest.StudioR
 
 public class StudioGradleClient implements GradleClient {
 
+    private static final Duration STUDIO_START_TIMEOUT = Duration.ofSeconds(15);
+    private static final Duration PLUGIN_CONNECT_TIMEOUT = Duration.ofMinutes(1);
     private static final Duration AGENT_CONNECT_TIMEOUT = Duration.ofMinutes(1);
     private static final Duration SYNC_STARTED_TIMEOUT = Duration.ofMinutes(10);
     private static final Duration GRADLE_INVOCATION_COMPLETED_TIMEOUT = Duration.ofMinutes(60);
@@ -43,7 +41,7 @@ public class StudioGradleClient implements GradleClient {
 
     private final Server studioAgentServer;
     private final Server studioPluginServer;
-    private final CommandExec.RunHandle studioProcess;
+    private final RunHandle studioProcess;
     private final ServerConnection studioAgentConnection;
     private final ServerConnection studioPluginConnection;
     private final StudioPluginInstaller studioPluginInstaller;
@@ -57,60 +55,32 @@ public class StudioGradleClient implements GradleClient {
         Logging.startOperation("Starting Android Studio at " + studioInstallDir);
         studioPluginServer = new Server("plugin");
         studioAgentServer = new Server("agent");
+        Server studioStartDetectorServer = new Server("studioStartDetector");
         StudioSandbox sandbox = StudioSandboxCreator.createSandbox(studioSandboxDir.map(File::toPath).orElse(null));
-        LaunchConfiguration launchConfiguration = new LauncherConfigurationParser().calculate(studioInstallDir, sandbox, studioPluginServer.getPort());
-        System.out.println();
-        System.out.println("* Java command: " + launchConfiguration.getJavaCommand());
-        System.out.println("* Classpath:");
-        for (Path entry : launchConfiguration.getClassPath()) {
-            System.out.println("  " + entry);
-        }
-        System.out.println("* System properties:");
-        for (Map.Entry<String, String> entry : launchConfiguration.getSystemProperties().entrySet()) {
-            System.out.println("  " + entry.getKey() + " -> " + entry.getValue());
-        }
-        System.out.println("* Main class: " + launchConfiguration.getMainClass());
+        LaunchConfiguration launchConfiguration = new LauncherConfigurationParser(studioInstallDir, sandbox)
+            .installStudioPlugin(studioStartDetectorServer.getPort(), studioPluginServer.getPort())
+            .installStudioAgent(studioAgentServer.getPort())
+            .calculate();
 
         studioPluginInstaller = new StudioPluginInstaller(launchConfiguration.getStudioPluginsDir());
-        studioProcess = startStudio(launchConfiguration, studioInstallDir, invocationSettings, studioAgentServer);
-        studioPluginConnection = studioPluginServer.waitForIncoming(AGENT_CONNECT_TIMEOUT);
+        studioPluginInstaller.installPlugin(launchConfiguration.getStudioPluginJars());
+        studioProcess = launchConfiguration.launchStudio(invocationSettings.getProjectDir());
+        waitOnSuccessfulIdeStart(studioProcess, studioStartDetectorServer);
+        studioPluginConnection = studioPluginServer.waitForIncoming(PLUGIN_CONNECT_TIMEOUT);
         studioAgentConnection = studioAgentServer.waitForIncoming(AGENT_CONNECT_TIMEOUT);
         studioAgentConnection.send(new StudioAgentConnectionParameters(buildConfiguration.getGradleHome()));
     }
 
-    private CommandExec.RunHandle startStudio(LaunchConfiguration launchConfiguration, Path studioInstallDir, InvocationSettings invocationSettings, Server server) {
-        List<String> commandLine = new ArrayList<>();
-        commandLine.add(launchConfiguration.getJavaCommand().toString());
-        commandLine.add("-cp");
-        commandLine.add(Joiner.on(File.pathSeparator).join(launchConfiguration.getClassPath()));
-        for (Map.Entry<String, String> systemProperty : launchConfiguration.getSystemProperties().entrySet()) {
-            commandLine.add("-D" + systemProperty.getKey() + "=" + systemProperty.getValue());
-        }
-        commandLine.add("-javaagent:" + launchConfiguration.getAgentJar() + "=" + server.getPort() + "," + launchConfiguration.getSupportJar());
-        commandLine.add("--add-exports");
-        commandLine.add("java.base/jdk.internal.misc=ALL-UNNAMED");
-        commandLine.add("-Xbootclasspath/a:" + Joiner.on(File.pathSeparator).join(launchConfiguration.getSharedJars()));
-        commandLine.add(launchConfiguration.getMainClass());
-        commandLine.add(invocationSettings.getProjectDir().getAbsolutePath());
-        System.out.println("* Android Studio logs can be found at: " + Paths.get(launchConfiguration.getStudioLogsDir().toString(), "idea.log"));
-        System.out.println("* Using command line: " + commandLine);
-
-        studioPluginInstaller.installPlugin(launchConfiguration.getStudioPluginJars());
-        return new CommandExec().inDir(studioInstallDir.toFile()).start(commandLine);
-    }
-
-    @Override
-    public void close() {
-        try (Server studioPluginServer = this.studioPluginServer;
-             Server studioAgentServer = this.studioAgentServer;
-             Closeable uninstallPlugin = studioPluginInstaller::uninstallPlugin) {
-            System.out.println("* Stopping Android Studio....");
-            studioPluginConnection.send(new StudioRequest(EXIT_IDE));
-            studioProcess.waitForSuccess(STUDIO_EXIT_TIMEOUT_SECONDS, SECONDS);
-            System.out.println("* Android Studio stopped.");
+    private void waitOnSuccessfulIdeStart(RunHandle runHandle, Server studioStartDetectorServer) {
+        try (Server server = studioStartDetectorServer) {
+            server.waitForIncoming(STUDIO_START_TIMEOUT);
         } catch (Exception e) {
-            e.printStackTrace();
-            System.out.println("* Android Studio did not finish successfully, you will have to close it manually.");
+            System.err.println("\n* ERROR\n" +
+                "* Could not connect to Android Studio process started by the gradle-profiler.\n" +
+                "* This might indicate that you are already running an Android Studio process in the same sandbox.\n" +
+                "* Stop Android Studio manually in the used sandbox or use a different sandbox with --studio-sandbox-dir to isolate the process.\n");
+            runHandle.kill();
+            throw new IllegalStateException(e.getMessage(), e);
         }
     }
 
@@ -132,5 +102,20 @@ public class StudioGradleClient implements GradleClient {
             Duration.ofMillis(agentCompleted.getDurationMillis()),
             Duration.ofMillis(syncRequestCompleted.getDurationMillis() - agentCompleted.getDurationMillis())
         );
+    }
+
+    @Override
+    public void close() {
+        try (Server studioPluginServer = this.studioPluginServer;
+             Server studioAgentServer = this.studioAgentServer;
+             Closeable uninstallPlugin = studioPluginInstaller::uninstallPlugin) {
+            System.out.println("* Stopping Android Studio....");
+            studioPluginConnection.send(new StudioRequest(EXIT_IDE));
+            studioProcess.waitForSuccess(STUDIO_EXIT_TIMEOUT_SECONDS, SECONDS);
+            System.out.println("* Android Studio stopped.");
+        } catch (Exception e) {
+            e.printStackTrace();
+            System.out.println("* Android Studio did not finish successfully, you will have to close it manually.");
+        }
     }
 }

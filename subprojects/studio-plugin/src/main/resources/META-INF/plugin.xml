@@ -20,4 +20,8 @@
                   topic="com.intellij.openapi.project.ProjectManagerListener"/>
     </applicationListeners>
 
+    <extensions defaultExtensionNs="com.intellij">
+        <preloadingActivity implementation="org.gradle.profiler.studio.plugin.GradleProfilerProjectManagerListener"/>
+    </extensions>
+
 </idea-plugin>
