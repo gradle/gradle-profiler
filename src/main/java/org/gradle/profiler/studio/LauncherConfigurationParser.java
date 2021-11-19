@@ -5,6 +5,7 @@ import com.dd.plist.NSObject;
 import com.dd.plist.NSString;
 import com.dd.plist.PropertyListParser;
 import com.google.common.base.Joiner;
+import org.gradle.profiler.OperatingSystem;
 import org.gradle.profiler.instrument.GradleInstrumentation;
 import org.gradle.profiler.studio.tools.StudioSandboxCreator.StudioSandbox;
 
@@ -62,7 +63,7 @@ public class LauncherConfigurationParser {
         List<Path> classPath = Arrays.stream(jvmOptions.string("ClassPath").split(":")).map(s -> FileSystems.getDefault().getPath(s.replace("$APP_PACKAGE", actualInstallDir.toString()))).collect(Collectors.toList());
         String mainClass = jvmOptions.string("MainClass");
         Map<String, String> systemProperties = buildSystemProperties(jvmOptions, actualInstallDir);
-        Path javaCommand = actualInstallDir.resolve("Contents/jre/Contents/Home/bin/java");
+        Path javaCommand = resolveJavaCommand(actualInstallDir);
         Path agentJar = GradleInstrumentation.unpackPlugin("studio-agent").toPath();
         Path asmJar = GradleInstrumentation.unpackPlugin("asm").toPath();
         Path supportJar = GradleInstrumentation.unpackPlugin("instrumentation-support").toPath();
@@ -101,6 +102,14 @@ public class LauncherConfigurationParser {
         systemProperties.put("idea.plugins.path", studioSandbox.getPluginsDir().toString());
         systemProperties.put("idea.log.path", studioSandbox.getLogsDir().toString());
         return systemProperties;
+    }
+
+    private Path resolveJavaCommand(Path actualInstallDir) {
+        if (OperatingSystem.isMacOS()) {
+            return actualInstallDir.resolve("Contents/jre/Contents/Home/bin/java");
+        } else {
+            return actualInstallDir.resolve("jre/bin/java");
+        }
     }
 
     private static Dict parse(Path infoFile) {

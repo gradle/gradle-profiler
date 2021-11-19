@@ -1,12 +1,14 @@
+
 import com.moowork.gradle.node.npm.NpxTask
 import io.sdkman.vendors.tasks.SdkAnnounceVersionTask
 import io.sdkman.vendors.tasks.SdkDefaultVersionTask
 import io.sdkman.vendors.tasks.SdkReleaseVersionTask
 import io.sdkman.vendors.tasks.SdkmanVendorBaseTask
-import java.util.Locale
+import java.util.*
 
 plugins {
     id("profiler.java-library")
+    id("profiler.android-studio-setup")
     groovy
     application
     `maven-publish`
