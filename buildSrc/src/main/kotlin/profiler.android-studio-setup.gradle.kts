@@ -15,7 +15,7 @@ val architecture = System.getProperty("os.arch").toLowerCase()
 fun isWindows(): Boolean = os.startsWith("windows")
 fun isMacOS(): Boolean = os.startsWith("mac")
 fun isLinux(): Boolean = os.startsWith("linux")
-fun isIntel(): Boolean = architecture.equals("x86_64") || architecture.equals("x86")
+fun isIntel(): Boolean = architecture == "x86_64" || architecture == "x86"
 
 val androidStudioRuntime by configurations.creating
 dependencies {
@@ -46,5 +46,8 @@ tasks.withType<Test>().configureEach {
         isMacOS() -> if (file("$androidStudioPath/Android Studio.app").exists()) { "Android Studio.app" } else { "Android Studio Preview.app" }
         else -> "android-studio"
     }
-    systemProperty("android-studio-home", "$androidStudioPath/$subfolder")
+    systemProperty("studio.home", "$androidStudioPath/$subfolder")
+    systemProperty("studio.tests.headless", "true")
+//    if (providers.gradleProperty("runStudioTestsHeadless").get() == "true") {
+//    }
 }

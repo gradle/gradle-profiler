@@ -15,6 +15,8 @@ fun toolchainConfiguration(os: Os) = listOf("-Porg.gradle.java.installations.aut
 
 fun ParametrizedWithType.javaHome(os: Os, javaVersion: JavaVersion) {
     param("env.JAVA_HOME", javaVersion.javaHome(os))
+    param("env.ANDROID_HOME", "/opt/android/sdk")
+    param("env.ANDROID_SDK_ROOT", "/opt/android/sdk")
 }
 
 enum class JavaVersion(val majorVersion: String, val vendor: String, private val javaHomePostfix: String) {

@@ -15,7 +15,6 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -23,6 +22,8 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 
 public class LauncherConfigurationParser {
+
+    private static final boolean SHOULD_RUN_HEADLESS = Boolean.getBoolean("studio.tests.headless");
 
     private final Path studioInstallDir;
     private final StudioSandbox studioSandbox;
@@ -72,7 +73,7 @@ public class LauncherConfigurationParser {
         Path studioPluginsDir = studioSandbox.getPluginsDir();
         Path studioLogsDir = studioSandbox.getLogsDir();
         List<Path> sharedJars = Arrays.asList(asmJar, protocolJar);
-        List<Path> studioPluginJars = isInstallStudioPlugin ? Arrays.asList(studioPlugin, protocolJar) : Collections.emptyList();
+        List<Path> studioPluginJars = Arrays.asList(studioPlugin, protocolJar);
 
         List<String> commandLine = new ArrayList<>();
         commandLine.add(javaCommand.toString());
@@ -86,6 +87,9 @@ public class LauncherConfigurationParser {
             commandLine.add("-Xbootclasspath/a:" + Joiner.on(File.pathSeparator).join(sharedJars));
         }
         commandLine.add(mainClass);
+        if (SHOULD_RUN_HEADLESS) {
+            commandLine.add("headless-starter");
+        }
 
         return new LaunchConfiguration(javaCommand, studioInstallDir, classPath, systemProperties, mainClass, agentJar, supportJar,
             sharedJars, studioPluginJars, studioPluginsDir, studioLogsDir, commandLine);
@@ -101,6 +105,9 @@ public class LauncherConfigurationParser {
         studioSandbox.getSystemDir().ifPresent(path -> systemProperties.put("idea.system.path", path.toString()));
         systemProperties.put("idea.plugins.path", studioSandbox.getPluginsDir().toString());
         systemProperties.put("idea.log.path", studioSandbox.getLogsDir().toString());
+        if (SHOULD_RUN_HEADLESS) {
+            systemProperties.put("java.awt.headless", "true");
+        }
         return systemProperties;
     }
 

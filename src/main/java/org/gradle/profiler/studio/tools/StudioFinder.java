@@ -5,7 +5,7 @@ import java.io.File;
 public class StudioFinder {
 
     private static final String STUDIO_HOME_ENV_VARIABLE = "STUDIO_PROFILER_HOME";
-    private static final String STUDIO_HOME_PROPERTY = "android-studio-home";
+    private static final String STUDIO_HOME_PROPERTY = "studio.home";
     private static final String STUDIO_PROFILER_HOME = System.getenv(STUDIO_HOME_ENV_VARIABLE) != null
         ? System.getenv(STUDIO_HOME_ENV_VARIABLE)
         : System.getProperty(STUDIO_HOME_PROPERTY);

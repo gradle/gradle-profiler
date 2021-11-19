@@ -3,6 +3,7 @@ package org.gradle.profiler
 import org.gradle.profiler.studio.LaunchConfiguration
 import org.gradle.profiler.studio.LauncherConfigurationParser
 import org.gradle.profiler.studio.tools.StudioFinder
+import org.gradle.profiler.studio.tools.StudioPluginInstaller
 import org.gradle.profiler.studio.tools.StudioSandboxCreator
 import spock.lang.Requires
 
@@ -93,6 +94,9 @@ class AndroidStudioIntegrationTest extends AbstractProfilerIntegrationTest {
         File otherStudioProjectDir = tmpDir.newFolder('project')
         StudioSandboxCreator.StudioSandbox sandbox = StudioSandboxCreator.createSandbox(sandboxDir.toPath())
         LaunchConfiguration launchConfiguration = new LauncherConfigurationParser(studioHome.toPath(), sandbox).calculate()
+        // We have to install plugin so also the first Studio process can be run in headless mode mode
+        StudioPluginInstaller pluginInstaller = new StudioPluginInstaller(launchConfiguration.getStudioPluginsDir())
+        pluginInstaller.installPlugin(launchConfiguration.getStudioPluginJars())
         def scenarioFile = file("performance.scenarios") << """
             $scenarioName {
                 android-studio-sync {
@@ -125,6 +129,9 @@ class AndroidStudioIntegrationTest extends AbstractProfilerIntegrationTest {
         File otherStudioProjectDir = tmpDir.newFolder('project')
         StudioSandboxCreator.StudioSandbox sandbox = StudioSandboxCreator.createSandbox(sandboxDir1.toPath())
         LaunchConfiguration launchConfiguration = new LauncherConfigurationParser(studioHome.toPath(), sandbox).calculate()
+        // We have to install plugin so also the first Studio process can be run in headless mode mode
+        StudioPluginInstaller pluginInstaller = new StudioPluginInstaller(launchConfiguration.getStudioPluginsDir())
+        pluginInstaller.installPlugin(launchConfiguration.getStudioPluginJars())
         def scenarioFile = file("performance.scenarios") << """
             $scenarioName {
                 android-studio-sync {
