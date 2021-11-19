@@ -1,5 +1,3 @@
-
-
 repositories {
     ivy {
         url = uri("https://redirector.gvt1.com/edgedl/android/studio/ide-zips")
@@ -29,6 +27,10 @@ dependencies {
 
 val androidStudioPath by lazy { "$buildDir/android-studio" }
 val unpackAndroidStudio = tasks.register<Copy>("unpackAndroidStudio") {
+    if (androidStudioRuntime.isEmpty) {
+        enabled = false
+        return@register
+    }
     val file = androidStudioRuntime.files.first()
     inputs.file(file)
     outputs.dir(androidStudioPath)
@@ -47,7 +49,7 @@ tasks.withType<Test>().configureEach {
         else -> "android-studio"
     }
     systemProperty("studio.home", "$androidStudioPath/$subfolder")
-    systemProperty("studio.tests.headless", "true")
-//    if (providers.gradleProperty("runStudioTestsHeadless").get() == "true") {
-//    }
+    if (providers.gradleProperty("runStudioTestsHeadless").orNull == "true") {
+        systemProperty("studio.tests.headless", "true")
+    }
 }
