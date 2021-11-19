@@ -1,9 +1,7 @@
 package org.gradle.profiler;
 
-import javax.annotation.Nullable;
 import java.time.Duration;
 import java.util.List;
-import java.util.Optional;
 
 /**
  * Runs some particular action against a Gradle build.
@@ -27,7 +25,7 @@ public interface BuildAction {
 
         @Override
         public BuildActionResult run(GradleClient gradleClient, List<String> gradleArgs, List<String> jvmArgs) {
-            return BuildActionResult.withExecutionTimeOnly(Duration.ZERO);
+            return new BuildActionResult(Duration.ZERO);
         }
     };
 
@@ -51,33 +49,13 @@ public interface BuildAction {
     class BuildActionResult {
 
         private final Duration executionTime;
-        private final Duration gradleToolingAgentExecutionTime;
-        private final Duration ideExecutionTime;
 
-        private BuildActionResult(Duration executionTime, @Nullable Duration gradleToolingAgentExecutionTime, @Nullable Duration ideExecutionTime) {
+        public BuildActionResult(Duration executionTime) {
             this.executionTime = executionTime;
-            this.gradleToolingAgentExecutionTime = gradleToolingAgentExecutionTime;
-            this.ideExecutionTime = ideExecutionTime;
         }
 
         public Duration getExecutionTime() {
             return executionTime;
-        }
-
-        public Optional<Duration> getGradleToolingAgentExecutionTime() {
-            return Optional.ofNullable(gradleToolingAgentExecutionTime);
-        }
-
-        public Optional<Duration> getIdeExecutionTime() {
-            return Optional.ofNullable(ideExecutionTime);
-        }
-
-        public static BuildActionResult withExecutionTimeOnly(Duration executionTime) {
-            return new BuildActionResult(executionTime, null, null);
-        }
-
-        public static BuildActionResult withIdeTimings(Duration executionTime, Duration gradleToolingAgentExecutionTime, Duration ideExecutionTime) {
-            return new BuildActionResult(executionTime, gradleToolingAgentExecutionTime, ideExecutionTime);
         }
     }
 

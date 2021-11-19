@@ -11,6 +11,7 @@ import org.gradle.profiler.client.protocol.messages.StudioRequest;
 import org.gradle.profiler.client.protocol.messages.StudioSyncRequestCompleted;
 import org.gradle.profiler.instrument.GradleInstrumentation;
 import org.gradle.profiler.studio.process.StudioProcessController;
+import org.gradle.profiler.studio.invoker.StudioBuildActionResult;
 import org.gradle.profiler.studio.tools.StudioPluginInstaller;
 import org.gradle.profiler.studio.tools.StudioSandboxCreator;
 import org.gradle.profiler.studio.tools.StudioSandboxCreator.StudioSandbox;
@@ -84,7 +85,7 @@ public class StudioGradleClient implements GradleClient {
             System.out.println("* Gradle invocation has completed in: " + agentCompleted.getDurationMillis() + "ms");
             StudioSyncRequestCompleted syncRequestCompleted = connections.getPluginConnection().receiveSyncRequestCompleted(SYNC_REQUEST_COMPLETED_TIMEOUT);
             System.out.println("* Full sync has completed in: " + syncRequestCompleted.getDurationMillis() + "ms and it " + syncRequestCompleted.getResult().name().toLowerCase());
-            return BuildActionResult.withIdeTimings(
+            return new StudioBuildActionResult(
                 Duration.ofMillis(syncRequestCompleted.getDurationMillis()),
                 Duration.ofMillis(agentCompleted.getDurationMillis()),
                 Duration.ofMillis(syncRequestCompleted.getDurationMillis() - agentCompleted.getDurationMillis())

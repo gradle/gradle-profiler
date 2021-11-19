@@ -7,12 +7,16 @@ import org.gradle.profiler.instrument.PidInstrumentation;
 import org.gradle.profiler.report.CsvGenerator;
 import org.gradle.profiler.report.HtmlGenerator;
 import org.gradle.profiler.result.BuildInvocationResult;
+import org.gradle.profiler.result.Sample;
+import org.gradle.profiler.studio.invoker.StudioGradleScenarioDefinition;
+import org.gradle.profiler.studio.invoker.StudioGradleScenarioInvoker;
 
 import java.io.File;
 import java.io.IOException;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.function.Consumer;
 
 public class Main {
     public static void main(String[] args) {
@@ -59,6 +63,7 @@ public class Main {
             BenchmarkResultCollector benchmarkResults = new BenchmarkResultCollector(new CsvGenerator(cvsFile, settings.getCsvFormat()), new HtmlGenerator(htmlFile));
             PidInstrumentation pidInstrumentation = new PidInstrumentation();
             GradleScenarioInvoker gradleScenarioInvoker = new GradleScenarioInvoker(daemonControl, pidInstrumentation);
+            StudioGradleScenarioInvoker studioGradleScenarioInvoker = new StudioGradleScenarioInvoker(gradleScenarioInvoker);
             BazelScenarioInvoker bazelScenarioInvoker = new BazelScenarioInvoker();
             BuckScenarioInvoker buckScenarioInvoker = new BuckScenarioInvoker();
             MavenScenarioInvoker mavenScenarioInvoker = new MavenScenarioInvoker();
@@ -77,6 +82,8 @@ public class Main {
                     invoke(mavenScenarioInvoker, (MavenScenarioDefinition) scenario, settings, benchmarkResults, failures);
                 } else if (scenario instanceof GradleScenarioDefinition) {
                     invoke(gradleScenarioInvoker, (GradleScenarioDefinition) scenario, settings, benchmarkResults, failures);
+                } else if (scenario instanceof StudioGradleScenarioDefinition) {
+                    invoke(studioGradleScenarioInvoker, (StudioGradleScenarioDefinition) scenario, settings, benchmarkResults, failures);
                 } else {
                     throw new IllegalArgumentException("Don't know how to run scenario.");
                 }
@@ -114,7 +121,9 @@ public class Main {
 
     private <S extends ScenarioDefinition, R extends BuildInvocationResult> void invoke(ScenarioInvoker<S, R> invoker, S scenario, InvocationSettings settings, BenchmarkResultCollector benchmarkResults, List<Throwable> failures) throws IOException {
         try {
-            invoker.run(scenario, settings, benchmarkResults);
+            List<Sample<? super R>> samples = invoker.samplesFor(settings, scenario);
+            Consumer<R> resultConsumer = benchmarkResults.scenario(scenario, samples);
+            invoker.run(scenario, settings, resultConsumer);
         } catch (Throwable t) {
             t.printStackTrace();
             failures.add(t);

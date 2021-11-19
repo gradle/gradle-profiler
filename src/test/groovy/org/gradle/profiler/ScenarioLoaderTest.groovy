@@ -2,6 +2,7 @@ package org.gradle.profiler
 
 import org.gradle.profiler.mutations.AbstractCleanupMutator
 import org.gradle.profiler.report.CsvGenerator
+import org.gradle.profiler.studio.invoker.StudioGradleScenarioDefinition
 import org.gradle.profiler.toolingapi.FetchProjectPublications
 import org.gradle.tooling.model.idea.IdeaProject
 import org.junit.Rule
@@ -374,8 +375,8 @@ class ScenarioLoaderTest extends Specification {
         def scenarios = loadScenarios(scenarioFile, settings, Mock(GradleBuildConfigurationReader))
         expect:
         scenarios*.name == ["default"]
-        def scenarioDefinition = scenarios[0] as GradleScenarioDefinition
-        scenarioDefinition.action instanceof AndroidStudioSyncAction
+        def scenarioDefinition = scenarios[0] as StudioGradleScenarioDefinition
+        scenarioDefinition.gradleScenarioDefinition.action instanceof AndroidStudioSyncAction
     }
 
     def "loads default scenarios only"() {

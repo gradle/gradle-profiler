@@ -28,6 +28,7 @@ import org.gradle.profiler.mutations.FileChangeMutatorConfigurator;
 import org.gradle.profiler.mutations.GitCheckoutMutator;
 import org.gradle.profiler.mutations.GitRevertMutator;
 import org.gradle.profiler.mutations.ShowBuildCacheSizeMutator;
+import org.gradle.profiler.studio.invoker.StudioGradleScenarioDefinition;
 
 import javax.annotation.Nullable;
 import java.io.File;
@@ -273,7 +274,7 @@ class ScenarioLoader {
                 List<String> jvmArgs = ConfigUtil.strings(scenario, JVM_ARGS);
                 for (GradleBuildConfiguration version : versions) {
                     File outputDir = versions.size() == 1 ? scenarioBaseDir : new File(scenarioBaseDir, version.getGradleVersion().getVersion());
-                    definitions.add(new GradleScenarioDefinition(
+                    GradleScenarioDefinition gradleScenarioDefinition = new GradleScenarioDefinition(
                         scenarioName,
                         title,
                         invoker,
@@ -288,7 +289,11 @@ class ScenarioLoader {
                         outputDir,
                         jvmArgs,
                         measuredBuildOperations
-                    ));
+                    );
+                    ScenarioDefinition scenarioDefinition = (buildAction instanceof AndroidStudioSyncAction)
+                        ? new StudioGradleScenarioDefinition(gradleScenarioDefinition)
+                        : gradleScenarioDefinition;
+                    definitions.add(scenarioDefinition);
                 }
             }
         }

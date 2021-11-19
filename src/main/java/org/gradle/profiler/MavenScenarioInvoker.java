@@ -8,7 +8,7 @@ import java.util.function.Consumer;
 
 public class MavenScenarioInvoker extends BuildToolCommandLineInvoker<MavenScenarioDefinition, BuildInvocationResult> {
     @Override
-    void doRun(MavenScenarioDefinition scenario, InvocationSettings settings, Consumer<BuildInvocationResult> resultConsumer) {
+    public void run(MavenScenarioDefinition scenario, InvocationSettings settings, Consumer<BuildInvocationResult> resultConsumer) {
         List<String> commandLine = new ArrayList<>();
         commandLine.add(scenario.getExecutablePath());
         commandLine.addAll(scenario.getTargets());

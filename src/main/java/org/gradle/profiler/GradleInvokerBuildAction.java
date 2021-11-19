@@ -7,7 +7,7 @@ public abstract class GradleInvokerBuildAction implements BuildAction {
     public BuildActionResult run(GradleClient gradleClient, List<String> gradleArgs, List<String> jvmArgs) {
         Timer timer = new Timer();
         run((GradleInvoker) gradleClient, gradleArgs, jvmArgs);
-        return BuildActionResult.withExecutionTimeOnly(timer.elapsed());
+        return new BuildActionResult(timer.elapsed());
     }
 
     protected abstract void run(GradleInvoker buildInvoker, List<String> gradleArgs, List<String> jvmArgs);
