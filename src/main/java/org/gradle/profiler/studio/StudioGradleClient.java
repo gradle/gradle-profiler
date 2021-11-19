@@ -28,9 +28,10 @@ import static org.gradle.profiler.client.protocol.messages.StudioRequest.StudioR
 
 public class StudioGradleClient implements GradleClient {
 
-    public enum SyncMode {
-        CLEAN_CACHE_AND_SYNC,
-        SYNC_ONLY
+    public enum CleanCacheMode {
+        BEFORE_SCENARIO,
+        BEFORE_BUILD,
+        NEVER
     }
 
     private static final Duration SYNC_STARTED_TIMEOUT = Duration.ofMinutes(10);
@@ -40,13 +41,15 @@ public class StudioGradleClient implements GradleClient {
 
     private final StudioProcessController processController;
     private final StudioPluginInstaller studioPluginInstaller;
-    private final SyncMode syncMode;
+    private final CleanCacheMode cleanCacheMode;
+    private boolean isFirstRun;
 
-    public StudioGradleClient(GradleBuildConfiguration buildConfiguration, InvocationSettings invocationSettings, SyncMode syncMode) {
+    public StudioGradleClient(GradleBuildConfiguration buildConfiguration, InvocationSettings invocationSettings, CleanCacheMode cleanCacheMode) {
         if (!OperatingSystem.isMacOS()) {
             throw new IllegalArgumentException("Support for Android studio is currently only implemented on macOS.");
         }
-        this.syncMode = syncMode;
+        this.isFirstRun = true;
+        this.cleanCacheMode = cleanCacheMode;
         Path studioInstallDir = invocationSettings.getStudioInstallDir().toPath();
         Optional<File> studioSandboxDir = invocationSettings.getStudioSandboxDir();
         StudioSandbox sandbox = StudioSandboxCreator.createSandbox(studioSandboxDir.map(File::toPath).orElse(null));
@@ -57,26 +60,8 @@ public class StudioGradleClient implements GradleClient {
         this.processController = new StudioProcessController(studioInstallDir, sandbox, invocationSettings, buildConfiguration);
     }
 
-    @Override
-    public void close() {
-        try {
-            if (processController.isProcessRunning()) {
-                processController.runAndWaitToStop((connections) -> {
-                    System.out.println("* Stopping Android Studio....");
-                    connections.getPluginConnection().send(new StudioRequest(EXIT_IDE));
-                    System.out.println("* Android Studio stopped.");
-                });
-            }
-        } catch (Exception e) {
-            e.printStackTrace();
-            System.out.println("* Android Studio did not finish successfully, you will have to close it manually.");
-        } finally {
-            studioPluginInstaller.uninstallPlugin();
-        }
-    }
-
     public BuildActionResult sync(List<String> gradleArgs, List<String> jvmArgs) {
-        if (syncMode == SyncMode.CLEAN_CACHE_AND_SYNC) {
+        if (shouldCleanCache()) {
             processController.runAndWaitToStop((connections) -> {
                 System.out.println("* Cleaning Android Studio cache, this will require a restart...");
                 connections.getPluginConnection().send(new StudioRequest(CLEANUP_CACHE));
@@ -85,6 +70,7 @@ public class StudioGradleClient implements GradleClient {
             });
         }
 
+        isFirstRun = false;
         return processController.run((connections) -> {
             System.out.println("* Running sync in Android Studio...");
             connections.getPluginConnection().send(new StudioRequest(SYNC));
@@ -104,5 +90,28 @@ public class StudioGradleClient implements GradleClient {
                 Duration.ofMillis(syncRequestCompleted.getDurationMillis() - agentCompleted.getDurationMillis())
             );
         });
+    }
+
+    private boolean shouldCleanCache() {
+        return isFirstRun && cleanCacheMode == CleanCacheMode.BEFORE_SCENARIO
+            || cleanCacheMode == CleanCacheMode.BEFORE_BUILD;
+    }
+
+    @Override
+    public void close() {
+        try {
+            if (processController.isProcessRunning()) {
+                processController.runAndWaitToStop((connections) -> {
+                    System.out.println("* Stopping Android Studio....");
+                    connections.getPluginConnection().send(new StudioRequest(EXIT_IDE));
+                    System.out.println("* Android Studio stopped.");
+                });
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+            System.out.println("* Android Studio did not finish successfully, you will have to close it manually.");
+        } finally {
+            studioPluginInstaller.uninstallPlugin();
+        }
     }
 }

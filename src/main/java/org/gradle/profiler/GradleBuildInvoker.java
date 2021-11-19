@@ -10,7 +10,8 @@ public class GradleBuildInvoker extends BuildInvoker {
         }
     };
     static final GradleBuildInvoker AndroidStudio = new GradleBuildInvoker(GradleClientSpec.AndroidStudio, GradleDaemonReuse.WarmDaemonOnly);
-    static final GradleBuildInvoker AndroidStudioFirstSync = new GradleBuildInvoker(GradleClientSpec.AndroidStudioFirstSync, GradleDaemonReuse.ColdDaemonOnly);
+    static final GradleBuildInvoker AndroidStudioCleanCacheBeforeScenario = new GradleBuildInvoker(GradleClientSpec.AndroidStudioCleanCacheBeforeScenario, GradleDaemonReuse.WarmDaemonOnly);
+    static final GradleBuildInvoker AndroidStudioCleanCacheBeforeBuild = new GradleBuildInvoker(GradleClientSpec.AndroidStudioCleanCacheBeforeBuild, GradleDaemonReuse.ColdDaemonOnly);
 
     private final GradleClientSpec client;
     private final GradleDaemonReuse daemonReuse;

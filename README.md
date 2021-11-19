@@ -266,8 +266,6 @@ Here is an example:
         title = "Android Studio Sync"
         # Measure an Android studio sync
         android-studio-sync {
-            # Enable first sync scenario with clean IDE cache
-            # first-sync = true
         }
     }
 
@@ -296,6 +294,7 @@ A scenario can define changes that should be applied to the source before each b
 - `clear-project-cache-before`: Deletes the contents of the `.gradle` and `buildSrc/.gradle` project cache directories before the scenario is executed (`SCENARIO`), before cleanup (`CLEANUP`) or before the build is executed (`BUILD`).
 - `clear-transform-cache-before`: Deletes the contents of the transform cache before the scenario is executed (`SCENARIO`), before cleanup (`CLEANUP`) or before the build is executed (`BUILD`).
 - `clear-jars-cache-before`: Deletes the contents of the instrumented jars cache before the scenario is executed (`SCENARIO`), before cleanup (`CLEANUP`) or before the build is executed (`BUILD`).
+- `clear-android studio-cache-before`: Invalidates the Android Studio caches before the scenario is executed (`SCENARIO`) or before the build is executed (`BUILD`). Due to Android Studio client specifics before cleanup (`CLEANUP`) is not supported. Note: cleaning the Android Studio caches is run only when Android Studio sync (`android-studio-sync`) is used.
 - `git-checkout`: Checks out a specific commit for the build step, and a different one for the cleanup step.
 - `git-revert`: Reverts a given set of commits before the build and resets it afterward.
 - `iterations`: Number of builds to actually measure

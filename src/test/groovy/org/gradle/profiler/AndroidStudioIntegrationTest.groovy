@@ -44,13 +44,12 @@ class AndroidStudioIntegrationTest extends AbstractProfilerIntegrationTest {
     }
 
     @Requires({ StudioFinder.findStudioHome() })
-    def "benchmarks Android Studio sync by cleaning ide cache"() {
+    def "benchmarks Android Studio sync by cleaning ide cache before build"() {
         given:
         def scenarioFile = file("performance.scenarios") << """
             $scenarioName {
-                android-studio-sync {
-                    first-sync = true
-                }
+                android-studio-sync {}
+                clear-android-studio-cache-before = BUILD
             }
         """
 
@@ -64,6 +63,28 @@ class AndroidStudioIntegrationTest extends AbstractProfilerIntegrationTest {
         logFile.find("* Cleaning Android Studio cache, this will require a restart...").size() == 3
         // 4 since on first run we start IDE, clean cache and restart
         logFile.find("* Starting Android Studio").size() == 4
+    }
+
+    @Requires({ StudioFinder.findStudioHome() })
+    def "benchmarks Android Studio sync by cleaning ide cache before scenario"() {
+        given:
+        def scenarioFile = file("performance.scenarios") << """
+            $scenarioName {
+                android-studio-sync {}
+                clear-android-studio-cache-before = SCENARIO
+            }
+        """
+
+        when:
+        runBenchmark(scenarioFile, 1, 2)
+
+        then:
+        logFile.find("Gradle invocation has completed in").size() == 3
+        logFile.find("Full sync has completed in").size() == 3
+        logFile.find("and it succeeded").size() == 3
+        logFile.find("* Cleaning Android Studio cache, this will require a restart...").size() == 1
+        // 2 since on first run we start IDE, clean cache and restart
+        logFile.find("* Starting Android Studio").size() == 2
     }
 
     @Requires({ StudioFinder.findStudioHome() })
