@@ -1,5 +1,7 @@
 package org.gradle.profiler.studio.tools;
 
+import org.gradle.profiler.support.FileSupport;
+
 import javax.annotation.Nullable;
 import java.io.File;
 import java.io.IOException;
@@ -9,9 +11,6 @@ import java.nio.file.Path;
 import java.util.Optional;
 
 public class StudioSandboxCreator {
-
-    private StudioSandboxCreator() {
-    }
 
     /**
      * Creates sandbox for Android Studio.
@@ -31,11 +30,30 @@ public class StudioSandboxCreator {
         Path systemDir = createDir(new File(sandboxDirFile, "system").toPath());
         Path pluginsDir = createDir(new File(sandboxDirFile, "plugins").toPath());
         Path logDir = createDir(new File(sandboxDirFile, "logs").toPath());
+        disableIdeUpdate(configDir);
         return StudioSandbox.fullSandbox(configDir, systemDir, pluginsDir, logDir);
     }
 
     private static boolean shouldCreatePartialSandbox(Path sandboxDir) {
         return sandboxDir == null;
+    }
+
+    /**
+     * Disables ide updates checks similar as it is done in gradle-intellij-plugin:
+     * https://github.com/JetBrains/gradle-intellij-plugin/blob/719981bf5627ec8890f98e6f24c645e512a907a8/src/main/kotlin/org/jetbrains/intellij/tasks/PrepareSandboxTask.kt#L122
+     */
+    private static void disableIdeUpdate(Path configDir) {
+        String updatesContent = "" +
+            "<application>\n" +
+            "  <component name=\"UpdatesConfigurable\">\n" +
+            "    <option name=\"CHECK_NEEDED\" value=\"false\" />\n" +
+            "  </component>\n" +
+            "</application>\n";
+        Path optionsDir = createDir(new File(configDir.toFile(), "options").toPath());
+        File updatesXml = new File(optionsDir.toFile(), "updates.xml");
+        if (!updatesXml.exists()) {
+            FileSupport.writeUnchecked(updatesXml.toPath(), updatesContent);
+        }
     }
 
     private static Path createDir(Path path) {
