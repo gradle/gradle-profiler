@@ -19,7 +19,7 @@ fun ParametrizedWithType.javaHome(os: Os, javaVersion: JavaVersion) {
 
 fun ParametrizedWithType.androidHome(os: Os) {
     val androidHome = when (os) {
-        Os.linux, Os.macos -> "/opt/android-sdk"
+        Os.linux, Os.macos -> "/opt/android/sdk"
         Os.windows -> """C:\Program Files\android\sdk"""
     }
     param("env.ANDROID_HOME", androidHome)

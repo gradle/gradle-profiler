@@ -1,3 +1,7 @@
+import org.graalvm.compiler.hotspot.debug.BenchmarkCounters.enabled
+import org.gradle.internal.classpath.Instrumented.systemProperty
+import org.gradle.kotlin.dsl.creating
+
 repositories {
     ivy {
         url = uri("https://redirector.gvt1.com/edgedl/android/studio/ide-zips")
@@ -17,12 +21,12 @@ fun isIntel(): Boolean = architecture == "x86_64" || architecture == "x86"
 
 val androidStudioRuntime by configurations.creating
 dependencies {
-//        androidStudioRuntime("android-studio:android-studio:2021.1.1.14@windows.zip")
-      androidStudioRuntime("android-studio:android-studio:2021.1.1.14@linux.tar.gz")
-//    when {
-//        isMacOS() && isIntel() -> androidStudioRuntime("android-studio:android-studio:2021.1.1.14@mac.zip")
-//        isMacOS() && !isIntel() -> androidStudioRuntime("android-studio:android-studio:2021.1.1.14@mac_arm.zip")
-//    }
+    when {
+        isWindows() -> androidStudioRuntime("android-studio:android-studio:2021.1.1.16@windows.zip")
+        isMacOS() && isIntel() -> androidStudioRuntime("android-studio:android-studio:2021.1.1.16@mac.zip")
+        isMacOS() && !isIntel() -> androidStudioRuntime("android-studio:android-studio:2021.1.1.16@mac_arm.zip")
+        isLinux() -> androidStudioRuntime("android-studio:android-studio:2021.1.1.16@linux.tar.gz")
+    }
 }
 
 val androidStudioPath by lazy { "$buildDir/android-studio" }

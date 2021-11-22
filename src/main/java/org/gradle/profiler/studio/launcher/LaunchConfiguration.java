@@ -1,4 +1,4 @@
-package org.gradle.profiler.studio;
+package org.gradle.profiler.studio.launcher;
 
 import org.gradle.profiler.CommandExec;
 import org.gradle.profiler.Logging;
