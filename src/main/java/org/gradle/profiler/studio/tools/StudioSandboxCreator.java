@@ -1,10 +1,7 @@
 package org.gradle.profiler.studio.tools;
 
-<<<<<<< HEAD
 import org.gradle.profiler.support.FileSupport;
-=======
 import com.google.common.annotations.VisibleForTesting;
->>>>>>> f5182f0 (Add support for Windows and Linux)
 
 import javax.annotation.Nullable;
 import java.io.File;

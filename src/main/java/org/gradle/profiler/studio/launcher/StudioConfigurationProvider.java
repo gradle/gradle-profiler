@@ -56,8 +56,7 @@ public class StudioConfigurationProvider {
         List<Path> classPath = Arrays.stream(jvmOptions.string("ClassPath").split(":"))
             .map(s -> FileSystems.getDefault().getPath(s.replace("$APP_PACKAGE", actualInstallDir.toString())))
             .collect(Collectors.toList());
-        Map<String, String> systemProperties = mapValues(jvmOptions.dict("Properties")
-            .toMap(), v -> v.replace("$APP_PACKAGE", actualInstallDir.toString()));
+        Map<String, String> systemProperties = mapValues(jvmOptions.dict("Properties").toMap(), v -> v.replace("$APP_PACKAGE", actualInstallDir.toString()));
         String mainClass = jvmOptions.string("MainClass");
         Path javaCommand = actualInstallDir.resolve("Contents/jre/Contents/Home/bin/java");
         return new StudioConfiguration(mainClass, actualInstallDir, javaCommand, classPath, systemProperties);

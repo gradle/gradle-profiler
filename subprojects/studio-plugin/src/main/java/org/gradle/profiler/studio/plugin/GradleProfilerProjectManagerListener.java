@@ -1,6 +1,7 @@
 package org.gradle.profiler.studio.plugin;
 
 import com.intellij.ide.impl.TrustedProjects;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.ProjectManagerListener;
 import org.gradle.profiler.client.protocol.Client;
@@ -11,7 +12,6 @@ import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
 import java.io.UncheckedIOException;
-import java.util.concurrent.Executors;
 
 import static org.gradle.profiler.client.protocol.messages.StudioRequest.StudioRequestType.EXIT_IDE;
 
@@ -25,9 +25,8 @@ public class GradleProfilerProjectManagerListener implements ProjectManagerListe
     public void projectOpened(@NotNull com.intellij.openapi.project.Project project) {
         LOG.info("Project opened");
         if (System.getProperty(PROFILER_PORT_PROPERTY) != null) {
-            System.out.println("WILL CONNECT");
             TrustedProjects.setTrusted(project, true);
-            Executors.newSingleThreadExecutor().submit(() -> {
+            ApplicationManager.getApplication().executeOnPooledThread(() -> {
                 StudioRequest lastRequest = listenForSyncRequests(project);
                 if (lastRequest.getType() == EXIT_IDE) {
                     AndroidStudioSystemHelper.exit(project);
