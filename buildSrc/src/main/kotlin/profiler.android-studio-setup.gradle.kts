@@ -1,9 +1,8 @@
-import org.graalvm.compiler.hotspot.debug.BenchmarkCounters.enabled
-import org.gradle.internal.classpath.Instrumented.systemProperty
-import org.gradle.kotlin.dsl.creating
+import extensions.AndroidStudioTestExtension
 
 repositories {
     ivy {
+        // Url of Android Studio archive
         url = uri("https://redirector.gvt1.com/edgedl/android/studio/ide-zips")
         patternLayout {
             artifact("[revision]/[artifact]-[revision]-[ext]")
@@ -18,42 +17,55 @@ fun isWindows(): Boolean = os.startsWith("windows")
 fun isMacOS(): Boolean = os.startsWith("mac")
 fun isLinux(): Boolean = os.startsWith("linux")
 fun isIntel(): Boolean = architecture == "x86_64" || architecture == "x86"
+fun File.isTar(): Boolean = name.endsWith(".tar.gz")
+
+val extension = extensions.create<AndroidStudioTestExtension>("androidStudioTests")
 
 val androidStudioRuntime by configurations.creating
-dependencies {
-    when {
-        isWindows() -> androidStudioRuntime("android-studio:android-studio:2021.1.1.16@windows.zip")
-        isMacOS() && isIntel() -> androidStudioRuntime("android-studio:android-studio:2021.1.1.16@mac.zip")
-        isMacOS() && !isIntel() -> androidStudioRuntime("android-studio:android-studio:2021.1.1.16@mac_arm.zip")
-        isLinux() -> androidStudioRuntime("android-studio:android-studio:2021.1.1.16@linux.tar.gz")
+val autoDownloadAndroidStudio by lazy { extension.autoDownloadAndroidStudio.getOrElse(false) }
+afterEvaluate {
+    if (autoDownloadAndroidStudio) {
+        dependencies {
+            val androidStudioVersion = extension.testAndroidStudioVersion.get()
+            when {
+                isWindows() -> androidStudioRuntime("android-studio:android-studio:$androidStudioVersion@windows.zip")
+                isMacOS() && isIntel() -> androidStudioRuntime("android-studio:android-studio:$androidStudioVersion@mac.zip")
+                isMacOS() && !isIntel() -> androidStudioRuntime("android-studio:android-studio:$androidStudioVersion@mac_arm.zip")
+                isLinux() -> androidStudioRuntime("android-studio:android-studio:$androidStudioVersion@linux.tar.gz")
+            }
+        }
     }
 }
 
-val androidStudioPath by lazy { "$buildDir/android-studio" }
+val androidStudioPath = "$buildDir/android-studio"
 val unpackAndroidStudio = tasks.register<Copy>("unpackAndroidStudio") {
-    if (androidStudioRuntime.isEmpty) {
-        enabled = false
-        return@register
+    if (autoDownloadAndroidStudio) {
+        val file = androidStudioRuntime.files.first()
+        inputs.file(file)
+        outputs.dir(androidStudioPath)
+        val fileTree = when {
+            file.isTar() -> tarTree(file)
+            else -> zipTree(file)
+        }
+        from(fileTree)
+        into(androidStudioPath)
     }
-    val file = androidStudioRuntime.files.first()
-    inputs.file(file)
-    outputs.dir(androidStudioPath)
-    val fileTree = when {
-        file.name.endsWith("tar.gz") -> tarTree(file)
-        else -> zipTree(file)
-    }
-    from(fileTree)
-    into(androidStudioPath)
 }
 
+val macOsAndroidStudioPath = "$androidStudioPath/Android Studio.app"
+val macOsAndroidStudioPathPreview = "$androidStudioPath/Android Studio Preview.app"
+val windowsAndLinuxPath = "$androidStudioPath/android-studio"
 tasks.withType<Test>().configureEach {
     dependsOn(unpackAndroidStudio)
-    val subfolder = when {
-        isMacOS() -> if (file("$androidStudioPath/Android Studio.app").exists()) { "Android Studio.app" } else { "Android Studio Preview.app" }
-        else -> "android-studio"
+    if (autoDownloadAndroidStudio) {
+        val studioHome = when {
+            isMacOS() && file(macOsAndroidStudioPath).exists() -> macOsAndroidStudioPath
+            isMacOS() -> macOsAndroidStudioPathPreview
+            else -> windowsAndLinuxPath
+        }
+        systemProperty("studio.home", studioHome)
     }
-    systemProperty("studio.home", "$androidStudioPath/$subfolder")
-    if (providers.gradleProperty("runStudioTestsHeadless").orNull == "true") {
+    if (extension.runAndroidStudioInHeadlessMode.getOrElse(false)) {
         systemProperty("studio.tests.headless", "true")
     }
 }

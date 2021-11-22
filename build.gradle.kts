@@ -130,6 +130,13 @@ tasks.test {
     setForkEvery(1)
 }
 
+androidStudioTests {
+    val autoDownloadAndRunInHeadless = providers.gradleProperty("autoDownloadAndRunInHeadless").orNull == "true"
+    runAndroidStudioInHeadlessMode.set(autoDownloadAndRunInHeadless)
+    autoDownloadAndroidStudio.set(autoDownloadAndRunInHeadless)
+    testAndroidStudioVersion.set("2021.1.1.16")
+}
+
 val testReports = mapOf(
     "testHtmlReport" to "example",
     "testHtmlReportSingle" to "example-single",
