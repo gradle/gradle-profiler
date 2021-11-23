@@ -1,9 +1,11 @@
 package org.gradle.profiler.studio.plugin.client;
 
 import com.google.common.base.Stopwatch;
+import com.intellij.ide.caches.CachesInvalidator;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import org.gradle.profiler.client.protocol.Client;
+import org.gradle.profiler.client.protocol.messages.StudioCacheCleanupCompleted;
 import org.gradle.profiler.client.protocol.messages.StudioRequest;
 import org.gradle.profiler.client.protocol.messages.StudioSyncRequestCompleted;
 import org.gradle.profiler.studio.plugin.system.GradleProfilerGradleSyncListener.GradleSyncResult;
@@ -49,6 +51,9 @@ public class GradleProfilerClient {
             case SYNC:
                 handleSyncRequest(request, project);
                 break;
+            case CLEANUP_CACHE:
+                cleanupCache(request);
+                break;
             case EXIT_IDE:
                 throw new IllegalArgumentException("Type: '" + request.getType() + "' should not be handled in 'handleGradleProfilerRequest()'.");
             default:
@@ -70,6 +75,22 @@ public class GradleProfilerClient {
         waitOnBackgroundProcessesFinish(project);
         LOG.info(String.format("[SYNC REQUEST %s] '%s': '%s'%n", request.getId(), result.getResult(), result.getErrorMessage().isEmpty() ? "no message" : result.getErrorMessage()));
         client.send(new StudioSyncRequestCompleted(request.getId(), stopwatch.elapsed(TimeUnit.MILLISECONDS), result.getResult()));
+    }
+
+    /**
+     * This code is similar to one in com.intellij.ide.InvalidateCacheService in IntelliJ Community project,
+     * it just does not make a dialog to restart IDE.
+     * @param request
+     */
+    private void cleanupCache(StudioRequest request) {
+        CachesInvalidator.EP_NAME.getExtensionList().forEach(it -> {
+            try {
+                it.invalidateCaches();
+            } catch (Throwable t) {
+                LOG.warn("Failed to invalidate caches with " + it.getClass().getName() + ". " + t.getMessage(), t);
+            }
+        });
+        client.send(new StudioCacheCleanupCompleted(request.getId()));
     }
 
 }

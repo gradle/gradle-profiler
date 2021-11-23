@@ -1,6 +1,7 @@
 package org.gradle.profiler.studio;
 
 import org.gradle.profiler.CommandExec;
+import org.gradle.profiler.Logging;
 
 import java.io.File;
 import java.nio.file.Path;
@@ -106,6 +107,7 @@ public class LaunchConfiguration {
 
     private void logLauncherConfiguration(List<String> commandLine) {
         System.out.println();
+        Logging.startOperation("Starting Android Studio at " + studioInstallDir);
         System.out.println("* Java command: " + getJavaCommand());
         System.out.println("* Classpath:");
         getClassPath().stream().map(entry -> "  " + entry).forEach(System.out::println);

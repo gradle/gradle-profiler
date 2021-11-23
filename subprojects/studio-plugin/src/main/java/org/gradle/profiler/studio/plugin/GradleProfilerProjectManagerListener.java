@@ -9,13 +9,13 @@ import com.intellij.openapi.project.ProjectManagerListener;
 import org.gradle.profiler.client.protocol.Client;
 import org.gradle.profiler.client.protocol.messages.StudioRequest;
 import org.gradle.profiler.studio.plugin.client.GradleProfilerClient;
+import org.gradle.profiler.studio.plugin.system.AndroidStudioSystemHelper;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
 import java.io.UncheckedIOException;
 
 import static org.gradle.profiler.client.protocol.messages.StudioRequest.StudioRequestType.EXIT_IDE;
-import static org.gradle.profiler.studio.plugin.system.AndroidStudioSystemHelper.exit;
 
 public class GradleProfilerProjectManagerListener extends PreloadingActivity implements ProjectManagerListener {
 
@@ -47,7 +47,7 @@ public class GradleProfilerProjectManagerListener extends PreloadingActivity imp
             ApplicationManager.getApplication().executeOnPooledThread(() -> {
                 StudioRequest lastRequest = listenForSyncRequests(project);
                 if (lastRequest.getType() == EXIT_IDE) {
-                    exit();
+                    AndroidStudioSystemHelper.exit(project);
                 }
             });
         }

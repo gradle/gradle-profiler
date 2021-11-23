@@ -6,11 +6,38 @@ import com.google.common.collect.ImmutableSet;
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
 import com.typesafe.config.ConfigParseOptions;
-import org.gradle.profiler.mutations.*;
+import org.gradle.profiler.mutations.AbstractCleanupMutator.CleanupSchedule;
+import org.gradle.profiler.mutations.ApplyAbiChangeToSourceFileMutator;
+import org.gradle.profiler.mutations.ApplyBuildScriptChangeFileMutator;
+import org.gradle.profiler.mutations.ApplyChangeToAndroidLayoutFileMutator;
+import org.gradle.profiler.mutations.ApplyChangeToAndroidManifestFileMutator;
+import org.gradle.profiler.mutations.ApplyChangeToAndroidResourceFileMutator;
+import org.gradle.profiler.mutations.ApplyChangeToComposableKotlinFileMutator;
+import org.gradle.profiler.mutations.ApplyChangeToNativeSourceFileMutator;
+import org.gradle.profiler.mutations.ApplyChangeToPropertyResourceFileMutator;
+import org.gradle.profiler.mutations.ApplyNonAbiChangeToSourceFileMutator;
+import org.gradle.profiler.mutations.ApplyValueChangeToAndroidResourceFileMutator;
+import org.gradle.profiler.mutations.BuildMutatorConfigurator;
+import org.gradle.profiler.mutations.ClearArtifactTransformCacheMutator;
+import org.gradle.profiler.mutations.ClearBuildCacheMutator;
+import org.gradle.profiler.mutations.ClearConfigurationCacheStateMutator;
+import org.gradle.profiler.mutations.ClearGradleUserHomeMutator;
+import org.gradle.profiler.mutations.ClearJarsCacheMutator;
+import org.gradle.profiler.mutations.ClearProjectCacheMutator;
+import org.gradle.profiler.mutations.FileChangeMutatorConfigurator;
+import org.gradle.profiler.mutations.GitCheckoutMutator;
+import org.gradle.profiler.mutations.GitRevertMutator;
+import org.gradle.profiler.mutations.ShowBuildCacheSizeMutator;
 
 import javax.annotation.Nullable;
 import java.io.File;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.TreeSet;
 import java.util.stream.Collectors;
 
 class ScenarioLoader {
@@ -47,6 +74,8 @@ class ScenarioLoader {
     private static final String CLEAR_PROJECT_CACHE_BEFORE = "clear-project-cache-before";
     private static final String CLEAR_TRANSFORM_CACHE_BEFORE = "clear-transform-cache-before";
     private static final String CLEAR_JARS_CACHE_BEFORE = "clear-jars-cache-before";
+    // clear-android-studio-cache-before is not implemented as a mutator, but it's implemented inside the StudioGradleClient
+    private static final String CLEAR_ANDROID_STUDIO_CACHE_BEFORE = "clear-android-studio-cache-before";
     private static final String SHOW_BUILD_CACHE_SIZE = "show-build-cache-size";
     private static final String GIT_CHECKOUT = "git-checkout";
     private static final String GIT_REVERT = "git-revert";
@@ -104,6 +133,7 @@ class ScenarioLoader {
             DAEMON,
             JVM_ARGS
         ))
+        .add(CLEAR_ANDROID_STUDIO_CACHE_BEFORE)
         .build();
 
     private static final List<String> BAZEL_KEYS = Arrays.asList(TARGETS, TOOL_HOME);
@@ -348,7 +378,7 @@ class ScenarioLoader {
         GradleBuildInvoker invoker = defaultValue;
         boolean sync = buildAction instanceof AndroidStudioSyncAction;
         if (sync) {
-            invoker = GradleBuildInvoker.AndroidStudio;
+            invoker = getAndroidStudioInvoker(config);
         }
 
         if (config.hasPath(RUN_USING)) {
@@ -379,6 +409,22 @@ class ScenarioLoader {
         }
 
         return invoker;
+    }
+
+    private static GradleBuildInvoker getAndroidStudioInvoker(Config config) {
+        CleanupSchedule schedule = ConfigUtil.enumValue(config, CLEAR_ANDROID_STUDIO_CACHE_BEFORE, CleanupSchedule.class, null);
+        if (schedule == null) {
+            return GradleBuildInvoker.AndroidStudio;
+        }
+        switch (schedule) {
+            case SCENARIO:
+                return GradleBuildInvoker.AndroidStudioCleanCacheBeforeScenario;
+            case BUILD:
+                return GradleBuildInvoker.AndroidStudioCleanCacheBeforeBuild;
+            case CLEANUP:
+            default:
+                throw new IllegalArgumentException(String.format("Unsupported cleanup schedule for '%s': '%s'", CLEAR_ANDROID_STUDIO_CACHE_BEFORE, schedule));
+        }
     }
 
     private static BuildAction getCleanupAction(Config scenario) {
