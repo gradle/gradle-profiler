@@ -8,6 +8,9 @@ repositories {
             artifact("[revision]/[artifact]-[revision]-[ext]")
         }
         metadataSources { artifact() }
+        content {
+            includeGroup("android-studio")
+        }
     }
 }
 
