@@ -22,7 +22,6 @@ fun ParametrizedWithType.androidHome(os: Os) {
         Os.linux, Os.macos -> "/opt/android/sdk"
         Os.windows -> """C:\Program Files\android\sdk"""
     }
-    param("env.ANDROID_HOME", androidHome)
     param("env.ANDROID_SDK_ROOT", androidHome)
 }
 

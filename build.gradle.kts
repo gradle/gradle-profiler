@@ -1,4 +1,3 @@
-
 import com.moowork.gradle.node.npm.NpxTask
 import io.sdkman.vendors.tasks.SdkAnnounceVersionTask
 import io.sdkman.vendors.tasks.SdkDefaultVersionTask

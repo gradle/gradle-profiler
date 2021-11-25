@@ -57,7 +57,6 @@ val unpackAndroidStudio = tasks.register<Copy>("unpackAndroidStudio") {
     into("$buildDir/android-studio")
 }
 
-
 val androidStudioInstallation = objects.newInstance<AndroidStudioInstallation>().apply {
     studioInstallLocation.fileProvider(unpackAndroidStudio.map { it.destinationDir })
 }
