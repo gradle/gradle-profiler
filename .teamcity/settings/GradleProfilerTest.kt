@@ -13,6 +13,7 @@ open class GradleProfilerTest(os: Os, javaVersion: JavaVersion) : BuildType({
         // Java home must always use Java11
         // since intellij-gradle-plugin is not compatible with Java8
         javaHome(os, JavaVersion.OPENJDK_11)
+        androidHome(os)
     }
 
     steps {
@@ -22,7 +23,8 @@ open class GradleProfilerTest(os: Os, javaVersion: JavaVersion) : BuildType({
             gradleParams = "-s" +
                 " --build-cache ${toolchainConfiguration(os)}" +
                 " -PtestJavaVersion=${javaVersion.majorVersion}" +
-                " -PtestJavaVendor=${javaVersion.vendor}"
+                " -PtestJavaVendor=${javaVersion.vendor}" +
+                " -PautoDownloadAndRunInHeadless=true"
             param("org.jfrog.artifactory.selectedDeployableServer.defaultModuleVersionConfiguration", "GLOBAL")
         }
     }

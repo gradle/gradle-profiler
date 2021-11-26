@@ -1,6 +1,7 @@
 package org.gradle.profiler.studio.tools;
 
 import org.gradle.profiler.support.FileSupport;
+import com.google.common.annotations.VisibleForTesting;
 
 import javax.annotation.Nullable;
 import java.io.File;
@@ -19,16 +20,21 @@ public class StudioSandboxCreator {
      * In that case Android Studio will use configs from default folder, additionally it will write to default folder.
      */
     public static StudioSandbox createSandbox(@Nullable Path sandboxDir) {
+        return createSandbox(sandboxDir, "plugins");
+    }
+
+    @VisibleForTesting
+    public static StudioSandbox createSandbox(@Nullable Path sandboxDir, String pluginsDirName) {
         if (shouldCreatePartialSandbox(sandboxDir)) {
             Path path = newTempDir();
-            Path pluginsDir = createDir(new File(path.toFile(), "plugins").toPath());
+            Path pluginsDir = createDir(new File(path.toFile(), pluginsDirName).toPath());
             Path logsDir = createDir(new File(path.toFile(), "logs").toPath());
             return StudioSandbox.partialSandbox(pluginsDir, logsDir);
         }
         File sandboxDirFile = sandboxDir.toFile();
         Path configDir = createDir(new File(sandboxDirFile, "config").toPath());
         Path systemDir = createDir(new File(sandboxDirFile, "system").toPath());
-        Path pluginsDir = createDir(new File(sandboxDirFile, "plugins").toPath());
+        Path pluginsDir = createDir(new File(sandboxDirFile, pluginsDirName).toPath());
         Path logDir = createDir(new File(sandboxDirFile, "logs").toPath());
         disableIdeUpdate(configDir);
         return StudioSandbox.fullSandbox(configDir, systemDir, pluginsDir, logDir);

@@ -4,7 +4,6 @@ import org.gradle.profiler.BuildAction.BuildActionResult;
 import org.gradle.profiler.GradleBuildConfiguration;
 import org.gradle.profiler.GradleClient;
 import org.gradle.profiler.InvocationSettings;
-import org.gradle.profiler.OperatingSystem;
 import org.gradle.profiler.client.protocol.messages.GradleInvocationCompleted;
 import org.gradle.profiler.client.protocol.messages.GradleInvocationParameters;
 import org.gradle.profiler.client.protocol.messages.StudioRequest;
@@ -45,9 +44,6 @@ public class StudioGradleClient implements GradleClient {
     private boolean isFirstRun;
 
     public StudioGradleClient(GradleBuildConfiguration buildConfiguration, InvocationSettings invocationSettings, CleanCacheMode cleanCacheMode) {
-        if (!OperatingSystem.isMacOS()) {
-            throw new IllegalArgumentException("Support for Android studio is currently only implemented on macOS.");
-        }
         this.isFirstRun = true;
         this.cleanCacheMode = cleanCacheMode;
         Path studioInstallDir = invocationSettings.getStudioInstallDir().toPath();
