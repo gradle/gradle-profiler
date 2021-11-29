@@ -265,6 +265,7 @@ Here is an example:
     androidStudioSync {
         title = "Android Studio Sync"
         # Measure an Android studio sync
+        # Note: Android Studio Bumblebee (2021.1.1) or newer is required
         android-studio-sync {
         }
     }

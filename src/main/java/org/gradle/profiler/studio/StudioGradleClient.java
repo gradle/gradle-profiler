@@ -36,7 +36,6 @@ import static org.gradle.profiler.client.protocol.messages.StudioRequest.StudioR
 
 public class StudioGradleClient implements GradleClient {
 
-
     public enum CleanCacheMode {
         BEFORE_SCENARIO,
         BEFORE_BUILD,
@@ -46,7 +45,7 @@ public class StudioGradleClient implements GradleClient {
     private static final Duration CACHE_CLEANUP_COMPLETED_TIMEOUT = Duration.ofSeconds(60);
     private static final Duration GRADLE_INVOCATION_STARTED_TIMEOUT = Duration.ofSeconds(2);
     private static final Duration GRADLE_INVOCATION_COMPLETED_TIMEOUT = Duration.ofMinutes(60);
-    private static final Duration SYNC_REQUEST_COMPLETED_TIMEOUT = Duration.ofMinutes(60);
+    private static final Duration SYNC_REQUEST_COMPLETED_TIMEOUT = Duration.ofMinutes(90);
 
     private final StudioProcessController processController;
     private final StudioPluginInstaller studioPluginInstaller;
@@ -79,7 +78,6 @@ public class StudioGradleClient implements GradleClient {
         }
 
         isFirstRun = false;
-        System.out.println("Sync started");
         return processController.run((connections) -> {
             System.out.println("* Running sync in Android Studio...");
             connections.getPluginConnection().send(new StudioRequest(SYNC));
