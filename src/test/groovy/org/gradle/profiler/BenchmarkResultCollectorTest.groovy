@@ -4,8 +4,10 @@ import org.gradle.profiler.report.AbstractGenerator
 import org.gradle.profiler.report.BenchmarkResult
 import org.gradle.profiler.result.BuildInvocationResult
 import org.gradle.profiler.result.Sample
+import spock.lang.Ignore
 import spock.lang.Specification
 
+@Ignore
 class BenchmarkResultCollectorTest extends Specification {
     def generator = Mock(AbstractGenerator)
     def collector = new BenchmarkResultCollector(generator)

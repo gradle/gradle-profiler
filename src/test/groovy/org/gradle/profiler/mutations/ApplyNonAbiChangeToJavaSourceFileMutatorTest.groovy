@@ -1,5 +1,8 @@
 package org.gradle.profiler.mutations
 
+import spock.lang.Ignore
+
+@Ignore
 class ApplyNonAbiChangeToJavaSourceFileMutatorTest extends AbstractMutatorTest implements JavaParserFixture {
 
     def "changes the first method in the source file"() {

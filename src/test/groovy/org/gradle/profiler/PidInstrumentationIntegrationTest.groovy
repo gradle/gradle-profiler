@@ -1,5 +1,8 @@
 package org.gradle.profiler
 
+import spock.lang.Ignore
+
+@Ignore
 class PidInstrumentationIntegrationTest extends AbstractProfilerIntegrationTest {
 
     def "pid instrumentation works for cold daemon with configuration caching"() {

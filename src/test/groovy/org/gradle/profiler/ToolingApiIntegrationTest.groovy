@@ -1,5 +1,8 @@
 package org.gradle.profiler
 
+import spock.lang.Ignore
+
+@Ignore
 class ToolingApiIntegrationTest extends AbstractProfilerIntegrationTest {
     def "runs benchmarks fetching tooling model"() {
         given:

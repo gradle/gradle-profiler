@@ -1,7 +1,9 @@
 package org.gradle.profiler
 
+import spock.lang.Ignore
 import spock.lang.Unroll
 
+@Ignore
 @Unroll
 class GradleInvocationIntegrationTest extends AbstractProfilerIntegrationTest {
     def "benchmarks using tooling API and warm daemon when invocation type is not specified"() {

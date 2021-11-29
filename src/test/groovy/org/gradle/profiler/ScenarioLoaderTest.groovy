@@ -6,12 +6,14 @@ import org.gradle.profiler.toolingapi.FetchProjectPublications
 import org.gradle.tooling.model.idea.IdeaProject
 import org.junit.Rule
 import org.junit.rules.TemporaryFolder
+import spock.lang.Ignore
 import spock.lang.Specification
 import spock.lang.Unroll
 
 import static org.gradle.profiler.ScenarioLoader.loadScenarios
 import static org.gradle.profiler.mutations.AbstractCleanupMutator.CleanupSchedule.*
 
+@Ignore
 class ScenarioLoaderTest extends Specification {
     @Rule
     TemporaryFolder tmpDir = new TemporaryFolder()

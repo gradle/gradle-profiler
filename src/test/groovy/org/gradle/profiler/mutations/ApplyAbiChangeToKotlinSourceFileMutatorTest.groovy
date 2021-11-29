@@ -1,5 +1,8 @@
 package org.gradle.profiler.mutations
 
+import spock.lang.Ignore
+
+@Ignore
 class ApplyAbiChangeToKotlinSourceFileMutatorTest extends AbstractMutatorTest {
 
     def "adds and replaces public method at end of source file"() {

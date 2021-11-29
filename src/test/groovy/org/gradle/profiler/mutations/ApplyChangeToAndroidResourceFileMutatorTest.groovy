@@ -1,5 +1,8 @@
 package org.gradle.profiler.mutations
 
+import spock.lang.Ignore
+
+@Ignore
 class ApplyChangeToAndroidResourceFileMutatorTest extends AbstractMutatorTest {
 
     def "adds string resource to end of source file"() {

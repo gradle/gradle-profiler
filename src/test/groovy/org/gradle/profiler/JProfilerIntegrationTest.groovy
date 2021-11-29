@@ -1,9 +1,11 @@
 package org.gradle.profiler
 
 import org.gradle.profiler.jprofiler.JProfiler
+import spock.lang.Ignore
 import spock.lang.Requires
 
 
+@Ignore
 @Requires({ new File(JProfiler.getDefaultHomeDir()).exists() })
 class JProfilerIntegrationTest extends AbstractProfilerIntegrationTest {
     def "profiles build using JProfiler with tooling API and warm daemon"() {

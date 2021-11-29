@@ -1,7 +1,9 @@
 package org.gradle.profiler.mutations
 
 import org.gradle.profiler.TestGitRepo
+import spock.lang.Ignore
 
+@Ignore
 class GitCheckoutMutatorTest extends AbstractMutatorTest {
 
     def "checks out target commit"() {

@@ -1,7 +1,9 @@
 package org.gradle.profiler.mutations
 
+import spock.lang.Ignore
 import spock.lang.Unroll
 
+@Ignore
 @Unroll
 class ApplyChangeToNativeSourceFileMutatorTest extends AbstractMutatorTest {
 

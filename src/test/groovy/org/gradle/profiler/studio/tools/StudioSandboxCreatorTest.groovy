@@ -2,8 +2,10 @@ package org.gradle.profiler.studio.tools
 
 import org.junit.Rule
 import org.junit.rules.TemporaryFolder
+import spock.lang.Ignore
 import spock.lang.Specification
 
+@Ignore
 class StudioSandboxCreatorTest extends Specification {
 
     private static final String UPDATES_XML_PATH = "config/options/updates.xml";

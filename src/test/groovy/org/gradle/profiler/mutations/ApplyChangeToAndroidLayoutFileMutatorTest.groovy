@@ -1,5 +1,8 @@
 package org.gradle.profiler.mutations
 
+import spock.lang.Ignore
+
+@Ignore
 class ApplyChangeToAndroidLayoutFileMutatorTest extends AbstractMutatorTest {
 
     def "adds new view at bottom of top level layout"() {
@@ -12,7 +15,7 @@ class ApplyChangeToAndroidLayoutFileMutatorTest extends AbstractMutatorTest {
 
         then:
         sourceFile.text == """\
-        <LinearLayout><View 
+        <LinearLayout><View
             android:id="@+id/view_276d92f3_16ac_4064_9a18_5f1dfd67992f_testScenario_3c4925d7_MEASURE_7"
             android:visibility="gone"
             android:layout_width="5dp"
@@ -32,7 +35,7 @@ class ApplyChangeToAndroidLayoutFileMutatorTest extends AbstractMutatorTest {
 
         then:
         sourceFile.text == """\
-        <layout><LinearLayout><View 
+        <layout><LinearLayout><View
             android:id="@+id/view_276d92f3_16ac_4064_9a18_5f1dfd67992f_testScenario_3c4925d7_MEASURE_7"
             android:visibility="gone"
             android:layout_width="5dp"

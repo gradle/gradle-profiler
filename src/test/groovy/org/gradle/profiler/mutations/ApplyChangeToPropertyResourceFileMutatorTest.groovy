@@ -1,5 +1,8 @@
 package org.gradle.profiler.mutations
 
+import spock.lang.Ignore
+
+@Ignore
 class ApplyChangeToPropertyResourceFileMutatorTest extends AbstractMutatorTest {
     public static final String ORIGINAL_CONTENTS = "org.foo=bar"
 

@@ -1,9 +1,11 @@
 package org.gradle.profiler.mutations
 
 import org.gradle.profiler.Phase
+import spock.lang.Ignore
 
 import java.util.function.Function
 
+@Ignore
 class ApplyNonAbiChangeToKotlinSourceFileMutatorTest extends AbstractMutatorTest {
 
     static Function<String, String> FUNCTION_TEXT = { qualifier ->

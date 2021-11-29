@@ -1,7 +1,9 @@
 package org.gradle.profiler.mutations
 
 import org.gradle.profiler.TestGitRepo
+import spock.lang.Ignore
 
+@Ignore
 class GitRevertMutatorTest extends AbstractMutatorTest {
 
     def "reverts things properly"() {

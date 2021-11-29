@@ -1,10 +1,11 @@
 package org.gradle.profiler
 
 import org.gradle.util.GradleVersion
+import spock.lang.Ignore
 import spock.lang.Shared
 import spock.lang.Unroll
 
-
+@Ignore
 class ChromeTraceIntegrationTest extends AbstractProfilerIntegrationTest {
     static final MINIMAL_SUPPORTED_VERSION_FOR_CHROME_TRACE = GradleVersion.version("3.5")
 

@@ -4,8 +4,10 @@ import org.gradle.profiler.jprofiler.JProfilerConfig
 import org.gradle.profiler.jprofiler.JProfilerConfigFileTransformer
 import org.junit.Rule
 import org.junit.rules.TemporaryFolder
+import spock.lang.Ignore
 import spock.lang.Specification
 
+@Ignore
 class JProfilerConfigFileTransformTest extends Specification {
     @Rule TemporaryFolder tmpDir = new TemporaryFolder()
 

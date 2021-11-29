@@ -1,7 +1,9 @@
 package org.gradle.profiler
 
 import groovy.transform.SelfType
+import spock.lang.Ignore
 
+@Ignore
 @SelfType(AbstractProfilerIntegrationTest)
 trait FlameGraphFixture {
 

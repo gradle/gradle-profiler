@@ -2,9 +2,11 @@ package org.gradle.profiler
 
 import org.junit.Rule
 import org.junit.rules.TemporaryFolder
+import spock.lang.Ignore
 import spock.lang.Requires
 import spock.lang.Specification
 
+@Ignore
 @Requires({ !OperatingSystem.windows })
 class CommandExecTest extends Specification {
     @Rule

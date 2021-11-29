@@ -1,6 +1,9 @@
 package org.gradle.profiler
 
+import spock.lang.Ignore
 
+
+@Ignore
 class BenchmarkIntegrationTest extends AbstractProfilerIntegrationTest {
     def "recovers from measured build failure running benchmarks"() {
         given:

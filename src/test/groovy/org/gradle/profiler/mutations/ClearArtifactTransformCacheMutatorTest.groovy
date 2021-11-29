@@ -1,5 +1,8 @@
 package org.gradle.profiler.mutations
 
+import spock.lang.Ignore
+
+@Ignore
 class ClearArtifactTransformCacheMutatorTest extends AbstractMutatorTest {
 
     def "removes directories with transforms prefix"() {

@@ -1,7 +1,9 @@
 package org.gradle.profiler
 
+import spock.lang.Ignore
 import spock.lang.Unroll
 
+@Ignore
 class JFRProfilerIntegrationTest extends AbstractProfilerIntegrationTest {
     @Unroll
     def "can profile Gradle #versionUnderTest using JFR, tooling API and warm daemon"() {

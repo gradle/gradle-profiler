@@ -1,5 +1,8 @@
 package org.gradle.profiler.mutations
 
+import spock.lang.Ignore
+
+@Ignore
 class ApplyChangeToAndroidManifestFileMutatorTest extends AbstractMutatorTest {
 
     def "adds fake permission to end of android manifest file"() {

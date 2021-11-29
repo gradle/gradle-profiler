@@ -3,10 +3,12 @@ package org.gradle.profiler
 import org.gradle.api.JavaVersion
 import org.gradle.profiler.buildscan.BuildScanProfiler
 import org.gradle.util.GradleVersion
+import spock.lang.Ignore
 import spock.lang.IgnoreIf
 import spock.lang.Requires
 import spock.lang.Unroll
 
+@Ignore
 @Unroll
 class ProfilerIntegrationTest extends AbstractProfilerIntegrationTest {
 

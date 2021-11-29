@@ -17,11 +17,13 @@ import org.gradle.profiler.result.Sample
 import org.gradle.util.GradleVersion
 import org.junit.Rule
 import org.junit.rules.TemporaryFolder
+import spock.lang.Ignore
 import spock.lang.Specification
 
 import java.time.Duration
 import java.time.Instant
 
+@Ignore
 class JsonResultWriterTest extends Specification {
 
     @Rule TemporaryFolder tmpDir

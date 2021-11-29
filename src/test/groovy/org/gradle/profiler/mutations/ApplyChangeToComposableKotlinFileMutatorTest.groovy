@@ -1,5 +1,8 @@
 package org.gradle.profiler.mutations
 
+import spock.lang.Ignore
+
+@Ignore
 class ApplyChangeToComposableKotlinFileMutatorTest extends AbstractMutatorTest {
 
     static ORIGINAL_COMPOSABLE_FILE_CONTENT = "import androidx.compose.material.Text\n" +

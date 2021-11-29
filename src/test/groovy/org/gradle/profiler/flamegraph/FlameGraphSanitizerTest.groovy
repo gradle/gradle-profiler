@@ -1,7 +1,9 @@
 package org.gradle.profiler.flamegraph
 
+import spock.lang.Ignore
 import spock.lang.Specification
 
+@Ignore
 class FlameGraphSanitizerTest extends Specification {
     def "normalizes lambda stack frames"() {
         def normalizer = FlameGraphSanitizer.NORMALIZE_LAMBDA_NAMES

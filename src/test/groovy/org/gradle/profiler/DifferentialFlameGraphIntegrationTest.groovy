@@ -1,8 +1,10 @@
 package org.gradle.profiler
 
+import spock.lang.Ignore
 import spock.lang.Requires
 import spock.lang.Unroll
 
+@Ignore
 @Unroll
 @Requires({ !OperatingSystem.isWindows() })
 class DifferentialFlameGraphIntegrationTest extends AbstractProfilerIntegrationTest implements FlameGraphFixture {

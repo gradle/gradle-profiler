@@ -1,9 +1,12 @@
 package org.gradle.profiler.mutations
 
+import spock.lang.Ignore
+
 import static org.gradle.profiler.mutations.AbstractCleanupMutator.CleanupSchedule.BUILD
 import static org.gradle.profiler.mutations.AbstractCleanupMutator.CleanupSchedule.CLEANUP
 import static org.gradle.profiler.mutations.AbstractCleanupMutator.CleanupSchedule.SCENARIO
 
+@Ignore
 class ClearBuildCacheMutatorTest extends AbstractMutatorTest {
 
     File gradleUserHome

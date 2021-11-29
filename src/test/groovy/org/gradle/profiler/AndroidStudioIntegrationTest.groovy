@@ -5,6 +5,7 @@ import org.gradle.profiler.studio.launcher.LauncherConfigurationParser
 import org.gradle.profiler.studio.tools.StudioFinder
 import org.gradle.profiler.studio.tools.StudioPluginInstaller
 import org.gradle.profiler.studio.tools.StudioSandboxCreator
+import spock.lang.IgnoreRest
 import spock.lang.Requires
 
 class AndroidStudioIntegrationTest extends AbstractProfilerIntegrationTest {
@@ -19,6 +20,7 @@ class AndroidStudioIntegrationTest extends AbstractProfilerIntegrationTest {
         scenarioName = "scenario"
     }
 
+    @IgnoreRest
     @Requires({ StudioFinder.findStudioHome() })
     def "benchmarks Android Studio sync with latest gradle version"() {
         given:
@@ -43,6 +45,7 @@ class AndroidStudioIntegrationTest extends AbstractProfilerIntegrationTest {
         and:
         File benchmarkCsv = outputDir.listFiles().find { it.name.matches("benchmark.csv") }
         benchmarkCsv.text.contains("value,total execution time,Gradle execution time,IDE execution time")
+        println new File(sandboxDir, "logs/idea.log").text
     }
 
     @Requires({ StudioFinder.findStudioHome() })

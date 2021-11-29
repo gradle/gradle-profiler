@@ -1,7 +1,9 @@
 package org.gradle.profiler
 
+import spock.lang.Ignore
 import spock.lang.Specification
 
+@Ignore
 class AbstractIntegrationTest extends Specification {
     ByteArrayOutputStream outputBuffer
 

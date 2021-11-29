@@ -1,5 +1,6 @@
 package org.gradle.profiler
 
+import spock.lang.Ignore
 import spock.lang.Unroll
 
 import static org.hamcrest.CoreMatchers.equalTo
@@ -9,6 +10,7 @@ import static org.hamcrest.CoreMatchers.not
 import static org.junit.Assert.assertThat
 import static org.junit.Assert.assertTrue
 
+@Ignore
 class BuildOperationInstrumentationIntegrationTest extends AbstractProfilerIntegrationTest {
 
     @Unroll

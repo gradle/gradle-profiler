@@ -1,7 +1,9 @@
 package org.gradle.profiler
 
+import spock.lang.Ignore
 import spock.lang.Unroll
 
+@Ignore
 @Unroll
 class CommandLineIntegrationTest extends AbstractIntegrationTest {
     def "can show help with #option"() {

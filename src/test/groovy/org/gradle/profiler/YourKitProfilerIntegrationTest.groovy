@@ -1,9 +1,11 @@
 package org.gradle.profiler
 
 import org.gradle.profiler.yourkit.YourKit
+import spock.lang.Ignore
 import spock.lang.Requires
 
 
+@Ignore
 class YourKitProfilerIntegrationTest extends AbstractProfilerIntegrationTest {
     @Requires({ YourKit.findYourKitHome() })
     def "profiles build using YourKit with tooling API and warm daemon to produce CPU tracing snapshot"() {

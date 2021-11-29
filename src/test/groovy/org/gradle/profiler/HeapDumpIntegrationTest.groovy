@@ -1,5 +1,8 @@
 package org.gradle.profiler
 
+import spock.lang.Ignore
+
+@Ignore
 class HeapDumpIntegrationTest extends AbstractProfilerIntegrationTest {
     def "generates a heap dump when run with tooling API and warm daemon"() {
         given:
