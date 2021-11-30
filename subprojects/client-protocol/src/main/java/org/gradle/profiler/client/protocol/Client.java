@@ -59,7 +59,6 @@ public class Client implements Closeable {
     public void close() throws IOException {
         synchronized (lock) {
             connection.close();
-            protocolHandler.close();
         }
     }
 }

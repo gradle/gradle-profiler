@@ -18,7 +18,7 @@ class BenchmarkResultCollectorTest extends Specification {
         def settings = new InvocationSettings.InvocationSettingsBuilder().build()
 
         when:
-        def consumer = collector.scenario(scenario, [sample()])
+        def consumer = collector.scenario(scenario, { [sample()] })
         consumer.accept(result1)
         consumer.accept(result2)
         collector.write(settings)
