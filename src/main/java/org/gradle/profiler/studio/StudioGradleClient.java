@@ -86,7 +86,7 @@ public class StudioGradleClient implements GradleClient {
             Pair<StudioSyncRequestResult, BuildActionResult> pair = waitForSyncToFinish(connections, gradleArgs, jvmArgs);
             StudioSyncRequestResult syncRequestResult = pair.getLeft();
             BuildActionResult durationResult = pair.getRight();
-            long fullGradleDuration = durationResult.getGradleToolingAgentExecutionTime().get().stream()
+            long fullGradleDuration = durationResult.getGradleToolingAgentExecutionTime().stream()
                 .mapToLong(Duration::toMillis)
                 .sum();
             System.out.printf("* Full Gradle execution time: %dms%n", fullGradleDuration);

@@ -6,7 +6,6 @@ import org.gradle.profiler.instrument.PidInstrumentation;
 
 import java.time.Duration;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -81,7 +80,7 @@ public class BuildUnderTestInvoker {
             return new GradleBuildInvocationResult(
                 buildContext,
                 buildActionResult.getExecutionTime(),
-                buildActionResult.getGradleToolingAgentExecutionTime().orElse(Collections.emptyList()),
+                buildActionResult.getGradleToolingAgentExecutionTime(),
                 buildActionResult.getIdeExecutionTime().orElse(null),
                 garbageCollectionTime.orElse(null),
                 timeToTaskExecution.orElse(null),
