@@ -4,7 +4,7 @@ import org.gradle.profiler.report.AbstractGenerator;
 import org.gradle.profiler.report.BenchmarkResult;
 import org.gradle.profiler.report.BuildScenarioResult;
 import org.gradle.profiler.result.BuildInvocationResult;
-import org.gradle.profiler.result.Sample;
+import org.gradle.profiler.result.SampleProvider;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -20,8 +20,8 @@ public class BenchmarkResultCollector {
         this.generators = Arrays.asList(generators);
     }
 
-    public <S extends ScenarioDefinition, T extends BuildInvocationResult> Consumer<T> scenario(S scenario, List<Sample<? super T>> samples) {
-        BuildScenarioResultImpl<T> buildScenario = new BuildScenarioResultImpl<>(scenario, samples);
+    public <S extends ScenarioDefinition, T extends BuildInvocationResult> Consumer<T> scenario(S scenario, SampleProvider<T> sampleProvider) {
+        BuildScenarioResultImpl<T> buildScenario = new BuildScenarioResultImpl<>(scenario, sampleProvider);
         allBuilds.add(buildScenario);
         return buildScenario;
     }

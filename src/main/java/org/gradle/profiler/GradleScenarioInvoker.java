@@ -6,14 +6,18 @@ import org.gradle.profiler.buildops.BuildOperationInstrumentation;
 import org.gradle.profiler.instrument.PidInstrumentation;
 import org.gradle.profiler.result.BuildInvocationResult;
 import org.gradle.profiler.result.Sample;
+import org.gradle.profiler.result.SampleProvider;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.function.Consumer;
+import java.util.stream.IntStream;
 
+import static java.util.stream.Collectors.toList;
 import static org.gradle.profiler.BuildStep.CLEANUP;
 import static org.gradle.profiler.Phase.MEASURE;
 import static org.gradle.profiler.Phase.WARM_UP;
@@ -28,23 +32,42 @@ public class GradleScenarioInvoker extends ScenarioInvoker<GradleScenarioDefinit
     }
 
     @Override
-    public List<Sample<? super GradleBuildInvocationResult>> samplesFor(InvocationSettings settings, GradleScenarioDefinition scenario) {
-        ImmutableList.Builder<Sample<? super GradleBuildInvocationResult>> builder = ImmutableList.builder();
-        builder.add(BuildInvocationResult.EXECUTION_TIME);
-        if (scenario.isAndroidStudioSync()) {
-            builder.add(GradleBuildInvocationResult.GRADLE_TOOLING_AGENT_EXECUTION_TIME);
-            builder.add(GradleBuildInvocationResult.IDE_EXECUTION_TIME);
+    public SampleProvider<GradleBuildInvocationResult> samplesFor(InvocationSettings settings, GradleScenarioDefinition scenario) {
+        return results -> {
+            ImmutableList.Builder<Sample<? super GradleBuildInvocationResult>> builder = ImmutableList.builder();
+            builder.add(BuildInvocationResult.EXECUTION_TIME);
+            if (scenario.isAndroidStudioSync()) {
+                builder.addAll(getAllGradleToolingAgentExecutimeTimeSamples(results));
+                builder.add(GradleBuildInvocationResult.GRADLE_TOOLING_AGENT_TOTAL_EXECUTION_TIME);
+                builder.add(GradleBuildInvocationResult.IDE_EXECUTION_TIME);
+            }
+            if (settings.isMeasureGarbageCollection()) {
+                builder.add(GradleBuildInvocationResult.GARBAGE_COLLECTION_TIME);
+            }
+            if (settings.isMeasureConfigTime()) {
+                builder.add(GradleBuildInvocationResult.TIME_TO_TASK_EXECUTION);
+            }
+            scenario.getMeasuredBuildOperations().stream()
+                .map(GradleBuildInvocationResult::sampleBuildOperation)
+                .forEach(builder::add);
+            return builder.build();
+        };
+    }
+
+    private List<Sample<GradleBuildInvocationResult>> getAllGradleToolingAgentExecutimeTimeSamples(List<GradleBuildInvocationResult> results) {
+        int maxGradleExecutions = results.stream()
+            .mapToInt(result -> result.getGradleToolingAgentExecutionTime().size())
+            .max()
+            .orElse(1);
+        if (maxGradleExecutions <= 1) {
+            // In case we have just one Gradle execution, we don't need to split it into multiple executions.
+            // So we can return empty list here, and we will show only GRADLE_TOOLING_AGENT_TOTAL_EXECUTION_TIME.
+            return Collections.emptyList();
         }
-        if (settings.isMeasureGarbageCollection()) {
-            builder.add(GradleBuildInvocationResult.GARBAGE_COLLECTION_TIME);
-        }
-        if (settings.isMeasureConfigTime()) {
-            builder.add(GradleBuildInvocationResult.TIME_TO_TASK_EXECUTION);
-        }
-        scenario.getMeasuredBuildOperations().stream()
-            .map(GradleBuildInvocationResult::sampleBuildOperation)
-            .forEach(builder::add);
-        return builder.build();
+        return IntStream.range(0, maxGradleExecutions)
+            .mapToObj(GradleBuildInvocationResult::getGradleToolingAgentExecutionTime)
+            .collect(toList());
+
     }
 
     @Override

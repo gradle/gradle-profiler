@@ -51,10 +51,10 @@ public interface BuildAction {
     class BuildActionResult {
 
         private final Duration executionTime;
-        private final Duration gradleToolingAgentExecutionTime;
+        private final List<Duration> gradleToolingAgentExecutionTime;
         private final Duration ideExecutionTime;
 
-        private BuildActionResult(Duration executionTime, @Nullable Duration gradleToolingAgentExecutionTime, @Nullable Duration ideExecutionTime) {
+        private BuildActionResult(Duration executionTime, @Nullable List<Duration> gradleToolingAgentExecutionTime, @Nullable Duration ideExecutionTime) {
             this.executionTime = executionTime;
             this.gradleToolingAgentExecutionTime = gradleToolingAgentExecutionTime;
             this.ideExecutionTime = ideExecutionTime;
@@ -64,7 +64,7 @@ public interface BuildAction {
             return executionTime;
         }
 
-        public Optional<Duration> getGradleToolingAgentExecutionTime() {
+        public Optional<List<Duration>> getGradleToolingAgentExecutionTime() {
             return Optional.ofNullable(gradleToolingAgentExecutionTime);
         }
 
@@ -76,7 +76,7 @@ public interface BuildAction {
             return new BuildActionResult(executionTime, null, null);
         }
 
-        public static BuildActionResult withIdeTimings(Duration executionTime, Duration gradleToolingAgentExecutionTime, Duration ideExecutionTime) {
+        public static BuildActionResult withIdeTimings(Duration executionTime, List<Duration> gradleToolingAgentExecutionTime, Duration ideExecutionTime) {
             return new BuildActionResult(executionTime, gradleToolingAgentExecutionTime, ideExecutionTime);
         }
     }

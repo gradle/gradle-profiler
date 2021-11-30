@@ -42,7 +42,7 @@ class AndroidStudioIntegrationTest extends AbstractProfilerIntegrationTest {
 
         and:
         File benchmarkCsv = outputDir.listFiles().find { it.name.matches("benchmark.csv") }
-        benchmarkCsv.text.contains("value,total execution time,Gradle execution time,IDE execution time")
+        benchmarkCsv.text.contains("value,total execution time,Gradle total execution time,IDE execution time")
     }
 
     @Requires({ StudioFinder.findStudioHome() })
@@ -79,7 +79,7 @@ class AndroidStudioIntegrationTest extends AbstractProfilerIntegrationTest {
 
         and:
         File benchmarkCsv = outputDir.listFiles().find { it.name.matches("benchmark.csv") }
-        benchmarkCsv.text.contains("value,total execution time,Gradle execution time,IDE execution time")
+        benchmarkCsv.text.contains("value,total execution time,Gradle execution time #1,Gradle execution time #2,Gradle total execution time,IDE execution time")
     }
 
     @Requires({ StudioFinder.findStudioHome() })
