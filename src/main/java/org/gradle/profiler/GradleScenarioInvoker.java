@@ -6,6 +6,7 @@ import org.gradle.profiler.buildops.BuildOperationInstrumentation;
 import org.gradle.profiler.instrument.PidInstrumentation;
 import org.gradle.profiler.result.BuildInvocationResult;
 import org.gradle.profiler.result.Sample;
+import org.gradle.profiler.result.SampleProvider;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -28,19 +29,21 @@ public class GradleScenarioInvoker extends ScenarioInvoker<GradleScenarioDefinit
     }
 
     @Override
-    public List<Sample<? super GradleBuildInvocationResult>> samplesFor(InvocationSettings settings, GradleScenarioDefinition scenario) {
-        ImmutableList.Builder<Sample<? super GradleBuildInvocationResult>> builder = ImmutableList.builder();
-        builder.add(BuildInvocationResult.EXECUTION_TIME);
-        if (settings.isMeasureGarbageCollection()) {
-            builder.add(GradleBuildInvocationResult.GARBAGE_COLLECTION_TIME);
-        }
-        if (settings.isMeasureConfigTime()) {
-            builder.add(GradleBuildInvocationResult.TIME_TO_TASK_EXECUTION);
-        }
-        scenario.getMeasuredBuildOperations().stream()
-            .map(GradleBuildInvocationResult::sampleBuildOperation)
-            .forEach(builder::add);
-        return builder.build();
+    public SampleProvider<GradleBuildInvocationResult> samplesFor(InvocationSettings settings, GradleScenarioDefinition scenario) {
+        return results -> {
+            ImmutableList.Builder<Sample<? super GradleBuildInvocationResult>> builder = ImmutableList.builder();
+            builder.add(BuildInvocationResult.EXECUTION_TIME);
+            if (settings.isMeasureGarbageCollection()) {
+                builder.add(GradleBuildInvocationResult.GARBAGE_COLLECTION_TIME);
+            }
+            if (settings.isMeasureConfigTime()) {
+                builder.add(GradleBuildInvocationResult.TIME_TO_TASK_EXECUTION);
+            }
+            scenario.getMeasuredBuildOperations().stream()
+                .map(GradleBuildInvocationResult::sampleBuildOperation)
+                .forEach(builder::add);
+            return builder.build();
+        };
     }
 
     @Override

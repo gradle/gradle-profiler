@@ -73,4 +73,32 @@ public class GradleBuildInvocationResult extends BuildInvocationResult {
         }
     };
 
+    public static Sample<GradleBuildInvocationResult> getGradleToolingAgentExecutionTime(int index) {
+        return new Sample<GradleBuildInvocationResult>() {
+            @Override
+            public String getName() {
+                return "Gradle execution time #" + (index + 1);
+            }
+
+            @Override
+            public Duration extractFrom(GradleBuildInvocationResult result) {
+                return index >= result.gradleToolingAgentExecutionTime.size()
+                    ? Duration.ZERO
+                    : result.gradleToolingAgentExecutionTime.get(index);
+            }
+        };
+    }
+
+    public static final Sample<GradleBuildInvocationResult> IDE_EXECUTION_TIME = new Sample<GradleBuildInvocationResult>() {
+        @Override
+        public String getName() {
+            return "IDE execution time";
+        }
+
+        @Override
+        public Duration extractFrom(GradleBuildInvocationResult result) {
+            return result.ideExecutionTime;
+        }
+    };
+
 }

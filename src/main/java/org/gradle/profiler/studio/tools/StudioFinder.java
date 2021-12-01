@@ -4,8 +4,11 @@ import java.io.File;
 
 public class StudioFinder {
 
-    static final String ENVIRONMENT_VARIABLE = "STUDIO_PROFILER_HOME";
-    private static final String STUDIO_PROFILER_HOME = System.getenv(ENVIRONMENT_VARIABLE);
+    private static final String STUDIO_HOME_ENV_VARIABLE = "STUDIO_PROFILER_HOME";
+    private static final String STUDIO_HOME_PROPERTY = "studio.home";
+    private static final String STUDIO_PROFILER_HOME = System.getenv(STUDIO_HOME_ENV_VARIABLE) != null
+        ? System.getenv(STUDIO_HOME_ENV_VARIABLE)
+        : System.getProperty(STUDIO_HOME_PROPERTY);
 
     /**
      * Locates the user's Android Studio installation. Returns null when not found.

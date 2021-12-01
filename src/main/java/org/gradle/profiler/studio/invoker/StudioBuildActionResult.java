@@ -3,20 +3,27 @@ package org.gradle.profiler.studio.invoker;
 import org.gradle.profiler.BuildAction.BuildActionResult;
 
 import java.time.Duration;
+import java.util.List;
 
 public class StudioBuildActionResult extends BuildActionResult {
 
-    private final Duration gradleExecutionTime;
+    private final Duration gradleTotalExecutionTime;
+    private final List<Duration> gradleExecutionTimes;
     private final Duration ideExecutionTime;
 
-    public StudioBuildActionResult(Duration executionTime, Duration gradleExecutionTime, Duration ideExecutionTime) {
+    public StudioBuildActionResult(Duration executionTime, Duration gradleTotalExecutionTime, List<Duration> gradleExecutionTimes, Duration ideExecutionTime) {
         super(executionTime);
-        this.gradleExecutionTime = gradleExecutionTime;
+        this.gradleTotalExecutionTime = gradleTotalExecutionTime;
+        this.gradleExecutionTimes = gradleExecutionTimes;
         this.ideExecutionTime = ideExecutionTime;
     }
 
-    public Duration getGradleExecutionTime() {
-        return gradleExecutionTime;
+    public Duration getGradleTotalExecutionTime() {
+        return gradleTotalExecutionTime;
+    }
+
+    public List<Duration> getGradleExecutionTimes() {
+        return gradleExecutionTimes;
     }
 
     public Duration getIdeExecutionTime() {

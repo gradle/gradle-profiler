@@ -21,7 +21,8 @@
     </applicationListeners>
 
     <extensions defaultExtensionNs="com.intellij">
-        <preloadingActivity implementation="org.gradle.profiler.studio.plugin.GradleProfilerProjectManagerListener"/>
+        <appStarter implementation="org.gradle.profiler.studio.plugin.starter.HeadlessApplicationStarter" />
+        <preloadingActivity implementation="org.gradle.profiler.studio.plugin.GradleProfilerPreloadingActivity"/>
     </extensions>
 
 </idea-plugin>

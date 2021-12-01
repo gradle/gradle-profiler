@@ -9,8 +9,6 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.List;
 
-import static com.google.common.base.Preconditions.checkArgument;
-
 /**
  * Installs the Android Studio plugin into the plugins directory.
  */
@@ -25,8 +23,13 @@ public class StudioPluginInstaller {
     }
 
     public void installPlugin(List<Path> pluginJars) {
-        // Delete previous directory in case it was not deleted before
-        uninstallPlugin();
+        try {
+            // Delete previous directory in case it was not deleted before
+            FileUtils.deleteDirectory(pluginInstallDir.toFile());
+        } catch (IOException e) {
+            throw new UncheckedIOException("Could not delete previous gradle-profiler plugin installation. " +
+                "This might indicate that another process with gradle-profiler plugin is running in the same sandbox.", e);
+        }
         installPluginToDirectory(pluginJars);
     }
 
@@ -41,12 +44,10 @@ public class StudioPluginInstaller {
         }
     }
 
+    /**
+     * We delete plugins Quietly at uninstall, since we don't want gradle-profiler to fail in that case.
+     */
     public void uninstallPlugin() {
-        try {
-            FileUtils.deleteDirectory(pluginInstallDir.toFile());
-        } catch (IOException e) {
-            throw new UncheckedIOException(e);
-        }
+        FileUtils.deleteQuietly(pluginInstallDir.toFile());
     }
-
 }

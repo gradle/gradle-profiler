@@ -20,7 +20,7 @@ class ProtocolTest extends Specification {
         def m1 = client.receiveConnectionParameters(timeout)
 
         client.send(new GradleInvocationStarted(1))
-        def m2 = serverConnection.receiveSyncStarted(timeout)
+        def m2 = serverConnection.receiveGradleInvocationStarted(timeout)
 
         serverConnection.send(new GradleInvocationParameters(["gradle-arg"], ["jvm-arg"]))
         def m3 = client.receiveSyncParameters(timeout)

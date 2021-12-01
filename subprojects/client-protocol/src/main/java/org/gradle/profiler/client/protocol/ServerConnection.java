@@ -1,13 +1,19 @@
 package org.gradle.profiler.client.protocol;
 
-import org.gradle.profiler.client.protocol.messages.*;
+import org.gradle.profiler.client.protocol.messages.GradleInvocationCompleted;
+import org.gradle.profiler.client.protocol.messages.GradleInvocationStarted;
+import org.gradle.profiler.client.protocol.messages.Message;
+import org.gradle.profiler.client.protocol.messages.StudioCacheCleanupCompleted;
+import org.gradle.profiler.client.protocol.messages.StudioSyncRequestCompleted;
 import org.gradle.profiler.client.protocol.serialization.MessageProtocolHandler;
 
 import java.io.Closeable;
 import java.io.IOException;
 import java.time.Duration;
+import java.util.Optional;
 
 public class ServerConnection implements Closeable {
+
     private final Connection connection;
     private final MessageProtocolHandler protocolHandler;
 
@@ -16,18 +22,15 @@ public class ServerConnection implements Closeable {
         this.protocolHandler = new MessageProtocolHandler(peerName, connection);
     }
 
-    @Override
-    public void close() throws IOException {
-        try(MessageProtocolHandler protocolHandler = this.protocolHandler) {
-            connection.close();
-        }
-    }
-
     public void send(Message message) {
         protocolHandler.send(message);
     }
 
-    public GradleInvocationStarted receiveSyncStarted(Duration timeout) {
+    public Optional<GradleInvocationStarted> maybeReceiveGradleInvocationStarted(Duration timeout) {
+        return protocolHandler.maybeReceive(GradleInvocationStarted.class, timeout);
+    }
+
+    public GradleInvocationStarted receiveGradleInvocationStarted(Duration timeout) {
         return protocolHandler.receive(GradleInvocationStarted.class, timeout);
     }
 
@@ -41,5 +44,10 @@ public class ServerConnection implements Closeable {
 
     public StudioCacheCleanupCompleted receiveCacheCleanupCompleted(Duration timeout) {
         return protocolHandler.receive(StudioCacheCleanupCompleted.class, timeout);
+    }
+
+    @Override
+    public void close() throws IOException {
+        connection.close();
     }
 }

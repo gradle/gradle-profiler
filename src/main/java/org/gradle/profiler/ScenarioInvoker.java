@@ -1,11 +1,10 @@
 package org.gradle.profiler;
 
+import com.google.common.collect.ImmutableList;
 import org.gradle.profiler.result.BuildInvocationResult;
-import org.gradle.profiler.result.Sample;
+import org.gradle.profiler.result.SampleProvider;
 
 import java.io.IOException;
-import java.util.Collections;
-import java.util.List;
 import java.util.function.Consumer;
 
 public abstract class ScenarioInvoker<T extends ScenarioDefinition, R extends BuildInvocationResult> {
@@ -18,8 +17,8 @@ public abstract class ScenarioInvoker<T extends ScenarioDefinition, R extends Bu
     /**
      * Which samples will this invoker generate for the given settings?
      */
-    public List<Sample<? super R>> samplesFor(InvocationSettings settings, T scenario) {
-        return Collections.singletonList(BuildInvocationResult.EXECUTION_TIME);
+    public SampleProvider<R> samplesFor(InvocationSettings settings, T scenario) {
+        return results -> ImmutableList.of(BuildInvocationResult.EXECUTION_TIME);
     }
 
     /**

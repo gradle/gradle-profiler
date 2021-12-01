@@ -10,7 +10,7 @@ public enum StudioSample implements Sample<BuildInvocationResult> {
         @Override
         public Duration extractFrom(BuildInvocationResult result) {
             StudioBuildActionResult studioResult = (StudioBuildActionResult) result.getActionResult();
-            return studioResult.getGradleExecutionTime();
+            return studioResult.getGradleTotalExecutionTime();
         }
     },
     IDE_EXECUTION_TIME("IDE execution time") {

@@ -17,6 +17,14 @@ fun ParametrizedWithType.javaHome(os: Os, javaVersion: JavaVersion) {
     param("env.JAVA_HOME", javaVersion.javaHome(os))
 }
 
+fun ParametrizedWithType.androidHome(os: Os) {
+    val androidHome = when (os) {
+        Os.linux, Os.macos -> "/opt/android/sdk"
+        Os.windows -> """C:\Program Files\android\sdk"""
+    }
+    param("env.ANDROID_SDK_ROOT", androidHome)
+}
+
 enum class JavaVersion(val majorVersion: String, val vendor: String, private val javaHomePostfix: String) {
     ORACLE_JAVA_8("8", "oracle", "java8.oracle.64bit"),
     OPENJDK_11("11", "openjdk", "java11.openjdk.64bit");

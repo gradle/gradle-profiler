@@ -1,8 +1,9 @@
 package org.gradle.profiler
 
-import org.gradle.profiler.studio.LaunchConfiguration
-import org.gradle.profiler.studio.LauncherConfigurationParser
+import org.gradle.profiler.studio.launcher.LaunchConfiguration
+import org.gradle.profiler.studio.launcher.LauncherConfigurationParser
 import org.gradle.profiler.studio.tools.StudioFinder
+import org.gradle.profiler.studio.tools.StudioPluginInstaller
 import org.gradle.profiler.studio.tools.StudioSandboxCreator
 import spock.lang.Requires
 
@@ -32,15 +33,53 @@ class AndroidStudioIntegrationTest extends AbstractProfilerIntegrationTest {
         runBenchmark(scenarioFile, 2, 3)
 
         then:
-        logFile.find("Gradle invocation has completed in").size() == 5
+        logFile.find("Gradle invocation 1 has completed in").size() == 5
+        logFile.find("Gradle invocation 2 has completed in").size() == 0
         logFile.find("Full sync has completed in").size() == 5
-        logFile.find("and it succeeded").size() == 5
+        logFile.find("and it SUCCEEDED").size() == 5
         logFile.find("* Cleaning Android Studio cache, this will require a restart...").size() == 0
         logFile.find("* Starting Android Studio").size() == 1
 
         and:
         File benchmarkCsv = outputDir.listFiles().find { it.name.matches("benchmark.csv") }
-        benchmarkCsv.text.contains("value,total execution time,Gradle execution time,IDE execution time")
+        benchmarkCsv.text.contains("value,total execution time,Gradle total execution time,IDE execution time")
+    }
+
+    @Requires({ StudioFinder.findStudioHome() })
+    def "benchmarks Android Studio sync for project with buildSrc"() {
+        // This tests that Android Studio can call Gradle multiple times during a sync
+        given:
+        new File(projectDir, "buildSrc").mkdirs()
+        new File(projectDir, "buildSrc/gradle.build").createNewFile()
+        def scenarioFile = file("performance.scenarios") << """
+            $scenarioName {
+                android-studio-sync {
+                }
+            }
+        """
+
+        when:
+        runBenchmark(scenarioFile, 1, 1)
+
+        then:
+        logFile.find("Gradle invocation 1 has completed in").size() == 2
+        logFile.find("Gradle invocation 2 has completed in").size() == 2
+        def firstDurations = (logFile.text =~ /Gradle invocation 1 has completed in: (\d+)ms/)
+            .findAll()
+            .collect { it[1] as Integer }
+        def secondDurations = (logFile.text =~ /Gradle invocation 2 has completed in: (\d+)ms/)
+            .findAll()
+            .collect { it[1] as Integer }
+        logFile.find("Full Gradle execution time: ${firstDurations[0] + secondDurations[0]}ms").size() == 1
+        logFile.find("Full Gradle execution time: ${firstDurations[1] + secondDurations[1]}ms").size() == 1
+        logFile.find("Full sync has completed in").size() == 2
+        logFile.find("and it SUCCEEDED").size() == 2
+        logFile.find("* Cleaning Android Studio cache, this will require a restart...").size() == 0
+        logFile.find("* Starting Android Studio").size() == 1
+
+        and:
+        File benchmarkCsv = outputDir.listFiles().find { it.name.matches("benchmark.csv") }
+        benchmarkCsv.text.contains("value,total execution time,Gradle execution time #1,Gradle execution time #2,Gradle total execution time,IDE execution time")
     }
 
     @Requires({ StudioFinder.findStudioHome() })
@@ -57,9 +96,9 @@ class AndroidStudioIntegrationTest extends AbstractProfilerIntegrationTest {
         runBenchmark(scenarioFile, 1, 2)
 
         then:
-        logFile.find("Gradle invocation has completed in").size() == 3
+        logFile.find("Gradle invocation 1 has completed in").size() == 3
         logFile.find("Full sync has completed in").size() == 3
-        logFile.find("and it succeeded").size() == 3
+        logFile.find("and it SUCCEEDED").size() == 3
         logFile.find("* Cleaning Android Studio cache, this will require a restart...").size() == 3
         // 4 since on first run we start IDE, clean cache and restart
         logFile.find("* Starting Android Studio").size() == 4
@@ -79,9 +118,9 @@ class AndroidStudioIntegrationTest extends AbstractProfilerIntegrationTest {
         runBenchmark(scenarioFile, 1, 2)
 
         then:
-        logFile.find("Gradle invocation has completed in").size() == 3
+        logFile.find("Gradle invocation 1 has completed in").size() == 3
         logFile.find("Full sync has completed in").size() == 3
-        logFile.find("and it succeeded").size() == 3
+        logFile.find("and it SUCCEEDED").size() == 3
         logFile.find("* Cleaning Android Studio cache, this will require a restart...").size() == 1
         // 2 since on first run we start IDE, clean cache and restart
         logFile.find("* Starting Android Studio").size() == 2
@@ -91,8 +130,12 @@ class AndroidStudioIntegrationTest extends AbstractProfilerIntegrationTest {
     def "detects if two Android Studio processes are running in the same sandbox"() {
         given:
         File otherStudioProjectDir = tmpDir.newFolder('project')
-        StudioSandboxCreator.StudioSandbox sandbox = StudioSandboxCreator.createSandbox(sandboxDir.toPath())
+        // We have to install plugin so also the first Studio process is run in the headless mode.
+        // We install plugin directory to a different "plugins-2" directory for first process otherwise cleaning plugin directory at start of second process fails on Windows.
+        StudioSandboxCreator.StudioSandbox sandbox = StudioSandboxCreator.createSandbox(sandboxDir.toPath(), "plugins-2")
         LaunchConfiguration launchConfiguration = new LauncherConfigurationParser(studioHome.toPath(), sandbox).calculate()
+        StudioPluginInstaller pluginInstaller = new StudioPluginInstaller(launchConfiguration.getStudioPluginsDir())
+        pluginInstaller.installPlugin(launchConfiguration.getStudioPluginJars())
         def scenarioFile = file("performance.scenarios") << """
             $scenarioName {
                 android-studio-sync {
@@ -125,6 +168,9 @@ class AndroidStudioIntegrationTest extends AbstractProfilerIntegrationTest {
         File otherStudioProjectDir = tmpDir.newFolder('project')
         StudioSandboxCreator.StudioSandbox sandbox = StudioSandboxCreator.createSandbox(sandboxDir1.toPath())
         LaunchConfiguration launchConfiguration = new LauncherConfigurationParser(studioHome.toPath(), sandbox).calculate()
+        // We have to install plugin so also the first Studio process can be run in headless mode mode
+        StudioPluginInstaller pluginInstaller = new StudioPluginInstaller(launchConfiguration.getStudioPluginsDir())
+        pluginInstaller.installPlugin(launchConfiguration.getStudioPluginJars())
         def scenarioFile = file("performance.scenarios") << """
             $scenarioName {
                 android-studio-sync {
@@ -137,7 +183,7 @@ class AndroidStudioIntegrationTest extends AbstractProfilerIntegrationTest {
         runBenchmark(scenarioFile, 1, 1)
 
         then:
-        logFile.find("Gradle invocation has completed in").size() == 2
+        logFile.find("Gradle invocation 1 has completed in").size() == 2
         logFile.find("Full sync has completed in").size() == 2
 
         cleanup:
