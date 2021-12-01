@@ -106,7 +106,7 @@ public class StudioGradleClient implements GradleClient {
             .sum();
         StudioBuildActionResult result = new StudioBuildActionResult(
             Duration.ofMillis(syncRequestCompleted.getDurationMillis()),
-            Duration.ofMinutes(totalGradleDuration),
+            Duration.ofMillis(totalGradleDuration),
             gradleInvocationDurations,
             Duration.ofMillis(syncRequestCompleted.getDurationMillis() - totalGradleDuration)
         );

@@ -290,7 +290,7 @@ class ScenarioLoader {
                         jvmArgs,
                         measuredBuildOperations
                     );
-                    ScenarioDefinition scenarioDefinition = (buildAction instanceof AndroidStudioSyncAction)
+                    ScenarioDefinition scenarioDefinition = scenario.hasPath(ANDROID_STUDIO_SYNC)
                         ? new StudioGradleScenarioDefinition(gradleScenarioDefinition)
                         : gradleScenarioDefinition;
                     definitions.add(scenarioDefinition);

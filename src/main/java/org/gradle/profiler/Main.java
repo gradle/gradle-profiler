@@ -7,7 +7,7 @@ import org.gradle.profiler.instrument.PidInstrumentation;
 import org.gradle.profiler.report.CsvGenerator;
 import org.gradle.profiler.report.HtmlGenerator;
 import org.gradle.profiler.result.BuildInvocationResult;
-import org.gradle.profiler.result.Sample;
+import org.gradle.profiler.result.SampleProvider;
 import org.gradle.profiler.studio.invoker.StudioGradleScenarioDefinition;
 import org.gradle.profiler.studio.invoker.StudioGradleScenarioInvoker;
 
@@ -121,8 +121,8 @@ public class Main {
 
     private <S extends ScenarioDefinition, R extends BuildInvocationResult> void invoke(ScenarioInvoker<S, R> invoker, S scenario, InvocationSettings settings, BenchmarkResultCollector benchmarkResults, List<Throwable> failures) throws IOException {
         try {
-            List<Sample<? super R>> samples = invoker.samplesFor(settings, scenario);
-            Consumer<R> resultConsumer = benchmarkResults.scenario(scenario, samples);
+            SampleProvider<R> sampleProvider = invoker.samplesFor(settings, scenario);
+            Consumer<R> resultConsumer = benchmarkResults.scenario(scenario, sampleProvider);
             invoker.run(scenario, settings, resultConsumer);
         } catch (Throwable t) {
             t.printStackTrace();
