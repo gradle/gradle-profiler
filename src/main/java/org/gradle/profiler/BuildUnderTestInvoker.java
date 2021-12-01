@@ -80,7 +80,7 @@ public class BuildUnderTestInvoker {
             return new GradleBuildInvocationResult(
                 buildContext,
                 buildActionResult.getExecutionTime(),
-                buildActionResult.getGradleToolingAgentExecutionTime().orElse(null),
+                buildActionResult.getGradleToolingAgentExecutionTime(),
                 buildActionResult.getIdeExecutionTime().orElse(null),
                 garbageCollectionTime.orElse(null),
                 timeToTaskExecution.orElse(null),

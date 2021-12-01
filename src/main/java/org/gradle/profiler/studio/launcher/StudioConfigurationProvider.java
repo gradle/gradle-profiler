@@ -1,11 +1,11 @@
-package org.gradle.profiler.studio;
+package org.gradle.profiler.studio.launcher;
 
 import com.dd.plist.NSDictionary;
 import com.dd.plist.NSObject;
 import com.dd.plist.NSString;
 import com.dd.plist.PropertyListParser;
-import org.gradle.profiler.instrument.GradleInstrumentation;
-import org.gradle.profiler.studio.tools.StudioSandboxCreator.StudioSandbox;
+import com.google.common.collect.ImmutableMap;
+import org.gradle.profiler.OperatingSystem;
 
 import java.nio.file.FileSystems;
 import java.nio.file.Path;
@@ -16,10 +16,33 @@ import java.util.List;
 import java.util.Map;
 import java.util.function.Function;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
-public class LauncherConfigurationParser {
+public class StudioConfigurationProvider {
 
-    public LaunchConfiguration calculate(Path studioInstallDir, StudioSandbox studioSandbox, int studioPluginPort) {
+    public static StudioConfiguration getLaunchConfiguration(Path studioInstallDir) {
+        if (OperatingSystem.isMacOS()) {
+            return getMacOSConfiguration(studioInstallDir);
+        } else {
+            return getWindowsOrLinuxConfiguration(studioInstallDir);
+        }
+    }
+
+    private static StudioConfiguration getWindowsOrLinuxConfiguration(Path studioInstallDir) {
+        String mainClass = "com.intellij.idea.Main";
+        List<Path> classPath = Stream.of("lib/bootstrap.jar", "lib/util.jar", "lib/jdom.jar", "lib/log4j.jar", "lib/jna.jar")
+            .map(studioInstallDir::resolve)
+            .collect(Collectors.toList());
+        Path javaCommand = studioInstallDir.resolve("jre/bin/java");
+        Map<String, String> systemProperties = ImmutableMap.<String, String>builder()
+            .put("idea.vendor.name", "Google")
+            .put("idea.executable", "studio")
+            .put("idea.platform.prefix", "AndroidStudio")
+            .build();
+        return new StudioConfiguration(mainClass, studioInstallDir, javaCommand, classPath, systemProperties);
+    }
+
+    private static StudioConfiguration getMacOSConfiguration(Path studioInstallDir) {
         Dict entries = parse(studioInstallDir.resolve("Contents/Info.plist"));
         Path actualInstallDir;
         if ("jetbrains-toolbox-launcher".equals(entries.string("CFBundleExecutable"))) {
@@ -28,28 +51,15 @@ public class LauncherConfigurationParser {
         } else {
             actualInstallDir = studioInstallDir;
         }
-        Dict jvmOptions = entries.dict("JVMOptions");
-        List<Path> classPath = Arrays.stream(jvmOptions.string("ClassPath").split(":")).map(s -> FileSystems.getDefault().getPath(s.replace("$APP_PACKAGE", actualInstallDir.toString()))).collect(Collectors.toList());
-        String mainClass = jvmOptions.string("MainClass");
-        Map<String, String> systemProperties = mapValues(jvmOptions.dict("Properties").toMap(), v -> v.replace("$APP_PACKAGE", actualInstallDir.toString()));
-        systemProperties.put("gradle.profiler.port", String.valueOf(studioPluginPort));
-        Path javaCommand = actualInstallDir.resolve("Contents/jre/Contents/Home/bin/java");
-        Path agentJar = GradleInstrumentation.unpackPlugin("studio-agent").toPath();
-        Path asmJar = GradleInstrumentation.unpackPlugin("asm").toPath();
-        Path supportJar = GradleInstrumentation.unpackPlugin("instrumentation-support").toPath();
-        Path protocolJar = GradleInstrumentation.unpackPlugin("client-protocol").toPath();
-        Path studioPlugin = GradleInstrumentation.unpackPlugin("studio-plugin").toPath();
 
-        studioSandbox.getConfigDir().ifPresent(path -> systemProperties.put("idea.config.path", path.toString()));
-        studioSandbox.getSystemDir().ifPresent(path -> systemProperties.put("idea.system.path", path.toString()));
-        Path studioPluginsDir = studioSandbox.getPluginsDir();
-        systemProperties.put("idea.plugins.path", studioPluginsDir.toString());
-        Path studioLogsDir = studioSandbox.getLogsDir();
-        systemProperties.put("idea.log.path", studioLogsDir.toString());
-        List<Path> sharedJars = Arrays.asList(asmJar, protocolJar);
-        List<Path> studioPluginJars = Arrays.asList(studioPlugin, protocolJar);
-        return new LaunchConfiguration(javaCommand, classPath, systemProperties, mainClass, agentJar, supportJar,
-            sharedJars, studioPluginJars, studioPluginsDir, studioLogsDir);
+        Dict jvmOptions = entries.dict("JVMOptions");
+        List<Path> classPath = Arrays.stream(jvmOptions.string("ClassPath").split(":"))
+            .map(s -> FileSystems.getDefault().getPath(s.replace("$APP_PACKAGE", actualInstallDir.toString())))
+            .collect(Collectors.toList());
+        Map<String, String> systemProperties = mapValues(jvmOptions.dict("Properties").toMap(), v -> v.replace("$APP_PACKAGE", actualInstallDir.toString()));
+        String mainClass = jvmOptions.string("MainClass");
+        Path javaCommand = actualInstallDir.resolve("Contents/jre/Contents/Home/bin/java");
+        return new StudioConfiguration(mainClass, actualInstallDir, javaCommand, classPath, systemProperties);
     }
 
     private static Dict parse(Path infoFile) {

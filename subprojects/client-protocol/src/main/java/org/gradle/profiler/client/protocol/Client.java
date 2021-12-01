@@ -6,34 +6,28 @@ import org.gradle.profiler.client.protocol.messages.StudioAgentConnectionParamet
 import org.gradle.profiler.client.protocol.messages.StudioRequest;
 import org.gradle.profiler.client.protocol.serialization.MessageProtocolHandler;
 
+import java.io.Closeable;
 import java.io.IOException;
-import java.io.UncheckedIOException;
 import java.net.InetAddress;
 import java.net.Socket;
 import java.time.Duration;
 
 /**
- * A singleton that runs inside a client process to communicate with the controller process.
+ * A client process to communicate with the controller process.
  */
-public enum Client {
-    INSTANCE;
+public class Client implements Closeable {
 
     private final Object lock = new Object();
-    private Connection connection;
-    private MessageProtocolHandler protocolHandler;
+    private final Connection connection;
+    private final MessageProtocolHandler protocolHandler;
 
-    public void connect(int port) {
-        synchronized (lock) {
-            if (connection != null) {
-                throw new IllegalStateException("This client is already connected.");
-            }
-            try {
-                Socket socket = new Socket(InetAddress.getLoopbackAddress(), port);
-                connection = new Connection(socket);
-                protocolHandler = new MessageProtocolHandler("controller process", connection);
-            } catch (IOException e) {
-                throw new RuntimeException("Could not connect to controller process.", e);
-            }
+    public Client(int port) {
+        try {
+            Socket socket = new Socket(InetAddress.getLoopbackAddress(), port);
+            connection = new Connection(socket);
+            protocolHandler = new MessageProtocolHandler("controller process", connection);
+        } catch (IOException e) {
+            throw new RuntimeException("Could not connect to controller process.", e);
         }
     }
 
@@ -61,18 +55,10 @@ public enum Client {
         }
     }
 
-    public void disconnect() {
+    @Override
+    public void close() throws IOException {
         synchronized (lock) {
-            try (MessageProtocolHandler protocolHandler = this.protocolHandler) {
-                if (connection != null) {
-                    connection.close();
-                }
-            } catch (IOException e) {
-                throw new UncheckedIOException(e);
-            } finally {
-                connection = null;
-                protocolHandler = null;
-            }
+            connection.close();
         }
     }
 }

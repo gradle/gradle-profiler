@@ -2,6 +2,7 @@ package org.gradle.profiler;
 
 import javax.annotation.Nullable;
 import java.time.Duration;
+import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 
@@ -51,10 +52,10 @@ public interface BuildAction {
     class BuildActionResult {
 
         private final Duration executionTime;
-        private final Duration gradleToolingAgentExecutionTime;
+        private final List<Duration> gradleToolingAgentExecutionTime;
         private final Duration ideExecutionTime;
 
-        private BuildActionResult(Duration executionTime, @Nullable Duration gradleToolingAgentExecutionTime, @Nullable Duration ideExecutionTime) {
+        private BuildActionResult(Duration executionTime, List<Duration> gradleToolingAgentExecutionTime, @Nullable Duration ideExecutionTime) {
             this.executionTime = executionTime;
             this.gradleToolingAgentExecutionTime = gradleToolingAgentExecutionTime;
             this.ideExecutionTime = ideExecutionTime;
@@ -64,8 +65,8 @@ public interface BuildAction {
             return executionTime;
         }
 
-        public Optional<Duration> getGradleToolingAgentExecutionTime() {
-            return Optional.ofNullable(gradleToolingAgentExecutionTime);
+        public List<Duration> getGradleToolingAgentExecutionTime() {
+            return gradleToolingAgentExecutionTime;
         }
 
         public Optional<Duration> getIdeExecutionTime() {
@@ -73,10 +74,10 @@ public interface BuildAction {
         }
 
         public static BuildActionResult withExecutionTimeOnly(Duration executionTime) {
-            return new BuildActionResult(executionTime, null, null);
+            return new BuildActionResult(executionTime, Collections.emptyList(), null);
         }
 
-        public static BuildActionResult withIdeTimings(Duration executionTime, Duration gradleToolingAgentExecutionTime, Duration ideExecutionTime) {
+        public static BuildActionResult withIdeTimings(Duration executionTime, List<Duration> gradleToolingAgentExecutionTime, Duration ideExecutionTime) {
             return new BuildActionResult(executionTime, gradleToolingAgentExecutionTime, ideExecutionTime);
         }
     }

@@ -6,6 +6,7 @@ public class StudioRequest implements Message {
 
     public enum StudioRequestType {
         SYNC,
+        CLEANUP_CACHE,
         EXIT_IDE,
         STOP_RECEIVING_EVENTS
     }

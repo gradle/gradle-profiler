@@ -6,6 +6,7 @@ import org.gradle.profiler.client.protocol.messages.GradleInvocationParameters;
 import org.gradle.profiler.client.protocol.messages.GradleInvocationStarted;
 import org.gradle.profiler.client.protocol.messages.Message;
 import org.gradle.profiler.client.protocol.messages.StudioAgentConnectionParameters;
+import org.gradle.profiler.client.protocol.messages.StudioCacheCleanupCompleted;
 import org.gradle.profiler.client.protocol.messages.StudioRequest;
 import org.gradle.profiler.client.protocol.messages.StudioRequest.StudioRequestType;
 import org.gradle.profiler.client.protocol.messages.StudioSyncRequestCompleted;
@@ -32,8 +33,8 @@ public enum MessageSerializer {
         }
 
         @Override
-        public Message doReadFrom(Connection connection) throws IOException {
-            int startId = connection.readInt();
+        public Message doReadFrom(Connection connection, int bodyTimeoutMillis) throws IOException {
+            int startId = connection.readInt(bodyTimeoutMillis);
             return new GradleInvocationStarted(startId);
         }
     },
@@ -46,9 +47,9 @@ public enum MessageSerializer {
         }
 
         @Override
-        public Message doReadFrom(Connection connection) throws IOException {
-            int completeId = connection.readInt();
-            long durationMillis = connection.readLong();
+        public Message doReadFrom(Connection connection, int bodyTimeoutMillis) throws IOException {
+            int completeId = connection.readInt(bodyTimeoutMillis);
+            long durationMillis = connection.readLong(bodyTimeoutMillis);
             return new GradleInvocationCompleted(completeId, durationMillis);
         }
     },
@@ -61,9 +62,9 @@ public enum MessageSerializer {
         }
 
         @Override
-        public Message doReadFrom(Connection connection) throws IOException {
-            List<String> gradleArgs = connection.readStrings();
-            List<String> jvmArgs = connection.readStrings();
+        public Message doReadFrom(Connection connection, int bodyTimeoutMillis) throws IOException {
+            List<String> gradleArgs = connection.readStrings(bodyTimeoutMillis);
+            List<String> jvmArgs = connection.readStrings(bodyTimeoutMillis);
             return new GradleInvocationParameters(gradleArgs, jvmArgs);
         }
     },
@@ -74,8 +75,8 @@ public enum MessageSerializer {
             connection.writeString(studioAgentConnectionParameters.getGradleInstallation().getPath());
         }
         @Override
-        public Message doReadFrom(Connection connection) throws IOException {
-            String gradleHome = connection.readString();
+        public Message doReadFrom(Connection connection, int bodyTimeoutMillis) throws IOException {
+            String gradleHome = connection.readString(bodyTimeoutMillis);
             return new StudioAgentConnectionParameters(new File(gradleHome));
         }
     },
@@ -88,13 +89,13 @@ public enum MessageSerializer {
         }
 
         @Override
-        public Message doReadFrom(Connection connection) throws IOException {
-            int syncId = connection.readInt();
-            StudioRequestType requestType = StudioRequestType.valueOf(connection.readString());
+        public Message doReadFrom(Connection connection, int bodyTimeoutMillis) throws IOException {
+            int syncId = connection.readInt(bodyTimeoutMillis);
+            StudioRequestType requestType = StudioRequestType.valueOf(connection.readString(bodyTimeoutMillis));
             return new StudioRequest(syncId, requestType);
         }
     },
-    STUDIO_SYNC_REQUEST((byte) 6, StudioSyncRequestCompleted.class) {
+    STUDIO_SYNC_REQUEST_COMPLETED((byte) 6, StudioSyncRequestCompleted.class) {
         @Override
         public void doWriteTo(Connection connection, Message message) throws IOException {
             StudioSyncRequestCompleted request = (StudioSyncRequestCompleted) message;
@@ -104,11 +105,24 @@ public enum MessageSerializer {
         }
 
         @Override
-        public Message doReadFrom(Connection connection) throws IOException {
-            int syncRequestCompletedId = connection.readInt();
-            long syncRequestCompletedDurationMillis = connection.readLong();
-            StudioSyncRequestResult result = StudioSyncRequestResult.valueOf(connection.readString());
+        public Message doReadFrom(Connection connection, int bodyTimeoutMillis) throws IOException {
+            int syncRequestCompletedId = connection.readInt(bodyTimeoutMillis);
+            long syncRequestCompletedDurationMillis = connection.readLong(bodyTimeoutMillis);
+            StudioSyncRequestResult result = StudioSyncRequestResult.valueOf(connection.readString(bodyTimeoutMillis));
             return new StudioSyncRequestCompleted(syncRequestCompletedId, syncRequestCompletedDurationMillis, result);
+        }
+    },
+    STUDIO_CACHE_CLEANUP_COMPLETED((byte) 7, StudioCacheCleanupCompleted.class) {
+        @Override
+        public void doWriteTo(Connection connection, Message message) throws IOException {
+            StudioCacheCleanupCompleted request = (StudioCacheCleanupCompleted) message;
+            connection.writeInt(request.getId());
+        }
+
+        @Override
+        public Message doReadFrom(Connection connection, int bodyTimeoutMillis) throws IOException {
+            int cacheCompletedId = connection.readInt(bodyTimeoutMillis);
+            return new StudioCacheCleanupCompleted(cacheCompletedId);
         }
     }
     ;
@@ -127,14 +141,14 @@ public enum MessageSerializer {
         this.type = type;
     }
 
-    protected abstract Message doReadFrom(Connection connection) throws IOException;
+    protected abstract Message doReadFrom(Connection connection, int bodyTimeoutMillis) throws IOException;
     protected abstract void doWriteTo(Connection connection, Message message) throws IOException;
 
     /**
      * Reads a message from the given connection.
      */
-    public Message readFrom(Connection connection) throws IOException {
-        return doReadFrom(connection);
+    public Message readFrom(Connection connection, int timeoutMillis) throws IOException {
+        return doReadFrom(connection, timeoutMillis);
     }
 
     /**

@@ -20,7 +20,7 @@ public class AndroidStudioSystemHelper {
     /**
      * Does a Gradle sync.
      */
-    public GradleSyncResult doGradleSync(Project project) {
+    public static GradleSyncResult doGradleSync(Project project) {
         GradleProfilerGradleSyncListener syncListener = new GradleProfilerGradleSyncListener();
         try {
             GradleSyncInvoker.getInstance().requestProjectSync(project, TRIGGER_USER_SYNC_ACTION, syncListener);
@@ -34,7 +34,7 @@ public class AndroidStudioSystemHelper {
     /**
      * Registers a listener that waits on next gradle sync if it's in progress.
      */
-    public void waitOnPreviousGradleSyncFinish(Project project) {
+    public static void waitOnPreviousGradleSyncFinish(Project project) {
         GradleProfilerGradleSyncListener syncListener = new GradleProfilerGradleSyncListener();
         MessageBusConnection connection = GradleSyncState.subscribe(project, syncListener);
         if (!GradleSyncState.getInstance(project).isSyncInProgress()) {
@@ -54,7 +54,7 @@ public class AndroidStudioSystemHelper {
      *
      * It seems there is no better way to do it atm.
      */
-    public void waitOnBackgroundProcessesFinish(Project project) {
+    public static void waitOnBackgroundProcessesFinish(Project project) {
         IdeFrame frame = WindowManagerEx.getInstanceEx().findFrameFor(project);
         StatusBarEx statusBar = frame == null ? null : (StatusBarEx) frame.getStatusBar();
         if (statusBar != null) {
@@ -63,7 +63,7 @@ public class AndroidStudioSystemHelper {
     }
 
     @SuppressWarnings("BusyWait")
-    private void waitOn(ProgressIndicator progressIndicator) {
+    private static void waitOn(ProgressIndicator progressIndicator) {
         while (progressIndicator.isRunning()) {
             try {
                 Thread.sleep(WAIT_ON_PROCESS_SLEEP_TIME);
@@ -76,8 +76,8 @@ public class AndroidStudioSystemHelper {
     /**
      * Exit the application.
      */
-    public void exit() {
+    public static void exit(Project project) {
+        waitOnBackgroundProcessesFinish(project);
         ApplicationManager.getApplication().exit(true, true, false);
     }
-
 }

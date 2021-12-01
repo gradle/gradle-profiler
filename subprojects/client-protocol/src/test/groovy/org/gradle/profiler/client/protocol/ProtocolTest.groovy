@@ -13,15 +13,14 @@ class ProtocolTest extends Specification {
         when:
         def server = new Server("some client")
         def timeout = Duration.ofSeconds(20)
-        def client = Client.INSTANCE
-        client.connect(server.port)
+        def client = new Client(server.port)
         def serverConnection = server.waitForIncoming(timeout)
 
         serverConnection.send(new StudioAgentConnectionParameters(new File("gradle-home")))
         def m1 = client.receiveConnectionParameters(timeout)
 
         client.send(new GradleInvocationStarted(1))
-        def m2 = serverConnection.receiveSyncStarted(timeout)
+        def m2 = serverConnection.receiveGradleInvocationStarted(timeout)
 
         serverConnection.send(new GradleInvocationParameters(["gradle-arg"], ["jvm-arg"]))
         def m3 = client.receiveSyncParameters(timeout)
@@ -38,7 +37,7 @@ class ProtocolTest extends Specification {
         m4.durationMillis == 123
 
         cleanup:
-        client?.disconnect()
+        client?.close()
         server?.close()
     }
 }

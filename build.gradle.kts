@@ -7,6 +7,7 @@ import java.util.Locale
 
 plugins {
     id("profiler.java-library")
+    id("profiler.android-studio-setup")
     groovy
     application
     `maven-publish`
@@ -126,6 +127,13 @@ tasks.test {
     // So I suppose the problem is that the JVM shares the TAPI client, and one of the tests leave the client in a bad state.
     // We now use forkEvery = 1 to run each test class in its own JVM, so we don't run into this problem any more.
     setForkEvery(1)
+}
+
+androidStudioTests {
+    val autoDownloadAndRunInHeadless = providers.gradleProperty("autoDownloadAndRunInHeadless").orNull == "true"
+    runAndroidStudioInHeadlessMode.set(autoDownloadAndRunInHeadless)
+    autoDownloadAndroidStudio.set(autoDownloadAndRunInHeadless)
+    testAndroidStudioVersion.set("2021.1.1.16")
 }
 
 val testReports = mapOf(

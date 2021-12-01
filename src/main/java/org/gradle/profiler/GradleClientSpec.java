@@ -4,16 +4,15 @@ import org.gradle.profiler.studio.StudioGradleClient;
 import org.gradle.tooling.GradleConnector;
 import org.gradle.tooling.ProjectConnection;
 
+import static org.gradle.profiler.studio.StudioGradleClient.CleanCacheMode.BEFORE_BUILD;
+import static org.gradle.profiler.studio.StudioGradleClient.CleanCacheMode.NEVER;
+import static org.gradle.profiler.studio.StudioGradleClient.CleanCacheMode.BEFORE_SCENARIO;
+
 /**
  * Specifies a client to be used to invoke Gradle builds.
  */
-public abstract class GradleClientSpec {
-    public static final GradleClientSpec ToolingApi = new GradleClientSpec() {
-        @Override
-        public String toString() {
-            return "Tooling API";
-        }
-
+public enum GradleClientSpec {
+    ToolingApi("Tooling API"){
         @Override
         public GradleClient create(GradleBuildConfiguration buildConfiguration, InvocationSettings invocationSettings) {
             GradleConnector connector = GradleConnector.newConnector()
@@ -22,26 +21,14 @@ public abstract class GradleClientSpec {
             ProjectConnection projectConnection = connector.forProjectDirectory(invocationSettings.getProjectDir()).connect();
             return new ToolingApiGradleClient(projectConnection);
         }
-    };
-
-    public static final GradleClientSpec GradleCli = new GradleClientSpec() {
-        @Override
-        public String toString() {
-            return "`gradle` command";
-        }
-
+    },
+    GradleCli("`gradle` command") {
         @Override
         public GradleClient create(GradleBuildConfiguration buildConfiguration, InvocationSettings invocationSettings) {
             return new CliGradleClient(buildConfiguration, buildConfiguration.getJavaHome(), invocationSettings.getProjectDir(), true, invocationSettings.getBuildLog());
         }
-    };
-
-    public static final GradleClientSpec GradleCliNoDaemon = new GradleClientSpec() {
-        @Override
-        public String toString() {
-            return "`gradle` command with --no-daemon";
-        }
-
+    },
+    GradleCliNoDaemon("`gradle` command with --no-daemon") {
         @Override
         public boolean isUsesDaemon() {
             return false;
@@ -51,19 +38,36 @@ public abstract class GradleClientSpec {
         public GradleClient create(GradleBuildConfiguration buildConfiguration, InvocationSettings invocationSettings) {
             return new CliGradleClient(buildConfiguration, buildConfiguration.getJavaHome(), invocationSettings.getProjectDir(), false, invocationSettings.getBuildLog());
         }
-    };
-
-    public static final GradleClientSpec AndroidStudio = new GradleClientSpec() {
-        @Override
-        public String toString() {
-            return "Android Studio";
-        }
-
+    },
+    AndroidStudio("Android Studio") {
         @Override
         public GradleClient create(GradleBuildConfiguration buildConfiguration, InvocationSettings invocationSettings) {
-            return new StudioGradleClient(buildConfiguration, invocationSettings);
+            return new StudioGradleClient(buildConfiguration, invocationSettings, NEVER);
+        }
+    },
+    AndroidStudioCleanCacheBeforeBuild("Android Studio with clean cache before build") {
+        @Override
+        public GradleClient create(GradleBuildConfiguration buildConfiguration, InvocationSettings invocationSettings) {
+            return new StudioGradleClient(buildConfiguration, invocationSettings, BEFORE_BUILD);
+        }
+    },
+    AndroidStudioCleanCacheBeforeScenario("Android Studio with clean cache before scenario") {
+        @Override
+        public GradleClient create(GradleBuildConfiguration buildConfiguration, InvocationSettings invocationSettings) {
+            return new StudioGradleClient(buildConfiguration, invocationSettings, BEFORE_SCENARIO);
         }
     };
+
+    private final String title;
+
+    GradleClientSpec(String title) {
+        this.title = title;
+    }
+
+    @Override
+    public String toString() {
+        return title;
+    }
 
     public boolean isUsesDaemon() {
         return true;
