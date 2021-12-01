@@ -5,12 +5,13 @@ import com.typesafe.config.Config;
 import org.gradle.profiler.BuildMutator;
 import org.gradle.profiler.CompositeBuildMutator;
 import org.gradle.profiler.InvocationSettings;
-import org.gradle.profiler.mutations.support.ProjectCombinations;
+import org.gradle.profiler.mutations.ApplyProjectDependencyChangeMutator.ProjectCombinations;
 
 import java.io.File;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
 import static org.gradle.profiler.mutations.support.ProjectCombinationsSupport.createProjectCombinations;
@@ -32,19 +33,15 @@ public class ApplyProjectDependencyChangeMutatorConfigurator implements BuildMut
         List<File> sourceFiles = sourceFiles(config, spec.getScenarioName(), settings.getProjectDir(), FILES_KEY);
         ProjectCombinations combinations = getProjectCombinations(spec, sourceFiles.size(), appliedProjectCount);
 
+        AtomicInteger index = new AtomicInteger();
         List<BuildMutator> mutatorsForKey = sourceFiles.stream()
-            .map(sourceFileToChange -> newBuildMutator(sourceFileToChange, combinations))
+            .map(sourceFileToChange -> {
+                boolean shouldCreateProjects = index.getAndIncrement() == 0;
+                return new ApplyProjectDependencyChangeMutator(settings.getProjectDir(), sourceFileToChange, combinations, shouldCreateProjects);
+            })
             .collect(Collectors.toList());
 
-        if (!mutatorsForKey.isEmpty()) {
-            mutatorsForKey.add(0, new ApplyProjectDependencyChangeSetupMutator(settings.getProjectDir(), combinations));
-        }
-
         return new CompositeBuildMutator(mutatorsForKey);
-    }
-
-    private BuildMutator newBuildMutator(File sourceFileToChange, ProjectCombinations projectCombinations) {
-        return new ApplyProjectDependencyChangeMutator(sourceFileToChange, projectCombinations);
     }
 
     private ProjectCombinations getProjectCombinations(BuildMutatorConfiguratorSpec spec, int numberOfProjects, int appliedProjectDependencies) {

@@ -11,23 +11,15 @@ import java.util.stream.Collectors;
 public class ScenarioSupport {
 
     public static List<File> sourceFiles(Config config, String scenarioName, File projectDir, String key) {
-        return ConfigUtil.strings(config, key)
-            .stream()
-            .map(fileName -> openFile(fileName, projectDir, scenarioName))
+        return ConfigUtil.strings(config, key).stream()
             .filter(Objects::nonNull)
+            .map(fileName -> new File(projectDir, fileName))
+            .peek(file -> {
+                if (!file.isFile()) {
+                    throw new IllegalArgumentException("Source file " + file.getName() + " specified for scenario " + scenarioName + " does not exist.");
+                }
+            })
             .collect(Collectors.toList());
-    }
-
-    private static File openFile(String fileName, File projectDir, String scenarioName) {
-        if (fileName == null) {
-            return null;
-        } else {
-            File file = new File(projectDir, fileName);
-            if (!file.isFile()) {
-                throw new IllegalArgumentException("Source file " + file.getName() + " specified for scenario " + scenarioName + " does not exist.");
-            }
-            return file;
-        }
     }
 
 }

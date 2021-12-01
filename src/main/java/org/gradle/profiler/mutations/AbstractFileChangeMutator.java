@@ -38,7 +38,7 @@ public abstract class AbstractFileChangeMutator implements BuildMutator {
         revert(sourceFile, originalText);
     }
 
-    private void revert(File file, String originalText) {
+    protected void revert(File file, String originalText) {
         FileSupport.writeUnchecked(file.toPath(), originalText);
     }
 

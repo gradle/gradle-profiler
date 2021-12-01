@@ -64,7 +64,7 @@ class ApplyChangeToAndroidLayoutFileMutatorTest extends AbstractMutatorTest {
 
         when:
         mutator.beforeScenario(scenarioContext)
-        mutator.beforeBuild(buildContext)
+        sourceFile.text = "some-change"
         mutator.afterScenario(scenarioContext)
 
         then:

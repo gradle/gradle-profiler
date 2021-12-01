@@ -41,7 +41,7 @@ class ApplyAbiChangeToJavaSourceFileMutatorTest extends AbstractMutatorTest impl
 
         when:
         mutator.beforeScenario(scenarioContext)
-        mutator.beforeBuild(buildContext)
+        sourceFile.text = "some-change"
         mutator.afterScenario(scenarioContext)
 
         then:

@@ -28,7 +28,7 @@ public class CompositeBuildMutator implements BuildMutator {
 
 	@Override
 	public void afterCleanup(BuildContext context, Throwable error) {
-		for (BuildMutator mutator : mutators) {
+		for (BuildMutator mutator : Lists.reverse(mutators)) {
 			mutator.afterCleanup(context, error);
 		}
 	}
@@ -42,7 +42,7 @@ public class CompositeBuildMutator implements BuildMutator {
 
 	@Override
 	public void afterBuild(BuildContext context, Throwable error) {
-		for (BuildMutator mutator : mutators) {
+		for (BuildMutator mutator : Lists.reverse(mutators)) {
 			mutator.afterBuild(context, error);
 		}
 	}
