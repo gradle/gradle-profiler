@@ -11,12 +11,12 @@ import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
 import static com.google.common.base.Preconditions.checkArgument;
-import static org.gradle.profiler.mutations.ApplyProjectDependencyChangeMutatorConfigurator.APPLIED_PROJECTS_COUNT_KEY;
+import static org.gradle.profiler.mutations.ApplyProjectDependencyChangeMutatorConfigurator.DEPENDENCY_COUNT_KEY;
 
 public class ProjectCombinationsSupport {
 
     public static ProjectCombinations createProjectCombinations(int numberOfRequiredCombinations, int appliedProjectsCount) {
-        checkArgument(appliedProjectsCount > 0, String.format("Value '%s' should be greater than 0.", APPLIED_PROJECTS_COUNT_KEY));
+        checkArgument(appliedProjectsCount > 0, String.format("Value '%s' should be greater than 0.", DEPENDENCY_COUNT_KEY));
         int projectsToGenerate = calculateNumberOfProjectsToGenerate(numberOfRequiredCombinations, appliedProjectsCount);
         List<String> projectNames = IntStream.range(0, projectsToGenerate)
             .mapToObj(index -> String.format("generated-dependency-%s", index))

@@ -19,9 +19,9 @@ import static org.gradle.profiler.mutations.support.ScenarioSupport.sourceFiles;
 
 public class ApplyProjectDependencyChangeMutatorConfigurator implements BuildMutatorConfigurator {
 
-    public static final String APPLIED_PROJECTS_COUNT_KEY = "applied-projects-count";
+    public static final String DEPENDENCY_COUNT_KEY = "dependency-count";
     private static final String FILES_KEY = "files";
-    private static final Set<String> VALID_CONFIG_KEYS = ImmutableSet.of(APPLIED_PROJECTS_COUNT_KEY, FILES_KEY);
+    private static final Set<String> VALID_CONFIG_KEYS = ImmutableSet.of(DEPENDENCY_COUNT_KEY, FILES_KEY);
     private static final int DEFAULT_APPLIED_PROJECTS_COUNT = 3;
 
     @Override
@@ -61,8 +61,8 @@ public class ApplyProjectDependencyChangeMutatorConfigurator implements BuildMut
     }
 
     private int getAppliedProjectCount(Config config) {
-        return config.hasPath(APPLIED_PROJECTS_COUNT_KEY)
-            ? config.getInt(APPLIED_PROJECTS_COUNT_KEY)
+        return config.hasPath(DEPENDENCY_COUNT_KEY)
+            ? config.getInt(DEPENDENCY_COUNT_KEY)
             : DEFAULT_APPLIED_PROJECTS_COUNT;
     }
 }

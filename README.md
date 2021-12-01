@@ -312,12 +312,11 @@ They can be added to a scenario file like this:
         apply-build-script-change-to = "build.gradle.kts"
         apply-project-dependency-change-to {
             files = ["build.gradle"]
-            # Default number of applied-projects-count is 3.
+            # Default number of dependency-count is 3.
             # Gradle Profiler will simulate changes to project dependencies by generate some additional projects and then add a combination of project dependencies to every non-generated subprojects before each iteration.
             # The profiler will generate the minimal number of subprojects to allow for a unique combination of dependencies to be used for each iteration.
-            # Note: Number of projects is calculated as binomial coffiecient: "X choose applied-projects-count = iterations * files",
-            # Because of this the higher the applied-projects-count is the fewer projects will be generated.
-            applied-projects-count = 3
+            # Note: Number of generated projects is calculated as binomial coffiecient: "from `x` choose `dependency-count` = `iterations * files`", where number of generated projects is `x`.
+            dependency-count = 3
         }
         apply-abi-change-to = "src/main/java/MyThing.java"
         apply-non-abi-change-to = ["src/main/java/MyThing.java", "src/main/java/MyOtherThing.java"]

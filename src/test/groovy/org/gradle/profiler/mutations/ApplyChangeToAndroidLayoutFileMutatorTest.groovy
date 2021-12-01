@@ -33,7 +33,6 @@ class ApplyChangeToAndroidLayoutFileMutatorTest extends AbstractMutatorTest {
         mutator.beforeBuild(buildContext)
 
         then:
-        println sourceFile.text
         sourceFile.text == """\
         <layout><LinearLayout><View 
             android:id="@+id/view_276d92f3_16ac_4064_9a18_5f1dfd67992f_testScenario_3c4925d7_MEASURE_7"
