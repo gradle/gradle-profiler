@@ -313,9 +313,10 @@ They can be added to a scenario file like this:
         apply-project-dependency-change-to {
             files = ["build.gradle"]
             # Default number of applied-projects-count is 3.
-            # Gradle-profiler will generate minimal number of projects to have a unique combination of project dependencies every run.
+            # Gradle Profiler will simulate changes to project dependencies by generate some additional projects and then add a combination of project dependencies to every non-generated subprojects before each iteration.
+            # The profiler will generate the minimal number of subprojects to allow for a unique combination of dependencies to be used for each iteration.
             # Note: Number of projects is calculated as binomial coffiecient: "X choose applied-projects-count = iterations * files",
-            # due to that, higher the applied-projects-count is, less projects will be generated.
+            # Because of this the higher the applied-projects-count is the fewer projects will be generated.
             applied-projects-count = 3
         }
         apply-abi-change-to = "src/main/java/MyThing.java"
