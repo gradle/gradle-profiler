@@ -1,5 +1,6 @@
 package org.gradle.profiler.mutations;
 
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Sets;
 import com.google.common.math.IntMath;
@@ -140,7 +141,8 @@ public class ApplyProjectDependencyChangeMutator extends AbstractFileChangeMutat
             return combinations.next();
         }
 
-        public static ProjectCombinations createProjectCombinations(int numberOfRequiredCombinations, int appliedProjectsCount) {
+        @VisibleForTesting
+        static ProjectCombinations createProjectCombinations(int numberOfRequiredCombinations, int appliedProjectsCount) {
             checkArgument(appliedProjectsCount > 0, String.format("Value '%s' should be greater than 0.", DEPENDENCY_COUNT_KEY));
             int projectsToGenerate = calculateNumberOfProjectsToGenerate(numberOfRequiredCombinations, appliedProjectsCount);
             List<String> projectNames = IntStream.range(0, projectsToGenerate)

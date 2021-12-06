@@ -1,4 +1,4 @@
-package org.gradle.profiler.mutations.support
+package org.gradle.profiler.mutations
 
 
 import spock.lang.Specification
