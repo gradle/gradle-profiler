@@ -1,7 +1,7 @@
 package org.gradle.profiler.mutations
 
 import static org.gradle.profiler.mutations.ApplyProjectDependencyChangeMutator.ProjectCombinations
-import static org.gradle.profiler.mutations.support.ProjectCombinationsSupport.createProjectCombinations
+import static org.gradle.profiler.mutations.ApplyProjectDependencyChangeMutator.ProjectCombinations.createProjectCombinations
 
 class ApplyProjectDependencyChangeMutatorTest extends AbstractMutatorTest {
 

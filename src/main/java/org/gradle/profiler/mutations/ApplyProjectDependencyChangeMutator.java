@@ -1,9 +1,16 @@
 package org.gradle.profiler.mutations;
 
+import com.google.common.collect.ImmutableSet;
+import com.google.common.collect.Sets;
+import com.google.common.math.IntMath;
+import com.typesafe.config.Config;
 import org.apache.commons.io.FileUtils;
 import org.gradle.profiler.BuildContext;
 import org.gradle.profiler.BuildInvoker;
+import org.gradle.profiler.BuildMutator;
+import org.gradle.profiler.CompositeBuildMutator;
 import org.gradle.profiler.GradleBuildInvoker;
+import org.gradle.profiler.InvocationSettings;
 import org.gradle.profiler.ScenarioContext;
 import org.gradle.profiler.mutations.support.FileSupport;
 
@@ -13,10 +20,19 @@ import java.io.UncheckedIOException;
 import java.nio.file.StandardOpenOption;
 import java.util.Collections;
 import java.util.Iterator;
+import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 import java.util.stream.Stream;
+
+import static com.google.common.base.Preconditions.checkArgument;
+import static org.gradle.profiler.mutations.ApplyProjectDependencyChangeMutator.Configurator.DEPENDENCY_COUNT_KEY;
+import static org.gradle.profiler.mutations.ApplyProjectDependencyChangeMutator.ProjectCombinations.createProjectCombinations;
+import static org.gradle.profiler.mutations.support.ScenarioSupport.sourceFiles;
 
 /**
  * Adds a project dependency to the source file.
@@ -122,6 +138,79 @@ public class ApplyProjectDependencyChangeMutator extends AbstractFileChangeMutat
 
         public Set<String> getNextCombination() {
             return combinations.next();
+        }
+
+        public static ProjectCombinations createProjectCombinations(int numberOfRequiredCombinations, int appliedProjectsCount) {
+            checkArgument(appliedProjectsCount > 0, String.format("Value '%s' should be greater than 0.", DEPENDENCY_COUNT_KEY));
+            int projectsToGenerate = calculateNumberOfProjectsToGenerate(numberOfRequiredCombinations, appliedProjectsCount);
+            List<String> projectNames = IntStream.range(0, projectsToGenerate)
+                .mapToObj(index -> String.format("generated-dependency-%s", index))
+                .collect(Collectors.toList());
+            Set<Set<String>> combinations = Sets.combinations(new LinkedHashSet<>(projectNames), appliedProjectsCount);
+            return new ProjectCombinations(projectNames, combinations);
+        }
+
+        private static int calculateNumberOfProjectsToGenerate(int numberOfRequiredCombinations, int appliedProjectsCount) {
+            if (appliedProjectsCount == 1) {
+                return numberOfRequiredCombinations;
+            }
+            int projectsToGenerate = appliedProjectsCount;
+            while (IntMath.binomial(projectsToGenerate, appliedProjectsCount) < numberOfRequiredCombinations) {
+                // We could be smarter but this is good enough
+                // unless we have more billions of iterations
+                projectsToGenerate++;
+            }
+            return projectsToGenerate;
+        }
+    }
+
+    public static class Configurator implements BuildMutatorConfigurator {
+
+        public static final String DEPENDENCY_COUNT_KEY = "dependency-count";
+        private static final String FILES_KEY = "files";
+        private static final Set<String> VALID_CONFIG_KEYS = ImmutableSet.of(DEPENDENCY_COUNT_KEY, FILES_KEY);
+        private static final int DEFAULT_APPLIED_PROJECTS_COUNT = 3;
+
+        @Override
+        public BuildMutator configure(String key, BuildMutatorConfiguratorSpec spec) {
+            Config config = spec.getScenario().getConfig(key);
+            validateConfig(key, spec.getScenarioName(), spec.getInvocationSettings().getScenarioFile(), config);
+            int appliedProjectCount = getAppliedProjectCount(config);
+            InvocationSettings settings = spec.getInvocationSettings();
+            List<File> sourceFiles = sourceFiles(config, spec.getScenarioName(), settings.getProjectDir(), FILES_KEY);
+            ProjectCombinations combinations = getProjectCombinations(spec, sourceFiles.size(), appliedProjectCount);
+
+            AtomicInteger index = new AtomicInteger();
+            List<BuildMutator> mutatorsForKey = sourceFiles.stream()
+                .map(sourceFileToChange -> {
+                    boolean shouldCreateProjects = index.getAndIncrement() == 0;
+                    return new ApplyProjectDependencyChangeMutator(settings.getProjectDir(), sourceFileToChange, combinations, shouldCreateProjects);
+                })
+                .collect(Collectors.toList());
+
+            return new CompositeBuildMutator(mutatorsForKey);
+        }
+
+        private ProjectCombinations getProjectCombinations(BuildMutatorConfiguratorSpec spec, int numberOfProjects, int appliedProjectDependencies) {
+            int numberOfIterations = spec.getWarmupCount() + spec.getBuildCount();
+            int numberOfRequiredCombinations = numberOfIterations * numberOfProjects;
+            return createProjectCombinations(numberOfRequiredCombinations, appliedProjectDependencies);
+        }
+
+        private void validateConfig(String key, String scenarioName, File scenarioFile, Config config) {
+            Set<String> invalidKeys = config.entrySet().stream()
+                .map(Map.Entry::getKey)
+                .filter(entryKey -> !VALID_CONFIG_KEYS.contains(entryKey))
+                .collect(Collectors.toSet());
+            if (!invalidKeys.isEmpty()) {
+                throw new IllegalArgumentException("Unrecognized keys " + invalidKeys + " found for '" + scenarioName + "." + key + "' defined in scenario file " + scenarioFile + ": " + invalidKeys);
+            }
+        }
+
+        private int getAppliedProjectCount(Config config) {
+            return config.hasPath(DEPENDENCY_COUNT_KEY)
+                ? config.getInt(DEPENDENCY_COUNT_KEY)
+                : DEFAULT_APPLIED_PROJECTS_COUNT;
         }
     }
 }

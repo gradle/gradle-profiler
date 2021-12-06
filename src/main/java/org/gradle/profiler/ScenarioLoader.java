@@ -16,7 +16,7 @@ import org.gradle.profiler.mutations.ApplyChangeToComposableKotlinFileMutator;
 import org.gradle.profiler.mutations.ApplyChangeToNativeSourceFileMutator;
 import org.gradle.profiler.mutations.ApplyChangeToPropertyResourceFileMutator;
 import org.gradle.profiler.mutations.ApplyNonAbiChangeToSourceFileMutator;
-import org.gradle.profiler.mutations.ApplyProjectDependencyChangeMutatorConfigurator;
+import org.gradle.profiler.mutations.ApplyProjectDependencyChangeMutator;
 import org.gradle.profiler.mutations.ApplyValueChangeToAndroidResourceFileMutator;
 import org.gradle.profiler.mutations.BuildMutatorConfigurator;
 import org.gradle.profiler.mutations.BuildMutatorConfigurator.BuildMutatorConfiguratorSpec;
@@ -92,7 +92,7 @@ class ScenarioLoader {
 
     private static final Map<String, BuildMutatorConfigurator> BUILD_MUTATOR_CONFIGURATORS = ImmutableMap.<String, BuildMutatorConfigurator>builder()
         .put(APPLY_BUILD_SCRIPT_CHANGE_TO, new FileChangeMutatorConfigurator(ApplyBuildScriptChangeFileMutator.class))
-        .put(APPLY_PROJECT_DEPENDENCY_CHANGE_TO, new ApplyProjectDependencyChangeMutatorConfigurator())
+        .put(APPLY_PROJECT_DEPENDENCY_CHANGE_TO, new ApplyProjectDependencyChangeMutator.Configurator())
         .put(APPLY_ABI_CHANGE_TO, new FileChangeMutatorConfigurator(ApplyAbiChangeToSourceFileMutator.class))
         .put(APPLY_NON_ABI_CHANGE_TO, new FileChangeMutatorConfigurator(ApplyNonAbiChangeToSourceFileMutator.class))
         .put(APPLY_ANDROID_RESOURCE_CHANGE_TO, new FileChangeMutatorConfigurator(ApplyChangeToAndroidResourceFileMutator.class))

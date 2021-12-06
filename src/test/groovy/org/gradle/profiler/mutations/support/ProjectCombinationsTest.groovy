@@ -1,12 +1,15 @@
 package org.gradle.profiler.mutations.support
 
+
 import spock.lang.Specification
 
-class ProjectCombinationsSupportTest extends Specification {
+import static org.gradle.profiler.mutations.ApplyProjectDependencyChangeMutator.ProjectCombinations.createProjectCombinations
+
+class ProjectCombinationsTest extends Specification {
 
     def "creates combinations for given number of required combinations"() {
         when:
-        def combinations = ProjectCombinationsSupport.createProjectCombinations(4, 2)
+        def combinations = createProjectCombinations(4, 2)
 
         then:
         combinations.getProjectNames() == ["generated-dependency-0", "generated-dependency-1", "generated-dependency-2", "generated-dependency-3"] as List<String>
