@@ -60,11 +60,13 @@ public class GitRevertMutator extends AbstractGitMutator {
     public static class Configurator implements BuildMutatorConfigurator {
 		@Override
 		public BuildMutator configure(Config scenario, String scenarioName, InvocationSettings settings, String key) {
-			List<String> commits = ConfigUtil.strings(scenario, key);
-			if (commits.isEmpty()) {
-				throw new IllegalArgumentException("No commits specified for git-revert");
-			}
-			return new GitRevertMutator(settings.getProjectDir(), commits);
+            return new HasPathBuildMutatorConfigurator(() -> {
+                List<String> commits = ConfigUtil.strings(scenario, key);
+                if (commits.isEmpty()) {
+                    throw new IllegalArgumentException("No commits specified for git-revert");
+                }
+                return new GitRevertMutator(settings.getProjectDir(), commits);
+            }).configure(scenario, scenarioName, settings, key);
 		}
 	}
 

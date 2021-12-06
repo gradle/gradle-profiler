@@ -22,12 +22,15 @@ public class FileChangeMutatorConfigurator implements BuildMutatorConfigurator {
 
 	@Override
 	public BuildMutator configure(Config scenario, String scenarioName, InvocationSettings settings, String key) {
-		List<BuildMutator> mutatorsForKey = new ArrayList<>();
-		for (File sourceFileToChange : sourceFiles(scenario, scenarioName, settings.getProjectDir(), key)) {
-			mutatorsForKey.add(getBuildMutatorForFile(sourceFileToChange));
-		}
+        return new HasPathBuildMutatorConfigurator(() -> {
+            List<BuildMutator> mutatorsForKey = new ArrayList<>();
+            for (File sourceFileToChange : sourceFiles(scenario, scenarioName,
+                settings.getProjectDir(), key)) {
+                mutatorsForKey.add(getBuildMutatorForFile(sourceFileToChange));
+            }
 
-		return new CompositeBuildMutator(mutatorsForKey);
+            return new CompositeBuildMutator(mutatorsForKey);
+        }).configure(scenario, scenarioName, settings, key);
 	}
 
 	private BuildMutator getBuildMutatorForFile(File sourceFileToChange) {

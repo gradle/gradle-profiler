@@ -10,7 +10,9 @@ public abstract class AbstractBuildMutatorWithoutOptionsConfigurator implements 
 
     @Override
     public BuildMutator configure(Config scenario, String scenarioName, InvocationSettings settings, String key) {
-        boolean enabled = scenario.getBoolean(key);
-        return enabled ? createBuildMutator(settings) : BuildMutator.NOOP;
+        return new HasPathBuildMutatorConfigurator(() -> {
+            boolean enabled = scenario.getBoolean(key);
+            return enabled ? createBuildMutator(settings) : BuildMutator.NOOP;
+        }).configure(scenario,scenarioName,settings,key);
     }
 }

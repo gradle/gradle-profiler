@@ -66,11 +66,14 @@ public abstract class AbstractCleanupMutator implements BuildMutator {
     protected static abstract class Configurator implements BuildMutatorConfigurator {
         @Override
         public BuildMutator configure(Config scenario, String scenarioName, InvocationSettings settings, String key) {
-            CleanupSchedule schedule = ConfigUtil.enumValue(scenario, key, CleanupSchedule.class, null);
-            if (schedule == null) {
-                throw new IllegalArgumentException("Schedule for cleanup is not specified");
-            }
-            return newInstance(scenario, scenarioName, settings, key, schedule);
+            return new HasPathBuildMutatorConfigurator(() -> {
+                CleanupSchedule schedule = ConfigUtil
+                    .enumValue(scenario, key, CleanupSchedule.class, null);
+                if (schedule == null) {
+                    throw new IllegalArgumentException("Schedule for cleanup is not specified");
+                }
+                return newInstance(scenario, scenarioName, settings, key, schedule);
+            }).configure(scenario, scenarioName, settings, key);
         }
 
         protected abstract BuildMutator newInstance(Config scenario, String scenarioName, InvocationSettings settings, String key, CleanupSchedule schedule);
