@@ -11,7 +11,6 @@ import org.gradle.profiler.client.protocol.messages.GradleInvocationParameters;
 import org.gradle.profiler.client.protocol.messages.GradleInvocationStarted;
 import org.gradle.profiler.client.protocol.messages.StudioRequest;
 import org.gradle.profiler.client.protocol.messages.StudioSyncRequestCompleted;
-import org.gradle.profiler.client.protocol.messages.StudioSyncRequestCompleted.StudioSyncRequestResult;
 import org.gradle.profiler.instrument.GradleInstrumentation;
 import org.gradle.profiler.studio.process.StudioProcess.StudioConnections;
 import org.gradle.profiler.studio.process.StudioProcessController;
@@ -34,8 +33,10 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import static org.gradle.profiler.client.protocol.messages.StudioRequest.StudioRequestType.CLEANUP_CACHE;
 import static org.gradle.profiler.client.protocol.messages.StudioRequest.StudioRequestType.EXIT_IDE;
 import static org.gradle.profiler.client.protocol.messages.StudioRequest.StudioRequestType.SYNC;
+import static org.gradle.profiler.client.protocol.messages.StudioSyncRequestCompleted.StudioSyncRequestResult.FAILED;
 
 public class StudioGradleClient implements GradleClient {
+
 
     public enum CleanCacheMode {
         BEFORE_SCENARIO,
@@ -52,6 +53,7 @@ public class StudioGradleClient implements GradleClient {
     private final StudioPluginInstaller studioPluginInstaller;
     private final CleanCacheMode cleanCacheMode;
     private final ExecutorService executor;
+    private final StudioSandbox sandbox;
     private boolean isFirstRun;
 
     public StudioGradleClient(GradleBuildConfiguration buildConfiguration, InvocationSettings invocationSettings, CleanCacheMode cleanCacheMode) {
@@ -59,7 +61,7 @@ public class StudioGradleClient implements GradleClient {
         this.cleanCacheMode = cleanCacheMode;
         Path studioInstallDir = invocationSettings.getStudioInstallDir().toPath();
         Optional<File> studioSandboxDir = invocationSettings.getStudioSandboxDir();
-        StudioSandbox sandbox = StudioSandboxCreator.createSandbox(studioSandboxDir.map(File::toPath).orElse(null));
+        this.sandbox = StudioSandboxCreator.createSandbox(studioSandboxDir.map(File::toPath).orElse(null));
         Path protocolJar = GradleInstrumentation.unpackPlugin("client-protocol").toPath();
         Path studioPlugin = GradleInstrumentation.unpackPlugin("studio-plugin").toPath();
         this.studioPluginInstaller = new StudioPluginInstaller(sandbox.getPluginsDir());
@@ -83,20 +85,30 @@ public class StudioGradleClient implements GradleClient {
             System.out.println("* Running sync in Android Studio...");
             connections.getPluginConnection().send(new StudioRequest(SYNC));
             System.out.println("* Sent sync request");
-            Pair<StudioSyncRequestResult, BuildActionResult> pair = waitForSyncToFinish(connections, gradleArgs, jvmArgs);
-            StudioSyncRequestResult syncRequestResult = pair.getLeft();
+            Pair<StudioSyncRequestCompleted, BuildActionResult> pair = waitForSyncToFinish(connections, gradleArgs, jvmArgs);
+            StudioSyncRequestCompleted syncRequestResult = pair.getLeft();
             BuildActionResult durationResult = pair.getRight();
             long fullGradleDuration = durationResult.getGradleToolingAgentExecutionTime().stream()
                 .mapToLong(Duration::toMillis)
                 .sum();
             System.out.printf("* Full Gradle execution time: %dms%n", fullGradleDuration);
             System.out.printf("* Full IDE execution time: %dms%n", durationResult.getIdeExecutionTime().get().toMillis());
-            System.out.printf("* Full sync has completed in: %dms and it %s%n", durationResult.getExecutionTime().toMillis(), syncRequestResult);
+            System.out.printf("* Full sync has completed in: %dms and it %s%n", durationResult.getExecutionTime().toMillis(), syncRequestResult.getResult());
+            maybeThrownExceptionOnSyncFailure(syncRequestResult);
             return durationResult;
         });
     }
 
-    private Pair<StudioSyncRequestResult, BuildActionResult> waitForSyncToFinish(StudioConnections connections, List<String> gradleArgs, List<String> jvmArgs) {
+    private void maybeThrownExceptionOnSyncFailure(StudioSyncRequestCompleted syncRequestResult) {
+        if (syncRequestResult.getResult() == FAILED) {
+            throw new IllegalStateException(String.format("Gradle sync has failed with error message: '%s'. Full Android Studio logs can be found in: '%s'.",
+                syncRequestResult.getErrorMessage(),
+                new File(sandbox.getLogsDir().toFile(), "idea.log").getAbsolutePath())
+            );
+        }
+    }
+
+    private Pair<StudioSyncRequestCompleted, BuildActionResult> waitForSyncToFinish(StudioConnections connections, List<String> gradleArgs, List<String> jvmArgs) {
         System.out.println("* Sync has started, waiting for it to complete...");
         AtomicBoolean isSyncRequestCompleted = new AtomicBoolean();
         CompletableFuture<List<Duration>> gradleInvocations = CompletableFuture.supplyAsync(() -> collectGradleInvocations(connections, isSyncRequestCompleted, gradleArgs, jvmArgs), executor);
@@ -111,7 +123,7 @@ public class StudioGradleClient implements GradleClient {
             gradleInvocationDurations,
             Duration.ofMillis(syncRequestCompleted.getDurationMillis() - fullGradleDuration)
         );
-        return Pair.of(syncRequestCompleted.getResult(), result);
+        return Pair.of(syncRequestCompleted, result);
     }
 
     private List<Duration> collectGradleInvocations(StudioConnections connections, AtomicBoolean isSyncRequestCompleted, List<String> gradleArgs, List<String> jvmArgs) {

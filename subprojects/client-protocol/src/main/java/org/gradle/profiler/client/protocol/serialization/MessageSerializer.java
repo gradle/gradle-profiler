@@ -102,6 +102,7 @@ public enum MessageSerializer {
             connection.writeInt(request.getId());
             connection.writeLong(request.getDurationMillis());
             connection.writeString(request.getResult().toString());
+            connection.writeString(request.getErrorMessage());
         }
 
         @Override
@@ -109,7 +110,8 @@ public enum MessageSerializer {
             int syncRequestCompletedId = connection.readInt(bodyTimeoutMillis);
             long syncRequestCompletedDurationMillis = connection.readLong(bodyTimeoutMillis);
             StudioSyncRequestResult result = StudioSyncRequestResult.valueOf(connection.readString(bodyTimeoutMillis));
-            return new StudioSyncRequestCompleted(syncRequestCompletedId, syncRequestCompletedDurationMillis, result);
+            String failureReason = connection.readString(bodyTimeoutMillis);
+            return new StudioSyncRequestCompleted(syncRequestCompletedId, syncRequestCompletedDurationMillis, result, failureReason);
         }
     },
     STUDIO_CACHE_CLEANUP_COMPLETED((byte) 7, StudioCacheCleanupCompleted.class) {

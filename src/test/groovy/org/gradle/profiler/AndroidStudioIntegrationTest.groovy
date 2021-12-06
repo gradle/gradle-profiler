@@ -190,6 +190,38 @@ class AndroidStudioIntegrationTest extends AbstractProfilerIntegrationTest {
         process.kill()
     }
 
+
+    @Requires({ StudioFinder.findStudioHome() })
+    def "fails fast if Android Studio sync fails"() {
+        given:
+        def scenarioFile = file("performance.scenarios") << """
+            $scenarioName {
+                android-studio-sync {
+                }
+            }
+        """
+        def markerFolder = tmpDir.newFolder()
+        buildFile << """
+            File markerFile = new File("${markerFolder.absolutePath}", "marker.txt")
+            if (markerFile.exists()) {
+                throw new RuntimeException("File exists")
+            } else {
+                markerFile.createNewFile()
+            }
+        """
+
+        when:
+        runBenchmark(scenarioFile, 1, 2)
+
+        then:
+        def e = thrown(Main.ScenarioFailedException)
+        println e.getCause().message
+        e.getCause().message == "Gradle sync has failed with error message: 'File exists\n\nConsult IDE log for more details (Help | Show Log)'. Full Android Studio logs can be found in: '${new File(sandboxDir.absolutePath + "/logs/idea.log")}'."
+        logFile.find("Full Gradle execution time").size() == 1
+        logFile.find("Full sync has completed in").size() == 1
+        logFile.find("and it FAILED").size() == 1
+    }
+
     def runBenchmark(File scenarioFile, int warmups, int iterations) {
         new Main().run(
             "--project-dir", projectDir.absolutePath,
