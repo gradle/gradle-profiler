@@ -31,6 +31,7 @@ class ApplyChangeToComposableKotlinFileMutatorTest extends AbstractMutatorTest {
         def mutator = new ApplyChangeToAndroidManifestFileMutator(sourceFile)
 
         when:
+        mutator.beforeScenario(scenarioContext)
         mutator.afterScenario(scenarioContext)
 
         then:
@@ -44,7 +45,7 @@ class ApplyChangeToComposableKotlinFileMutatorTest extends AbstractMutatorTest {
 
         when:
         mutator.beforeScenario(scenarioContext)
-        mutator.beforeBuild(buildContext)
+        sourceFile.text = "some-change"
         mutator.afterScenario(scenarioContext)
 
         then:

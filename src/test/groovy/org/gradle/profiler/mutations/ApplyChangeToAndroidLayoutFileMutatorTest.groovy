@@ -8,6 +8,7 @@ class ApplyChangeToAndroidLayoutFileMutatorTest extends AbstractMutatorTest {
         def mutator = new ApplyChangeToAndroidLayoutFileMutator(sourceFile)
 
         when:
+        mutator.beforeScenario(scenarioContext)
         mutator.beforeBuild(buildContext)
 
         then:
@@ -28,6 +29,7 @@ class ApplyChangeToAndroidLayoutFileMutatorTest extends AbstractMutatorTest {
         def mutator = new ApplyChangeToAndroidLayoutFileMutator(sourceFile)
 
         when:
+        mutator.beforeScenario(scenarioContext)
         mutator.beforeBuild(buildContext)
 
         then:
@@ -47,6 +49,7 @@ class ApplyChangeToAndroidLayoutFileMutatorTest extends AbstractMutatorTest {
         def mutator = new ApplyChangeToAndroidLayoutFileMutator(sourceFile)
 
         when:
+        mutator.beforeScenario(scenarioContext)
         mutator.afterScenario(scenarioContext)
 
         then:
@@ -59,7 +62,8 @@ class ApplyChangeToAndroidLayoutFileMutatorTest extends AbstractMutatorTest {
         def mutator = new ApplyChangeToAndroidLayoutFileMutator(sourceFile)
 
         when:
-        mutator.beforeBuild(buildContext)
+        mutator.beforeScenario(scenarioContext)
+        sourceFile.text = "some-change"
         mutator.afterScenario(scenarioContext)
 
         then:

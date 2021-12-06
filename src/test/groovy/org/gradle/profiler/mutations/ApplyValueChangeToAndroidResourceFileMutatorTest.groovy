@@ -8,6 +8,7 @@ class ApplyValueChangeToAndroidResourceFileMutatorTest extends AbstractMutatorTe
         def mutator = new ApplyValueChangeToAndroidResourceFileMutator(sourceFile)
 
         when:
+        mutator.beforeScenario(scenarioContext)
         mutator.beforeBuild(buildContext)
 
         then:
@@ -20,6 +21,7 @@ class ApplyValueChangeToAndroidResourceFileMutatorTest extends AbstractMutatorTe
         def mutator = new ApplyValueChangeToAndroidResourceFileMutator(sourceFile)
 
         when:
+        mutator.beforeScenario(scenarioContext)
         mutator.afterScenario(scenarioContext)
 
         then:
@@ -32,7 +34,8 @@ class ApplyValueChangeToAndroidResourceFileMutatorTest extends AbstractMutatorTe
         def mutator = new ApplyChangeToAndroidResourceFileMutator(sourceFile)
 
         when:
-        mutator.beforeBuild(buildContext)
+        mutator.beforeScenario(scenarioContext)
+        sourceFile.text = "some-change"
         mutator.afterScenario(scenarioContext)
 
         then:

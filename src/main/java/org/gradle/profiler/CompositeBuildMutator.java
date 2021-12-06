@@ -1,5 +1,7 @@
 package org.gradle.profiler;
 
+import com.google.common.collect.Lists;
+
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -26,7 +28,7 @@ public class CompositeBuildMutator implements BuildMutator {
 
 	@Override
 	public void afterCleanup(BuildContext context, Throwable error) {
-		for (BuildMutator mutator : mutators) {
+		for (BuildMutator mutator : Lists.reverse(mutators)) {
 			mutator.afterCleanup(context, error);
 		}
 	}
@@ -40,14 +42,14 @@ public class CompositeBuildMutator implements BuildMutator {
 
 	@Override
 	public void afterBuild(BuildContext context, Throwable error) {
-		for (BuildMutator mutator : mutators) {
+		for (BuildMutator mutator : Lists.reverse(mutators)) {
 			mutator.afterBuild(context, error);
 		}
 	}
 
 	@Override
 	public void afterScenario(ScenarioContext context) {
-		for (BuildMutator mutator : mutators) {
+		for (BuildMutator mutator : Lists.reverse(mutators)) {
 			mutator.afterScenario(context);
 		}
 	}
