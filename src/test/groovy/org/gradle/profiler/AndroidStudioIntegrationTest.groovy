@@ -202,9 +202,9 @@ class AndroidStudioIntegrationTest extends AbstractProfilerIntegrationTest {
         """
         def markerFolder = tmpDir.newFolder()
         buildFile << """
-            File markerFile = new File("${markerFolder.absolutePath}", "marker.txt")
+            File markerFile = new File('${markerFolder.absolutePath}', 'marker.txt')
             if (markerFile.exists()) {
-                throw new RuntimeException("File exists")
+                throw new RuntimeException('File exists')
             } else {
                 markerFile.createNewFile()
             }
