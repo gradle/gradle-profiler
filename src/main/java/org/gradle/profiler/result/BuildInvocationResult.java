@@ -1,12 +1,34 @@
 package org.gradle.profiler.result;
 
+import org.gradle.profiler.BuildAction.BuildActionResult;
 import org.gradle.profiler.BuildContext;
 
 import java.time.Duration;
 
 public class BuildInvocationResult {
     private final BuildContext buildContext;
-    private final Duration executionTime;
+    private final BuildActionResult actionResult;
+
+    public BuildInvocationResult(BuildContext buildContext, BuildActionResult actionResult) {
+        this.buildContext = buildContext;
+        this.actionResult = actionResult;
+    }
+
+    public String getDisplayName() {
+        return buildContext.getDisplayName();
+    }
+
+    public BuildContext getBuildContext() {
+        return buildContext;
+    }
+
+    public BuildActionResult getActionResult() {
+        return actionResult;
+    }
+
+    public Duration getExecutionTime() {
+        return actionResult.getExecutionTime();
+    }
 
     public static final Sample<BuildInvocationResult> EXECUTION_TIME = new Sample<BuildInvocationResult>() {
         @Override
@@ -19,21 +41,4 @@ public class BuildInvocationResult {
             return result.getExecutionTime();
         }
     };
-
-    public BuildInvocationResult(BuildContext buildContext, Duration executionTime) {
-        this.buildContext = buildContext;
-        this.executionTime = executionTime;
-    }
-
-    public String getDisplayName() {
-        return buildContext.getDisplayName();
-    }
-
-    public BuildContext getBuildContext() {
-        return buildContext;
-    }
-
-    public Duration getExecutionTime() {
-        return executionTime;
-    }
 }

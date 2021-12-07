@@ -10,14 +10,11 @@ import org.gradle.profiler.result.SampleProvider;
 
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.function.Consumer;
-import java.util.stream.IntStream;
 
-import static java.util.stream.Collectors.toList;
 import static org.gradle.profiler.BuildStep.CLEANUP;
 import static org.gradle.profiler.Phase.MEASURE;
 import static org.gradle.profiler.Phase.WARM_UP;
@@ -36,11 +33,6 @@ public class GradleScenarioInvoker extends ScenarioInvoker<GradleScenarioDefinit
         return results -> {
             ImmutableList.Builder<Sample<? super GradleBuildInvocationResult>> builder = ImmutableList.builder();
             builder.add(BuildInvocationResult.EXECUTION_TIME);
-            if (scenario.isAndroidStudioSync()) {
-                builder.addAll(getAllGradleToolingAgentExecutimeTimeSamples(results));
-                builder.add(GradleBuildInvocationResult.GRADLE_TOOLING_AGENT_TOTAL_EXECUTION_TIME);
-                builder.add(GradleBuildInvocationResult.IDE_EXECUTION_TIME);
-            }
             if (settings.isMeasureGarbageCollection()) {
                 builder.add(GradleBuildInvocationResult.GARBAGE_COLLECTION_TIME);
             }
@@ -54,24 +46,8 @@ public class GradleScenarioInvoker extends ScenarioInvoker<GradleScenarioDefinit
         };
     }
 
-    private List<Sample<GradleBuildInvocationResult>> getAllGradleToolingAgentExecutimeTimeSamples(List<GradleBuildInvocationResult> results) {
-        int maxGradleExecutions = results.stream()
-            .mapToInt(result -> result.getGradleToolingAgentExecutionTime().size())
-            .max()
-            .orElse(1);
-        if (maxGradleExecutions <= 1) {
-            // In case we have just one Gradle execution, we don't need to split it into multiple executions.
-            // So we can return empty list here, and we will show only GRADLE_TOOLING_AGENT_TOTAL_EXECUTION_TIME.
-            return Collections.emptyList();
-        }
-        return IntStream.range(0, maxGradleExecutions)
-            .mapToObj(GradleBuildInvocationResult::getGradleToolingAgentExecutionTime)
-            .collect(toList());
-
-    }
-
     @Override
-    public void doRun(GradleScenarioDefinition scenario, InvocationSettings settings, Consumer<GradleBuildInvocationResult> resultConsumer) throws IOException, InterruptedException {
+    public void run(GradleScenarioDefinition scenario, InvocationSettings settings, Consumer<GradleBuildInvocationResult> resultConsumer) throws IOException, InterruptedException {
         if (settings.isProfile() && scenario.getWarmUpCount() == 0) {
             throw new IllegalStateException("Using the --profile option requires at least one warm-up");
         }

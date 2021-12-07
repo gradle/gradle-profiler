@@ -10,7 +10,7 @@ import java.util.stream.Collectors;
 
 public class BuckScenarioInvoker extends BuildToolCommandLineInvoker<BuckScenarioDefinition, BuildInvocationResult> {
     @Override
-    void doRun(BuckScenarioDefinition scenario, InvocationSettings settings, Consumer<BuildInvocationResult> resultConsumer) {
+    public void run(BuckScenarioDefinition scenario, InvocationSettings settings, Consumer<BuildInvocationResult> resultConsumer) {
         String buckwExe = settings.getProjectDir() + "/buckw";
         List<String> targets = new ArrayList<>(scenario.getTargets());
         if (scenario.getType() != null) {

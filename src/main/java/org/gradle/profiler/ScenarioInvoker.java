@@ -8,18 +8,11 @@ import java.io.IOException;
 import java.util.function.Consumer;
 
 public abstract class ScenarioInvoker<T extends ScenarioDefinition, R extends BuildInvocationResult> {
-    /**
-     * Runs a scenario and collects the results.
-     */
-    public final void run(T scenario, InvocationSettings settings, BenchmarkResultCollector collector) throws IOException, InterruptedException {
-        Consumer<R> resultConsumer = collector.scenario(scenario, samplesFor(settings, scenario));
-        doRun(scenario, settings, resultConsumer);
-    }
 
     /**
      * Runs a scenario and collects the results.
      */
-    abstract void doRun(T scenario, InvocationSettings settings, Consumer<R> resultConsumer) throws IOException, InterruptedException;
+    public abstract void run(T scenario, InvocationSettings settings, Consumer<R> resultConsumer) throws IOException, InterruptedException;
 
     /**
      * Which samples will this invoker generate for the given settings?
