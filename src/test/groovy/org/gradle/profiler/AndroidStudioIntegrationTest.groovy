@@ -215,11 +215,13 @@ class AndroidStudioIntegrationTest extends AbstractProfilerIntegrationTest {
 
         then:
         def e = thrown(Main.ScenarioFailedException)
+        println new File(sandboxDir.absolutePath + "/logs/idea.log").text
         println e.getCause().message
         e.getCause().message == "Gradle sync has failed with error message: 'File exists\n\nConsult IDE log for more details (Help | Show Log)'. Full Android Studio logs can be found in: '${new File(sandboxDir.absolutePath + "/logs/idea.log")}'."
         logFile.find("Full Gradle execution time").size() == 1
         logFile.find("Full sync has completed in").size() == 1
         logFile.find("and it FAILED").size() == 1
+
     }
 
     def runBenchmark(File scenarioFile, int warmups, int iterations) {
