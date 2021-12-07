@@ -1,5 +1,6 @@
 package org.gradle.profiler;
 
+import org.gradle.profiler.BuildAction.BuildActionResult;
 import org.gradle.profiler.result.BuildInvocationResult;
 
 import java.io.File;
@@ -50,7 +51,7 @@ public abstract class BuildToolCommandLineInvoker<T extends BuildToolCommandLine
                     new CommandExec().inDir(workingDir).runAndCollectOutput(buildLog, commandLine);
                 }
                 Duration executionTime = timer.elapsed();
-                return (R) new BuildInvocationResult(buildContext, executionTime);
+                return (R) new BuildInvocationResult(buildContext, new BuildActionResult(executionTime));
             }
         };
     }

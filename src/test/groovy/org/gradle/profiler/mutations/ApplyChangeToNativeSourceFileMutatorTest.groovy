@@ -11,6 +11,7 @@ class ApplyChangeToNativeSourceFileMutatorTest extends AbstractMutatorTest {
         def mutator = new ApplyChangeToNativeSourceFileMutator(sourceFile)
 
         when:
+        mutator.beforeScenario(scenarioContext)
         mutator.beforeBuild(buildContext)
 
         then:
@@ -27,6 +28,7 @@ class ApplyChangeToNativeSourceFileMutatorTest extends AbstractMutatorTest {
         def mutator = new ApplyChangeToNativeSourceFileMutator(sourceFile)
 
         when:
+        mutator.beforeScenario(scenarioContext)
         mutator.beforeBuild(buildContext)
 
         then:
@@ -46,12 +48,14 @@ class ApplyChangeToNativeSourceFileMutatorTest extends AbstractMutatorTest {
         def mutatorH = new ApplyChangeToNativeSourceFileMutator(sourceFileH)
 
         when:
+        mutatorC.beforeScenario(scenarioContext)
         mutatorC.beforeBuild(buildContext)
 
         then:
         sourceFileCPP.text == " \nint _m_276d92f3_16ac_4064_9a18_5f1dfd67992f_testScenario_3c4925d7_MEASURE_7 () { }"
 
         when:
+        mutatorH.beforeScenario(scenarioContext)
         mutatorH.beforeBuild(buildContext)
 
         then:

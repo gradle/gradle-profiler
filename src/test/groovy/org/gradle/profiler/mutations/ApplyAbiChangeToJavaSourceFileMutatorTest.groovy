@@ -1,7 +1,5 @@
 package org.gradle.profiler.mutations
 
-import com.github.javaparser.JavaParser
-
 class ApplyAbiChangeToJavaSourceFileMutatorTest extends AbstractMutatorTest implements JavaParserFixture {
 
     def "adds and replaces public method at end of source file"() {
@@ -10,6 +8,7 @@ class ApplyAbiChangeToJavaSourceFileMutatorTest extends AbstractMutatorTest impl
         def mutator = new ApplyAbiChangeToJavaSourceFileMutator(sourceFile)
 
         when:
+        mutator.beforeScenario(scenarioContext)
         mutator.beforeBuild(buildContext)
 
         then:
@@ -22,6 +21,7 @@ class ApplyAbiChangeToJavaSourceFileMutatorTest extends AbstractMutatorTest impl
         def mutator = new ApplyAbiChangeToJavaSourceFileMutator(sourceFile)
 
         when:
+        mutator.beforeScenario(scenarioContext)
         mutator.afterScenario(scenarioContext)
 
         then:
@@ -40,7 +40,8 @@ class ApplyAbiChangeToJavaSourceFileMutatorTest extends AbstractMutatorTest impl
         def mutator = new ApplyAbiChangeToJavaSourceFileMutator(sourceFile)
 
         when:
-        mutator.beforeBuild(buildContext)
+        mutator.beforeScenario(scenarioContext)
+        sourceFile.text = "some-change"
         mutator.afterScenario(scenarioContext)
 
         then:

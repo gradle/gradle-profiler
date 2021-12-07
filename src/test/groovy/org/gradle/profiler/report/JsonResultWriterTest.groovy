@@ -309,7 +309,7 @@ class JsonResultWriterTest extends Specification {
         final BuildContext context
 
         GradleInvocationResult(BuildContext context, long executionTime, long testTime) {
-            super(context, Duration.ofMillis(executionTime))
+            super(context, new BuildAction.BuildActionResult(Duration.ofMillis(executionTime)))
             this.testTime = Duration.ofMillis(testTime)
             this.context = context
         }

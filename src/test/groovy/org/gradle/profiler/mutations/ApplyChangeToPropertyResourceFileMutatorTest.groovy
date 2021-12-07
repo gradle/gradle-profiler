@@ -9,6 +9,7 @@ class ApplyChangeToPropertyResourceFileMutatorTest extends AbstractMutatorTest {
         def mutator = new ApplyChangeToPropertyResourceFileMutator(sourceFile)
 
         when:
+        mutator.beforeScenario(scenarioContext)
         mutator.beforeBuild(buildContext)
 
         then:
@@ -21,6 +22,7 @@ class ApplyChangeToPropertyResourceFileMutatorTest extends AbstractMutatorTest {
         def mutator = new ApplyChangeToPropertyResourceFileMutator(sourceFile)
 
         when:
+        mutator.beforeScenario(scenarioContext)
         mutator.afterScenario(scenarioContext)
 
         then:
@@ -33,7 +35,8 @@ class ApplyChangeToPropertyResourceFileMutatorTest extends AbstractMutatorTest {
         def mutator = new ApplyChangeToPropertyResourceFileMutator(sourceFile)
 
         when:
-        mutator.beforeBuild(buildContext)
+        mutator.beforeScenario(scenarioContext)
+        sourceFile.text = "some-change"
         mutator.afterScenario(scenarioContext)
 
         then:

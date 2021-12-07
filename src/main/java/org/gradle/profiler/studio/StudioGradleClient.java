@@ -14,6 +14,7 @@ import org.gradle.profiler.client.protocol.messages.StudioSyncRequestCompleted;
 import org.gradle.profiler.instrument.GradleInstrumentation;
 import org.gradle.profiler.studio.process.StudioProcess.StudioConnections;
 import org.gradle.profiler.studio.process.StudioProcessController;
+import org.gradle.profiler.studio.invoker.StudioBuildActionResult;
 import org.gradle.profiler.studio.tools.StudioPluginInstaller;
 import org.gradle.profiler.studio.tools.StudioSandboxCreator;
 import org.gradle.profiler.studio.tools.StudioSandboxCreator.StudioSandbox;
@@ -36,7 +37,6 @@ import static org.gradle.profiler.client.protocol.messages.StudioRequest.StudioR
 import static org.gradle.profiler.client.protocol.messages.StudioSyncRequestCompleted.StudioSyncRequestResult.FAILED;
 
 public class StudioGradleClient implements GradleClient {
-
 
     public enum CleanCacheMode {
         BEFORE_SCENARIO,
@@ -85,14 +85,11 @@ public class StudioGradleClient implements GradleClient {
             System.out.println("* Running sync in Android Studio...");
             connections.getPluginConnection().send(new StudioRequest(SYNC));
             System.out.println("* Sent sync request");
-            Pair<StudioSyncRequestCompleted, BuildActionResult> pair = waitForSyncToFinish(connections, gradleArgs, jvmArgs);
+            Pair<StudioSyncRequestCompleted, StudioBuildActionResult> pair = waitForSyncToFinish(connections, gradleArgs, jvmArgs);
             StudioSyncRequestCompleted syncRequestResult = pair.getLeft();
-            BuildActionResult durationResult = pair.getRight();
-            long fullGradleDuration = durationResult.getGradleToolingAgentExecutionTime().stream()
-                .mapToLong(Duration::toMillis)
-                .sum();
-            System.out.printf("* Full Gradle execution time: %dms%n", fullGradleDuration);
-            System.out.printf("* Full IDE execution time: %dms%n", durationResult.getIdeExecutionTime().get().toMillis());
+            StudioBuildActionResult durationResult = pair.getRight();
+            System.out.printf("* Full Gradle execution time: %dms%n", durationResult.getGradleTotalExecutionTime().toMillis());
+            System.out.printf("* Full IDE execution time: %dms%n", durationResult.getIdeExecutionTime().toMillis());
             System.out.printf("* Full sync has completed in: %dms and it %s%n", durationResult.getExecutionTime().toMillis(), syncRequestResult.getResult());
             maybeThrownExceptionOnSyncFailure(syncRequestResult);
             return durationResult;
@@ -108,20 +105,21 @@ public class StudioGradleClient implements GradleClient {
         }
     }
 
-    private Pair<StudioSyncRequestCompleted, BuildActionResult> waitForSyncToFinish(StudioConnections connections, List<String> gradleArgs, List<String> jvmArgs) {
+    private Pair<StudioSyncRequestCompleted, StudioBuildActionResult> waitForSyncToFinish(StudioConnections connections, List<String> gradleArgs, List<String> jvmArgs) {
         System.out.println("* Sync has started, waiting for it to complete...");
         AtomicBoolean isSyncRequestCompleted = new AtomicBoolean();
         CompletableFuture<List<Duration>> gradleInvocations = CompletableFuture.supplyAsync(() -> collectGradleInvocations(connections, isSyncRequestCompleted, gradleArgs, jvmArgs), executor);
         StudioSyncRequestCompleted syncRequestCompleted = connections.getPluginConnection().receiveSyncRequestCompleted(SYNC_REQUEST_COMPLETED_TIMEOUT);
         isSyncRequestCompleted.set(true);
         List<Duration> gradleInvocationDurations = gradleInvocations.join();
-        long fullGradleDuration = gradleInvocationDurations.stream()
+        long totalGradleDuration = gradleInvocationDurations.stream()
             .mapToLong(Duration::toMillis)
             .sum();
-        BuildActionResult result = BuildActionResult.withIdeTimings(
+        StudioBuildActionResult result = new StudioBuildActionResult(
             Duration.ofMillis(syncRequestCompleted.getDurationMillis()),
+            Duration.ofMillis(totalGradleDuration),
             gradleInvocationDurations,
-            Duration.ofMillis(syncRequestCompleted.getDurationMillis() - fullGradleDuration)
+            Duration.ofMillis(syncRequestCompleted.getDurationMillis() - totalGradleDuration)
         );
         return Pair.of(syncRequestCompleted, result);
     }

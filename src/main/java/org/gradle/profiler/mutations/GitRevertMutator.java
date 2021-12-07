@@ -1,6 +1,5 @@
 package org.gradle.profiler.mutations;
 
-import com.typesafe.config.Config;
 import org.gradle.profiler.BuildContext;
 import org.gradle.profiler.BuildMutator;
 import org.gradle.profiler.CommandExec;
@@ -59,11 +58,12 @@ public class GitRevertMutator extends AbstractGitMutator {
 
     public static class Configurator implements BuildMutatorConfigurator {
 		@Override
-		public BuildMutator configure(Config scenario, String scenarioName, InvocationSettings settings, String key) {
-			List<String> commits = ConfigUtil.strings(scenario, key);
+		public BuildMutator configure(String key, BuildMutatorConfiguratorSpec spec) {
+			List<String> commits = ConfigUtil.strings(spec.getScenario(), key);
 			if (commits.isEmpty()) {
 				throw new IllegalArgumentException("No commits specified for git-revert");
 			}
+			InvocationSettings settings = spec.getInvocationSettings();
 			return new GitRevertMutator(settings.getProjectDir(), commits);
 		}
 	}

@@ -8,7 +8,7 @@ import java.util.function.Consumer;
 
 public class BazelScenarioInvoker extends BuildToolCommandLineInvoker<BazelScenarioDefinition, BuildInvocationResult> {
     @Override
-    void doRun(BazelScenarioDefinition scenario, InvocationSettings settings, Consumer<BuildInvocationResult> resultConsumer) {
+    public void run(BazelScenarioDefinition scenario, InvocationSettings settings, Consumer<BuildInvocationResult> resultConsumer) {
         List<String> targets = scenario.getTargets();
 
         List<String> commandLine = new ArrayList<>();

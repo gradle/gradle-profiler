@@ -1,5 +1,6 @@
 package org.gradle.profiler.mutations
 
+
 import org.gradle.profiler.DefaultScenarioContext
 import org.gradle.profiler.Phase
 import org.junit.Rule

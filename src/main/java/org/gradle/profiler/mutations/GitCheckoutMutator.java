@@ -62,13 +62,14 @@ public class GitCheckoutMutator extends AbstractGitMutator {
 
 	public static class Configurator implements BuildMutatorConfigurator {
 		@Override
-		public BuildMutator configure(Config scenario, String scenarioName, InvocationSettings settings, String key) {
-			Config config = scenario.getConfig(key);
+		public BuildMutator configure(String key, BuildMutatorConfiguratorSpec spec) {
+			Config config = spec.getScenario().getConfig(key);
 			String cleanup = ConfigUtil.string(config, "cleanup", null);
 			String build = ConfigUtil.string(config, "build", null);
 			if (build == null) {
 				throw new IllegalArgumentException("No git-checkout target specified for build");
 			}
+			InvocationSettings settings = spec.getInvocationSettings();
 			return new GitCheckoutMutator(settings.getProjectDir(), cleanup, build);
 		}
 	}
