@@ -73,14 +73,14 @@ public class GradleProfilerClient {
         LOG.info(String.format("[SYNC REQUEST %s] Sync has started%n", request.getId()));
         GradleSyncResult result = doGradleSync(project);
         waitOnBackgroundProcessesFinish(project);
-        LOG.info(String.format("[SYNC REQUEST %s] '%s': '%s'%n", request.getId(), result.getResult(), result.getErrorMessage().isEmpty() ? "no message" : result.getErrorMessage()));
-        client.send(new StudioSyncRequestCompleted(request.getId(), stopwatch.elapsed(TimeUnit.MILLISECONDS), result.getResult()));
+        String errorMessage = result.getErrorMessage().isEmpty() ? "no error message" : result.getErrorMessage();
+        LOG.info(String.format("[SYNC REQUEST %s] '%s': '%s'%n", request.getId(), result.getResult(), errorMessage));
+        client.send(new StudioSyncRequestCompleted(request.getId(), stopwatch.elapsed(TimeUnit.MILLISECONDS), result.getResult(), errorMessage));
     }
 
     /**
      * This code is similar to one in com.intellij.ide.InvalidateCacheService in IntelliJ Community project,
      * it just does not make a dialog to restart IDE.
-     * @param request
      */
     private void cleanupCache(StudioRequest request) {
         CachesInvalidator.EP_NAME.getExtensionList().forEach(it -> {

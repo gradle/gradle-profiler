@@ -190,6 +190,33 @@ class AndroidStudioIntegrationTest extends AbstractProfilerIntegrationTest {
         process.kill()
     }
 
+
+    @Requires({ StudioFinder.findStudioHome() })
+    def "fails fast if Android Studio sync fails"() {
+        given:
+        def scenarioFile = file("performance.scenarios") << """
+            $scenarioName {
+                android-studio-sync {
+                }
+            }
+        """
+        buildFile << """
+            if (System.getProperty("idea.sync.active") != null) {
+                throw new GradleException("Sync test failure")
+            }
+        """
+
+        when:
+        runBenchmark(scenarioFile, 1, 2)
+
+        then:
+        def e = thrown(Main.ScenarioFailedException)
+        e.getCause().message.startsWith("Gradle sync has failed with error message:")
+        logFile.find("Full Gradle execution time").size() == 1
+        logFile.find("Full sync has completed in").size() == 1
+        logFile.find("and it FAILED").size() == 1
+    }
+
     def runBenchmark(File scenarioFile, int warmups, int iterations) {
         new Main().run(
             "--project-dir", projectDir.absolutePath,
