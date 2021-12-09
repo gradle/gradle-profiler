@@ -32,7 +32,7 @@ public class StudioBuildInvocationResult extends GradleBuildInvocationResult {
 
         @Override
         public Duration extractFrom(StudioBuildInvocationResult result) {
-            return result.getExecutionTime();
+            return result.getActionResult().getGradleTotalExecutionTime();
         }
     };
 
