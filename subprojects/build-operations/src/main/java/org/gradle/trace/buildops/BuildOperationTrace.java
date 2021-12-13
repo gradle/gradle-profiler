@@ -15,8 +15,6 @@ import org.gradle.internal.operations.OperationFinishEvent;
 import org.gradle.internal.operations.OperationIdentifier;
 import org.gradle.internal.operations.OperationProgressEvent;
 import org.gradle.internal.operations.OperationStartEvent;
-import org.gradle.tooling.events.FinishEvent;
-import org.gradle.tooling.events.OperationCompletionListener;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -47,8 +45,8 @@ public class BuildOperationTrace {
         Provider<GcTimeCollectionService> listenerProvider = sharedServices.registerIfAbsent("gc-time", GcTimeCollectionService.class, spec -> {
             spec.getParameters().getOutputFile().set(outFile);
         });
-        // Force the service to be instantiated so we actually get a close() call at the end of the build
-        registry.onTaskCompletion(listenerProvider);
+        // Force the service to be instantiated, so we actually get a close() call at the end of the build
+        registry.onOperationCompletion(listenerProvider);
         return this;
     }
 
@@ -74,21 +72,31 @@ public class BuildOperationTrace {
         }
     }
 
-    public static abstract class GcTimeCollectionService implements BuildService<GcTimeCollectionService.Params>, OperationCompletionListener, AutoCloseable {
+    public static abstract class GcTimeCollectionService implements BuildService<GcTimeCollectionService.Params>, BuildOperationListener, AutoCloseable {
         interface Params extends BuildServiceParameters {
             RegularFileProperty getOutputFile();
         }
 
         @Override
-        public void onFinish(FinishEvent event) {
+        public void started(BuildOperationDescriptor buildOperationDescriptor, OperationStartEvent operationStartEvent) {
+            // Ignore, we are only interested in the callback to close()
+        }
+
+        @Override
+        public void finished(BuildOperationDescriptor buildOperationDescriptor, OperationFinishEvent operationFinishEvent) {
+            // Ignore, we are only interested in the callback to close()
+        }
+
+        @Override
+        public void progress(OperationIdentifier operationIdentifier, OperationProgressEvent progressEvent) {
             // Ignore, we are only interested in the callback to close()
         }
 
         @Override
         public void close() throws Exception {
             writeToFile(getParameters().getOutputFile().getAsFile().get(), ManagementFactory.getGarbageCollectorMXBeans().stream()
-                .map(GarbageCollectorMXBean::getCollectionTime)
-                .reduce(0L, Long::sum));
+                .mapToLong(GarbageCollectorMXBean::getCollectionTime)
+                .sum());
         }
     }
 

@@ -7,6 +7,7 @@ import org.gradle.profiler.studio.tools.StudioPluginInstaller
 import org.gradle.profiler.studio.tools.StudioSandboxCreator
 import spock.lang.Requires
 
+@Requires({ StudioFinder.findStudioHome() })
 class AndroidStudioIntegrationTest extends AbstractProfilerIntegrationTest {
 
     File sandboxDir
@@ -19,7 +20,6 @@ class AndroidStudioIntegrationTest extends AbstractProfilerIntegrationTest {
         scenarioName = "scenario"
     }
 
-    @Requires({ StudioFinder.findStudioHome() })
     def "benchmarks Android Studio sync with latest gradle version"() {
         given:
         def scenarioFile = file("performance.scenarios") << """
@@ -41,11 +41,9 @@ class AndroidStudioIntegrationTest extends AbstractProfilerIntegrationTest {
         logFile.find("* Starting Android Studio").size() == 1
 
         and:
-        File benchmarkCsv = outputDir.listFiles().find { it.name.matches("benchmark.csv") }
-        benchmarkCsv.text.contains("value,total execution time,Gradle total execution time,IDE execution time")
+        resultFile.lines[3] == "value,total execution time,Gradle total execution time,IDE execution time"
     }
 
-    @Requires({ StudioFinder.findStudioHome() })
     def "benchmarks Android Studio sync for project with buildSrc"() {
         // This tests that Android Studio can call Gradle multiple times during a sync
         given:
@@ -78,11 +76,9 @@ class AndroidStudioIntegrationTest extends AbstractProfilerIntegrationTest {
         logFile.find("* Starting Android Studio").size() == 1
 
         and:
-        File benchmarkCsv = outputDir.listFiles().find { it.name.matches("benchmark.csv") }
-        benchmarkCsv.text.contains("value,total execution time,Gradle execution time #1,Gradle execution time #2,Gradle total execution time,IDE execution time")
+        resultFile.lines[3] == "value,total execution time,Gradle execution time #1,Gradle execution time #2,Gradle total execution time,IDE execution time"
     }
 
-    @Requires({ StudioFinder.findStudioHome() })
     def "benchmarks Android Studio sync by cleaning ide cache before build"() {
         given:
         def scenarioFile = file("performance.scenarios") << """
@@ -104,7 +100,6 @@ class AndroidStudioIntegrationTest extends AbstractProfilerIntegrationTest {
         logFile.find("* Starting Android Studio").size() == 4
     }
 
-    @Requires({ StudioFinder.findStudioHome() })
     def "benchmarks Android Studio sync by cleaning ide cache before scenario"() {
         given:
         def scenarioFile = file("performance.scenarios") << """
@@ -126,7 +121,6 @@ class AndroidStudioIntegrationTest extends AbstractProfilerIntegrationTest {
         logFile.find("* Starting Android Studio").size() == 2
     }
 
-    @Requires({ StudioFinder.findStudioHome() })
     def "detects if two Android Studio processes are running in the same sandbox"() {
         given:
         File otherStudioProjectDir = tmpDir.newFolder('project')
@@ -159,7 +153,6 @@ class AndroidStudioIntegrationTest extends AbstractProfilerIntegrationTest {
         process.kill()
     }
 
-    @Requires({ StudioFinder.findStudioHome() })
     def "allows two Android Studio processes in different sandboxes"() {
         given:
         File sandboxDir1 = tmpDir.newFolder('sandbox1')
@@ -190,8 +183,6 @@ class AndroidStudioIntegrationTest extends AbstractProfilerIntegrationTest {
         process.kill()
     }
 
-
-    @Requires({ StudioFinder.findStudioHome() })
     def "fails fast if Android Studio sync fails"() {
         given:
         def scenarioFile = file("performance.scenarios") << """
@@ -217,8 +208,42 @@ class AndroidStudioIntegrationTest extends AbstractProfilerIntegrationTest {
         logFile.find("and it FAILED").size() == 1
     }
 
-    def runBenchmark(File scenarioFile, int warmups, int iterations) {
-        new Main().run(
+    def "benchmarks Android Studio sync with gc measurement, configuration time measurement and operation time measurement"() {
+        given:
+        def scenarioFile = file("performance.scenarios") << """
+            $scenarioName {
+                android-studio-sync {
+                }
+            }
+        """
+        buildFile << """
+            System.gc()
+        """
+
+        when:
+        runBenchmark(scenarioFile, 1, 2,
+            "--measure-gc",
+            "--measure-config-time",
+            "--measure-build-op", "org.gradle.initialization.ConfigureBuildBuildOperationType")
+
+        then:
+        logFile.find("Gradle invocation 1 has completed in").size() == 3
+        logFile.find("Full sync has completed in").size() == 3
+        logFile.find("and it SUCCEEDED").size() == 3
+
+        and:
+        def lines = resultFile.lines
+        lines[3] == "value,total execution time,garbage collection time,task start,ConfigureBuildBuildOperationType,Gradle total execution time,IDE execution time"
+        def matcher = lines[4] =~ /warm-up build #1,(\d+),(?<gc>\d+),(?<taskStart>\d+),(?<buildOp>\d+),(\d+),(\d+)/
+        matcher.matches()
+        assert matcher.group("gc") as long > 0
+        assert matcher.group("taskStart") as long > 0
+        assert matcher.group("buildOp") as long > 0
+
+    }
+
+    def runBenchmark(File scenarioFile, int warmups, int iterations, String... additionalArgs) {
+        List<String> args = [
             "--project-dir", projectDir.absolutePath,
             "--output-dir", outputDir.absolutePath,
             "--gradle-version", latestSupportedGradleVersion,
@@ -228,6 +253,9 @@ class AndroidStudioIntegrationTest extends AbstractProfilerIntegrationTest {
             "--studio-sandbox-dir", sandboxDir.absolutePath,
             "--warmups", "$warmups",
             "--iterations", "$iterations",
-            scenarioName)
+            *additionalArgs,
+            scenarioName
+        ]
+        new Main().run(*args)
     }
 }
