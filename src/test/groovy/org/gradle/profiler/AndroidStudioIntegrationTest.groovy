@@ -33,6 +33,7 @@ class AndroidStudioIntegrationTest extends AbstractProfilerIntegrationTest {
         runBenchmark(scenarioFile, 2, 3)
 
         then:
+        println new File(sandboxDir.absolutePath, "logs/idea.log").text
         logFile.find("Gradle invocation 1 has completed in").size() == 5
         logFile.find("Gradle invocation 2 has completed in").size() == 0
         logFile.find("Full sync has completed in").size() == 5
@@ -60,6 +61,7 @@ class AndroidStudioIntegrationTest extends AbstractProfilerIntegrationTest {
         runBenchmark(scenarioFile, 1, 1)
 
         then:
+        println new File(sandboxDir.absolutePath, "logs/idea.log").text
         logFile.find("Gradle invocation 1 has completed in").size() == 2
         logFile.find("Gradle invocation 2 has completed in").size() == 2
         def firstDurations = (logFile.text =~ /Gradle invocation 1 has completed in: (\d+)ms/)
@@ -92,6 +94,7 @@ class AndroidStudioIntegrationTest extends AbstractProfilerIntegrationTest {
         runBenchmark(scenarioFile, 1, 2)
 
         then:
+        println new File(sandboxDir.absolutePath, "logs/idea.log").text
         logFile.find("Gradle invocation 1 has completed in").size() == 3
         logFile.find("Full sync has completed in").size() == 3
         logFile.find("and it SUCCEEDED").size() == 3
@@ -113,6 +116,7 @@ class AndroidStudioIntegrationTest extends AbstractProfilerIntegrationTest {
         runBenchmark(scenarioFile, 1, 2)
 
         then:
+        println new File(sandboxDir.absolutePath, "logs/idea.log").text
         logFile.find("Gradle invocation 1 has completed in").size() == 3
         logFile.find("Full sync has completed in").size() == 3
         logFile.find("and it SUCCEEDED").size() == 3
@@ -142,6 +146,7 @@ class AndroidStudioIntegrationTest extends AbstractProfilerIntegrationTest {
         runBenchmark(scenarioFile, 1, 1)
 
         then:
+        println new File(sandboxDir.absolutePath, "logs/idea.log").text
         def e = thrown(Main.ScenarioFailedException)
         e.getCause().message == "Timeout waiting for incoming connection from start-detector."
         logFile.containsOne("* ERROR")
@@ -176,6 +181,7 @@ class AndroidStudioIntegrationTest extends AbstractProfilerIntegrationTest {
         runBenchmark(scenarioFile, 1, 1)
 
         then:
+        println new File(sandboxDir.absolutePath, "logs/idea.log").text
         logFile.find("Gradle invocation 1 has completed in").size() == 2
         logFile.find("Full sync has completed in").size() == 2
 
@@ -232,6 +238,7 @@ class AndroidStudioIntegrationTest extends AbstractProfilerIntegrationTest {
         logFile.find("and it SUCCEEDED").size() == 3
 
         and:
+        println new File(sandboxDir.absolutePath, "logs/idea.log").text
         def lines = resultFile.lines
         lines[3] == "value,total execution time,garbage collection time,task start,ConfigureBuildBuildOperationType,Gradle total execution time,IDE execution time"
         def matcher = lines[4] =~ /warm-up build #1,(\d+),(?<gc>\d+),(?<taskStart>\d+),(?<buildOp>\d+),(\d+),(\d+)/
