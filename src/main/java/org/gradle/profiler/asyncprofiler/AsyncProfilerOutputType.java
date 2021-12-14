@@ -34,7 +34,7 @@ public enum AsyncProfilerOutputType {
     abstract File outputFileFor(ScenarioSettings settings);
 
     File individualOutputFileFor(ScenarioSettings settings) {
-        File outputFile = outputFileFor(settings);
+        File outputFile = outputFileFor(settings).getAbsoluteFile();
         return settings.getScenario().createsMultipleProcesses()
             ? new File(outputFile, "profile-%t-%p.jfr")
             : outputFile;
