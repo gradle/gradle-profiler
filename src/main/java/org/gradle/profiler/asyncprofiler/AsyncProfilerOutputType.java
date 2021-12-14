@@ -9,13 +9,13 @@ public enum AsyncProfilerOutputType {
     STACKS("collapsed") {
         @Override
         File outputFileFor(ScenarioSettings settings) {
-            return settings.profilerOutputLocationFor(".stacks.txt").getAbsoluteFile();
+            return settings.profilerOutputLocationFor(".stacks.txt");
         }
     },
     JFR("jfr") {
         @Override
         File outputFileFor(ScenarioSettings settings) {
-            return settings.computeJfrProfilerOutputLocation().getAbsoluteFile();
+            return settings.computeJfrProfilerOutputLocation();
         }
     };
 
