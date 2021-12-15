@@ -97,7 +97,7 @@ class CommandLineParser {
             return null;
         }
 
-        File projectDir = parsedOptions.valueOf(projectOption);
+        File projectDir = toAbsoluteFileOrNull(parsedOptions.valueOf(projectOption));
         boolean hasProfiler = parsedOptions.has(profilerOption);
         ProfilerFactory profilerFactory = ProfilerFactory.NONE;
         if (hasProfiler) {
@@ -111,8 +111,8 @@ class CommandLineParser {
             return fail(parser, "Neither --profile or --benchmark specified.");
         }
 
-        File outputDir = parsedOptions.valueOf(outputDirOption);
-        File gradleUserHome = parsedOptions.valueOf(gradleUserHomeOption);
+        File outputDir = toAbsoluteFileOrNull(parsedOptions.valueOf(outputDirOption));
+        File gradleUserHome = toAbsoluteFileOrNull(parsedOptions.valueOf(gradleUserHomeOption));
         Integer warmups = parsedOptions.valueOf(warmupsOption);
         Integer iterations = parsedOptions.valueOf(iterationsOption);
         boolean measureGarbageCollection = parsedOptions.has(measureGarbageCollectionOption);
@@ -121,9 +121,9 @@ class CommandLineParser {
 
         List<String> targetNames = parsedOptions.nonOptionArguments().stream().map(Object::toString).collect(Collectors.toList());
         List<String> gradleVersions = parsedOptions.valuesOf(gradleVersionOption);
-        File scenarioFile = parsedOptions.valueOf(scenarioFileOption);
-        File studioInstallDir = parsedOptions.valueOf(studioHomeOption);
-        File studioSandboxDir = parsedOptions.valueOf(studioSandboxOption);
+        File scenarioFile = toAbsoluteFileOrNull(parsedOptions.valueOf(scenarioFileOption));
+        File studioInstallDir = toAbsoluteFileOrNull(parsedOptions.valueOf(studioHomeOption));
+        File studioSandboxDir = toAbsoluteFileOrNull(parsedOptions.valueOf(studioSandboxOption));
         if (parsedOptions.has(disableStudioSandbox)) {
             studioSandboxDir = null;
         } else if (studioSandboxDir == null) {
@@ -216,5 +216,9 @@ class CommandLineParser {
 
     private void showVersion() {
         System.out.printf("Gradle Profiler version %s%n", CommandLineParser.class.getPackage().getImplementationVersion());
+    }
+
+    private File toAbsoluteFileOrNull(@Nullable File file) {
+        return file == null ? null : file.getAbsoluteFile();
     }
 }
