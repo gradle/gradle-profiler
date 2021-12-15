@@ -267,6 +267,8 @@ Here is an example:
         # Measure an Android studio sync
         # Note: Android Studio Bumblebee (2021.1.1) or newer is required
         android-studio-sync {
+            # Override default Android Studio jvm args
+            # studio-jvm-args = ["-Xms256m", "-Xmx4096m"]
         }
     }
 

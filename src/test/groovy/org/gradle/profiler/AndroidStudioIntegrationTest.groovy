@@ -242,6 +242,25 @@ class AndroidStudioIntegrationTest extends AbstractProfilerIntegrationTest {
 
     }
 
+    def "can override Android Studio jvm args"() {
+        given:
+        def scenarioFile = file("performance.scenarios") << """
+            $scenarioName {
+                android-studio-sync {
+                    studio-jvm-args = ["-Xmx1024m", "-Xms128m"]
+                }
+            }
+        """
+
+        when:
+        runBenchmark(scenarioFile, 1, 1)
+
+        then:
+        logFile.find("Full sync has completed in").size() == 2
+        logFile.find("and it SUCCEEDED").size() == 2
+        logFile.find(~/\* Using command line:.*-Xmx1024m, -Xms128m, com.intellij.idea.Main,.*/).size() == 1
+    }
+
     def runBenchmark(File scenarioFile, int warmups, int iterations, String... additionalArgs) {
         List<String> args = [
             "--project-dir", projectDir.absolutePath,

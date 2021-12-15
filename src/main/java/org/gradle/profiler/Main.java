@@ -80,10 +80,10 @@ public class Main {
                     invoke(buckScenarioInvoker, (BuckScenarioDefinition) scenario, settings, benchmarkResults, failures);
                 } else if (scenario instanceof MavenScenarioDefinition) {
                     invoke(mavenScenarioInvoker, (MavenScenarioDefinition) scenario, settings, benchmarkResults, failures);
-                } else if (scenario instanceof GradleScenarioDefinition) {
-                    invoke(gradleScenarioInvoker, (GradleScenarioDefinition) scenario, settings, benchmarkResults, failures);
                 } else if (scenario instanceof StudioGradleScenarioDefinition) {
                     invoke(studioGradleScenarioInvoker, (StudioGradleScenarioDefinition) scenario, settings, benchmarkResults, failures);
+                } else if (scenario instanceof GradleScenarioDefinition) {
+                    invoke(gradleScenarioInvoker, (GradleScenarioDefinition) scenario, settings, benchmarkResults, failures);
                 } else {
                     throw new IllegalArgumentException("Don't know how to run scenario.");
                 }
