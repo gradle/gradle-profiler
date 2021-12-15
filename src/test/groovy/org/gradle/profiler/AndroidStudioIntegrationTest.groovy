@@ -43,6 +43,9 @@ class AndroidStudioIntegrationTest extends AbstractProfilerIntegrationTest {
 
         and:
         resultFile.lines[3] == "value,total execution time,Gradle total execution time,IDE execution time"
+
+        cleanup:
+        println new File(sandboxDir.absolutePath, "logs/idea.log").text
     }
 
     def "benchmarks Android Studio sync for project with buildSrc"() {
@@ -186,6 +189,7 @@ class AndroidStudioIntegrationTest extends AbstractProfilerIntegrationTest {
         logFile.find("Full sync has completed in").size() == 2
 
         cleanup:
+        println new File(sandboxDir.absolutePath, "logs/idea.log").text
         process.kill()
     }
 
@@ -207,6 +211,7 @@ class AndroidStudioIntegrationTest extends AbstractProfilerIntegrationTest {
         runBenchmark(scenarioFile, 1, 2)
 
         then:
+        println new File(sandboxDir.absolutePath, "logs/idea.log").text
         def e = thrown(Main.ScenarioFailedException)
         e.getCause().message.startsWith("Gradle sync has failed with error message:")
         logFile.find("Full Gradle execution time").size() == 1
@@ -233,6 +238,7 @@ class AndroidStudioIntegrationTest extends AbstractProfilerIntegrationTest {
             "--measure-build-op", "org.gradle.initialization.ConfigureBuildBuildOperationType")
 
         then:
+        println new File(sandboxDir.absolutePath, "logs/idea.log").text
         logFile.find("Gradle invocation 1 has completed in").size() == 3
         logFile.find("Full sync has completed in").size() == 3
         logFile.find("and it SUCCEEDED").size() == 3
