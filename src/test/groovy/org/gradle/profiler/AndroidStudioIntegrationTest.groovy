@@ -127,7 +127,7 @@ class AndroidStudioIntegrationTest extends AbstractProfilerIntegrationTest {
         // We have to install plugin so also the first Studio process is run in the headless mode.
         // We install plugin directory to a different "plugins-2" directory for first process otherwise cleaning plugin directory at start of second process fails on Windows.
         StudioSandboxCreator.StudioSandbox sandbox = StudioSandboxCreator.createSandbox(sandboxDir.toPath(), "plugins-2")
-        LaunchConfiguration launchConfiguration = new LauncherConfigurationParser(studioHome.toPath(), sandbox).calculate()
+        LaunchConfiguration launchConfiguration = new LauncherConfigurationParser(studioHome.toPath(), sandbox, []).calculate()
         StudioPluginInstaller pluginInstaller = new StudioPluginInstaller(launchConfiguration.getStudioPluginsDir())
         pluginInstaller.installPlugin(launchConfiguration.getStudioPluginJars())
         def scenarioFile = file("performance.scenarios") << """
@@ -160,7 +160,7 @@ class AndroidStudioIntegrationTest extends AbstractProfilerIntegrationTest {
         // since if Android Studio writes to same project at the same time, it can fail
         File otherStudioProjectDir = tmpDir.newFolder('project')
         StudioSandboxCreator.StudioSandbox sandbox = StudioSandboxCreator.createSandbox(sandboxDir1.toPath())
-        LaunchConfiguration launchConfiguration = new LauncherConfigurationParser(studioHome.toPath(), sandbox).calculate()
+        LaunchConfiguration launchConfiguration = new LauncherConfigurationParser(studioHome.toPath(), sandbox, []).calculate()
         // We have to install plugin so also the first Studio process can be run in headless mode mode
         StudioPluginInstaller pluginInstaller = new StudioPluginInstaller(launchConfiguration.getStudioPluginsDir())
         pluginInstaller.installPlugin(launchConfiguration.getStudioPluginJars())
