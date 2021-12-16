@@ -89,6 +89,7 @@ class ScenarioLoader {
     private static final String ACTION = "action";
     private static final String TOOLING_API = "tooling-api";
     private static final String ANDROID_STUDIO_SYNC = "android-studio-sync";
+    private static final String ANDROID_STUDIO_JVM_ARGS = "studio-jvm-args";
     private static final String JVM_ARGS = "jvm-args";
 
     private static final Map<String, BuildMutatorConfigurator> BUILD_MUTATOR_CONFIGURATORS = ImmutableMap.<String, BuildMutatorConfigurator>builder()
@@ -293,7 +294,7 @@ class ScenarioLoader {
                         measuredBuildOperations
                     );
                     ScenarioDefinition scenarioDefinition = scenario.hasPath(ANDROID_STUDIO_SYNC)
-                        ? new StudioGradleScenarioDefinition(gradleScenarioDefinition)
+                        ? newStudioGradleScenarioDefinition(gradleScenarioDefinition, scenario)
                         : gradleScenarioDefinition;
                     definitions.add(scenarioDefinition);
                 }
@@ -303,6 +304,12 @@ class ScenarioLoader {
         definitions.forEach(ScenarioDefinition::validate);
 
         return definitions;
+    }
+
+    private static StudioGradleScenarioDefinition newStudioGradleScenarioDefinition(GradleScenarioDefinition gradleScenarioDefinition, Config scenario) {
+        Config androidStudioSync = scenario.getConfig(ANDROID_STUDIO_SYNC);
+        List<String> studioJvmArgs = ConfigUtil.strings(androidStudioSync, ANDROID_STUDIO_JVM_ARGS, ImmutableList.of("-Xms256m", "-Xmx4096m"));
+        return new StudioGradleScenarioDefinition(gradleScenarioDefinition, studioJvmArgs);
     }
 
     private static List<BuildMutator> getMutators(Config scenario, String scenarioName, InvocationSettings settings, int warmUpCount, int buildCount) {

@@ -2,7 +2,6 @@ package org.gradle.profiler.studio;
 
 import org.gradle.internal.Pair;
 import org.gradle.profiler.BuildAction.BuildActionResult;
-import org.gradle.profiler.GradleBuildConfiguration;
 import org.gradle.profiler.GradleClient;
 import org.gradle.profiler.InvocationSettings;
 import org.gradle.profiler.client.protocol.ServerConnection;
@@ -12,9 +11,10 @@ import org.gradle.profiler.client.protocol.messages.GradleInvocationStarted;
 import org.gradle.profiler.client.protocol.messages.StudioRequest;
 import org.gradle.profiler.client.protocol.messages.StudioSyncRequestCompleted;
 import org.gradle.profiler.instrument.GradleInstrumentation;
+import org.gradle.profiler.studio.invoker.StudioBuildActionResult;
+import org.gradle.profiler.studio.invoker.StudioGradleScenarioDefinition.StudioGradleBuildConfiguration;
 import org.gradle.profiler.studio.process.StudioProcess.StudioConnections;
 import org.gradle.profiler.studio.process.StudioProcessController;
-import org.gradle.profiler.studio.invoker.StudioBuildActionResult;
 import org.gradle.profiler.studio.tools.StudioPluginInstaller;
 import org.gradle.profiler.studio.tools.StudioSandboxCreator;
 import org.gradle.profiler.studio.tools.StudioSandboxCreator.StudioSandbox;
@@ -56,7 +56,7 @@ public class StudioGradleClient implements GradleClient {
     private final StudioSandbox sandbox;
     private boolean isFirstRun;
 
-    public StudioGradleClient(GradleBuildConfiguration buildConfiguration, InvocationSettings invocationSettings, CleanCacheMode cleanCacheMode) {
+    public StudioGradleClient(StudioGradleBuildConfiguration buildConfiguration, InvocationSettings invocationSettings, CleanCacheMode cleanCacheMode) {
         this.isFirstRun = true;
         this.cleanCacheMode = cleanCacheMode;
         Path studioInstallDir = invocationSettings.getStudioInstallDir().toPath();

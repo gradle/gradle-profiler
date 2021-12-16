@@ -6,6 +6,8 @@ import org.junit.Rule
 import org.junit.rules.TemporaryFolder
 import spock.lang.Shared
 
+import java.util.regex.Pattern
+
 abstract class AbstractProfilerIntegrationTest extends AbstractIntegrationTest {
 
     private static int NUMBER_OF_HEADERS = 4
@@ -169,6 +171,13 @@ genrule(
          */
         List<String> find(String str) {
             lines.findAll { it.contains(str) }
+        }
+
+        /**
+         * Locates the lines containing the given pattern
+         */
+        List<String> find(Pattern pattern) {
+            lines.findAll { it.matches(pattern) }
         }
 
         String getText() {

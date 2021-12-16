@@ -2,7 +2,6 @@ package org.gradle.profiler.studio.invoker;
 
 import com.google.common.collect.ImmutableList;
 import org.gradle.profiler.GradleBuildInvocationResult;
-import org.gradle.profiler.GradleScenarioDefinition;
 import org.gradle.profiler.GradleScenarioInvoker;
 import org.gradle.profiler.InvocationSettings;
 import org.gradle.profiler.ScenarioInvoker;
@@ -14,6 +13,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.function.Consumer;
 import java.util.stream.IntStream;
+
 import static java.util.stream.Collectors.toList;
 
 public class StudioGradleScenarioInvoker extends ScenarioInvoker<StudioGradleScenarioDefinition, StudioBuildInvocationResult> {
@@ -27,8 +27,7 @@ public class StudioGradleScenarioInvoker extends ScenarioInvoker<StudioGradleSce
     @Override
     public SampleProvider<StudioBuildInvocationResult> samplesFor(InvocationSettings settings, StudioGradleScenarioDefinition scenario) {
         return results -> {
-            GradleScenarioDefinition gradleScenarioDefinition = scenario.getGradleScenarioDefinition();
-            SampleProvider<GradleBuildInvocationResult> gradleSampleProvider = gradleScenarioInvoker.samplesFor(settings, gradleScenarioDefinition);
+            SampleProvider<GradleBuildInvocationResult> gradleSampleProvider = gradleScenarioInvoker.samplesFor(settings, scenario);
             List<Sample<? super GradleBuildInvocationResult>> gradleScenarioInvokerSamples = gradleSampleProvider.get(toGradleBuildInvocationResults(results));
             return ImmutableList.<Sample<? super StudioBuildInvocationResult>>builder()
                 .addAll(gradleScenarioInvokerSamples)
@@ -61,6 +60,6 @@ public class StudioGradleScenarioInvoker extends ScenarioInvoker<StudioGradleSce
 
     @Override
     public void run(StudioGradleScenarioDefinition scenario, InvocationSettings settings, Consumer<StudioBuildInvocationResult> resultConsumer) throws IOException, InterruptedException {
-        gradleScenarioInvoker.run(scenario.getGradleScenarioDefinition(), settings, (result) -> resultConsumer.accept(new StudioBuildInvocationResult(result)));
+        gradleScenarioInvoker.run(scenario, settings, (result) -> resultConsumer.accept(new StudioBuildInvocationResult(result)));
     }
 }

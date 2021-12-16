@@ -1,12 +1,13 @@
 package org.gradle.profiler;
 
 import org.gradle.profiler.studio.StudioGradleClient;
+import org.gradle.profiler.studio.invoker.StudioGradleScenarioDefinition.StudioGradleBuildConfiguration;
 import org.gradle.tooling.GradleConnector;
 import org.gradle.tooling.ProjectConnection;
 
 import static org.gradle.profiler.studio.StudioGradleClient.CleanCacheMode.BEFORE_BUILD;
-import static org.gradle.profiler.studio.StudioGradleClient.CleanCacheMode.NEVER;
 import static org.gradle.profiler.studio.StudioGradleClient.CleanCacheMode.BEFORE_SCENARIO;
+import static org.gradle.profiler.studio.StudioGradleClient.CleanCacheMode.NEVER;
 
 /**
  * Specifies a client to be used to invoke Gradle builds.
@@ -42,19 +43,19 @@ public enum GradleClientSpec {
     AndroidStudio("Android Studio") {
         @Override
         public GradleClient create(GradleBuildConfiguration buildConfiguration, InvocationSettings invocationSettings) {
-            return new StudioGradleClient(buildConfiguration, invocationSettings, NEVER);
+            return new StudioGradleClient((StudioGradleBuildConfiguration) buildConfiguration, invocationSettings, NEVER);
         }
     },
     AndroidStudioCleanCacheBeforeBuild("Android Studio with clean cache before build") {
         @Override
         public GradleClient create(GradleBuildConfiguration buildConfiguration, InvocationSettings invocationSettings) {
-            return new StudioGradleClient(buildConfiguration, invocationSettings, BEFORE_BUILD);
+            return new StudioGradleClient((StudioGradleBuildConfiguration) buildConfiguration, invocationSettings, BEFORE_BUILD);
         }
     },
     AndroidStudioCleanCacheBeforeScenario("Android Studio with clean cache before scenario") {
         @Override
         public GradleClient create(GradleBuildConfiguration buildConfiguration, InvocationSettings invocationSettings) {
-            return new StudioGradleClient(buildConfiguration, invocationSettings, BEFORE_SCENARIO);
+            return new StudioGradleClient((StudioGradleBuildConfiguration) buildConfiguration, invocationSettings, BEFORE_SCENARIO);
         }
     };
 

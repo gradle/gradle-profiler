@@ -1,51 +1,48 @@
 package org.gradle.profiler.studio.invoker;
 
-import org.gradle.profiler.BuildInvoker;
+import org.gradle.profiler.GradleBuildConfiguration;
 import org.gradle.profiler.GradleScenarioDefinition;
-import org.gradle.profiler.ScenarioDefinition;
 
-public class StudioGradleScenarioDefinition extends ScenarioDefinition {
+import java.util.List;
 
-    private final GradleScenarioDefinition gradleScenarioDefinition;
+public class StudioGradleScenarioDefinition extends GradleScenarioDefinition {
 
-    public StudioGradleScenarioDefinition(GradleScenarioDefinition gradleScenarioDefinition) {
+    public StudioGradleScenarioDefinition(GradleScenarioDefinition gradleScenarioDefinition, List<String> studioJvmArgs) {
         super(
             gradleScenarioDefinition.getName(),
             gradleScenarioDefinition.getTitle(),
+            gradleScenarioDefinition.getInvoker(),
+            new StudioGradleBuildConfiguration(gradleScenarioDefinition.getBuildConfiguration(), studioJvmArgs),
+            gradleScenarioDefinition.getAction(),
+            gradleScenarioDefinition.getCleanupAction(),
+            gradleScenarioDefinition.getGradleArgs(),
+            gradleScenarioDefinition.getSystemProperties(),
             gradleScenarioDefinition.getBuildMutators(),
             gradleScenarioDefinition.getWarmUpCount(),
             gradleScenarioDefinition.getBuildCount(),
-            gradleScenarioDefinition.getOutputDir()
+            gradleScenarioDefinition.getOutputDir(),
+            gradleScenarioDefinition.getJvmArgs(),
+            gradleScenarioDefinition.getMeasuredBuildOperations()
         );
-        this.gradleScenarioDefinition = gradleScenarioDefinition;
     }
 
-    public GradleScenarioDefinition getGradleScenarioDefinition() {
-        return gradleScenarioDefinition;
-    }
+    public static class StudioGradleBuildConfiguration extends GradleBuildConfiguration {
 
-    @Override
-    public String getDisplayName() {
-        return gradleScenarioDefinition.getDisplayName();
-    }
+        private final List<String> studioJvmArgs;
 
-    @Override
-    public String getProfileName() {
-        return gradleScenarioDefinition.getProfileName();
-    }
+        StudioGradleBuildConfiguration(GradleBuildConfiguration gradleBuildConfiguration, List<String> studioJvmArguments) {
+            super(
+                gradleBuildConfiguration.getGradleVersion(),
+                gradleBuildConfiguration.getGradleHome(),
+                gradleBuildConfiguration.getJavaHome(),
+                gradleBuildConfiguration.getJvmArguments(),
+                gradleBuildConfiguration.isUsesScanPlugin()
+            );
+            this.studioJvmArgs = studioJvmArguments;
+        }
 
-    @Override
-    public String getBuildToolDisplayName() {
-        return gradleScenarioDefinition.getBuildToolDisplayName();
-    }
-
-    @Override
-    public String getTasksDisplayName() {
-        return gradleScenarioDefinition.getTasksDisplayName();
-    }
-
-    @Override
-    public BuildInvoker getInvoker() {
-        return gradleScenarioDefinition.getInvoker();
+        public List<String> getStudioJvmArgs() {
+            return studioJvmArgs;
+        }
     }
 }

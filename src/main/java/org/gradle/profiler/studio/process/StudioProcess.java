@@ -12,6 +12,7 @@ import java.io.Closeable;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.time.Duration;
+import java.util.List;
 
 public class StudioProcess implements Closeable {
 
@@ -24,11 +25,11 @@ public class StudioProcess implements Closeable {
     private final StudioConnections connections;
     private final RunHandle process;
 
-    public StudioProcess(Path studioInstallDir, StudioSandbox sandbox, InvocationSettings invocationSettings) {
+    public StudioProcess(Path studioInstallDir, StudioSandbox sandbox, InvocationSettings invocationSettings, List<String> studioJvmArgs) {
         Server studioStartDetectorServer = new Server("start-detector");
         this.studioPluginServer = new Server("plugin");
         this.studioAgentServer = new Server("agent");
-        LaunchConfiguration launchConfiguration = new LauncherConfigurationParser(studioInstallDir, sandbox)
+        LaunchConfiguration launchConfiguration = new LauncherConfigurationParser(studioInstallDir, sandbox, studioJvmArgs)
             .withStudioPluginParameters(studioStartDetectorServer.getPort(), studioPluginServer.getPort())
             .withStudioAgentParameters(studioAgentServer.getPort())
             .calculate();

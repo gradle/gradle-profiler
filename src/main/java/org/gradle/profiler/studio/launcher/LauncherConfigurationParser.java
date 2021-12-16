@@ -18,15 +18,17 @@ public class LauncherConfigurationParser {
 
     private final Path studioInstallDir;
     private final StudioSandbox studioSandbox;
+    private final List<String> studioJvmArgs;
     private boolean enableStudioPluginParameters;
     private int studioPluginPort;
     private boolean enableStudioAgentParameters;
     private int studioAgentPort;
     private int studioStartDetectorPort;
 
-    public LauncherConfigurationParser(Path studioInstallDir, StudioSandbox studioSandbox) {
+    public LauncherConfigurationParser(Path studioInstallDir, StudioSandbox studioSandbox, List<String> studioJvmArgs) {
         this.studioInstallDir = studioInstallDir;
         this.studioSandbox = studioSandbox;
+        this.studioJvmArgs = studioJvmArgs;
     }
 
     public LauncherConfigurationParser withStudioPluginParameters(int studioStartDetectorPort, int studioPluginPort) {
@@ -65,14 +67,13 @@ public class LauncherConfigurationParser {
         commandLine.add("-cp");
         commandLine.add(Joiner.on(File.pathSeparator).join(classpath));
         systemProperties.forEach((key, value) -> commandLine.add(String.format("-D%s=%s", key, value)));
-        commandLine.add("-Xms256m");
-        commandLine.add("-Xmx2048m");
         if (enableStudioAgentParameters) {
             commandLine.add(String.format("-javaagent:%s=%s,%s", agentJar, studioAgentPort, supportJar));
             commandLine.add("--add-exports");
             commandLine.add("java.base/jdk.internal.misc=ALL-UNNAMED");
             commandLine.add("-Xbootclasspath/a:" + Joiner.on(File.pathSeparator).join(sharedJars));
         }
+        commandLine.addAll(studioJvmArgs);
         commandLine.add(mainClass);
         if (SHOULD_RUN_HEADLESS) {
             // Note: In headless mode ANDROID_HOME and ANDROID_SDK_ROOT have to be set otherwise
