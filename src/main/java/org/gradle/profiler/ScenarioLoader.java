@@ -36,7 +36,6 @@ import javax.annotation.Nullable;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
@@ -309,7 +308,7 @@ class ScenarioLoader {
 
     private static StudioGradleScenarioDefinition newStudioGradleScenarioDefinition(GradleScenarioDefinition gradleScenarioDefinition, Config scenario) {
         Config androidStudioSync = scenario.getConfig(ANDROID_STUDIO_SYNC);
-        List<String> studioJvmArgs = ConfigUtil.strings(androidStudioSync, ANDROID_STUDIO_JVM_ARGS, Collections.emptyList());
+        List<String> studioJvmArgs = ConfigUtil.strings(androidStudioSync, ANDROID_STUDIO_JVM_ARGS, ImmutableList.of("-Xms256m", "-Xmx4096m"));
         return new StudioGradleScenarioDefinition(gradleScenarioDefinition, studioJvmArgs);
     }
 
