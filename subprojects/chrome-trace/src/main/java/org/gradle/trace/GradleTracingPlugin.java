@@ -25,24 +25,22 @@ public class GradleTracingPlugin {
     private final GCMonitoring gcMonitoring = new GCMonitoring();
     private final BuildOperationListenerAdapter buildOperationListener;
 
-    private GradleTracingPlugin(GradleInternal gradle, File traceFolder, String traceFilePattern) {
+    private GradleTracingPlugin(GradleInternal gradle, File traceFolder, String traceFileBaseName) {
         this.buildRequestMetaData = gradle.getServices().get(BuildRequestMetaData.class);
-        traceResult = new TraceResult(getTraceFile(traceFolder, traceFilePattern));
+        traceResult = new TraceResult(getTraceFile(traceFolder, traceFileBaseName));
         systemMonitoring.start(traceResult);
         gcMonitoring.start(traceResult);
         buildOperationListener = BuildOperationListenerAdapter.create(gradle, traceResult);
         gradle.addListener(new TraceFinalizerAdapter(gradle));
     }
 
-    private File getTraceFile(File traceFolder, String traceFilePatter) {
+    private File getTraceFile(File traceFolder, String traceFileBaseName) {
         String phase = System.getProperty("org.gradle.profiler.phase.display.name");
         String build = System.getProperty("org.gradle.profiler.number");
         int invocation = 1;
         File traceFile;
         do {
-            String traceFileName = traceFilePatter.replace("{phase}", phase)
-                .replace("{build}", build)
-                .replace("{invocation}", String.valueOf(invocation));
+            String traceFileName = String.format("%s-%s-build-%s-invocation-%s-trace.json", traceFileBaseName, phase, build, invocation);
             traceFile = new File(traceFolder.getAbsoluteFile(), traceFileName);
             invocation++;
         } while (traceFile.exists());
@@ -50,11 +48,11 @@ public class GradleTracingPlugin {
     }
 
     /**
-     * org.gradle.profiler.chrometrace.ChromeTraceInstrumentation writes a build init script that calls this
+     * org.gradle.profiler.chrometrace.ChromeTraceInstrumentation writes a build init script that calls this method
      */
     @SuppressWarnings("unused")
-    public static void start(GradleInternal gradle, File traceFile, String traceFilePattern) {
-        new GradleTracingPlugin(gradle, traceFile, traceFilePattern);
+    public static void start(GradleInternal gradle, File traceFile, String traceFileBaseName) {
+        new GradleTracingPlugin(gradle, traceFile, traceFileBaseName);
     }
 
     private class TraceFinalizerAdapter extends BuildAdapter {

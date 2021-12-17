@@ -23,16 +23,16 @@ import java.io.PrintWriter;
 
 public class ChromeTraceInstrumentation extends GradleInstrumentation {
     private final File traceFolder;
-    private final String traceFilePattern;
+    private final String traceFileBaseName;
 
     public ChromeTraceInstrumentation(ScenarioSettings scenarioSettings) {
         traceFolder = scenarioSettings.profilerOutputLocationFor("-trace");
         traceFolder.mkdirs();
-        traceFilePattern = scenarioSettings.getProfilerOutputBaseName() + "-{phase}-build-{build}-invocation-{invocation}-trace.json";
+        traceFileBaseName = scenarioSettings.getProfilerOutputBaseName();
     }
 
     @Override
     protected void generateInitScriptBody(PrintWriter writer) {
-        writer.println("org.gradle.trace.GradleTracingPlugin.start(gradle, new File(new URI(\"" + traceFolder.toURI() + "\")), \"" + traceFilePattern + "\")");
+        writer.println("org.gradle.trace.GradleTracingPlugin.start(gradle, new File(new URI(\"" + traceFolder.toURI() + "\")), \"" + traceFileBaseName + "\")");
     }
 }
