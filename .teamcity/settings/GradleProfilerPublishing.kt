@@ -16,6 +16,7 @@ object GradleProfilerPublishing : BuildType({
         password("pgpSigningPassphrase", "credentialsJSON:f75db3bd-4f5b-4591-b5cb-2e76d91f57f5", display = ParameterDisplay.HIDDEN)
         password("mavenCentralStagingRepoUser", "credentialsJSON:ce6ff00a-dc06-4b9b-aa1f-7b01bea2eb2f", display = ParameterDisplay.HIDDEN)
         password("mavenCentralStagingRepoPassword", "credentialsJSON:f3c71885-0cec-49c9-adcf-d21536fcf1ca", display = ParameterDisplay.HIDDEN)
+        text("additional.gradle.parameters", "")
 
         param("env.ORG_GRADLE_PROJECT_githubToken", "%github.bot-teamcity.token%")
         param("env.ORG_GRADLE_PROJECT_sdkmanKey", "%gradleprofiler.sdkman.key%")
@@ -30,7 +31,7 @@ object GradleProfilerPublishing : BuildType({
 
     steps {
         gradle {
-            tasks = "clean publishToSonatype closeAndReleaseSonatypeStagingRepository gitPushTag releaseToSdkMan"
+            tasks = "clean publishToSonatype closeAndReleaseSonatypeStagingRepository gitPushTag releaseToSdkMan %additional.gradle.parameters%"
             gradleParams = toolchainConfiguration(Os.linux) + " -Dgradle.cache.remote.push=true"
             param("org.jfrog.artifactory.selectedDeployableServer.defaultModuleVersionConfiguration", "GLOBAL")
             buildFile = ""
