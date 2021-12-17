@@ -584,12 +584,16 @@ sub flow {
 	for ($i = $len_same; $i <= $len_b; $i++) {
 		my $k = "$this->[$i];$i";
 		$Tmp{$k}->{stime} = $v;
+	}
+
+	for ($i = 0; $i <= $len_b; $i++) {
+		my $k = "$this->[$i];$i";
 		if (defined $d) {
-			$Tmp{$k}->{delta} += $i == $len_b ? $d : 0;
+			$Tmp{$k}->{delta} += $d;
 		}
 	}
 
-        return $this;
+  return $this;
 }
 
 # parse input
@@ -650,7 +654,6 @@ foreach (@SortedData) {
 	$delta = undef;
 	if (defined $samples2) {
 		$delta = $samples2 - $samples;
-		$maxdelta = abs($delta) if abs($delta) > $maxdelta;
 	}
 
 	# for chain graphs, annotate waker frames with "_[w]", for later
@@ -705,12 +708,14 @@ my $minwidth_time = $minwidth / $widthpertime;
 while (my ($id, $node) = each %Node) {
 	my ($func, $depth, $etime) = split ";", $id;
 	my $stime = $node->{stime};
+	my $delta = abs($node->{delta});
 	die "missing start for $id" if not defined $stime;
 
 	if (($etime-$stime) < $minwidth_time) {
 		delete $Node{$id};
 		next;
 	}
+	$maxdelta = $delta if $delta > $maxdelta;
 	$depthmax = $depth if $depth > $depthmax;
 }
 
