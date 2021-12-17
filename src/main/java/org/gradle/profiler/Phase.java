@@ -12,4 +12,8 @@ public enum Phase {
 	public String displayBuildNumber(int number) {
 		return name + " build #" + number;
 	}
+
+    public String getDisplayName() {
+        return name;
+    }
 }

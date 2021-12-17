@@ -22,14 +22,17 @@ import java.io.File;
 import java.io.PrintWriter;
 
 public class ChromeTraceInstrumentation extends GradleInstrumentation {
-    private final File traceFile;
+    private final File traceFolder;
+    private final String traceFilePattern;
 
     public ChromeTraceInstrumentation(ScenarioSettings scenarioSettings) {
-        traceFile = scenarioSettings.profilerOutputLocationFor("-trace.json");
+        traceFolder = scenarioSettings.profilerOutputLocationFor("-trace");
+        traceFolder.mkdirs();
+        traceFilePattern = scenarioSettings.getProfilerOutputBaseName() + "-{phase}-build-{build}-invocation-{invocation}-trace.json";
     }
 
     @Override
     protected void generateInitScriptBody(PrintWriter writer) {
-        writer.println("org.gradle.trace.GradleTracingPlugin.start(gradle, new File(new URI(\"" + traceFile.toURI() + "\")))");
+        writer.println("org.gradle.trace.GradleTracingPlugin.start(gradle, new File(new URI(\"" + traceFolder.toURI() + "\")), \"" + traceFilePattern + "\")");
     }
 }
