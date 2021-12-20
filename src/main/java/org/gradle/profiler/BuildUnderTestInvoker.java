@@ -54,6 +54,7 @@ public class BuildUnderTestInvoker {
         public GradleBuildInvocationResult run(BuildContext buildContext, BuildStep buildStep) {
             List<String> jvmArgs = new ArrayList<>(BuildUnderTestInvoker.this.jvmArgs);
             jvmArgs.add("-Dorg.gradle.profiler.phase=" + buildContext.getPhase());
+            jvmArgs.add("-Dorg.gradle.profiler.phase.display.name=" + buildContext.getPhase().getDisplayName());
             jvmArgs.add("-Dorg.gradle.profiler.number=" + buildContext.getIteration());
             jvmArgs.add("-Dorg.gradle.profiler.step=" + buildStep);
 
