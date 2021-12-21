@@ -1,0 +1,96 @@
+package tasks
+
+import org.gradle.api.DefaultTask
+import org.gradle.api.GradleException
+import org.gradle.api.file.DirectoryProperty
+import org.gradle.api.file.ProjectLayout
+import org.gradle.api.provider.Property
+import org.gradle.api.tasks.Input
+import org.gradle.api.tasks.Optional
+import org.gradle.api.tasks.OutputDirectory
+import org.gradle.api.tasks.TaskAction
+import org.gradle.tooling.GradleConnector
+import java.io.File
+import javax.inject.Inject
+
+/**
+ * Installs Android SDK. This task requires the ANDROID_SDK_ROOT env variable to be set.
+ */
+abstract class InstallAndroidSdkTask : DefaultTask() {
+
+    @get:Input
+    abstract val androidSdkVersion: Property<String>
+
+    @get:OutputDirectory
+    abstract val androidProjectDir: DirectoryProperty
+
+    /**
+     * Optional since we use manual error message
+     */
+    @get:Optional
+    @get:OutputDirectory
+    abstract val androidSdkInstallationDir: DirectoryProperty
+
+    @get:Inject
+    abstract val projectLayout: ProjectLayout
+
+    @TaskAction
+    fun install() {
+        if (!androidSdkInstallationDir.isPresent) {
+            throw GradleException("Output 'androidSdkInstallationDir' is not set, you should set ANDROID_SDK_ROOT env variable with Android Studio license in it.")
+        }
+        val androidSdkVersion = androidSdkVersion.get()
+        val projectDir = androidProjectDir.get().asFile
+
+        createAndroidProject(projectDir, androidSdkVersion)
+        buildAndroidProject(projectDir)
+    }
+
+    private fun buildAndroidProject(projectDir: File) {
+        val connector = GradleConnector.newConnector()
+            .forProjectDirectory(projectDir)
+        connector.connect().use {
+            it.newBuild().forTasks("build").run()
+        }
+    }
+
+    private fun createAndroidProject(projectDir: File, androidSdkVersion: String) {
+        File(projectDir, "settings.gradle").writeText(
+            """
+            pluginManagement {
+                repositories {
+                    gradlePluginPortal()
+                    google()
+                    mavenCentral()
+                }
+            }
+            rootProject.name = "android-sdk-project"
+            """.trimIndent()
+        )
+
+        File(projectDir, "build.gradle").writeText(
+            """
+            plugins {
+                id 'com.android.application' version "$androidSdkVersion"
+            }
+            repositories {
+                google()
+                mavenCentral()
+            }
+            android {
+                compileSdk 31
+            }
+            """.trimIndent()
+        )
+
+        File(projectDir, "src/main").mkdirs()
+        File(projectDir, "src/main/AndroidManifest.xml").writeText(
+            """
+            <?xml version="1.0" encoding="utf-8"?>
+            <manifest xmlns:android="http://schemas.android.com/apk/res/android"
+                package="com.example.myapplication">
+            </manifest>
+            """.trimIndent()
+        )
+    }
+}

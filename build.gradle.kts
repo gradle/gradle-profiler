@@ -1,3 +1,4 @@
+
 import com.moowork.gradle.node.npm.NpxTask
 import io.sdkman.vendors.tasks.SdkAnnounceVersionTask
 import io.sdkman.vendors.tasks.SdkDefaultVersionTask
@@ -134,6 +135,10 @@ androidStudioTests {
     runAndroidStudioInHeadlessMode.set(autoDownloadAndRunInHeadless)
     autoDownloadAndroidStudio.set(autoDownloadAndRunInHeadless)
     testAndroidStudioVersion.set("2021.1.1.16")
+    testAndroidSdkVersion.set("7.0.0")
+    // For local development it's easier to setup Android SDK with Android Studio, since auto download needs ANDROID_SDK_ROOT to be set with
+    // a accepted license in it. See https://developer.android.com/studio/intro/update.html#download-with-gradle.
+    autoDownloadAndroidSdk.set(autoDownloadAndRunInHeadless)
 }
 
 val testReports = mapOf(

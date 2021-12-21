@@ -1,4 +1,5 @@
 import extensions.AndroidStudioTestExtension
+import tasks.InstallAndroidSdkTask
 
 repositories {
     ivy {
@@ -24,6 +25,7 @@ fun isIntel(): Boolean = architecture == "x86_64" || architecture == "x86"
 val extension = extensions.create<AndroidStudioTestExtension>("androidStudioTests").apply {
     autoDownloadAndroidStudio.convention(false)
     runAndroidStudioInHeadlessMode.convention(false)
+    autoDownloadAndroidSdk.convention(false)
 }
 
 val androidStudioRuntime by configurations.creating
@@ -57,8 +59,22 @@ val unpackAndroidStudio = tasks.register<Copy>("unpackAndroidStudio") {
     into("$buildDir/android-studio")
 }
 
+val installAndroidSdk = tasks.register<InstallAndroidSdkTask>("installAndroidSdk") {
+    androidSdkVersion.set(extension.testAndroidSdkVersion)
+    androidProjectDir.set(layout.buildDirectory.dir("android-sdk-project"))
+    androidSdkInstallationDir.set(providers.environmentVariable("ANDROID_SDK_ROOT").flatMap {
+        val installationDirectory = objects.directoryProperty()
+        installationDirectory.set(File(it))
+        installationDirectory
+    })
+}
+
 val androidStudioInstallation = objects.newInstance<AndroidStudioInstallation>().apply {
     studioInstallLocation.fileProvider(unpackAndroidStudio.map { it.destinationDir })
+}
+
+val androidSdkInstallation = objects.newInstance<AndroidSdkInstallation>().apply {
+    sdkInstallLocation.set(installAndroidSdk.flatMap { it.androidSdkInstallationDir })
 }
 
 tasks.withType<Test>().configureEach {
@@ -66,6 +82,8 @@ tasks.withType<Test>().configureEach {
         androidStudioInstallation,
         extension.autoDownloadAndroidStudio,
         extension.runAndroidStudioInHeadlessMode,
+        extension.autoDownloadAndroidSdk,
+        androidSdkInstallation,
         providers
     ))
 }
@@ -76,6 +94,12 @@ abstract class AndroidStudioInstallation {
     abstract val studioInstallLocation: DirectoryProperty
 }
 
+abstract class AndroidSdkInstallation {
+    @get:InputFiles
+    @get:PathSensitive(PathSensitivity.RELATIVE)
+    abstract val sdkInstallLocation: DirectoryProperty
+}
+
 class AndroidStudioSystemProperties(
     @get:Internal
     val studioInstallation: AndroidStudioInstallation,
@@ -83,14 +107,28 @@ class AndroidStudioSystemProperties(
     val autoDownloadAndroidStudio: Provider<Boolean>,
     @get:Input
     val runInHeadlessMode: Provider<Boolean>,
+    @get:Internal
+    val autoDownloadAndroidSdk: Provider<Boolean>,
+    @get:Internal
+    val sdkInstallation: AndroidSdkInstallation,
     providers: ProviderFactory
-    ) : CommandLineArgumentProvider {
+) : CommandLineArgumentProvider {
 
     @get:Optional
     @get:Nested
-    val installationProvider = providers.provider {
+    val studioInstallationProvider = providers.provider {
         if (autoDownloadAndroidStudio.get()) {
             studioInstallation
+        } else {
+            null
+        }
+    }
+
+    @get:Optional
+    @get:Nested
+    val sdkInstallationProvider = providers.provider {
+        if (autoDownloadAndroidSdk.get()) {
+            sdkInstallation
         } else {
             null
         }
@@ -109,6 +147,9 @@ class AndroidStudioSystemProperties(
                 else -> windowsAndLinuxPath
             }
             systemProperties.add("-Dstudio.home=$studioHome")
+        }
+        if (autoDownloadAndroidSdk.get()) {
+            systemProperties.add("-Dsdk.instalation.path=${sdkInstallation.sdkInstallLocation.get().asFile.absolutePath}")
         }
         if (runInHeadlessMode.get()) {
             systemProperties.add("-Dstudio.tests.headless=true")
