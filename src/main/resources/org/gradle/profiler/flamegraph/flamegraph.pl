@@ -708,14 +708,16 @@ my $minwidth_time = $minwidth / $widthpertime;
 while (my ($id, $node) = each %Node) {
 	my ($func, $depth, $etime) = split ";", $id;
 	my $stime = $node->{stime};
-	my $delta = abs($node->{delta});
+	my $delta = $node->{delta};
 	die "missing start for $id" if not defined $stime;
 
 	if (($etime-$stime) < $minwidth_time) {
 		delete $Node{$id};
 		next;
 	}
-	$maxdelta = $delta if $delta > $maxdelta;
+	if (defined $delta) {
+		$maxdelta = abs($delta) if abs($delta) > $maxdelta;
+	}
 	$depthmax = $depth if $depth > $depthmax;
 }
 
