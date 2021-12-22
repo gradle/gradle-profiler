@@ -134,6 +134,10 @@ androidStudioTests {
     runAndroidStudioInHeadlessMode.set(autoDownloadAndRunInHeadless)
     autoDownloadAndroidStudio.set(autoDownloadAndRunInHeadless)
     testAndroidStudioVersion.set("2021.1.1.16")
+    testAndroidSdkVersion.set("7.1.0-beta04")
+    // For local development it's easier to setup Android SDK with Android Studio, since auto download needs ANDROID_SDK_ROOT to be set with
+    // an accepted license in it. See https://developer.android.com/studio/intro/update.html#download-with-gradle.
+    autoDownloadAndroidSdk.set(autoDownloadAndRunInHeadless)
 }
 
 val testReports = mapOf(

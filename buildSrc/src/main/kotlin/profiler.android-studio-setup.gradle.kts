@@ -1,4 +1,5 @@
 import extensions.AndroidStudioTestExtension
+import tasks.InstallAndroidSdkTask
 
 repositories {
     ivy {
@@ -24,6 +25,7 @@ fun isIntel(): Boolean = architecture == "x86_64" || architecture == "x86"
 val extension = extensions.create<AndroidStudioTestExtension>("androidStudioTests").apply {
     autoDownloadAndroidStudio.convention(false)
     runAndroidStudioInHeadlessMode.convention(false)
+    autoDownloadAndroidSdk.convention(false)
 }
 
 val androidStudioRuntime by configurations.creating
@@ -57,11 +59,18 @@ val unpackAndroidStudio = tasks.register<Copy>("unpackAndroidStudio") {
     into("$buildDir/android-studio")
 }
 
+val installAndroidSdk = tasks.register<InstallAndroidSdkTask>("installAndroidSdk") {
+    androidSdkVersion.set(extension.testAndroidSdkVersion)
+    androidProjectDir.set(layout.buildDirectory.dir("installAndroidSdk/android-sdk-project"))
+    onlyIf { extension.autoDownloadAndroidSdk.get() }
+}
+
 val androidStudioInstallation = objects.newInstance<AndroidStudioInstallation>().apply {
     studioInstallLocation.fileProvider(unpackAndroidStudio.map { it.destinationDir })
 }
 
 tasks.withType<Test>().configureEach {
+    dependsOn(installAndroidSdk)
     jvmArgumentProviders.add(AndroidStudioSystemProperties(
         androidStudioInstallation,
         extension.autoDownloadAndroidStudio,
@@ -84,11 +93,11 @@ class AndroidStudioSystemProperties(
     @get:Input
     val runInHeadlessMode: Provider<Boolean>,
     providers: ProviderFactory
-    ) : CommandLineArgumentProvider {
+) : CommandLineArgumentProvider {
 
     @get:Optional
     @get:Nested
-    val installationProvider = providers.provider {
+    val studioInstallationProvider = providers.provider {
         if (autoDownloadAndroidStudio.get()) {
             studioInstallation
         } else {
