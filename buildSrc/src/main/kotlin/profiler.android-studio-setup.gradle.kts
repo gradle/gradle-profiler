@@ -60,7 +60,6 @@ val unpackAndroidStudio = tasks.register<Copy>("unpackAndroidStudio") {
 }
 
 val installAndroidSdk = tasks.register<InstallAndroidSdkTask>("installAndroidSdk") {
-    androidSdkRootEnvVariable.set(providers.environmentVariable("ANDROID_SDK_ROOT"))
     androidSdkVersion.set(extension.testAndroidSdkVersion)
     androidProjectDir.set(layout.buildDirectory.dir("installAndroidSdk/android-sdk-project"))
     onlyIf { extension.autoDownloadAndroidSdk.get() }

@@ -5,7 +5,6 @@ import org.gradle.api.GradleException
 import org.gradle.api.file.DirectoryProperty
 import org.gradle.api.provider.Property
 import org.gradle.api.tasks.Input
-import org.gradle.api.tasks.Optional
 import org.gradle.api.tasks.OutputDirectory
 import org.gradle.api.tasks.TaskAction
 import org.gradle.api.tasks.UntrackedTask
@@ -21,20 +20,16 @@ abstract class InstallAndroidSdkTask : DefaultTask() {
     @get:Input
     abstract val androidSdkVersion: Property<String>
 
-    /**
-     * Optional since we use manual error message
-     */
-    @get:Input
-    @get:Optional
-    abstract val androidSdkRootEnvVariable: Property<String>
-
     @get:OutputDirectory
     abstract val androidProjectDir: DirectoryProperty
 
     @TaskAction
     fun install() {
-        if (!androidSdkRootEnvVariable.isPresent) {
-            throw GradleException("ANDROID_SDK_ROOT env variable is not set but it should be.")
+        if (System.getenv("ANDROID_SDK_ROOT") == null) {
+            throw GradleException(
+                "ANDROID_SDK_ROOT env variable is not set but it should be with the installation directory path. " +
+                    "The installation directory should also contain the Android sdk license key. See https://developer.android.com/studio/intro/update.html#download-with-gradle."
+            )
         }
 
         val androidSdkVersion = androidSdkVersion.get()
