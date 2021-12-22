@@ -40,10 +40,15 @@ abstract class InstallAndroidSdkTask : DefaultTask() {
     }
 
     private fun buildAndroidProject(projectDir: File) {
-        val connector = GradleConnector.newConnector()
-            .forProjectDirectory(projectDir)
-        connector.connect().use {
-            it.newBuild().forTasks("build").run()
+        try {
+            val connector = GradleConnector.newConnector()
+                .forProjectDirectory(projectDir)
+            connector.connect().use {
+                it.newBuild().forTasks("build").run()
+            }
+        } catch (e: Exception) {
+            e.printStackTrace()
+            throw e
         }
     }
 
