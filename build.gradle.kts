@@ -4,7 +4,7 @@ import io.sdkman.vendors.tasks.SdkAnnounceVersionTask
 import io.sdkman.vendors.tasks.SdkDefaultVersionTask
 import io.sdkman.vendors.tasks.SdkReleaseVersionTask
 import io.sdkman.vendors.tasks.SdkmanVendorBaseTask
-import java.util.Locale
+import java.util.*
 
 plugins {
     id("profiler.java-library")
@@ -135,9 +135,9 @@ androidStudioTests {
     runAndroidStudioInHeadlessMode.set(autoDownloadAndRunInHeadless)
     autoDownloadAndroidStudio.set(autoDownloadAndRunInHeadless)
     testAndroidStudioVersion.set("2021.1.1.16")
-    testAndroidSdkVersion.set("7.0.0")
+    testAndroidSdkVersion.set("7.1.0-beta04")
     // For local development it's easier to setup Android SDK with Android Studio, since auto download needs ANDROID_SDK_ROOT to be set with
-    // a accepted license in it. See https://developer.android.com/studio/intro/update.html#download-with-gradle.
+    // an accepted license in it. See https://developer.android.com/studio/intro/update.html#download-with-gradle.
     autoDownloadAndroidSdk.set(autoDownloadAndRunInHeadless)
 }
 

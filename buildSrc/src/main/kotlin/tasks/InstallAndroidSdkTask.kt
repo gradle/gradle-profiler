@@ -3,42 +3,36 @@ package tasks
 import org.gradle.api.DefaultTask
 import org.gradle.api.GradleException
 import org.gradle.api.file.DirectoryProperty
-import org.gradle.api.file.ProjectLayout
 import org.gradle.api.provider.Property
-import org.gradle.api.tasks.Input
-import org.gradle.api.tasks.Optional
-import org.gradle.api.tasks.OutputDirectory
-import org.gradle.api.tasks.TaskAction
+import org.gradle.api.tasks.*
 import org.gradle.tooling.GradleConnector
 import java.io.File
-import javax.inject.Inject
 
 /**
  * Installs Android SDK. This task requires the ANDROID_SDK_ROOT env variable to be set.
  */
+@UntrackedTask(because = "Output directory can change when running other builds")
 abstract class InstallAndroidSdkTask : DefaultTask() {
 
     @get:Input
     abstract val androidSdkVersion: Property<String>
 
-    @get:OutputDirectory
-    abstract val androidProjectDir: DirectoryProperty
-
     /**
      * Optional since we use manual error message
      */
+    @get:Input
     @get:Optional
-    @get:OutputDirectory
-    abstract val androidSdkInstallationDir: DirectoryProperty
+    abstract val androidSdkRootEnvVariable: Property<String>
 
-    @get:Inject
-    abstract val projectLayout: ProjectLayout
+    @get:OutputDirectory
+    abstract val androidProjectDir: DirectoryProperty
 
     @TaskAction
     fun install() {
-        if (!androidSdkInstallationDir.isPresent) {
-            throw GradleException("Output 'androidSdkInstallationDir' is not set, you should set ANDROID_SDK_ROOT env variable with Android Studio license in it.")
+        if (!androidSdkRootEnvVariable.isPresent) {
+            throw GradleException("ANDROID_SDK_ROOT env variable is not set but it should be.")
         }
+
         val androidSdkVersion = androidSdkVersion.get()
         val projectDir = androidProjectDir.get().asFile
 
