@@ -38,3 +38,5 @@ fun BuildType.gradleProfilerVcs() {
         checkoutMode = CheckoutMode.ON_AGENT
     }
 }
+
+const val buildReceipt = "build-receipt.properties"

@@ -6,7 +6,10 @@ object GradleProfilerPublishing : BuildType({
     name = "Gradle profiler Publishing"
     description = "Publish Gradle profiler Gradle's Artifactory repository"
 
-    artifactRules = "build/reports/** => .teamcity/reports"
+    artifactRules = """
+        build/reports/** => .teamcity/reports
+        build/$buildReceipt => $buildReceipt
+    """.trimIndent()
 
     gradleProfilerVcs()
     val os = Os.linux
@@ -34,7 +37,7 @@ object GradleProfilerPublishing : BuildType({
 
     steps {
         gradle {
-            tasks = "clean publishToSonatype closeAndReleaseSonatypeStagingRepository gitPushTag releaseToSdkMan %additional.gradle.parameters%"
+            tasks = "clean createBuildReceipt publishToSonatype closeAndReleaseSonatypeStagingRepository gitPushTag releaseToSdkMan %additional.gradle.parameters%"
             gradleParams = toolchainConfiguration(os) + " -Dgradle.cache.remote.push=true"
             param("org.jfrog.artifactory.selectedDeployableServer.defaultModuleVersionConfiguration", "GLOBAL")
             buildFile = ""

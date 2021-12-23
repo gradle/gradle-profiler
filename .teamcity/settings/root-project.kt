@@ -15,6 +15,7 @@ fun Project.configureGradleProfilerProject() {
 
     buildType(GradleProfilerTestTrigger(testBuilds))
     buildType(GradleProfilerPublishing)
+    buildType(GradleProfilerPublishToSdkMan(GradleProfilerPublishing))
 
     params {
         password("gradleprofiler.sdkman.key", "credentialsJSON:a76beba1-f1a3-44c6-9995-9808bf652c9e", display = ParameterDisplay.HIDDEN)
