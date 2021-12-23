@@ -17,11 +17,6 @@ plugins {
     id("io.github.gradle-nexus.publish-plugin") version "1.1.0"
 }
 
-allprojects {
-    group = "org.gradle.profiler"
-    version = property("profiler.version") as String
-}
-
 description = "A tool to profile and benchmark Gradle builds"
 
 val gradleRuntime by configurations.creating
