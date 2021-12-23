@@ -10,4 +10,5 @@ These are the steps to release Gradle profiler.
 * Commit the updated version number: _git commit -S -am "Prepare next development version 0.13.0"_
 * Push the version update
 * Update the [release draft](https://github.com/gradle/gradle-profiler/releases) prepared by [release-drafter](https://probot.github.io/apps/release-drafter/), assign the tag you created and publish the release
+* When the release shows up on Maven Central (see the link in the release notes), then publish it to SDKman by promoting [the publishing job](https://builds.gradle.org/buildConfiguration/GradleProfiler_GradleProfilerPublishing?branch=%3Cdefault%3E) to [Publish to SDKman](https://builds.gradle.org/buildConfiguration/GradleProfiler_GradleProfilerPublishToSdkMan?branch=%3Cdefault%3E). 
 * All done!
