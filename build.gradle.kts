@@ -206,6 +206,7 @@ tasks.register<Exec>("gitTag") {
 val gitPushTag = tasks.register<Exec>("gitPushTag") {
     mustRunAfter("closeSonatypeStagingRepository")
     dependsOn("gitTag")
+    onlyIf { !project.version.toString().endsWith("-SNAPSHOT") }
     commandLine("git", "push", "https://bot-teamcity:${project.findProperty("githubToken")}@github.com/gradle/gradle-profiler.git", releaseTagName)
 }
 
