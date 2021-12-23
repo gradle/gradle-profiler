@@ -196,14 +196,17 @@ val releaseTagName = "v$version"
 
 tasks.register<Exec>("gitTag") {
     commandLine("git", "tag", releaseTagName)
+    onlyIf { !isSnapshot() }
 }
 
 val gitPushTag = tasks.register<Exec>("gitPushTag") {
     mustRunAfter("closeSonatypeStagingRepository")
     dependsOn("gitTag")
-    onlyIf { !project.version.toString().endsWith("-SNAPSHOT") }
+    onlyIf { !isSnapshot() }
     commandLine("git", "push", "https://bot-teamcity:${project.findProperty("githubToken")}@github.com/gradle/gradle-profiler.git", releaseTagName)
 }
+
+fun Project.isSnapshot() = version.toString().endsWith("-SNAPSHOT")
 
 sdkman {
     api = "https://vendors.sdkman.io"
