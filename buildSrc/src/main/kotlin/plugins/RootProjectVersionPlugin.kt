@@ -33,5 +33,10 @@ open class RootProjectVersionPlugin : Plugin<Project> {
                 createdBuildReceipt.get().asFile.writeText("version=${versionInfo.version.get()}", StandardCharsets.UTF_8)
             }
         }
+
+        target.gradle.taskGraph.whenReady {
+            if (hasTask(":publishToSonatype") || hasTask(":releaseToSdkMan"))
+            target.logger.lifecycle("##teamcity[buildStatus text='{build.status.text}, Published version {}']", versionInfo.version.get())
+        }
     }
 }
