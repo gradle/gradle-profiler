@@ -21,6 +21,14 @@ Profiling information can be captured using several different tools:
     > sdk install gradleprofiler
     > gradle-profiler --benchmark help
 
+### Homebrew
+
+[Homebrew](https://brew.sh/) is the easiest and most flexible way to install the UNIX tools Apple didn’t include with macOS.
+
+    > brew install gradleprofiler
+    > gradle-profiler --benchmark help
+
+
 ### Download binaries
 
 Binaries are available and linked from the [releases](https://github.com/gradle/gradle-profiler/releases) page.
