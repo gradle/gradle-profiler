@@ -35,8 +35,12 @@ open class RootProjectVersionPlugin : Plugin<Project> {
         }
 
         target.gradle.taskGraph.whenReady {
-            if (hasTask(":publishToSonatype") || hasTask(":releaseToSdkMan"))
-            target.logger.lifecycle("##teamcity[buildStatus text='{build.status.text}, Published version {}']", versionInfo.version.get())
+            if (hasTask(":publishToSonatype") || hasTask(":releaseToSdkMan")) {
+                target.logger.lifecycle(
+                    "##teamcity[buildStatus text='{build.status.text}, Published version {}']",
+                    versionInfo.version.get()
+                )
+            }
         }
     }
 }
