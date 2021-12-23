@@ -17,11 +17,6 @@ plugins {
     id("io.github.gradle-nexus.publish-plugin") version "1.1.0"
 }
 
-allprojects {
-    group = "org.gradle.profiler"
-    version = property("profiler.version") as String
-}
-
 description = "A tool to profile and benchmark Gradle builds"
 
 val gradleRuntime by configurations.creating
@@ -201,13 +196,17 @@ val releaseTagName = "v$version"
 
 tasks.register<Exec>("gitTag") {
     commandLine("git", "tag", releaseTagName)
+    onlyIf { !isSnapshot() }
 }
 
 val gitPushTag = tasks.register<Exec>("gitPushTag") {
     mustRunAfter("closeSonatypeStagingRepository")
     dependsOn("gitTag")
+    onlyIf { !isSnapshot() }
     commandLine("git", "push", "https://bot-teamcity:${project.findProperty("githubToken")}@github.com/gradle/gradle-profiler.git", releaseTagName)
 }
+
+fun Project.isSnapshot() = version.toString().endsWith("-SNAPSHOT")
 
 sdkman {
     api = "https://vendors.sdkman.io"

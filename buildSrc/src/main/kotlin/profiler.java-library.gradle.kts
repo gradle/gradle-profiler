@@ -1,6 +1,7 @@
 import org.gradle.internal.os.OperatingSystem
 
 plugins {
+    id("profiler.allprojects")
     id("java-library")
 }
 

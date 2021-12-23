@@ -25,3 +25,4 @@
 hs_err_pid*.log
 
 /local.properties
+/incoming-distributions/

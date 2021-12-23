@@ -5,6 +5,7 @@ import org.jetbrains.intellij.IntelliJPluginConstants.INTELLIJ_DEFAULT_DEPENDENC
 plugins {
     groovy
     `java-test-fixtures`
+    id("profiler.allprojects")
     id("org.jetbrains.intellij") version "1.2.1"
 }
 
