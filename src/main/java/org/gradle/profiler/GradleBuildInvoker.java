@@ -1,6 +1,10 @@
 package org.gradle.profiler;
 
 public class GradleBuildInvoker extends BuildInvoker {
+
+    /**
+     * Invokers should be public since they are used in the gradle/gradle project
+     */
     public static final GradleBuildInvoker ToolingApi = new GradleBuildInvoker(GradleClientSpec.ToolingApi, GradleDaemonReuse.WarmDaemonOnly);
     public static final GradleBuildInvoker Cli = new GradleBuildInvoker(GradleClientSpec.GradleCli, GradleDaemonReuse.WarmDaemonOnly);
     public static final GradleBuildInvoker CliNoDaemon = new GradleBuildInvoker(GradleClientSpec.GradleCliNoDaemon, GradleDaemonReuse.ColdDaemonOnly) {
@@ -9,9 +13,9 @@ public class GradleBuildInvoker extends BuildInvoker {
             return "`gradle` command with --no-daemon";
         }
     };
-    static final GradleBuildInvoker AndroidStudio = new GradleBuildInvoker(GradleClientSpec.AndroidStudio, GradleDaemonReuse.WarmDaemonOnly);
-    static final GradleBuildInvoker AndroidStudioCleanCacheBeforeScenario = new GradleBuildInvoker(GradleClientSpec.AndroidStudioCleanCacheBeforeScenario, GradleDaemonReuse.WarmDaemonOnly);
-    static final GradleBuildInvoker AndroidStudioCleanCacheBeforeBuild = new GradleBuildInvoker(GradleClientSpec.AndroidStudioCleanCacheBeforeBuild, GradleDaemonReuse.ColdDaemonOnly);
+    public static final GradleBuildInvoker AndroidStudio = new GradleBuildInvoker(GradleClientSpec.AndroidStudio, GradleDaemonReuse.WarmDaemonOnly);
+    public static final GradleBuildInvoker AndroidStudioCleanCacheBeforeScenario = new GradleBuildInvoker(GradleClientSpec.AndroidStudioCleanCacheBeforeScenario, GradleDaemonReuse.WarmDaemonOnly);
+    public static final GradleBuildInvoker AndroidStudioCleanCacheBeforeBuild = new GradleBuildInvoker(GradleClientSpec.AndroidStudioCleanCacheBeforeBuild, GradleDaemonReuse.ColdDaemonOnly);
 
     private final GradleClientSpec client;
     private final GradleDaemonReuse daemonReuse;
