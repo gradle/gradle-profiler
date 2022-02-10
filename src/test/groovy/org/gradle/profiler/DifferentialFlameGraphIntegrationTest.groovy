@@ -14,12 +14,12 @@ class DifferentialFlameGraphIntegrationTest extends AbstractProfilerIntegrationT
         new Main().run("--project-dir", projectDir.absolutePath, "--output-dir", outputDir.absolutePath,
             "--gradle-version", latestSupportedGradleVersion,
             "--gradle-version", minimalSupportedGradleVersion,
-            "--iterations", "2",
+            "--iterations", "3",
             "--profile", profiler,
             "assemble")
 
         then:
-        logFile.find("<daemon: true").size() == 10
+        logFile.find("<daemon: true").size() == 12
         logFile.find("<invocations: 3>").size() == 2
 
         and:
@@ -43,13 +43,13 @@ class DifferentialFlameGraphIntegrationTest extends AbstractProfilerIntegrationT
         when:
         new Main().run("--project-dir", projectDir.absolutePath, "--output-dir", outputDir.absolutePath, "--gradle-version", latestSupportedGradleVersion, "--gradle-version", minimalSupportedGradleVersion,
             "--scenario-file", scenarioFile.absolutePath,
-            "--iterations", "2",
+            "--iterations", "3",
             "--profile", profiler,
             "upToDate"
         )
 
         then:
-        logFile.find("<daemon: true").size() == 10
+        logFile.find("<daemon: true").size() == 12
         logFile.find("<invocations: 3>").size() == 2
 
         and:
@@ -77,13 +77,13 @@ class DifferentialFlameGraphIntegrationTest extends AbstractProfilerIntegrationT
         when:
         new Main().run("--project-dir", projectDir.absolutePath, "--output-dir", outputDir.absolutePath, "--gradle-version", latestSupportedGradleVersion,
             "--scenario-file", scenarioFile.absolutePath,
-            "--iterations", "2",
+            "--iterations", "3",
             "--profile", profiler,
             "upToDate", "help"
         )
 
         then:
-        logFile.find("<daemon: true").size() == 9
+        logFile.find("<daemon: true").size() == 11
         logFile.find("<invocations: 3>").size() == 2
 
         and:
@@ -104,12 +104,12 @@ class DifferentialFlameGraphIntegrationTest extends AbstractProfilerIntegrationT
             "--gradle-version", latestSupportedGradleVersion,
             "--gradle-version", minimalSupportedGradleVersion,
             "--no-diffs",
-            "--iterations", "2",
+            "--iterations", "3",
             "--profile", "async-profiler",
             "assemble")
 
         then:
-        logFile.find("<daemon: true").size() == 10
+        logFile.find("<daemon: true").size() == 12
         logFile.find("<invocations: 3>").size() == 2
 
         and:
