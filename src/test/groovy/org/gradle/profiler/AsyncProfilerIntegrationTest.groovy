@@ -11,10 +11,13 @@ class AsyncProfilerIntegrationTest extends AbstractProfilerIntegrationTest imple
         instrumentedBuildScript()
 
         when:
-        new Main().run("--project-dir", projectDir.absolutePath, "--output-dir", outputDir.absolutePath, "--gradle-version", latestSupportedGradleVersion, "--profile", "async-profiler", "assemble")
+        new Main().run("--project-dir", projectDir.absolutePath, "--output-dir", outputDir.absolutePath,
+            "--gradle-version", latestSupportedGradleVersion,
+            "--iterations", "3",
+            "--profile", "async-profiler", "assemble")
 
         then:
-        logFile.find("<daemon: true").size() == 4
+        logFile.find("<daemon: true").size() == 6
         logFile.containsOne("<invocations: 3>")
 
         and:
@@ -28,13 +31,13 @@ class AsyncProfilerIntegrationTest extends AbstractProfilerIntegrationTest imple
         when:
         new Main().run("--project-dir", projectDir.absolutePath, "--output-dir", outputDir.absolutePath,
             "--gradle-version", latestSupportedGradleVersion,
-            "--iterations", "2",
+            "--iterations", "3",
             "--profile", "async-profiler-all",
             "assemble"
         )
 
         then:
-        logFile.find("<daemon: true").size() == 5
+        logFile.find("<daemon: true").size() == 6
         logFile.containsOne("<invocations: 3>")
 
         and:
@@ -47,13 +50,14 @@ class AsyncProfilerIntegrationTest extends AbstractProfilerIntegrationTest imple
 
         when:
         new Main().run("--project-dir", projectDir.absolutePath, "--output-dir", outputDir.absolutePath, "--gradle-version", latestSupportedGradleVersion, "--profile", "async-profiler",
+            "--iterations", "3",
             "--async-profiler-event", "wall",
             "--async-profiler-event", "alloc",
             "assemble"
         )
 
         then:
-        logFile.find("<daemon: true").size() == 4
+        logFile.find("<daemon: true").size() == 6
         logFile.containsOne("<invocations: 3>")
 
         and:
@@ -65,10 +69,13 @@ class AsyncProfilerIntegrationTest extends AbstractProfilerIntegrationTest imple
         instrumentedBuildScript()
 
         when:
-        new Main().run("--project-dir", projectDir.absolutePath, "--output-dir", outputDir.absolutePath, "--gradle-version", latestSupportedGradleVersion, "--profile", "async-profiler-heap", "assemble")
+        new Main().run("--project-dir", projectDir.absolutePath, "--output-dir", outputDir.absolutePath,
+            "--iterations", "3",
+            "--gradle-version", latestSupportedGradleVersion,
+            "--profile", "async-profiler-heap", "assemble")
 
         then:
-        logFile.find("<daemon: true").size() == 4
+        logFile.find("<daemon: true").size() == 6
         logFile.containsOne("<invocations: 3>")
 
         and:
@@ -80,10 +87,10 @@ class AsyncProfilerIntegrationTest extends AbstractProfilerIntegrationTest imple
         instrumentedBuildScript()
 
         when:
-        new Main().run("--project-dir", projectDir.absolutePath, "--output-dir", outputDir.absolutePath, "--gradle-version", latestSupportedGradleVersion, "--profile", profiler, "--iterations", "2", "assemble")
+        new Main().run("--project-dir", projectDir.absolutePath, "--output-dir", outputDir.absolutePath, "--gradle-version", latestSupportedGradleVersion, "--profile", profiler, "--iterations", "3", "assemble")
 
         then:
-        logFile.find("<daemon: true").size() == 5
+        logFile.find("<daemon: true").size() == 6
         logFile.containsOne("<invocations: 4>")
 
         and:
@@ -177,10 +184,14 @@ class AsyncProfilerIntegrationTest extends AbstractProfilerIntegrationTest imple
         """
 
         when:
-        new Main().run("--project-dir", projectDir.absolutePath, "--output-dir", outputDir.absolutePath, "--gradle-version", latestSupportedGradleVersion, "--profile", profiler, "--scenario-file", scenarios.absolutePath, "a/b")
+        new Main().run("--project-dir", projectDir.absolutePath, "--output-dir", outputDir.absolutePath,
+            "--gradle-version", latestSupportedGradleVersion,
+            "--iterations", "3",
+            "--profile", profiler,
+            "--scenario-file", scenarios.absolutePath, "a/b")
 
         then:
-        logFile.find("<daemon: true").size() == 4
+        logFile.find("<daemon: true").size() == 6
         logFile.containsOne("<invocations: 3>")
 
         and:
