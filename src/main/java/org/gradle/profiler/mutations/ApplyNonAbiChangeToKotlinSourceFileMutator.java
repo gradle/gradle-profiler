@@ -15,7 +15,7 @@ public class ApplyNonAbiChangeToKotlinSourceFileMutator extends AbstractKotlinSo
         text.append('\n')
             .append("private fun _m")
             .append(context.getUniqueScenarioId())
-            .append("() {requireNotNull(\"")
+            .append("() {println(\"")
             .append(context.getUniqueBuildId())
             .append("\")}");
     }
