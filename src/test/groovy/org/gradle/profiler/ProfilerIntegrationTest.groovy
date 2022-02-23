@@ -910,8 +910,8 @@ classes {
         then:
         // Probe version, 6 warm up, 10 builds
         logFile.find("<src-length: ${srcFile.length()}>").size() == 1
-        logFile.find("<src-length: ${srcFile.length() + 101}>").size() == 6 /* WARM_UP #1..6 */ + 9 /* MEASURE #1..9*/
-        logFile.find("<src-length: ${srcFile.length() + 102}>").size() == 1 /* MEASURE #10 */
+        logFile.find("<src-length: ${srcFile.length() + 165}>").size() == 6 /* WARM_UP #1..6 */ + 9 /* MEASURE #1..9*/
+        logFile.find("<src-length: ${srcFile.length() + 167}>").size() == 1 /* MEASURE #10 */
         srcFile.text == originalText
     }
 
