@@ -1,7 +1,10 @@
 package org.gradle.profiler.asyncprofiler;
 
 import com.google.common.collect.ImmutableSet;
+import org.apache.commons.compress.archivers.ArchiveEntry;
+import org.apache.commons.compress.archivers.ArchiveInputStream;
 import org.apache.commons.compress.archivers.tar.TarArchiveInputStream;
+import org.apache.commons.compress.archivers.zip.ZipArchiveInputStream;
 import org.apache.commons.compress.compressors.gzip.GzipCompressorInputStream;
 import org.gradle.profiler.Logging;
 import org.gradle.profiler.OperatingSystem;
@@ -25,7 +28,7 @@ import static java.nio.file.StandardCopyOption.REPLACE_EXISTING;
  * Downloads a version of async profiler and installs into ~/.gradle-profiler-dist.
  */
 public class AsyncProfilerDownload {
-    private static final String ASYNC_PROFILER_VERSION = "2.0";
+    private static final String ASYNC_PROFILER_VERSION = "2.7";
 
     /**
      * Attempts to locate a default install of async profiler. Uses a previously downloaded installation, or downloads if not available.
@@ -34,10 +37,13 @@ public class AsyncProfilerDownload {
      */
     static File defaultHome() {
         String platformName;
+        String extension;
         if (OperatingSystem.isMacOS()) {
-            platformName = "macos-x64";
+            platformName = "macos";
+            extension = "zip";
         } else if (OperatingSystem.isLinuxX86()) {
             platformName = "linux-x64";
+            extension = "tar.gz";
         } else {
             return null;
         }
@@ -51,15 +57,19 @@ public class AsyncProfilerDownload {
         }
 
         try {
-            URL download = new URL(String.format("https://github.com/jvm-profiling-tools/async-profiler/releases/download/v%s/async-profiler-%s-%s.tar.gz", ASYNC_PROFILER_VERSION, ASYNC_PROFILER_VERSION, platformName));
+            URL download = new URL(String.format("https://github.com/jvm-profiling-tools/async-profiler/releases/download/v%s/async-profiler-%s-%s.%s", ASYNC_PROFILER_VERSION, ASYNC_PROFILER_VERSION, platformName, extension));
             Logging.startOperation("Download and install " + download);
 
             Files.createDirectories(installDist.toPath());
-            File bundle = new File(installDist, "async-profiler.tar.gz");
+            File bundle = new File(installDist, String.format("async-profiler.%s", extension));
             copyTo(download, bundle);
 
             deleteDir(homeDir);
-            untarTo(bundle, installDist);
+            if (extension.equals("tar.gz")) {
+                untarTo(bundle, installDist);
+            } else {
+                unzipTo(bundle, installDist);
+            }
 
             marker.createNewFile();
         } catch (IOException e) {
@@ -69,26 +79,44 @@ public class AsyncProfilerDownload {
         return homeDir;
     }
 
+    private static void unzipTo(File source, File destDir) throws IOException {
+        try (ZipArchiveInputStream zipStream = new ZipArchiveInputStream(new FileInputStream(source))) {
+            extract(zipStream, destDir);
+        }
+    }
+
     private static void untarTo(File source, File destDir) throws IOException {
         try (TarArchiveInputStream tarStream = new TarArchiveInputStream(new GzipCompressorInputStream(new FileInputStream(source)))) {
-            while (tarStream.getNextEntry() != null) {
-                if (tarStream.getCurrentEntry().isDirectory()) {
-                    continue;
-                }
-                String name = tarStream.getCurrentEntry().getName();
-                File file = new File(destDir, name);
-                Files.createDirectories(file.getParentFile().toPath());
-                Files.copy(tarStream, file.toPath(), REPLACE_EXISTING);
-                boolean executable = (tarStream.getCurrentEntry().getMode() & 0x40) != 0;
-                if (executable) {
-                    Set<PosixFilePermission> permissions = Files.getPosixFilePermissions(file.toPath());
-                    ImmutableSet.Builder<PosixFilePermission> withExecute = ImmutableSet.builder();
-                    withExecute.addAll(permissions);
-                    withExecute.add(PosixFilePermission.OWNER_EXECUTE);
-                    Files.setPosixFilePermissions(file.toPath(), withExecute.build());
-                }
+            extract(tarStream, destDir);
+        }
+    }
+
+    private static void extract(ArchiveInputStream archiveStream, File destDir) throws IOException {
+        ArchiveEntry entry;
+        while ((entry = archiveStream.getNextEntry()) != null) {
+            if (entry.isDirectory()) {
+                continue;
+            }
+            String name = entry.getName();
+            File file = new File(destDir, name);
+            Files.createDirectories(file.getParentFile().toPath());
+            Files.copy(archiveStream, file.toPath(), REPLACE_EXISTING);
+            boolean executable = isExecutable(entry);
+            if (executable) {
+                Set<PosixFilePermission> permissions = Files.getPosixFilePermissions(file.toPath());
+                ImmutableSet.Builder<PosixFilePermission> withExecute = ImmutableSet.builder();
+                withExecute.addAll(permissions);
+                withExecute.add(PosixFilePermission.OWNER_EXECUTE);
+                Files.setPosixFilePermissions(file.toPath(), withExecute.build());
             }
         }
+    }
+
+    private static boolean isExecutable(ArchiveEntry entry) {
+        return entry.getName().endsWith(".sh")
+            || entry.getName().endsWith(".so")
+            || entry.getName().endsWith(".dylib")
+            || entry.getName().endsWith("jattach");
     }
 
     private static void copyTo(URL source, File dest) throws IOException {
