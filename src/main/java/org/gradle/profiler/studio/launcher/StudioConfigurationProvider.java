@@ -21,17 +21,9 @@ import java.util.stream.Stream;
 
 public class StudioConfigurationProvider {
 
-    private static final List<String> DEFAULT_JAVA_PATHS = ImmutableList.<String>builder()
-        // MacOS Studio and IntelliJ paths
-        .add("Contents/jre/Contents/Home/bin/java")
-        .add("Contents/jbr/Contents/Home/bin/java")
-        // Linux Studio and IntelliJ paths
-        .add("jre/bin/java")
-        .add("jbr/bin/java")
-        // Windows Studio and IntelliJ paths
-        .add("jre/bin/java.exe")
-        .add("jbr/bin/java.exe")
-        .build();
+    private static final List<String> DEFAULT_MACOS_JAVA_PATHS = ImmutableList.of("Contents/jre/Contents/Home/bin/java", "Contents/jbr/Contents/Home/bin/java");
+    private static final List<String> DEFAULT_WINDOWS_JAVA_PATHS = ImmutableList.of("jre/bin/java.exe", "jbr/bin/java.exe");
+    private static final List<String> DEFAULT_LINUX_JAVA_PATHS = ImmutableList.of("jre/bin/java", "jbr/bin/java");
 
     public static StudioConfiguration getLaunchConfiguration(Path studioInstallDir) {
         if (OperatingSystem.isMacOS()) {
@@ -76,11 +68,21 @@ public class StudioConfigurationProvider {
     }
 
     private static Path getJavaPath(Path studioInstallDir) {
-        return DEFAULT_JAVA_PATHS.stream()
+        return getDefaultJavaPathsForOs().stream()
             .map(studioInstallDir::resolve)
             .filter(path -> path.toFile().exists())
             .findFirst()
             .orElseThrow(() -> new RuntimeException("Could not find Java executable in " + studioInstallDir));
+    }
+
+    private static List<String> getDefaultJavaPathsForOs() {
+        if (OperatingSystem.isMacOS()) {
+            return DEFAULT_MACOS_JAVA_PATHS;
+        } else if (OperatingSystem.isWindows()) {
+            return DEFAULT_WINDOWS_JAVA_PATHS;
+        } else {
+            return DEFAULT_LINUX_JAVA_PATHS;
+        }
     }
 
     private static Dict parse(Path infoFile) {
