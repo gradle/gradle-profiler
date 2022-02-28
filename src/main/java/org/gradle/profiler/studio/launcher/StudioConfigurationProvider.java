@@ -4,6 +4,7 @@ import com.dd.plist.NSDictionary;
 import com.dd.plist.NSObject;
 import com.dd.plist.NSString;
 import com.dd.plist.PropertyListParser;
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import org.gradle.profiler.OperatingSystem;
 
@@ -20,6 +21,18 @@ import java.util.stream.Stream;
 
 public class StudioConfigurationProvider {
 
+    private static final List<String> DEFAULT_JAVA_PATHS = ImmutableList.<String>builder()
+        // MacOS Studio and IntelliJ paths
+        .add("Contents/jre/Contents/Home/bin/java")
+        .add("Contents/jbr/Contents/Home/bin/java")
+        // Linux Studio and IntelliJ paths
+        .add("jre/bin/java")
+        .add("jbr/bin/java")
+        // Windows Studio and IntelliJ paths
+        .add("jre/bin/java.exe")
+        .add("jbr/bin/java.exe")
+        .build();
+
     public static StudioConfiguration getLaunchConfiguration(Path studioInstallDir) {
         if (OperatingSystem.isMacOS()) {
             return getMacOSConfiguration(studioInstallDir);
@@ -33,17 +46,13 @@ public class StudioConfigurationProvider {
         List<Path> classPath = Stream.of("lib/bootstrap.jar", "lib/util.jar", "lib/jdom.jar", "lib/log4j.jar", "lib/jna.jar")
             .map(studioInstallDir::resolve)
             .collect(Collectors.toList());
-        Path javaCommand = studioInstallDir.resolve("jre/bin/java");
-        if (!javaCommand.toFile().exists()) {
-            // Try IntelliJ location
-            javaCommand = studioInstallDir.resolve("jbr/bin/java");
-        }
+        Path javaPath = getJavaPath(studioInstallDir);
         Map<String, String> systemProperties = ImmutableMap.<String, String>builder()
             .put("idea.vendor.name", "Google")
             .put("idea.executable", "studio")
             .put("idea.platform.prefix", "AndroidStudio")
             .build();
-        return new StudioConfiguration(mainClass, studioInstallDir, javaCommand, classPath, systemProperties);
+        return new StudioConfiguration(mainClass, studioInstallDir, javaPath, classPath, systemProperties);
     }
 
     private static StudioConfiguration getMacOSConfiguration(Path studioInstallDir) {
@@ -62,12 +71,16 @@ public class StudioConfigurationProvider {
             .collect(Collectors.toList());
         Map<String, String> systemProperties = mapValues(jvmOptions.dict("Properties").toMap(), v -> v.replace("$APP_PACKAGE", actualInstallDir.toString()));
         String mainClass = jvmOptions.string("MainClass");
-        Path javaCommand = actualInstallDir.resolve("Contents/jre/Contents/Home/bin/java");
-        if (!javaCommand.toFile().exists()) {
-            // Try IntelliJ location
-            javaCommand = actualInstallDir.resolve("Contents/jbr/Contents/Home/bin/java");
-        }
-        return new StudioConfiguration(mainClass, actualInstallDir, javaCommand, classPath, systemProperties);
+        Path javaPath = getJavaPath(actualInstallDir);
+        return new StudioConfiguration(mainClass, actualInstallDir, javaPath, classPath, systemProperties);
+    }
+
+    private static Path getJavaPath(Path studioInstallDir) {
+        return DEFAULT_JAVA_PATHS.stream()
+            .map(studioInstallDir::resolve)
+            .filter(path -> path.toFile().exists())
+            .findFirst()
+            .orElseThrow(() -> new RuntimeException("Could not find Java executable in " + studioInstallDir));
     }
 
     private static Dict parse(Path infoFile) {
