@@ -34,6 +34,10 @@ public class StudioConfigurationProvider {
             .map(studioInstallDir::resolve)
             .collect(Collectors.toList());
         Path javaCommand = studioInstallDir.resolve("jre/bin/java");
+        if (!javaCommand.toFile().exists()) {
+            // Try IntelliJ location
+            javaCommand = studioInstallDir.resolve("jbr/bin/java");
+        }
         Map<String, String> systemProperties = ImmutableMap.<String, String>builder()
             .put("idea.vendor.name", "Google")
             .put("idea.executable", "studio")
@@ -59,6 +63,10 @@ public class StudioConfigurationProvider {
         Map<String, String> systemProperties = mapValues(jvmOptions.dict("Properties").toMap(), v -> v.replace("$APP_PACKAGE", actualInstallDir.toString()));
         String mainClass = jvmOptions.string("MainClass");
         Path javaCommand = actualInstallDir.resolve("Contents/jre/Contents/Home/bin/java");
+        if (!javaCommand.toFile().exists()) {
+            // Try IntelliJ location
+            javaCommand = actualInstallDir.resolve("Contents/jbr/Contents/Home/bin/java");
+        }
         return new StudioConfiguration(mainClass, actualInstallDir, javaCommand, classPath, systemProperties);
     }
 
