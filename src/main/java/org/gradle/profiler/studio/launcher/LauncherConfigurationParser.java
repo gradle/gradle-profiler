@@ -95,6 +95,8 @@ public class LauncherConfigurationParser {
         studioSandbox.getSystemDir().ifPresent(path -> systemProperties.put("idea.system.path", path.toString()));
         systemProperties.put("idea.plugins.path", studioSandbox.getPluginsDir().toString());
         systemProperties.put("idea.log.path", studioSandbox.getLogsDir().toString());
+        // Newer IntelliJ versions require this property to avoid trust project popup
+        systemProperties.put("idea.trust.all.projects", "true");
         if (SHOULD_RUN_HEADLESS) {
             systemProperties.put("java.awt.headless", "true");
         }
