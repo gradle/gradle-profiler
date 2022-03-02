@@ -99,7 +99,7 @@ public class AsyncProfilerDownload {
             }
             String name = entry.getName();
             Path file = destDir.resolve(name);
-            if (!file.startsWith(destDir)) {
+            if (!file.normalize().startsWith(destDir)) {
                 // Ignore files outside destination dir
                 continue;
             }
