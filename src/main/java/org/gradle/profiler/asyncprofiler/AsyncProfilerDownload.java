@@ -81,33 +81,37 @@ public class AsyncProfilerDownload {
 
     private static void unzipTo(File source, File destDir) throws IOException {
         try (ZipArchiveInputStream zipStream = new ZipArchiveInputStream(new FileInputStream(source))) {
-            extract(zipStream, destDir);
+            extract(zipStream, destDir.toPath());
         }
     }
 
     private static void untarTo(File source, File destDir) throws IOException {
         try (TarArchiveInputStream tarStream = new TarArchiveInputStream(new GzipCompressorInputStream(new FileInputStream(source)))) {
-            extract(tarStream, destDir);
+            extract(tarStream, destDir.toPath());
         }
     }
 
-    private static void extract(ArchiveInputStream archiveStream, File destDir) throws IOException {
+    private static void extract(ArchiveInputStream archiveStream, Path destDir) throws IOException {
         ArchiveEntry entry;
         while ((entry = archiveStream.getNextEntry()) != null) {
             if (entry.isDirectory()) {
                 continue;
             }
             String name = entry.getName();
-            File file = new File(destDir, name);
-            Files.createDirectories(file.getParentFile().toPath());
-            Files.copy(archiveStream, file.toPath(), REPLACE_EXISTING);
+            Path file = destDir.resolve(name);
+            if (!file.startsWith(destDir)) {
+                // Ignore files outside destination dir
+                continue;
+            }
+            Files.createDirectories(file.getParent());
+            Files.copy(archiveStream, file, REPLACE_EXISTING);
             boolean executable = isExecutable(entry);
             if (executable) {
-                Set<PosixFilePermission> permissions = Files.getPosixFilePermissions(file.toPath());
+                Set<PosixFilePermission> permissions = Files.getPosixFilePermissions(file);
                 ImmutableSet.Builder<PosixFilePermission> withExecute = ImmutableSet.builder();
                 withExecute.addAll(permissions);
                 withExecute.add(PosixFilePermission.OWNER_EXECUTE);
-                Files.setPosixFilePermissions(file.toPath(), withExecute.build());
+                Files.setPosixFilePermissions(file, withExecute.build());
             }
         }
     }
