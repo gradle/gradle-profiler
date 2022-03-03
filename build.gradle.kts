@@ -72,6 +72,7 @@ application.mainClass.set("org.gradle.profiler.Main")
 
 node {
     download = true
+    version = "17.6.0"
 }
 
 val generateHtmlReportJavaScript = tasks.register<NpxTask>("generateHtmlReportJavaScript") {

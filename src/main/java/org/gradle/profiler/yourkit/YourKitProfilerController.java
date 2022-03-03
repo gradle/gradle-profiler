@@ -47,7 +47,12 @@ public class YourKitProfilerController implements InstrumentingProfiler.Snapshot
 
     private void runYourKitCommand(String command) {
         File controllerJar = findControllerJar();
-        new CommandExec().run(System.getProperty("java.home") + "/bin/java", "-jar", controllerJar.getAbsolutePath(), "localhost", String.valueOf(YourKitJvmArgsCalculator.PORT), command);
+        new CommandExec().run(System.getProperty("java.home") + "/bin/java",
+            "-jar",
+            controllerJar.getAbsolutePath(),
+            "--host=localhost",
+            "--port=" + YourKitJvmArgsCalculator.PORT,
+            command);
     }
 
     private File findControllerJar() {
