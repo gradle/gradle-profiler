@@ -1,5 +1,7 @@
 package org.gradle.profiler.yourkit;
 
+import org.gradle.profiler.OperatingSystem;
+
 import java.io.File;
 
 public class YourKit {
@@ -35,6 +37,12 @@ public class YourKit {
 
     public static File findJniLib() {
         File yourKitHome = findYourKitHome();
+        if(OperatingSystem.isWindows()) {
+            if("32".equals(System.getProperty("sun.arch.data.model"))) {
+                return tryLocations(yourKitHome, "bin/win32/yjpagent.dll");
+            }
+            return tryLocations(yourKitHome, "bin/win64/yjpagent.dll");
+        }
         String macLibLocationPrefix = "Contents/Resources/bin/mac/libyjpagent.";
         return tryLocations(yourKitHome, macLibLocationPrefix + "jnilib", macLibLocationPrefix + "dylib", "bin/linux-x86-64/libyjpagent.so");
     }
