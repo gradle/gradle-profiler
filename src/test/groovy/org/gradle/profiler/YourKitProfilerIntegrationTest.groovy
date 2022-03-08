@@ -108,7 +108,7 @@ class YourKitProfilerIntegrationTest extends AbstractProfilerIntegrationTest {
         instrumentedBuildScript()
 
         when:
-        new Main().run("--project-dir", projectDir.absolutePath, "--output-dir", outputDir.absolutePath, "--gradle-version", minimalSupportedGradleVersion, "--profile", "yourkit", "--yourkit-sampling", "assemble")
+        new Main().run("--project-dir", projectDir.absolutePath, "--output-dir", outputDir.absolutePath, "--gradle-version", minimalSupportedGradleVersion, "--profile", "yourkit-tracing", "assemble")
 
         then:
         logFile.find("<daemon: true").size() == 4
@@ -124,7 +124,7 @@ class YourKitProfilerIntegrationTest extends AbstractProfilerIntegrationTest {
         instrumentedBuildScript()
 
         when:
-        new Main().run("--project-dir", projectDir.absolutePath, "--output-dir", outputDir.absolutePath, "--gradle-version", minimalSupportedGradleVersion, "--profile", "yourkit", "--cold-daemon", "--yourkit-sampling", "assemble")
+        new Main().run("--project-dir", projectDir.absolutePath, "--output-dir", outputDir.absolutePath, "--gradle-version", minimalSupportedGradleVersion, "--profile", "yourkit-tracing", "--cold-daemon", "assemble")
 
         then:
         logFile.find("<daemon: true").size() == 3
@@ -140,7 +140,7 @@ class YourKitProfilerIntegrationTest extends AbstractProfilerIntegrationTest {
         instrumentedBuildScript()
 
         when:
-        new Main().run("--project-dir", projectDir.absolutePath, "--output-dir", outputDir.absolutePath, "--gradle-version", minimalSupportedGradleVersion, "--profile", "yourkit", "--yourkit-sampling", "--no-daemon", "assemble")
+        new Main().run("--project-dir", projectDir.absolutePath, "--output-dir", outputDir.absolutePath, "--gradle-version", minimalSupportedGradleVersion, "--profile", "yourkit-tracing", "--no-daemon", "assemble")
 
         then:
         logFile.find("<daemon: true").size() == 1
@@ -157,7 +157,7 @@ class YourKitProfilerIntegrationTest extends AbstractProfilerIntegrationTest {
         instrumentedBuildScript()
 
         when:
-        new Main().run("--project-dir", projectDir.absolutePath, "--output-dir", outputDir.absolutePath, "--gradle-version", minimalSupportedGradleVersion, "--profile", "yourkit", "--yourkit-memory", "assemble")
+        new Main().run("--project-dir", projectDir.absolutePath, "--output-dir", outputDir.absolutePath, "--gradle-version", minimalSupportedGradleVersion, "--profile", "yourkit-heap", "assemble")
 
         then:
         logFile.find("<daemon: true").size() == 4
@@ -173,7 +173,7 @@ class YourKitProfilerIntegrationTest extends AbstractProfilerIntegrationTest {
         instrumentedBuildScript()
 
         when:
-        new Main().run("--project-dir", projectDir.absolutePath, "--output-dir", outputDir.absolutePath, "--gradle-version", minimalSupportedGradleVersion, "--profile", "yourkit", "--yourkit-memory", "--cold-daemon", "assemble")
+        new Main().run("--project-dir", projectDir.absolutePath, "--output-dir", outputDir.absolutePath, "--gradle-version", minimalSupportedGradleVersion, "--profile", "yourkit-heap", "--cold-daemon", "assemble")
 
         then:
         logFile.find("<daemon: true").size() == 3
@@ -189,7 +189,7 @@ class YourKitProfilerIntegrationTest extends AbstractProfilerIntegrationTest {
         instrumentedBuildScript()
 
         when:
-        new Main().run("--project-dir", projectDir.absolutePath, "--output-dir", outputDir.absolutePath, "--gradle-version", minimalSupportedGradleVersion, "--profile", "yourkit", "--yourkit-memory", "--no-daemon", "assemble")
+        new Main().run("--project-dir", projectDir.absolutePath, "--output-dir", outputDir.absolutePath, "--gradle-version", minimalSupportedGradleVersion, "--profile", "yourkit-heap", "--no-daemon", "assemble")
 
         then:
         logFile.find("<daemon: true").size() == 1

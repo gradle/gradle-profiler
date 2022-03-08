@@ -25,9 +25,6 @@ public class YourKitJvmArgsCalculator implements JvmArgsCalculator {
 
     @Override
     public void calculateJvmArgs(List<String> jvmArgs) {
-        if (!OperatingSystem.isMacOS() && !OperatingSystem.isLinuxX86()) {
-            throw new IllegalArgumentException("YourKit is currently supported on OS X and Linux x64 only.");
-        }
         File yourKitHome = YourKit.findYourKitHome();
         if (yourKitHome == null) {
             throw new IllegalArgumentException("Could not locate YourKit installation. Try setting the " + ENIVONMENT_VARIABLE + " environment variable");
