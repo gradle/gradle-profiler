@@ -31,21 +31,14 @@ val extension = extensions.create<AndroidStudioTestExtension>("androidStudioTest
 val androidStudioRuntime by configurations.creating
 
 dependencies {
-    val extension = when {
+    val fileExtension = when {
         isWindows() -> "windows.zip"
         isMacOS() && isIntel() -> "mac.zip"
         isMacOS() && !isIntel() -> "mac_arm.zip"
         isLinux() -> "linux.tar.gz"
         else -> throw IllegalStateException("Unsupported OS: $os")
     }
-    androidStudioRuntime("android-studio:android-studio@$extension")
-}
-androidStudioRuntime.withDependencies {
-    this.forEach { dependency ->
-        if (dependency is ExternalDependency && dependency.version == null) {
-            dependency.version { require(extension.testAndroidStudioVersion.get()) }
-        }
-    }
+    androidStudioRuntime(extension.testAndroidStudioVersion.map { version -> "android-studio:android-studio:$version@$fileExtension" })
 }
 
 val unpackAndroidStudio = tasks.register<Copy>("unpackAndroidStudio") {
