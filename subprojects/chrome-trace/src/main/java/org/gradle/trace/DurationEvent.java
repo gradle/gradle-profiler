@@ -1,5 +1,7 @@
 package org.gradle.trace;
 
+import org.gradle.trace.util.JsonUtil;
+
 import java.util.Iterator;
 import java.util.Map;
 
@@ -44,8 +46,8 @@ public class DurationEvent implements TraceEvent {
         if (colorName != null) {
             cname = String.format(", \"cname\": \"%s\"", colorName);
         }
-
-        return String.format("{\"name\": \"%s\", \"cat\": \"%s\", \"ph\": \"X\", \"pid\": 0, \"tid\": %d, \"ts\": %d, \"dur\": %d, \"args\": %s %s}", name, category, threadId, startTimestamp, elapsed, args, cname);
+        return String.format("{\"name\": \"%s\", \"cat\": \"%s\", \"ph\": \"X\", \"pid\": 0, \"tid\": %d, \"ts\": %d, \"dur\": %d, \"args\": %s %s}",
+            JsonUtil.escape(name), category, threadId, startTimestamp, elapsed, args, cname);
     }
 
     public void finished(long timestampNanos) {

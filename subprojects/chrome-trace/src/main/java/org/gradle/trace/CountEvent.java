@@ -1,5 +1,7 @@
 package org.gradle.trace;
 
+import org.gradle.trace.util.JsonUtil;
+
 import java.util.Iterator;
 import java.util.Map;
 
@@ -36,6 +38,7 @@ public class CountEvent implements TraceEvent {
             cname = String.format(", \"cname\": \"%s\"", colorName);
         }
 
-        return String.format("{\"name\": \"%s\", \"ph\": \"C\", \"pid\": 0, \"tid\": %d, \"ts\": %d, \"args\": %s %s}", name, Thread.currentThread().getId(), timestamp, args, cname);
+        return String.format("{\"name\": \"%s\", \"ph\": \"C\", \"pid\": 0, \"tid\": %d, \"ts\": %d, \"args\": %s %s}",
+            JsonUtil.escape(name), Thread.currentThread().getId(), timestamp, args, cname);
     }
 }
