@@ -1,3 +1,5 @@
+[中文文档](https://github.com/gradle/gradle-profiler/blob/master/README_CN.md)
+
 # Gradle Profiler
 
 A tool to automate the gathering of profiling and benchmarking information for Gradle builds.
