@@ -22,12 +22,13 @@ public class JFRJvmArgsCalculator implements JvmArgsCalculator {
 
     @Override
     public void calculateJvmArgs(List<String> jvmArgs) {
+        boolean oracleVm = isOracleVm();
+        boolean java8OrLater = JavaVersion.current().isJava8Compatible();
         boolean java11OrLater = JavaVersion.current().isJava11Compatible();
-        if (!java11OrLater) {
-            if (!isOracleVm()) {
-                throw new IllegalArgumentException("JFR is only supported on OpenJDK since Java 11 and Oracle JDK since Java 7");
-            }
+        if (oracleVm && !java11OrLater) {
             jvmArgs.add("-XX:+UnlockCommercialFeatures");
+        } else if (!java8OrLater) {
+            throw new IllegalArgumentException("JFR is only supported on OpenJDK since Java 8 and Oracle JDK since Java 7");
         }
         jvmArgs.add("-XX:+FlightRecorder");
         jvmArgs.add("-XX:+UnlockDiagnosticVMOptions");
@@ -36,18 +37,18 @@ public class JFRJvmArgsCalculator implements JvmArgsCalculator {
         StringBuilder flightRecorderOptions = new StringBuilder("-XX:FlightRecorderOptions=stackdepth=1024");
 
         if (profileOnStart) {
-            if (java11OrLater) {
-                String dumpOnExit = captureOnExit
-                    ? ",dumponexit=true,filename=" + outputFile.getAbsolutePath()
-                    : "";
-                jvmArgs.add("-XX:StartFlightRecording=name=profile,settings=" + args.getJfrSettings() + dumpOnExit);
-            } else {
+            if (oracleVm && !java11OrLater) {
                 jvmArgs.add("-XX:StartFlightRecording=name=profile,settings=" + args.getJfrSettings());
                 if (captureOnExit) {
                     flightRecorderOptions.append(",defaultrecording=true,dumponexit=true")
                         .append(",dumponexitpath=")
                         .append(outputFile.getAbsolutePath());
                 }
+            } else {
+                String dumpOnExit = captureOnExit
+                    ? ",dumponexit=true,filename=" + outputFile.getAbsolutePath()
+                    : "";
+                jvmArgs.add("-XX:StartFlightRecording=name=profile,settings=" + args.getJfrSettings() + dumpOnExit);
             }
         }
 
