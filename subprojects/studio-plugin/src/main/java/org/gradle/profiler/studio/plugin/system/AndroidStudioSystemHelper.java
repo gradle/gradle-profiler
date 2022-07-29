@@ -2,6 +2,7 @@ package org.gradle.profiler.studio.plugin.system;
 
 import com.android.tools.idea.gradle.project.sync.GradleSyncInvoker;
 import com.android.tools.idea.gradle.project.sync.GradleSyncState;
+import com.android.tools.idea.gradle.project.sync.GradleSyncStateImpl;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
@@ -23,7 +24,7 @@ public class AndroidStudioSystemHelper {
     public static GradleSyncResult doGradleSync(Project project) {
         GradleProfilerGradleSyncListener syncListener = new GradleProfilerGradleSyncListener();
         try {
-            GradleSyncInvoker.getInstance().requestProjectSync(project, TRIGGER_USER_SYNC_ACTION, syncListener);
+            GradleSyncInvoker.getInstance().requestProjectSync(project, new GradleSyncInvoker.Request(TRIGGER_USER_SYNC_ACTION), syncListener);
         } catch (Exception e) {
             e.printStackTrace();
             syncListener.syncFailed(project, e.getMessage());
@@ -36,7 +37,7 @@ public class AndroidStudioSystemHelper {
      */
     public static void waitOnPreviousGradleSyncFinish(Project project) {
         GradleProfilerGradleSyncListener syncListener = new GradleProfilerGradleSyncListener();
-        MessageBusConnection connection = GradleSyncState.subscribe(project, syncListener);
+        MessageBusConnection connection = GradleSyncStateImpl.Companion.subscribe(project, syncListener);
         if (!GradleSyncState.getInstance(project).isSyncInProgress()) {
             // Sync was actually not in progress,
             // just acknowledge the listener, so it won't wait forever.

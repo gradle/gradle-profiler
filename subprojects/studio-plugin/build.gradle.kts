@@ -18,6 +18,7 @@ repositories {
 dependencies {
     implementation(project(":client-protocol"))
     testFixturesImplementation(project(":client-protocol"))
+    implementation(files("libstudio.proto.jar"))
 }
 
 // Applied configurations by gradle-intellij-plugin can be found here:
@@ -41,7 +42,7 @@ java {
 
 intellij {
     pluginName.set("gradle-profiler-studio-plugin")
-    version.set("2021.1.1")
+    version.set("2022.1.3")
     // Don't override "since-build" and "until-build" properties in plugin.xml,
     // so we don't need to update plugin to use it also on future IntelliJ versions.
     updateSinceUntilBuild.set(false)
