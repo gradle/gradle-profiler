@@ -35,7 +35,7 @@ public class StudioConfigurationProvider {
 
     private static StudioConfiguration getWindowsOrLinuxConfiguration(Path studioInstallDir) {
         String mainClass = "com.intellij.idea.Main";
-        List<Path> classPath = Stream.of("lib/bootstrap.jar", "lib/util.jar", "lib/jdom.jar", "lib/log4j.jar", "lib/jna.jar")
+        List<Path> classPath = Stream.of("lib/bootstrap.jar", "lib/util.jar", "lib/util_rt.jar", "lib/jdom.jar", "lib/log4j.jar", "lib/jna.jar")
             .map(studioInstallDir::resolve)
             .collect(Collectors.toList());
         Path javaPath = getJavaPath(studioInstallDir);
