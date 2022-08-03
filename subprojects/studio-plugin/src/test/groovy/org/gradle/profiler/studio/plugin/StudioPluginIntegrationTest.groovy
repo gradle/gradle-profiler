@@ -1,6 +1,8 @@
 package org.gradle.profiler.studio.plugin
 
+import com.intellij.openapi.application.ApplicationInfo
 import com.intellij.openapi.application.PathManager
+import com.intellij.openapi.project.ProjectUtil
 import org.gradle.profiler.client.protocol.ServerConnection
 import org.gradle.profiler.client.protocol.messages.StudioRequest
 import org.gradle.profiler.client.protocol.messages.StudioSyncRequestCompleted
@@ -57,7 +59,9 @@ class StudioPluginIntegrationTest extends StudioPluginTestCase {
         ServerConnection connection = server.waitForIncoming(Duration.ofSeconds(10))
 
         when:
-        def invalidateFile = Paths.get(PathManager.getSystemPath(), "projectModelCache", ".invalidate").toFile()
+        def invalidateFile = ApplicationInfo.instance.majorVersion == "2021" && ApplicationInfo.instance.minorVersionMainPart <= "1"
+            ? Paths.get(PathManager.getSystemPath(), "projectModelCache", ".invalidate").toFile()
+            : ProjectUtil.projectsDataDir.resolve(".invalidate").toFile()
         long beforeTimestamp = invalidateFile.exists() ? invalidateFile.text as Long : 0
         connection.send(new StudioRequest(CLEANUP_CACHE))
         connection.receiveCacheCleanupCompleted(Duration.ofSeconds(10))
