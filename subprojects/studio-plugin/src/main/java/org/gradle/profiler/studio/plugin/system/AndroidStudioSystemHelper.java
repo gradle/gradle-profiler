@@ -52,7 +52,6 @@ public class AndroidStudioSystemHelper {
         } catch (NoSuchMethodException | IllegalAccessException | InvocationTargetException e) {
             throw new RuntimeException(e);
         }
-
     }
 
     /**
@@ -85,7 +84,6 @@ public class AndroidStudioSystemHelper {
         } catch (NoSuchMethodException | IllegalAccessException | InvocationTargetException e) {
             throw new RuntimeException(e);
         }
-
     }
 
     /**
