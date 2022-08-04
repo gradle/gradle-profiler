@@ -72,6 +72,6 @@ object MacOSJava8 : GradleProfilerTest(Os.macos, JavaVersion.ORACLE_JAVA_8, {
     name = "MacOS - Java 8"
 })
 
-object WindowsJava8 : GradleProfilerTest(Os.windows, JavaVersion.OPENJDK_11, {
-    name = "Windows - Java 8"
+object WindowsJava11 : GradleProfilerTest(Os.windows, JavaVersion.OPENJDK_11, {
+    name = "Windows - Java 11"
 })
