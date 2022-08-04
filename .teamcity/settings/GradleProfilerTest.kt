@@ -60,7 +60,7 @@ open class GradleProfilerTest(os: Os, javaVersion: JavaVersion) : BuildType({
     }
 }
 
-object LinuxJava8 : GradleProfilerTest(Os.linux, JavaVersion.OPENJDK_8, {
+object LinuxJava8 : GradleProfilerTest(Os.linux, JavaVersion.ORACLE_JAVA_8, {
     name = "Linux - Java 8"
 })
 
@@ -68,7 +68,7 @@ object LinuxJava11 : GradleProfilerTest(Os.linux, JavaVersion.OPENJDK_11, {
     name = "Linux - Java 11"
 })
 
-object MacOSJava8 : GradleProfilerTest(Os.macos, JavaVersion.OPENJDK_8, {
+object MacOSJava8 : GradleProfilerTest(Os.macos, JavaVersion.ORACLE_JAVA_8, {
     name = "MacOS - Java 8"
 })
 

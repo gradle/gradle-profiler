@@ -11,7 +11,7 @@ fun BuildType.agentRequirement(os: Os) {
 
 fun toolchainConfiguration(os: Os) = listOf("-Porg.gradle.java.installations.auto-detect=false",
     "-Porg.gradle.java.installations.auto-download=false",
-    """"-Porg.gradle.java.installations.paths=%${os.name}.java8.openjdk.64bit%,%${os.name}.java11.openjdk.64bit%"""").joinToString(" ")
+    """"-Porg.gradle.java.installations.paths=%${os.name}.java8.oracle.64bit%,%${os.name}.java8.openjdk.64bit%,%${os.name}.java11.openjdk.64bit%"""").joinToString(" ")
 
 fun ParametrizedWithType.javaHome(os: Os, javaVersion: JavaVersion) {
     param("env.JAVA_HOME", javaVersion.javaHome(os))
@@ -26,6 +26,7 @@ fun ParametrizedWithType.androidHome(os: Os) {
 }
 
 enum class JavaVersion(val majorVersion: String, val vendor: String, private val javaHomePostfix: String) {
+    ORACLE_JAVA_8("8", "oracle", "java8.oracle.64bit"),
     OPENJDK_8("8", "openjdk", "java8.openjdk.64bit"),
     OPENJDK_11("11", "openjdk", "java11.openjdk.64bit");
 
