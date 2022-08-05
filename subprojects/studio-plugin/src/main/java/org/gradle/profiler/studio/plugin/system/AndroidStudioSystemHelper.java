@@ -1,9 +1,7 @@
 package org.gradle.profiler.studio.plugin.system;
 
-import com.android.tools.idea.gradle.project.sync.GradleSyncInvoker;
-import com.android.tools.idea.gradle.project.sync.GradleSyncListener;
 import com.android.tools.idea.gradle.project.sync.GradleSyncState;
-import com.google.wireless.android.sdk.stats.GradleSyncStats;
+import com.android.tools.idea.projectsystem.ProjectSystemUtil;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
@@ -13,10 +11,7 @@ import com.intellij.openapi.wm.ex.WindowManagerEx;
 import com.intellij.util.messages.MessageBusConnection;
 import org.gradle.profiler.studio.plugin.system.GradleProfilerGradleSyncListener.GradleSyncResult;
 
-import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
-
-import static com.google.wireless.android.sdk.stats.GradleSyncStats.Trigger.TRIGGER_USER_SYNC_ACTION;
+import static com.android.tools.idea.projectsystem.ProjectSystemSyncManager.SyncReason.USER_REQUEST;
 
 public class AndroidStudioSystemHelper {
 
@@ -27,30 +22,14 @@ public class AndroidStudioSystemHelper {
      */
     public static GradleSyncResult doGradleSync(Project project) {
         GradleProfilerGradleSyncListener syncListener = new GradleProfilerGradleSyncListener();
+        MessageBusConnection connection = subscribeToGradleSync(project, syncListener);
         try {
-            requestProjectSync(project, TRIGGER_USER_SYNC_ACTION, syncListener);
-        } catch (Exception e) {
-            e.printStackTrace();
-            syncListener.syncFailed(project, e.getMessage());
-        }
-        return syncListener.waitAndGetResult();
-    }
-
-    /**
-     * We use reflection since Android Studio Electric Eel adds a modified android plugin at runtime on classpath
-     */
-    private static void requestProjectSync(Project project, GradleSyncStats.Trigger trigger, GradleSyncListener listener) {
-        try {
-            Object syncInvoker = ApplicationManager.getApplication().getService(GradleSyncInvoker.class);
-            Method method = syncInvoker.getClass().getMethod(
-                "requestProjectSync",
-                Project.class,
-                GradleSyncInvoker.Request.class,
-                GradleSyncListener.class
-            );
-            method.invoke(syncInvoker, project, new GradleSyncInvoker.Request(trigger), listener);
-        } catch (NoSuchMethodException | IllegalAccessException | InvocationTargetException e) {
-            throw new RuntimeException(e);
+            // We could get sync result from the `Future` returned by the syncProject(),
+            // but it doesn't return error message so we rather listen to GRADLE_SYNC_TOPIC to get the sync result
+            ProjectSystemUtil.getSyncManager(project).syncProject(USER_REQUEST);
+            return syncListener.waitAndGetResult();
+        } finally {
+            connection.disconnect();
         }
     }
 
@@ -59,9 +38,8 @@ public class AndroidStudioSystemHelper {
      */
     public static void waitOnPreviousGradleSyncFinish(Project project) {
         GradleProfilerGradleSyncListener syncListener = new GradleProfilerGradleSyncListener();
-        MessageBusConnection connection = project.getMessageBus().connect(project);
-        connection.subscribe(GradleSyncState.GRADLE_SYNC_TOPIC, syncListener);
-        if (!isSyncInProgress(project)) {
+        MessageBusConnection connection = subscribeToGradleSync(project, syncListener);
+        if (!ProjectSystemUtil.getSyncManager(project).isSyncInProgress()) {
             // Sync was actually not in progress,
             // just acknowledge the listener, so it won't wait forever.
             syncListener.syncSkipped(project);
@@ -73,22 +51,15 @@ public class AndroidStudioSystemHelper {
         }
     }
 
-    /**
-     * We use reflection since Android Studio Electric Eel adds a modified android plugin at runtime on classpath
-     */
-    private static boolean isSyncInProgress(Project project) {
-        try {
-            Object syncState = project.getService(GradleSyncState.class);
-            Method method = syncState.getClass().getMethod("isSyncInProgress");
-            return (boolean) method.invoke(syncState);
-        } catch (NoSuchMethodException | IllegalAccessException | InvocationTargetException e) {
-            throw new RuntimeException(e);
-        }
+    private static MessageBusConnection subscribeToGradleSync(Project project, GradleProfilerGradleSyncListener syncListener) {
+        MessageBusConnection connection = project.getMessageBus().connect(project);
+        connection.subscribe(GradleSyncState.GRADLE_SYNC_TOPIC, syncListener);
+        return connection;
     }
 
     /**
      * Wait on Android Studio indexing and similar background tasks to finish.
-     *
+     * <p>
      * It seems there is no better way to do it atm.
      */
     public static void waitOnBackgroundProcessesFinish(Project project) {
