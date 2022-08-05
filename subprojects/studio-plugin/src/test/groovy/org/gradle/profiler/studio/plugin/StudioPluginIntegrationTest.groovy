@@ -40,14 +40,14 @@ class StudioPluginIntegrationTest extends StudioPluginTestCase {
         given:
         ServerConnection connection = server.waitForIncoming(Duration.ofSeconds(10))
         // Fail Gradle build by removing settings file
-        settingsFile.delete()
+        settingsFile << "garbage"
 
         when:
         connection.send(new StudioRequest(SYNC))
 
         then:
         StudioSyncRequestCompleted requestCompleted = connection.receiveSyncRequestCompleted(Duration.ofSeconds(90))
-        requestCompleted.result == FAILED
+        assert requestCompleted.result == FAILED
 
         and:
         connection.send(new StudioRequest(STOP_RECEIVING_EVENTS))

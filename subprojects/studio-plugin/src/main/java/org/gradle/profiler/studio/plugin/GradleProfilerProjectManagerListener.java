@@ -1,5 +1,6 @@
 package org.gradle.profiler.studio.plugin;
 
+import com.android.tools.idea.gradle.project.GradleProjectInfo;
 import com.intellij.ide.impl.TrustedProjects;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -25,6 +26,9 @@ public class GradleProfilerProjectManagerListener implements ProjectManagerListe
     public void projectOpened(@NotNull com.intellij.openapi.project.Project project) {
         LOG.info("Project opened");
         if (System.getProperty(PROFILER_PORT_PROPERTY) != null) {
+            // Skip Android Studio Gradle automatic import on project open,
+            // interestingly this is an issue only with Android Studio but not IntelliJ
+            GradleProjectInfo.getInstance(project).setSkipStartupActivity(true);
             TrustedProjects.setTrusted(project, true);
             ApplicationManager.getApplication().executeOnPooledThread(() -> {
                 StudioRequest lastRequest = listenForSyncRequests(project);
@@ -43,5 +47,4 @@ public class GradleProfilerProjectManagerListener implements ProjectManagerListe
             throw new UncheckedIOException(e);
         }
     }
-
 }
