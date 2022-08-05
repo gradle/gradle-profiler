@@ -38,9 +38,10 @@ public class GradleProfilerGradleSyncListener implements GradleSyncListener {
     }
 
     private void setResult(GradleSyncResult result) {
-        if (results.isEmpty()) {
-            results.add(result);
+        if (!results.isEmpty()) {
+            results.poll();
         }
+        results.add(result);
     }
 
     public GradleSyncResult waitAndGetResult() {

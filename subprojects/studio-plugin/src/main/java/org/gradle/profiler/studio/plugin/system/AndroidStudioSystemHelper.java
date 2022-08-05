@@ -24,6 +24,9 @@ public class AndroidStudioSystemHelper {
         GradleProfilerGradleSyncListener syncListener = new GradleProfilerGradleSyncListener();
         MessageBusConnection connection = subscribeToGradleSync(project, syncListener);
         try {
+            if (ProjectSystemUtil.getSyncManager(project).isSyncInProgress()) {
+                waitOnPreviousGradleSyncFinish(project);
+            }
             // We could get sync result from the `Future` returned by the syncProject(),
             // but it doesn't return error message so we rather listen to GRADLE_SYNC_TOPIC to get the sync result
             ProjectSystemUtil.getSyncManager(project).syncProject(USER_REQUEST);
