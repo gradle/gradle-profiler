@@ -131,7 +131,7 @@ androidStudioTests {
     autoDownloadAndroidStudio.set(autoDownloadAndRunInHeadless)
     // Electric Eel (2022.1.1) Canary 8
     testAndroidStudioVersion.set("2022.1.1.8")
-    testAndroidSdkVersion.set("7.3.0-beta04")
+    testAndroidSdkVersion.set("7.2.2")
     // For local development it's easier to setup Android SDK with Android Studio, since auto download needs ANDROID_SDK_ROOT to be set with
     // an accepted license in it. See https://developer.android.com/studio/intro/update.html#download-with-gradle.
     autoDownloadAndroidSdk.set(autoDownloadAndRunInHeadless)
