@@ -6,7 +6,7 @@ fun Project.configureGradleProfilerProject() {
 
     val testBuilds = listOf(
         MacOSJava8,
-        WindowsJava8,
+        WindowsJava11,
         LinuxJava8,
         LinuxJava11
     )
