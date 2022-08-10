@@ -17,6 +17,10 @@ import static org.gradle.profiler.client.protocol.messages.StudioRequest.StudioR
 import static org.gradle.profiler.client.protocol.messages.StudioSyncRequestCompleted.StudioSyncRequestResult.FAILED
 import static org.gradle.profiler.client.protocol.messages.StudioSyncRequestCompleted.StudioSyncRequestResult.SUCCEEDED
 
+/**
+ * Note: This class doesn't extend Spock Specification, but it extends IntelliJ HeavyPlatformTestCase,
+ * so you should always use `assert` when asserting statements
+ */
 class StudioPluginIntegrationTest extends StudioPluginTestCase {
 
     @Test
@@ -29,7 +33,7 @@ class StudioPluginIntegrationTest extends StudioPluginTestCase {
 
         then:
         StudioSyncRequestCompleted requestCompleted = connection.receiveSyncRequestCompleted(Duration.ofSeconds(90))
-        requestCompleted.result == SUCCEEDED
+        assert requestCompleted.result == SUCCEEDED
 
         and:
         connection.send(new StudioRequest(STOP_RECEIVING_EVENTS))
@@ -39,8 +43,8 @@ class StudioPluginIntegrationTest extends StudioPluginTestCase {
     void "should report error if Gradle sync is not successful"() {
         given:
         ServerConnection connection = server.waitForIncoming(Duration.ofSeconds(10))
-        // Fail Gradle build by removing settings file
-        settingsFile << "garbage"
+        // Fail Gradle build by failing the build script compilation
+        settingsFile.text = "garbage"
 
         when:
         connection.send(new StudioRequest(SYNC))
@@ -59,7 +63,7 @@ class StudioPluginIntegrationTest extends StudioPluginTestCase {
         ServerConnection connection = server.waitForIncoming(Duration.ofSeconds(10))
 
         when:
-        def invalidateFile = ApplicationInfo.instance.majorVersion == "2021" && ApplicationInfo.instance.minorVersionMainPart <= "1"
+        def invalidateFile = ApplicationInfo.instance.majorVersion == "2021" && ApplicationInfo.instance.minorVersionMainPart in ["0", "1"]
             ? Paths.get(PathManager.getSystemPath(), "projectModelCache", ".invalidate").toFile()
             : ProjectUtil.projectsDataDir.resolve(".invalidate").toFile()
         long beforeTimestamp = invalidateFile.exists() ? invalidateFile.text as Long : 0

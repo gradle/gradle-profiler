@@ -2,7 +2,6 @@ package org.gradle.profiler.studio.plugin.system;
 
 import com.android.tools.idea.gradle.project.sync.GradleSyncListener;
 import com.intellij.openapi.project.Project;
-import com.intellij.util.messages.MessageBusConnection;
 import org.gradle.profiler.client.protocol.messages.StudioSyncRequestCompleted.StudioSyncRequestResult;
 import org.jetbrains.annotations.NotNull;
 
@@ -19,11 +18,9 @@ import static org.gradle.profiler.client.protocol.messages.StudioSyncRequestComp
 public class GradleProfilerGradleSyncListener implements GradleSyncListener {
 
     private final BlockingQueue<GradleSyncResult> results;
-    private final MessageBusConnection connection;
 
-    public GradleProfilerGradleSyncListener(MessageBusConnection connection) {
+    public GradleProfilerGradleSyncListener() {
         this.results = new ArrayBlockingQueue<>(1);
-        this.connection = connection;
     }
 
     @Override
@@ -53,8 +50,6 @@ public class GradleProfilerGradleSyncListener implements GradleSyncListener {
             return results.take();
         } catch (InterruptedException e) {
             throw new RuntimeException(e);
-        } finally {
-            connection.disconnect();
         }
     }
 

@@ -1,7 +1,7 @@
 package org.gradle.profiler.studio.plugin.system;
 
 import com.android.tools.idea.gradle.project.sync.GradleSyncState;
-import com.android.tools.idea.projectsystem.ProjectSystemSyncManager;
+import com.android.tools.idea.projectsystem.ProjectSystemSyncManager.SyncReason;
 import com.android.tools.idea.projectsystem.ProjectSystemUtil;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -28,13 +28,17 @@ public class AndroidStudioSystemHelper {
      * Does a Gradle sync.
      */
     public static GradleSyncResult doGradleSync(Project project) {
-        GradleProfilerGradleSyncListener syncListener = subscribeToGradleSync(project);
+        MessageBusConnection connection = project.getMessageBus().connect();
+        GradleProfilerGradleSyncListener syncListener = new GradleProfilerGradleSyncListener();
+        connection.subscribe(GradleSyncState.GRADLE_SYNC_TOPIC, syncListener);
         try {
             // We could get sync result from the `Future` returned by the syncProject(),
             // but it doesn't return error message so we rather listen to GRADLE_SYNC_TOPIC to get the sync result
-            ProjectSystemUtil.getSyncManager(project).syncProject(ProjectSystemSyncManager.SyncReason.USER_REQUEST).get();
+            ProjectSystemUtil.getSyncManager(project).syncProject(SyncReason.USER_REQUEST).get();
         } catch (InterruptedException | ExecutionException e) {
-            throw new RuntimeException(e);
+            syncListener.syncFailed(project, e.getMessage());
+        } finally {
+            connection.disconnect();
         }
         return syncListener.waitAndGetResult();
     }
@@ -43,26 +47,12 @@ public class AndroidStudioSystemHelper {
      * Registers a listener that waits on next gradle sync if it's in progress.
      */
     public static void waitOnPreviousGradleSyncFinish(Project project) {
-        MessageBusConnection connection = project.getMessageBus().connect();
-        CompletableFuture<String> future = new CompletableFuture<>();
-        connection.subscribe(PROJECT_SYSTEM_SYNC_TOPIC, syncResult -> future.complete("Done"));
-        if (!ProjectSystemUtil.getSyncManager(project).isSyncInProgress()) {
-            // Sync was actually not in progress,
-            // just acknowledge the listener, so it won't wait forever.
-            future.complete("Done");
-        }
-        try {
+        if (ProjectSystemUtil.getSyncManager(project).isSyncInProgress()) {
+            MessageBusConnection connection = project.getMessageBus().connect();
+            CompletableFuture<Void> future = new CompletableFuture<>();
+            connection.subscribe(PROJECT_SYSTEM_SYNC_TOPIC, syncResult -> future.complete(null));
             future.join();
-        } finally {
-            connection.disconnect();
         }
-    }
-
-    private static GradleProfilerGradleSyncListener subscribeToGradleSync(Project project) {
-        MessageBusConnection connection = project.getMessageBus().connect();
-        GradleProfilerGradleSyncListener syncListener = new GradleProfilerGradleSyncListener(connection);
-        connection.subscribe(GradleSyncState.GRADLE_SYNC_TOPIC, syncListener);
-        return syncListener;
     }
 
     /**
@@ -79,15 +69,15 @@ public class AndroidStudioSystemHelper {
     }
 
     private static void waitOnProgressIndicator(ProgressIndicator progressIndicator) {
-        wait(progressIndicator::isRunning, WAIT_ON_PROCESS_SLEEP_TIME);
+        wait(WAIT_ON_PROCESS_SLEEP_TIME, progressIndicator::isRunning);
     }
 
     public static void waitOnPostStartupActivities(Project project) {
-        wait(() -> !StartupManager.getInstance(project).postStartupActivityPassed(), WAIT_ON_STARTUP_SLEEP_TIME);
+        wait(WAIT_ON_STARTUP_SLEEP_TIME, () -> !StartupManager.getInstance(project).postStartupActivityPassed());
     }
 
     @SuppressWarnings("BusyWait")
-    private static void wait(Supplier<Boolean> whileCondition, long sleepMillis) {
+    private static void wait(long sleepMillis, Supplier<Boolean> whileCondition) {
         while (whileCondition.get()) {
             try {
                 Thread.sleep(sleepMillis);

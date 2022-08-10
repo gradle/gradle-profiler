@@ -15,7 +15,6 @@ import org.gradle.profiler.studio.plugin.system.GradleProfilerGradleSyncListener
 
 import java.time.Duration;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicInteger;
 
 import static com.android.tools.idea.projectsystem.ProjectSystemSyncManager.SyncResult.SKIPPED;
 import static com.android.tools.idea.projectsystem.ProjectSystemSyncManager.SyncResult.SKIPPED_OUT_OF_DATE;
@@ -33,12 +32,11 @@ public class GradleProfilerClient {
 
     private final Client client;
     private final Stopwatch startupStopwatch;
-    private final AtomicInteger syncCount;
+    private int syncCount;
 
     public GradleProfilerClient(Client client) {
         this.client = client;
         this.startupStopwatch = Stopwatch.createStarted();
-        this.syncCount = new AtomicInteger();
     }
 
     public StudioRequest listenForSyncRequests(Project project) {
@@ -76,7 +74,7 @@ public class GradleProfilerClient {
 
     private void handleSyncRequest(StudioRequest request, Project project) {
         LOG.info("Received sync request with id: " + request.getId());
-        boolean isStartup = syncCount.getAndIncrement() == 0;
+        boolean isStartup = syncCount++ == 0;
 
         // In some cases sync could happen before we trigger it,
         // for example when we open a project for the first time.
@@ -104,16 +102,13 @@ public class GradleProfilerClient {
         if (lastSyncResult == UNKNOWN) {
             // Sync was not run before, we need to run it manually
             return startManualSync(project);
-        }
-        GradleSyncResult result;
-        if (lastSyncResult.isSuccessful() && (lastSyncResult == SKIPPED || lastSyncResult == SKIPPED_OUT_OF_DATE)) {
-            result = new GradleSyncResult(StudioSyncRequestResult.SKIPPED, "");
+        } else if ((lastSyncResult == SKIPPED || lastSyncResult == SKIPPED_OUT_OF_DATE)) {
+            return new GradleSyncResult(StudioSyncRequestResult.SKIPPED, "");
         } else if (lastSyncResult.isSuccessful()) {
-            result = new GradleSyncResult(StudioSyncRequestResult.SUCCEEDED, "");
+            return new GradleSyncResult(StudioSyncRequestResult.SUCCEEDED, "");
         } else  {
-            result = new GradleSyncResult(StudioSyncRequestResult.FAILED, "Startup failure");
+            return new GradleSyncResult(StudioSyncRequestResult.FAILED, "Startup failure");
         }
-        return result;
     }
 
     /**
