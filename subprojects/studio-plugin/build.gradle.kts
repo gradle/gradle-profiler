@@ -17,9 +17,9 @@ repositories {
 
 dependencies {
     implementation(project(":client-protocol"))
-    testImplementation(libs.groovy.core)
+    testImplementation(libs.bundles.testDependencies)
     testFixturesImplementation(project(":client-protocol"))
-    testFixturesImplementation(libs.groovy.core)
+    testFixturesImplementation(libs.bundles.testDependencies)
 }
 
 // Applied configurations by gradle-intellij-plugin can be found here:
@@ -39,6 +39,10 @@ java {
     toolchain {
         languageVersion.set(JavaLanguageVersion.of(11))
     }
+}
+
+tasks.test {
+    useJUnitPlatform()
 }
 
 intellij {

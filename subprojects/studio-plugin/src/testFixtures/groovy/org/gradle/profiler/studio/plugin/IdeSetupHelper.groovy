@@ -8,31 +8,40 @@ import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.testFramework.EdtTestUtil
 import com.intellij.testFramework.HeavyPlatformTestCase
 import com.intellij.testFramework.OpenProjectTaskBuilder
-import org.gradle.profiler.client.protocol.Server
+import com.intellij.util.ThrowableRunnable
 import org.jetbrains.annotations.NotNull
-import org.junit.runner.RunWith
-import org.junit.runners.JUnit4
+import org.junit.runner.Description
 
 import java.nio.file.Path
+import java.util.function.Consumer
+/**
+ * HeavyPlatformTestCase extends Junit TestCase, but we use it through composition so we can use Spock framework
+ */
+@SuppressWarnings('UnconstructableJUnitTestCase')
+class IdeSetupHelper extends HeavyPlatformTestCase {
 
-@RunWith(JUnit4.class)
-class StudioPluginTestCase extends HeavyPlatformTestCase {
+    Consumer<File> projectCreator
 
-    Server server
-    File buildFile
-    File settingsFile
-    File projectDir
-
-    @Override
-    protected void setUp() throws Exception {
-        server = new Server("plugin")
-        System.setProperty("gradle.profiler.port", server.getPort() as String)
-        // We must run this on Edt otherwise the exception is thrown since runInDispatchThread is set to false
-        EdtTestUtil.runInEdtAndWait { super.setUp() }
+    IdeSetupHelper(Description description, Consumer<File> projectCreator) {
+        super.setName(description.methodName)
+        this.projectCreator = projectCreator
     }
 
     @Override
-    protected void tearDown() throws Exception {
+    void runBare(@NotNull ThrowableRunnable<Throwable> testRunnable) {
+        super.runBare(testRunnable)
+    }
+
+    @Override
+    void setUp() {
+        // We must run this on Edt otherwise the exception is thrown since runInDispatchThread is set to false
+        EdtTestUtil.runInEdtAndWait {
+            super.setUp()
+        }
+    }
+
+    @Override
+    void tearDown() {
         // We must run this on Edt otherwise the exception is thrown since runInDispatchThread is set to false
         EdtTestUtil.runInEdtAndWait {
             ProjectJdkTable jdkTable = ProjectJdkTable.getInstance()
@@ -50,19 +59,11 @@ class StudioPluginTestCase extends HeavyPlatformTestCase {
     protected @NotNull Project doCreateAndOpenProject() {
         OpenProjectTaskBuilder optionBuilder = getOpenProjectOptions()
         Path projectFile = getProjectDirOrFile(isCreateDirectoryBasedProject())
-        // We have to create a project with build.gradle file
+        // We have to create a project with settings.gradle file
         // before it is open by IDE, so IDE detects it as a Gradle project
-        createGradleProject()
-        return Objects.requireNonNull(ProjectManagerEx.getInstanceEx().openProject(projectFile, optionBuilder.build()));
-    }
-
-    protected void createGradleProject() {
-        projectDir = getProjectDirOrFile().parent.toFile()
-        projectDir.mkdirs()
-        buildFile = new File(projectDir, "build.gradle")
-        settingsFile = new File(projectDir, "settings.gradle")
-        buildFile.createNewFile()
-        settingsFile.createNewFile()
+        projectCreator.accept(projectFile.parent.toFile())
+        Project project = ProjectManagerEx.getInstanceEx().openProject(projectFile, optionBuilder.build())
+        return project
     }
 
     /**
@@ -72,5 +73,4 @@ class StudioPluginTestCase extends HeavyPlatformTestCase {
     protected boolean runInDispatchThread() {
         return false
     }
-
 }
