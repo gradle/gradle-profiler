@@ -11,6 +11,7 @@ import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.openapi.wm.ex.StatusBarEx;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
 import com.intellij.util.messages.MessageBusConnection;
+import org.gradle.profiler.client.protocol.messages.StudioSyncRequestCompleted.StudioSyncRequestResult;
 import org.gradle.profiler.studio.plugin.system.GradleProfilerGradleSyncListener.GradleSyncResult;
 
 import java.util.concurrent.CompletableFuture;
@@ -29,18 +30,18 @@ public class AndroidStudioSystemHelper {
      */
     public static GradleSyncResult doGradleSync(Project project) {
         MessageBusConnection connection = project.getMessageBus().connect();
-        GradleProfilerGradleSyncListener syncListener = new GradleProfilerGradleSyncListener();
-        connection.subscribe(GradleSyncState.GRADLE_SYNC_TOPIC, syncListener);
         try {
+            GradleProfilerGradleSyncListener syncListener = new GradleProfilerGradleSyncListener();
+            connection.subscribe(GradleSyncState.GRADLE_SYNC_TOPIC, syncListener);
             // We could get sync result from the `Future` returned by the syncProject(),
             // but it doesn't return error message so we rather listen to GRADLE_SYNC_TOPIC to get the sync result
             ProjectSystemUtil.getSyncManager(project).syncProject(SyncReason.USER_REQUEST).get();
+            return syncListener.waitAndGetResult();
         } catch (InterruptedException | ExecutionException e) {
-            syncListener.syncFailed(project, e.getMessage());
+            return new GradleSyncResult(StudioSyncRequestResult.FAILED, e.getMessage());
         } finally {
             connection.disconnect();
         }
-        return syncListener.waitAndGetResult();
     }
 
     /**

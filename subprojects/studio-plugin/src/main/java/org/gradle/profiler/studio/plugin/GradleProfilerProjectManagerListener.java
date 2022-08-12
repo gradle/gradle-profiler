@@ -26,8 +26,10 @@ public class GradleProfilerProjectManagerListener implements ProjectManagerListe
     public void projectOpened(@NotNull com.intellij.openapi.project.Project project) {
         LOG.info("Project opened");
         if (System.getProperty(PROFILER_PORT_PROPERTY) != null) {
-            // Skip Android Studio Gradle automatic import on project open,
-            // interestingly this is an issue only with Android Studio but not IntelliJ
+            // This solves the issue where Android Studio would run the Gradle sync automatically on the first import.
+            // Unfortunately it seems we can't always detect it because it happens very late and due to that there might
+            // a case where two simultaneous syncs would be run: one from automatic sync trigger and one from our trigger.
+            // With this line we disable that automatic sync, but we still trigger our sync later in the code.
             GradleProjectInfo.getInstance(project).setSkipStartupActivity(true);
             TrustedProjects.setTrusted(project, true);
             ApplicationManager.getApplication().executeOnPooledThread(() -> {
