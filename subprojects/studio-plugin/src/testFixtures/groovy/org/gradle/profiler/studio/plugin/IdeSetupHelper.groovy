@@ -14,6 +14,7 @@ import org.junit.runner.Description
 
 import java.nio.file.Path
 import java.util.function.Consumer
+
 /**
  * HeavyPlatformTestCase extends Junit TestCase, but we use it through composition so we can use Spock framework
  */
