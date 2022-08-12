@@ -1,5 +1,7 @@
 import extensions.AndroidStudioTestExtension
 import tasks.InstallAndroidSdkTask
+import providers.AndroidStudioInstallation
+import providers.AndroidStudioSystemProperties
 
 repositories {
     ivy {
@@ -55,7 +57,8 @@ val unpackAndroidStudio = tasks.register<Copy>("unpackAndroidStudio") {
 val installAndroidSdk = tasks.register<InstallAndroidSdkTask>("installAndroidSdk") {
     androidSdkVersion.set(extension.testAndroidSdkVersion)
     androidProjectDir.set(layout.buildDirectory.dir("installAndroidSdk/android-sdk-project"))
-    onlyIf { extension.autoDownloadAndroidSdk.get() }
+    val autoDownloadAndroidSdk = extension.autoDownloadAndroidSdk
+    onlyIf { autoDownloadAndroidSdk.get() }
 }
 
 val androidStudioInstallation = objects.newInstance<AndroidStudioInstallation>().apply {
@@ -64,57 +67,12 @@ val androidStudioInstallation = objects.newInstance<AndroidStudioInstallation>()
 
 tasks.withType<Test>().configureEach {
     dependsOn(installAndroidSdk)
-    jvmArgumentProviders.add(AndroidStudioSystemProperties(
-        androidStudioInstallation,
-        extension.autoDownloadAndroidStudio,
-        extension.runAndroidStudioInHeadlessMode,
-        providers
-    ))
-}
-
-abstract class AndroidStudioInstallation {
-    @get:InputFiles
-    @get:PathSensitive(PathSensitivity.RELATIVE)
-    abstract val studioInstallLocation: DirectoryProperty
-}
-
-class AndroidStudioSystemProperties(
-    @get:Internal
-    val studioInstallation: AndroidStudioInstallation,
-    @get:Internal
-    val autoDownloadAndroidStudio: Provider<Boolean>,
-    @get:Input
-    val runInHeadlessMode: Provider<Boolean>,
-    providers: ProviderFactory
-) : CommandLineArgumentProvider {
-
-    @get:Optional
-    @get:Nested
-    val studioInstallationProvider = providers.provider {
-        if (autoDownloadAndroidStudio.get()) {
-            studioInstallation
-        } else {
-            null
-        }
-    }
-
-    override fun asArguments(): Iterable<String> {
-        val systemProperties = mutableListOf<String>()
-        if (autoDownloadAndroidStudio.get()) {
-            val androidStudioPath = studioInstallation.studioInstallLocation.get().asFile.absolutePath
-            val macOsAndroidStudioPath = "$androidStudioPath/Android Studio.app"
-            val macOsAndroidStudioPathPreview = "$androidStudioPath/Android Studio Preview.app"
-            val windowsAndLinuxPath = "$androidStudioPath/android-studio"
-            val studioHome = when {
-                isMacOS() && File(macOsAndroidStudioPath).exists() -> macOsAndroidStudioPath
-                isMacOS() -> macOsAndroidStudioPathPreview
-                else -> windowsAndLinuxPath
-            }
-            systemProperties.add("-Dstudio.home=$studioHome")
-        }
-        if (runInHeadlessMode.get()) {
-            systemProperties.add("-Dstudio.tests.headless=true")
-        }
-        return systemProperties
-    }
+    jvmArgumentProviders.add(
+        AndroidStudioSystemProperties(
+            androidStudioInstallation,
+            extension.autoDownloadAndroidStudio,
+            extension.runAndroidStudioInHeadlessMode,
+            providers
+        )
+    )
 }
