@@ -1,4 +1,4 @@
-import com.moowork.gradle.node.npm.NpxTask
+import com.github.gradle.node.npm.task.NpxTask
 import io.sdkman.vendors.tasks.SdkAnnounceVersionTask
 import io.sdkman.vendors.tasks.SdkDefaultVersionTask
 import io.sdkman.vendors.tasks.SdkReleaseVersionTask
@@ -12,7 +12,7 @@ plugins {
     application
     `maven-publish`
     id("profiler.publication")
-    id("com.github.node-gradle.node") version "2.2.4"
+    id("com.github.node-gradle.node") version "3.4.0"
     id("io.sdkman.vendors") version "2.0.0"
     id("io.github.gradle-nexus.publish-plugin") version "1.1.0"
 }
@@ -71,19 +71,19 @@ tasks.withType<Jar>().configureEach {
 application.mainClass.set("org.gradle.profiler.Main")
 
 node {
-    download = true
-    version = "17.6.0"
+    download.set(true)
+    version.set("17.6.0")
 }
 
 val generateHtmlReportJavaScript = tasks.register<NpxTask>("generateHtmlReportJavaScript") {
+    dependsOn(tasks.npmInstall)
     val source = file("src/main/js/org/gradle/profiler/report/report.js")
     val outputDir = layout.buildDirectory.dir("html-report")
     val output = outputDir.map { it.file("org/gradle/profiler/report/report.js") }
     inputs.file(source)
-    inputs.files(tasks.npmInstall)
     outputs.dir(outputDir)
-    command = "browserify"
-    setArgs(listOf(source.absolutePath, "--outfile", output.get().asFile))
+    command.set("browserify")
+    args.addAll(source.absolutePath, "--outfile", output.get().asFile.absolutePath)
 }
 
 tasks.processResources {
