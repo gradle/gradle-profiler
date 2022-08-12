@@ -1,10 +1,11 @@
 package org.gradle.profiler.studio.plugin
 
+import com.intellij.openapi.application.ApplicationInfo
 import com.intellij.openapi.application.PathManager
+import com.intellij.openapi.project.ProjectUtil
 import org.gradle.profiler.client.protocol.ServerConnection
 import org.gradle.profiler.client.protocol.messages.StudioRequest
 import org.gradle.profiler.client.protocol.messages.StudioSyncRequestCompleted
-import org.junit.Test
 
 import java.nio.file.Paths
 import java.time.Duration
@@ -15,10 +16,9 @@ import static org.gradle.profiler.client.protocol.messages.StudioRequest.StudioR
 import static org.gradle.profiler.client.protocol.messages.StudioSyncRequestCompleted.StudioSyncRequestResult.FAILED
 import static org.gradle.profiler.client.protocol.messages.StudioSyncRequestCompleted.StudioSyncRequestResult.SUCCEEDED
 
-class StudioPluginIntegrationTest extends StudioPluginTestCase {
+class StudioPluginIntegrationTest extends StudioPluginSpecification {
 
-    @Test
-    void "should successfully sync Gradle project"() {
+    def "should successfully sync Gradle project"() {
         given:
         ServerConnection connection = server.waitForIncoming(Duration.ofSeconds(10))
 
@@ -26,38 +26,38 @@ class StudioPluginIntegrationTest extends StudioPluginTestCase {
         connection.send(new StudioRequest(SYNC))
 
         then:
-        StudioSyncRequestCompleted requestCompleted = connection.receiveSyncRequestCompleted(Duration.ofSeconds(90))
+        StudioSyncRequestCompleted requestCompleted = connection.receiveSyncRequestCompleted(Duration.ofSeconds(150))
         requestCompleted.result == SUCCEEDED
 
         and:
         connection.send(new StudioRequest(STOP_RECEIVING_EVENTS))
     }
 
-    @Test
-    void "should report error if Gradle sync is not successful"() {
+    def "should report error if Gradle sync is not successful"() {
         given:
         ServerConnection connection = server.waitForIncoming(Duration.ofSeconds(10))
-        // Fail Gradle build by removing settings file
-        settingsFile.delete()
+        // Fail Gradle build by failing the build script compilation
+        settingsFile.text = "garbage"
 
         when:
         connection.send(new StudioRequest(SYNC))
 
         then:
-        StudioSyncRequestCompleted requestCompleted = connection.receiveSyncRequestCompleted(Duration.ofSeconds(90))
+        StudioSyncRequestCompleted requestCompleted = connection.receiveSyncRequestCompleted(Duration.ofSeconds(150))
         requestCompleted.result == FAILED
 
         and:
         connection.send(new StudioRequest(STOP_RECEIVING_EVENTS))
     }
 
-    @Test
-    void "should clean IDE cache"() {
+    def "should clean IDE cache"() {
         given:
         ServerConnection connection = server.waitForIncoming(Duration.ofSeconds(10))
 
         when:
-        def invalidateFile = Paths.get(PathManager.getSystemPath(), "projectModelCache", ".invalidate").toFile()
+        def invalidateFile = ApplicationInfo.instance.majorVersion == "2021" && ApplicationInfo.instance.minorVersionMainPart in ["0", "1"]
+            ? Paths.get(PathManager.getSystemPath(), "projectModelCache", ".invalidate").toFile()
+            : ProjectUtil.projectsDataDir.resolve(".invalidate").toFile()
         long beforeTimestamp = invalidateFile.exists() ? invalidateFile.text as Long : 0
         connection.send(new StudioRequest(CLEANUP_CACHE))
         connection.receiveCacheCleanupCompleted(Duration.ofSeconds(10))
@@ -67,11 +67,10 @@ class StudioPluginIntegrationTest extends StudioPluginTestCase {
         long afterSecondTimestamp = invalidateFile.text as Long
 
         then:
-        assert beforeTimestamp < afterFirstTimestamp
-        assert afterFirstTimestamp < afterSecondTimestamp
+        beforeTimestamp < afterFirstTimestamp
+        afterFirstTimestamp < afterSecondTimestamp
 
         and:
         connection.send(new StudioRequest(STOP_RECEIVING_EVENTS))
     }
-
 }

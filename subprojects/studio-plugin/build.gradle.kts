@@ -6,7 +6,7 @@ plugins {
     groovy
     `java-test-fixtures`
     id("profiler.allprojects")
-    id("org.jetbrains.intellij") version "1.2.1"
+    id("org.jetbrains.intellij") version "1.8.0"
 }
 
 description = "Contains logic for Android Studio plugin that communicates with profiler"
@@ -17,7 +17,9 @@ repositories {
 
 dependencies {
     implementation(project(":client-protocol"))
+    testImplementation(libs.bundles.testDependencies)
     testFixturesImplementation(project(":client-protocol"))
+    testFixturesImplementation(libs.bundles.testDependencies)
 }
 
 // Applied configurations by gradle-intellij-plugin can be found here:
@@ -37,6 +39,10 @@ java {
     toolchain {
         languageVersion.set(JavaLanguageVersion.of(11))
     }
+}
+
+tasks.test {
+    useJUnitPlatform()
 }
 
 intellij {

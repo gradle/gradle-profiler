@@ -4,11 +4,16 @@ import com.dd.plist.NSDictionary;
 import com.dd.plist.NSObject;
 import com.dd.plist.NSString;
 import com.dd.plist.PropertyListParser;
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import org.gradle.profiler.OperatingSystem;
 
+import java.io.IOException;
+import java.io.UncheckedIOException;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.FileSystems;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Arrays;
@@ -16,6 +21,8 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Function;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -24,20 +31,46 @@ public class StudioConfigurationProvider {
     private static final List<String> DEFAULT_MACOS_JAVA_PATHS = ImmutableList.of("Contents/jre/Contents/Home/bin/java", "Contents/jbr/Contents/Home/bin/java");
     private static final List<String> DEFAULT_WINDOWS_JAVA_PATHS = ImmutableList.of("jre/bin/java.exe", "jbr/bin/java.exe");
     private static final List<String> DEFAULT_LINUX_JAVA_PATHS = ImmutableList.of("jre/bin/java", "jbr/bin/java");
+    private static final Pattern LINUX_CLASSPATH_LIB_PATTERN = Pattern.compile(".*CLASS_PATH=.*(?<lib>lib/.+\\.jar).*");
+    private static final Pattern WINDOWS_CLASSPATH_LIB_PATTERN = Pattern.compile(".*CLASS_PATH=.*(?<lib>lib\\\\.+\\.jar).*");
 
     public static StudioConfiguration getLaunchConfiguration(Path studioInstallDir) {
         if (OperatingSystem.isMacOS()) {
             return getMacOSConfiguration(studioInstallDir);
+        } else if (OperatingSystem.isWindows()){
+            return getWindowsConfiguration(studioInstallDir);
         } else {
-            return getWindowsOrLinuxConfiguration(studioInstallDir);
+            return getLinuxConfiguration(studioInstallDir);
         }
     }
 
-    private static StudioConfiguration getWindowsOrLinuxConfiguration(Path studioInstallDir) {
+    @VisibleForTesting
+    static StudioConfiguration getWindowsConfiguration(Path studioInstallDir) {
+        Path studioBat = studioInstallDir.resolve("bin/studio.bat");
+        List<Path> classPath = parseClasspathFromFile(studioInstallDir, studioBat, WINDOWS_CLASSPATH_LIB_PATTERN);
+        return getWindowsAndLinuxConfiguration(studioInstallDir, classPath);
+    }
+
+    @VisibleForTesting
+    static StudioConfiguration getLinuxConfiguration(Path studioInstallDir) {
+        Path studioSh = studioInstallDir.resolve("bin/studio.sh");
+        List<Path> classPath = parseClasspathFromFile(studioInstallDir, studioSh, LINUX_CLASSPATH_LIB_PATTERN);
+        return getWindowsAndLinuxConfiguration(studioInstallDir, classPath);
+    }
+
+    private static List<Path> parseClasspathFromFile(Path studioInstallDir, Path studioExec, Pattern libPattern) {
+        try (Stream<String> lines = Files.lines(studioExec, StandardCharsets.UTF_8)) {
+            return lines.map(libPattern::matcher)
+                .filter(Matcher::matches)
+                .map(matcher -> studioInstallDir.resolve(matcher.group("lib")))
+                .collect(Collectors.toList());
+        } catch (IOException e) {
+            throw new UncheckedIOException(e);
+        }
+    }
+
+    private static StudioConfiguration getWindowsAndLinuxConfiguration(Path studioInstallDir, List<Path> classPath) {
         String mainClass = "com.intellij.idea.Main";
-        List<Path> classPath = Stream.of("lib/bootstrap.jar", "lib/util.jar", "lib/jdom.jar", "lib/log4j.jar", "lib/jna.jar")
-            .map(studioInstallDir::resolve)
-            .collect(Collectors.toList());
         Path javaPath = getJavaPath(studioInstallDir);
         Map<String, String> systemProperties = ImmutableMap.<String, String>builder()
             .put("idea.vendor.name", "Google")
@@ -48,11 +81,11 @@ public class StudioConfigurationProvider {
     }
 
     private static StudioConfiguration getMacOSConfiguration(Path studioInstallDir) {
-        Dict entries = parse(studioInstallDir.resolve("Contents/Info.plist"));
+        Dict entries = parseMacOsPlist(studioInstallDir.resolve("Contents/Info.plist"));
         Path actualInstallDir;
         if ("jetbrains-toolbox-launcher".equals(entries.string("CFBundleExecutable"))) {
             actualInstallDir = Paths.get(entries.string("JetBrainsToolboxApp"));
-            entries = parse(actualInstallDir.resolve("Contents/Info.plist"));
+            entries = parseMacOsPlist(actualInstallDir.resolve("Contents/Info.plist"));
         } else {
             actualInstallDir = studioInstallDir;
         }
@@ -85,7 +118,7 @@ public class StudioConfigurationProvider {
         }
     }
 
-    private static Dict parse(Path infoFile) {
+    private static Dict parseMacOsPlist(Path infoFile) {
         try {
             return new Dict((NSDictionary) PropertyListParser.parse(infoFile.toFile()));
         } catch (Exception e) {
