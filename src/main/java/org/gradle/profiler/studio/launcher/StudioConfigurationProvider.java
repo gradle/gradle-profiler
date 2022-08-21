@@ -31,8 +31,8 @@ public class StudioConfigurationProvider {
     private static final List<String> DEFAULT_MACOS_JAVA_PATHS = ImmutableList.of("Contents/jre/Contents/Home/bin/java", "Contents/jbr/Contents/Home/bin/java");
     private static final List<String> DEFAULT_WINDOWS_JAVA_PATHS = ImmutableList.of("jre/bin/java.exe", "jbr/bin/java.exe");
     private static final List<String> DEFAULT_LINUX_JAVA_PATHS = ImmutableList.of("jre/bin/java", "jbr/bin/java");
-    private static final Pattern LINUX_CLASSPATH_LIB_PATTERN = Pattern.compile(".*CLASS_PATH=.*(?<lib>lib/.+\\.jar).*");
-    private static final Pattern WINDOWS_CLASSPATH_LIB_PATTERN = Pattern.compile(".*CLASS_PATH=.*(?<lib>lib\\\\.+\\.jar).*");
+    private static final Pattern LINUX_CLASSPATH_LIB_PATTERN = Pattern.compile(".*(CLASS_PATH|CLASSPATH)=.*(?<lib>lib/.+\\.jar).*");
+    private static final Pattern WINDOWS_CLASSPATH_LIB_PATTERN = Pattern.compile(".*(CLASS_PATH|CLASSPATH)=.*(?<lib>lib\\\\.+\\.jar).*");
 
     public static StudioConfiguration getLaunchConfiguration(Path studioInstallDir) {
         if (OperatingSystem.isMacOS()) {
