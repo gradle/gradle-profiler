@@ -35,8 +35,8 @@ public class StudioConfigurationProvider {
     /**
      * Android Studio Dolphin (2021.3) and older versions use "CLASSPATH", while Electric Eel (2022.1) and newer versions use CLASS_PATH
      */
-    private static final Pattern LINUX_CLASSPATH_LIB_PATTERN = Pattern.compile(".*(CLASS_PATH|CLASSPATH)=.*(?<lib>lib/.+\\.jar).*");
-    private static final Pattern WINDOWS_CLASSPATH_LIB_PATTERN = Pattern.compile(".*(CLASS_PATH|CLASSPATH)=.*(?<lib>lib\\\\.+\\.jar).*");
+    private static final Pattern LINUX_CLASSPATH_LIB_PATTERN = Pattern.compile(".*(?:CLASS_PATH|CLASSPATH)=.*(?<lib>lib/.+\\.jar).*");
+    private static final Pattern WINDOWS_CLASSPATH_LIB_PATTERN = Pattern.compile(".*(?:CLASS_PATH|CLASSPATH)=.*(?<lib>lib\\\\.+\\.jar).*");
 
     public static StudioConfiguration getLaunchConfiguration(Path studioInstallDir) {
         if (OperatingSystem.isMacOS()) {
