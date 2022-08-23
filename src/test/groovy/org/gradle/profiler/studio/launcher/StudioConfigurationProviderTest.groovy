@@ -20,14 +20,14 @@ class StudioConfigurationProviderTest extends Specification {
         new File(studioInstallDir, "jre/bin/java").createNewFile()
     }
 
-    def "should parse linux classpath correctly from studio sh file"() {
+    def "should parse linux classpath correctly from studio sh file with #classpathKeyword"() {
         given:
         new File(studioInstallDir, "bin/studio.sh") << """
 some text
 
-CLASS_PATH="\$IDE_HOME/lib/lib1.jar"
-CLASS_PATH="\$CLASS_PATH:\$IDE_HOME/lib/lib2.jar"
-CLASS_PATH="\$CLASS_PATH:\$IDE_HOME/lib/lib1/lib1.jar"
+$classpathKeyword="\$IDE_HOME/lib/lib1.jar"
+$classpathKeyword="\$$classpathKeyword:\$IDE_HOME/lib/lib2.jar"
+$classpathKeyword="\$$classpathKeyword:\$IDE_HOME/lib/lib1/lib1.jar"
 
 some other text
 """
@@ -41,16 +41,19 @@ some other text
             studioInstallDir.toPath().resolve("lib/lib2.jar"),
             studioInstallDir.toPath().resolve("lib/lib1/lib1.jar")
         ]
+
+        where:
+        classpathKeyword << ["CLASS_PATH", "CLASSPATH"]
     }
 
-    def "should parse windows classpath correctly from studio bat file"() {
+    def "should parse windows classpath correctly from studio bat file with #classpathKeyword"() {
         given:
         new File(studioInstallDir, "bin/studio.bat") << """
 some text
 
-SET "CLASS_PATH=%IDE_HOME%\\lib\\lib1.jar"
-SET "CLASS_PATH=%CLASS_PATH%;%IDE_HOME%\\lib\\lib2.jar"
-SET "CLASS_PATH=%CLASS_PATH%;%IDE_HOME%\\lib\\lib1\\lib1.jar"
+SET "$classpathKeyword=%IDE_HOME%\\lib\\lib1.jar"
+SET "$classpathKeyword=%$classpathKeyword%;%IDE_HOME%\\lib\\lib2.jar"
+SET "$classpathKeyword=%$classpathKeyword%;%IDE_HOME%\\lib\\lib1\\lib1.jar"
 
 some other text
 """
@@ -64,6 +67,8 @@ some other text
             studioInstallDir.toPath().resolve("lib\\lib2.jar"),
             studioInstallDir.toPath().resolve("lib\\lib1\\lib1.jar")
         ]
-    }
 
+        where:
+        classpathKeyword << ["CLASS_PATH", "CLASSPATH"]
+    }
 }
