@@ -60,7 +60,7 @@ publishing {
     }
 }
 
-val pgpSigningKey: Provider<String> = providers.environmentVariable("PGP_SIGNING_KEY").forUseAtConfigurationTime()
+val pgpSigningKey: Provider<String> = providers.environmentVariable("PGP_SIGNING_KEY")
 val signArtifacts: Boolean = !pgpSigningKey.orNull.isNullOrEmpty()
 
 tasks.withType<Sign>().configureEach { isEnabled = signArtifacts }
