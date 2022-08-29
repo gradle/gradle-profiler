@@ -261,6 +261,43 @@ class AndroidStudioIntegrationTest extends AbstractProfilerIntegrationTest {
         logFile.find(~/\* Using command line:.*-Xmx1024m, -Xms128m, com.intellij.idea.Main,.*/).size() == 1
     }
 
+    def "doesn't write external annotations to .m2 folder"() {
+        given:
+        def scenarioFile = file("performance.scenarios") << """
+            $scenarioName {
+                android-studio-sync {
+                }
+            }
+        """
+        buildFile.text = """
+            plugins {
+                id 'java'
+            }
+            repositories {
+                mavenCentral()
+            }
+            dependencies {
+                // This dependency triggers download of external annotations
+                // to <mavenRepo>/org/jetbrains/externalAnnotations
+                implementation("com.fasterxml.jackson.core:jackson-core:2.9.6")
+            }
+        """
+        def mavenRepository = tmpDir.newFolder("maven/repository")
+        new File("${sandboxDir.absolutePath}/config/options").mkdirs()
+        new File("${sandboxDir.absolutePath}/config/options/path.macros.xml").text = """
+<application>
+  <component name="PathMacrosImpl">
+    <macro name="MAVEN_REPOSITORY" value="${mavenRepository.absolutePath}" />
+  </component>
+</application>"""
+
+        when:
+        runBenchmark(scenarioFile, 1, 1)
+
+        then:
+        mavenRepository.list() == [] as String[]
+    }
+
     def runBenchmark(File scenarioFile, int warmups, int iterations, String... additionalArgs) {
         List<String> args = [
             "--project-dir", projectDir.absolutePath,

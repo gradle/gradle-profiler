@@ -10,6 +10,7 @@ import org.gradle.profiler.client.protocol.messages.StudioRequest;
 import org.gradle.profiler.studio.plugin.client.GradleProfilerClient;
 import org.gradle.profiler.studio.plugin.system.AndroidStudioSystemHelper;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.plugins.gradle.settings.GradleSettings;
 
 import java.io.IOException;
 import java.io.UncheckedIOException;
@@ -31,6 +32,10 @@ public class GradleProfilerProjectManagerListener implements ProjectManagerListe
             // a case where two simultaneous syncs would be run: one from automatic sync trigger and one from our trigger.
             // With this line we disable that automatic sync, but we still trigger our sync later in the code.
             GradleProjectInfo.getInstance(project).setSkipStartupActivity(true);
+            // If we don't disable this, Android Studio will download to .m2 folder if
+            // some project has com.fasterxml.jackson.core:jackson-core as a dependency
+            GradleSettings.getInstance(project).getLinkedProjectsSettings()
+                .forEach(settings -> settings.setResolveExternalAnnotations(false));
             TrustedProjects.setTrusted(project, true);
             ApplicationManager.getApplication().executeOnPooledThread(() -> {
                 StudioRequest lastRequest = listenForSyncRequests(project);
