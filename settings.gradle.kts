@@ -19,8 +19,6 @@ rootProject.children.forEach {
     it.projectDir = rootDir.resolve( "subprojects/${it.name}")
 }
 
-enableFeaturePreview("VERSION_CATALOGS")
-
 /**
  * Intellij-gradle-plugin requires Java 11.
  */
