@@ -76,7 +76,8 @@ public class BuildOperationInstrumentation extends GradleInstrumentation {
         if (totalGarbageCollectionTimeDataFile.length() == 0) {
             return Optional.empty();
         }
-        return Optional.of(readCumulativeTimeFromDataFile(totalGarbageCollectionTimeDataFile));
+        BuildOperationDuration buildOperationDuration = readCumulativeMetricsFromDataFile(totalGarbageCollectionTimeDataFile);
+        return Optional.of(buildOperationDuration.getTotalDuration());
     }
 
     public Optional<Duration> getTimeToTaskExecution() {
@@ -95,22 +96,35 @@ public class BuildOperationInstrumentation extends GradleInstrumentation {
         }
     }
 
-    public Map<String, Duration> getCumulativeBuildOperationTimes() {
+    public Map<String, BuildOperationDuration> getCumulativeBuildOperationDurations() {
         return buildOperationDataFiles.entrySet().stream()
             .filter(entry -> entry.getValue().length() > 0)
             .collect(Collectors.toMap(
                 Map.Entry::getKey,
-                (entry -> readCumulativeTimeFromDataFile(entry.getValue())))
+                entry -> readCumulativeMetricsFromDataFile(entry.getValue()))
             );
     }
 
-    private static Duration readCumulativeTimeFromDataFile(File dataFile) {
+    private static BuildOperationDuration readCumulativeMetricsFromDataFile(File dataFile) {
         try {
             try (Stream<String> lines = Files.lines(dataFile.toPath(), StandardCharsets.UTF_8)) {
-                return Duration.ofMillis(lines.mapToLong(Long::parseLong).sum());
+                BuildOperationDuration buildOperationDuration = new BuildOperationDuration();
+                lines.forEachOrdered(s -> collectMetrics(buildOperationDuration, s));
+                return buildOperationDuration;
             }
         } catch (IOException e) {
             throw new UncheckedIOException("Could not read result from file.", e);
         }
+    }
+
+    public static void collectMetrics(BuildOperationDuration collector, String s) {
+        int separatorIndex = s.indexOf(",");
+        if (separatorIndex == -1) {
+            throw new IllegalStateException("Unexpected line format: " + s);
+        }
+
+        long durationMillis = Long.parseLong(s.substring(0, separatorIndex));
+        int count = Integer.parseInt(s.substring(separatorIndex + 1));
+        collector.add(durationMillis, count);
     }
 }

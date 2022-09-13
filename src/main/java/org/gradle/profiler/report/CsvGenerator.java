@@ -110,7 +110,7 @@ public class CsvGenerator extends AbstractGenerator {
         }
         T buildResult = results.get(row);
         writer.write(scenario.getSamples().stream()
-            .map(sample -> sample.extractFrom(buildResult))
+            .map(sample -> sample.extractTotalDurationFrom(buildResult))
             .map(Duration::toMillis)
             .map(Object::toString)
             .collect(Collectors.joining(","))
@@ -118,7 +118,7 @@ public class CsvGenerator extends AbstractGenerator {
     }
 
     private void writeLong(BufferedWriter writer, List<? extends BuildScenarioResult<?>> allScenarios) throws IOException {
-        writer.write("Scenario,Tool,Tasks,Phase,Iteration,Sample,Duration");
+        writer.write("Scenario,Tool,Tasks,Phase,Iteration,Sample,Duration,Count");
         writer.newLine();
         for (BuildScenarioResult<?> scenario : allScenarios) {
             writeLongRow(writer, scenario);
@@ -140,7 +140,9 @@ public class CsvGenerator extends AbstractGenerator {
                 writer.write(",");
                 writer.write(sample.getName());
                 writer.write(",");
-                writer.write(String.valueOf(sample.extractFrom(result).toMillis()));
+                writer.write(String.valueOf(sample.extractTotalDurationFrom(result).toMillis()));
+                writer.write(",");
+                writer.write(String.valueOf(sample.extractTotalCountFrom(result)));
                 writer.newLine();
             }
         }

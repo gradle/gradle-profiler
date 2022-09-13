@@ -1,6 +1,7 @@
 package org.gradle.profiler.studio.invoker;
 
 import org.gradle.profiler.GradleBuildInvocationResult;
+import org.gradle.profiler.result.DurationOnlySample;
 import org.gradle.profiler.result.Sample;
 
 import java.time.Duration;
@@ -14,7 +15,7 @@ public class StudioBuildInvocationResult extends GradleBuildInvocationResult {
             result.getActionResult(),
             result.getGarbageCollectionTime(),
             result.getTimeToTaskExecution(),
-            result.getCumulativeBuildOperationTimes(),
+            result.getCumulativeBuildOperationDurations(),
             result.getDaemonPid()
         );
     }
@@ -24,27 +25,27 @@ public class StudioBuildInvocationResult extends GradleBuildInvocationResult {
         return (StudioBuildActionResult) super.getActionResult();
     }
 
-    public static final Sample<StudioBuildInvocationResult> GRADLE_TOTAL_EXECUTION_TIME = new Sample<StudioBuildInvocationResult>() {
+    public static final Sample<StudioBuildInvocationResult> GRADLE_TOTAL_EXECUTION_TIME = new DurationOnlySample<StudioBuildInvocationResult>() {
         @Override
         public String getName() {
             return "Gradle total execution time";
         }
 
         @Override
-        public Duration extractFrom(StudioBuildInvocationResult result) {
+        public Duration extractTotalDurationFrom(StudioBuildInvocationResult result) {
             return result.getActionResult().getGradleTotalExecutionTime();
         }
     };
 
     public static Sample<StudioBuildInvocationResult> getGradleToolingAgentExecutionTime(int index) {
-        return new Sample<StudioBuildInvocationResult>() {
+        return new DurationOnlySample<StudioBuildInvocationResult>() {
             @Override
             public String getName() {
                 return "Gradle execution time #" + (index + 1);
             }
 
             @Override
-            public Duration extractFrom(StudioBuildInvocationResult result) {
+            public Duration extractTotalDurationFrom(StudioBuildInvocationResult result) {
                 List<Duration> executionTimes = result.getActionResult().getGradleExecutionTimes();
                 return index >= executionTimes.size()
                     ? Duration.ZERO
@@ -53,14 +54,14 @@ public class StudioBuildInvocationResult extends GradleBuildInvocationResult {
         };
     }
 
-    public static final Sample<StudioBuildInvocationResult> IDE_EXECUTION_TIME = new Sample<StudioBuildInvocationResult>() {
+    public static final Sample<StudioBuildInvocationResult> IDE_EXECUTION_TIME = new DurationOnlySample<StudioBuildInvocationResult>() {
         @Override
         public String getName() {
             return "IDE execution time";
         }
 
         @Override
-        public Duration extractFrom(StudioBuildInvocationResult result) {
+        public Duration extractTotalDurationFrom(StudioBuildInvocationResult result) {
             return result.getActionResult().getIdeExecutionTime();
         }
     };

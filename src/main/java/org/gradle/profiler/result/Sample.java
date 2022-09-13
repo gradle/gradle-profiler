@@ -5,5 +5,7 @@ import java.time.Duration;
 public interface Sample<T extends BuildInvocationResult> {
     String getName();
 
-    Duration extractFrom(T result);
+    Duration extractTotalDurationFrom(T result);
+
+    int extractTotalCountFrom(T result);
 }

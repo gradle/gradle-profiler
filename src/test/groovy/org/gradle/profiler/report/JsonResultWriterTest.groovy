@@ -13,6 +13,7 @@ import org.gradle.profiler.RunTasksAction
 import org.gradle.profiler.ScenarioContext
 import org.gradle.profiler.mutations.ApplyAbiChangeToKotlinSourceFileMutator
 import org.gradle.profiler.result.BuildInvocationResult
+import org.gradle.profiler.result.DurationOnlySample
 import org.gradle.profiler.result.Sample
 import org.gradle.util.GradleVersion
 import org.junit.Rule
@@ -294,12 +295,12 @@ class JsonResultWriterTest extends Specification {
 }"""
     }
 
-    static class TestSample implements Sample<BuildInvocationResult> {
+    static class TestSample implements DurationOnlySample<BuildInvocationResult> {
         static final TestSample INSTANCE = new TestSample()
         final String name = "Test sample"
 
         @Override
-        Duration extractFrom(BuildInvocationResult result) {
+        Duration extractTotalDurationFrom(BuildInvocationResult result) {
             return ((GradleInvocationResult) result).testTime
         }
     }
