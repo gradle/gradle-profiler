@@ -1,7 +1,7 @@
 package org.gradle.profiler.studio.invoker;
 
 import org.gradle.profiler.GradleBuildInvocationResult;
-import org.gradle.profiler.result.DurationOnlySample;
+import org.gradle.profiler.result.SingleInvocationSample;
 import org.gradle.profiler.result.Sample;
 
 import java.time.Duration;
@@ -15,7 +15,7 @@ public class StudioBuildInvocationResult extends GradleBuildInvocationResult {
             result.getActionResult(),
             result.getGarbageCollectionTime(),
             result.getTimeToTaskExecution(),
-            result.getCumulativeBuildOperationDurations(),
+            result.getTotalBuildOperationExecutionData(),
             result.getDaemonPid()
         );
     }
@@ -25,7 +25,7 @@ public class StudioBuildInvocationResult extends GradleBuildInvocationResult {
         return (StudioBuildActionResult) super.getActionResult();
     }
 
-    public static final Sample<StudioBuildInvocationResult> GRADLE_TOTAL_EXECUTION_TIME = new DurationOnlySample<StudioBuildInvocationResult>() {
+    public static final Sample<StudioBuildInvocationResult> GRADLE_TOTAL_EXECUTION_TIME = new SingleInvocationSample<StudioBuildInvocationResult>() {
         @Override
         public String getName() {
             return "Gradle total execution time";
@@ -38,7 +38,7 @@ public class StudioBuildInvocationResult extends GradleBuildInvocationResult {
     };
 
     public static Sample<StudioBuildInvocationResult> getGradleToolingAgentExecutionTime(int index) {
-        return new DurationOnlySample<StudioBuildInvocationResult>() {
+        return new SingleInvocationSample<StudioBuildInvocationResult>() {
             @Override
             public String getName() {
                 return "Gradle execution time #" + (index + 1);
@@ -54,7 +54,7 @@ public class StudioBuildInvocationResult extends GradleBuildInvocationResult {
         };
     }
 
-    public static final Sample<StudioBuildInvocationResult> IDE_EXECUTION_TIME = new DurationOnlySample<StudioBuildInvocationResult>() {
+    public static final Sample<StudioBuildInvocationResult> IDE_EXECUTION_TIME = new SingleInvocationSample<StudioBuildInvocationResult>() {
         @Override
         public String getName() {
             return "IDE execution time";

@@ -76,8 +76,8 @@ public class BuildOperationInstrumentation extends GradleInstrumentation {
         if (totalGarbageCollectionTimeDataFile.length() == 0) {
             return Optional.empty();
         }
-        BuildOperationDuration buildOperationDuration = readCumulativeMetricsFromDataFile(totalGarbageCollectionTimeDataFile);
-        return Optional.of(buildOperationDuration.getTotalDuration());
+        BuildOperationExecutionData buildOperationExecutionData = readExecutionDataFromFile(totalGarbageCollectionTimeDataFile);
+        return Optional.of(buildOperationExecutionData.getTotalDuration());
     }
 
     public Optional<Duration> getTimeToTaskExecution() {
@@ -96,35 +96,35 @@ public class BuildOperationInstrumentation extends GradleInstrumentation {
         }
     }
 
-    public Map<String, BuildOperationDuration> getCumulativeBuildOperationDurations() {
+    public Map<String, BuildOperationExecutionData> getTotalBuildOperationExecutionData() {
         return buildOperationDataFiles.entrySet().stream()
             .filter(entry -> entry.getValue().length() > 0)
             .collect(Collectors.toMap(
                 Map.Entry::getKey,
-                entry -> readCumulativeMetricsFromDataFile(entry.getValue()))
+                entry -> readExecutionDataFromFile(entry.getValue()))
             );
     }
 
-    private static BuildOperationDuration readCumulativeMetricsFromDataFile(File dataFile) {
+    private static BuildOperationExecutionData readExecutionDataFromFile(File dataFile) {
         try {
             try (Stream<String> lines = Files.lines(dataFile.toPath(), StandardCharsets.UTF_8)) {
-                BuildOperationDuration buildOperationDuration = new BuildOperationDuration();
-                lines.forEachOrdered(s -> collectMetrics(buildOperationDuration, s));
-                return buildOperationDuration;
+                BuildOperationExecutionData.Builder executionDataBuilder = new BuildOperationExecutionData.Builder();
+                lines.forEachOrdered(s -> collectExecutionDataFromLine(executionDataBuilder, s));
+                return executionDataBuilder.build();
             }
         } catch (IOException e) {
             throw new UncheckedIOException("Could not read result from file.", e);
         }
     }
 
-    public static void collectMetrics(BuildOperationDuration collector, String s) {
-        int separatorIndex = s.indexOf(",");
+    public static void collectExecutionDataFromLine(BuildOperationExecutionData.Builder executionDataBuilder, String line) {
+        int separatorIndex = line.indexOf(",");
         if (separatorIndex == -1) {
-            throw new IllegalStateException("Unexpected line format: " + s);
+            throw new IllegalStateException("Unexpected line format: " + line);
         }
 
-        long durationMillis = Long.parseLong(s.substring(0, separatorIndex));
-        int count = Integer.parseInt(s.substring(separatorIndex + 1));
-        collector.add(durationMillis, count);
+        long durationMillis = Long.parseLong(line.substring(0, separatorIndex));
+        int count = Integer.parseInt(line.substring(separatorIndex + 1));
+        executionDataBuilder.add(durationMillis, count);
     }
 }

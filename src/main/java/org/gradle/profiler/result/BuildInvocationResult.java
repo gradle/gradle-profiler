@@ -30,7 +30,7 @@ public class BuildInvocationResult {
         return actionResult.getExecutionTime();
     }
 
-    public static final Sample<BuildInvocationResult> EXECUTION_TIME = new DurationOnlySample<BuildInvocationResult>() {
+    public static final Sample<BuildInvocationResult> EXECUTION_TIME = new SingleInvocationSample<BuildInvocationResult>() {
         @Override
         public String getName() {
             return "total execution time";
