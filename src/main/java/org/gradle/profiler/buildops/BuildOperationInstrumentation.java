@@ -76,8 +76,9 @@ public class BuildOperationInstrumentation extends GradleInstrumentation {
         if (totalGarbageCollectionTimeDataFile.length() == 0) {
             return Optional.empty();
         }
-        BuildOperationExecutionData buildOperationExecutionData = readExecutionDataFromFile(totalGarbageCollectionTimeDataFile);
-        return Optional.of(buildOperationExecutionData.getTotalDuration());
+
+        return readExecutionDataFromFile(totalGarbageCollectionTimeDataFile)
+            .map(BuildOperationExecutionData::getTotalDuration);
     }
 
     public Optional<Duration> getTimeToTaskExecution() {
@@ -85,14 +86,9 @@ public class BuildOperationInstrumentation extends GradleInstrumentation {
         if (configurationTimeDataFile.length() == 0) {
             return Optional.empty();
         }
-        try {
-            try (Stream<String> lines = Files.lines(configurationTimeDataFile.toPath(), StandardCharsets.UTF_8)) {
-                Optional<String> lastLine = lines.reduce((first, second) -> second);
-                return lastLine.map(line -> readExecutionDataLine(line).getTotalDuration());
-            }
-        } catch (IOException e) {
-            throw new UncheckedIOException("Could not read result from file.", e);
-        }
+
+        return readExecutionDataFromFile(configurationTimeDataFile)
+            .map(BuildOperationExecutionData::getTotalDuration);
     }
 
     public Map<String, BuildOperationExecutionData> getTotalBuildOperationExecutionData() {
@@ -100,29 +96,24 @@ public class BuildOperationInstrumentation extends GradleInstrumentation {
             .filter(entry -> entry.getValue().length() > 0)
             .collect(Collectors.toMap(
                 Map.Entry::getKey,
-                entry -> readExecutionDataFromFile(entry.getValue()))
+                entry -> readExecutionDataFromFile(entry.getValue()).orElse(BuildOperationExecutionData.ZERO))
             );
     }
 
-    private static BuildOperationExecutionData readExecutionDataFromFile(File dataFile) {
+    private static Optional<BuildOperationExecutionData> readExecutionDataFromFile(File dataFile) {
         try {
             try (Stream<String> lines = Files.lines(dataFile.toPath(), StandardCharsets.UTF_8)) {
-                BuildOperationExecutionData.Builder executionDataBuilder = new BuildOperationExecutionData.Builder();
-                lines.forEachOrdered(line -> processExecutionDataLine(line, executionDataBuilder::add));
-                return executionDataBuilder.build();
+                // Expecting the file to contain at most one line
+                // See `org.gradle.trace.buildops.BuildOperationTrace`
+                Optional<String> lastLine = lines.reduce((ignored, second) -> second);
+                return lastLine.map(BuildOperationInstrumentation::parseExecutionDataLine);
             }
         } catch (IOException e) {
             throw new UncheckedIOException("Could not read result from file.", e);
         }
     }
 
-    private static BuildOperationExecutionData readExecutionDataLine(String line) {
-        BuildOperationExecutionData.Builder executionDataBuilder = new BuildOperationExecutionData.Builder();
-        processExecutionDataLine(line, executionDataBuilder::add);
-        return executionDataBuilder.build();
-    }
-
-    private static void processExecutionDataLine(String line, ExecutionDataConsumer consumer) {
+    private static BuildOperationExecutionData parseExecutionDataLine(String line) {
         int separatorIndex = line.indexOf(",");
         if (separatorIndex == -1) {
             throw new IllegalStateException("Unexpected line format: " + line);
@@ -130,11 +121,6 @@ public class BuildOperationInstrumentation extends GradleInstrumentation {
 
         long durationMillis = Long.parseLong(line.substring(0, separatorIndex));
         int count = Integer.parseInt(line.substring(separatorIndex + 1));
-        consumer.consume(durationMillis, count);
-    }
-
-    @FunctionalInterface
-    private interface ExecutionDataConsumer {
-        void consume(long durationMillis, int count);
+        return new BuildOperationExecutionData(Duration.ofMillis(durationMillis), count);
     }
 }

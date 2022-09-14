@@ -24,18 +24,4 @@ public class BuildOperationExecutionData {
     public int getTotalCount() {
         return totalCount;
     }
-
-    public static class Builder {
-        private long totalDurationMillis;
-        private int totalCount;
-
-        public void add(long durationMillis, int count) {
-            totalDurationMillis += durationMillis;
-            totalCount += count;
-        }
-
-        public BuildOperationExecutionData build() {
-            return new BuildOperationExecutionData(Duration.ofMillis(totalDurationMillis), totalCount);
-        }
-    }
 }
