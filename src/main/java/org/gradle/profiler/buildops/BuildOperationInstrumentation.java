@@ -76,7 +76,9 @@ public class BuildOperationInstrumentation extends GradleInstrumentation {
         if (totalGarbageCollectionTimeDataFile.length() == 0) {
             return Optional.empty();
         }
-        return Optional.of(readCumulativeTimeFromDataFile(totalGarbageCollectionTimeDataFile));
+
+        return readExecutionDataFromFile(totalGarbageCollectionTimeDataFile)
+            .map(BuildOperationExecutionData::getTotalDuration);
     }
 
     public Optional<Duration> getTimeToTaskExecution() {
@@ -84,33 +86,41 @@ public class BuildOperationInstrumentation extends GradleInstrumentation {
         if (configurationTimeDataFile.length() == 0) {
             return Optional.empty();
         }
-        try {
-            try (Stream<String> lines = Files.lines(configurationTimeDataFile.toPath(), StandardCharsets.UTF_8)) {
-                return lines
-                    .reduce((first, second) -> second)
-                    .map(line -> Duration.ofMillis(Long.parseLong(line)));
-            }
-        } catch (IOException e) {
-            throw new UncheckedIOException("Could not read result from file.", e);
-        }
+
+        return readExecutionDataFromFile(configurationTimeDataFile)
+            .map(BuildOperationExecutionData::getTotalDuration);
     }
 
-    public Map<String, Duration> getCumulativeBuildOperationTimes() {
+    public Map<String, BuildOperationExecutionData> getTotalBuildOperationExecutionData() {
         return buildOperationDataFiles.entrySet().stream()
             .filter(entry -> entry.getValue().length() > 0)
             .collect(Collectors.toMap(
                 Map.Entry::getKey,
-                (entry -> readCumulativeTimeFromDataFile(entry.getValue())))
+                entry -> readExecutionDataFromFile(entry.getValue()).orElse(BuildOperationExecutionData.ZERO))
             );
     }
 
-    private static Duration readCumulativeTimeFromDataFile(File dataFile) {
+    private static Optional<BuildOperationExecutionData> readExecutionDataFromFile(File dataFile) {
         try {
             try (Stream<String> lines = Files.lines(dataFile.toPath(), StandardCharsets.UTF_8)) {
-                return Duration.ofMillis(lines.mapToLong(Long::parseLong).sum());
+                // Expecting the file to contain at most one line
+                // See `org.gradle.trace.buildops.BuildOperationTrace`
+                Optional<String> lastLine = lines.reduce((ignored, second) -> second);
+                return lastLine.map(BuildOperationInstrumentation::parseExecutionDataLine);
             }
         } catch (IOException e) {
             throw new UncheckedIOException("Could not read result from file.", e);
         }
+    }
+
+    private static BuildOperationExecutionData parseExecutionDataLine(String line) {
+        int separatorIndex = line.indexOf(",");
+        if (separatorIndex == -1) {
+            throw new IllegalStateException("Unexpected line format: " + line);
+        }
+
+        long durationMillis = Long.parseLong(line.substring(0, separatorIndex));
+        int count = Integer.parseInt(line.substring(separatorIndex + 1));
+        return new BuildOperationExecutionData(Duration.ofMillis(durationMillis), count);
     }
 }

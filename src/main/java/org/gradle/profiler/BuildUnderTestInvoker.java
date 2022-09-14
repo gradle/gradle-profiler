@@ -1,6 +1,7 @@
 package org.gradle.profiler;
 
 import org.gradle.profiler.BuildAction.BuildActionResult;
+import org.gradle.profiler.buildops.BuildOperationExecutionData;
 import org.gradle.profiler.buildops.BuildOperationInstrumentation;
 import org.gradle.profiler.instrument.PidInstrumentation;
 
@@ -71,9 +72,11 @@ public class BuildUnderTestInvoker {
                 });
             Optional<Duration> timeToTaskExecution = buildOperationInstrumentation.getTimeToTaskExecution();
 
-            Map<String, Duration> cumulativeBuildOperationTimes = buildOperationInstrumentation.getCumulativeBuildOperationTimes();
-            cumulativeBuildOperationTimes.forEach((opName, duration) -> {
-                Logging.detailed().printf("Cumulative build operation time %s ms for %s%n", duration.toMillis(), opName);
+            Map<String, BuildOperationExecutionData> totalExecutionData = buildOperationInstrumentation.getTotalBuildOperationExecutionData();
+            totalExecutionData.forEach((opName, duration) -> {
+                Logging.detailed().printf(
+                    "Total build operation time %s ms (%s occurrences) for %s%n",
+                    duration.getTotalDuration().toMillis(), duration.getTotalCount(), opName);
             });
             garbageCollectionTime.ifPresent(duration -> Logging.detailed().printf("Total GC time: %d ms%n", duration.toMillis()));
             timeToTaskExecution.ifPresent(duration -> Logging.detailed().printf("Time to task execution %d ms%n", duration.toMillis()));
@@ -83,7 +86,7 @@ public class BuildUnderTestInvoker {
                 buildActionResult,
                 garbageCollectionTime.orElse(null),
                 timeToTaskExecution.orElse(null),
-                cumulativeBuildOperationTimes,
+                totalExecutionData,
                 pid);
         }
     }

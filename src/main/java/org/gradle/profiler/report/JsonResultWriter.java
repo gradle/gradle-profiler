@@ -116,7 +116,7 @@ public class JsonResultWriter {
         json.addProperty("title", result.getBuildContext().getDisplayName());
         JsonObject valuesJson = new JsonObject();
         for (Sample<? super T> sample : samples) {
-            Duration value = sample.extractFrom(result);
+            Duration value = sample.extractTotalDurationFrom(result);
             valuesJson.addProperty(sample.getName(), value.toNanos() / 1000000d);
         }
         json.add("values", valuesJson);

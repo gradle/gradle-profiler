@@ -27,6 +27,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 
 @SuppressWarnings("unused")
@@ -66,9 +67,13 @@ public class BuildOperationTrace {
         return this;
     }
 
-    private static void writeToFile(File outputFile, Object data) throws IOException {
+    private static void writeToFile(File outputFile, long durationMillis, int count) throws IOException {
+        // See `org.gradle.profiler.buildops.BuildOperationInstrumentation` for parsing
         try (PrintWriter writer = new PrintWriter(outputFile)) {
-            writer.println(data);
+            writer.print(durationMillis);
+            writer.print(",");
+            writer.print(count);
+            writer.println();
         }
     }
 
@@ -94,9 +99,10 @@ public class BuildOperationTrace {
 
         @Override
         public void close() throws Exception {
-            writeToFile(getParameters().getOutputFile().getAsFile().get(), ManagementFactory.getGarbageCollectorMXBeans().stream()
+            long totalGcTime = ManagementFactory.getGarbageCollectorMXBeans().stream()
                 .mapToLong(GarbageCollectorMXBean::getCollectionTime)
-                .sum());
+                .sum();
+            writeToFile(getParameters().getOutputFile().getAsFile().get(), totalGcTime, 1);
         }
     }
 
@@ -126,7 +132,7 @@ public class BuildOperationTrace {
 
         @Override
         public void close() throws Exception {
-            writeToFile(getParameters().getOutputFile().getAsFile().get(), timeToFirstTask.longValue());
+            writeToFile(getParameters().getOutputFile().getAsFile().get(), timeToFirstTask.longValue(), 1);
         }
     }
 
@@ -185,6 +191,7 @@ public class BuildOperationTrace {
         private final Class<?> detailsType;
         private final File outputFile;
         private final AtomicLong buildOperationTime = new AtomicLong(0);
+        private final AtomicInteger buildOperationCount = new AtomicInteger(0);
 
         public BuildOperationCollector(Class<?> detailsType, File outputFile) {
             this.detailsType = detailsType;
@@ -194,11 +201,12 @@ public class BuildOperationTrace {
         public void collect(Object details, OperationFinishEvent operationFinishEvent) {
             if (detailsType.isAssignableFrom(details.getClass())) {
                 buildOperationTime.addAndGet(operationFinishEvent.getEndTime() - operationFinishEvent.getStartTime());
+                buildOperationCount.incrementAndGet();
             }
         }
 
         public void write() throws IOException {
-            writeToFile(outputFile, buildOperationTime.longValue());
+            writeToFile(outputFile, buildOperationTime.get(), buildOperationCount.get());
         }
     }
 }
