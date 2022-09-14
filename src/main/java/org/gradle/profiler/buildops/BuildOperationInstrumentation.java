@@ -87,9 +87,8 @@ public class BuildOperationInstrumentation extends GradleInstrumentation {
         }
         try {
             try (Stream<String> lines = Files.lines(configurationTimeDataFile.toPath(), StandardCharsets.UTF_8)) {
-                return lines
-                    .reduce((first, second) -> second)
-                    .map(line -> Duration.ofMillis(Long.parseLong(line)));
+                Optional<String> lastLine = lines.reduce((first, second) -> second);
+                return lastLine.map(line -> readExecutionDataLine(line).getTotalDuration());
             }
         } catch (IOException e) {
             throw new UncheckedIOException("Could not read result from file.", e);
@@ -109,7 +108,7 @@ public class BuildOperationInstrumentation extends GradleInstrumentation {
         try {
             try (Stream<String> lines = Files.lines(dataFile.toPath(), StandardCharsets.UTF_8)) {
                 BuildOperationExecutionData.Builder executionDataBuilder = new BuildOperationExecutionData.Builder();
-                lines.forEachOrdered(s -> collectExecutionDataFromLine(executionDataBuilder, s));
+                lines.forEachOrdered(line -> processExecutionDataLine(line, executionDataBuilder::add));
                 return executionDataBuilder.build();
             }
         } catch (IOException e) {
@@ -117,7 +116,13 @@ public class BuildOperationInstrumentation extends GradleInstrumentation {
         }
     }
 
-    public static void collectExecutionDataFromLine(BuildOperationExecutionData.Builder executionDataBuilder, String line) {
+    private static BuildOperationExecutionData readExecutionDataLine(String line) {
+        BuildOperationExecutionData.Builder executionDataBuilder = new BuildOperationExecutionData.Builder();
+        processExecutionDataLine(line, executionDataBuilder::add);
+        return executionDataBuilder.build();
+    }
+
+    private static void processExecutionDataLine(String line, ExecutionDataConsumer consumer) {
         int separatorIndex = line.indexOf(",");
         if (separatorIndex == -1) {
             throw new IllegalStateException("Unexpected line format: " + line);
@@ -125,6 +130,11 @@ public class BuildOperationInstrumentation extends GradleInstrumentation {
 
         long durationMillis = Long.parseLong(line.substring(0, separatorIndex));
         int count = Integer.parseInt(line.substring(separatorIndex + 1));
-        executionDataBuilder.add(durationMillis, count);
+        consumer.consume(durationMillis, count);
+    }
+
+    @FunctionalInterface
+    private interface ExecutionDataConsumer {
+        void consume(long durationMillis, int count);
     }
 }
