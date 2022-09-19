@@ -12,14 +12,22 @@ import java.io.InputStream;
 import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.StandardCopyOption;
+import java.util.Locale;
 
 public class JfrProfilerFactory extends ProfilerFactory {
     private final File defaultConfig = createDefaultConfig();
 
-    private static File createDefaultConfig() {
+    private File createDefaultConfig() {
         try {
             File jfcFile = File.createTempFile("gradle", ".jfc");
-            String jfcTemplateName = JavaVersion.current().isJava9Compatible() ? "gradle-java9.jfc" : "gradle.jfc";
+            String jfcTemplateName;
+            if (isOracleVm()) {
+                jfcTemplateName = JavaVersion.current().isJava9Compatible() ? "oracle-java9.jfc" : "oracle.jfc";
+            } else if (JavaVersion.current().isJava8Compatible()) {
+                jfcTemplateName = "openjdk.jfc";
+            } else {
+                throw new IllegalArgumentException("JFR is only supported on OpenJDK since Java 8 and Oracle JDK since Java 7");
+            }
             URL jfcResource = JfrProfiler.class.getResource(jfcTemplateName);
             try (InputStream stream = jfcResource.openStream()) {
                 Files.copy(stream, jfcFile.toPath(), StandardCopyOption.REPLACE_EXISTING);
@@ -50,5 +58,9 @@ public class JfrProfilerFactory extends ProfilerFactory {
             jfrSettings = new File(jfrSettings).getAbsolutePath();
         }
         return new JFRArgs(jfrSettings);
+    }
+
+    private boolean isOracleVm() {
+        return System.getProperty("java.vendor").toLowerCase(Locale.ROOT).contains("oracle");
     }
 }
