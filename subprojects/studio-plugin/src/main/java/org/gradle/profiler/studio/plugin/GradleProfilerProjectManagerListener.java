@@ -4,6 +4,7 @@ import com.android.tools.idea.gradle.project.GradleProjectInfo;
 import com.intellij.ide.impl.TrustedProjects;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.externalSystem.service.notification.ExternalSystemProgressNotificationManager;
 import com.intellij.openapi.externalSystem.settings.ExternalSystemSettingsListenerAdapter;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManagerListener;
@@ -11,6 +12,7 @@ import org.gradle.profiler.client.protocol.Client;
 import org.gradle.profiler.client.protocol.messages.StudioRequest;
 import org.gradle.profiler.studio.plugin.client.GradleProfilerClient;
 import org.gradle.profiler.studio.plugin.system.AndroidStudioSystemHelper;
+import org.gradle.profiler.studio.plugin.system.GradleSystemListener;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.gradle.settings.GradleProjectSettings;
 import org.jetbrains.plugins.gradle.settings.GradleSettings;
@@ -39,9 +41,11 @@ public class GradleProfilerProjectManagerListener implements ProjectManagerListe
             // If we don't disable external annotations, Android Studio will download some artifacts
             // to .m2 folder if some project has for example com.fasterxml.jackson.core:jackson-core as a dependency
             disableDownloadOfExternalAnnotations(project);
+            // Register system listener already here, so we can catch any failure for syncs that are automatically started
+            GradleSystemListener gradleSystemListener = registerGradleSystemListener();
             TrustedProjects.setTrusted(project, true);
             ApplicationManager.getApplication().executeOnPooledThread(() -> {
-                StudioRequest lastRequest = listenForSyncRequests(project);
+                StudioRequest lastRequest = listenForSyncRequests(project, gradleSystemListener);
                 if (lastRequest.getType() == EXIT_IDE) {
                     AndroidStudioSystemHelper.exit(project);
                 }
@@ -61,10 +65,16 @@ public class GradleProfilerProjectManagerListener implements ProjectManagerListe
         });
     }
 
-    private StudioRequest listenForSyncRequests(@NotNull Project project) {
+    private GradleSystemListener registerGradleSystemListener() {
+        GradleSystemListener gradleSystemListener = new GradleSystemListener();
+        ExternalSystemProgressNotificationManager.getInstance().addNotificationListener(gradleSystemListener);
+        return gradleSystemListener;
+    }
+
+    private StudioRequest listenForSyncRequests(@NotNull Project project, @NotNull GradleSystemListener gradleStartupListener) {
         int port = Integer.getInteger(PROFILER_PORT_PROPERTY);
         try (Client client = new Client(port)) {
-            return new GradleProfilerClient(client).listenForSyncRequests(project);
+            return new GradleProfilerClient(client).listenForSyncRequests(project, gradleStartupListener);
         } catch (IOException e) {
             throw new UncheckedIOException(e);
         }
