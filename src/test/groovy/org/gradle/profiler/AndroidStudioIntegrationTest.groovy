@@ -202,7 +202,7 @@ class AndroidStudioIntegrationTest extends AbstractProfilerIntegrationTest {
 
         then:
         def e = thrown(Main.ScenarioFailedException)
-        e.getCause().message.startsWith("Gradle sync has failed with error message:")
+        e.getCause().message.startsWith("Gradle sync has failed with error message: 'Sync test failure'.")
         logFile.find("Full Gradle execution time").size() == 1
         logFile.find("Full sync has completed in").size() == 1
         logFile.find("and it FAILED").size() == 1

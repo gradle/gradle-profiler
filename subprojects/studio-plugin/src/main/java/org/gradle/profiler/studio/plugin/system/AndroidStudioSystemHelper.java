@@ -1,8 +1,9 @@
 package org.gradle.profiler.studio.plugin.system;
 
-import com.android.tools.idea.gradle.project.sync.GradleSyncState;
+import com.android.tools.idea.projectsystem.ProjectSystemSyncManager;
 import com.android.tools.idea.projectsystem.ProjectSystemSyncManager.SyncReason;
 import com.android.tools.idea.projectsystem.ProjectSystemUtil;
+import com.google.common.base.Strings;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
@@ -12,12 +13,15 @@ import com.intellij.openapi.wm.ex.StatusBarEx;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
 import com.intellij.util.messages.MessageBusConnection;
 import org.gradle.profiler.client.protocol.messages.StudioSyncRequestCompleted.StudioSyncRequestResult;
-import org.gradle.profiler.studio.plugin.system.GradleProfilerGradleSyncListener.GradleSyncResult;
 
+import javax.annotation.Nullable;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.function.Supplier;
 
+import static com.android.tools.idea.projectsystem.ProjectSystemSyncManager.SyncResult.SKIPPED;
+import static com.android.tools.idea.projectsystem.ProjectSystemSyncManager.SyncResult.SKIPPED_OUT_OF_DATE;
+import static com.android.tools.idea.projectsystem.ProjectSystemSyncManager.SyncResult.UNKNOWN;
 import static com.android.tools.idea.projectsystem.ProjectSystemSyncUtil.PROJECT_SYSTEM_SYNC_TOPIC;
 
 public class AndroidStudioSystemHelper {
@@ -26,21 +30,43 @@ public class AndroidStudioSystemHelper {
     private static final long WAIT_ON_STARTUP_SLEEP_TIME = 100;
 
     /**
-     * Does a Gradle sync.
+     * Gets the result of startup sync by checking if there was already any sync done before. Otherwise, it starts a new sync.
      */
-    public static GradleSyncResult doGradleSync(Project project) {
-        MessageBusConnection connection = project.getMessageBus().connect();
+    public static GradleSyncResult getStartupSyncResult(Project project, GradleSystemListener gradleSystemListener) {
+        ProjectSystemSyncManager.SyncResult lastSyncResult = ProjectSystemUtil.getSyncManager(project).getLastSyncResult();
+        if (lastSyncResult == UNKNOWN) {
+            // Sync was not run before, we need to run it manually
+            return startManualSync(project, gradleSystemListener);
+        }
+        return convertToGradleSyncResult(lastSyncResult, gradleSystemListener.getLastException());
+    }
+
+    /**
+     * Starts a manual sync and returns a result.
+     */
+    public static GradleSyncResult startManualSync(Project project, GradleSystemListener gradleSystemListener) {
+        GradleSyncResult result = doGradleSync(project, gradleSystemListener);
+        waitOnBackgroundProcessesFinish(project);
+        return result;
+    }
+
+    private static GradleSyncResult doGradleSync(Project project, GradleSystemListener gradleSystemListener) {
         try {
-            GradleProfilerGradleSyncListener syncListener = new GradleProfilerGradleSyncListener();
-            connection.subscribe(GradleSyncState.GRADLE_SYNC_TOPIC, syncListener);
-            // We could get sync result from the `Future` returned by the syncProject(),
-            // but it doesn't return error message so we rather listen to GRADLE_SYNC_TOPIC to get the sync result
-            ProjectSystemUtil.getSyncManager(project).syncProject(SyncReason.USER_REQUEST).get();
-            return syncListener.waitAndGetResult();
+            ProjectSystemSyncManager.SyncResult syncResult = ProjectSystemUtil.getSyncManager(project).syncProject(SyncReason.USER_REQUEST).get();
+            return convertToGradleSyncResult(syncResult, gradleSystemListener.getLastException());
         } catch (InterruptedException | ExecutionException e) {
             return new GradleSyncResult(StudioSyncRequestResult.FAILED, e.getMessage());
-        } finally {
-            connection.disconnect();
+        }
+    }
+
+    private static GradleSyncResult convertToGradleSyncResult(ProjectSystemSyncManager.SyncResult syncResult, @Nullable Throwable throwable) {
+        if ((syncResult == SKIPPED || syncResult == SKIPPED_OUT_OF_DATE)) {
+            return new GradleSyncResult(StudioSyncRequestResult.SKIPPED, "");
+        } else if (syncResult.isSuccessful()) {
+            return new GradleSyncResult(StudioSyncRequestResult.SUCCEEDED, "");
+        } else  {
+            String error = throwable != null ? throwable.getMessage() : "Unknown error";
+            return new GradleSyncResult(StudioSyncRequestResult.FAILED, Strings.nullToEmpty(error));
         }
     }
 
