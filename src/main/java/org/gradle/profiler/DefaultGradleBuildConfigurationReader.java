@@ -36,10 +36,16 @@ public class DefaultGradleBuildConfigurationReader implements GradleBuildConfigu
     private void generateInitScript() throws IOException {
         try (PrintWriter writer = new PrintWriter(new FileWriter(initScript))) {
             writer.println(
+                "settingsEvaluated {\n" +
+                    "   def detailsFile = new File(new URI('" + buildDetails.toURI() + "'))\n" +
+                    "   detailsFile.text = \"${it.pluginManager.hasPlugin('com.gradle.enterprise')}\\n\"\n" +
+                    "}\n"
+            );
+            writer.println(
                 "rootProject {\n" +
                     "  afterEvaluate {\n" +
                     "    def detailsFile = new File(new URI('" + buildDetails.toURI() + "'))\n" +
-                    "    detailsFile.text = \"${gradle.gradleHomeDir}\\n\"\n" +
+                    "    detailsFile << \"${gradle.gradleHomeDir}\\n\"\n" +
                     "    detailsFile << plugins.hasPlugin('com.gradle.build-scan') << '\\n'\n" +
                     "  }\n" +
                     "}\n"
@@ -104,12 +110,13 @@ public class DefaultGradleBuildConfigurationReader implements GradleBuildConfigu
             JavaEnvironment javaEnvironment = buildEnvironment.getJava();
             List<String> allJvmArgs = new ArrayList<>(javaEnvironment.getJvmArguments());
             allJvmArgs.addAll(readSystemPropertiesFromGradleProperties());
+            boolean usesScanPlugin = Boolean.parseBoolean(buildDetails.get(0)) || Boolean.parseBoolean(buildDetails.get(2));
             version = new GradleBuildConfiguration(
                 GradleVersion.version(buildEnvironment.getGradle().getGradleVersion()),
-                new File(buildDetails.get(0)),
+                new File(buildDetails.get(1)),
                 javaEnvironment.getJavaHome(),
                 allJvmArgs,
-                Boolean.valueOf(buildDetails.get(1))
+                usesScanPlugin
             );
         }
         daemonControl.stop(version);

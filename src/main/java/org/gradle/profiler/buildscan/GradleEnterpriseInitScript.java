@@ -21,6 +21,12 @@ import java.io.PrintWriter;
 
 public class GradleEnterpriseInitScript extends GeneratedInitScript {
 
+    static final String PUBLISH_AND_TAG = "" +
+        "        if (System.getProperty('org.gradle.profiler.phase') == 'MEASURE') {\n" +
+        "            publishAlways()\n" +
+        "            tag('GRADLE_PROFILER')\n" +
+        "        }\n";
+
     private final String version;
 
     public GradleEnterpriseInitScript(String version) {
@@ -34,7 +40,7 @@ public class GradleEnterpriseInitScript extends GeneratedInitScript {
         writer.write("      gradlePluginPortal()\n");
         writer.write("    }\n");
         writer.write("    dependencies {\n");
-        writer.write("        classpath \"com.gradle:gradle-enterprise-gradle-plugin:" + version + "\"\n");
+        writer.write("        classpath(\"com.gradle:gradle-enterprise-gradle-plugin:" + version + "\")\n");
         writer.write("    }\n");
         writer.write("}\n");
         writer.write("\n");
@@ -45,6 +51,7 @@ public class GradleEnterpriseInitScript extends GeneratedInitScript {
         writer.write("    it.extensions[\"gradleEnterprise\"].buildScan.with {\n");
         writer.write("        termsOfServiceUrl = 'https://gradle.com/terms-of-service'\n");
         writer.write("        termsOfServiceAgree = 'yes'\n");
+        writer.write(PUBLISH_AND_TAG);
         writer.write("    }\n");
         writer.write("}\n");
     }
