@@ -1,11 +1,16 @@
 package org.gradle.profiler.buildscan;
 
-import org.gradle.profiler.*;
+import org.gradle.profiler.GeneratedInitScript;
+import org.gradle.profiler.GradleArgsCalculator;
+import org.gradle.profiler.GradleBuildConfiguration;
+import org.gradle.profiler.Profiler;
+import org.gradle.profiler.ScenarioSettings;
 import org.gradle.util.GradleVersion;
 
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
+import java.util.Optional;
 import java.util.function.Consumer;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -89,14 +94,21 @@ public class BuildScanProfiler extends Profiler {
     public GradleArgsCalculator newGradleArgsCalculator(ScenarioSettings settings) {
         return gradleArgs -> {
             GradleBuildConfiguration buildConfiguration = settings.getScenario().getBuildConfiguration();
-            if (!buildConfiguration.isUsesScanPlugin()) {
-                String effectiveBuildScanVersion = getEffectiveBuildScanVersion(buildConfiguration);
-                GeneratedInitScript buildScanInitScript = (buildConfiguration.getGradleVersion().compareTo(GRADLE_6) < 0)
-                    ? new BuildScanInitScript(effectiveBuildScanVersion)
-                    : new GradleEnterpriseInitScript(effectiveBuildScanVersion);
-                buildScanInitScript.calculateGradleArgs(gradleArgs);
-            }
+            Optional<GeneratedInitScript> initScript = getInitScript(buildConfiguration);
+            initScript.ifPresent(script -> script.calculateGradleArgs(gradleArgs));
         };
+    }
+
+    private Optional<GeneratedInitScript> getInitScript(GradleBuildConfiguration buildConfiguration) {
+        if (buildConfiguration.isUsesScanPlugin() && buildConfiguration.getGradleVersion().compareTo(GRADLE_6) >= 0) {
+            return Optional.of(new GradleEnterpriseAlreadyAppliedInitScript());
+        } else if (!buildConfiguration.isUsesScanPlugin()) {
+            String effectiveBuildScanVersion = getEffectiveBuildScanVersion(buildConfiguration);
+            return (buildConfiguration.getGradleVersion().compareTo(GRADLE_6) < 0)
+                ? Optional.of(new BuildScanInitScript(effectiveBuildScanVersion))
+                : Optional.of(new GradleEnterpriseInitScript(effectiveBuildScanVersion));
+        }
+        return Optional.empty();
     }
 
     @Override
@@ -110,7 +122,7 @@ public class BuildScanProfiler extends Profiler {
             }
             if (buildConfiguration.getGradleVersion().compareTo(GRADLE_5) < 0) {
                 gradleArgs.add("-Dscan");
-            } else {
+            } else if (buildConfiguration.getGradleVersion().compareTo(GRADLE_6) < 0) {
                 gradleArgs.add("--scan");
             }
         };

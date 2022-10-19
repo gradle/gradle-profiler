@@ -7,10 +7,19 @@ import org.gradle.tooling.model.build.BuildEnvironment;
 import org.gradle.tooling.model.build.JavaEnvironment;
 import org.gradle.util.GradleVersion;
 
-import java.io.*;
-import java.nio.charset.StandardCharsets;
+import java.io.File;
+import java.io.FileReader;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.PrintWriter;
 import java.nio.file.Files;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Properties;
 import java.util.stream.Collectors;
 
 public class DefaultGradleBuildConfigurationReader implements GradleBuildConfigurationReader {
@@ -36,11 +45,20 @@ public class DefaultGradleBuildConfigurationReader implements GradleBuildConfigu
     private void generateInitScript() throws IOException {
         try (PrintWriter writer = new PrintWriter(new FileWriter(initScript))) {
             writer.println(
+                "settingsEvaluated {\n" +
+                    "   def detailsFile = new File(new URI('" + buildDetails.toURI() + "'))\n" +
+                    "   detailsFile.text = \"isEnterprisePluginApplied=${it.pluginManager.hasPlugin('com.gradle.enterprise')}\\n\"\n" +
+                    "}\n"
+            );
+            String gradleHome = OperatingSystem.isWindows()
+                ? "${gradle.gradleHomeDir.absolutePath.replace('\\\\', '/')}"
+                : "${gradle.gradleHomeDir}";
+            writer.println(
                 "rootProject {\n" +
                     "  afterEvaluate {\n" +
                     "    def detailsFile = new File(new URI('" + buildDetails.toURI() + "'))\n" +
-                    "    detailsFile.text = \"${gradle.gradleHomeDir}\\n\"\n" +
-                    "    detailsFile << plugins.hasPlugin('com.gradle.build-scan') << '\\n'\n" +
+                    "    detailsFile << \"gradleHome=" + gradleHome + "\\n\"\n" +
+                    "    detailsFile << \"isBuildScanPluginApplied=${plugins.hasPlugin('com.gradle.build-scan')}\\n\"\n" +
                     "  }\n" +
                     "}\n"
             );
@@ -87,9 +105,15 @@ public class DefaultGradleBuildConfigurationReader implements GradleBuildConfigu
         return GradleConnector.newConnector().useGradleUserHomeDir(gradleUserHome.getAbsoluteFile());
     }
 
-    private List<String> readBuildDetails() {
-        try {
-            return Files.readAllLines(buildDetails.toPath(), StandardCharsets.UTF_8);
+    private BuildDetails readBuildDetails() {
+        try (InputStream inputStream = Files.newInputStream(buildDetails.toPath())) {
+            Properties properties = new Properties();
+            properties.load(inputStream);
+            return new BuildDetails(
+                properties.getProperty("gradleHome").trim(),
+                properties.getProperty("isBuildScanPluginApplied", "false").trim().equals("true"),
+                properties.getProperty("isEnterprisePluginApplied", "false").trim().equals("true")
+            );
         } catch (IOException e) {
             throw new RuntimeException("Could not read the build's configuration.", e);
         }
@@ -100,16 +124,17 @@ public class DefaultGradleBuildConfigurationReader implements GradleBuildConfigu
         try (ProjectConnection connection = connector.forProjectDirectory(projectDir).connect()) {
             BuildEnvironment buildEnvironment = connection.getModel(BuildEnvironment.class);
             new ToolingApiGradleClient(connection).runTasks(ImmutableList.of("help"), ImmutableList.of("-I", initScript.getAbsolutePath()), ImmutableList.of());
-            List<String> buildDetails = readBuildDetails();
+            BuildDetails buildDetails = readBuildDetails();
             JavaEnvironment javaEnvironment = buildEnvironment.getJava();
             List<String> allJvmArgs = new ArrayList<>(javaEnvironment.getJvmArguments());
             allJvmArgs.addAll(readSystemPropertiesFromGradleProperties());
+            boolean usesAnyScanPlugin = buildDetails.usesAnyScanPlugin();
             version = new GradleBuildConfiguration(
                 GradleVersion.version(buildEnvironment.getGradle().getGradleVersion()),
-                new File(buildDetails.get(0)),
+                new File(buildDetails.getGradleHome()),
                 javaEnvironment.getJavaHome(),
                 allJvmArgs,
-                Boolean.valueOf(buildDetails.get(1))
+                usesAnyScanPlugin
             );
         }
         daemonControl.stop(version);
@@ -141,5 +166,25 @@ public class DefaultGradleBuildConfigurationReader implements GradleBuildConfigu
             throw new RuntimeException("Could not load properties from '" + propertyFile + "'.", e);
         }
         return properties.getProperty("org.gradle.jvmargs");
+    }
+
+    private static class BuildDetails {
+        private final String gradleHome;
+        private final boolean isBuildScanPluginApplied;
+        private final boolean isEnterprisePluginApplied;
+
+        private BuildDetails(String gradleHome, boolean isBuildScanPluginApplied, boolean isEnterprisePluginApplied) {
+            this.gradleHome = gradleHome;
+            this.isBuildScanPluginApplied = isBuildScanPluginApplied;
+            this.isEnterprisePluginApplied = isEnterprisePluginApplied;
+        }
+
+        public String getGradleHome() {
+            return gradleHome;
+        }
+
+        public boolean usesAnyScanPlugin() {
+            return isBuildScanPluginApplied || isEnterprisePluginApplied;
+        }
     }
 }

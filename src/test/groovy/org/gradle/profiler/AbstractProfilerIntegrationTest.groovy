@@ -86,7 +86,7 @@ abstract class AbstractProfilerIntegrationTest extends AbstractIntegrationTest {
         """
     }
 
-    void assertBuildScanPublished(String buildScanPluginVersion) {
+    void assertBuildScanPublished(String buildScanPluginVersion = null) {
         if (buildScanPluginVersion) {
             assert logFile.find("Using build scan plugin " + buildScanPluginVersion).size() == 1
         } else {
