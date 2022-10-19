@@ -24,8 +24,8 @@ public class GradleEnterpriseInitScript extends GeneratedInitScript {
     static final String PUBLISH_AND_TAG = "" +
         "        if (System.getProperty('org.gradle.profiler.phase') == 'MEASURE') {\n" +
         "            publishAlways()\n" +
-        "            tag('GRADLE_PROFILER')\n" +
-        "        }\n";
+        "        }\n" +
+        "        tag('GRADLE_PROFILER')\n";
 
     private final String version;
 
