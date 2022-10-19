@@ -50,11 +50,14 @@ public class DefaultGradleBuildConfigurationReader implements GradleBuildConfigu
                     "   detailsFile.text = \"isEnterprisePluginApplied=${it.pluginManager.hasPlugin('com.gradle.enterprise')}\\n\"\n" +
                     "}\n"
             );
+            String gradleHome = OperatingSystem.isWindows()
+                ? "${gradle.gradleHomeDir.absolutePath.replace('\\\\', '/')}"
+                : "${gradle.gradleHomeDir}";
             writer.println(
                 "rootProject {\n" +
                     "  afterEvaluate {\n" +
                     "    def detailsFile = new File(new URI('" + buildDetails.toURI() + "'))\n" +
-                    "    detailsFile << \"gradleHome=${gradle.gradleHomeDir}\\n\"\n" +
+                    "    detailsFile << \"gradleHome=" + gradleHome + "\\n\"\n" +
                     "    detailsFile << \"isBuildScanPluginApplied=${plugins.hasPlugin('com.gradle.build-scan')}\\n\"\n" +
                     "  }\n" +
                     "}\n"

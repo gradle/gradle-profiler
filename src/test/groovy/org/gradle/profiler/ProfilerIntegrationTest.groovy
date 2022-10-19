@@ -936,10 +936,10 @@ class ProfilerIntegrationTest extends AbstractProfilerIntegrationTest {
         def srcFile = file("src/main/java/Library.java")
         srcFile.parentFile.mkdirs()
         srcFile.text = """
-            class Library {
-                void thing() { }
-            }
-        """
+            |class Library {
+            |    void thing() { }
+            |}
+        |""".stripMargin()
         def originalText = srcFile.text
 
         def scenarioFile = file("scenarios.conf")
