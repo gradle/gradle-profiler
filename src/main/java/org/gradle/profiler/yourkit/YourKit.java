@@ -38,7 +38,7 @@ public class YourKit {
     public static File findJniLib() {
         File yourKitHome = findYourKitHome();
         if (OperatingSystem.isWindows()) {
-            return tryLocations(yourKitHome, "bin/win64/yjpagent.dll");
+            return tryLocations(yourKitHome, "bin/win64/yjpagent.dll", "bin/windows-x86-64/yjpagent.dll");
         }
         String macLibLocationPrefix = "Contents/Resources/bin/mac/libyjpagent.";
         return tryLocations(yourKitHome, macLibLocationPrefix + "jnilib", macLibLocationPrefix + "dylib", "bin/linux-x86-64/libyjpagent.so");
