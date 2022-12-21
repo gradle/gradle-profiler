@@ -48,7 +48,7 @@ class CommandLineParser {
         ArgumentAcceptingOptionSpec<File> scenarioFileOption = parser.accepts("scenario-file", "Scenario definition file to use").withRequiredArg().ofType(File.class);
         ArgumentAcceptingOptionSpec<String> sysPropOption = parser.accepts("D", "Defines a system property").withRequiredArg();
         ArgumentAcceptingOptionSpec<File> outputDirOption = parser.accepts("output-dir", "Directory to write results to").withRequiredArg()
-            .ofType(File.class).defaultsTo(findOutputDir());
+            .ofType(File.class).defaultsTo(findOutputDir("profile-out"));
         ArgumentAcceptingOptionSpec<Integer> warmupsOption = parser.accepts("warmups", "Number of warm-up build to run for each scenario").withRequiredArg().ofType(Integer.class);
         ArgumentAcceptingOptionSpec<Integer> iterationsOption = parser.accepts("iterations", "Number of builds to run for each scenario").withRequiredArg().ofType(Integer.class);
         ArgumentAcceptingOptionSpec<String> profilerOption = parser.accepts("profile",
@@ -190,13 +190,13 @@ class CommandLineParser {
             .build();
     }
 
-    private File findOutputDir() {
-        File outputDir = new File("profile-out");
+    private File findOutputDir(String path) {
+        File outputDir = new File(path);
         if (!outputDir.exists()) {
             return outputDir;
         }
         for (int i = 2; ; i++) {
-            outputDir = new File("profile-out-" + i);
+            outputDir = new File(path + "-" + i);
             if (!outputDir.exists()) {
                 return outputDir;
             }
