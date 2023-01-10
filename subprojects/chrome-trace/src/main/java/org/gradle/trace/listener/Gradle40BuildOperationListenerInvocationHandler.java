@@ -1,5 +1,6 @@
 package org.gradle.trace.listener;
 
+import static org.gradle.trace.util.FilePathUtil.normalizePathInDisplayName;
 import static org.gradle.trace.util.ReflectionUtil.invokerGetter;
 
 import org.gradle.api.internal.TaskInternal;
@@ -14,7 +15,7 @@ public class Gradle40BuildOperationListenerInvocationHandler extends BuildOperat
     protected String getName(Object operation) {
         TaskInternal task = getTask(operation);
         if (task == null) {
-            return invokerGetter(operation, "getDisplayName") + " (" + invokerGetter(operation, "getId") + ")";
+            return normalizePathInDisplayName(invokerGetter(operation, "getDisplayName").toString()) + " (" + invokerGetter(operation, "getId") + ")";
         } else {
             return task.getPath();
         }

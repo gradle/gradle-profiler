@@ -3,6 +3,7 @@ package org.gradle.trace.listener;
 import org.gradle.api.internal.TaskInternal;
 import org.gradle.trace.TraceResult;
 
+import static org.gradle.trace.util.FilePathUtil.normalizePathInDisplayName;
 import static org.gradle.trace.util.ReflectionUtil.invokerGetter;
 
 public class Gradle35BuildOperationListenerInvocationHandler extends BuildOperationListenerInvocationHandler {
@@ -16,7 +17,7 @@ public class Gradle35BuildOperationListenerInvocationHandler extends BuildOperat
         if (details != null && details.getClass().getSimpleName().equals("TaskOperationDescriptor")) {
             return (String) invokerGetter(invokerGetter(details, "getTask"), "getPath");
         }
-        return invokerGetter(operation, "getDisplayName") + " (" + invokerGetter(operation, "getId") + ")";
+        return normalizePathInDisplayName(invokerGetter(operation, "getDisplayName").toString()) + " (" + invokerGetter(operation, "getId") + ")";
     }
 
     protected TaskInternal getTask(Object operation) {
