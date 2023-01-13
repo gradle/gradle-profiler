@@ -1,5 +1,6 @@
 package org.gradle.trace.listener;
 
+import static org.gradle.trace.util.FilePathUtil.normalizePathInDisplayName;
 import static org.gradle.trace.util.ReflectionUtil.invokerGetter;
 
 import org.gradle.api.internal.TaskInternal;
@@ -18,7 +19,7 @@ public class Gradle47BuildOperationListenerInvocationHandler extends BuildOperat
         BuildOperationDescriptor operationDescriptor = (BuildOperationDescriptor) operation;
         TaskInternal task = getTask(operation);
         if (task == null) {
-            return operationDescriptor.getDisplayName() + " (" + operationDescriptor.getId() + ")";
+            return normalizePathInDisplayName(operationDescriptor.getDisplayName()) + " (" + operationDescriptor.getId() + ")";
         } else {
             return task.getPath();
         }

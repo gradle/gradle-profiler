@@ -1,5 +1,6 @@
 plugins {
     id("profiler.java-library")
+    id("groovy")
 }
 
 // These projects are packaged into the Gradle profiler Jar, so let's make them reproducible
