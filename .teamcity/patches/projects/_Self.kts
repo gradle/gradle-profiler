@@ -17,5 +17,11 @@ changeProject(DslContext.projectId) {
         update {
             password("gradleprofiler.sdkman.key", "credentialsJSON:28e1a1ff-4594-4972-824c-5c3cdcaefc05", display = ParameterDisplay.HIDDEN)
         }
+        expect {
+            password("gradleprofiler.sdkman.token", "credentialsJSON:518893d3-6327-427f-a63f-b12b94399315", display = ParameterDisplay.HIDDEN)
+        }
+        update {
+            password("gradleprofiler.sdkman.token", "credentialsJSON:a8c19c49-5e95-408c-bc5f-4f89c9c4c24c", display = ParameterDisplay.HIDDEN)
+        }
     }
 }
