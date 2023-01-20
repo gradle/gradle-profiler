@@ -1,3 +1,4 @@
+
 import com.github.gradle.node.npm.task.NpxTask
 import io.sdkman.vendors.tasks.SdkAnnounceVersionTask
 import io.sdkman.vendors.tasks.SdkDefaultVersionTask
@@ -129,8 +130,8 @@ androidStudioTests {
     val autoDownloadAndRunInHeadless = providers.gradleProperty("autoDownloadAndRunInHeadless").orNull == "true"
     runAndroidStudioInHeadlessMode.set(autoDownloadAndRunInHeadless)
     autoDownloadAndroidStudio.set(autoDownloadAndRunInHeadless)
-    // Electric Eel (2022.1.1) Beta 1
-    testAndroidStudioVersion.set("2022.1.1.11")
+    // Flamingo (2022.2.1) Beta 1
+    testAndroidStudioVersion.set("2022.2.1.12")
     testAndroidSdkVersion.set("7.3.0")
     // For local development it's easier to setup Android SDK with Android Studio, since auto download needs ANDROID_SDK_ROOT to be set with
     // an accepted license in it. See https://developer.android.com/studio/intro/update.html#download-with-gradle.
