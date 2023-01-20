@@ -102,7 +102,8 @@ public class LaunchConfiguration {
         List<String> commandLine = new ArrayList<>(getCommandLine());
         commandLine.add(projectDir.getAbsolutePath());
         logLauncherConfiguration(commandLine);
-        return new CommandExec().inDir(studioInstallDir().toFile()).start(commandLine);
+        System.out.println(new CommandExec().inDir(studioInstallDir().toFile()).runAndCollectOutput(commandLine));
+        return null;
     }
 
     private void logLauncherConfiguration(List<String> commandLine) {

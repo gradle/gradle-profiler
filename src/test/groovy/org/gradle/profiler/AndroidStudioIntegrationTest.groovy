@@ -20,6 +20,14 @@ class AndroidStudioIntegrationTest extends AbstractProfilerIntegrationTest {
         scenarioName = "scenario"
     }
 
+    def cleanup() {
+        def androidStudioLogs = new File(sandboxDir, "logs/idea.log")
+        println("Android studio logs exists: " + androidStudioLogs.exists())
+        if (androidStudioLogs.exists()) {
+            println(androidStudioLogs.text)
+        }
+    }
+
     def "benchmarks Android Studio sync with latest gradle version"() {
         given:
         def scenarioFile = file("performance.scenarios") << """
