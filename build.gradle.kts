@@ -132,7 +132,7 @@ androidStudioTests {
     autoDownloadAndroidStudio.set(autoDownloadAndRunInHeadless)
     // Flamingo (2022.2.1) Beta 1
     testAndroidStudioVersion.set("2022.2.1.12")
-    testAndroidSdkVersion.set("7.3.0")
+    testAndroidSdkVersion.set("7.4.0")
     // For local development it's easier to setup Android SDK with Android Studio, since auto download needs ANDROID_SDK_ROOT to be set with
     // an accepted license in it. See https://developer.android.com/studio/intro/update.html#download-with-gradle.
     autoDownloadAndroidSdk.set(autoDownloadAndRunInHeadless)
