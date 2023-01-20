@@ -6,7 +6,7 @@ import jetbrains.buildServer.configs.kotlin.v2019_2.failureConditions.BuildFailu
 import jetbrains.buildServer.configs.kotlin.v2019_2.failureConditions.failOnText
 import jetbrains.buildServer.configs.kotlin.v2019_2.ui.add
 
-open class GradleProfilerTest(os: Os, javaVersion: JavaVersion) : BuildType({
+open class GradleProfilerTest(os: Os, javaVersion: JavaVersion, arch: Arch = Arch.AMD64) : BuildType({
     gradleProfilerVcs()
 
     params {
@@ -53,7 +53,7 @@ open class GradleProfilerTest(os: Os, javaVersion: JavaVersion) : BuildType({
         }
     }
 
-    agentRequirement(os)
+    agentRequirement(os, arch)
 }) {
     constructor(os: Os, javaVersion: JavaVersion, init: GradleProfilerTest.() -> Unit) : this(os, javaVersion) {
         init()
