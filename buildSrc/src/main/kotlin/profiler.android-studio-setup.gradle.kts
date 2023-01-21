@@ -40,6 +40,7 @@ dependencies {
         isLinux() -> "linux.tar.gz"
         else -> throw IllegalStateException("Unsupported OS: $os")
     }
+    println("Architecture: $architecture, fileExtension: $fileExtension")
     androidStudioRuntime(extension.testAndroidStudioVersion.map { version -> "android-studio:android-studio:$version@$fileExtension" })
 }
 
