@@ -8,6 +8,7 @@ import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 
@@ -106,7 +107,12 @@ public class LaunchConfiguration {
         System.out.println("TRYING TO START:");
         Process process;
         try {
-            process = new ProcessBuilder(commandLine).inheritIO().redirectErrorStream(true).start();
+            File java = new File(commandLine.get(0));
+            java.setExecutable(true);
+            System.out.println("File: " + java.getAbsolutePath() + " exists: " + java.exists());
+            process = new ProcessBuilder(Arrays.asList(java.getAbsolutePath(), "-Xms256m", "-Xmx1280m", "-XX:ReservedCodeCacheSize=512m", "-XX:+IgnoreUnrecognizedVMOptions", "-XX:+UseG1GC", "-XX:SoftRefLRUPolicyMSPerMB=50", "-ea", "-Dsun.io.useCanonCaches=false", "-Djdk.attach.allowAttachSelf=true", "-Djdk.module.illegalAccess.silent=true", "-Djna.nosys=true", "-Didea.vendor.name=Google", "-version")).inheritIO().start();
+            System.out.println("WAITING ON PROCESS " + process.waitFor());
+            process = new ProcessBuilder("java", "-version").start();
             System.out.println("WAITING ON PROCESS " + process.waitFor());
         } catch (IOException | InterruptedException e) {
             System.out.println(e.getMessage());

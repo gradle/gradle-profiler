@@ -104,41 +104,41 @@ public class CommandExec {
             processBuilder.redirectErrorStream(true);
             Process process = processBuilder.inheritIO().start();
             ExecutorService executor = Executors.newFixedThreadPool(3);
-            executor.execute(() -> {
-                byte[] buffer = new byte[4096];
-                while (true) {
-                    if (readStream(process.getInputStream(), outputStream, command, buffer)) {
-                        break;
-                    }
-                }
-            });
-            executor.execute(() -> {
-                byte[] buffer = new byte[4096];
-                while (true) {
-                    if (readStream(process.getErrorStream(), outputStream, command, buffer)) {
-                        break;
-                    }
-                }
-            });
-            if (inputStream != null) {
-                executor.execute(() -> {
-                    byte[] buffer = new byte[4096];
-                    OutputStream output = process.getOutputStream();
-                    while (true) {
-                        try {
-                            int read = inputStream.read(buffer);
-                            output.write(buffer);
-                            if (read == -1) {
-                                output.flush();
-                                output.close();
-                                break;
-                            }
-                        } catch (IOException e) {
-                            throw new RuntimeException("Could not write input", e);
-                        }
-                    }
-                });
-            }
+//            executor.execute(() -> {
+//                byte[] buffer = new byte[4096];
+//                while (true) {
+//                    if (readStream(process.getInputStream(), outputStream, command, buffer)) {
+//                        break;
+//                    }
+//                }
+//            });
+//            executor.execute(() -> {
+//                byte[] buffer = new byte[4096];
+//                while (true) {
+//                    if (readStream(process.getErrorStream(), outputStream, command, buffer)) {
+//                        break;
+//                    }
+//                }
+//            });
+//            if (inputStream != null) {
+//                executor.execute(() -> {
+//                    byte[] buffer = new byte[4096];
+//                    OutputStream output = process.getOutputStream();
+//                    while (true) {
+//                        try {
+//                            int read = inputStream.read(buffer);
+//                            output.write(buffer);
+//                            if (read == -1) {
+//                                output.flush();
+//                                output.close();
+//                                break;
+//                            }
+//                        } catch (IOException e) {
+//                            throw new RuntimeException("Could not write input", e);
+//                        }
+//                    }
+//                });
+//            }
             return new RunHandle(processBuilder, process, diagnosticOutput, executor);
         } catch (IOException e) {
             throw new RuntimeException(commandErrorMessage(processBuilder, diagnosticOutput.get()), e);

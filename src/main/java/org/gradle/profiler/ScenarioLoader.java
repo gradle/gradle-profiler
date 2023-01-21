@@ -308,7 +308,7 @@ class ScenarioLoader {
 
     private static StudioGradleScenarioDefinition newStudioGradleScenarioDefinition(GradleScenarioDefinition gradleScenarioDefinition, Config scenario) {
         Config androidStudioSync = scenario.getConfig(ANDROID_STUDIO_SYNC);
-        List<String> studioJvmArgs = ConfigUtil.strings(androidStudioSync, ANDROID_STUDIO_JVM_ARGS, ImmutableList.of("-Xms256m", "-Xmx4096m"));
+        List<String> studioJvmArgs = ConfigUtil.strings(androidStudioSync, ANDROID_STUDIO_JVM_ARGS, ImmutableList.of());
         return new StudioGradleScenarioDefinition(gradleScenarioDefinition, studioJvmArgs);
     }
 
