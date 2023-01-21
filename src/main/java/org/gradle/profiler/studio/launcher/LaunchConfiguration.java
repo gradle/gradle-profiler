@@ -4,6 +4,7 @@ import org.gradle.profiler.CommandExec;
 import org.gradle.profiler.Logging;
 
 import java.io.File;
+import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
@@ -102,6 +103,15 @@ public class LaunchConfiguration {
         List<String> commandLine = new ArrayList<>(getCommandLine());
         commandLine.add(projectDir.getAbsolutePath());
         logLauncherConfiguration(commandLine);
+        System.out.println("TRYING TO START:");
+        Process process;
+        try {
+            process = new ProcessBuilder(commandLine).inheritIO().redirectErrorStream(true).start();
+            System.out.println("WAITING ON PROCESS " + process.waitFor());
+        } catch (IOException | InterruptedException e) {
+            System.out.println(e.getMessage());
+        }
+//        System.out.println(new CommandExec().inDir(studioInstallDir().toFile()).runAndCollectOutput(commandLine));
         return new CommandExec().inDir(studioInstallDir().toFile()).start(commandLine);
     }
 

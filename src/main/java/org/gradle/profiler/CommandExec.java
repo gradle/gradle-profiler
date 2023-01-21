@@ -54,7 +54,7 @@ public class CommandExec {
         try {
             start(new ProcessBuilder(commandLine), outputStream, outputStream::toString, null).waitForSuccess();
         } catch (RuntimeException e) {
-            System.out.print(new String(outputStream.toByteArray()));
+            System.out.println(new String(outputStream.toByteArray()));
             throw e;
         }
         return new String(outputStream.toByteArray());
@@ -102,7 +102,7 @@ public class CommandExec {
 
         try {
             processBuilder.redirectErrorStream(true);
-            Process process = processBuilder.start();
+            Process process = processBuilder.inheritIO().start();
             ExecutorService executor = Executors.newFixedThreadPool(3);
             executor.execute(() -> {
                 byte[] buffer = new byte[4096];
