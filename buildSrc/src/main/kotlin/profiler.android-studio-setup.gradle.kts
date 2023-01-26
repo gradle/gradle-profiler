@@ -35,7 +35,7 @@ val androidStudioRuntime by configurations.creating
 dependencies {
     val fileExtension = when {
         isWindows() -> "windows.zip"
-        isMacOS() && isIntel() -> "mac.zip"
+        isMacOS() && isIntel() -> "mac_arm.zip"
         isMacOS() && !isIntel() -> "mac_arm.zip"
         isLinux() -> "linux.tar.gz"
         else -> throw IllegalStateException("Unsupported OS: $os")
