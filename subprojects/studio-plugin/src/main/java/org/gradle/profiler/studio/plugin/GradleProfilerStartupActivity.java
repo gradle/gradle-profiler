@@ -7,7 +7,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.externalSystem.service.notification.ExternalSystemProgressNotificationManager;
 import com.intellij.openapi.externalSystem.settings.ExternalSystemSettingsListenerAdapter;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.project.ProjectManagerListener;
+import com.intellij.openapi.startup.StartupActivity;
 import org.gradle.profiler.client.protocol.Client;
 import org.gradle.profiler.client.protocol.messages.StudioRequest;
 import org.gradle.profiler.studio.plugin.client.GradleProfilerClient;
@@ -23,14 +23,14 @@ import java.util.Collection;
 
 import static org.gradle.profiler.client.protocol.messages.StudioRequest.StudioRequestType.EXIT_IDE;
 
-public class GradleProfilerProjectManagerListener implements ProjectManagerListener {
+public class GradleProfilerStartupActivity implements StartupActivity {
 
-    private static final Logger LOG = Logger.getInstance(GradleProfilerProjectManagerListener.class);
+    private static final Logger LOG = Logger.getInstance(GradleProfilerStartupActivity.class);
 
     public static final String PROFILER_PORT_PROPERTY = "gradle.profiler.port";
 
     @Override
-    public void projectOpened(@NotNull Project project) {
+    public void runActivity(@NotNull Project project) {
         LOG.info("Project opened");
         if (System.getProperty(PROFILER_PORT_PROPERTY) != null) {
             // This solves the issue where Android Studio would run the Gradle sync automatically on the first import.
@@ -62,7 +62,7 @@ public class GradleProfilerProjectManagerListener implements ProjectManagerListe
             public void onProjectsLinked(@NotNull Collection<GradleProjectSettings> linkedProjectsSettings) {
                 linkedProjectsSettings.forEach(settings -> settings.setResolveExternalAnnotations(false));
             }
-        });
+        }, gradleSettings);
     }
 
     private GradleSystemListener registerGradleSystemListener() {

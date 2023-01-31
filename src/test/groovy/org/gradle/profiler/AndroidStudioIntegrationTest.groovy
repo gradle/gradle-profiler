@@ -7,17 +7,24 @@ import org.gradle.profiler.studio.tools.StudioPluginInstaller
 import org.gradle.profiler.studio.tools.StudioSandboxCreator
 import spock.lang.Requires
 
+/**
+ * If running this tests with Android Studio Giraffe (2023.1) or later you need ANDROID_SDK_ROOT set or
+ * having Android sdk installed in <user.dir>/Library/Android/sdk (e.g. on Mac /Users/<username>/Library/Android/sdk)
+ */
 @Requires({ StudioFinder.findStudioHome() })
 class AndroidStudioIntegrationTest extends AbstractProfilerIntegrationTest {
 
     File sandboxDir
     File studioHome
+    File localProperties
     String scenarioName
 
     def setup() {
         sandboxDir = tmpDir.newFolder('sandbox')
         studioHome = StudioFinder.findStudioHome()
+        localProperties = file("local.properties")
         scenarioName = "scenario"
+        findAndroidSdkPath().ifPresent { path -> localProperties << "\nsdk.dir=$path\n" }
     }
 
     def "benchmarks Android Studio sync with latest gradle version"() {
@@ -313,5 +320,15 @@ class AndroidStudioIntegrationTest extends AbstractProfilerIntegrationTest {
             scenarioName
         ]
         new Main().run(*args)
+    }
+
+    private static Optional<String> findAndroidSdkPath() {
+        if (System.getenv("ANDROID_SDK_ROOT") != null) {
+            return Optional.of(System.getenv("ANDROID_SDK_ROOT").replace("\\", "/"))
+        }
+        String userDirAndroidSdkPath = "${System.getProperty("user.home").replace("\\", "/")}/Library/Android/sdk"
+        return new File(userDirAndroidSdkPath).exists()
+            ? Optional.<String>of(userDirAndroidSdkPath)
+            : Optional.<String>empty()
     }
 }
