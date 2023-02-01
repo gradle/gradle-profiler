@@ -67,6 +67,7 @@ val androidStudioInstallation = objects.newInstance<AndroidStudioInstallation>()
 
 tasks.withType<Test>().configureEach {
     dependsOn(installAndroidSdk)
+    environment("ANDROID_SDK_ROOT", System.getenv("ANDROID_SDK_ROOT"))
     jvmArgumentProviders.add(
         AndroidStudioSystemProperties(
             androidStudioInstallation,
