@@ -23,7 +23,7 @@ import java.util.Collection;
 
 import static org.gradle.profiler.client.protocol.messages.StudioRequest.StudioRequestType.EXIT_IDE;
 
-public class GradleProfilerStartupActivity implements StartupActivity {
+public class GradleProfilerStartupActivity implements StartupActivity.DumbAware {
 
     private static final Logger LOG = Logger.getInstance(GradleProfilerStartupActivity.class);
 
