@@ -18,7 +18,7 @@ open class GradleProfilerTest(os: Os, javaVersion: JavaVersion, arch: Arch = Arc
 
     steps {
         gradle {
-            tasks = "clean :test"
+            tasks = "clean test"
             buildFile = ""
             gradleParams = "-s" +
                 " --build-cache ${toolchainConfiguration(os)}" +
