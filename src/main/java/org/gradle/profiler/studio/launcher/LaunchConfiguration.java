@@ -115,6 +115,6 @@ public class LaunchConfiguration {
         getSystemProperties().forEach((key, value) -> System.out.printf("  %s -> %s%n", key, value));
         System.out.println("* Main class: " + getMainClass());
         System.out.println("* Android Studio logs can be found at: " + Paths.get(getStudioLogsDir().toString(), "idea.log"));
-        System.out.printf("* Using command line: %s%n%n", commandLine);
+        System.out.printf("* Using command line: %s%n%n", String.join(" ", commandLine));
     }
 }

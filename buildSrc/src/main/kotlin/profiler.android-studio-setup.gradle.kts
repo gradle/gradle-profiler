@@ -50,7 +50,13 @@ val unpackAndroidStudio = tasks.register<Copy>("unpackAndroidStudio") {
             singleFile.name.endsWith(".tar.gz") -> tarTree(singleFile)
             else -> zipTree(singleFile)
         }
-    })
+    }) {
+        eachFile {
+            // Remove top folder when unzipping,
+            // that way we get rid of Android Studio.app folder that can cause issues on Mac
+            relativePath = RelativePath(true, *relativePath.segments.drop(1).toTypedArray())
+        }
+    }
     into("$buildDir/android-studio")
 }
 
@@ -67,7 +73,6 @@ val androidStudioInstallation = objects.newInstance<AndroidStudioInstallation>()
 
 tasks.withType<Test>().configureEach {
     dependsOn(installAndroidSdk)
-    environment("ANDROID_SDK_ROOT", System.getenv("ANDROID_SDK_ROOT"))
     jvmArgumentProviders.add(
         AndroidStudioSystemProperties(
             androidStudioInstallation,

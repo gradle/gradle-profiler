@@ -20,6 +20,7 @@ public class LauncherConfigurationParser {
         "--add-opens=java.base/java.io=ALL-UNNAMED",
         "--add-opens=java.base/java.lang=ALL-UNNAMED",
         "--add-opens=java.base/java.lang.reflect=ALL-UNNAMED",
+        "--add-opens=java.base/java.lang.ref=ALL-UNNAMED",
         "--add-opens=java.base/java.net=ALL-UNNAMED",
         "--add-opens=java.base/java.nio=ALL-UNNAMED",
         "--add-opens=java.base/java.nio.charset=ALL-UNNAMED",
@@ -30,10 +31,12 @@ public class LauncherConfigurationParser {
         "--add-opens=java.base/java.util.concurrent.atomic=ALL-UNNAMED",
         "--add-opens=java.base/jdk.internal.vm=ALL-UNNAMED",
         "--add-opens=java.base/sun.nio.ch=ALL-UNNAMED",
+        "--add-opens=java.base/sun.nio.fs=ALL-UNNAMED",
         "--add-opens=java.base/sun.security.ssl=ALL-UNNAMED",
         "--add-opens=java.base/sun.security.util=ALL-UNNAMED",
         "--add-opens=java.desktop/com.sun.java.swing.plaf.gtk=ALL-UNNAMED",
         "--add-opens=java.desktop/java.awt=ALL-UNNAMED",
+        "--add-opens=java.desktop/java.awt.font=ALL-UNNAMED",
         "--add-opens=java.desktop/java.awt.dnd.peer=ALL-UNNAMED",
         "--add-opens=java.desktop/java.awt.event=ALL-UNNAMED",
         "--add-opens=java.desktop/java.awt.image=ALL-UNNAMED",
@@ -45,6 +48,7 @@ public class LauncherConfigurationParser {
         "--add-opens=java.desktop/sun.awt.datatransfer=ALL-UNNAMED",
         "--add-opens=java.desktop/sun.awt.image=ALL-UNNAMED",
         "--add-opens=java.desktop/sun.awt=ALL-UNNAMED",
+        "--add-opens=java.desktop/sun.awt.windows=ALL-UNNAMED",
         "--add-opens=java.desktop/sun.font=ALL-UNNAMED",
         "--add-opens=java.desktop/sun.java2d=ALL-UNNAMED",
         "--add-opens=java.desktop/sun.swing=ALL-UNNAMED",
@@ -54,7 +58,12 @@ public class LauncherConfigurationParser {
         "--add-opens=jdk.jdi/com.sun.tools.jdi=ALL-UNNAMED",
         "--add-exports=java.desktop/com.apple.eawt=ALL-UNNAMED",
         "--add-exports=java.desktop/com.apple.laf=ALL-UNNAMED",
-        "--add-exports=java.desktop/com.apple.eawt.event=ALL-UNNAMED"
+        "--add-exports=java.desktop/com.apple.eawt.event=ALL-UNNAMED",
+        "--add-opens=java.desktop/com.apple.eawt=ALL-UNNAMED",
+        "--add-opens=java.desktop/com.apple.eawt.event=ALL-UNNAMED",
+        "--add-opens=java.desktop/com.apple.laf=ALL-UNNAMED",
+        "--add-opens=java.desktop/sun.lwawt=ALL-UNNAMED",
+        "--add-opens=java.desktop/sun.lwawt.macosx=ALL-UNNAMED"
     );
 
     private final Path studioInstallDir;
@@ -136,6 +145,7 @@ public class LauncherConfigurationParser {
         }
         studioSandbox.getConfigDir().ifPresent(path -> systemProperties.put("idea.config.path", path.toString()));
         studioSandbox.getSystemDir().ifPresent(path -> systemProperties.put("idea.system.path", path.toString()));
+        systemProperties.put("java.system.class.loader", "com.intellij.util.lang.PathClassLoader");
         systemProperties.put("idea.plugins.path", studioSandbox.getPluginsDir().toString());
         systemProperties.put("idea.log.path", studioSandbox.getLogsDir().toString());
         // Newer IntelliJ versions require this property to avoid trust project popup
