@@ -1,120 +1,79 @@
 package org.gradle.profiler.studio.launcher;
 
+import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableMap;
 import org.gradle.profiler.CommandExec;
 import org.gradle.profiler.Logging;
+import org.gradle.profiler.studio.tools.StudioSandboxCreator.StudioSandbox;
 
 import java.io.File;
+import java.io.IOException;
+import java.io.UncheckedIOException;
+import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
 public class LaunchConfiguration {
-    private final Path javaCommand;
-    private final List<Path> classPath;
-    private final Map<String, String> systemProperties;
-    private final String mainClass;
-    private final Path agentJar;
-    private final Path supportJar;
-    private final List<Path> sharedJars;
-    private final List<Path> studioPluginJars;
-    private final Path studioPluginsDir;
-    private final Path studioLogsDir;
-    private final List<String> commandLine;
+
+    private final Path startCommand;
     private final Path studioInstallDir;
+    private final String headlessCommand;
+    private final List<String> additionalJvmArgs;
+    private final StudioSandbox studioSandbox;
 
-    public LaunchConfiguration(Path javaCommand,
-                               Path studioInstallDir,
-                               List<Path> classPath,
-                               Map<String, String> systemProperties,
-                               String mainClass,
-                               Path agentJar,
-                               Path supportJar,
-                               List<Path> sharedJars,
-                               List<Path> studioPluginJars,
-                               Path studioPluginsDir,
-                               Path studioLogsDir,
-                               List<String> commandLine) {
-        this.javaCommand = javaCommand;
+    public LaunchConfiguration(
+        Path startCommand,
+        String headlessCommand,
+        Path studioInstallDir,
+        List<String> additionalJvmArgs,
+        StudioSandbox studioSandbox
+    ) {
+        this.startCommand = startCommand;
+        this.headlessCommand = headlessCommand;
         this.studioInstallDir = studioInstallDir;
-        this.classPath = classPath;
-        this.systemProperties = systemProperties;
-        this.mainClass = mainClass;
-        this.agentJar = agentJar;
-        this.supportJar = supportJar;
-        this.sharedJars = sharedJars;
-        this.studioPluginJars = studioPluginJars;
-        this.studioPluginsDir = studioPluginsDir;
-        this.studioLogsDir = studioLogsDir;
-        this.commandLine = commandLine;
-    }
-
-    public Path getJavaCommand() {
-        return javaCommand;
-    }
-
-    public Path studioInstallDir() {
-        return studioInstallDir;
-    }
-
-    public List<Path> getClassPath() {
-        return classPath;
-    }
-
-    public Map<String, String> getSystemProperties() {
-        return systemProperties;
-    }
-
-    public String getMainClass() {
-        return mainClass;
-    }
-
-    public Path getAgentJar() {
-        return agentJar;
-    }
-
-    public Path getSupportJar() {
-        return supportJar;
-    }
-
-    public List<Path> getSharedJars() {
-        return sharedJars;
-    }
-
-    public List<Path> getStudioPluginJars() {
-        return studioPluginJars;
-    }
-
-    public Path getStudioPluginsDir() {
-        return studioPluginsDir;
-    }
-
-    public Path getStudioLogsDir() {
-        return studioLogsDir;
-    }
-
-    public List<String> getCommandLine() {
-        return commandLine;
+        this.additionalJvmArgs = additionalJvmArgs;
+        this.studioSandbox = studioSandbox;
     }
 
     public CommandExec.RunHandle launchStudio(File projectDir) {
-        List<String> commandLine = new ArrayList<>(getCommandLine());
-        commandLine.add(projectDir.getAbsolutePath());
+        List<String> commandLine = getCommandLine(projectDir);
         logLauncherConfiguration(commandLine);
-        return new CommandExec().inDir(studioInstallDir().toFile()).start(commandLine);
+        Map<String, String> environmentVariables = writeAdditionalJvmArgs();
+        return new CommandExec()
+            .inDir(studioInstallDir.toFile())
+            .environmentVariables(environmentVariables)
+            .start(commandLine);
+    }
+
+    private List<String> getCommandLine(File projectDir) {
+        if (headlessCommand.isEmpty()) {
+            return ImmutableList.of(startCommand.toAbsolutePath().toString(), projectDir.getAbsolutePath());
+        }
+        return ImmutableList.of(startCommand.toAbsolutePath().toString(), headlessCommand, projectDir.getAbsolutePath());
     }
 
     private void logLauncherConfiguration(List<String> commandLine) {
         System.out.println();
         Logging.startOperation("Starting Android Studio at " + studioInstallDir);
-        System.out.println("* Java command: " + getJavaCommand());
-        System.out.println("* Classpath:");
-        getClassPath().stream().map(entry -> "  " + entry).forEach(System.out::println);
-        System.out.println("* System properties:");
-        getSystemProperties().forEach((key, value) -> System.out.printf("  %s -> %s%n", key, value));
-        System.out.println("* Main class: " + getMainClass());
-        System.out.println("* Android Studio logs can be found at: " + Paths.get(getStudioLogsDir().toString(), "idea.log"));
+        System.out.println("* Start command: " + startCommand);
+        System.out.println("* Additional JVM args:");
+        additionalJvmArgs.forEach(arg -> System.out.println("  " + arg));
+        System.out.println("* Additional JVM args can be found at: " + studioSandbox.getJvmArgsDir().resolve("idea.vmoptions"));
+        System.out.println("* Android Studio logs can be found at: " + studioSandbox.getLogsDir().resolve("idea.log"));
         System.out.printf("* Using command line: %s%n%n", String.join(" ", commandLine));
+    }
+
+    private Map<String, String> writeAdditionalJvmArgs() {
+        try {
+            Path additionJvmArgsFile = studioSandbox.getJvmArgsDir().resolve("idea.vmoptions").toAbsolutePath();
+            Files.write(additionJvmArgsFile, additionalJvmArgs);
+            return ImmutableMap.<String, String>builder()
+                .put("STUDIO_VM_OPTIONS", additionJvmArgsFile.toString())
+                .put("IDEA_VM_OPTIONS", additionJvmArgsFile.toString())
+                .build();
+        } catch (IOException e) {
+            throw new UncheckedIOException(e);
+        }
     }
 }
