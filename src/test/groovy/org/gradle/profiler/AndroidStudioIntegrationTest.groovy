@@ -1,5 +1,7 @@
 package org.gradle.profiler
 
+import org.gradle.profiler.spock.extensions.ShowAndroidStudioLogsOnFailure
+import org.gradle.profiler.studio.AndroidStudioTestSupport
 import org.gradle.profiler.studio.launcher.LaunchConfiguration
 import org.gradle.profiler.studio.launcher.LauncherConfigurationParser
 import org.gradle.profiler.studio.tools.StudioFinder
@@ -7,7 +9,15 @@ import org.gradle.profiler.studio.tools.StudioPluginInstaller
 import org.gradle.profiler.studio.tools.StudioSandboxCreator
 import spock.lang.Requires
 
+import static org.gradle.profiler.studio.AndroidStudioTestSupport.setupLocalProperties
+
+/**
+ * If running this tests with Android Studio Giraffe (2022.3) or later you need ANDROID_SDK_ROOT set or
+ * having Android sdk installed in <user.home>/Library/Android/sdk (e.g. on Mac /Users/<username>/Library/Android/sdk)
+ */
+@ShowAndroidStudioLogsOnFailure
 @Requires({ StudioFinder.findStudioHome() })
+@Requires({ AndroidStudioTestSupport.findAndroidSdkPath() })
 class AndroidStudioIntegrationTest extends AbstractProfilerIntegrationTest {
 
     File sandboxDir
@@ -17,6 +27,7 @@ class AndroidStudioIntegrationTest extends AbstractProfilerIntegrationTest {
     def setup() {
         sandboxDir = tmpDir.newFolder('sandbox')
         studioHome = StudioFinder.findStudioHome()
+        setupLocalProperties(file("local.properties"))
         scenarioName = "scenario"
     }
 
@@ -258,7 +269,7 @@ class AndroidStudioIntegrationTest extends AbstractProfilerIntegrationTest {
         then:
         logFile.find("Full sync has completed in").size() == 2
         logFile.find("and it SUCCEEDED").size() == 2
-        logFile.find(~/\* Using command line:.*-Xmx1024m, -Xms128m, com.intellij.idea.Main,.*/).size() == 1
+        logFile.find(~/\* Using command line:.*-Xmx1024m -Xms128m com.intellij.idea.Main .*/).size() == 1
     }
 
     def "doesn't write external annotations to .m2 folder"() {

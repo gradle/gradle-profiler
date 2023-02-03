@@ -50,7 +50,13 @@ val unpackAndroidStudio = tasks.register<Copy>("unpackAndroidStudio") {
             singleFile.name.endsWith(".tar.gz") -> tarTree(singleFile)
             else -> zipTree(singleFile)
         }
-    })
+    }) {
+        eachFile {
+            // Remove top folder when unzipping, that way we get rid of Android Studio.app folder that can cause issues on Mac
+            // where MacOS would kill the Android Studio process right after start, issue: https://github.com/gradle/gradle-profiler/issues/469
+            relativePath = RelativePath(true, *relativePath.segments.drop(1).toTypedArray())
+        }
+    }
     into("$buildDir/android-studio")
 }
 

@@ -1,13 +1,24 @@
 package org.gradle.profiler
 
+import org.gradle.profiler.spock.extensions.ShowAndroidStudioLogsOnFailure
+import org.gradle.profiler.studio.AndroidStudioTestSupport
 import org.gradle.profiler.studio.tools.StudioFinder
 import org.gradle.util.GradleVersion
 import spock.lang.Requires
 import spock.lang.Shared
 import spock.lang.Unroll
 
+import static org.gradle.profiler.studio.AndroidStudioTestSupport.setupLocalProperties
+
 class ChromeTraceIntegrationTest extends AbstractProfilerIntegrationTest {
+
     static final MINIMAL_SUPPORTED_VERSION_FOR_CHROME_TRACE = GradleVersion.version("3.5")
+
+    File sandboxDir
+
+    def setup() {
+        sandboxDir = tmpDir.newFolder('sandbox')
+    }
 
     @Shared
     List<String> supportedGradleVersionsForChromeTrace = super.supportedGradleVersions.findAll { gradleVersion ->
@@ -66,10 +77,13 @@ class ChromeTraceIntegrationTest extends AbstractProfilerIntegrationTest {
         versionUnderTest << supportedGradleVersionsForChromeTrace
     }
 
+    @ShowAndroidStudioLogsOnFailure
     @Requires({ StudioFinder.findStudioHome() })
+    @Requires({ AndroidStudioTestSupport.findAndroidSdkPath() })
     def "profiles build to produce chrome trace output for builds with multiple gradle invocations"() {
         given:
         def studioHome = StudioFinder.findStudioHome()
+        setupLocalProperties(new File(projectDir, "local.properties"))
         new File(projectDir, "buildSrc").mkdirs()
         new File(projectDir, "buildSrc/gradle.build").createNewFile()
         def scenarioFile = file("performance.scenarios") << """
@@ -84,6 +98,7 @@ class ChromeTraceIntegrationTest extends AbstractProfilerIntegrationTest {
             "--profile", "chrome-trace",
             "--scenario-file", scenarioFile.absolutePath,
             "--studio-install-dir", studioHome.absolutePath,
+            "--studio-sandbox-dir", sandboxDir.absolutePath,
             "--warmups", "1",
             "--iterations", "1")
 
