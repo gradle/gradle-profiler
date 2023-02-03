@@ -14,7 +14,7 @@ import java.nio.file.Path;
 import java.util.List;
 import java.util.Map;
 
-public class LaunchConfiguration {
+public class StudioLauncher {
 
     private final Path startCommand;
     private final Path studioInstallDir;
@@ -22,7 +22,7 @@ public class LaunchConfiguration {
     private final List<String> additionalJvmArgs;
     private final StudioSandbox studioSandbox;
 
-    public LaunchConfiguration(
+    public StudioLauncher(
         Path startCommand,
         String headlessCommand,
         Path studioInstallDir,

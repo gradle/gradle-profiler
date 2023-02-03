@@ -14,7 +14,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-public class LauncherConfigurationParser {
+public class StudioLauncherProvider {
 
     private static final boolean SHOULD_RUN_HEADLESS = Boolean.getBoolean("studio.tests.headless");
     private static final List<String> DEFAULT_MACOS_STARTER_PATHS = ImmutableList.of("Contents/MacOS/studio", "Contents/MacOS/idea");
@@ -30,26 +30,26 @@ public class LauncherConfigurationParser {
     private int studioAgentPort;
     private int studioStartDetectorPort;
 
-    public LauncherConfigurationParser(Path studioInstallDir, StudioSandbox studioSandbox, List<String> studioJvmArgs) {
+    public StudioLauncherProvider(Path studioInstallDir, StudioSandbox studioSandbox, List<String> studioJvmArgs) {
         this.studioInstallDir = studioInstallDir;
         this.studioSandbox = studioSandbox;
         this.studioJvmArgs = studioJvmArgs;
     }
 
-    public LauncherConfigurationParser withStudioPluginParameters(int studioStartDetectorPort, int studioPluginPort) {
+    public StudioLauncherProvider withStudioPluginParameters(int studioStartDetectorPort, int studioPluginPort) {
         this.enableStudioPluginParameters = true;
         this.studioStartDetectorPort = studioStartDetectorPort;
         this.studioPluginPort = studioPluginPort;
         return this;
     }
 
-    public LauncherConfigurationParser withStudioAgentParameters(int studioAgentPort) {
+    public StudioLauncherProvider withStudioAgentParameters(int studioAgentPort) {
         this.enableStudioAgentParameters = true;
         this.studioAgentPort = studioAgentPort;
         return this;
     }
 
-    public LaunchConfiguration calculate() {
+    public StudioLauncher get() {
         Path startCommand = getStartCommand(studioInstallDir);
         List<String> additionalJvmArgs = getAdditionalJvmArgs();
 
@@ -57,7 +57,7 @@ public class LauncherConfigurationParser {
         // Studio will fail since "missing Android SDK" modal will try to open
         String headlessCommand = SHOULD_RUN_HEADLESS ? "headless-starter" : "";
 
-        return new LaunchConfiguration(startCommand, headlessCommand, studioInstallDir, additionalJvmArgs, studioSandbox);
+        return new StudioLauncher(startCommand, headlessCommand, studioInstallDir, additionalJvmArgs, studioSandbox);
     }
 
     private List<String> getAdditionalJvmArgs() {

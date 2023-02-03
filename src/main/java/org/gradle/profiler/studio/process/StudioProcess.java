@@ -4,8 +4,8 @@ import org.gradle.profiler.CommandExec.RunHandle;
 import org.gradle.profiler.InvocationSettings;
 import org.gradle.profiler.client.protocol.Server;
 import org.gradle.profiler.client.protocol.ServerConnection;
-import org.gradle.profiler.studio.launcher.LaunchConfiguration;
-import org.gradle.profiler.studio.launcher.LauncherConfigurationParser;
+import org.gradle.profiler.studio.launcher.StudioLauncher;
+import org.gradle.profiler.studio.launcher.StudioLauncherProvider;
 import org.gradle.profiler.studio.tools.StudioSandboxCreator.StudioSandbox;
 
 import java.io.Closeable;
@@ -29,11 +29,11 @@ public class StudioProcess implements Closeable {
         Server studioStartDetectorServer = new Server("start-detector");
         this.studioPluginServer = new Server("plugin");
         this.studioAgentServer = new Server("agent");
-        LaunchConfiguration launchConfiguration = new LauncherConfigurationParser(studioInstallDir, sandbox, studioJvmArgs)
+        StudioLauncher studioLauncher = new StudioLauncherProvider(studioInstallDir, sandbox, studioJvmArgs)
             .withStudioPluginParameters(studioStartDetectorServer.getPort(), studioPluginServer.getPort())
             .withStudioAgentParameters(studioAgentServer.getPort())
-            .calculate();
-        this.process = launchConfiguration.launchStudio(invocationSettings.getProjectDir());
+            .get();
+        this.process = studioLauncher.launchStudio(invocationSettings.getProjectDir());
         waitOnSuccessfulIdeStart(process, studioStartDetectorServer);
         connections = new StudioConnections(
             studioPluginServer.waitForIncoming(PLUGIN_CONNECT_TIMEOUT),
