@@ -61,13 +61,13 @@ public class LauncherConfigurationParser {
     }
 
     private List<String> getAdditionalJvmArgs() {
-       List<String> jvmArgs = new ArrayList<>();
+        List<String> jvmArgs = new ArrayList<>();
         if (enableStudioAgentParameters) {
-            Path agentJar = GradleInstrumentation.unpackPlugin("studio-agent").toPath();
-            Path supportJar = GradleInstrumentation.unpackPlugin("instrumentation-support").toPath();
-            Path asmJar = GradleInstrumentation.unpackPlugin("asm").toPath();
-            Path protocolJar = GradleInstrumentation.unpackPlugin("client-protocol").toPath();
-            List<Path> sharedJars = Arrays.asList(asmJar, protocolJar);
+            String agentJar = GradleInstrumentation.unpackPlugin("studio-agent").getAbsolutePath();
+            String supportJar = GradleInstrumentation.unpackPlugin("instrumentation-support").getAbsolutePath();
+            String asmJar = GradleInstrumentation.unpackPlugin("asm").getAbsolutePath();
+            String protocolJar = GradleInstrumentation.unpackPlugin("client-protocol").getAbsolutePath();
+            List<String> sharedJars = Arrays.asList(asmJar, protocolJar);
             jvmArgs.add(String.format("-javaagent:%s=%s,%s", agentJar, studioAgentPort, supportJar));
             jvmArgs.add("--add-exports=java.base/jdk.internal.misc=ALL-UNNAMED");
             jvmArgs.add("-Xbootclasspath/a:" + Joiner.on(File.pathSeparator).join(sharedJars));
