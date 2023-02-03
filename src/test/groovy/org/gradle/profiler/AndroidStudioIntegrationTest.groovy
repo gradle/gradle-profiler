@@ -325,14 +325,4 @@ class AndroidStudioIntegrationTest extends AbstractProfilerIntegrationTest {
         ]
         new Main().run(*args)
     }
-
-    private static Optional<String> findAndroidSdkPath() {
-        if (System.getenv("ANDROID_SDK_ROOT") != null) {
-            return Optional.of(System.getenv("ANDROID_SDK_ROOT").replace("\\", "/"))
-        }
-        String userDirAndroidSdkPath = "${System.getProperty("user.home").replace("\\", "/")}/Library/Android/sdk"
-        return new File(userDirAndroidSdkPath).exists()
-            ? Optional.<String>of(userDirAndroidSdkPath)
-            : Optional.<String>empty()
-    }
 }

@@ -1,5 +1,7 @@
 package org.gradle.profiler.studio
 
+import org.apache.commons.io.FilenameUtils
+
 class AndroidStudioTestSupport {
 
     static setupLocalProperties(File localProperties) {
@@ -8,9 +10,9 @@ class AndroidStudioTestSupport {
 
     static String findAndroidSdkPath() {
         if (System.getenv("ANDROID_SDK_ROOT") != null) {
-            return System.getenv("ANDROID_SDK_ROOT").replace("\\", "/")
+            return FilenameUtils.separatorsToUnix(System.getenv("ANDROID_SDK_ROOT"))
         }
-        String userDirAndroidSdkPath = "${System.getProperty("user.home").replace("\\", "/")}/Library/Android/sdk"
+        String userDirAndroidSdkPath = FilenameUtils.separatorsToUnix("${System.getProperty("user.home")}/Library/Android/sdk")
         if (!new File(userDirAndroidSdkPath).exists()) {
             return null
         }
