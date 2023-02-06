@@ -7,12 +7,13 @@ import org.gradle.profiler.result.Sample;
 import java.io.BufferedWriter;
 import java.io.File;
 import java.io.IOException;
-import java.time.Duration;
+import java.text.DecimalFormat;
 import java.util.List;
 import java.util.stream.Collectors;
 
 public class CsvGenerator extends AbstractGenerator {
     private final Format format;
+    private static final DecimalFormat DOUBLE_FORMAT = new DecimalFormat("0.00");
 
     public enum Format {
         LONG, WIDE;
@@ -80,6 +81,9 @@ public class CsvGenerator extends AbstractGenerator {
             for (Sample<?> sample : scenario.getSamples()) {
                 writer.write(",");
                 writer.write(sample.getName());
+                writer.write(" (");
+                writer.write(sample.getUnit());
+                writer.write(")");
             }
         }
         writer.newLine();
@@ -110,9 +114,8 @@ public class CsvGenerator extends AbstractGenerator {
         }
         T buildResult = results.get(row);
         writer.write(scenario.getSamples().stream()
-            .map(sample -> sample.extractTotalDurationFrom(buildResult))
-            .map(Duration::toMillis)
-            .map(Object::toString)
+            .map(sample -> sample.extractValue(buildResult))
+            .map(DOUBLE_FORMAT::format)
             .collect(Collectors.joining(","))
         );
     }
@@ -140,7 +143,7 @@ public class CsvGenerator extends AbstractGenerator {
                 writer.write(",");
                 writer.write(sample.getName());
                 writer.write(",");
-                writer.write(String.valueOf(sample.extractTotalDurationFrom(result).toMillis()));
+                writer.write(DOUBLE_FORMAT.format(sample.extractValue(result)));
                 writer.write(",");
                 writer.write(String.valueOf(sample.extractTotalCountFrom(result)));
                 writer.newLine();

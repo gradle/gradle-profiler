@@ -48,6 +48,7 @@
         "samples": [
           {
             "name": "execution",
+            "unit": "ms",
             "confidence": 0.0
           }
         ],
@@ -294,6 +295,7 @@
         "samples": [
           {
             "name": "execution",
+            "unit": "ms",
             "confidence": 0.9991642831782728
           }
         ],

@@ -1,12 +1,6 @@
 package org.gradle.profiler.report;
 
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
-import com.google.gson.JsonArray;
-import com.google.gson.JsonObject;
-import com.google.gson.JsonPrimitive;
-import com.google.gson.JsonSerializationContext;
-import com.google.gson.JsonSerializer;
+import com.google.gson.*;
 import org.gradle.profiler.GradleScenarioDefinition;
 import org.gradle.profiler.OperatingSystem;
 import org.gradle.profiler.ScenarioDefinition;
@@ -18,7 +12,6 @@ import javax.annotation.Nullable;
 import javax.annotation.OverridingMethodsMustInvokeSuper;
 import java.io.Writer;
 import java.lang.reflect.Type;
-import java.time.Duration;
 import java.time.format.DateTimeFormatter;
 import java.time.temporal.Temporal;
 import java.util.List;
@@ -105,6 +98,7 @@ public class JsonResultWriter {
     private JsonObject serializeSample(Sample<?> sample) {
         JsonObject json = new JsonObject();
         json.addProperty("name", sample.getName());
+        json.addProperty("unit", sample.getUnit());
         return json;
     }
 
@@ -116,8 +110,7 @@ public class JsonResultWriter {
         json.addProperty("title", result.getBuildContext().getDisplayName());
         JsonObject valuesJson = new JsonObject();
         for (Sample<? super T> sample : samples) {
-            Duration value = sample.extractTotalDurationFrom(result);
-            valuesJson.addProperty(sample.getName(), value.toNanos() / 1000000d);
+            valuesJson.addProperty(sample.getName(), sample.extractValue(result));
         }
         json.add("values", valuesJson);
         return json;
