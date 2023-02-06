@@ -1,9 +1,10 @@
 package org.gradle.profiler
 
+import org.gradle.profiler.instrument.GradleInstrumentation
 import org.gradle.profiler.spock.extensions.ShowAndroidStudioLogsOnFailure
 import org.gradle.profiler.studio.AndroidStudioTestSupport
-import org.gradle.profiler.studio.launcher.LaunchConfiguration
-import org.gradle.profiler.studio.launcher.LauncherConfigurationParser
+import org.gradle.profiler.studio.launcher.StudioLauncher
+import org.gradle.profiler.studio.launcher.StudioLauncherProvider
 import org.gradle.profiler.studio.tools.StudioFinder
 import org.gradle.profiler.studio.tools.StudioPluginInstaller
 import org.gradle.profiler.studio.tools.StudioSandboxCreator
@@ -138,9 +139,10 @@ class AndroidStudioIntegrationTest extends AbstractProfilerIntegrationTest {
         // We have to install plugin so also the first Studio process is run in the headless mode.
         // We install plugin directory to a different "plugins-2" directory for first process otherwise cleaning plugin directory at start of second process fails on Windows.
         StudioSandboxCreator.StudioSandbox sandbox = StudioSandboxCreator.createSandbox(sandboxDir.toPath(), "plugins-2")
-        LaunchConfiguration launchConfiguration = new LauncherConfigurationParser(studioHome.toPath(), sandbox, []).calculate()
-        StudioPluginInstaller pluginInstaller = new StudioPluginInstaller(launchConfiguration.getStudioPluginsDir())
-        pluginInstaller.installPlugin(launchConfiguration.getStudioPluginJars())
+        StudioLauncher studioLauncher = new StudioLauncherProvider(studioHome.toPath(), sandbox, []).get()
+        StudioPluginInstaller pluginInstaller = new StudioPluginInstaller(sandbox.getPluginsDir())
+        // We have to install plugin, since a plugin contains headless starter and it makes it run headless on CI
+        pluginInstaller.installPlugin(Collections.singletonList(GradleInstrumentation.unpackPlugin("studio-plugin").toPath()))
         def scenarioFile = file("performance.scenarios") << """
             $scenarioName {
                 android-studio-sync {
@@ -149,7 +151,7 @@ class AndroidStudioIntegrationTest extends AbstractProfilerIntegrationTest {
         """
 
         when:
-        CommandExec.RunHandle process = launchConfiguration.launchStudio(otherStudioProjectDir)
+        CommandExec.RunHandle process = studioLauncher.launchStudio(otherStudioProjectDir)
         runBenchmark(scenarioFile, 1, 1)
 
         then:
@@ -171,10 +173,10 @@ class AndroidStudioIntegrationTest extends AbstractProfilerIntegrationTest {
         // since if Android Studio writes to same project at the same time, it can fail
         File otherStudioProjectDir = tmpDir.newFolder('project')
         StudioSandboxCreator.StudioSandbox sandbox = StudioSandboxCreator.createSandbox(sandboxDir1.toPath())
-        LaunchConfiguration launchConfiguration = new LauncherConfigurationParser(studioHome.toPath(), sandbox, []).calculate()
-        // We have to install plugin so also the first Studio process can be run in headless mode mode
-        StudioPluginInstaller pluginInstaller = new StudioPluginInstaller(launchConfiguration.getStudioPluginsDir())
-        pluginInstaller.installPlugin(launchConfiguration.getStudioPluginJars())
+        StudioLauncher studioLauncher = new StudioLauncherProvider(studioHome.toPath(), sandbox, []).get()
+        // We have to install plugin, since a plugin contains headless starter and it makes it run headless on CI
+        StudioPluginInstaller pluginInstaller = new StudioPluginInstaller(sandbox.getPluginsDir())
+        pluginInstaller.installPlugin(Collections.singletonList(GradleInstrumentation.unpackPlugin("studio-plugin").toPath()))
         def scenarioFile = file("performance.scenarios") << """
             $scenarioName {
                 android-studio-sync {
@@ -183,7 +185,7 @@ class AndroidStudioIntegrationTest extends AbstractProfilerIntegrationTest {
         """
 
         when:
-        CommandExec.RunHandle process = launchConfiguration.launchStudio(otherStudioProjectDir)
+        CommandExec.RunHandle process = studioLauncher.launchStudio(otherStudioProjectDir)
         runBenchmark(scenarioFile, 1, 1)
 
         then:
@@ -269,7 +271,11 @@ class AndroidStudioIntegrationTest extends AbstractProfilerIntegrationTest {
         then:
         logFile.find("Full sync has completed in").size() == 2
         logFile.find("and it SUCCEEDED").size() == 2
-        logFile.find(~/\* Using command line:.*-Xmx1024m -Xms128m com.intellij.idea.Main .*/).size() == 1
+        def vmOptionsFile = new File(sandboxDir, "jvmArgs/idea.vmoptions")
+        vmOptionsFile.exists()
+        def vmOptions = vmOptionsFile.readLines()
+        vmOptions.contains("-Xmx1024m")
+        vmOptions.contains("-Xms128m")
     }
 
     def "doesn't write external annotations to .m2 folder"() {
