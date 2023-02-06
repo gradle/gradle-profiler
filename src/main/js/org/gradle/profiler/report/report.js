@@ -111,7 +111,8 @@ new Vue({
                             pointBackgroundColor: sample.color,
                             borderColor: sample.color,
                             data: data,
-                            sample: sample
+                            sample: sample,
+                            yAxisID: sample.unit
                         };
                     }))
                 .flat();
@@ -183,6 +184,27 @@ new Vue({
         const maxMeasuredIterations = benchmarkResult.scenarios
             .map(scenario => measuredIterations(scenario).length)
             .max();
+        const scales = benchmarkResult.scenarios
+            .flatMap(scenario => scenario.samples)
+            .map(sample => sample.unit)
+            .unique()
+            .reduce((scales, unit) => {
+                scales[unit] = {
+                    type: "linear",
+                    display: "auto",
+                    beginAtZero: true,
+                    position: Object.keys(scales).length % 2 === 0
+                        ? "left"
+                        : "right",
+                    ticks: {
+                        // Include a dollar sign in the ticks
+                        callback: function(value, index, ticks) {
+                            return value + ' ' + unit;
+                        }
+                    }
+                };
+                return scales;
+            }, {});
         const chart = this.chart = new Chart(ctx, {
             type: 'line',
             data: {
@@ -222,11 +244,7 @@ new Vue({
                 hover: {
                     intersect: false
                 },
-                scales: {
-                    y: {
-                        beginAtZero: true
-                    }
-                }
+                scales: scales
             }
         });
         document.fonts.ready.then(() => chart.update());

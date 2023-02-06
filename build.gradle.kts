@@ -140,6 +140,7 @@ androidStudioTests {
 val testReports = mapOf(
     "testHtmlReport" to "example",
     "testHtmlReportSingle" to "example-single",
+    "testHtmlReportCacheSize" to "example-cache-size",
     "testHtmlReportWithOps" to "example-with-build-operations",
     "testHtmlReportRegression" to "example-regression"
 )
