@@ -36,6 +36,9 @@ public class GradleScenarioInvoker extends ScenarioInvoker<GradleScenarioDefinit
             if (settings.isMeasureGarbageCollection()) {
                 builder.add(GradleBuildInvocationResult.GARBAGE_COLLECTION_TIME);
             }
+            if (settings.isMeasureLocalCache()) {
+                builder.add(GradleBuildInvocationResult.LOCAL_CACHE_SIZE);
+            }
             if (settings.isMeasureConfigTime()) {
                 builder.add(GradleBuildInvocationResult.TIME_TO_TASK_EXECUTION);
             }
@@ -60,6 +63,7 @@ public class GradleScenarioInvoker extends ScenarioInvoker<GradleScenarioDefinit
 
         BuildOperationInstrumentation buildOperationInstrumentation = new BuildOperationInstrumentation(
             settings.isMeasureGarbageCollection(),
+            settings.isMeasureLocalCache(),
             settings.isMeasureConfigTime(),
             scenario.getMeasuredBuildOperations()
         );

@@ -66,6 +66,53 @@ class BuildOperationInstrumentationIntegrationTest extends AbstractProfilerInteg
     }
 
     @Unroll
+    def "can benchmark local cache size for build using #gradleVersion (configuration-cache: #configurationCache)"() {
+        given:
+        instrumentedBuildScript()
+
+        and:
+        String[] args = [
+            "--project-dir", projectDir.absolutePath,
+            "--output-dir", outputDir.absolutePath,
+            "--gradle-version", gradleVersion,
+            "--benchmark",
+            "--measure-local-cache",
+            "assemble",
+            "-Dorg.gradle.caching=true"
+        ]
+        if (configurationCache) {
+            file("gradle.properties") << """
+                org.gradle.unsafe.configuration-cache=true
+            """
+        }
+
+        when:
+        new Main().run(*args)
+
+        then:
+        def lines = resultFile.lines
+        lines.size() == totalLinesForExecutions(16)
+        lines.get(0) == "scenario,default,default"
+        lines.get(1) == "version,Gradle ${gradleVersion},Gradle ${gradleVersion}"
+        lines.get(2) == "tasks,assemble,assemble"
+        lines.get(3) == "value,total execution time,local cache size"
+        lines.get(4).matches("warm-up build #1,$SAMPLE,$SAMPLE")
+        lines.get(9).matches("warm-up build #6,$SAMPLE,$SAMPLE")
+        lines.get(10).matches("measured build #1,$SAMPLE,$SAMPLE")
+
+        and:
+        def localCacheSize = lines.get(10) =~ /measured build #1,$SAMPLE,($SAMPLE)/
+        localCacheSize.matches()
+        Double.valueOf(localCacheSize[0][1]) > 0
+
+        where:
+        gradleVersion                | configurationCache
+        "6.1"                        | false
+        latestSupportedGradleVersion | false
+        latestSupportedGradleVersion | true
+    }
+
+    @Unroll
     def "can benchmark configuration time for build using #gradleVersion (configuration-cache: #configurationCache)"() {
         given:
         instrumentedBuildScript()

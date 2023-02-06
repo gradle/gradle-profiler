@@ -1,5 +1,7 @@
 package org.gradle.trace.buildops;
 
+import org.gradle.api.NonNullApi;
+import org.gradle.api.file.DirectoryProperty;
 import org.gradle.api.file.RegularFileProperty;
 import org.gradle.api.internal.GradleInternal;
 import org.gradle.api.provider.MapProperty;
@@ -9,12 +11,8 @@ import org.gradle.api.services.BuildServiceParameters;
 import org.gradle.api.services.BuildServiceRegistry;
 import org.gradle.execution.RunRootBuildWorkBuildOperationType;
 import org.gradle.internal.build.event.BuildEventListenerRegistryInternal;
-import org.gradle.internal.operations.BuildOperationDescriptor;
-import org.gradle.internal.operations.BuildOperationListener;
-import org.gradle.internal.operations.OperationFinishEvent;
-import org.gradle.internal.operations.OperationIdentifier;
-import org.gradle.internal.operations.OperationProgressEvent;
-import org.gradle.internal.operations.OperationStartEvent;
+import org.gradle.internal.file.PathToFileResolver;
+import org.gradle.internal.operations.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -31,13 +29,16 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 
 @SuppressWarnings("unused")
+@NonNullApi
 public class BuildOperationTrace {
     private static final Logger LOGGER = LoggerFactory.getLogger(BuildOperationTrace.class);
 
+    private final GradleInternal gradle;
     private final BuildEventListenerRegistryInternal registry;
     private final BuildServiceRegistry sharedServices;
 
     public BuildOperationTrace(GradleInternal gradle) {
+        this.gradle = gradle;
         this.registry = gradle.getServices().get(BuildEventListenerRegistryInternal.class);
         this.sharedServices = gradle.getSharedServices();
     }
@@ -48,6 +49,23 @@ public class BuildOperationTrace {
         });
         // Force the service to be instantiated, so we actually get a close() call at the end of the build
         registry.onOperationCompletion(listenerProvider);
+        return this;
+    }
+
+    public BuildOperationTrace measureLocalCache(File outFile) {
+        gradle.settingsEvaluated(settings -> {
+            Object cachePath = settings.getBuildCache().getLocal().getDirectory();
+            File cacheDirectory = cachePath != null
+                ? gradle.getServices().get(PathToFileResolver.class).resolve(cachePath)
+                : null;
+            Provider<LocalCacheSizerService> listenerProvider = sharedServices.registerIfAbsent("local-cache-sizer", LocalCacheSizerService.class, spec -> {
+                spec.getParameters().getGradleUserHome().set(gradle.getGradleUserHomeDir());
+                spec.getParameters().getCacheDirectory().set(cacheDirectory);
+                spec.getParameters().getOutputFile().set(outFile);
+            });
+            // Force the service to be instantiated, so we actually get a close() call at the end of the build
+            registry.onOperationCompletion(listenerProvider);
+        });
         return this;
     }
 
@@ -67,10 +85,10 @@ public class BuildOperationTrace {
         return this;
     }
 
-    private static void writeToFile(File outputFile, long durationMillis, int count) throws IOException {
+    private static void writeToFile(File outputFile, long value, int count) throws IOException {
         // See `org.gradle.profiler.buildops.BuildOperationInstrumentation` for parsing
         try (PrintWriter writer = new PrintWriter(outputFile)) {
-            writer.print(durationMillis);
+            writer.print(value);
             writer.print(",");
             writer.print(count);
             writer.println();
@@ -103,6 +121,60 @@ public class BuildOperationTrace {
                 .mapToLong(GarbageCollectorMXBean::getCollectionTime)
                 .sum();
             writeToFile(getParameters().getOutputFile().getAsFile().get(), totalGcTime, 1);
+        }
+    }
+
+    public static abstract class LocalCacheSizerService implements BuildService<LocalCacheSizerService.Params>, BuildOperationListener, AutoCloseable {
+        interface Params extends BuildServiceParameters {
+            DirectoryProperty getGradleUserHome();
+
+            DirectoryProperty getCacheDirectory();
+
+            RegularFileProperty getOutputFile();
+        }
+
+
+        @Override
+        public void started(BuildOperationDescriptor buildOperationDescriptor, OperationStartEvent operationStartEvent) {
+            // Ignore, we are only interested in the callback to close()
+        }
+
+        @Override
+        public void finished(BuildOperationDescriptor buildOperationDescriptor, OperationFinishEvent operationFinishEvent) {
+            // Ignore, we are only interested in the callback to close()
+        }
+
+        @Override
+        public void progress(OperationIdentifier operationIdentifier, OperationProgressEvent progressEvent) {
+            // Ignore, we are only interested in the callback to close()
+        }
+
+        @Override
+        public void close() throws Exception {
+            AtomicInteger fileCount = new AtomicInteger(0);
+            AtomicLong size = new AtomicLong(0);
+            File cacheDirectory = getParameters().getCacheDirectory()
+                .orElse(getParameters().getGradleUserHome()
+                    .map(gradleUserHome -> {
+                        String cacheName = Boolean.getBoolean("org.gradle.unsafe.cache.ng")
+                            ? "build-cache-2"
+                            : "build-cache-1";
+                        return gradleUserHome.dir("caches").dir(cacheName);
+                    }))
+                .get()
+                .getAsFile();
+            System.out.println(">>> Calculating cache size: " + cacheDirectory);
+            if (cacheDirectory.isDirectory()) {
+                System.out.println(">>> Is a directory: " + cacheDirectory);
+                File[] cacheFiles = cacheDirectory.listFiles(File::isFile);
+                if (cacheFiles != null) {
+                    for (File file : cacheFiles) {
+                        fileCount.incrementAndGet();
+                        size.addAndGet(file.length());
+                    }
+                }
+            }
+            writeToFile(getParameters().getOutputFile().getAsFile().get(), size.get(), fileCount.get());
         }
     }
 

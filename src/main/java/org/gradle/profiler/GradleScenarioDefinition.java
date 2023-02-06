@@ -120,6 +120,9 @@ public class GradleScenarioDefinition extends ScenarioDefinition {
         if (settings.isMeasureGarbageCollection() && isBuildServiceUnsupported()) {
             reporter.accept("Measuring garbage collection is only supported for Gradle 6.1-milestone-3 and later");
         }
+        if (settings.isMeasureLocalCache() && isBuildServiceUnsupported()) {
+            reporter.accept("Measuring local cache size is only supported for Gradle 6.1-milestone-3 and later");
+        }
         if (settings.isMeasureConfigTime() && isBuildServiceUnsupported()) {
             reporter.accept("Measuring build configuration is only supported for Gradle 6.1-milestone-3 and later");
         }

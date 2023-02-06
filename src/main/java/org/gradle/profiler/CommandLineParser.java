@@ -66,6 +66,7 @@ class CommandLineParser {
         OptionSpecBuilder coldDaemonOption = parser.accepts("cold-daemon", "Use a cold Gradle daemon");
         OptionSpecBuilder cliOption = parser.accepts("cli", "Uses the command-line client to connect to the daemon");
         OptionSpecBuilder measureGarbageCollectionOption = parser.accepts("measure-gc", "Measure the GC time during each invocation");
+        OptionSpecBuilder measureLocalCacheOption = parser.accepts("measure-local-cache", "Measure the size of the local cache");
         OptionSpecBuilder measureConfigTimeOption = parser.accepts("measure-config-time", "Include a breakdown of configuration time in benchmark results");
         OptionSpecBuilder dryRunOption = parser.accepts("dry-run", "Verify configuration");
         OptionSpecBuilder bazelOption = parser.accepts("bazel", "Benchmark scenarios using Bazel");
@@ -116,6 +117,7 @@ class CommandLineParser {
         Integer warmups = parsedOptions.valueOf(warmupsOption);
         Integer iterations = parsedOptions.valueOf(iterationsOption);
         boolean measureGarbageCollection = parsedOptions.has(measureGarbageCollectionOption);
+        boolean measureLocalCache = parsedOptions.has(measureLocalCacheOption);
         boolean measureConfig = parsedOptions.has(measureConfigTimeOption);
         List<String> benchmarkedBuildOperations = parsedOptions.valuesOf(benchmarkBuildOperation);
 
@@ -183,6 +185,7 @@ class CommandLineParser {
             .setWarmupCount(warmups)
             .setIterations(iterations)
             .setMeasureGarbageCollection(measureGarbageCollection)
+            .setMeasureLocalCache(measureLocalCache)
             .setMeasureConfigTime(measureConfig)
             .setMeasuredBuildOperations(benchmarkedBuildOperations)
             .setCsvFormat(csvFormat)

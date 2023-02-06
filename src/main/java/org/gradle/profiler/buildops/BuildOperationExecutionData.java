@@ -1,24 +1,22 @@
 package org.gradle.profiler.buildops;
 
-import java.time.Duration;
-
 /**
  * Carries total duration and count of one or more invocations of a build operation.
  */
 public class BuildOperationExecutionData {
 
-    public static final BuildOperationExecutionData ZERO = new BuildOperationExecutionData(Duration.ZERO, 0);
+    public static final BuildOperationExecutionData ZERO = new BuildOperationExecutionData(0, 0);
 
-    private final Duration totalDuration;
+    private final long value;
     private final int totalCount;
 
-    public BuildOperationExecutionData(Duration totalDuration, int totalCount) {
-        this.totalDuration = totalDuration;
+    public BuildOperationExecutionData(long value, int totalCount) {
+        this.value = value;
         this.totalCount = totalCount;
     }
 
-    public Duration getTotalDuration() {
-        return totalDuration;
+    public long getValue() {
+        return value;
     }
 
     public int getTotalCount() {
