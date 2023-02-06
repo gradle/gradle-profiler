@@ -81,9 +81,6 @@ public class CsvGenerator extends AbstractGenerator {
             for (Sample<?> sample : scenario.getSamples()) {
                 writer.write(",");
                 writer.write(sample.getName());
-                writer.write(" (");
-                writer.write(sample.getUnit());
-                writer.write(")");
             }
         }
         writer.newLine();
