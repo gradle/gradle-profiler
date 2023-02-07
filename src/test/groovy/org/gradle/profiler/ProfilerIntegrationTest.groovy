@@ -626,11 +626,11 @@ class ProfilerIntegrationTest extends AbstractProfilerIntegrationTest {
         lines.get(1) == "version,Gradle ${minimalSupportedGradleVersion}"
         lines.get(2) == "tasks,help"
         lines.get(3) == "value,total execution time"
-        lines.get(4).matches("warm-up build #1,\\d+")
-        lines.get(9).matches("warm-up build #6,\\d+")
-        lines.get(10).matches("measured build #1,\\d+")
-        lines.get(11).matches("measured build #2,\\d+")
-        lines.get(19).matches("measured build #10,\\d+")
+        lines.get(4).matches("warm-up build #1,$SAMPLE")
+        lines.get(9).matches("warm-up build #6,$SAMPLE")
+        lines.get(10).matches("measured build #1,$SAMPLE")
+        lines.get(11).matches("measured build #2,$SAMPLE")
+        lines.get(19).matches("measured build #10,$SAMPLE")
     }
 
     def "runs benchmarks using single scenario defined in scenario file"() {
@@ -703,8 +703,8 @@ class ProfilerIntegrationTest extends AbstractProfilerIntegrationTest {
         lines.get(1) == "version,Gradle ${latestSupportedGradleVersion},Gradle ${minimalSupportedGradleVersion},Gradle ${minimalSupportedGradleVersion}"
         lines.get(2) == "tasks,assemble,assemble,clean assemble"
         lines.get(3) == "value,total execution time,total execution time,total execution time"
-        lines.get(4).matches("warm-up build #1,\\d+,\\d+,\\d+")
-        lines.get(5).matches("measured build #1,\\d+,\\d+,\\d+")
+        lines.get(4).matches("warm-up build #1,$SAMPLE,$SAMPLE,$SAMPLE")
+        lines.get(5).matches("measured build #1,$SAMPLE,$SAMPLE,$SAMPLE")
     }
 
     def "can define system property when benchmarking using tooling API"() {
@@ -1142,11 +1142,11 @@ class ProfilerIntegrationTest extends AbstractProfilerIntegrationTest {
         lines.get(1) == "version,buck,buck,buck"
         lines.get(2) == "tasks,,//some/target,"
         lines.get(3) == "value,total execution time,total execution time,total execution time"
-        lines.get(4).matches("warm-up build #1,\\d+,\\d+,\\d+")
-        lines.get(9).matches("warm-up build #6,\\d+,\\d+,\\d+")
-        lines.get(10).matches("measured build #1,\\d+,\\d+,\\d+")
-        lines.get(11).matches("measured build #2,\\d+,\\d+,\\d+")
-        lines.get(19).matches("measured build #10,\\d+,\\d+,\\d+")
+        lines.get(4).matches("warm-up build #1,$SAMPLE,$SAMPLE,$SAMPLE")
+        lines.get(9).matches("warm-up build #6,$SAMPLE,$SAMPLE,$SAMPLE")
+        lines.get(10).matches("measured build #1,$SAMPLE,$SAMPLE,$SAMPLE")
+        lines.get(11).matches("measured build #2,$SAMPLE,$SAMPLE,$SAMPLE")
+        lines.get(19).matches("measured build #10,$SAMPLE,$SAMPLE,$SAMPLE")
     }
 
     def "cannot profile a buck build"() {
@@ -1242,11 +1242,11 @@ class ProfilerIntegrationTest extends AbstractProfilerIntegrationTest {
         lines.get(1) == "version,bazel"
         lines.get(2) == "tasks,some:assemble"
         lines.get(3) == "value,total execution time"
-        lines.get(4).matches("warm-up build #1,\\d+")
-        lines.get(9).matches("warm-up build #6,\\d+")
-        lines.get(10).matches("measured build #1,\\d+")
-        lines.get(11).matches("measured build #2,\\d+")
-        lines.get(19).matches("measured build #10,\\d+")
+        lines.get(4).matches("warm-up build #1,$SAMPLE")
+        lines.get(9).matches("warm-up build #6,$SAMPLE")
+        lines.get(10).matches("measured build #1,$SAMPLE")
+        lines.get(11).matches("measured build #2,$SAMPLE")
+        lines.get(19).matches("measured build #10,$SAMPLE")
     }
 
     def "cannot profile a bazel build"() {
@@ -1337,11 +1337,11 @@ class ProfilerIntegrationTest extends AbstractProfilerIntegrationTest {
         lines.get(1) == "version,maven"
         lines.get(2) == "tasks,-v"
         lines.get(3) == "value,total execution time"
-        lines.get(4).matches("warm-up build #1,\\d+")
-        lines.get(9).matches("warm-up build #6,\\d+")
-        lines.get(10).matches("measured build #1,\\d+")
-        lines.get(11).matches("measured build #2,\\d+")
-        lines.get(19).matches("measured build #10,\\d+")
+        lines.get(4).matches("warm-up build #1,$SAMPLE")
+        lines.get(9).matches("warm-up build #6,$SAMPLE")
+        lines.get(10).matches("measured build #1,$SAMPLE")
+        lines.get(11).matches("measured build #2,$SAMPLE")
+        lines.get(19).matches("measured build #10,$SAMPLE")
     }
 
     def "clears build cache when asked"() {

@@ -11,8 +11,6 @@ import static org.junit.Assert.assertTrue
 
 class BuildOperationInstrumentationIntegrationTest extends AbstractProfilerIntegrationTest {
 
-    static final SAMPLE = "-?\\d+(?:\\.\\d+)"
-
     @Unroll
     def "can benchmark GC time for build using #gradleVersion (configuration-cache: #configurationCache)"() {
         given:

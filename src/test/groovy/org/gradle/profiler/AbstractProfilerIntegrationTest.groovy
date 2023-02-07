@@ -12,6 +12,8 @@ abstract class AbstractProfilerIntegrationTest extends AbstractIntegrationTest {
 
     private static int NUMBER_OF_HEADERS = 4
 
+    static final SAMPLE = "-?\\d+(?:\\.\\d+)"
+
     static List<String> gradleVersionsSupportedOnCurrentJvm(List<String> gradleVersions) {
         gradleVersions.findAll {
             JavaVersion.current().isJava11Compatible() ? GradleVersion.version(it) >= GradleVersion.version("5.0") : true
@@ -200,11 +202,11 @@ genrule(
             assert lines.get(1) == "version,Gradle ${gradleVersion}"
             assert lines.get(2) == "tasks,${tasks.join(", ")}"
             assert lines.get(3) == "value,total execution time"
-            assert lines.get(4).matches("warm-up build #1,\\d+")
-            assert lines.get(9).matches("warm-up build #6,\\d+")
-            assert lines.get(10).matches("measured build #1,\\d+")
-            assert lines.get(11).matches("measured build #2,\\d+")
-            assert lines.get(19).matches("measured build #10,\\d+")
+            assert lines.get(4).matches("warm-up build #1,$SAMPLE")
+            assert lines.get(9).matches("warm-up build #6,$SAMPLE")
+            assert lines.get(10).matches("measured build #1,$SAMPLE")
+            assert lines.get(11).matches("measured build #2,$SAMPLE")
+            assert lines.get(19).matches("measured build #10,$SAMPLE")
         }
 
         /**
@@ -217,10 +219,10 @@ genrule(
             assert lines.get(1) == "version,Gradle ${gradleVersion}"
             assert lines.get(2) == "tasks,${tasks.join(", ")}"
             assert lines.get(3) == "value,total execution time"
-            assert lines.get(4).matches("warm-up build #1,\\d+")
-            assert lines.get(5).matches("measured build #1,\\d+")
-            assert lines.get(6).matches("measured build #2,\\d+")
-            assert lines.get(14).matches("measured build #10,\\d+")
+            assert lines.get(4).matches("warm-up build #1,$SAMPLE")
+            assert lines.get(5).matches("measured build #1,$SAMPLE")
+            assert lines.get(6).matches("measured build #2,$SAMPLE")
+            assert lines.get(14).matches("measured build #10,$SAMPLE")
         }
 
         /**
@@ -233,10 +235,10 @@ genrule(
             assert lines.get(1) == "version,Gradle ${gradleVersion}"
             assert lines.get(2) == "tasks,${tasks.join(", ")}"
             assert lines.get(3) == "value,total execution time"
-            assert lines.get(4).matches("warm-up build #1,\\d+")
-            assert lines.get(5).matches("measured build #1,\\d+")
-            assert lines.get(6).matches("measured build #2,\\d+")
-            assert lines.get(14).matches("measured build #10,\\d+")
+            assert lines.get(4).matches("warm-up build #1,$SAMPLE")
+            assert lines.get(5).matches("measured build #1,$SAMPLE")
+            assert lines.get(6).matches("measured build #2,$SAMPLE")
+            assert lines.get(14).matches("measured build #10,$SAMPLE")
         }
     }
 
