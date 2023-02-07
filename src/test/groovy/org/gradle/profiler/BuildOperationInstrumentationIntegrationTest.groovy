@@ -64,7 +64,7 @@ class BuildOperationInstrumentationIntegrationTest extends AbstractProfilerInteg
     }
 
     @Unroll
-    def "can benchmark local cache size for build using #gradleVersion (configuration-cache: #configurationCache)"() {
+    def "can benchmark local build cache size for build using #gradleVersion (configuration-cache: #configurationCache)"() {
         given:
         instrumentedBuildScript()
 
@@ -90,7 +90,7 @@ class BuildOperationInstrumentationIntegrationTest extends AbstractProfilerInteg
             "--output-dir", outputDir.absolutePath,
             "--gradle-version", gradleVersion,
             "--benchmark",
-            "--measure-local-cache",
+            "--measure-local-build-cache",
             "assemble",
             "-Dorg.gradle.caching=true"
         ]
@@ -109,15 +109,15 @@ class BuildOperationInstrumentationIntegrationTest extends AbstractProfilerInteg
         lines.get(0) == "scenario,default,default"
         lines.get(1) == "version,Gradle ${gradleVersion},Gradle ${gradleVersion}"
         lines.get(2) == "tasks,assemble,assemble"
-        lines.get(3) == "value,total execution time,local cache size"
+        lines.get(3) == "value,total execution time,local build cache size"
         lines.get(4).matches("warm-up build #1,$SAMPLE,$SAMPLE")
         lines.get(9).matches("warm-up build #6,$SAMPLE,$SAMPLE")
         lines.get(10).matches("measured build #1,$SAMPLE,$SAMPLE")
 
         and:
-        def localCacheSize = lines.get(10) =~ /measured build #1,$SAMPLE,($SAMPLE)/
-        localCacheSize.matches()
-        Double.valueOf(localCacheSize[0][1]) > 0
+        def localBuildCacheSize = lines.get(10) =~ /measured build #1,$SAMPLE,($SAMPLE)/
+        localBuildCacheSize.matches()
+        Double.valueOf(localBuildCacheSize[0][1]) > 0
 
         where:
         gradleVersion                | configurationCache

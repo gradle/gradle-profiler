@@ -206,7 +206,7 @@ The following command line options only apply when measuring Gradle builds:
 - `--measure-build-op`: Additionally measure the cumulative time spent in the given build operation. Only supported for Gradle 6.1 and later.
 - `--measure-config-time`: Measure some additional details about configuration time. Only supported for Gradle 6.1 and later.
 - `--measure-gc`: Measure the garbage collection time. Only supported for Gradle 6.1 and later.
-- `--measure-local-cache`: Measure the size of the local cache.
+- `--measure-local-build-cache`: Measure the size of the local build cache.
 - `-D<key>=<value>`: Defines a system property when running the build, overriding the default for the build.
 - `--studio-install-dir`: The Android Studio installation directory. Required when measuring Android Studio sync.
 - `--studio-sandbox-dir`: The Android Studio sandbox directory. It's recommended to use it since it isolates the Android Studio process from your other Android Studio processes. By default, this will be set to `<output-dir>/studio-sandbox`. If you want Android Studio to keep old data (e.g. indexes) you should set and reuse your own folder. 

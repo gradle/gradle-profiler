@@ -50,13 +50,13 @@ public class BuildOperationTrace {
         return this;
     }
 
-    public BuildOperationTrace measureLocalCache(File outFile) {
+    public BuildOperationTrace measureLocalBuildCache(File outFile) {
         gradle.settingsEvaluated(settings -> {
             Object cachePath = settings.getBuildCache().getLocal().getDirectory();
             File cacheDirectory = cachePath != null
                 ? gradle.getServices().get(PathToFileResolver.class).resolve(cachePath)
                 : null;
-            Provider<LocalCacheSizerService> listenerProvider = sharedServices.registerIfAbsent("local-cache-sizer", LocalCacheSizerService.class, spec -> {
+            Provider<LocalBuildCacheSizerService> listenerProvider = sharedServices.registerIfAbsent("local-build-cache-sizer", LocalBuildCacheSizerService.class, spec -> {
                 spec.getParameters().getGradleUserHome().set(gradle.getGradleUserHomeDir());
                 spec.getParameters().getCacheDirectory().set(cacheDirectory);
                 spec.getParameters().getOutputFile().set(outFile);
@@ -122,7 +122,7 @@ public class BuildOperationTrace {
         }
     }
 
-    public static abstract class LocalCacheSizerService implements BuildService<LocalCacheSizerService.Params>, BuildOperationListener, AutoCloseable {
+    public static abstract class LocalBuildCacheSizerService implements BuildService<LocalBuildCacheSizerService.Params>, BuildOperationListener, AutoCloseable {
         interface Params extends BuildServiceParameters {
             DirectoryProperty getGradleUserHome();
 

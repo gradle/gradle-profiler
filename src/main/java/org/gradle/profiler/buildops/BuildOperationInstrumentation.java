@@ -20,8 +20,8 @@ public class BuildOperationInstrumentation extends GradleInstrumentation {
     private final boolean measureGarbageCollection;
     private final File totalGarbageCollectionTimeDataFile;
 
-    private final boolean measureLocalCache;
-    private final File localCacheDataFile;
+    private final boolean measureLocalBuildCache;
+    private final File localBuildCacheDataFile;
 
     private final boolean measureConfigTime;
     private final File configurationTimeDataFile;
@@ -30,14 +30,14 @@ public class BuildOperationInstrumentation extends GradleInstrumentation {
 
     public BuildOperationInstrumentation(
         boolean measureGarbageCollection,
-        boolean measureLocalCache,
+        boolean measureLocalBuildCache,
         boolean measureConfigTime,
         List<String> measuredBuildOperations
     ) throws IOException {
         this.measureGarbageCollection = measureGarbageCollection;
         this.totalGarbageCollectionTimeDataFile = File.createTempFile("gradle-profiler", "gc-time");
-        this.measureLocalCache = measureLocalCache;
-        this.localCacheDataFile = File.createTempFile("gradle-profiler", "local-cache");
+        this.measureLocalBuildCache = measureLocalBuildCache;
+        this.localBuildCacheDataFile = File.createTempFile("gradle-profiler", "local-build-cache");
         this.measureConfigTime = measureConfigTime;
         this.configurationTimeDataFile = File.createTempFile("gradle-profiler", "build-ops-config-time");
         this.configurationTimeDataFile.deleteOnExit();
@@ -46,7 +46,7 @@ public class BuildOperationInstrumentation extends GradleInstrumentation {
     }
 
     public boolean requiresInitScript() {
-        return measureGarbageCollection || measureLocalCache || measureConfigTime || !buildOperationDataFiles.isEmpty();
+        return measureGarbageCollection || measureLocalBuildCache || measureConfigTime || !buildOperationDataFiles.isEmpty();
     }
 
     private static File createBuildOperationTempFile(String op) {
@@ -65,8 +65,8 @@ public class BuildOperationInstrumentation extends GradleInstrumentation {
         if (measureGarbageCollection) {
             writer.print(".measureGarbageCollection(" + newFile(totalGarbageCollectionTimeDataFile) + ")");
         }
-        if (measureLocalCache) {
-            writer.print(".measureLocalCache(" + newFile(localCacheDataFile) + ")");
+        if (measureLocalBuildCache) {
+            writer.print(".measureLocalBuildCache(" + newFile(localBuildCacheDataFile) + ")");
         }
         if (measureConfigTime) {
             writer.print(".measureConfigurationTime(" + newFile(configurationTimeDataFile) + ")");
@@ -97,12 +97,12 @@ public class BuildOperationInstrumentation extends GradleInstrumentation {
             .map(Duration::ofMillis);
     }
 
-    public Optional<Long> getLocalCacheSize() {
-        if (localCacheDataFile.length() == 0) {
+    public Optional<Long> getLocalBuildCacheSize() {
+        if (localBuildCacheDataFile.length() == 0) {
             return Optional.empty();
         }
 
-        return readExecutionDataFromFile(localCacheDataFile)
+        return readExecutionDataFromFile(localBuildCacheDataFile)
             .map(BuildOperationExecutionData::getValue);
     }
 

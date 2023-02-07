@@ -15,7 +15,7 @@ import static org.gradle.profiler.buildops.BuildOperationUtil.getSimpleBuildOper
 
 public class GradleBuildInvocationResult extends BuildInvocationResult {
     private final Duration garbageCollectionTime;
-    private final Long localCacheSize;
+    private final Long localBuildCacheSize;
     private final Duration timeToTaskExecution;
     private final Map<String, BuildOperationExecutionData> totalBuildOperationExecutionData;
     private final String daemonPid;
@@ -24,14 +24,14 @@ public class GradleBuildInvocationResult extends BuildInvocationResult {
         BuildContext buildContext,
         BuildActionResult actionResult,
         @Nullable Duration garbageCollectionTime,
-        @Nullable Long localCacheSize,
+        @Nullable Long localBuildCacheSize,
         @Nullable Duration timeToTaskExecution,
         Map<String, BuildOperationExecutionData> totalBuildOperationExecutionData,
         String daemonPid
     ) {
         super(buildContext, actionResult);
         this.garbageCollectionTime = garbageCollectionTime;
-        this.localCacheSize = localCacheSize;
+        this.localBuildCacheSize = localBuildCacheSize;
         this.timeToTaskExecution = timeToTaskExecution;
         this.totalBuildOperationExecutionData = totalBuildOperationExecutionData;
         this.daemonPid = daemonPid;
@@ -45,8 +45,8 @@ public class GradleBuildInvocationResult extends BuildInvocationResult {
         return garbageCollectionTime;
     }
 
-    public Long getLocalCacheSize() {
-        return localCacheSize;
+    public Long getLocalBuildCacheSize() {
+        return localBuildCacheSize;
     }
 
     public Duration getTimeToTaskExecution() {
@@ -78,11 +78,11 @@ public class GradleBuildInvocationResult extends BuildInvocationResult {
     public static final Sample<GradleBuildInvocationResult> GARBAGE_COLLECTION_TIME
         = SingleInvocationDurationSample.from("garbage collection time", GradleBuildInvocationResult::getGarbageCollectionTime);
 
-    public static final Sample<GradleBuildInvocationResult> LOCAL_CACHE_SIZE
-        = new Sample<GradleBuildInvocationResult>("local cache size", "MiB") {
+    public static final Sample<GradleBuildInvocationResult> LOCAL_BUILD_CACHE_SIZE
+        = new Sample<GradleBuildInvocationResult>("local build cache size", "MiB") {
         @Override
         public double extractValue(GradleBuildInvocationResult result) {
-            return result.getLocalCacheSize() / 1024.0 / 1024.0;
+            return result.getLocalBuildCacheSize() / 1024.0 / 1024.0;
         }
 
         @Override

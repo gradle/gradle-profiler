@@ -70,7 +70,7 @@ public class BuildUnderTestInvoker {
                     previousGcTimes.put(pid, currentTotal);
                     return currentTotal.minus(previousTotal);
                 });
-            Optional<Long> localCacheSize = buildOperationInstrumentation.getLocalCacheSize();
+            Optional<Long> localBuildCacheSize = buildOperationInstrumentation.getLocalBuildCacheSize();
             Optional<Duration> timeToTaskExecution = buildOperationInstrumentation.getTimeToTaskExecution();
 
             Map<String, BuildOperationExecutionData> totalExecutionData = buildOperationInstrumentation.getTotalBuildOperationExecutionData();
@@ -86,7 +86,7 @@ public class BuildUnderTestInvoker {
                 buildContext,
                 buildActionResult,
                 garbageCollectionTime.orElse(null),
-                localCacheSize.orElse(null),
+                localBuildCacheSize.orElse(null),
                 timeToTaskExecution.orElse(null),
                 totalExecutionData,
                 pid);

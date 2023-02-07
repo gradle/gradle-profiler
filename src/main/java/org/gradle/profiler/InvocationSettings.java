@@ -28,7 +28,7 @@ public class InvocationSettings {
     private final Integer warmupCount;
     private final Integer iterations;
     private final boolean measureGarbageCollection;
-    private final boolean measureLocalCache;
+    private final boolean measureLocalBuildCache;
     private final boolean measureConfigTime;
     private final List<String> measuredBuildOperations;
     private final Format csvFormat;
@@ -59,7 +59,7 @@ public class InvocationSettings {
         Integer warmupCount,
         Integer iterations,
         boolean measureGarbageCollection,
-        boolean measureLocalCache,
+        boolean measureLocalBuildCache,
         boolean measureConfigTime,
         List<String> measuredBuildOperations,
         Format csvFormat,
@@ -83,7 +83,7 @@ public class InvocationSettings {
         this.warmupCount = warmupCount;
         this.iterations = iterations;
         this.measureGarbageCollection = measureGarbageCollection;
-        this.measureLocalCache = measureLocalCache;
+        this.measureLocalBuildCache = measureLocalBuildCache;
         this.measureConfigTime = measureConfigTime;
         this.measuredBuildOperations = measuredBuildOperations;
         this.csvFormat = csvFormat;
@@ -180,8 +180,8 @@ public class InvocationSettings {
         return measureGarbageCollection;
     }
 
-    public boolean isMeasureLocalCache() {
-        return measureLocalCache;
+    public boolean isMeasureLocalBuildCache() {
+        return measureLocalBuildCache;
     }
 
     public boolean isMeasureConfigTime() {
@@ -275,7 +275,7 @@ public class InvocationSettings {
         private Integer warmupCount;
         private Integer iterations;
         private boolean measureGarbageCollection;
-        private boolean measureLocalCache;
+        private boolean measureLocalBuildCache;
         private boolean measureConfigTime;
         private List<String> measuredBuildOperations;
         private Format csvFormat;
@@ -367,8 +367,8 @@ public class InvocationSettings {
             return this;
         }
 
-        public InvocationSettingsBuilder setMeasureLocalCache(boolean measureLocalCache) {
-            this.measureLocalCache = measureLocalCache;
+        public InvocationSettingsBuilder setMeasureLocalBuildCache(boolean measureLocalBuildCache) {
+            this.measureLocalBuildCache = measureLocalBuildCache;
             return this;
         }
 
@@ -419,7 +419,7 @@ public class InvocationSettings {
                 warmupCount,
                 iterations,
                 measureGarbageCollection,
-                measureLocalCache,
+                measureLocalBuildCache,
                 measureConfigTime,
                 measuredBuildOperations,
                 csvFormat,
