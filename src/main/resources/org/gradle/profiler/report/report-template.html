@@ -156,7 +156,7 @@ div.controls .btn {
     <div class='container-fluid'>
         <div class='row mt-3'>
             <div class='col'>
-                <canvas id='samples' style="width: 100%; height: 400px;"></canvas>
+                <canvas id='samples' style="width: 100%;"></canvas>
             </div>
         </div>
         <div class="form-row mt-2 controls ml-auto mr-auto">
@@ -219,17 +219,17 @@ div.controls .btn {
                                         <span>{{ sample.name }}</span>
                                     </td>
                                     <td v-for="(operation, index) in operations" class="numeric data" :class="{ dark: index %2 === 0 }">
-                                        <div>{{ sample[operation.name] | numeric }} {{ sample.unit }}</div>
+                                        <div>{{ sample[operation.name] | numeric }}&nbsp;{{ sample.unit }}</div>
                                         <template v-if="baseline && baseline !== scenario && baseline.samples.some(it => it.name === sample.name)">
-                                            <div class="diff">{{ sample[operation.name] - baseline.samples.find(it => it.name === sample.name)[operation.name] | diff }} {{ sample.unit }}</div>
+                                            <div class="diff">{{ sample[operation.name] - baseline.samples.find(it => it.name === sample.name)[operation.name] | diff }}&nbsp;{{ sample.unit }}</div>
                                             <div class="diff">{{ (sample[operation.name] / baseline.samples.find(it => it.name === sample.name)[operation.name]) - 1 | percentDiff }}</div>
                                         </template>
                                     </td>
                                     <template v-for="(iteration, index) in scenario.iterations">
                                         <td class="numeric data" :class="iteration.phase" :title="iteration.phase + ' #' + iteration.iteration">
-                                            <span>{{ iteration.values[sample.name] | numeric }} {{ sample.unit }}</span>
+                                            <span>{{ iteration.values[sample.name] | numeric }}&nbsp;{{ sample.unit }}</span>
                                             <template v-if="baseline && baseline !== scenario && baseline.samples.some(it => it.name === sample.name) && baseline.iterations[index]">
-                                                <div class="diff">{{ iteration.values[sample.name] - baseline.iterations[index].values[sample.name] | diff }} {{ sample.unit }}</div>
+                                                <div class="diff">{{ iteration.values[sample.name] - baseline.iterations[index].values[sample.name] | diff }}&nbsp;{{ sample.unit }}</div>
                                                 <div class="diff">{{ (iteration.values[sample.name] / baseline.iterations[index].values[sample.name]) - 1 | percentDiff }}</div>
                                             </template>
                                         </td>

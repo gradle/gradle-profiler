@@ -180,7 +180,6 @@ new Vue({
             : null;
     },
     mounted: function() {
-        const numberFormat = new Intl.NumberFormat();
         const ctx = document.getElementById('samples').getContext('2d');
         const maxMeasuredIterations = benchmarkResult.scenarios
             .map(scenario => measuredIterations(scenario).length)
@@ -200,7 +199,7 @@ new Vue({
                     ticks: {
                         // Include a dollar sign in the ticks
                         callback: function(value, index, ticks) {
-                            return numberFormat.format(value) + ' ' + unit;
+                            return dataFormat.format(value) + ' ' + unit;
                         }
                     }
                 };
@@ -227,21 +226,21 @@ new Vue({
                         snap: {
                             enabled: false
                         }
+                    },
+                    tooltip: {
+                        mode: "index",
+                        position: "nearest",
+                        itemSort: (a, b) => b.yLabel - a.yLabel,
+                        callbacks: {
+                            title: (tooltips, data) => `Build #${tooltips[0].label}`,
+                            label: (context) => dataFormat.format(context.parsed.y) + " " + context.dataset.sample.unit + " – " + context.dataset.label
+                        }
                     }
                 },
-                responsive: false,
                 animation: {
                     duration: 0
                 },
-                tooltips: {
-                    mode: "index",
-                    position: "nearest",
-                    itemSort: (a, b) => b.yLabel - a.yLabel,
-                    callbacks: {
-                        title: (tooltips, data) => `Build #${tooltips[0].label}`,
-                        label: (context) => dataFormat.format(context.dataPoint.y) + " " + context.dataset.sample.unit + " – " + context.dataset.label
-                    }
-                },
+                aspectRatio: 3,
                 hover: {
                     intersect: false
                 },
