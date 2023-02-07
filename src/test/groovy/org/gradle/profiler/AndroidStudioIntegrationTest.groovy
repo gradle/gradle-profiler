@@ -74,10 +74,10 @@ class AndroidStudioIntegrationTest extends AbstractProfilerIntegrationTest {
         then:
         logFile.find("Gradle invocation 1 has completed in").size() == 2
         logFile.find("Gradle invocation 2 has completed in").size() == 2
-        def firstDurations = (logFile.text =~ /Gradle invocation 1 has completed in: ($SAMPLE)ms/)
+        def firstDurations = (logFile.text =~ /Gradle invocation 1 has completed in: (\\d+)ms/)
             .findAll()
             .collect { it[1] as Integer }
-        def secondDurations = (logFile.text =~ /Gradle invocation 2 has completed in: ($SAMPLE)ms/)
+        def secondDurations = (logFile.text =~ /Gradle invocation 2 has completed in: (\\d+)ms/)
             .findAll()
             .collect { it[1] as Integer }
         logFile.find("Full Gradle execution time: ${firstDurations[0] + secondDurations[0]}ms").size() == 1
@@ -249,10 +249,9 @@ class AndroidStudioIntegrationTest extends AbstractProfilerIntegrationTest {
         lines[3] == "value,total execution time,garbage collection time,task start,ConfigureBuildBuildOperationType,Gradle total execution time,IDE execution time"
         def matcher = lines[4] =~ /warm-up build #1,($SAMPLE),(?<gc>$SAMPLE),(?<taskStart>$SAMPLE),(?<buildOp>$SAMPLE),($SAMPLE),($SAMPLE)/
         matcher.matches()
-        assert matcher.group("gc") as long > 0
-        assert matcher.group("taskStart") as long > 0
-        assert matcher.group("buildOp") as long > 0
-
+        assert matcher.group("gc") as double > 0
+        assert matcher.group("taskStart") as double > 0
+        assert matcher.group("buildOp") as double > 0
     }
 
     def "can override Android Studio jvm args"() {
