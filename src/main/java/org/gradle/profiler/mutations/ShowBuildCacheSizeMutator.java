@@ -7,6 +7,7 @@ import org.gradle.profiler.ScenarioContext;
 
 import java.io.File;
 import java.text.MessageFormat;
+import java.util.stream.Stream;
 
 public class ShowBuildCacheSizeMutator extends AbstractBuildMutator {
 
@@ -35,14 +36,14 @@ public class ShowBuildCacheSizeMutator extends AbstractBuildMutator {
         File[] cacheDirs = new File(gradleUserHome, "caches")
             .listFiles(file -> file.isDirectory() && file.getName().startsWith("build-cache-"));
         if (cacheDirs != null) {
-            for (File cacheDir : cacheDirs) {
-                showCacheSize(cacheDir);
-            }
+            Stream.of(cacheDirs)
+                .sorted()
+                .forEach(ShowBuildCacheSizeMutator::showCacheSize);
         }
     }
 
     private static void showCacheSize(File cacheDir) {
-        File[] cacheFiles = cacheDir.listFiles((file) -> file.getName().length() == 32);
+        File[] cacheFiles = cacheDir.listFiles();
         if (cacheFiles == null) {
             System.out.println("> Cannot list cache directory " + cacheDir);
         } else {
