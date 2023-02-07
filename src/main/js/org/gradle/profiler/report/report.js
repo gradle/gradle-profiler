@@ -180,6 +180,7 @@ new Vue({
             : null;
     },
     mounted: function() {
+        const numberFormat = new Intl.NumberFormat();
         const ctx = document.getElementById('samples').getContext('2d');
         const maxMeasuredIterations = benchmarkResult.scenarios
             .map(scenario => measuredIterations(scenario).length)
@@ -199,7 +200,7 @@ new Vue({
                     ticks: {
                         // Include a dollar sign in the ticks
                         callback: function(value, index, ticks) {
-                            return value + ' ' + unit;
+                            return numberFormat.format(value) + ' ' + unit;
                         }
                     }
                 };
