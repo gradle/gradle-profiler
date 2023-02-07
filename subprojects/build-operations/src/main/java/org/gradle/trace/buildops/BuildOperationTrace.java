@@ -1,11 +1,13 @@
 package org.gradle.trace.buildops;
 
 import org.gradle.api.NonNullApi;
+import org.gradle.api.file.Directory;
 import org.gradle.api.file.DirectoryProperty;
 import org.gradle.api.file.RegularFileProperty;
 import org.gradle.api.internal.GradleInternal;
 import org.gradle.api.provider.MapProperty;
 import org.gradle.api.provider.Provider;
+import org.gradle.api.provider.ProviderFactory;
 import org.gradle.api.services.BuildService;
 import org.gradle.api.services.BuildServiceParameters;
 import org.gradle.api.services.BuildServiceRegistry;
@@ -16,6 +18,8 @@ import org.gradle.internal.operations.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.annotation.Nullable;
+import javax.inject.Inject;
 import java.io.File;
 import java.io.IOException;
 import java.io.PrintWriter;
@@ -131,6 +135,8 @@ public class BuildOperationTrace {
             RegularFileProperty getOutputFile();
         }
 
+        @Inject
+        protected abstract ProviderFactory getProviders();
 
         @Override
         public void started(BuildOperationDescriptor buildOperationDescriptor, OperationStartEvent operationStartEvent) {
@@ -149,30 +155,31 @@ public class BuildOperationTrace {
 
         @Override
         public void close() throws Exception {
-            AtomicInteger fileCount = new AtomicInteger(0);
-            AtomicLong size = new AtomicLong(0);
-            Stream<File> cacheDirectories;
+            AtomicInteger cacheFileCount = new AtomicInteger(0);
+            AtomicLong cacheSizeInBytes = new AtomicLong(0);
 
-            File configuredCacheDirectory = getParameters().getCacheDirectory().getAsFile().getOrNull();
-            if (configuredCacheDirectory != null) {
-                cacheDirectories = Stream.of(configuredCacheDirectory);
-            } else {
-                File[] cacheDirs = getParameters().getGradleUserHome().dir("caches").get().getAsFile()
-                    .listFiles(cacheDir -> cacheDir.isDirectory() && cacheDir.getName().startsWith("build-cache-"));
-                cacheDirectories = cacheDirs == null
-                    ? Stream.empty()
-                    : Stream.of(cacheDirs);
-            }
-            cacheDirectories.forEach(cacheDirectory -> {
-                File[] cacheFiles = cacheDirectory.listFiles(File::isFile);
-                if (cacheFiles != null) {
-                    for (File file : cacheFiles) {
-                        fileCount.incrementAndGet();
-                        size.addAndGet(file.length());
-                    }
-                }
-            });
-            writeToFile(getParameters().getOutputFile().getAsFile().get(), size.get(), fileCount.get());
+            getParameters().getCacheDirectory()
+                .getAsFile()
+                .map(Stream::of)
+                .orElse(getParameters().getGradleUserHome()
+                    .dir("caches")
+                    .map(Directory::getAsFile)
+                    .map(LocalBuildCacheSizerService::listBuildCacheDirectories)
+                    .map(Stream::of))
+                .get()
+                .map(File::listFiles)
+                .filter(Objects::nonNull)
+                .flatMap(Stream::of)
+                .forEach(file -> {
+                    cacheFileCount.incrementAndGet();
+                    cacheSizeInBytes.addAndGet(file.length());
+                });
+            writeToFile(getParameters().getOutputFile().getAsFile().get(), cacheSizeInBytes.get(), cacheFileCount.get());
+        }
+
+        @Nullable
+        private static File[] listBuildCacheDirectories(File cachesDir) {
+            return cachesDir.listFiles(cacheDir -> cacheDir.isDirectory() && cacheDir.getName().startsWith("build-cache-"));
         }
     }
 
