@@ -7,6 +7,7 @@ import org.gradle.profiler.ScenarioContext;
 
 import java.io.File;
 import java.text.MessageFormat;
+import java.util.Objects;
 import java.util.stream.Stream;
 
 public class ShowBuildCacheSizeMutator extends AbstractBuildMutator {
@@ -33,26 +34,26 @@ public class ShowBuildCacheSizeMutator extends AbstractBuildMutator {
     }
 
     private void showCacheSize() {
-        File[] cacheDirs = new File(gradleUserHome, "caches")
-            .listFiles(file -> file.isDirectory() && file.getName().startsWith("build-cache-"));
-        if (cacheDirs != null) {
-            Stream.of(cacheDirs)
-                .sorted()
-                .forEach(ShowBuildCacheSizeMutator::showCacheSize);
-        }
+        Stream.of(new File(gradleUserHome, "caches"))
+            .map(File::listFiles)
+            .filter(Objects::nonNull)
+            .flatMap(Stream::of)
+            .filter(File::isDirectory)
+            .filter(cacheDir -> cacheDir.getName().startsWith("build-cache-"))
+            .sorted()
+            .forEach(ShowBuildCacheSizeMutator::showCacheSize);
     }
 
     private static void showCacheSize(File cacheDir) {
         File[] cacheFiles = cacheDir.listFiles();
         if (cacheFiles == null) {
-            System.out.println("> Cannot list cache directory " + cacheDir);
-        } else {
-            long size = 0;
-            for (File cacheFile : cacheFiles) {
-                size += cacheFile.length();
-            }
-            System.out.println(MessageFormat.format("> Build cache size: {0,number} bytes in {1,number} file(s) ({2})", size, cacheFiles.length, cacheDir.getName()));
+            return;
         }
+        long size = Stream.of(cacheFiles)
+            .map(File::length)
+            .reduce(Long::sum)
+            .orElse(0L);
+        System.out.println(MessageFormat.format("> Build cache size: {0,number} bytes in {1,number} file(s) ({2})", size, cacheFiles.length, cacheDir.getName()));
     }
 
     public static class Configurator extends AbstractBuildMutatorWithoutOptionsConfigurator {
