@@ -70,6 +70,22 @@ class BuildOperationInstrumentationIntegrationTest extends AbstractProfilerInteg
         given:
         instrumentedBuildScript()
 
+        buildFile << """
+            // Produce some output so the cache size is noticeable
+            task producePayload() {
+                def outputFile = file("output.txt")
+                outputs.file(outputFile)
+                outputs.cacheIf { true }
+                doLast {
+                    def buffer = new byte[1024 * 1024]
+                    new Random().nextBytes(buffer)
+                    outputFile.bytes = buffer
+                }
+            }
+
+            assemble.dependsOn producePayload
+        """
+
         and:
         String[] args = [
             "--project-dir", projectDir.absolutePath,

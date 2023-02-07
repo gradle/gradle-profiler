@@ -79,10 +79,10 @@ public class GradleBuildInvocationResult extends BuildInvocationResult {
         = SingleInvocationDurationSample.from("garbage collection time", GradleBuildInvocationResult::getGarbageCollectionTime);
 
     public static final Sample<GradleBuildInvocationResult> LOCAL_CACHE_SIZE
-        = new Sample<GradleBuildInvocationResult>("local cache size", "KiB") {
+        = new Sample<GradleBuildInvocationResult>("local cache size", "MiB") {
         @Override
         public double extractValue(GradleBuildInvocationResult result) {
-            return result.getLocalCacheSize() / 1024.0;
+            return result.getLocalCacheSize() / 1024.0 / 1024.0;
         }
 
         @Override
