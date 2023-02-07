@@ -39,6 +39,7 @@ Array.prototype.unique = function() {
     return [...new Set(this)];
 }
 const dataFormat = new Intl.NumberFormat(navigator.language, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+const labelFormat = new Intl.NumberFormat(navigator.language, { minimumFractionDigits: 0, maximumFractionDigits: 2 });
 const dataDiffFormat = new Intl.NumberFormat(navigator.language, { minimumFractionDigits: 2, maximumFractionDigits: 2, signDisplay: "exceptZero" });
 const percentFormat = new Intl.NumberFormat(navigator.language, { style: 'percent', minimumFractionDigits: 2, maximumFractionDigits: 2 });
 const percentDiffFormat = new Intl.NumberFormat(navigator.language, { style: 'percent', minimumFractionDigits: 2, maximumFractionDigits: 2, signDisplay: "exceptZero"  });
@@ -197,14 +198,15 @@ new Vue({
                         ? "left"
                         : "right",
                     ticks: {
-                        // Include a dollar sign in the ticks
                         callback: function(value, index, ticks) {
-                            return dataFormat.format(value) + ' ' + unit;
+                            return labelFormat.format(value) + ' ' + unit;
                         }
                     }
                 };
                 return scales;
             }, {});
+        Chart.defaults.font.family = "Lato";
+        Chart.defaults.font.size = "14";
         const chart = this.chart = new Chart(ctx, {
             type: 'line',
             data: {
@@ -212,24 +214,13 @@ new Vue({
                 datasets: this.chartData
             },
             options: {
-                font: {
-                    family: "Roboto Mono"
-                },
                 plugins: {
                     legend: {
                         display: false
                     },
-                    crosshair: {
-                        zoom: {
-                            enabled: false
-                        },
-                        snap: {
-                            enabled: false
-                        }
-                    },
                     tooltip: {
                         mode: "index",
-                        position: "nearest",
+                        position: "average",
                         itemSort: (a, b) => b.yLabel - a.yLabel,
                         callbacks: {
                             title: (tooltips, data) => `Build #${tooltips[0].label}`,
@@ -241,9 +232,6 @@ new Vue({
                     duration: 0
                 },
                 aspectRatio: 3,
-                hover: {
-                    intersect: false
-                },
                 scales: scales
             }
         });
