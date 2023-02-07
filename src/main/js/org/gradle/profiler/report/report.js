@@ -217,6 +217,9 @@ new Vue({
                     family: "Roboto Mono"
                 },
                 plugins: {
+                    legend: {
+                        display: false
+                    },
                     crosshair: {
                         zoom: {
                             enabled: false
@@ -229,9 +232,6 @@ new Vue({
                 responsive: false,
                 animation: {
                     duration: 0
-                },
-                legend: {
-                    display: false
                 },
                 tooltips: {
                     mode: "index",
