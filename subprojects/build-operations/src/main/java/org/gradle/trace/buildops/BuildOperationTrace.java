@@ -21,12 +21,10 @@ import java.io.IOException;
 import java.io.PrintWriter;
 import java.lang.management.GarbageCollectorMXBean;
 import java.lang.management.ManagementFactory;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
+import java.util.stream.Stream;
 
 @SuppressWarnings("unused")
 @NonNullApi
@@ -153,19 +151,19 @@ public class BuildOperationTrace {
         public void close() throws Exception {
             AtomicInteger fileCount = new AtomicInteger(0);
             AtomicLong size = new AtomicLong(0);
-            File cacheDirectory = getParameters().getCacheDirectory()
-                .orElse(getParameters().getGradleUserHome()
-                    .map(gradleUserHome -> {
-                        String cacheName = Boolean.getBoolean("org.gradle.unsafe.cache.ng")
-                            ? "build-cache-2"
-                            : "build-cache-1";
-                        return gradleUserHome.dir("caches").dir(cacheName);
-                    }))
-                .get()
-                .getAsFile();
-            System.out.println(">>> Calculating cache size: " + cacheDirectory);
-            if (cacheDirectory.isDirectory()) {
-                System.out.println(">>> Is a directory: " + cacheDirectory);
+            Stream<File> cacheDirectories;
+
+            File configuredCacheDirectory = getParameters().getCacheDirectory().getAsFile().getOrNull();
+            if (configuredCacheDirectory != null) {
+                cacheDirectories = Stream.of(configuredCacheDirectory);
+            } else {
+                File[] cacheDirs = getParameters().getGradleUserHome().dir("caches").get().getAsFile()
+                    .listFiles(cacheDir -> cacheDir.isDirectory() && cacheDir.getName().startsWith("build-cache-"));
+                cacheDirectories = cacheDirs == null
+                    ? Stream.empty()
+                    : Stream.of(cacheDirs);
+            }
+            cacheDirectories.forEach(cacheDirectory -> {
                 File[] cacheFiles = cacheDirectory.listFiles(File::isFile);
                 if (cacheFiles != null) {
                     for (File file : cacheFiles) {
@@ -173,7 +171,7 @@ public class BuildOperationTrace {
                         size.addAndGet(file.length());
                     }
                 }
-            }
+            });
             writeToFile(getParameters().getOutputFile().getAsFile().get(), size.get(), fileCount.get());
         }
     }
