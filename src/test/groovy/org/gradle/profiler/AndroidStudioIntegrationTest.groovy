@@ -74,10 +74,10 @@ class AndroidStudioIntegrationTest extends AbstractProfilerIntegrationTest {
         then:
         logFile.find("Gradle invocation 1 has completed in").size() == 2
         logFile.find("Gradle invocation 2 has completed in").size() == 2
-        def firstDurations = (logFile.text =~ /Gradle invocation 1 has completed in: (\\d+)ms/)
+        def firstDurations = (logFile.text =~ /Gradle invocation 1 has completed in: (\d+)ms/)
             .findAll()
             .collect { it[1] as Integer }
-        def secondDurations = (logFile.text =~ /Gradle invocation 2 has completed in: (\\d+)ms/)
+        def secondDurations = (logFile.text =~ /Gradle invocation 2 has completed in: (\d+)ms/)
             .findAll()
             .collect { it[1] as Integer }
         logFile.find("Full Gradle execution time: ${firstDurations[0] + secondDurations[0]}ms").size() == 1
