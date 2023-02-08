@@ -1,6 +1,12 @@
 package org.gradle.profiler.report;
 
-import com.google.gson.*;
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
+import com.google.gson.JsonArray;
+import com.google.gson.JsonObject;
+import com.google.gson.JsonPrimitive;
+import com.google.gson.JsonSerializationContext;
+import com.google.gson.JsonSerializer;
 import org.gradle.profiler.GradleScenarioDefinition;
 import org.gradle.profiler.OperatingSystem;
 import org.gradle.profiler.ScenarioDefinition;
