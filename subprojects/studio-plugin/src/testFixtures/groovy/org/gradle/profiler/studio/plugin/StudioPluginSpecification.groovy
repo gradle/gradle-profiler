@@ -7,6 +7,10 @@ import org.junit.runner.Description
 import org.junit.runners.model.Statement
 import spock.lang.Specification
 
+import java.nio.file.Files
+import java.nio.file.Path
+import java.nio.file.Paths
+
 class StudioPluginSpecification extends Specification {
 
     /**
@@ -27,12 +31,24 @@ class StudioPluginSpecification extends Specification {
     Server server
     File buildFile
     File settingsFile
+    File gradleProperties
 
     def createProject(File projectDir) {
         projectDir.mkdirs()
         buildFile = new File(projectDir, "build.gradle")
         buildFile.createNewFile()
         settingsFile = new File(projectDir, "settings.gradle")
-        settingsFile.createNewFile()
+        settingsFile << "rootProject.name = 'test'"
+        gradleProperties = new File(projectDir, "gradle.properties")
+        gradleProperties << "org.gradle.jvmargs=-Xmx1024m"
+        setupWrapper(projectDir.toPath())
+    }
+
+    private def setupWrapper(Path projectDir) {
+        Files.createDirectories(projectDir.resolve("gradle/wrapper"))
+        Files.copy(Paths.get("../../gradlew"), projectDir.resolve("gradlew"))
+        Files.copy(Paths.get("../../gradlew.bat"), projectDir.resolve("gradlew.bat"))
+        Files.copy(Paths.get("../../gradle/wrapper/gradle-wrapper.jar"), projectDir.resolve("gradle/wrapper/gradle-wrapper.jar"))
+        Files.copy(Paths.get("../../gradle/wrapper/gradle-wrapper.properties"), projectDir.resolve("gradle/wrapper/gradle-wrapper.properties"))
     }
 }

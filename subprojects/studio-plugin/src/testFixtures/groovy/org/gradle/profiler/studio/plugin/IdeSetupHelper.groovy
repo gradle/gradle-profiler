@@ -1,20 +1,26 @@
 package org.gradle.profiler.studio.plugin
 
+import com.android.tools.idea.sdk.Jdks
 import com.intellij.openapi.application.WriteAction
+import com.intellij.openapi.externalSystem.service.execution.ExternalSystemJdkUtil
+import com.intellij.openapi.externalSystem.settings.ExternalSystemSettingsListenerAdapter
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ex.ProjectManagerEx
 import com.intellij.openapi.projectRoots.ProjectJdkTable
 import com.intellij.openapi.projectRoots.Sdk
+import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.testFramework.EdtTestUtil
 import com.intellij.testFramework.HeavyPlatformTestCase
 import com.intellij.testFramework.OpenProjectTaskBuilder
 import com.intellij.util.ThrowableRunnable
+import org.gradle.internal.jvm.Jvm
 import org.jetbrains.annotations.NotNull
+import org.jetbrains.plugins.gradle.settings.GradleProjectSettings
+import org.jetbrains.plugins.gradle.settings.GradleSettings
 import org.junit.runner.Description
 
 import java.nio.file.Path
 import java.util.function.Consumer
-
 /**
  * HeavyPlatformTestCase extends Junit TestCase, but we use it through composition so we can use Spock framework
  */
@@ -22,6 +28,7 @@ import java.util.function.Consumer
 class IdeSetupHelper extends HeavyPlatformTestCase {
 
     Consumer<File> projectCreator
+    Sdk jdk
 
     IdeSetupHelper(Description description, Consumer<File> projectCreator) {
         super.setName(description.methodName)
@@ -38,6 +45,18 @@ class IdeSetupHelper extends HeavyPlatformTestCase {
         // We must run this on Edt otherwise the exception is thrown since runInDispatchThread is set to false
         EdtTestUtil.runInEdtAndWait {
             super.setUp()
+            // Setup Project JDK to current test JDK, so IntelliJ doesn't try to discover all JDKs on the system
+            WriteAction.run {
+                jdk = Jdks.instance.createJdk(Jvm.current().javaHome.absolutePath)
+                ProjectRootManager.getInstance(project).setProjectSdk(jdk)
+            }
+            GradleSettings gradleSettings = GradleSettings.getInstance(project);
+            gradleSettings.subscribe(new ExternalSystemSettingsListenerAdapter<GradleProjectSettings>() {
+                @Override
+                void onProjectsLinked(@NotNull Collection<GradleProjectSettings> linkedProjectsSettings) {
+                    linkedProjectsSettings.each { it.gradleJvm = ExternalSystemJdkUtil.USE_PROJECT_JDK }
+                }
+            }, gradleSettings);
         }
     }
 
@@ -45,9 +64,8 @@ class IdeSetupHelper extends HeavyPlatformTestCase {
     void tearDown() {
         // We must run this on Edt otherwise the exception is thrown since runInDispatchThread is set to false
         EdtTestUtil.runInEdtAndWait {
-            ProjectJdkTable jdkTable = ProjectJdkTable.getInstance()
-            jdkTable.getAllJdks().each { Sdk sdk ->
-                WriteAction.run { jdkTable.removeJdk(sdk) }
+            WriteAction.run {
+                ProjectJdkTable.instance.removeJdk(jdk)
             }
             super.tearDown()
         }
