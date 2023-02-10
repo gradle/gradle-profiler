@@ -1,5 +1,7 @@
 package org.gradle.profiler;
 
+import org.gradle.api.JavaVersion;
+
 import javax.annotation.Nullable;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
@@ -9,6 +11,8 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.lang.reflect.Field;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
@@ -19,6 +23,8 @@ import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.function.Supplier;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 public class CommandExec {
     private final File directory;
@@ -248,8 +254,28 @@ public class CommandExec {
         }
 
         public void kill() {
+            // On Windows subprocesses are not automatically
+            // killed with parent, so let's do that manually
+            destroyDescendants();
             process.destroy();
             shutdownExecutor();
+        }
+
+        private void destroyDescendants() {
+            if (!JavaVersion.current().isJava9Compatible()) {
+                // ProcessHandle API is available only from JDK9
+                return;
+            }
+            try {
+                @SuppressWarnings("unchecked")
+                Stream<Object> stream = (Stream<Object>) Process.class.getMethod("descendants").invoke(process);
+                Method destroy = Class.forName("java.lang.ProcessHandle").getMethod("destroy");
+                for (Object child : stream.collect(Collectors.toList())) {
+                    destroy.invoke(child);
+                }
+            } catch (NoSuchMethodException | IllegalAccessException | InvocationTargetException | ClassNotFoundException e) {
+                throw new RuntimeException(e);
+            }
         }
 
         private void shutdownExecutor() {
