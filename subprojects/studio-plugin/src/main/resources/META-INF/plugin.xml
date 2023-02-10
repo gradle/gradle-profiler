@@ -16,13 +16,14 @@
     <depends>org.jetbrains.android</depends>
 
     <applicationListeners>
-        <listener class="org.gradle.profiler.studio.plugin.GradleProfilerProjectManagerListener"
-                  topic="com.intellij.openapi.project.ProjectManagerListener"/>
+        <listener class="org.gradle.profiler.studio.plugin.GradleProfilerAppLifecycleListener"
+                  topic="com.intellij.ide.AppLifecycleListener"/>
     </applicationListeners>
 
     <extensions defaultExtensionNs="com.intellij">
-        <appStarter implementation="org.gradle.profiler.studio.plugin.starter.HeadlessApplicationStarter" />
-        <preloadingActivity implementation="org.gradle.profiler.studio.plugin.GradleProfilerPreloadingActivity"/>
+        <appStarter id="headless-starter"
+                    implementation="org.gradle.profiler.studio.plugin.starter.HeadlessApplicationStarter"/>
+        <postStartupActivity implementation="org.gradle.profiler.studio.plugin.GradleProfilerStartupActivity"/>
     </extensions>
 
 </idea-plugin>

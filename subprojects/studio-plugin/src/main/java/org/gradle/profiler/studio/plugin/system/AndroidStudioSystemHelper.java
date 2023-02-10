@@ -6,6 +6,7 @@ import com.android.tools.idea.projectsystem.ProjectSystemUtil;
 import com.google.common.base.Strings;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.wm.IdeFrame;
@@ -88,11 +89,13 @@ public class AndroidStudioSystemHelper {
      * It seems there is no better way to do it atm.
      */
     public static void waitOnBackgroundProcessesFinish(Project project) {
-        IdeFrame frame = WindowManagerEx.getInstanceEx().findFrameFor(project);
-        StatusBarEx statusBar = frame == null ? null : (StatusBarEx) frame.getStatusBar();
-        if (statusBar != null) {
-            statusBar.getBackgroundProcesses().forEach(it -> waitOnProgressIndicator(it.getSecond()));
-        }
+        DumbService.getInstance(project).runReadActionInSmartMode(() -> {
+            IdeFrame frame = WindowManagerEx.getInstanceEx().findFrameFor(project);
+            StatusBarEx statusBar = frame == null ? null : (StatusBarEx) frame.getStatusBar();
+            if (statusBar != null) {
+                statusBar.getBackgroundProcesses().forEach(it -> waitOnProgressIndicator(it.getSecond()));
+            }
+        });
     }
 
     private static void waitOnProgressIndicator(ProgressIndicator progressIndicator) {

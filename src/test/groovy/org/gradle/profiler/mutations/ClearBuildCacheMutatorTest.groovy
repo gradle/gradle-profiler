@@ -13,7 +13,7 @@ class ClearBuildCacheMutatorTest extends AbstractMutatorTest {
     def setup() {
         gradleUserHome = tmpDir.newFolder()
         buildCache1Entry = new File(gradleUserHome, "caches/build-cache-1/12345678901234567890123456789012")
-        buildCache2Entry = new File(gradleUserHome, "caches/build-cache-2/12345678901234567890123456789012")
+        buildCache2Entry = new File(gradleUserHome, "caches/build-cache-2/filestore.mv.db")
     }
 
     private void remakeCacheEntries() {

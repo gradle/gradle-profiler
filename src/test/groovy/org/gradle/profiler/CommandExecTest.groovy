@@ -15,7 +15,7 @@ class CommandExecTest extends Specification {
         File output = new File(tmpDir.root, "output.txt")
 
         when:
-        new CommandExec(tmpDir.root).runAndCollectOutput(output, "echo", "hello")
+        new CommandExec(tmpDir.root, [:]).runAndCollectOutput(output, "echo", "hello")
 
         then:
         output.text.trim() == 'hello'

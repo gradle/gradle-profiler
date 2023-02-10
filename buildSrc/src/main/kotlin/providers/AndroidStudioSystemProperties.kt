@@ -37,16 +37,7 @@ class AndroidStudioSystemProperties(
         val systemProperties = mutableListOf<String>()
         if (autoDownloadAndroidStudio.get()) {
             val androidStudioPath = studioInstallation.studioInstallLocation.get().asFile.absolutePath
-            val isMacOS = System.getProperty("os.name").toLowerCase().startsWith("mac")
-            val macOsAndroidStudioPath = "$androidStudioPath/Android Studio.app"
-            val macOsAndroidStudioPathPreview = "$androidStudioPath/Android Studio Preview.app"
-            val windowsAndLinuxPath = "$androidStudioPath/android-studio"
-            val studioHome = when {
-                isMacOS && File(macOsAndroidStudioPath).exists() -> macOsAndroidStudioPath
-                isMacOS -> macOsAndroidStudioPathPreview
-                else -> windowsAndLinuxPath
-            }
-            systemProperties.add("-Dstudio.home=$studioHome")
+            systemProperties.add("-Dstudio.home=$androidStudioPath")
         }
         if (runInHeadlessMode.get()) {
             systemProperties.add("-Dstudio.tests.headless=true")
