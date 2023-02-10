@@ -17,9 +17,9 @@ import org.gradle.internal.jvm.Jvm
 import org.jetbrains.annotations.NotNull
 import org.jetbrains.plugins.gradle.settings.GradleProjectSettings
 import org.jetbrains.plugins.gradle.settings.GradleSettings
+import org.junit.rules.TemporaryFolder
 import org.junit.runner.Description
 
-import java.nio.file.Path
 import java.util.function.Consumer
 /**
  * HeavyPlatformTestCase extends Junit TestCase, but we use it through composition so we can use Spock framework
@@ -28,11 +28,13 @@ import java.util.function.Consumer
 class IdeSetupHelper extends HeavyPlatformTestCase {
 
     Consumer<File> projectCreator
+    TemporaryFolder temporaryFolder
     Sdk jdk
 
-    IdeSetupHelper(Description description, Consumer<File> projectCreator) {
+    IdeSetupHelper(Description description, TemporaryFolder tempFolder, Consumer<File> projectCreator) {
         super.setName(description.methodName)
         this.projectCreator = projectCreator
+        this.temporaryFolder = tempFolder
     }
 
     @Override
@@ -77,11 +79,11 @@ class IdeSetupHelper extends HeavyPlatformTestCase {
     @Override
     protected @NotNull Project doCreateAndOpenProject() {
         OpenProjectTaskBuilder optionBuilder = getOpenProjectOptions()
-        Path projectFile = getProjectDirOrFile(isCreateDirectoryBasedProject())
+        File projectRoot = temporaryFolder.newFolder()
         // We have to create a project with settings.gradle file
         // before it is open by IDE, so IDE detects it as a Gradle project
-        projectCreator.accept(projectFile.parent.toFile())
-        Project project = ProjectManagerEx.getInstanceEx().openProject(projectFile, optionBuilder.build())
+        projectCreator.accept(projectRoot)
+        Project project = ProjectManagerEx.getInstanceEx().openProject(projectRoot.toPath(), optionBuilder.build())
         return project
     }
 

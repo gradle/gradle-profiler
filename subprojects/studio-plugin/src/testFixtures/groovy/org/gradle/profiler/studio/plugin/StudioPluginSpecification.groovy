@@ -1,7 +1,9 @@
 package org.gradle.profiler.studio.plugin
 
+
 import org.gradle.profiler.client.protocol.Server
 import org.junit.Rule
+import org.junit.rules.TemporaryFolder
 import org.junit.rules.TestRule
 import org.junit.runner.Description
 import org.junit.runners.model.Statement
@@ -13,6 +15,9 @@ import java.nio.file.Paths
 
 class StudioPluginSpecification extends Specification {
 
+    @Rule
+    TemporaryFolder tempDir = new TemporaryFolder();
+
     /**
      * Used so we can run integration tests as Spock tests and we use composition to setup the IDE.
      */
@@ -23,7 +28,7 @@ class StudioPluginSpecification extends Specification {
             void evaluate() throws Throwable {
                 server = new Server("plugin")
                 System.setProperty("gradle.profiler.port", server.getPort() as String)
-                new IdeSetupHelper(description, StudioPluginSpecification.this::createProject).runBare(base::evaluate)
+                new IdeSetupHelper(description, tempDir, StudioPluginSpecification.this::createProject).runBare(base::evaluate)
             }
         }
     }
