@@ -8,12 +8,14 @@ import java.io.BufferedWriter;
 import java.io.File;
 import java.io.IOException;
 import java.text.DecimalFormat;
+import java.text.DecimalFormatSymbols;
 import java.util.List;
+import java.util.Locale;
 import java.util.stream.Collectors;
 
 public class CsvGenerator extends AbstractGenerator {
     private final Format format;
-    private static final DecimalFormat DOUBLE_FORMAT = new DecimalFormat("0.00");
+    private static final DecimalFormat DOUBLE_FORMAT = new DecimalFormat("0.00", new DecimalFormatSymbols(Locale.US));
 
     public enum Format {
         LONG, WIDE;
