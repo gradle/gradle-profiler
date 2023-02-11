@@ -83,6 +83,13 @@ class BuildOperationInstrumentationIntegrationTest extends AbstractProfilerInteg
 
             assemble.dependsOn producePayload
         """
+        def scenarioFile = file("performance.scenarios")
+        file("performance.scenarios") << """
+            default {
+                tasks = ["assemble"]
+                clear-build-cache-before = SCENARIO
+            }
+        """
 
         and:
         String[] args = [
@@ -91,14 +98,13 @@ class BuildOperationInstrumentationIntegrationTest extends AbstractProfilerInteg
             "--gradle-version", gradleVersion,
             "--benchmark",
             "--measure-local-build-cache",
-            "assemble",
-            "-Dorg.gradle.caching=true"
+            "--scenario-file", scenarioFile.absolutePath,
+            "default"
         ]
-        if (configurationCache) {
-            file("gradle.properties") << """
-                org.gradle.unsafe.configuration-cache=true
-            """
-        }
+        file("gradle.properties") << """
+            org.gradle.caching=true
+            ${configurationCache ? "org.gradle.unsafe.configuration-cache=true" : ""}
+        """
 
         when:
         new Main().run(*args)
