@@ -2,6 +2,7 @@ package org.gradle.profiler
 
 
 class BenchmarkIntegrationTest extends AbstractProfilerIntegrationTest {
+
     def "recovers from measured build failure running benchmarks"() {
         given:
         brokenBuild(8)
@@ -28,12 +29,12 @@ class BenchmarkIntegrationTest extends AbstractProfilerIntegrationTest {
         lines.get(1) == "version,Gradle ${minimalSupportedGradleVersion},Gradle 5.0"
         lines.get(2) == "tasks,assemble,assemble"
         lines.get(3) == "value,total execution time,total execution time"
-        lines.get(4).matches("warm-up build #1,\\d+,\\d+")
-        lines.get(9).matches("warm-up build #6,\\d+,\\d+")
-        lines.get(10).matches("measured build #1,\\d+,\\d+")
-        lines.get(11).matches("measured build #2,\\d+,\\d+")
-        lines.get(12).matches("measured build #3,,\\d+")
-        lines.get(19).matches("measured build #10,,\\d+")
+        lines.get(4).matches("warm-up build #1,$SAMPLE,$SAMPLE")
+        lines.get(9).matches("warm-up build #6,$SAMPLE,$SAMPLE")
+        lines.get(10).matches("measured build #1,$SAMPLE,$SAMPLE")
+        lines.get(11).matches("measured build #2,$SAMPLE,$SAMPLE")
+        lines.get(12).matches("measured build #3,,$SAMPLE")
+        lines.get(19).matches("measured build #10,,$SAMPLE")
     }
 
     def "recovers from failure in warm-up build while running benchmarks"() {
@@ -62,15 +63,15 @@ class BenchmarkIntegrationTest extends AbstractProfilerIntegrationTest {
         lines.get(1) == "version,Gradle ${minimalSupportedGradleVersion},Gradle 5.0"
         lines.get(2) == "tasks,assemble,assemble"
         lines.get(3) == "value,total execution time,total execution time"
-        lines.get(4).matches("warm-up build #1,\\d+,\\d+")
-        lines.get(5).matches("warm-up build #2,\\d+,\\d+")
-        lines.get(6).matches("warm-up build #3,\\d+,\\d+")
-        lines.get(7).matches("warm-up build #4,,\\d+")
-        lines.get(8).matches("warm-up build #5,,\\d+")
-        lines.get(9).matches("warm-up build #6,,\\d+")
-        lines.get(10).matches("measured build #1,,\\d+")
-        lines.get(11).matches("measured build #2,,\\d+")
-        lines.get(19).matches("measured build #10,,\\d+")
+        lines.get(4).matches("warm-up build #1,$SAMPLE,$SAMPLE")
+        lines.get(5).matches("warm-up build #2,$SAMPLE,$SAMPLE")
+        lines.get(6).matches("warm-up build #3,$SAMPLE,$SAMPLE")
+        lines.get(7).matches("warm-up build #4,,$SAMPLE")
+        lines.get(8).matches("warm-up build #5,,$SAMPLE")
+        lines.get(9).matches("warm-up build #6,,$SAMPLE")
+        lines.get(10).matches("measured build #1,,$SAMPLE")
+        lines.get(11).matches("measured build #2,,$SAMPLE")
+        lines.get(19).matches("measured build #10,,$SAMPLE")
     }
 
     def "recovers from failure to run any builds while running benchmarks"() {
@@ -99,12 +100,12 @@ class BenchmarkIntegrationTest extends AbstractProfilerIntegrationTest {
         lines.get(1) == "version,Gradle ${minimalSupportedGradleVersion},Gradle 5.0"
         lines.get(2) == "tasks,assemble,assemble"
         lines.get(3) == "value,total execution time,total execution time"
-        lines.get(4).matches("warm-up build #1,,\\d+")
-        lines.get(5).matches("warm-up build #2,,\\d+")
-        lines.get(6).matches("warm-up build #3,,\\d+")
-        lines.get(10).matches("measured build #1,,\\d+")
-        lines.get(11).matches("measured build #2,,\\d+")
-        lines.get(19).matches("measured build #10,,\\d+")
+        lines.get(4).matches("warm-up build #1,,$SAMPLE")
+        lines.get(5).matches("warm-up build #2,,$SAMPLE")
+        lines.get(6).matches("warm-up build #3,,$SAMPLE")
+        lines.get(10).matches("measured build #1,,$SAMPLE")
+        lines.get(11).matches("measured build #2,,$SAMPLE")
+        lines.get(19).matches("measured build #10,,$SAMPLE")
     }
 
     def brokenBuild(int successfulIterations) {

@@ -19,13 +19,25 @@ import java.util.stream.Stream;
 public class BuildOperationInstrumentation extends GradleInstrumentation {
     private final boolean measureGarbageCollection;
     private final File totalGarbageCollectionTimeDataFile;
+
+    private final boolean measureLocalBuildCache;
+    private final File localBuildCacheDataFile;
+
     private final boolean measureConfigTime;
     private final File configurationTimeDataFile;
+
     private final Map<String, File> buildOperationDataFiles;
 
-    public BuildOperationInstrumentation(boolean measureGarbageCollection, boolean measureConfigTime, List<String> measuredBuildOperations) throws IOException {
+    public BuildOperationInstrumentation(
+        boolean measureGarbageCollection,
+        boolean measureLocalBuildCache,
+        boolean measureConfigTime,
+        List<String> measuredBuildOperations
+    ) throws IOException {
         this.measureGarbageCollection = measureGarbageCollection;
         this.totalGarbageCollectionTimeDataFile = File.createTempFile("gradle-profiler", "gc-time");
+        this.measureLocalBuildCache = measureLocalBuildCache;
+        this.localBuildCacheDataFile = File.createTempFile("gradle-profiler", "local-build-cache");
         this.measureConfigTime = measureConfigTime;
         this.configurationTimeDataFile = File.createTempFile("gradle-profiler", "build-ops-config-time");
         this.configurationTimeDataFile.deleteOnExit();
@@ -34,7 +46,7 @@ public class BuildOperationInstrumentation extends GradleInstrumentation {
     }
 
     public boolean requiresInitScript() {
-        return measureGarbageCollection || measureConfigTime || !buildOperationDataFiles.isEmpty();
+        return measureGarbageCollection || measureLocalBuildCache || measureConfigTime || !buildOperationDataFiles.isEmpty();
     }
 
     private static File createBuildOperationTempFile(String op) {
@@ -52,6 +64,9 @@ public class BuildOperationInstrumentation extends GradleInstrumentation {
         writer.print("new org.gradle.trace.buildops.BuildOperationTrace(gradle)");
         if (measureGarbageCollection) {
             writer.print(".measureGarbageCollection(" + newFile(totalGarbageCollectionTimeDataFile) + ")");
+        }
+        if (measureLocalBuildCache) {
+            writer.print(".measureLocalBuildCache(" + newFile(localBuildCacheDataFile) + ")");
         }
         if (measureConfigTime) {
             writer.print(".measureConfigurationTime(" + newFile(configurationTimeDataFile) + ")");
@@ -78,7 +93,17 @@ public class BuildOperationInstrumentation extends GradleInstrumentation {
         }
 
         return readExecutionDataFromFile(totalGarbageCollectionTimeDataFile)
-            .map(BuildOperationExecutionData::getTotalDuration);
+            .map(BuildOperationExecutionData::getValue)
+            .map(Duration::ofMillis);
+    }
+
+    public Optional<Long> getLocalBuildCacheSize() {
+        if (localBuildCacheDataFile.length() == 0) {
+            return Optional.empty();
+        }
+
+        return readExecutionDataFromFile(localBuildCacheDataFile)
+            .map(BuildOperationExecutionData::getValue);
     }
 
     public Optional<Duration> getTimeToTaskExecution() {
@@ -88,7 +113,8 @@ public class BuildOperationInstrumentation extends GradleInstrumentation {
         }
 
         return readExecutionDataFromFile(configurationTimeDataFile)
-            .map(BuildOperationExecutionData::getTotalDuration);
+            .map(BuildOperationExecutionData::getValue)
+            .map(Duration::ofMillis);
     }
 
     public Map<String, BuildOperationExecutionData> getTotalBuildOperationExecutionData() {
@@ -121,6 +147,6 @@ public class BuildOperationInstrumentation extends GradleInstrumentation {
 
         long durationMillis = Long.parseLong(line.substring(0, separatorIndex));
         int count = Integer.parseInt(line.substring(separatorIndex + 1));
-        return new BuildOperationExecutionData(Duration.ofMillis(durationMillis), count);
+        return new BuildOperationExecutionData(durationMillis, count);
     }
 }

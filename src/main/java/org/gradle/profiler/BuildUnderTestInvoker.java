@@ -70,13 +70,14 @@ public class BuildUnderTestInvoker {
                     previousGcTimes.put(pid, currentTotal);
                     return currentTotal.minus(previousTotal);
                 });
+            Optional<Long> localBuildCacheSize = buildOperationInstrumentation.getLocalBuildCacheSize();
             Optional<Duration> timeToTaskExecution = buildOperationInstrumentation.getTimeToTaskExecution();
 
             Map<String, BuildOperationExecutionData> totalExecutionData = buildOperationInstrumentation.getTotalBuildOperationExecutionData();
             totalExecutionData.forEach((opName, duration) -> {
                 Logging.detailed().printf(
                     "Total build operation time %s ms (%s occurrences) for %s%n",
-                    duration.getTotalDuration().toMillis(), duration.getTotalCount(), opName);
+                    duration.getValue(), duration.getTotalCount(), opName);
             });
             garbageCollectionTime.ifPresent(duration -> Logging.detailed().printf("Total GC time: %d ms%n", duration.toMillis()));
             timeToTaskExecution.ifPresent(duration -> Logging.detailed().printf("Time to task execution %d ms%n", duration.toMillis()));
@@ -85,6 +86,7 @@ public class BuildUnderTestInvoker {
                 buildContext,
                 buildActionResult,
                 garbageCollectionTime.orElse(null),
+                localBuildCacheSize.orElse(null),
                 timeToTaskExecution.orElse(null),
                 totalExecutionData,
                 pid);

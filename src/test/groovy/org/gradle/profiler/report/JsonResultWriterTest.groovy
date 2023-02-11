@@ -13,7 +13,7 @@ import org.gradle.profiler.RunTasksAction
 import org.gradle.profiler.ScenarioContext
 import org.gradle.profiler.mutations.ApplyAbiChangeToKotlinSourceFileMutator
 import org.gradle.profiler.result.BuildInvocationResult
-import org.gradle.profiler.result.SingleInvocationSample
+import org.gradle.profiler.result.SingleInvocationDurationSample
 import org.gradle.util.GradleVersion
 import org.junit.Rule
 import org.junit.rules.TemporaryFolder
@@ -101,8 +101,7 @@ class JsonResultWriterTest extends Specification {
 
         when:
         writer.write("Test benchmark", Instant.ofEpochMilli(1600000000000), [result1, result2], stringWriter)
-        then:
-        stringWriter.toString() == """{
+        String expected = """{
   "title": "Test benchmark",
   "date": "2020-09-13T12:26:40Z",
   "environment": {
@@ -141,10 +140,12 @@ class JsonResultWriterTest extends Specification {
       },
       "samples": [
         {
-          "name": "total execution time"
+          "name": "total execution time",
+          "unit": "ms"
         },
         {
-          "name": "Test sample"
+          "name": "Test sample",
+          "unit": "ms"
         }
       ],
       "iterations": [
@@ -241,10 +242,12 @@ class JsonResultWriterTest extends Specification {
       },
       "samples": [
         {
-          "name": "total execution time"
+          "name": "total execution time",
+          "unit": "ms"
         },
         {
-          "name": "Test sample"
+          "name": "Test sample",
+          "unit": "ms"
         }
       ],
       "iterations": [
@@ -292,14 +295,19 @@ class JsonResultWriterTest extends Specification {
     }
   ]
 }"""
+        then:
+        stringWriter.toString() == expected
     }
 
-    static class TestSample implements SingleInvocationSample<BuildInvocationResult> {
+    static class TestSample extends SingleInvocationDurationSample<BuildInvocationResult> {
         static final TestSample INSTANCE = new TestSample()
-        final String name = "Test sample"
+
+        TestSample() {
+            super("Test sample")
+        }
 
         @Override
-        Duration extractTotalDurationFrom(BuildInvocationResult result) {
+        protected Duration extractTotalDurationFrom(BuildInvocationResult result) {
             return ((GradleInvocationResult) result).testTime
         }
     }

@@ -3,8 +3,9 @@ package org.gradle.profiler;
 import org.gradle.profiler.BuildAction.BuildActionResult;
 import org.gradle.profiler.buildops.BuildOperationExecutionData;
 import org.gradle.profiler.result.BuildInvocationResult;
-import org.gradle.profiler.result.SingleInvocationSample;
+import org.gradle.profiler.result.DurationSample;
 import org.gradle.profiler.result.Sample;
+import org.gradle.profiler.result.SingleInvocationDurationSample;
 
 import javax.annotation.Nullable;
 import java.time.Duration;
@@ -14,6 +15,7 @@ import static org.gradle.profiler.buildops.BuildOperationUtil.getSimpleBuildOper
 
 public class GradleBuildInvocationResult extends BuildInvocationResult {
     private final Duration garbageCollectionTime;
+    private final Long localBuildCacheSize;
     private final Duration timeToTaskExecution;
     private final Map<String, BuildOperationExecutionData> totalBuildOperationExecutionData;
     private final String daemonPid;
@@ -22,12 +24,14 @@ public class GradleBuildInvocationResult extends BuildInvocationResult {
         BuildContext buildContext,
         BuildActionResult actionResult,
         @Nullable Duration garbageCollectionTime,
+        @Nullable Long localBuildCacheSize,
         @Nullable Duration timeToTaskExecution,
         Map<String, BuildOperationExecutionData> totalBuildOperationExecutionData,
         String daemonPid
     ) {
         super(buildContext, actionResult);
         this.garbageCollectionTime = garbageCollectionTime;
+        this.localBuildCacheSize = localBuildCacheSize;
         this.timeToTaskExecution = timeToTaskExecution;
         this.totalBuildOperationExecutionData = totalBuildOperationExecutionData;
         this.daemonPid = daemonPid;
@@ -41,6 +45,10 @@ public class GradleBuildInvocationResult extends BuildInvocationResult {
         return garbageCollectionTime;
     }
 
+    public Long getLocalBuildCacheSize() {
+        return localBuildCacheSize;
+    }
+
     public Duration getTimeToTaskExecution() {
         return timeToTaskExecution;
     }
@@ -50,15 +58,10 @@ public class GradleBuildInvocationResult extends BuildInvocationResult {
     }
 
     public static Sample<GradleBuildInvocationResult> sampleBuildOperation(String buildOperationDetailsClass) {
-        return new Sample<GradleBuildInvocationResult>() {
+        return new DurationSample<GradleBuildInvocationResult>(getSimpleBuildOperationName(buildOperationDetailsClass)) {
             @Override
-            public String getName() {
-                return getSimpleBuildOperationName(buildOperationDetailsClass);
-            }
-
-            @Override
-            public Duration extractTotalDurationFrom(GradleBuildInvocationResult result) {
-                return getExecutionData(result).getTotalDuration();
+            protected Duration extractTotalDurationFrom(GradleBuildInvocationResult result) {
+                return Duration.ofMillis(getExecutionData(result).getValue());
             }
 
             @Override
@@ -72,27 +75,22 @@ public class GradleBuildInvocationResult extends BuildInvocationResult {
         };
     }
 
-    public static final Sample<GradleBuildInvocationResult> GARBAGE_COLLECTION_TIME = new SingleInvocationSample<GradleBuildInvocationResult>() {
+    public static final Sample<GradleBuildInvocationResult> GARBAGE_COLLECTION_TIME
+        = SingleInvocationDurationSample.from("garbage collection time", GradleBuildInvocationResult::getGarbageCollectionTime);
+
+    public static final Sample<GradleBuildInvocationResult> LOCAL_BUILD_CACHE_SIZE
+        = new Sample<GradleBuildInvocationResult>("local build cache size", "MiB") {
         @Override
-        public String getName() {
-            return "garbage collection time";
+        public double extractValue(GradleBuildInvocationResult result) {
+            return result.getLocalBuildCacheSize() / 1024.0 / 1024.0;
         }
 
         @Override
-        public Duration extractTotalDurationFrom(GradleBuildInvocationResult result) {
-            return result.garbageCollectionTime;
+        public int extractTotalCountFrom(GradleBuildInvocationResult result) {
+            return 1;
         }
     };
 
-    public static final Sample<GradleBuildInvocationResult> TIME_TO_TASK_EXECUTION = new SingleInvocationSample<GradleBuildInvocationResult>() {
-        @Override
-        public String getName() {
-            return "task start";
-        }
-
-        @Override
-        public Duration extractTotalDurationFrom(GradleBuildInvocationResult result) {
-            return result.timeToTaskExecution;
-        }
-    };
+    public static final Sample<GradleBuildInvocationResult> TIME_TO_TASK_EXECUTION
+        = SingleInvocationDurationSample.from("task start", GradleBuildInvocationResult::getTimeToTaskExecution);
 }

@@ -247,12 +247,11 @@ class AndroidStudioIntegrationTest extends AbstractProfilerIntegrationTest {
         and:
         def lines = resultFile.lines
         lines[3] == "value,total execution time,garbage collection time,task start,ConfigureBuildBuildOperationType,Gradle total execution time,IDE execution time"
-        def matcher = lines[4] =~ /warm-up build #1,(\d+),(?<gc>\d+),(?<taskStart>\d+),(?<buildOp>\d+),(\d+),(\d+)/
+        def matcher = lines[4] =~ /warm-up build #1,($SAMPLE),(?<gc>$SAMPLE),(?<taskStart>$SAMPLE),(?<buildOp>$SAMPLE),($SAMPLE),($SAMPLE)/
         matcher.matches()
-        assert matcher.group("gc") as long > 0
-        assert matcher.group("taskStart") as long > 0
-        assert matcher.group("buildOp") as long > 0
-
+        assert matcher.group("gc") as double > 0
+        assert matcher.group("taskStart") as double > 0
+        assert matcher.group("buildOp") as double > 0
     }
 
     def "can override Android Studio jvm args"() {

@@ -48,7 +48,8 @@
       "samples": [
         {
           "name": "execution",
-          "confidence": 0.0
+          "confidence": 0.0,
+          "unit": "ms"
         }
       ],
       "iterations": [
@@ -294,6 +295,7 @@
       "samples": [
         {
           "name": "execution",
+          "unit": "ms",
           "confidence": 0.9991642831782728
         }
       ],
