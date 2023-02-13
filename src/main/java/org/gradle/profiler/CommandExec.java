@@ -23,7 +23,6 @@ import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.function.Supplier;
-import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 public class CommandExec {
@@ -268,12 +267,22 @@ public class CommandExec {
             }
             try {
                 @SuppressWarnings("unchecked")
-                Stream<Object> stream = (Stream<Object>) Process.class.getMethod("descendants").invoke(process);
-                Method destroy = Class.forName("java.lang.ProcessHandle").getMethod("destroy");
-                for (Object child : stream.collect(Collectors.toList())) {
-                    destroy.invoke(child);
-                }
+                Stream<Object> descendants = (Stream<Object>) Process.class.getMethod("descendants").invoke(process);
+                Method pidMethod = Class.forName("java.lang.ProcessHandle").getMethod("pid");
+                Method destroyMethod = Class.forName("java.lang.ProcessHandle").getMethod("destroy");
+                descendants.forEach(descendant -> destroyDescendant(descendant, pidMethod, destroyMethod));
             } catch (NoSuchMethodException | IllegalAccessException | InvocationTargetException | ClassNotFoundException e) {
+                throw new RuntimeException(e);
+            }
+        }
+
+        private void destroyDescendant(Object child, Method pidMethod, Method destroyMethod) {
+            try {
+                long pid = (long) pidMethod.invoke(child);
+                boolean success = (boolean) destroyMethod.invoke(child);
+                String successOrFailure = success ? "Successfully" : "Unsuccessfully";
+                Logging.detailed().println(successOrFailure + " requested termination of process: " + pid);
+            } catch (IllegalAccessException | InvocationTargetException e) {
                 throw new RuntimeException(e);
             }
         }

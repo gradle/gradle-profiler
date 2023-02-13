@@ -1,6 +1,6 @@
 package org.gradle.profiler.studio.plugin
 
-
+import com.google.common.collect.ImmutableList
 import org.gradle.profiler.client.protocol.Server
 import org.junit.Rule
 import org.junit.rules.TemporaryFolder
@@ -14,6 +14,13 @@ import java.nio.file.Path
 import java.nio.file.Paths
 
 class StudioPluginSpecification extends Specification {
+
+    private static final List<String> WRAPPER_FILES = ImmutableList.of(
+        "gradlew",
+        "gradlew.bat",
+        "gradle/wrapper/gradle-wrapper.jar",
+        "gradle/wrapper/gradle-wrapper.properties"
+    )
 
     @Rule
     TemporaryFolder tempDir = new TemporaryFolder();
@@ -51,9 +58,6 @@ class StudioPluginSpecification extends Specification {
 
     private def setupWrapper(Path projectDir) {
         Files.createDirectories(projectDir.resolve("gradle/wrapper"))
-        Files.copy(Paths.get("../../gradlew"), projectDir.resolve("gradlew"))
-        Files.copy(Paths.get("../../gradlew.bat"), projectDir.resolve("gradlew.bat"))
-        Files.copy(Paths.get("../../gradle/wrapper/gradle-wrapper.jar"), projectDir.resolve("gradle/wrapper/gradle-wrapper.jar"))
-        Files.copy(Paths.get("../../gradle/wrapper/gradle-wrapper.properties"), projectDir.resolve("gradle/wrapper/gradle-wrapper.properties"))
+        WRAPPER_FILES.each { Files.copy(Paths.get("../../$it"), projectDir.resolve(it)) }
     }
 }
