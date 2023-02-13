@@ -268,20 +268,21 @@ public class CommandExec {
             try {
                 @SuppressWarnings("unchecked")
                 Stream<Object> descendants = (Stream<Object>) Process.class.getMethod("descendants").invoke(process);
+                long parentPid = (long) Process.class.getMethod("pid").invoke(process);
                 Method pidMethod = Class.forName("java.lang.ProcessHandle").getMethod("pid");
                 Method destroyMethod = Class.forName("java.lang.ProcessHandle").getMethod("destroy");
-                descendants.forEach(descendant -> destroyDescendant(descendant, pidMethod, destroyMethod));
+                descendants.forEach(descendant -> destroyDescendant(parentPid, descendant, pidMethod, destroyMethod));
             } catch (NoSuchMethodException | IllegalAccessException | InvocationTargetException | ClassNotFoundException e) {
                 throw new RuntimeException(e);
             }
         }
 
-        private void destroyDescendant(Object child, Method pidMethod, Method destroyMethod) {
+        private void destroyDescendant(long parentPid, Object child, Method pidMethod, Method destroyMethod) {
             try {
                 long pid = (long) pidMethod.invoke(child);
                 boolean success = (boolean) destroyMethod.invoke(child);
                 String successOrFailure = success ? "Successfully" : "Unsuccessfully";
-                Logging.detailed().println(successOrFailure + " requested termination of process: " + pid);
+                Logging.detailed().printf("%s requested termination of descendant '%d' of parent '%d'. Parent will be terminated after that.%n", successOrFailure, pid, parentPid);
             } catch (IllegalAccessException | InvocationTargetException e) {
                 throw new RuntimeException(e);
             }
