@@ -1,5 +1,7 @@
 package org.gradle.profiler;
 
+import org.gradle.api.JavaVersion;
+
 import javax.annotation.Nullable;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
@@ -9,6 +11,8 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.lang.reflect.Field;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
@@ -19,6 +23,7 @@ import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.function.Supplier;
+import java.util.stream.Stream;
 
 public class CommandExec {
     private final File directory;
@@ -248,8 +253,39 @@ public class CommandExec {
         }
 
         public void kill() {
+            // On Windows subprocesses are not automatically
+            // killed with parent, so let's do that manually
+            destroyDescendants();
             process.destroy();
             shutdownExecutor();
+        }
+
+        private void destroyDescendants() {
+            if (!JavaVersion.current().isJava9Compatible()) {
+                // ProcessHandle API is available only from JDK9
+                return;
+            }
+            try {
+                @SuppressWarnings("unchecked")
+                Stream<Object> descendants = (Stream<Object>) Process.class.getMethod("descendants").invoke(process);
+                long parentPid = (long) Process.class.getMethod("pid").invoke(process);
+                Method pidMethod = Class.forName("java.lang.ProcessHandle").getMethod("pid");
+                Method destroyMethod = Class.forName("java.lang.ProcessHandle").getMethod("destroy");
+                descendants.forEach(descendant -> destroyDescendant(parentPid, descendant, pidMethod, destroyMethod));
+            } catch (NoSuchMethodException | IllegalAccessException | InvocationTargetException | ClassNotFoundException e) {
+                throw new RuntimeException(e);
+            }
+        }
+
+        private void destroyDescendant(long parentPid, Object child, Method pidMethod, Method destroyMethod) {
+            try {
+                long pid = (long) pidMethod.invoke(child);
+                boolean success = (boolean) destroyMethod.invoke(child);
+                String successOrFailure = success ? "Successfully" : "Unsuccessfully";
+                Logging.detailed().printf("%s requested termination of descendant '%d' of parent '%d'. Parent will be terminated after that.%n", successOrFailure, pid, parentPid);
+            } catch (IllegalAccessException | InvocationTargetException e) {
+                throw new RuntimeException(e);
+            }
         }
 
         private void shutdownExecutor() {
