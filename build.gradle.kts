@@ -132,8 +132,8 @@ androidStudioTests {
     // Giraffe (2022.3.1.2) Canary 2
     testAndroidStudioVersion.set("2022.3.1.2")
     testAndroidSdkVersion.set("7.3.0")
-    // For local development it's easier to setup Android SDK with Android Studio, since auto download needs ANDROID_HOME to be set with
-    // an accepted license in it. See https://developer.android.com/studio/intro/update.html#download-with-gradle.
+    // For local development it's easier to setup Android SDK with Android Studio, since auto download needs ANDROID_HOME or ANDROID_SDK_ROOT
+    // to be set with an accepted license in it. See https://developer.android.com/studio/intro/update.html#download-with-gradle.
     autoDownloadAndroidSdk.set(autoDownloadAndRunInHeadless)
 }
 
