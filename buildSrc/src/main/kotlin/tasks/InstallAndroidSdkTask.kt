@@ -12,7 +12,7 @@ import org.gradle.tooling.GradleConnector
 import java.io.File
 
 /**
- * Installs Android SDK. This task requires the ANDROID_SDK_ROOT env variable to be set.
+ * Installs Android SDK. This task requires the ANDROID_HOME or ANDROID_SDK_ROOT env variable to be set.
  */
 @UntrackedTask(because = "Output directory can change when running other builds")
 abstract class InstallAndroidSdkTask : DefaultTask() {
@@ -25,9 +25,9 @@ abstract class InstallAndroidSdkTask : DefaultTask() {
 
     @TaskAction
     fun install() {
-        if (System.getenv("ANDROID_SDK_ROOT") == null) {
+        if (System.getenv("ANDROID_HOME") == null && System.getenv("ANDROID_SDK_ROOT") == null) {
             throw GradleException(
-                "ANDROID_SDK_ROOT env variable is not set but it should be with the installation directory path. " +
+                "None of ANDROID_HOME or ANDROID_SDK_ROOT env variable is set, but one should be. " +
                     "The installation directory should also contain the Android sdk license key. See https://developer.android.com/studio/intro/update.html#download-with-gradle."
             )
         }

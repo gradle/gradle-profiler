@@ -13,7 +13,7 @@ import spock.lang.Requires
 import static org.gradle.profiler.studio.AndroidStudioTestSupport.setupLocalProperties
 
 /**
- * If running this tests with Android Studio Giraffe (2022.3) or later you need ANDROID_SDK_ROOT set or
+ * If running this tests with Android Studio Giraffe (2022.3) or later you need ANDROID_HOME or ANDROID_SDK_ROOT set or
  * having Android sdk installed in <user.home>/Library/Android/sdk (e.g. on Mac /Users/<username>/Library/Android/sdk)
  */
 @ShowAndroidStudioLogsOnFailure

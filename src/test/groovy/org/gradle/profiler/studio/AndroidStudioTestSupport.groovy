@@ -9,6 +9,9 @@ class AndroidStudioTestSupport {
     }
 
     static String findAndroidSdkPath() {
+        if (System.getenv("ANDROID_HOME") != null) {
+            return FilenameUtils.separatorsToUnix(System.getenv("ANDROID_HOME"))
+        }
         if (System.getenv("ANDROID_SDK_ROOT") != null) {
             return FilenameUtils.separatorsToUnix(System.getenv("ANDROID_SDK_ROOT"))
         }
