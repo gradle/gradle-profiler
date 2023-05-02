@@ -8,6 +8,7 @@
 /profile-out/
 /profile-out-*/
 /gradle-user-home/
+/home with spaces/
 
 **/.classpath
 **/.project
