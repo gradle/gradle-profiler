@@ -2,6 +2,7 @@ package org.gradle.profiler
 
 import org.gradle.profiler.mutations.AbstractCleanupMutator
 import org.gradle.profiler.report.Format
+import org.gradle.profiler.studio.AndroidStudioSyncAction
 import org.gradle.profiler.studio.invoker.StudioGradleScenarioDefinition
 import org.gradle.profiler.toolingapi.FetchProjectPublications
 import org.gradle.tooling.model.idea.IdeaProject
