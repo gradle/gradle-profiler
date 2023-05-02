@@ -1,5 +1,7 @@
-package org.gradle.profiler;
+package org.gradle.profiler.bazel;
 
+import org.gradle.profiler.BuildToolCommandLineInvoker;
+import org.gradle.profiler.InvocationSettings;
 import org.gradle.profiler.result.BuildInvocationResult;
 
 import java.util.ArrayList;

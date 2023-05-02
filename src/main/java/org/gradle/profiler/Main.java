@@ -1,9 +1,15 @@
 package org.gradle.profiler;
 
+import org.gradle.profiler.bazel.BazelScenarioDefinition;
+import org.gradle.profiler.bazel.BazelScenarioInvoker;
+import org.gradle.profiler.buck.BuckScenarioDefinition;
+import org.gradle.profiler.buck.BuckScenarioInvoker;
 import org.gradle.profiler.flamegraph.DifferentialStacksGenerator;
 import org.gradle.profiler.flamegraph.FlameGraphGenerator;
 import org.gradle.profiler.flamegraph.Stacks;
 import org.gradle.profiler.instrument.PidInstrumentation;
+import org.gradle.profiler.maven.MavenScenarioDefinition;
+import org.gradle.profiler.maven.MavenScenarioInvoker;
 import org.gradle.profiler.report.CsvGenerator;
 import org.gradle.profiler.report.HtmlGenerator;
 import org.gradle.profiler.result.BuildInvocationResult;

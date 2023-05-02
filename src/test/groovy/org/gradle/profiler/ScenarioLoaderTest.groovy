@@ -1,5 +1,8 @@
 package org.gradle.profiler
 
+import org.gradle.profiler.bazel.BazelScenarioDefinition
+import org.gradle.profiler.buck.BuckScenarioDefinition
+import org.gradle.profiler.maven.MavenScenarioDefinition
 import org.gradle.profiler.mutations.AbstractCleanupMutator
 import org.gradle.profiler.report.Format
 import org.gradle.profiler.studio.AndroidStudioSyncAction
