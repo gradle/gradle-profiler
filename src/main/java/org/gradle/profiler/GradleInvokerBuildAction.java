@@ -1,5 +1,7 @@
 package org.gradle.profiler;
 
+import org.gradle.profiler.result.BuildActionResult;
+
 import java.util.List;
 
 public abstract class GradleInvokerBuildAction implements BuildAction {

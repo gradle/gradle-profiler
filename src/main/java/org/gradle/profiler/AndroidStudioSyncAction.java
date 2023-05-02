@@ -1,5 +1,6 @@
 package org.gradle.profiler;
 
+import org.gradle.profiler.result.BuildActionResult;
 import org.gradle.profiler.studio.StudioGradleClient;
 
 import java.util.List;

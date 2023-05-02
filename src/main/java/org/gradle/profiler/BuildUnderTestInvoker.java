@@ -1,16 +1,12 @@
 package org.gradle.profiler;
 
-import org.gradle.profiler.BuildAction.BuildActionResult;
 import org.gradle.profiler.buildops.BuildOperationExecutionData;
 import org.gradle.profiler.buildops.BuildOperationInstrumentation;
 import org.gradle.profiler.instrument.PidInstrumentation;
+import org.gradle.profiler.result.BuildActionResult;
 
 import java.time.Duration;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
 
 /**
  * Runs a single invocation of a Gradle build and collects the result.

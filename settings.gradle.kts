@@ -17,6 +17,8 @@ include("profiler-buildscan")
 include("profiler-chrometrace")
 include("profiler-heapdump")
 
+include("invoker-api")
+
 include("chrome-trace")
 include("build-operations")
 include("heap-dump")

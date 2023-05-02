@@ -1,11 +1,7 @@
 package org.gradle.profiler;
 
-import org.gradle.profiler.BuildAction.BuildActionResult;
 import org.gradle.profiler.buildops.BuildOperationExecutionData;
-import org.gradle.profiler.result.BuildInvocationResult;
-import org.gradle.profiler.result.DurationSample;
-import org.gradle.profiler.result.Sample;
-import org.gradle.profiler.result.SingleInvocationDurationSample;
+import org.gradle.profiler.result.*;
 
 import javax.annotation.Nullable;
 import java.time.Duration;

@@ -1,6 +1,5 @@
 package org.gradle.profiler.result;
 
-import org.gradle.profiler.BuildAction.BuildActionResult;
 import org.gradle.profiler.BuildContext;
 
 import java.time.Duration;

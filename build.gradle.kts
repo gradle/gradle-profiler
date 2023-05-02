@@ -51,6 +51,7 @@ dependencies {
     implementation(project(":profiler-jprofiler"))
     implementation(project(":profiler-yourkit"))
 
+    implementation(project(":invoker-api"))
 
     gradleRuntime(gradleApi())
     gradleRuntime(libs.toolingApi)

@@ -12,6 +12,7 @@ import org.gradle.profiler.Phase
 import org.gradle.profiler.RunTasksAction
 import org.gradle.profiler.ScenarioContext
 import org.gradle.profiler.mutations.ApplyAbiChangeToKotlinSourceFileMutator
+import org.gradle.profiler.result.BuildActionResult
 import org.gradle.profiler.result.BuildInvocationResult
 import org.gradle.profiler.result.SingleInvocationDurationSample
 import org.gradle.util.GradleVersion
@@ -317,7 +318,7 @@ class JsonResultWriterTest extends Specification {
         final BuildContext context
 
         GradleInvocationResult(BuildContext context, long executionTime, long testTime) {
-            super(context, new BuildAction.BuildActionResult(Duration.ofMillis(executionTime)))
+            super(context, new BuildActionResult(Duration.ofMillis(executionTime)))
             this.testTime = Duration.ofMillis(testTime)
             this.context = context
         }

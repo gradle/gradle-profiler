@@ -1,6 +1,6 @@
 package org.gradle.profiler;
 
-import org.gradle.profiler.BuildAction.BuildActionResult;
+import org.gradle.profiler.result.BuildActionResult;
 import org.gradle.profiler.result.BuildInvocationResult;
 
 import java.io.File;
