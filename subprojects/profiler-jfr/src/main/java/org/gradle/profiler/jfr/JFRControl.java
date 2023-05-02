@@ -1,12 +1,12 @@
 package org.gradle.profiler.jfr;
 
-import com.google.common.collect.ImmutableMap;
 import org.gradle.profiler.CommandExec;
 import org.gradle.profiler.InstrumentingProfiler;
 import org.gradle.profiler.flamegraph.*;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.LinkedHashMap;
 import java.util.List;
 
 public class JFRControl implements InstrumentingProfiler.SnapshotCapturingProfilerController {
@@ -14,10 +14,11 @@ public class JFRControl implements InstrumentingProfiler.SnapshotCapturingProfil
     private final JcmdRunner jcmd;
     private final JFRArgs jfrArgs;
     private final File jfrFile;
-    private final JfrToStacksConverter stacksConverter = new JfrToStacksConverter(ImmutableMap.of(
-        DetailLevel.RAW, FlameGraphSanitizer.raw(),
-        DetailLevel.SIMPLIFIED, FlameGraphSanitizer.simplified()
-    ));
+    private final JfrToStacksConverter stacksConverter = new JfrToStacksConverter(new LinkedHashMap<DetailLevel, FlameGraphSanitizer>() {{
+        put(DetailLevel.RAW, FlameGraphSanitizer.raw());
+        put(DetailLevel.SIMPLIFIED, FlameGraphSanitizer.simplified());
+    }});
+
     private final FlameGraphGenerator flameGraphGenerator = new FlameGraphGenerator();
     private int counter;
 

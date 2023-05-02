@@ -1,7 +1,7 @@
 package org.gradle.profiler.jfr;
 
-import org.gradle.api.JavaVersion;
 import org.gradle.profiler.JvmArgsCalculator;
+import org.gradle.profiler.VersionUtils;
 
 import java.io.File;
 import java.util.List;
@@ -23,8 +23,9 @@ public class JFRJvmArgsCalculator implements JvmArgsCalculator {
     @Override
     public void calculateJvmArgs(List<String> jvmArgs) {
         boolean oracleVm = isOracleVm();
-        boolean java8OrLater = JavaVersion.current().isJava8Compatible();
-        boolean java11OrLater = JavaVersion.current().isJava11Compatible();
+        int javaVersion = VersionUtils.getJavaVersion();
+        boolean java8OrLater = javaVersion >= 8;
+        boolean java11OrLater = javaVersion >= 11;
         if (oracleVm && !java11OrLater) {
             jvmArgs.add("-XX:+UnlockCommercialFeatures");
         } else if (!java8OrLater) {

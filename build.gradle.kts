@@ -41,8 +41,16 @@ dependencies {
         because("To write JSON output")
     }
     implementation(project(":client-protocol"))
+
     implementation(project(":profiler-api"))
     implementation(project(":profiler-asyncprofiler"))
+    implementation(project(":profiler-buildscan"))
+    implementation(project(":profiler-chrometrace"))
+    implementation(project(":profiler-heapdump"))
+    implementation(project(":profiler-jfr"))
+    implementation(project(":profiler-jprofiler"))
+    implementation(project(":profiler-yourkit"))
+
 
     gradleRuntime(gradleApi())
     gradleRuntime(libs.toolingApi)
