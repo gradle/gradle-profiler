@@ -1,5 +1,7 @@
-package org.gradle.profiler;
+package org.gradle.profiler.gradle;
 
+import org.gradle.profiler.GradleClient;
+import org.gradle.profiler.Logging;
 import org.gradle.tooling.BuildAction;
 import org.gradle.tooling.BuildActionExecuter;
 import org.gradle.tooling.GradleConnectionException;

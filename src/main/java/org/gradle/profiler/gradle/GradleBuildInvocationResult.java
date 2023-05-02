@@ -1,5 +1,6 @@
-package org.gradle.profiler;
+package org.gradle.profiler.gradle;
 
+import org.gradle.profiler.BuildContext;
 import org.gradle.profiler.buildops.BuildOperationExecutionData;
 import org.gradle.profiler.result.*;
 

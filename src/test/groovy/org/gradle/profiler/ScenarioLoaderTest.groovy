@@ -2,6 +2,12 @@ package org.gradle.profiler
 
 import org.gradle.profiler.bazel.BazelScenarioDefinition
 import org.gradle.profiler.buck.BuckScenarioDefinition
+import org.gradle.profiler.gradle.GradleBuildInvoker
+import org.gradle.profiler.gradle.GradleClientSpec
+import org.gradle.profiler.gradle.GradleDaemonReuse
+import org.gradle.profiler.gradle.GradleScenarioDefinition
+import org.gradle.profiler.gradle.LoadToolingModelAction
+import org.gradle.profiler.gradle.RunToolingAction
 import org.gradle.profiler.maven.MavenScenarioDefinition
 import org.gradle.profiler.mutations.AbstractCleanupMutator
 import org.gradle.profiler.report.Format

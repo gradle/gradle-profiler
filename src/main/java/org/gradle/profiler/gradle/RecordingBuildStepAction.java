@@ -1,8 +1,8 @@
-package org.gradle.profiler;
+package org.gradle.profiler.gradle;
+
+import org.gradle.profiler.*;
 
 import java.io.IOException;
-
-import static org.gradle.profiler.BuildStep.BUILD;
 
 public class RecordingBuildStepAction implements BuildStepAction<GradleBuildInvocationResult> {
     private final BuildStepAction<GradleBuildInvocationResult> action;

@@ -6,6 +6,7 @@ import joptsimple.OptionException;
 import joptsimple.OptionParser;
 import joptsimple.OptionSet;
 import joptsimple.OptionSpecBuilder;
+import org.gradle.profiler.gradle.GradleBuildInvoker;
 import org.gradle.profiler.report.Format;
 
 import javax.annotation.Nullable;

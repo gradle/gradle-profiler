@@ -1,7 +1,7 @@
 package org.gradle.profiler.studio.invoker;
 
 import org.gradle.profiler.GradleBuildConfiguration;
-import org.gradle.profiler.GradleScenarioDefinition;
+import org.gradle.profiler.gradle.GradleScenarioDefinition;
 
 import java.util.List;
 

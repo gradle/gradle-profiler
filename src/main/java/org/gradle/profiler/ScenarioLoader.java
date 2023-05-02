@@ -8,6 +8,7 @@ import com.typesafe.config.ConfigFactory;
 import com.typesafe.config.ConfigParseOptions;
 import org.gradle.profiler.bazel.BazelScenarioDefinition;
 import org.gradle.profiler.buck.BuckScenarioDefinition;
+import org.gradle.profiler.gradle.*;
 import org.gradle.profiler.maven.MavenScenarioDefinition;
 import org.gradle.profiler.mutations.AbstractCleanupMutator.CleanupSchedule;
 import org.gradle.profiler.mutations.ApplyAbiChangeToSourceFileMutator;

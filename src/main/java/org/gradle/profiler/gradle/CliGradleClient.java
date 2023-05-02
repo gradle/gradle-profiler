@@ -1,5 +1,6 @@
-package org.gradle.profiler;
+package org.gradle.profiler.gradle;
 
+import org.gradle.profiler.*;
 import org.gradle.tooling.BuildAction;
 import org.gradle.tooling.BuildActionExecuter;
 

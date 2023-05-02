@@ -1,4 +1,7 @@
-package org.gradle.profiler;
+package org.gradle.profiler.gradle;
+
+import org.gradle.profiler.GradleBuildConfiguration;
+import org.gradle.profiler.Logging;
 
 import java.io.File;
 

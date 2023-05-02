@@ -1,4 +1,6 @@
-package org.gradle.profiler;
+package org.gradle.profiler.gradle;
+
+import org.gradle.profiler.BuildInvoker;
 
 public class GradleBuildInvoker extends BuildInvoker {
 

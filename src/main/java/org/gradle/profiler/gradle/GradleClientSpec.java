@@ -1,5 +1,10 @@
-package org.gradle.profiler;
+package org.gradle.profiler.gradle;
 
+import org.gradle.profiler.GradleBuildConfiguration;
+import org.gradle.profiler.GradleClient;
+import org.gradle.profiler.InvocationSettings;
+import org.gradle.profiler.gradle.CliGradleClient;
+import org.gradle.profiler.gradle.ToolingApiGradleClient;
 import org.gradle.profiler.studio.StudioGradleClient;
 import org.gradle.profiler.studio.invoker.StudioGradleScenarioDefinition.StudioGradleBuildConfiguration;
 import org.gradle.tooling.GradleConnector;

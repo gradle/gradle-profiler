@@ -1,5 +1,6 @@
-package org.gradle.profiler;
+package org.gradle.profiler.gradle;
 
+import org.gradle.profiler.*;
 import org.gradle.profiler.buildops.BuildOperationExecutionData;
 import org.gradle.profiler.buildops.BuildOperationInstrumentation;
 import org.gradle.profiler.instrument.PidInstrumentation;
@@ -19,6 +20,18 @@ public class BuildUnderTestInvoker {
     private final BuildOperationInstrumentation buildOperationInstrumentation;
     private final Map<String, Duration> previousGcTimes = new HashMap<>();
 
+    BuildStepAction<GradleBuildInvocationResult> NO_OP = new BuildStepAction<GradleBuildInvocationResult>() {
+        @Override
+        public boolean isDoesSomething() {
+            return false;
+        }
+
+        @Override
+        public GradleBuildInvocationResult run(BuildContext buildContext, BuildStep buildStep) {
+            return null;
+        }
+    };
+
     public BuildUnderTestInvoker(List<String> jvmArgs, List<String> gradleArgs, GradleClient gradleClient, PidInstrumentation pidInstrumentation, BuildOperationInstrumentation buildOperationInstrumentation) {
         this.jvmArgs = jvmArgs;
         this.gradleArgs = gradleArgs;
@@ -31,7 +44,7 @@ public class BuildUnderTestInvoker {
         if (action.isDoesSomething()) {
             return new InvokeAndMeasureAction(action);
         } else {
-            return BuildStepAction.NO_OP;
+            return NO_OP;
         }
     }
 

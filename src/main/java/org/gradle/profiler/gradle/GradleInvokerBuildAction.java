@@ -1,5 +1,8 @@
-package org.gradle.profiler;
+package org.gradle.profiler.gradle;
 
+import org.gradle.profiler.BuildAction;
+import org.gradle.profiler.GradleClient;
+import org.gradle.profiler.Timer;
 import org.gradle.profiler.result.BuildActionResult;
 
 import java.util.List;

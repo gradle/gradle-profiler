@@ -1,4 +1,9 @@
-package org.gradle.profiler;
+package org.gradle.profiler.gradle;
+
+import org.gradle.profiler.BuildAction;
+import org.gradle.profiler.GradleBuildConfiguration;
+import org.gradle.profiler.gradle.GradleBuildInvoker;
+import org.gradle.profiler.gradle.GradleScenarioDefinition;
 
 import java.io.File;
 import java.util.Collections;

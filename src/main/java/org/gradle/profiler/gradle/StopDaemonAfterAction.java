@@ -1,5 +1,10 @@
-package org.gradle.profiler;
+package org.gradle.profiler.gradle;
 
+import org.gradle.profiler.BuildContext;
+import org.gradle.profiler.BuildStep;
+import org.gradle.profiler.BuildStepAction;
+import org.gradle.profiler.GradleBuildConfiguration;
+import org.gradle.profiler.gradle.DaemonControl;
 import org.gradle.profiler.result.BuildInvocationResult;
 
 public class StopDaemonAfterAction<T extends BuildInvocationResult> implements BuildStepAction<T> {

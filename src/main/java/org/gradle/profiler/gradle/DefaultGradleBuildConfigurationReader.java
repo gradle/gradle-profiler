@@ -1,6 +1,9 @@
-package org.gradle.profiler;
+package org.gradle.profiler.gradle;
 
 import com.google.common.collect.ImmutableList;
+import org.gradle.profiler.*;
+import org.gradle.profiler.gradle.DaemonControl;
+import org.gradle.profiler.gradle.ToolingApiGradleClient;
 import org.gradle.tooling.GradleConnector;
 import org.gradle.tooling.ProjectConnection;
 import org.gradle.tooling.model.build.BuildEnvironment;

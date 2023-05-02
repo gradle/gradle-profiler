@@ -1,4 +1,4 @@
-package org.gradle.profiler;
+package org.gradle.profiler.gradle;
 
 import java.util.List;
 import java.util.stream.Collectors;

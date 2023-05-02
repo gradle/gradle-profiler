@@ -5,11 +5,11 @@ import org.gradle.profiler.BuildAction
 import org.gradle.profiler.BuildContext
 import org.gradle.profiler.BuildScenarioResultImpl
 import org.gradle.profiler.GradleBuildConfiguration
-import org.gradle.profiler.GradleBuildInvoker
-import org.gradle.profiler.GradleScenarioDefinition
+import org.gradle.profiler.gradle.GradleBuildInvoker
+import org.gradle.profiler.gradle.GradleScenarioDefinition
 import org.gradle.profiler.OperatingSystem
 import org.gradle.profiler.Phase
-import org.gradle.profiler.RunTasksAction
+import org.gradle.profiler.gradle.RunTasksAction
 import org.gradle.profiler.ScenarioContext
 import org.gradle.profiler.mutations.ApplyAbiChangeToKotlinSourceFileMutator
 import org.gradle.profiler.result.BuildActionResult

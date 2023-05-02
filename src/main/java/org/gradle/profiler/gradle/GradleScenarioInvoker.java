@@ -1,7 +1,8 @@
-package org.gradle.profiler;
+package org.gradle.profiler.gradle;
 
 import com.google.common.collect.ImmutableList;
 import org.apache.commons.io.FileUtils;
+import org.gradle.profiler.*;
 import org.gradle.profiler.buildops.BuildOperationInstrumentation;
 import org.gradle.profiler.instrument.PidInstrumentation;
 import org.gradle.profiler.result.BuildInvocationResult;
