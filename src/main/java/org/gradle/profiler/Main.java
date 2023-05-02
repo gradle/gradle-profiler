@@ -62,6 +62,8 @@ public class Main {
             File htmlFile = new File(settings.getOutputDir(), "benchmark.html");
             BenchmarkResultCollector benchmarkResults = new BenchmarkResultCollector(new CsvGenerator(cvsFile, settings.getCsvFormat()), new HtmlGenerator(htmlFile));
             PidInstrumentation pidInstrumentation = new PidInstrumentation();
+
+
             GradleScenarioInvoker gradleScenarioInvoker = new GradleScenarioInvoker(daemonControl, pidInstrumentation);
             StudioGradleScenarioInvoker studioGradleScenarioInvoker = new StudioGradleScenarioInvoker(gradleScenarioInvoker);
             BazelScenarioInvoker bazelScenarioInvoker = new BazelScenarioInvoker();
