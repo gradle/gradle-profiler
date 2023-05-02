@@ -1,20 +1,21 @@
 package org.gradle.profiler.mutations;
 
-import com.google.common.collect.ImmutableSet;
 import org.apache.commons.io.FilenameUtils;
 import org.gradle.profiler.BuildContext;
 
 import java.io.File;
+import java.util.Arrays;
+import java.util.List;
 import java.util.Locale;
 
 public class ApplyChangeToNativeSourceFileMutator extends AbstractFileChangeMutator {
 
     // Both lists taken from https://gcc.gnu.org/onlinedocs/gcc/Overall-Options.html
-    private static final ImmutableSet<String> nativeSourcecodeFileEndings = ImmutableSet.of(
+    private static final List<String> nativeSourcecodeFileEndings = Arrays.asList(
         "c", "cc", "cp", "cxx", "cpp", "c++"
     );
 
-    private static final ImmutableSet<String> nativeHeaderFileEndings = ImmutableSet.of(
+    private static final List<String> nativeHeaderFileEndings = Arrays.asList(
         "h", "hh", "hp", "hxx", "hpp", "h++", "tcc"
     );
 

@@ -6,25 +6,14 @@ import com.google.common.collect.Sets;
 import com.google.common.math.IntMath;
 import com.typesafe.config.Config;
 import org.apache.commons.io.FileUtils;
-import org.gradle.profiler.BuildContext;
-import org.gradle.profiler.BuildInvoker;
-import org.gradle.profiler.BuildMutator;
-import org.gradle.profiler.CompositeBuildMutator;
-import org.gradle.profiler.GradleBuildInvoker;
-import org.gradle.profiler.InvocationSettings;
-import org.gradle.profiler.ScenarioContext;
+import org.gradle.profiler.*;
 import org.gradle.profiler.mutations.support.FileSupport;
 
 import java.io.File;
 import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.nio.file.StandardOpenOption;
-import java.util.Collections;
-import java.util.Iterator;
-import java.util.LinkedHashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
@@ -110,9 +99,10 @@ public class ApplyProjectDependencyChangeMutator extends AbstractFileChangeMutat
 
     @Override
     public void validate(BuildInvoker invoker) {
-        if (!(invoker instanceof GradleBuildInvoker)) {
-            throw new IllegalStateException("Only Gradle invoker is supported for " + this + ", but " + invoker + " was provided.");
-        }
+        // TODO: This validation should be handled elsewhere.
+//        if (!(invoker instanceof GradleBuildInvoker)) {
+//            throw new IllegalStateException("Only Gradle invoker is supported for " + this + ", but " + invoker + " was provided.");
+//        }
     }
 
     @Override
