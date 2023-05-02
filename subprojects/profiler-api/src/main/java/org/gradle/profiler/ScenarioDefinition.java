@@ -102,4 +102,10 @@ public abstract class ScenarioDefinition {
 
     protected void printDetail(PrintStream out) {
     }
+
+    public abstract boolean createsMultipleProcesses();
+
+    public abstract boolean doesCleanup();
+
+    public abstract BuildConfiguration getBuildConfiguration();
 }

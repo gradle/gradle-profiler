@@ -14,8 +14,6 @@ import java.util.Locale;
 
 public class AsyncProfilerFactory extends ProfilerFactory {
     static final String ASYNC_PROFILER_HOME = "ASYNC_PROFILER_HOME";
-    public static final AsyncProfilerFactory INSTANCE = new AsyncProfilerFactory();
-
     private ArgumentAcceptingOptionSpec<File> profilerHomeOption;
     private ArgumentAcceptingOptionSpec<String> eventOption;
     private ArgumentAcceptingOptionSpec<AsyncProfilerConfig.Counter> counterOption;
@@ -24,6 +22,11 @@ public class AsyncProfilerFactory extends ProfilerFactory {
     private ArgumentAcceptingOptionSpec<Integer> lockThresholdOption;
     private ArgumentAcceptingOptionSpec<Integer> stackDepthOption;
     private ArgumentAcceptingOptionSpec<Boolean> systemThreadOption;
+
+    @Override
+    public String getName() {
+        return "async-profiler";
+    }
 
     @Override
     public void addOptions(OptionParser parser) {

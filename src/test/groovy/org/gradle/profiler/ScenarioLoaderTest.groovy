@@ -1,7 +1,7 @@
 package org.gradle.profiler
 
 import org.gradle.profiler.mutations.AbstractCleanupMutator
-import org.gradle.profiler.report.CsvGenerator
+import org.gradle.profiler.report.Format
 import org.gradle.profiler.studio.invoker.StudioGradleScenarioDefinition
 import org.gradle.profiler.toolingapi.FetchProjectPublications
 import org.gradle.tooling.model.idea.IdeaProject
@@ -53,7 +53,7 @@ class ScenarioLoaderTest extends Specification {
             .setMeasureGarbageCollection(false)
             .setMeasureConfigTime(false)
             .setMeasuredBuildOperations(measuredBuildOperations)
-            .setCsvFormat(CsvGenerator.Format.WIDE
+            .setCsvFormat(Format.WIDE
             ).build()
     }
 

@@ -7,9 +7,9 @@ public class ScenarioSettings {
     private static final String PROFILE_JFR_DIRECTORY_SUFFIX = "-jfr";
 
     private final InvocationSettings invocationSettings;
-    private final GradleScenarioDefinition scenario;
+    private final ScenarioDefinition scenario;
 
-    public ScenarioSettings(InvocationSettings invocationSettings, GradleScenarioDefinition scenario) {
+    public ScenarioSettings(InvocationSettings invocationSettings, ScenarioDefinition scenario) {
         this.invocationSettings = invocationSettings;
         this.scenario = scenario;
     }
@@ -18,12 +18,11 @@ public class ScenarioSettings {
         return invocationSettings;
     }
 
-    public GradleScenarioDefinition getScenario() {
+    public ScenarioDefinition getScenario() {
         return scenario;
     }
 
     public File computeJfrProfilerOutputLocation() {
-        GradleScenarioDefinition scenario = getScenario();
         if (scenario.createsMultipleProcesses()) {
             File jfrFilesDirectory = profilerOutputLocationFor(PROFILE_JFR_DIRECTORY_SUFFIX);
             jfrFilesDirectory.mkdirs();

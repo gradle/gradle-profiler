@@ -3,10 +3,7 @@ package org.gradle.profiler.jfr;
 import com.google.common.collect.ImmutableMap;
 import org.gradle.profiler.CommandExec;
 import org.gradle.profiler.InstrumentingProfiler;
-import org.gradle.profiler.flamegraph.DetailLevel;
-import org.gradle.profiler.flamegraph.FlameGraphGenerator;
-import org.gradle.profiler.flamegraph.FlameGraphSanitizer;
-import org.gradle.profiler.flamegraph.Stacks;
+import org.gradle.profiler.flamegraph.*;
 
 import java.io.File;
 import java.io.IOException;

@@ -7,6 +7,8 @@ checkIfCurrentJavaIsCompatible()
 
 rootProject.name = "gradle-profiler"
 
+include("profiler-api")
+include("profiler-asyncprofiler")
 include("chrome-trace")
 include("build-operations")
 include("heap-dump")

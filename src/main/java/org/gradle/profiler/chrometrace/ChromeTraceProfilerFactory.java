@@ -9,4 +9,9 @@ public class ChromeTraceProfilerFactory extends ProfilerFactory {
     public Profiler createFromOptions(OptionSet parsedOptions) {
         return new ChromeTraceProfiler();
     }
+
+    @Override
+    public String getName() {
+        return "chrome-trace";
+    }
 }

@@ -1,6 +1,6 @@
 package org.gradle.profiler.asyncprofiler;
 
-import org.gradle.profiler.GradleScenarioDefinition;
+import org.gradle.profiler.ScenarioDefinition;
 import org.gradle.profiler.ScenarioSettings;
 
 import java.io.File;
@@ -19,7 +19,7 @@ public enum AsyncProfilerOutputType {
         }
     };
 
-    public static AsyncProfilerOutputType from(AsyncProfilerConfig config, GradleScenarioDefinition scenarioDefinition) {
+    public static AsyncProfilerOutputType from(AsyncProfilerConfig config, ScenarioDefinition scenarioDefinition) {
         return (config.getEvents().size() > 1 || scenarioDefinition.createsMultipleProcesses())
             ? AsyncProfilerOutputType.JFR
             : AsyncProfilerOutputType.STACKS;

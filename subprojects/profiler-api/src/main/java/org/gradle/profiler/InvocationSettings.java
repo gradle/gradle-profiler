@@ -1,5 +1,7 @@
 package org.gradle.profiler;
 
+import org.gradle.profiler.report.Format;
+
 import javax.annotation.Nullable;
 import java.io.File;
 import java.io.PrintStream;
@@ -7,8 +9,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
-
-import static org.gradle.profiler.report.CsvGenerator.Format;
 
 public class InvocationSettings {
     private final File projectDir;

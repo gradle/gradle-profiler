@@ -1,9 +1,5 @@
-package org.gradle.profiler.jfr;
+package org.gradle.profiler.flamegraph;
 
-import org.gradle.profiler.flamegraph.DetailLevel;
-import org.gradle.profiler.flamegraph.EventType;
-import org.gradle.profiler.flamegraph.FlameGraphSanitizer;
-import org.gradle.profiler.flamegraph.Stacks;
 import org.openjdk.jmc.common.IMCFrame;
 import org.openjdk.jmc.common.IMCStackTrace;
 import org.openjdk.jmc.common.item.IItem;

@@ -42,6 +42,11 @@ public class JProfilerProfilerFactory extends ProfilerFactory {
         return new JProfilerProfiler(newConfigObject(parsedOptions));
     }
 
+    @Override
+    public String getName() {
+        return "jprofiler";
+    }
+
     private JProfilerConfig newConfigObject(OptionSet parsedOptions) {
         return new JProfilerConfig(
             parsedOptions.valueOf(homeDir),

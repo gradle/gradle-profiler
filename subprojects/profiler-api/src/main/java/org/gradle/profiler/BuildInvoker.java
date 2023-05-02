@@ -31,4 +31,13 @@ public class BuildInvoker {
     public boolean allowsCleanupBetweenBuilds() {
         return true;
     }
+
+
+    public boolean isDoesNotUseDaemon() {
+        return true;
+    }
+
+    public boolean isReuseDaemon() {
+        return false;
+    }
 }

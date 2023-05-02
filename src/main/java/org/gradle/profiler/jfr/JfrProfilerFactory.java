@@ -40,6 +40,11 @@ public class JfrProfilerFactory extends ProfilerFactory {
     }
 
     @Override
+    public String getName() {
+        return "jfr";
+    }
+
+    @Override
     public void addOptions(final OptionParser parser) {
         parser.accepts("jfr-settings", "JFR settings - Either a .jfc file or the name of a template known to your JFR installation")
             .availableIf("profile")

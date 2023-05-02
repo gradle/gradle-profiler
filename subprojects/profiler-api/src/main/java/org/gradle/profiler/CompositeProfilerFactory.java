@@ -27,4 +27,9 @@ class CompositeProfilerFactory extends ProfilerFactory {
     public void addOptions(OptionParser parser) {
         throw new UnsupportedOperationException();
     }
+
+    @Override
+    public String getName() {
+        return "composite of " + delegates.stream().map(profilerFactory -> profilerFactory.getName()).collect(Collectors.joining(","));
+    }
 }

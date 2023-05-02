@@ -50,4 +50,19 @@ public abstract class BuildToolCommandLineScenarioDefinition extends ScenarioDef
     public File getToolHome() {
         return toolHome;
     }
+
+    @Override
+    public boolean createsMultipleProcesses() {
+        return false;
+    }
+
+    @Override
+    public boolean doesCleanup() {
+        return false;
+    }
+
+    @Override
+    public BuildConfiguration getBuildConfiguration() {
+        throw new IllegalStateException("unsupported");
+    }
 }

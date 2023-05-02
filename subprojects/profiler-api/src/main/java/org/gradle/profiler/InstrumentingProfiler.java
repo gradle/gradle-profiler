@@ -84,14 +84,14 @@ public abstract class InstrumentingProfiler extends Profiler {
     }
 
     protected void validateMultipleIterationsWithCleanupAction(ScenarioSettings settings, Consumer<String> reporter) {
-        GradleScenarioDefinition scenario = settings.getScenario();
-        if (scenario.getBuildCount() > 1 && !canRestartRecording(settings) && scenario.getCleanupAction().isDoesSomething()) {
+        ScenarioDefinition scenario = settings.getScenario();
+        if (scenario.getBuildCount() > 1 && !canRestartRecording(settings) && scenario.doesCleanup()) {
             reporter.accept("Profiler " + toString() + " does not support profiling multiple iterations with cleanup steps in between.");
         }
     }
 
     protected void validateMultipleDaemons(ScenarioSettings settings, Consumer<String> reporter) {
-        GradleScenarioDefinition scenario = settings.getScenario();
+        ScenarioDefinition scenario = settings.getScenario();
         if (scenario.getBuildCount() > 1 && !scenario.getInvoker().isReuseDaemon()) {
             reporter.accept("Profiler " + toString() + " does not support profiling multiple daemons.");
         }

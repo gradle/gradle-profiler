@@ -8,7 +8,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
-public class GradleBuildConfiguration {
+public class GradleBuildConfiguration implements BuildConfiguration {
     private final GradleVersion gradleVersion;
     private final File gradleHome;
     private final File javaHome;

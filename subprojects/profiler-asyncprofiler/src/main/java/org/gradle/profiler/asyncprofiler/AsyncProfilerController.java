@@ -10,7 +10,7 @@ import org.gradle.profiler.flamegraph.EventType;
 import org.gradle.profiler.flamegraph.FlameGraphGenerator;
 import org.gradle.profiler.flamegraph.FlameGraphSanitizer;
 import org.gradle.profiler.flamegraph.Stacks;
-import org.gradle.profiler.jfr.JfrToStacksConverter;
+import org.gradle.profiler.flamegraph.JfrToStacksConverter;
 
 import java.io.File;
 import java.io.IOException;

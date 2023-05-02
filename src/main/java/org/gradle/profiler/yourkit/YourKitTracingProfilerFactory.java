@@ -9,4 +9,9 @@ public class YourKitTracingProfilerFactory extends ProfilerFactory {
     public Profiler createFromOptions(OptionSet parsedOptions) {
         return new YourKitProfiler(new YourKitConfig(false, false));
     }
+
+    @Override
+    public String getName() {
+        return "yourkit-tracing";
+    }
 }

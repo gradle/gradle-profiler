@@ -17,4 +17,9 @@ public class BuildScanProfilerFactory extends ProfilerFactory {
             .availableIf("profile")
             .withOptionalArg();
     }
+
+    @Override
+    public String getName() {
+        return "buildscan";
+    }
 }

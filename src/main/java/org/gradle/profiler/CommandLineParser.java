@@ -6,8 +6,7 @@ import joptsimple.OptionException;
 import joptsimple.OptionParser;
 import joptsimple.OptionSet;
 import joptsimple.OptionSpecBuilder;
-import org.gradle.profiler.report.CsvGenerator;
-import org.gradle.profiler.report.CsvGenerator.Format;
+import org.gradle.profiler.report.Format;
 
 import javax.annotation.Nullable;
 import java.io.File;
@@ -164,7 +163,7 @@ class CommandLineParser {
                 sysProperties.put(value.substring(0, sep), value.substring(sep + 1));
             }
         }
-        CsvGenerator.Format csvFormat = CsvGenerator.Format.parse(parsedOptions.valueOf(csvFormatOption));
+        Format csvFormat = Format.parse(parsedOptions.valueOf(csvFormatOption));
         String benchmarkTitle = parsedOptions.valueOf(benchmarkTitleOption);
 
         return new InvocationSettings.InvocationSettingsBuilder()

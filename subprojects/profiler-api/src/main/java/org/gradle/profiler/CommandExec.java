@@ -1,7 +1,5 @@
 package org.gradle.profiler;
 
-import org.gradle.api.JavaVersion;
-
 import javax.annotation.Nullable;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
@@ -260,8 +258,17 @@ public class CommandExec {
             shutdownExecutor();
         }
 
+        private int getJavaVersion() {
+            String version = System.getProperty("java.version");
+            if(version.startsWith("1.")) {
+                version = version.substring(2, 3);
+            } else {
+                int dot = version.indexOf(".");
+                if(dot != -1) { version = version.substring(0, dot); }
+            } return Integer.parseInt(version);
+        }
         private void destroyDescendants() {
-            if (!JavaVersion.current().isJava9Compatible()) {
+            if (getJavaVersion() < 9) {
                 // ProcessHandle API is available only from JDK9
                 return;
             }

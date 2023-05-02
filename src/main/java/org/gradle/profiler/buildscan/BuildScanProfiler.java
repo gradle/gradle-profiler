@@ -1,10 +1,6 @@
 package org.gradle.profiler.buildscan;
 
-import org.gradle.profiler.GeneratedInitScript;
-import org.gradle.profiler.GradleArgsCalculator;
-import org.gradle.profiler.GradleBuildConfiguration;
-import org.gradle.profiler.Profiler;
-import org.gradle.profiler.ScenarioSettings;
+import org.gradle.profiler.*;
 import org.gradle.util.GradleVersion;
 
 import java.io.File;
@@ -93,8 +89,8 @@ public class BuildScanProfiler extends Profiler {
     @Override
     public GradleArgsCalculator newGradleArgsCalculator(ScenarioSettings settings) {
         return gradleArgs -> {
-            GradleBuildConfiguration buildConfiguration = settings.getScenario().getBuildConfiguration();
-            Optional<GeneratedInitScript> initScript = getInitScript(buildConfiguration);
+            BuildConfiguration buildConfiguration = settings.getScenario().getBuildConfiguration();
+            Optional<GeneratedInitScript> initScript = getInitScript(buildConfiguration.as(GradleBuildConfiguration.class));
             initScript.ifPresent(script -> script.calculateGradleArgs(gradleArgs));
         };
     }
@@ -114,7 +110,7 @@ public class BuildScanProfiler extends Profiler {
     @Override
     public GradleArgsCalculator newInstrumentedBuildsGradleArgsCalculator(ScenarioSettings settings) {
         return gradleArgs -> {
-            GradleBuildConfiguration buildConfiguration = settings.getScenario().getBuildConfiguration();
+            GradleBuildConfiguration buildConfiguration = settings.getScenario().getBuildConfiguration().as(GradleBuildConfiguration.class);
             if (buildConfiguration.isUsesScanPlugin()) {
                 System.out.println("Using build scan plugin specified in the build");
             } else {

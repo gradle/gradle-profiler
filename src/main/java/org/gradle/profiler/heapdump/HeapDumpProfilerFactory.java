@@ -9,4 +9,9 @@ public class HeapDumpProfilerFactory extends ProfilerFactory {
     public Profiler createFromOptions(OptionSet parsedOptions) {
         return new HeapDumpProfiler();
     }
+
+    @Override
+    public String getName() {
+        return "heap-dump";
+    }
 }

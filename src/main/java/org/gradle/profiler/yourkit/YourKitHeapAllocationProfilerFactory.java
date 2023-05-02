@@ -9,4 +9,9 @@ public class YourKitHeapAllocationProfilerFactory extends ProfilerFactory {
     public Profiler createFromOptions(OptionSet parsedOptions) {
         return new YourKitProfiler(new YourKitConfig(true, false));
     }
+
+    @Override
+    public String getName() {
+        return "yourkit-heap";
+    }
 }

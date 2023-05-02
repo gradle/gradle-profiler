@@ -89,6 +89,11 @@ public class GradleScenarioDefinition extends ScenarioDefinition {
         return cleanupAction;
     }
 
+    @Override
+    public boolean doesCleanup() {
+        return cleanupAction.isDoesSomething();
+    }
+
     public GradleBuildConfiguration getBuildConfiguration() {
         return buildConfiguration;
     }
