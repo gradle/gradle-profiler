@@ -22,11 +22,12 @@ abstract class AbstractProfilerIntegrationTest extends AbstractIntegrationTest {
 
     @Shared
     List<String> supportedGradleVersions = gradleVersionsSupportedOnCurrentJvm([
-        "3.3", "3.5",
-        "4.0", "4.7",
-        "5.2.1", "5.6.3",
-        "6.0.1", "6.1", "6.6.1",
-        "7.1.1", "7.5"
+        "3.3", "3.5.1",
+        "4.0.1", "4.10.3",
+        "5.2.1", "5.6.4",
+        "6.0.1", "6.9.4",
+        "7.0.2", "7.6.1",
+        "8.0.1", "8.1.1"
     ])
 
     @Shared
