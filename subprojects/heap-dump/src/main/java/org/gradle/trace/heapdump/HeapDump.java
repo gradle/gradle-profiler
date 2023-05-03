@@ -12,10 +12,12 @@ import org.gradle.tooling.events.FinishEvent;
 import org.gradle.tooling.events.OperationCompletionListener;
 
 import javax.management.MBeanServer;
+import javax.management.ObjectName;
 import java.io.Closeable;
 import java.io.File;
-import java.io.IOException;
 import java.lang.management.ManagementFactory;
+import java.nio.file.Files;
+import java.util.Collections;
 
 public class HeapDump {
 
@@ -41,12 +43,26 @@ public class HeapDump {
         @Override
         public void close() {
             try {
-                File dumpFile = new File(getParameters().getBaseFile().get() + "-heap-" + (++counter) + ".hprof");
-                dumpFile.getParentFile().mkdirs();
+                String dumpFileBase = getParameters().getBaseFile().get() + "-heap-" + (++counter);
+                File hprofFile = new File(dumpFileBase + ".hprof");
+                File jmapFile = new File(dumpFileBase + ".jmap");
+                hprofFile.getParentFile().mkdirs();
+
                 MBeanServer server = ManagementFactory.getPlatformMBeanServer();
+
+                // Dump heap into hprof file
                 HotSpotDiagnosticMXBean mxBean = ManagementFactory.newPlatformMXBeanProxy(server, "com.sun.management:type=HotSpotDiagnostic", HotSpotDiagnosticMXBean.class);
-                mxBean.dumpHeap(dumpFile.getAbsolutePath(), true);
-            } catch (IOException e) {
+                mxBean.dumpHeap(hprofFile.getAbsolutePath(), true);
+
+                // Dump class histogram to .jmap file
+                // This should be the same output as running jmap -histo:live <pid>
+                String histogram = (String) server.invoke(
+                    new ObjectName("com.sun.management:type=DiagnosticCommand"),
+                    "gcClassHistogram",
+                    new Object[]{null},
+                    new String[]{"[Ljava.lang.String;"});
+                Files.write(jmapFile.toPath(), Collections.singleton(histogram));
+            } catch (Exception e) {
                 throw UncheckedException.throwAsUncheckedException(e);
             }
         }
