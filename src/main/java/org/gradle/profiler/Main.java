@@ -25,8 +25,10 @@ import java.io.File;
 import java.io.IOException;
 import java.time.Instant;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.function.Consumer;
+import java.util.stream.Collectors;
 
 public class Main {
     public static void main(String[] args) {
@@ -167,10 +169,14 @@ public class Main {
         if (outputDir == null) {
             return;
         }
-        for (File file : outputDir.listFiles()) {
-            profiler.summarizeResultFile(file, line -> System.out.println("  " + line));
+        // Report results in a predictable order
+        List<File> results = Arrays.stream(outputDir.listFiles()).sorted().collect(Collectors.toList());
+        for (File file : results) {
+            if (file.isFile()) {
+                profiler.summarizeResultFile(file, line -> System.out.println("  " + line));
+            }
         }
-        for (File file : outputDir.listFiles()) {
+        for (File file : results) {
             if (file.isDirectory()) {
                 printResultFileSummaries(file, profiler);
             }
