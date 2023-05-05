@@ -7,7 +7,7 @@ import com.google.gson.JsonObject;
 import com.google.gson.JsonPrimitive;
 import com.google.gson.JsonSerializationContext;
 import com.google.gson.JsonSerializer;
-import org.gradle.profiler.GradleScenarioDefinition;
+import org.gradle.profiler.gradle.GradleScenarioDefinition;
 import org.gradle.profiler.OperatingSystem;
 import org.gradle.profiler.ScenarioDefinition;
 import org.gradle.profiler.Version;

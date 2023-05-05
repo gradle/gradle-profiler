@@ -1,13 +1,14 @@
 package org.gradle.profiler.studio.tools;
 
-import org.gradle.profiler.support.FileSupport;
 import com.google.common.annotations.VisibleForTesting;
 
 import javax.annotation.Nullable;
 import java.io.File;
 import java.io.IOException;
 import java.io.UncheckedIOException;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
+import java.nio.file.OpenOption;
 import java.nio.file.Path;
 import java.util.Optional;
 
@@ -60,7 +61,15 @@ public class StudioSandboxCreator {
         Path optionsDir = createDir(new File(configDir.toFile(), "options").toPath());
         File updatesXml = new File(optionsDir.toFile(), "updates.xml");
         if (!updatesXml.exists()) {
-            FileSupport.writeUnchecked(updatesXml.toPath(), updatesContent);
+            writeUnchecked(updatesXml.toPath(), updatesContent);
+        }
+    }
+
+    private static void writeUnchecked(Path path, String text, OpenOption... options) {
+        try {
+            Files.write(path, text.getBytes(StandardCharsets.UTF_8), options);
+        } catch (IOException e) {
+            throw new UncheckedIOException("Could not write content to a file: " + path, e);
         }
     }
 

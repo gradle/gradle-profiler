@@ -1,0 +1,11 @@
+org.gradle.profiler.heapdump.HeapDumpProfilerFactory
+org.gradle.profiler.asyncprofiler.AsyncProfilerHeapAllocationProfilerFactory
+org.gradle.profiler.asyncprofiler.AsyncProfilerAllEventsProfilerFactory
+org.gradle.profiler.asyncprofiler.AsyncProfilerFactory
+org.gradle.profiler.buildscan.BuildScanProfilerFactory
+org.gradle.profiler.yourkit.YourKitSamplingProfilerFactory
+org.gradle.profiler.yourkit.YourKitTracingProfilerFactory
+org.gradle.profiler.yourkit.YourKitHeapAllocationProfilerFactory
+org.gradle.profiler.chrometrace.ChromeTraceProfilerFactory
+org.gradle.profiler.jfr.JfrProfilerFactory
+org.gradle.profiler.jprofiler.JProfilerProfilerFactory

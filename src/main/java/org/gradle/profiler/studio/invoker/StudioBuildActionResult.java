@@ -1,6 +1,7 @@
 package org.gradle.profiler.studio.invoker;
 
-import org.gradle.profiler.BuildAction.BuildActionResult;
+
+import org.gradle.profiler.result.BuildActionResult;
 
 import java.time.Duration;
 import java.util.List;

@@ -1,6 +1,6 @@
 package org.gradle.profiler;
 
-import org.gradle.profiler.BuildAction.BuildActionResult;
+import org.gradle.profiler.result.BuildActionResult;
 import org.gradle.profiler.result.BuildInvocationResult;
 
 import java.io.File;
@@ -13,7 +13,7 @@ import static org.gradle.profiler.Phase.MEASURE;
 import static org.gradle.profiler.Phase.WARM_UP;
 
 public abstract class BuildToolCommandLineInvoker<T extends BuildToolCommandLineScenarioDefinition, R extends BuildInvocationResult> extends ScenarioInvoker<T, R> {
-    void doRun(T scenario, InvocationSettings settings, Consumer<BuildInvocationResult> resultConsumer, List<String> commandLine) {
+    protected void doRun(T scenario, InvocationSettings settings, Consumer<BuildInvocationResult> resultConsumer, List<String> commandLine) {
         ScenarioContext scenarioContext = ScenarioContext.from(settings, scenario);
 
         BuildMutator mutator = new CompositeBuildMutator(scenario.getBuildMutators());

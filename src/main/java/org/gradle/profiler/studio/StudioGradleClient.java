@@ -1,16 +1,12 @@
 package org.gradle.profiler.studio;
 
 import org.gradle.internal.Pair;
-import org.gradle.profiler.BuildAction.BuildActionResult;
 import org.gradle.profiler.GradleClient;
 import org.gradle.profiler.InvocationSettings;
 import org.gradle.profiler.client.protocol.ServerConnection;
-import org.gradle.profiler.client.protocol.messages.GradleInvocationCompleted;
-import org.gradle.profiler.client.protocol.messages.GradleInvocationParameters;
-import org.gradle.profiler.client.protocol.messages.GradleInvocationStarted;
-import org.gradle.profiler.client.protocol.messages.StudioRequest;
-import org.gradle.profiler.client.protocol.messages.StudioSyncRequestCompleted;
+import org.gradle.profiler.client.protocol.messages.*;
 import org.gradle.profiler.instrument.GradleInstrumentation;
+import org.gradle.profiler.result.BuildActionResult;
 import org.gradle.profiler.studio.invoker.StudioBuildActionResult;
 import org.gradle.profiler.studio.invoker.StudioGradleScenarioDefinition.StudioGradleBuildConfiguration;
 import org.gradle.profiler.studio.process.StudioProcess.StudioConnections;
@@ -31,9 +27,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-import static org.gradle.profiler.client.protocol.messages.StudioRequest.StudioRequestType.CLEANUP_CACHE;
-import static org.gradle.profiler.client.protocol.messages.StudioRequest.StudioRequestType.EXIT_IDE;
-import static org.gradle.profiler.client.protocol.messages.StudioRequest.StudioRequestType.SYNC;
+import static org.gradle.profiler.client.protocol.messages.StudioRequest.StudioRequestType.*;
 import static org.gradle.profiler.client.protocol.messages.StudioSyncRequestCompleted.StudioSyncRequestResult.FAILED;
 
 public class StudioGradleClient implements GradleClient {

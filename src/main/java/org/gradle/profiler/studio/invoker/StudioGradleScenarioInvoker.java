@@ -1,8 +1,8 @@
 package org.gradle.profiler.studio.invoker;
 
 import com.google.common.collect.ImmutableList;
-import org.gradle.profiler.GradleBuildInvocationResult;
-import org.gradle.profiler.GradleScenarioInvoker;
+import org.gradle.profiler.gradle.GradleBuildInvocationResult;
+import org.gradle.profiler.gradle.GradleScenarioInvoker;
 import org.gradle.profiler.InvocationSettings;
 import org.gradle.profiler.ScenarioInvoker;
 import org.gradle.profiler.result.Sample;

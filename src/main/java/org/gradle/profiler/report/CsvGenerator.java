@@ -17,19 +17,6 @@ public class CsvGenerator extends AbstractGenerator {
     private final Format format;
     private static final DecimalFormat DOUBLE_FORMAT = new DecimalFormat("0.00", new DecimalFormatSymbols(Locale.US));
 
-    public enum Format {
-        LONG, WIDE;
-
-        public static Format parse(String name) {
-            for (Format format : values()) {
-                if (format.name().toLowerCase().equals(name)) {
-                    return format;
-                }
-            }
-            throw new IllegalArgumentException("Unknown CSV format: " + name);
-        }
-    }
-
     public CsvGenerator(File outputFile, Format format) {
         super(outputFile);
         this.format = format;
