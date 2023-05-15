@@ -17,8 +17,8 @@ repositories {
     }
 }
 
-val os = System.getProperty("os.name").toLowerCase()
-val architecture = System.getProperty("os.arch").toLowerCase()
+val os = System.getProperty("os.name").lowercase()
+val architecture = System.getProperty("os.arch").lowercase()
 fun isWindows(): Boolean = os.startsWith("windows")
 fun isMacOS(): Boolean = os.startsWith("mac")
 fun isLinux(): Boolean = os.startsWith("linux")
