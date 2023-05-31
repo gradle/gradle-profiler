@@ -52,7 +52,7 @@ class StudioPluginSpecification extends Specification {
         settingsFile = new File(projectDir, "settings.gradle")
         settingsFile << "rootProject.name = 'test'"
         gradleProperties = new File(projectDir, "gradle.properties")
-        gradleProperties << "org.gradle.jvmargs=-Xmx1024m"
+        gradleProperties << "org.gradle.jvmargs=-Xmx1024m\norg.gradle.daemon=false"
         setupWrapper(projectDir.toPath())
     }
 
