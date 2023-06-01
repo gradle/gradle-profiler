@@ -89,13 +89,13 @@ public class AndroidStudioSystemHelper {
      * It seems there is no better way to do it atm.
      */
     public static void waitOnBackgroundProcessesFinish(Project project) {
-        DumbService.getInstance(project).runReadActionInSmartMode(() -> {
-            IdeFrame frame = WindowManagerEx.getInstanceEx().findFrameFor(project);
-            StatusBarEx statusBar = frame == null ? null : (StatusBarEx) frame.getStatusBar();
-            if (statusBar != null) {
-                statusBar.getBackgroundProcesses().forEach(it -> waitOnProgressIndicator(it.getSecond()));
-            }
-        });
+        // Run a dummy read action just so we wait on all indexing done
+        DumbService.getInstance(project).runReadActionInSmartMode(() -> {});
+        IdeFrame frame = WindowManagerEx.getInstanceEx().findFrameFor(project);
+        StatusBarEx statusBar = frame == null ? null : (StatusBarEx) frame.getStatusBar();
+        if (statusBar != null) {
+            statusBar.getBackgroundProcesses().forEach(it -> waitOnProgressIndicator(it.getSecond()));
+        }
     }
 
     private static void waitOnProgressIndicator(ProgressIndicator progressIndicator) {

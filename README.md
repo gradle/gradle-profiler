@@ -275,6 +275,8 @@ Here is an example:
         title = "Android Studio Sync"
         # Measure an Android studio sync
         # Note: Android Studio Bumblebee (2021.1.1) or newer is required
+        # Note2: If you are testing with Android Studio Giraffe (2022.3) or later
+        # you need to have local.properties file in your project with sdk.dir set
         android-studio-sync {
             # Override default Android Studio jvm args
             # studio-jvm-args = ["-Xms256m", "-Xmx4096m"]
