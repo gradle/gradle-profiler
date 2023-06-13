@@ -1,7 +1,5 @@
 package org.gradle.profiler;
 
-import org.gradle.profiler.result.BuildActionResult;
-
 import java.time.Duration;
 import java.util.List;
 
@@ -47,5 +45,18 @@ public interface BuildAction {
      * Runs the work of this action and returns the result.
      */
     BuildActionResult run(GradleClient gradleClient, List<String> gradleArgs, List<String> jvmArgs);
+
+    class BuildActionResult {
+
+        private final Duration executionTime;
+
+        public BuildActionResult(Duration executionTime) {
+            this.executionTime = executionTime;
+        }
+
+        public Duration getExecutionTime() {
+            return executionTime;
+        }
+    }
 
 }

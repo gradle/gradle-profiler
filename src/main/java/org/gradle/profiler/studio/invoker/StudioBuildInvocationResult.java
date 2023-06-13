@@ -1,6 +1,6 @@
 package org.gradle.profiler.studio.invoker;
 
-import org.gradle.profiler.gradle.GradleBuildInvocationResult;
+import org.gradle.profiler.GradleBuildInvocationResult;
 import org.gradle.profiler.result.Sample;
 import org.gradle.profiler.result.SingleInvocationDurationSample;
 

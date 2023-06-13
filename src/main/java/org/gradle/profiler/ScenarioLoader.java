@@ -6,10 +6,6 @@ import com.google.common.collect.ImmutableSet;
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
 import com.typesafe.config.ConfigParseOptions;
-import org.gradle.profiler.bazel.BazelScenarioDefinition;
-import org.gradle.profiler.buck.BuckScenarioDefinition;
-import org.gradle.profiler.gradle.*;
-import org.gradle.profiler.maven.MavenScenarioDefinition;
 import org.gradle.profiler.mutations.AbstractCleanupMutator.CleanupSchedule;
 import org.gradle.profiler.mutations.ApplyAbiChangeToSourceFileMutator;
 import org.gradle.profiler.mutations.ApplyBuildScriptChangeFileMutator;
@@ -34,7 +30,6 @@ import org.gradle.profiler.mutations.FileChangeMutatorConfigurator;
 import org.gradle.profiler.mutations.GitCheckoutMutator;
 import org.gradle.profiler.mutations.GitRevertMutator;
 import org.gradle.profiler.mutations.ShowBuildCacheSizeMutator;
-import org.gradle.profiler.studio.AndroidStudioSyncAction;
 import org.gradle.profiler.studio.invoker.StudioGradleScenarioDefinition;
 
 import javax.annotation.Nullable;

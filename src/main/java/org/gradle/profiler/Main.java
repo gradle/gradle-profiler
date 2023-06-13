@@ -1,19 +1,9 @@
 package org.gradle.profiler;
 
-import org.gradle.profiler.bazel.BazelScenarioDefinition;
-import org.gradle.profiler.bazel.BazelScenarioInvoker;
-import org.gradle.profiler.buck.BuckScenarioDefinition;
-import org.gradle.profiler.buck.BuckScenarioInvoker;
 import org.gradle.profiler.flamegraph.DifferentialStacksGenerator;
 import org.gradle.profiler.flamegraph.FlameGraphGenerator;
 import org.gradle.profiler.flamegraph.Stacks;
-import org.gradle.profiler.gradle.DaemonControl;
-import org.gradle.profiler.gradle.DefaultGradleBuildConfigurationReader;
-import org.gradle.profiler.gradle.GradleScenarioDefinition;
-import org.gradle.profiler.gradle.GradleScenarioInvoker;
 import org.gradle.profiler.instrument.PidInstrumentation;
-import org.gradle.profiler.maven.MavenScenarioDefinition;
-import org.gradle.profiler.maven.MavenScenarioInvoker;
 import org.gradle.profiler.report.CsvGenerator;
 import org.gradle.profiler.report.HtmlGenerator;
 import org.gradle.profiler.result.BuildInvocationResult;
@@ -72,8 +62,6 @@ public class Main {
             File htmlFile = new File(settings.getOutputDir(), "benchmark.html");
             BenchmarkResultCollector benchmarkResults = new BenchmarkResultCollector(new CsvGenerator(cvsFile, settings.getCsvFormat()), new HtmlGenerator(htmlFile));
             PidInstrumentation pidInstrumentation = new PidInstrumentation();
-
-
             GradleScenarioInvoker gradleScenarioInvoker = new GradleScenarioInvoker(daemonControl, pidInstrumentation);
             StudioGradleScenarioInvoker studioGradleScenarioInvoker = new StudioGradleScenarioInvoker(gradleScenarioInvoker);
             BazelScenarioInvoker bazelScenarioInvoker = new BazelScenarioInvoker();
