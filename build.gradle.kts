@@ -31,6 +31,7 @@ dependencies {
     implementation("com.typesafe:config:1.3.3")
     implementation("org.apache.commons:commons-math3:3.6.1")
     implementation("com.github.javaparser:javaparser-core:3.18.0")
+    implementation("net.sf.jopt-simple:jopt-simple:5.0.4")
     implementation("org.apache.ant:ant-compress:1.5")
     implementation("commons-io:commons-io:2.6")
     implementation("org.openjdk.jmc:flightrecorder:8.0.1")
@@ -42,16 +43,6 @@ dependencies {
     }
     implementation(project(":client-protocol"))
 
-    implementation(project(":profiler-api"))
-    implementation(project(":profiler-asyncprofiler"))
-    implementation(project(":profiler-buildscan"))
-    implementation(project(":profiler-chrometrace"))
-    implementation(project(":profiler-heapdump"))
-    implementation(project(":profiler-jfr"))
-    implementation(project(":profiler-jprofiler"))
-    implementation(project(":profiler-yourkit"))
-
-    implementation(project(":invoker-api"))
 
     gradleRuntime(gradleApi())
     gradleRuntime(libs.toolingApi)
