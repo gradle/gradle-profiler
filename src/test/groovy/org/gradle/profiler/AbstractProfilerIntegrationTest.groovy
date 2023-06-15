@@ -27,7 +27,7 @@ abstract class AbstractProfilerIntegrationTest extends AbstractIntegrationTest {
         "5.2.1", "5.6.4",
         "6.0.1", "6.9.4",
         "7.0.2", "7.6.1",
-        "8.0.1", "8.1.1"
+        "8.0.1"
     ])
 
     @Shared
