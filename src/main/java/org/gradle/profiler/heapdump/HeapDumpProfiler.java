@@ -23,7 +23,7 @@ public class HeapDumpProfiler extends Profiler {
 
     @Override
     public void summarizeResultFile(File resultFile, Consumer<String> consumer) {
-        if (resultFile.getName().endsWith(".hprof")) {
+        if (resultFile.getName().endsWith(".hprof") || resultFile.getName().endsWith(".jmap")) {
             consumer.accept(resultFile.getAbsolutePath());
         }
     }
