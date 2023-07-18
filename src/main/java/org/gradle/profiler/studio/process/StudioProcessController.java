@@ -73,7 +73,7 @@ public class StudioProcessController {
      */
     public StudioProcess maybeStartProcess() {
         if (!isProcessRunning()) {
-            process = new StudioProcess(studioInstallDir, sandbox, invocationSettings, buildConfiguration.getStudioJvmArgs());
+            process = new StudioProcess(studioInstallDir, sandbox, invocationSettings, buildConfiguration.getStudioJvmArgs(), buildConfiguration.getIdeaProperties());
             process.getConnections().getAgentConnection().send(new StudioAgentConnectionParameters(buildConfiguration.getGradleHome()));
         }
         return process;

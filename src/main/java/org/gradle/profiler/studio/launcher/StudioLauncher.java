@@ -11,6 +11,8 @@ import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -20,6 +22,7 @@ public class StudioLauncher {
     private final Path studioInstallDir;
     private final String headlessCommand;
     private final List<String> additionalJvmArgs;
+    private final List<String> ideaProperties;
     private final StudioSandbox studioSandbox;
 
     public StudioLauncher(
@@ -27,19 +30,23 @@ public class StudioLauncher {
         String headlessCommand,
         Path studioInstallDir,
         List<String> additionalJvmArgs,
-        StudioSandbox studioSandbox
+        StudioSandbox studioSandbox,
+        List<String> ideaProperties
     ) {
         this.startCommand = startCommand;
         this.headlessCommand = headlessCommand;
         this.studioInstallDir = studioInstallDir;
         this.additionalJvmArgs = additionalJvmArgs;
         this.studioSandbox = studioSandbox;
+        this.ideaProperties = ideaProperties;
     }
 
     public CommandExec.RunHandle launchStudio(File projectDir) {
         List<String> commandLine = getCommandLine(projectDir);
         logLauncherConfiguration(commandLine);
-        Map<String, String> environmentVariables = writeAdditionalJvmArgs();
+        Map<String, String> environmentVariables = new HashMap<>();
+        environmentVariables.putAll(writeAdditionalJvmArgs());
+        environmentVariables.putAll(writeIdeaProperties());
         return new CommandExec()
             .inDir(studioInstallDir.toFile())
             .environmentVariables(environmentVariables)
@@ -62,6 +69,24 @@ public class StudioLauncher {
         System.out.println("* Additional JVM args can be found at: " + studioSandbox.getJvmArgsDir().resolve("idea.vmoptions"));
         System.out.println("* Android Studio logs can be found at: " + studioSandbox.getLogsDir().resolve("idea.log"));
         System.out.printf("* Using command line: %s%n%n", String.join(" ", commandLine));
+    }
+
+    private Map<String, String> writeIdeaProperties() {
+        if (!studioSandbox.getConfigDir().isPresent()) {
+            System.out.println("* idea.properties can be set only in the sandbox");
+            return Collections.emptyMap();
+        }
+        try {
+            Path ideaPropertiesFile = studioSandbox.getConfigDir().get().resolve("idea.properties").toAbsolutePath();
+            Files.write(ideaPropertiesFile, ideaProperties);
+            return ImmutableMap.<String, String>builder()
+                .put("STUDIO_PROPERTIES", ideaProperties.toString())
+                .put("IDEA_PROPERTIES", ideaProperties.toString())
+                .build();
+
+        } catch (IOException e) {
+            throw new UncheckedIOException(e);
+        }
     }
 
     private Map<String, String> writeAdditionalJvmArgs() {
