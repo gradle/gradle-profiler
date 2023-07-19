@@ -280,7 +280,7 @@ Here is an example:
         android-studio-sync {
             # Override default Android Studio jvm args
             # studio-jvm-args = ["-Xms256m", "-Xmx4096m"]
-            # Pass an IDEA properties to Android Studio. This can be used to set registry values as well
+            # Pass an IDEA properties to Android Studio. This can be used to set a registry values as well
             # idea-properties = ["gradle.tooling.models.parallel.fetch=true"]
         }
     }

@@ -11,7 +11,6 @@ import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -66,18 +65,14 @@ public class StudioLauncher {
         System.out.println("* Start command: " + startCommand);
         System.out.println("* Additional JVM args:");
         additionalJvmArgs.forEach(arg -> System.out.println("  " + arg));
-        System.out.println("* Additional JVM args can be found at: " + studioSandbox.getJvmArgsDir().resolve("idea.vmoptions"));
+        System.out.println("* Additional JVM args can be found at: " + studioSandbox.getScenarioOptionsDir().resolve("idea.vmoptions"));
         System.out.println("* Android Studio logs can be found at: " + studioSandbox.getLogsDir().resolve("idea.log"));
         System.out.printf("* Using command line: %s%n%n", String.join(" ", commandLine));
     }
 
     private Map<String, String> writeIdeaProperties() {
-        if (!studioSandbox.getConfigDir().isPresent()) {
-            System.out.println("* idea.properties can be set only in the sandbox");
-            return Collections.emptyMap();
-        }
         try {
-            Path ideaPropertiesFile = studioSandbox.getConfigDir().get().resolve("idea.properties").toAbsolutePath();
+            Path ideaPropertiesFile = studioSandbox.getScenarioOptionsDir().resolve("idea.properties").toAbsolutePath();
             Files.write(ideaPropertiesFile, ideaProperties);
             return ImmutableMap.<String, String>builder()
                 .put("STUDIO_PROPERTIES", ideaPropertiesFile.toString())
@@ -91,7 +86,7 @@ public class StudioLauncher {
 
     private Map<String, String> writeAdditionalJvmArgs() {
         try {
-            Path additionJvmArgsFile = studioSandbox.getJvmArgsDir().resolve("idea.vmoptions").toAbsolutePath();
+            Path additionJvmArgsFile = studioSandbox.getScenarioOptionsDir().resolve("idea.vmoptions").toAbsolutePath();
             Files.write(additionJvmArgsFile, additionalJvmArgs);
             return ImmutableMap.<String, String>builder()
                 .put("STUDIO_VM_OPTIONS", additionJvmArgsFile.toString())

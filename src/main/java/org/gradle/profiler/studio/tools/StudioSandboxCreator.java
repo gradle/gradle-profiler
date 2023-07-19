@@ -92,14 +92,14 @@ public class StudioSandboxCreator {
         private final Path systemDir;
         private final Path pluginsDir;
         private final Path logsDir;
-        private final Path jvmArgsDir;
+        private final Path scenarioOptionsDir;
 
-        private StudioSandbox(@Nullable Path configDir, @Nullable Path systemDir, Path pluginsDir, Path logsDir, Path jvmArgsDir) {
+        private StudioSandbox(@Nullable Path configDir, @Nullable Path systemDir, Path pluginsDir, Path logsDir, Path scenarioOptionsDir) {
             this.configDir = configDir;
             this.systemDir = systemDir;
             this.pluginsDir = pluginsDir;
             this.logsDir = logsDir;
-            this.jvmArgsDir = jvmArgsDir;
+            this.scenarioOptionsDir = scenarioOptionsDir;
         }
 
         public Optional<Path> getConfigDir() {
@@ -114,8 +114,8 @@ public class StudioSandboxCreator {
             return logsDir;
         }
 
-        public Path getJvmArgsDir() {
-            return jvmArgsDir;
+        public Path getScenarioOptionsDir() {
+            return scenarioOptionsDir;
         }
 
         public Path getPluginsDir() {
