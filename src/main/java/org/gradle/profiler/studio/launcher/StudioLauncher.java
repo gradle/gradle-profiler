@@ -80,8 +80,8 @@ public class StudioLauncher {
             Path ideaPropertiesFile = studioSandbox.getConfigDir().get().resolve("idea.properties").toAbsolutePath();
             Files.write(ideaPropertiesFile, ideaProperties);
             return ImmutableMap.<String, String>builder()
-                .put("STUDIO_PROPERTIES", ideaProperties.toString())
-                .put("IDEA_PROPERTIES", ideaProperties.toString())
+                .put("STUDIO_PROPERTIES", ideaPropertiesFile.toString())
+                .put("IDEA_PROPERTIES", ideaPropertiesFile.toString())
                 .build();
 
         } catch (IOException e) {

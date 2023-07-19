@@ -348,7 +348,7 @@ class AndroidStudioIntegrationTest extends AbstractProfilerIntegrationTest {
         logFile.find("Full sync has completed in").size() == 2
         logFile.find("and it SUCCEEDED").size() == 2
         def ideaPropertiesFile = new File(sandboxDir, "config/idea.properties")
-        def vmOptions = ideaPropertiesFile.readLines()
-        vmOptions.contains("foo=true")
+        def ideaProperties = ideaPropertiesFile.readLines()
+        ideaProperties.contains("foo=true")
     }
 }
