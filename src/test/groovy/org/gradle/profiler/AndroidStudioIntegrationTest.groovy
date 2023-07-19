@@ -270,7 +270,7 @@ class AndroidStudioIntegrationTest extends AbstractProfilerIntegrationTest {
         then:
         logFile.find("Full sync has completed in").size() == 2
         logFile.find("and it SUCCEEDED").size() == 2
-        def vmOptionsFile = new File(sandboxDir, "jvmArgs/idea.vmoptions")
+        def vmOptionsFile = new File(sandboxDir, "scenarioOptions/idea.vmoptions")
         vmOptionsFile.exists()
         def vmOptions = vmOptionsFile.readLines()
         vmOptions.contains("-Xmx1024m")
@@ -347,7 +347,7 @@ class AndroidStudioIntegrationTest extends AbstractProfilerIntegrationTest {
         then:
         logFile.find("Full sync has completed in").size() == 2
         logFile.find("and it SUCCEEDED").size() == 2
-        def ideaPropertiesFile = new File(sandboxDir, "config/idea.properties")
+        def ideaPropertiesFile = new File(sandboxDir, "scenarioOptions/idea.properties")
         def ideaProperties = ideaPropertiesFile.readLines()
         ideaProperties.contains("foo=true")
     }

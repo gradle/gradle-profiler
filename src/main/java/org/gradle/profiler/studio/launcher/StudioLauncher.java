@@ -66,6 +66,9 @@ public class StudioLauncher {
         System.out.println("* Additional JVM args:");
         additionalJvmArgs.forEach(arg -> System.out.println("  " + arg));
         System.out.println("* Additional JVM args can be found at: " + studioSandbox.getScenarioOptionsDir().resolve("idea.vmoptions"));
+        System.out.println("* IDEA properties:");
+        ideaProperties.forEach(property -> System.out.println("  " + property));
+        System.out.println("* IDEA properties can be found at: " + studioSandbox.getScenarioOptionsDir().resolve("idea.properties"));
         System.out.println("* Android Studio logs can be found at: " + studioSandbox.getLogsDir().resolve("idea.log"));
         System.out.printf("* Using command line: %s%n%n", String.join(" ", commandLine));
     }
