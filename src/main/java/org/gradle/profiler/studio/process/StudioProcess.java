@@ -25,11 +25,11 @@ public class StudioProcess implements Closeable {
     private final StudioConnections connections;
     private final RunHandle process;
 
-    public StudioProcess(Path studioInstallDir, StudioSandbox sandbox, InvocationSettings invocationSettings, List<String> studioJvmArgs) {
+    public StudioProcess(Path studioInstallDir, StudioSandbox sandbox, InvocationSettings invocationSettings, List<String> studioJvmArgs, List<String> ideaProperties) {
         Server studioStartDetectorServer = new Server("start-detector");
         this.studioPluginServer = new Server("plugin");
         this.studioAgentServer = new Server("agent");
-        StudioLauncher studioLauncher = new StudioLauncherProvider(studioInstallDir, sandbox, studioJvmArgs)
+        StudioLauncher studioLauncher = new StudioLauncherProvider(studioInstallDir, sandbox, studioJvmArgs, ideaProperties)
             .withStudioPluginParameters(studioStartDetectorServer.getPort(), studioPluginServer.getPort())
             .withStudioAgentParameters(studioAgentServer.getPort())
             .get();

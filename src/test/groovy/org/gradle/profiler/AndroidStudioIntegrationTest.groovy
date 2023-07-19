@@ -139,7 +139,7 @@ class AndroidStudioIntegrationTest extends AbstractProfilerIntegrationTest {
         // We have to install plugin so also the first Studio process is run in the headless mode.
         // We install plugin directory to a different "plugins-2" directory for first process otherwise cleaning plugin directory at start of second process fails on Windows.
         StudioSandboxCreator.StudioSandbox sandbox = StudioSandboxCreator.createSandbox(sandboxDir.toPath(), "plugins-2")
-        StudioLauncher studioLauncher = new StudioLauncherProvider(studioHome.toPath(), sandbox, []).get()
+        StudioLauncher studioLauncher = new StudioLauncherProvider(studioHome.toPath(), sandbox, [], []).get()
         StudioPluginInstaller pluginInstaller = new StudioPluginInstaller(sandbox.getPluginsDir())
         // We have to install plugin, since a plugin contains headless starter and it makes it run headless on CI
         pluginInstaller.installPlugin(Collections.singletonList(GradleInstrumentation.unpackPlugin("studio-plugin").toPath()))
@@ -173,7 +173,7 @@ class AndroidStudioIntegrationTest extends AbstractProfilerIntegrationTest {
         // since if Android Studio writes to same project at the same time, it can fail
         File otherStudioProjectDir = tmpDir.newFolder('project')
         StudioSandboxCreator.StudioSandbox sandbox = StudioSandboxCreator.createSandbox(sandboxDir1.toPath())
-        StudioLauncher studioLauncher = new StudioLauncherProvider(studioHome.toPath(), sandbox, []).get()
+        StudioLauncher studioLauncher = new StudioLauncherProvider(studioHome.toPath(), sandbox, [], []).get()
         // We have to install plugin, since a plugin contains headless starter and it makes it run headless on CI
         StudioPluginInstaller pluginInstaller = new StudioPluginInstaller(sandbox.getPluginsDir())
         pluginInstaller.installPlugin(Collections.singletonList(GradleInstrumentation.unpackPlugin("studio-plugin").toPath()))
@@ -270,7 +270,7 @@ class AndroidStudioIntegrationTest extends AbstractProfilerIntegrationTest {
         then:
         logFile.find("Full sync has completed in").size() == 2
         logFile.find("and it SUCCEEDED").size() == 2
-        def vmOptionsFile = new File(sandboxDir, "jvmArgs/idea.vmoptions")
+        def vmOptionsFile = new File(sandboxDir, "scenarioOptions/idea.vmoptions")
         vmOptionsFile.exists()
         def vmOptions = vmOptionsFile.readLines()
         vmOptions.contains("-Xmx1024m")
@@ -329,5 +329,26 @@ class AndroidStudioIntegrationTest extends AbstractProfilerIntegrationTest {
             scenarioName
         ]
         new Main().run(*args)
+    }
+
+    def "can add idea.properties"() {
+        given:
+        def scenarioFile = file("performance.scenarios") << """
+            $scenarioName {
+                android-studio-sync {
+                    idea-properties = ["foo=true"]
+                }
+            }
+        """
+
+        when:
+        runBenchmark(scenarioFile, 1, 1)
+
+        then:
+        logFile.find("Full sync has completed in").size() == 2
+        logFile.find("and it SUCCEEDED").size() == 2
+        def ideaPropertiesFile = new File(sandboxDir, "scenarioOptions/idea.properties")
+        def ideaProperties = ideaPropertiesFile.readLines()
+        ideaProperties.contains("foo=true")
     }
 }

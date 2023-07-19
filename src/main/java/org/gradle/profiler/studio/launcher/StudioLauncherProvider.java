@@ -24,16 +24,18 @@ public class StudioLauncherProvider {
     private final Path studioInstallDir;
     private final StudioSandbox studioSandbox;
     private final List<String> studioJvmArgs;
+    private final List<String> ideaProperties;
     private boolean enableStudioPluginParameters;
     private int studioPluginPort;
     private boolean enableStudioAgentParameters;
     private int studioAgentPort;
     private int studioStartDetectorPort;
 
-    public StudioLauncherProvider(Path studioInstallDir, StudioSandbox studioSandbox, List<String> studioJvmArgs) {
+    public StudioLauncherProvider(Path studioInstallDir, StudioSandbox studioSandbox, List<String> studioJvmArgs, List<String> ideaProperties) {
         this.studioInstallDir = studioInstallDir;
         this.studioSandbox = studioSandbox;
         this.studioJvmArgs = studioJvmArgs;
+        this.ideaProperties = ideaProperties;
     }
 
     public StudioLauncherProvider withStudioPluginParameters(int studioStartDetectorPort, int studioPluginPort) {
@@ -57,7 +59,7 @@ public class StudioLauncherProvider {
         // Studio will fail since "missing Android SDK" modal will try to open
         String headlessCommand = SHOULD_RUN_HEADLESS ? "headless-starter" : "";
 
-        return new StudioLauncher(startCommand, headlessCommand, studioInstallDir, additionalJvmArgs, studioSandbox);
+        return new StudioLauncher(startCommand, headlessCommand, studioInstallDir, additionalJvmArgs, studioSandbox, ideaProperties);
     }
 
     private List<String> getAdditionalJvmArgs() {

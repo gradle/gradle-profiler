@@ -30,17 +30,17 @@ public class StudioSandboxCreator {
             Path path = newTempDir();
             Path pluginsDir = createDir(new File(path.toFile(), pluginsDirName).toPath());
             Path logsDir = createDir(new File(path.toFile(), "logs").toPath());
-            Path jvmArgsDir = createDir(new File(path.toFile(), "jvmArgs").toPath());
-            return StudioSandbox.partialSandbox(pluginsDir, logsDir, jvmArgsDir);
+            Path scenarioOptionsDir = createDir(new File(path.toFile(), "scenarioOptions").toPath());
+            return StudioSandbox.partialSandbox(pluginsDir, logsDir, scenarioOptionsDir);
         }
         File sandboxDirFile = sandboxDir.toFile();
         Path configDir = createDir(new File(sandboxDirFile, "config").toPath());
         Path systemDir = createDir(new File(sandboxDirFile, "system").toPath());
         Path pluginsDir = createDir(new File(sandboxDirFile, pluginsDirName).toPath());
         Path logDir = createDir(new File(sandboxDirFile, "logs").toPath());
-        Path jvmArgsDir = createDir(new File(sandboxDirFile, "jvmArgs").toPath());
+        Path scenarioOptionsDir = createDir(new File(sandboxDirFile, "scenarioOptions").toPath());
         disableIdeUpdate(configDir);
-        return StudioSandbox.fullSandbox(configDir, systemDir, pluginsDir, logDir, jvmArgsDir);
+        return StudioSandbox.fullSandbox(configDir, systemDir, pluginsDir, logDir, scenarioOptionsDir);
     }
 
     private static boolean shouldCreatePartialSandbox(Path sandboxDir) {
@@ -92,14 +92,14 @@ public class StudioSandboxCreator {
         private final Path systemDir;
         private final Path pluginsDir;
         private final Path logsDir;
-        private final Path jvmArgsDir;
+        private final Path scenarioOptionsDir;
 
-        private StudioSandbox(@Nullable Path configDir, @Nullable Path systemDir, Path pluginsDir, Path logsDir, Path jvmArgsDir) {
+        private StudioSandbox(@Nullable Path configDir, @Nullable Path systemDir, Path pluginsDir, Path logsDir, Path scenarioOptionsDir) {
             this.configDir = configDir;
             this.systemDir = systemDir;
             this.pluginsDir = pluginsDir;
             this.logsDir = logsDir;
-            this.jvmArgsDir = jvmArgsDir;
+            this.scenarioOptionsDir = scenarioOptionsDir;
         }
 
         public Optional<Path> getConfigDir() {
@@ -114,20 +114,20 @@ public class StudioSandboxCreator {
             return logsDir;
         }
 
-        public Path getJvmArgsDir() {
-            return jvmArgsDir;
+        public Path getScenarioOptionsDir() {
+            return scenarioOptionsDir;
         }
 
         public Path getPluginsDir() {
             return pluginsDir;
         }
 
-        public static StudioSandbox fullSandbox(Path configDir, Path systemDir, Path pluginsDir, Path logsDir, Path jvmArgsDir) {
-            return new StudioSandbox(configDir, systemDir, pluginsDir, logsDir, jvmArgsDir);
+        public static StudioSandbox fullSandbox(Path configDir, Path systemDir, Path pluginsDir, Path logsDir, Path scenarioOptionsDir) {
+            return new StudioSandbox(configDir, systemDir, pluginsDir, logsDir, scenarioOptionsDir);
         }
 
-        public static StudioSandbox partialSandbox(Path pluginsDir, Path logsDir, Path jvmArgsDir) {
-            return new StudioSandbox(null, null, pluginsDir, logsDir, jvmArgsDir);
+        public static StudioSandbox partialSandbox(Path pluginsDir, Path logsDir, Path scenarioOptionsDir) {
+            return new StudioSandbox(null, null, pluginsDir, logsDir, scenarioOptionsDir);
         }
     }
 }

@@ -8,6 +8,8 @@ import com.intellij.openapi.externalSystem.service.notification.ExternalSystemPr
 import com.intellij.openapi.externalSystem.settings.ExternalSystemSettingsListenerAdapter;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.startup.StartupActivity;
+import com.intellij.openapi.util.registry.Registry;
+import com.intellij.openapi.util.registry.RegistryValue;
 import org.gradle.profiler.client.protocol.Client;
 import org.gradle.profiler.client.protocol.messages.StudioRequest;
 import org.gradle.profiler.studio.plugin.client.GradleProfilerClient;
@@ -17,9 +19,14 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.gradle.settings.GradleProjectSettings;
 import org.jetbrains.plugins.gradle.settings.GradleSettings;
 
+import java.io.File;
+import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.util.Collection;
+import java.util.List;
+import java.util.Properties;
+import java.util.stream.Collectors;
 
 import static org.gradle.profiler.client.protocol.messages.StudioRequest.StudioRequestType.EXIT_IDE;
 
@@ -32,6 +39,7 @@ public class GradleProfilerStartupActivity implements StartupActivity.DumbAware 
     @Override
     public void runActivity(@NotNull Project project) {
         LOG.info("Project opened");
+        logModifiedRegistryEntries();
         if (System.getProperty(PROFILER_PORT_PROPERTY) != null) {
             // This solves the issue where Android Studio would run the Gradle sync automatically on the first import.
             // Unfortunately it seems we can't always detect it because it happens very late and due to that there might
@@ -50,6 +58,25 @@ public class GradleProfilerStartupActivity implements StartupActivity.DumbAware 
                     AndroidStudioSystemHelper.exit(project);
                 }
             });
+        }
+    }
+
+    private void logModifiedRegistryEntries() {
+        String studioPropertiesPath = System.getenv("STUDIO_PROPERTIES");
+        if (studioPropertiesPath == null || !new File(studioPropertiesPath).exists()) {
+            return;
+        }
+        try {
+            Properties properties = new Properties();
+            properties.load(new FileInputStream(studioPropertiesPath));
+            List<String> modifiedValues = Registry.getAll().stream()
+                .filter(value -> properties.containsKey(value.getKey()))
+                .map(RegistryValue::toString)
+                .sorted()
+                .collect(Collectors.toList());
+            LOG.info("Modified registry entries: " + modifiedValues);
+        } catch (IOException e) {
+            throw new UncheckedIOException(e);
         }
     }
 
