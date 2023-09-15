@@ -18,8 +18,8 @@ object GradleProfilerPublishing : BuildType({
         // Java home must always use Java11
         // since intellij-gradle-plugin is not compatible with Java8
         javaHome(os, JavaVersion.OPENJDK_11)
-        password("pgpSigningKey", "credentialsJSON:ae6de222-f77d-4c71-b94e-fac6da485143", display = ParameterDisplay.HIDDEN)
-        password("pgpSigningPassphrase", "credentialsJSON:f75db3bd-4f5b-4591-b5cb-2e76d91f57f5", display = ParameterDisplay.HIDDEN)
+        password("pgpSigningKey", "credentialsJSON:20c56c10-3c97-4753-91c2-685ddf26700e", display = ParameterDisplay.HIDDEN)
+        password("pgpSigningPassphrase", "credentialsJSON:d49291bd-101e-4165-a9a8-912ca457926b", display = ParameterDisplay.HIDDEN)
         password("mavenCentralStagingRepoUser", "credentialsJSON:ce6ff00a-dc06-4b9b-aa1f-7b01bea2eb2f", display = ParameterDisplay.HIDDEN)
         password("mavenCentralStagingRepoPassword", "credentialsJSON:f3c71885-0cec-49c9-adcf-d21536fcf1ca", display = ParameterDisplay.HIDDEN)
         text("additional.gradle.parameters", "")
