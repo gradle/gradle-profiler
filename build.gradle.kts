@@ -130,8 +130,8 @@ androidStudioTests {
     val autoDownloadAndRunInHeadless = providers.gradleProperty("autoDownloadAndRunInHeadless").orNull == "true"
     runAndroidStudioInHeadlessMode.set(autoDownloadAndRunInHeadless)
     autoDownloadAndroidStudio.set(autoDownloadAndRunInHeadless)
-    // Hedgehog (2023.1.1.22) Beta 6
-    testAndroidStudioVersion.set("2023.1.1.22")
+    // Iguana (2023.2.1.7) Canary 7
+    testAndroidStudioVersion.set("2023.2.1.7")
     testAndroidSdkVersion.set("7.3.0")
     // For local development it's easier to setup Android SDK with Android Studio, since auto download needs ANDROID_HOME or ANDROID_SDK_ROOT
     // to be set with an accepted license in it. See https://developer.android.com/studio/intro/update.html#download-with-gradle.
