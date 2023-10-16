@@ -259,7 +259,7 @@ class AndroidStudioIntegrationTest extends AbstractProfilerIntegrationTest {
         def scenarioFile = file("performance.scenarios") << """
             $scenarioName {
                 android-studio-sync {
-                    studio-jvm-args = ["-Xmx1024m", "-Xms128m"]
+                    studio-jvm-args = ["-Xmx4104m", "-Xms128m"]
                 }
             }
         """
@@ -273,7 +273,7 @@ class AndroidStudioIntegrationTest extends AbstractProfilerIntegrationTest {
         def vmOptionsFile = new File(sandboxDir, "scenarioOptions/idea.vmoptions")
         vmOptionsFile.exists()
         def vmOptions = vmOptionsFile.readLines()
-        vmOptions.contains("-Xmx1024m")
+        vmOptions.contains("-Xmx4104m")
         vmOptions.contains("-Xms128m")
     }
 
