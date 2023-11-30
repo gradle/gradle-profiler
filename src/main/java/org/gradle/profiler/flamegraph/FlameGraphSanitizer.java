@@ -233,11 +233,14 @@ public class FlameGraphSanitizer {
     }
 
     private static class NormalizeLambda extends FrameWiseSanitizeFunction {
+
+        private static final Pattern LAMBDA_PATTERN = Pattern.compile("\\$\\$Lambda\\$(:?[0-9]+[./][0-9]+|x[0-9a-fA-F]+)");
+
         @Override
         protected String mapFrame(String frame) {
-            // Lambdas contain a name that's based on an index + timestamp at runtime and changes build-to-build.
+            // Lambdas contain a name that's based on an index + timestamp or memory address at runtime and changes build-to-build.
             // This makes comparing two builds very difficult when a lambda is in the stack
-            return frame.replaceFirst(Pattern.quote("$$Lambda$")+"[0-9]+[./][0-9]+", "\\$\\$Lambda\\$");
+            return LAMBDA_PATTERN.matcher(frame).replaceFirst("\\$\\$Lambda\\$");
         }
     }
 
