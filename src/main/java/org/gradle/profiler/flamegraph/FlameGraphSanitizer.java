@@ -234,7 +234,7 @@ public class FlameGraphSanitizer {
 
     private static class NormalizeLambda extends FrameWiseSanitizeFunction {
 
-        private static final Pattern LAMBDA_PATTERN = Pattern.compile(Pattern.quote("$$Lambda$") + "(?:[0-9]+[./][0-9]+|x[0-9a-fA-F]+)");
+        private static final Pattern LAMBDA_PATTERN = Pattern.compile(Pattern.quote("$$Lambda$") + "[0-9]+[./][0-9]+(?:x[0-9a-fA-F]+)?");
 
         @Override
         protected String mapFrame(String frame) {

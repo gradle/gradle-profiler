@@ -9,6 +9,6 @@ class FlameGraphSanitizerTest extends Specification {
         expect:
         normalizer.map(['DefaultPlanExecutor$ExecutorWorker$$Lambda$887.1827771163.execute']) == ['DefaultPlanExecutor$ExecutorWorker$$Lambda$.execute']
         normalizer.map(['DefaultPlanExecutor$ExecutorWorker$$Lambda$887/1827771163.execute']) == ['DefaultPlanExecutor$ExecutorWorker$$Lambda$.execute']
-        normalizer.map(['DefaultPlanExecutor$ExecutorWorker$$Lambda$x00007fd5410e0c68.execute']) == ['DefaultPlanExecutor$ExecutorWorker$$Lambda$.execute']
+        normalizer.map(['DefaultPlanExecutor$ExecutorWorker$$Lambda$92.0x00007f9338139800.execute']) == ['DefaultPlanExecutor$ExecutorWorker$$Lambda$.execute']
     }
 }
