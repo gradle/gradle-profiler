@@ -126,7 +126,7 @@ public class DefaultGradleBuildConfigurationReader implements GradleBuildConfigu
         GradleBuildConfiguration version;
         try (ProjectConnection connection = connector.forProjectDirectory(projectDir).connect()) {
             BuildEnvironment buildEnvironment = connection.getModel(BuildEnvironment.class);
-            new ToolingApiGradleClient(connection).runTasks(ImmutableList.of("help"), ImmutableList.of("-I", initScript.getAbsolutePath()), ImmutableList.of());
+            new ToolingApiGradleClient(connection).runTasks(ImmutableList.of(":help"), ImmutableList.of("-I", initScript.getAbsolutePath()), ImmutableList.of());
             BuildDetails buildDetails = readBuildDetails();
             JavaEnvironment javaEnvironment = buildEnvironment.getJava();
             List<String> allJvmArgs = new ArrayList<>(javaEnvironment.getJvmArguments());
