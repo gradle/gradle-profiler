@@ -396,7 +396,7 @@ class ProfilerIntegrationTest extends AbstractProfilerIntegrationTest {
             }
             help {
                 versions = "$minimalSupportedGradleVersion"
-                tasks = [":help"]
+                tasks = ["help"]
                 daemon = none
             }
         """
@@ -416,9 +416,10 @@ class ProfilerIntegrationTest extends AbstractProfilerIntegrationTest {
         // Probe version, 2 scenarios have 6 warm up, 10 builds, 1 scenario has 1 warm up, 10 builds
         logFile.find("<gradle-version: $minimalSupportedGradleVersion>").size() == 1 + 16 + 11
         logFile.find("<gradle-version: $latestSupportedGradleVersion").size() == 17
+        logFile.find("<tasks: [:help]>").size() == 2 // Probe version
         logFile.find("<daemon: true").size() == 2 + 16 * 2
         logFile.find("<daemon: false").size() == 11
-        logFile.find("<tasks: [:help]>").size() == 2 + 11
+        logFile.find("<tasks: [help]>").size() == 11
         logFile.find("<tasks: [assemble]>").size() == 16 * 2
 
         logFile.containsOne("* Running scenario assemble using Gradle $latestSupportedGradleVersion (scenario 1/3)")
@@ -460,8 +461,8 @@ class ProfilerIntegrationTest extends AbstractProfilerIntegrationTest {
         then:
         // Probe version, 6 warm up, 10 builds
         logFile.find("<gradle-version: $minimalSupportedGradleVersion>").size() == 17
+        logFile.find("<tasks: [:help]>").size() == 1 // Probe version
         logFile.find("<daemon: true").size() == 17
-        logFile.find("<tasks: [:help]>").size() == 1
         logFile.find("<tasks: []>").size() == 16
 
         logFile.containsOne("* Running scenario xyz using Gradle $minimalSupportedGradleVersion (scenario 1/1)")
@@ -482,7 +483,7 @@ class ProfilerIntegrationTest extends AbstractProfilerIntegrationTest {
                 tasks = assemble
             }
             help {
-                tasks = ":help"
+                tasks = help
             }
         """
 
@@ -498,7 +499,8 @@ class ProfilerIntegrationTest extends AbstractProfilerIntegrationTest {
 
         then:
         logFile.find("<gradle-version: $minimalSupportedGradleVersion>").size() == 7
-        logFile.find("<tasks: [:help]>").size() == 4
+        logFile.find("<tasks: [:help]>").size() == 1 // Probe version
+        logFile.find("<tasks: [help]>").size() == 3
         logFile.find("<tasks: [assemble]>").size() == 3
 
         logFile.containsOne("* Running scenario assemble using Gradle $minimalSupportedGradleVersion (scenario 1/2)")
@@ -516,7 +518,7 @@ class ProfilerIntegrationTest extends AbstractProfilerIntegrationTest {
                 tasks = assemble
             }
             help {
-                tasks = ":help"
+                tasks = help
             }
         """
 
@@ -533,7 +535,8 @@ class ProfilerIntegrationTest extends AbstractProfilerIntegrationTest {
         then:
         logFile.find("<gradle-version: $minimalSupportedGradleVersion>").size() == 7
         logFile.find("<gradle-version: $latestSupportedGradleVersion>").size() == 7
-        logFile.find("<tasks: [:help]>").size() == 8
+        logFile.find("<tasks: [:help]>").size() == 2 // Probe version
+        logFile.find("<tasks: [help]>").size() == 6
         logFile.find("<tasks: [assemble]>").size() == 6
 
         logFile.containsOne("* Running scenario assemble using Gradle $minimalSupportedGradleVersion (scenario 1/4)")
@@ -564,7 +567,7 @@ class ProfilerIntegrationTest extends AbstractProfilerIntegrationTest {
                 tasks = assemble
             }
             help = \${defaults} {
-                tasks = ":help"
+                tasks = help
             }
         """
 
@@ -581,8 +584,9 @@ class ProfilerIntegrationTest extends AbstractProfilerIntegrationTest {
         then:
         logFile.find("<gradle-version: $minimalSupportedGradleVersion>").size() == 7
         logFile.find("<gradle-version: $latestSupportedGradleVersion>").size() == 7
+        logFile.find("<tasks: [:help]>").size() == 2 // Probe version
         logFile.find("<tasks: [assemble]>").size() == 6
-        logFile.find("<tasks: [:help]>").size() == 8
+        logFile.find("<tasks: [help]>").size() == 6
 
         logFile.containsOne("* Running scenario assemble using Gradle $minimalSupportedGradleVersion (scenario 1/4)")
         logFile.containsOne("* Running scenario assemble using Gradle $latestSupportedGradleVersion (scenario 2/4)")
@@ -600,7 +604,7 @@ class ProfilerIntegrationTest extends AbstractProfilerIntegrationTest {
             help {
                 versions = "$minimalSupportedGradleVersion"
                 cleanup-tasks = clean
-                tasks = ":help"
+                tasks = help
             }
         """
 
@@ -618,13 +622,14 @@ class ProfilerIntegrationTest extends AbstractProfilerIntegrationTest {
         then:
         // Probe version, 6 warm up, 10 builds
         logFile.find("<gradle-version: $minimalSupportedGradleVersion>").size() == 33
-        logFile.find("<tasks: [:help]>").size() == 17
+        logFile.find("<tasks: [:help]>").size() == 1
+        logFile.find("<tasks: [help]>").size() == 16
 
         def lines = resultFile.lines
         lines.size() == totalLinesForExecutions(16)
         lines.get(0) == "scenario,help"
         lines.get(1) == "version,Gradle ${minimalSupportedGradleVersion}"
-        lines.get(2) == "tasks,:help"
+        lines.get(2) == "tasks,help"
         lines.get(3) == "value,total execution time"
         lines.get(4).matches("warm-up build #1,$SAMPLE")
         lines.get(9).matches("warm-up build #6,$SAMPLE")
@@ -691,9 +696,9 @@ class ProfilerIntegrationTest extends AbstractProfilerIntegrationTest {
         // Probe version, 1 warm up, 1 build
         logFile.find("<gradle-version: $minimalSupportedGradleVersion>").size() == 5
         logFile.find("<gradle-version: $latestSupportedGradleVersion").size() == 3
+        logFile.find("<tasks: [:help]>").size() == 2
         logFile.find("<dry-run: false>").size() == 2
         logFile.find("<dry-run: true>").size() == 6
-        logFile.find("<tasks: [:help]>").size() == 2
         logFile.find("<tasks: [assemble]>").size() == 4
         logFile.find("<tasks: [clean, assemble]>").size() == 2
 
