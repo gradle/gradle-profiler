@@ -20,7 +20,7 @@ class BenchmarkIntegrationTest extends AbstractProfilerIntegrationTest {
         // Probe version, 6 warm up, 10 builds
         logFile.find("<gradle-version: $minimalSupportedGradleVersion>").size() == 10
         logFile.find("<gradle-version: 5.0>").size() == 17
-        logFile.find("<tasks: [help]>").size() == 2
+        logFile.find("<tasks: [:help]>").size() == 2
         logFile.find("<tasks: [assemble]>").size() == 9 + 16
 
         def lines = resultFile.lines
@@ -54,7 +54,7 @@ class BenchmarkIntegrationTest extends AbstractProfilerIntegrationTest {
         // Probe version, 6 warm up, 10 builds
         logFile.find("<gradle-version: $minimalSupportedGradleVersion>").size() == 5
         logFile.find("<gradle-version: 5.0>").size() == 17
-        logFile.find("<tasks: [help]>").size() == 2
+        logFile.find("<tasks: [:help]>").size() == 2
         logFile.find("<tasks: [assemble]>").size() == 4 + 16
 
         def lines = resultFile.lines
@@ -91,7 +91,7 @@ class BenchmarkIntegrationTest extends AbstractProfilerIntegrationTest {
         // Probe version, 6 warm up, 10 builds
         logFile.find("<gradle-version: $minimalSupportedGradleVersion>").size() == 2
         logFile.find("<gradle-version: 5.0>").size() == 17
-        logFile.find("<tasks: [help]>").size() == 2
+        logFile.find("<tasks: [:help]>").size() == 2
         logFile.find("<tasks: [assemble]>").size() == 1 + 16
 
         def lines = resultFile.lines

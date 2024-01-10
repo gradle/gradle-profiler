@@ -258,7 +258,7 @@ genrule(
             assert find("<gradle-version: $gradleVersion>").size() == 17
             assert find("<daemon: true").size() == 17
             assert find("<daemon: false").size() == 0
-            assert find("<tasks: [help]>").size() == 1
+            assert find("<tasks: [:help]>").size() == 1
             assert find("<tasks: [${tasks.join(", ")}]>").size() == 16
             assert containsOne("<invocations: 16>")
         }
@@ -274,7 +274,7 @@ genrule(
             assert find("<gradle-version: $gradleVersion>").size() == 12
             assert find("<daemon: true").size() == 12
             assert find("<daemon: false").size() == 0
-            assert find("<tasks: [help]>").size() == 1
+            assert find("<tasks: [:help]>").size() == 1
             assert find("<tasks: [${tasks.join(", ")}]>").size() == 11
             assert find("<invocations: 1>").size() == 12
         }
@@ -290,7 +290,7 @@ genrule(
             assert find("<gradle-version: $gradleVersion>").size() == 12
             assert find("<daemon: true").size() == 1
             assert find("<daemon: false").size() == 11
-            assert find("<tasks: [help]>").size() == 1
+            assert find("<tasks: [:help]>").size() == 1
             assert find("<tasks: [${tasks.join(", ")}]>").size() == 11
             assert find("<invocations: 1>").size() == 12
         }
