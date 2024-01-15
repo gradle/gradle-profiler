@@ -1,36 +1,21 @@
 package org.gradle.profiler.ide.studio;
 
-import com.intellij.ide.starter.community.IdeByLinkDownloader;
 import com.intellij.ide.starter.ide.IdeArchiveExtractor;
-import com.intellij.ide.starter.ide.IdeDownloader;
-import com.intellij.ide.starter.ide.installer.IdeInstallerFile;
-import com.intellij.ide.starter.models.IdeInfo;
 import com.intellij.ide.starter.utils.HttpClient;
+import com.intellij.openapi.util.SystemInfo;
 import org.gradle.profiler.ide.IdeProvider;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.nio.file.Path;
-import java.util.Collections;
 
 public class AndroidStudioProvider implements IdeProvider<AndroidStudio> {
     private final IdeArchiveExtractor ideArchiveExtractor = IdeArchiveExtractor.INSTANCE;
+    private final HttpClient httpClient = HttpClient.INSTANCE;
 
     @Override
     public File provideIde(AndroidStudio ide, Path homeDir, Path downloadsDir) {
-        IdeInfo ideInfo = new IdeInfo(
-            "",
-            "",
-            "",
-            "",
-            Collections.emptyList(),
-            "build",
-            ide.getVersion(),
-            "",
-            getStudioDownloadUrl(ide),
-
-
-        );
+        String extension = getExtension();
 
         String version = ide.getVersion().isEmpty()
             ? "latest"
@@ -44,33 +29,35 @@ public class AndroidStudioProvider implements IdeProvider<AndroidStudio> {
         File unpackedIde = getUnpackedIde(unpackDir);
 
         if (unpackedIde != null) {
-            System.out.println("Downloading is skipped, get AndroidStudio from cache");
+            System.out.println("Downloading is skipped, get Android Studio from cache");
             return unpackedIde;
         }
 
-        IdeInstallerFile installerFile = ideDownloader.downloadIdeInstaller(ideInfo, downloadsDir);
+        File installer = downloadsDir
+            .resolve("androidStudio" + version + extension)
+            .toFile();
 
-//        val extension = when {
-//            BuildEnvironment.isWindows -> "windows.zip"
-//            BuildEnvironment.isMacOsX && BuildEnvironment.isIntel -> "mac.zip"
-//            BuildEnvironment.isMacOsX && !BuildEnvironment.isIntel -> "mac_arm.zip"
-//            BuildEnvironment.isLinux -> "linux.tar.gz"
-//                    else -> throw IllegalStateException("Unsupported OS: ${OperatingSystem.current()}")
-//        }
+        httpClient.download(getStudioDownloadUrl(ide, extension), installer, 3);
+        ideArchiveExtractor.unpackIdeIfNeeded(installer, unpackDir);
 
-
-//        val downloadUrl = "https://redirector.gvt1.com/edgedl/android/studio/ide-zips/2021.1.1.11/android-studio-2021.1.1.11$ext"
-//        IdeArchiveExtractor.unpackIdeIfNeeded(installerFile, installDir.toFile())
-//        val installationPath = when (!SystemInfo.isMac) {
-//            true -> installDir.resolve("android-studio")
-//            false -> installDir
-//        }
-
-        return null;
+        return unpackDir.listFiles()[0];
     }
 
-    private static String getStudioDownloadUrl(AndroidStudio studio) {
-        String extension = "foo";
+    private static String getExtension() {
+        if (SystemInfo.isWindows) {
+            return "windows.zip";
+        } else if (SystemInfo.isLinux) {
+            return "linux.tar.gz";
+        } else if (SystemInfo.isMac && SystemInfo.OS_ARCH.equals("aarch64")) {
+            return "mac_arm.zip";
+        } else if (SystemInfo.isMac) {
+            return "mac.zip";
+        } else {
+            throw new IllegalArgumentException("Unknown OS");
+        }
+    }
+
+    private static String getStudioDownloadUrl(AndroidStudio studio, String extension) {
         return String.format("https://redirector.gvt1.com/edgedl/android/studio/ide-zips/%1$s/android-studio-%1$s-%2$s", studio.getVersion(), extension);
     }
 
