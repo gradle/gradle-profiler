@@ -1,6 +1,6 @@
 package org.gradle.profiler.ide
 
-import org.gradle.profiler.TeeOutputStream
+import org.apache.commons.io.output.TeeOutputStream
 import org.junit.Rule
 import org.junit.rules.TemporaryFolder
 import spock.lang.Specification
