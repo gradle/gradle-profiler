@@ -33,8 +33,8 @@ class IdeProviderTest extends AbstractIdeProvisioningTest {
         !downloadsDir.toFile().exists()
 
         where:
-        ide                  | title
-        IDEA.LATEST          | "IDEA Community"
-        AndroidStudio.LATEST | "Android Studio"
+        ide                              | title
+        IDEA.LATEST                      | "IDEA Community"
+        new AndroidStudio("2023.2.1.16") | "Android Studio"
     }
 }

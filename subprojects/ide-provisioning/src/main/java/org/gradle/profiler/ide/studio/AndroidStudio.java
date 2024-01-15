@@ -4,7 +4,6 @@ import org.gradle.profiler.ide.Ide;
 import org.jetbrains.annotations.NotNull;
 
 public class AndroidStudio implements Ide {
-    public static AndroidStudio LATEST = new AndroidStudio("");
     private final String version;
 
     public AndroidStudio(String version) {
