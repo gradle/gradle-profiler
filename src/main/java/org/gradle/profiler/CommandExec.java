@@ -1,5 +1,7 @@
 package org.gradle.profiler;
 
+import org.apache.commons.io.output.TeeOutputStream;
+
 import javax.annotation.Nullable;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
