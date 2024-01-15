@@ -18,16 +18,16 @@ class IdeProviderTest extends AbstractIdeProvisioningTest {
 
         then:
         outputContains("Downloading https://")
-        assert ide.exists()
+        ide.exists()
 
         when:
         def ide2 = ideProvider.provideIde(IDEA.LATEST, ideHomeDir, downloadsDir)
 
         then:
         outputContains("Downloading is skipped, get IDEA Community from cache")
-        assert ide == ide2
+        ide == ide2
 
         and:
-        assert !downloadsDir.toFile().exists()
+        !downloadsDir.toFile().exists()
     }
 }
