@@ -6,6 +6,7 @@ import com.intellij.ide.starter.ide.IdeArchiveExtractor;
 import com.intellij.ide.starter.ide.IdeDownloader;
 import com.intellij.ide.starter.ide.installer.IdeInstallerFile;
 import com.intellij.ide.starter.models.IdeInfo;
+import com.intellij.openapi.util.SystemInfo;
 import org.gradle.profiler.ide.IdeProvider;
 import org.jetbrains.annotations.Nullable;
 
