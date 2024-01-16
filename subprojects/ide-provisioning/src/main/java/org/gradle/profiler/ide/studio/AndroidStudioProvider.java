@@ -4,7 +4,7 @@ import com.intellij.ide.starter.ide.IdeArchiveExtractor;
 import com.intellij.ide.starter.utils.HttpClient;
 import com.intellij.openapi.util.SystemInfo;
 import org.gradle.profiler.ide.IdeProvider;
-import org.jetbrains.annotations.Nullable;
+import org.gradle.profiler.ide.UnpackUtils;
 
 import java.io.File;
 import java.nio.file.Path;
@@ -15,18 +15,18 @@ public class AndroidStudioProvider implements IdeProvider<AndroidStudio> {
 
     @Override
     public File provideIde(AndroidStudio ide, Path homeDir, Path downloadsDir) {
+        if (ide.getVersion().isEmpty()) {
+            throw new IllegalArgumentException("Android Studio version must be specified");
+        }
+
         String extension = getExtension();
-
-        String version = ide.getVersion().isEmpty()
-            ? "latest"
-            : ide.getVersion();
-
+        String version = ide.getVersion();
         File unpackDir = homeDir
             .resolve("androidStudio")
             .resolve(version)
             .toFile();
 
-        File unpackedIde = getUnpackedIde(unpackDir);
+        File unpackedIde = UnpackUtils.getSingleFileFrom(unpackDir);
 
         if (unpackedIde != null) {
             System.out.println("Downloading is skipped, get Android Studio from cache");
@@ -40,7 +40,7 @@ public class AndroidStudioProvider implements IdeProvider<AndroidStudio> {
         httpClient.download(getStudioDownloadUrl(ide, extension), installer, 3);
         ideArchiveExtractor.unpackIdeIfNeeded(installer, unpackDir);
 
-        return unpackDir.listFiles()[0];
+        return UnpackUtils.getSingleFileFrom(unpackDir);
     }
 
     private static String getExtension() {
@@ -59,17 +59,5 @@ public class AndroidStudioProvider implements IdeProvider<AndroidStudio> {
 
     private static String getStudioDownloadUrl(AndroidStudio studio, String extension) {
         return String.format("https://redirector.gvt1.com/edgedl/android/studio/ide-zips/%1$s/android-studio-%1$s-%2$s", studio.getVersion(), extension);
-    }
-
-    @Nullable
-    private static File getUnpackedIde(File unpackDir) {
-        File[] unpackedFiles = unpackDir.listFiles();
-        if (unpackedFiles == null || unpackedFiles.length == 0) {
-            return null;
-        }
-        if (unpackedFiles.length == 1) {
-            return unpackedFiles[0];
-        }
-        throw new IllegalStateException("Unexpected content in " + unpackDir);
     }
 }
