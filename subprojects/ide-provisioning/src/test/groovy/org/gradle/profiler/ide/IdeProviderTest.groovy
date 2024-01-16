@@ -3,31 +3,38 @@ package org.gradle.profiler.ide
 
 import org.gradle.profiler.ide.idea.IDEA
 import org.gradle.profiler.ide.idea.IDEAProvider
+import org.gradle.profiler.ide.studio.AndroidStudio
+import org.gradle.profiler.ide.studio.AndroidStudioProvider
 
 class IdeProviderTest extends AbstractIdeProvisioningTest {
 
-    def "can provide IDEA"() {
+    def "can provide #title"() {
         given:
         def workDir = tmpDir.newFolder().toPath().toAbsolutePath()
         def downloadsDir = workDir.resolve("downloads")
         def ideHomeDir = workDir.resolve("ide")
-        def ideProvider = new DefaultIdeProvider(new IDEAProvider())
+        def ideProvider = new DefaultIdeProvider(new IDEAProvider(), new AndroidStudioProvider())
 
         when:
-        def ide = ideProvider.provideIde(IDEA.LATEST, ideHomeDir, downloadsDir)
+        def ideFile = ideProvider.provideIde(ide, ideHomeDir, downloadsDir)
 
         then:
         outputContains("Downloading https://")
-        ide.exists()
+        ideFile.exists()
 
         when:
-        def ide2 = ideProvider.provideIde(IDEA.LATEST, ideHomeDir, downloadsDir)
+        def ideFile2 = ideProvider.provideIde(ide, ideHomeDir, downloadsDir)
 
         then:
-        outputContains("Downloading is skipped, get IDEA Community from cache")
-        ide == ide2
+        outputContains("Downloading is skipped, get $title from cache")
+        ideFile == ideFile2
 
         and:
         !downloadsDir.toFile().exists()
+
+        where:
+        ide                              | title
+        IDEA.LATEST                      | "IDEA Community"
+        new AndroidStudio("2023.2.1.16") | "Android Studio"
     }
 }
