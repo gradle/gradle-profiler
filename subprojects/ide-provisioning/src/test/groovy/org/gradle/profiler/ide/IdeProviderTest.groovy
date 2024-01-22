@@ -1,10 +1,7 @@
 package org.gradle.profiler.ide
 
-
 import org.gradle.profiler.ide.idea.IDEA
-import org.gradle.profiler.ide.idea.IDEAProvider
 import org.gradle.profiler.ide.studio.AndroidStudio
-import org.gradle.profiler.ide.studio.AndroidStudioProvider
 
 class IdeProviderTest extends AbstractIdeProvisioningTest {
 
@@ -13,7 +10,7 @@ class IdeProviderTest extends AbstractIdeProvisioningTest {
         def workDir = tmpDir.newFolder().toPath().toAbsolutePath()
         def downloadsDir = workDir.resolve("downloads")
         def ideHomeDir = workDir.resolve("ide")
-        def ideProvider = new DefaultIdeProvider(new IDEAProvider(), new AndroidStudioProvider())
+        def ideProvider = new DefaultIdeProvider()
 
         when:
         def ideFile = ideProvider.provideIde(ide, ideHomeDir, downloadsDir)

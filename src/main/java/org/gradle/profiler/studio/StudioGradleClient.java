@@ -26,6 +26,7 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.function.Supplier;
 
 import static org.gradle.profiler.client.protocol.messages.StudioRequest.StudioRequestType.*;
 import static org.gradle.profiler.client.protocol.messages.StudioSyncRequestCompleted.StudioSyncRequestResult.FAILED;
@@ -50,17 +51,21 @@ public class StudioGradleClient implements GradleClient {
     private final StudioSandbox sandbox;
     private boolean isFirstRun;
 
-    public StudioGradleClient(StudioGradleBuildConfiguration buildConfiguration, InvocationSettings invocationSettings, CleanCacheMode cleanCacheMode) {
+    public StudioGradleClient(
+        StudioGradleBuildConfiguration buildConfiguration,
+        InvocationSettings invocationSettings,
+        CleanCacheMode cleanCacheMode
+    ) {
         this.isFirstRun = true;
         this.cleanCacheMode = cleanCacheMode;
-        Path studioInstallDir = invocationSettings.getStudioInstallDir().toPath();
+        Supplier<Path> studioInstallDirSupplier = new StudioInstallDirSupplier(invocationSettings, buildConfiguration);
         Optional<File> studioSandboxDir = invocationSettings.getStudioSandboxDir();
         this.sandbox = StudioSandboxCreator.createSandbox(studioSandboxDir.map(File::toPath).orElse(null));
         Path protocolJar = GradleInstrumentation.unpackPlugin("client-protocol").toPath();
         Path studioPlugin = GradleInstrumentation.unpackPlugin("studio-plugin").toPath();
         this.studioPluginInstaller = new StudioPluginInstaller(sandbox.getPluginsDir());
         studioPluginInstaller.installPlugin(Arrays.asList(studioPlugin, protocolJar));
-        this.processController = new StudioProcessController(studioInstallDir, sandbox, invocationSettings, buildConfiguration);
+        this.processController = new StudioProcessController(studioInstallDirSupplier, sandbox, invocationSettings, buildConfiguration);
         this.executor = Executors.newSingleThreadExecutor();
     }
 

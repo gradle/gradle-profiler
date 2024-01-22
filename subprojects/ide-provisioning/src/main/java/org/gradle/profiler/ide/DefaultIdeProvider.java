@@ -11,13 +11,8 @@ import java.nio.file.Path;
 
 public class DefaultIdeProvider implements IdeProvider<Ide> {
 
-    private final IDEAProvider ideaProvider;
-    private final AndroidStudioProvider studioProvider;
-
-    public DefaultIdeProvider(IDEAProvider ideaProvider, AndroidStudioProvider studioProvider) {
-        this.ideaProvider = ideaProvider;
-        this.studioProvider = studioProvider;
-    }
+    private final IDEAProvider ideaProvider = new IDEAProvider();
+    private final AndroidStudioProvider studioProvider = new AndroidStudioProvider();
 
     @Override
     public File provideIde(Ide ide, Path homeDir, Path downloadsDir) {

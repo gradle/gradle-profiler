@@ -11,13 +11,14 @@ import java.io.UncheckedIOException;
 import java.nio.file.Path;
 import java.util.function.Consumer;
 import java.util.function.Function;
+import java.util.function.Supplier;
 
 /**
  * Controls Studio process and connections.
  */
 public class StudioProcessController {
 
-    private final Path studioInstallDir;
+    private final Supplier<Path> studioInstallDirSupplier;
     private final StudioSandbox sandbox;
     private final InvocationSettings invocationSettings;
     private final StudioGradleBuildConfiguration buildConfiguration;
@@ -25,12 +26,12 @@ public class StudioProcessController {
     private StudioProcess process;
 
     public StudioProcessController(
-        Path studioInstallDir,
+        Supplier<Path> studioInstallDirSupplier,
         StudioSandbox sandbox,
         InvocationSettings invocationSettings,
         StudioGradleBuildConfiguration buildConfiguration
     ) {
-        this.studioInstallDir = studioInstallDir;
+        this.studioInstallDirSupplier = studioInstallDirSupplier;
         this.sandbox = sandbox;
         this.invocationSettings = invocationSettings;
         this.buildConfiguration = buildConfiguration;
@@ -73,7 +74,7 @@ public class StudioProcessController {
      */
     public StudioProcess maybeStartProcess() {
         if (!isProcessRunning()) {
-            process = new StudioProcess(studioInstallDir, sandbox, invocationSettings, buildConfiguration.getStudioJvmArgs(), buildConfiguration.getIdeaProperties());
+            process = new StudioProcess(studioInstallDirSupplier.get(), sandbox, invocationSettings, buildConfiguration.getStudioJvmArgs(), buildConfiguration.getIdeaProperties());
             process.getConnections().getAgentConnection().send(new StudioAgentConnectionParameters(buildConfiguration.getGradleHome()));
         }
         return process;

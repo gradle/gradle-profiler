@@ -90,6 +90,8 @@ class ScenarioLoader {
     private static final String ANDROID_STUDIO_SYNC = "android-studio-sync";
     private static final String ANDROID_STUDIO_JVM_ARGS = "studio-jvm-args";
     private static final String ANDROID_STUDIO_IDEA_PROPERTIES = "idea-properties";
+    private static final String IDE_VERSION = "ide-version";
+    private static final String IDE_TYPE = "ide-type";
     private static final String JVM_ARGS = "jvm-args";
 
     private static final Map<String, BuildMutatorConfigurator> BUILD_MUTATOR_CONFIGURATORS = ImmutableMap.<String, BuildMutatorConfigurator>builder()
@@ -310,7 +312,10 @@ class ScenarioLoader {
         Config androidStudioSync = scenario.getConfig(ANDROID_STUDIO_SYNC);
         List<String> studioJvmArgs = ConfigUtil.strings(androidStudioSync, ANDROID_STUDIO_JVM_ARGS, ImmutableList.of("-Xms256m", "-Xmx4096m"));
         List<String> ideaProperties = ConfigUtil.strings(androidStudioSync, ANDROID_STUDIO_IDEA_PROPERTIES, Collections.emptyList());
-        return new StudioGradleScenarioDefinition(gradleScenarioDefinition, studioJvmArgs, ideaProperties);
+        String ideType = ConfigUtil.string(androidStudioSync, IDE_TYPE, null);
+        String ideVersion = ConfigUtil.string(androidStudioSync, IDE_VERSION, null);
+
+        return new StudioGradleScenarioDefinition(gradleScenarioDefinition, studioJvmArgs, ideaProperties, ideType, ideVersion);
     }
 
     private static List<BuildMutator> getMutators(Config scenario, String scenarioName, InvocationSettings settings, int warmUpCount, int buildCount) {
@@ -465,16 +470,7 @@ class ScenarioLoader {
         List<String> tasks = ConfigUtil.strings(scenario, TASKS);
 
         if (sync) {
-            if (toolingApi != null) {
-                throw new IllegalArgumentException(String.format("Scenario '%s': Cannot load tooling model and Android studio sync in same scenario.", scenarioName));
-            }
-            if (!tasks.isEmpty()) {
-                throw new IllegalArgumentException(String.format("Scenario '%s': Cannot run tasks and Android studio sync in same scenario.", scenarioName));
-            }
-            if (invocationSettings.getStudioInstallDir() == null) {
-                throw new IllegalArgumentException("Android Studio installation directory should be specified using --studio-install-dir when measuring Android studio sync.");
-            }
-            return new AndroidStudioSyncAction();
+            return getAndroidStudioSyncAction(scenario, scenarioName, invocationSettings, toolingApi, tasks);
         }
 
         if (toolingApi != null) {
@@ -494,6 +490,32 @@ class ScenarioLoader {
         } else {
             return new RunTasksAction(tasks);
         }
+    }
+
+    private static BuildAction getAndroidStudioSyncAction(
+        Config scenario,
+        String scenarioName,
+        InvocationSettings invocationSettings,
+        Config toolingApiScenario,
+        List<String> tasks
+    ) {
+        Config sync = scenario.getConfig(ANDROID_STUDIO_SYNC);
+        String ideType = ConfigUtil.string(sync, IDE_TYPE, null);
+        String ideVersion = ConfigUtil.string(sync, IDE_VERSION, null);
+
+        boolean isStudioProvisioningSpecified = ideType != null && ideVersion != null;
+        boolean isStudioDirSpecified = invocationSettings.getStudioInstallDir() == null;
+
+        if (toolingApiScenario != null) {
+            throw new IllegalArgumentException(String.format("Scenario '%s': Cannot load tooling model and Android studio sync in same scenario.", scenarioName));
+        }
+        if (!tasks.isEmpty()) {
+            throw new IllegalArgumentException(String.format("Scenario '%s': Cannot run tasks and Android studio sync in same scenario.", scenarioName));
+        }
+        if (!isStudioDirSpecified && !isStudioProvisioningSpecified) {
+            throw new IllegalArgumentException("Android Studio installation directory should be specified using --studio-install-dir when measuring Android studio sync.");
+        }
+        return new AndroidStudioSyncAction();
     }
 
     private static org.gradle.tooling.BuildAction<?> getToolingAction(Config config, File scenarioFile) {
