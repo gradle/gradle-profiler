@@ -42,7 +42,7 @@ dependencies {
         because("To write JSON output")
     }
     implementation(project(":client-protocol"))
-
+    implementation(project(":ide-provisioning"))
 
     gradleRuntime(gradleApi())
     gradleRuntime(libs.toolingApi)

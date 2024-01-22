@@ -1,11 +1,7 @@
 package org.gradle.profiler.studio;
 
 import org.gradle.profiler.InvocationSettings;
-import org.gradle.profiler.ide.DefaultIdeProvider;
-import org.gradle.profiler.ide.Ide;
-import org.gradle.profiler.ide.IdeProvider;
-import org.gradle.profiler.ide.idea.IDEA;
-import org.gradle.profiler.ide.studio.AndroidStudio;
+import org.gradle.profiler.ide.IdeProviderCompatibilityLayerImpl;
 import org.gradle.profiler.studio.invoker.StudioGradleScenarioDefinition.StudioGradleBuildConfiguration;
 
 import java.io.File;
@@ -19,12 +15,12 @@ public class StudioInstallDirSupplier implements Supplier<Path> {
 
     private final StudioGradleBuildConfiguration buildConfiguration;
 
-    private final IdeProvider<Ide> ideProvider;
+    private final IdeProviderCompatibilityLayerImpl ideProvider;
 
     public StudioInstallDirSupplier(InvocationSettings invocationSettings, StudioGradleBuildConfiguration buildConfiguration) {
         this.invocationSettings = invocationSettings;
         this.buildConfiguration = buildConfiguration;
-        this.ideProvider = new DefaultIdeProvider();
+        this.ideProvider = new IdeProviderCompatibilityLayerImpl();
     }
 
     @Override
@@ -34,15 +30,11 @@ public class StudioInstallDirSupplier implements Supplier<Path> {
             return studioInstallDir.toPath();
         }
 
-        Ide ide;
-        if (buildConfiguration.getIdeType().equals("IC")) {
-            ide = new IDEA(buildConfiguration.getIdeVersion());
-        } else if (buildConfiguration.getIdeType().equals("AI")) {
-            ide = new AndroidStudio(buildConfiguration.getIdeVersion());
-        } else {
-            throw new IllegalArgumentException("Unknown IDE product was requested");
-        }
-
-        return ideProvider.provideIde(ide, Paths.get("/Users/sopivalov/Projects/foo"), Paths.get("/Users/sopivalov/Projects/foo/downloads")).toPath();
+        return ideProvider.provideIde(
+            buildConfiguration.getIdeType(),
+            buildConfiguration.getIdeVersion(),
+            Paths.get("/Users/sopivalov/Projects/foo"),
+            Paths.get("/Users/sopivalov/Projects/foo/downloads")
+        ).toPath();
     }
 }

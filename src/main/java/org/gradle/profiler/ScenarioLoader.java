@@ -504,7 +504,7 @@ class ScenarioLoader {
         String ideVersion = ConfigUtil.string(sync, IDE_VERSION, null);
 
         boolean isStudioProvisioningSpecified = ideType != null && ideVersion != null;
-        boolean isStudioDirSpecified = invocationSettings.getStudioInstallDir() == null;
+        boolean isStudioDirSpecified = invocationSettings.getStudioInstallDir() != null;
 
         if (toolingApiScenario != null) {
             throw new IllegalArgumentException(String.format("Scenario '%s': Cannot load tooling model and Android studio sync in same scenario.", scenarioName));
