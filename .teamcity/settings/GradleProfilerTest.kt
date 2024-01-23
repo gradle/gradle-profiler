@@ -12,7 +12,7 @@ open class GradleProfilerTest(os: Os, javaVersion: JavaVersion, arch: Arch = Arc
     params {
         // Java home must always use Java11
         // since intellij-gradle-plugin is not compatible with Java8
-        javaHome(os, JavaVersion.OPENJDK_11)
+        javaHome(os, JavaVersion.OPENJDK_17)
         androidHome(os)
     }
 
