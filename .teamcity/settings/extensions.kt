@@ -35,7 +35,7 @@ fun ParametrizedWithType.androidHome(os: Os) {
 
 enum class JavaVersion(val majorVersion: String, val vendor: String, private val javaHomePostfix: String) {
     ORACLE_JAVA_8("8", "oracle", "java8.oracle.64bit"),
-    OPENJDK_11("11", "openjdk", "java11.openjdk.64bit");
+    OPENJDK_11("11", "openjdk", "java11.openjdk.64bit"),
     OPENJDK_17("17", "openjdk", "java17.openjdk.64bit");
 
     fun javaHome(os: Os) = "%${os.name}.$javaHomePostfix%"
