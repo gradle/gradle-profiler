@@ -31,7 +31,7 @@ class IdeProviderTest extends AbstractIdeProvisioningTest {
 
         where:
         ide                              | title
-        IDEA.LATEST                      | "IDEA Community"
+        IDEA.LATEST_RELEASE              | "IDEA Community"
         new AndroidStudio("2023.2.1.16") | "Android Studio"
     }
 }

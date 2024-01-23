@@ -5,6 +5,7 @@ import org.gradle.profiler.InvocationSettings;
 import org.gradle.profiler.VersionUtils;
 import org.gradle.profiler.gradle.GradleScenarioDefinition;
 
+import java.nio.file.Path;
 import java.util.List;
 import java.util.function.Consumer;
 
@@ -15,13 +16,15 @@ public class StudioGradleScenarioDefinition extends GradleScenarioDefinition {
         List<String> studioJvmArgs,
         List<String> ideaProperties,
         String ideType,
-        String ideVersion
+        String ideVersion,
+        String ideBuildType,
+        Path ideHome
     ) {
         super(
             gradleScenarioDefinition.getName(),
             gradleScenarioDefinition.getTitle(),
             gradleScenarioDefinition.getInvoker(),
-            new StudioGradleBuildConfiguration(gradleScenarioDefinition.getBuildConfiguration(), studioJvmArgs, ideaProperties, ideType, ideVersion),
+            new StudioGradleBuildConfiguration(gradleScenarioDefinition.getBuildConfiguration(), studioJvmArgs, ideaProperties, ideType, ideVersion, ideBuildType, ideHome),
             gradleScenarioDefinition.getAction(),
             gradleScenarioDefinition.getCleanupAction(),
             gradleScenarioDefinition.getGradleArgs(),
@@ -54,13 +57,17 @@ public class StudioGradleScenarioDefinition extends GradleScenarioDefinition {
         private final List<String> ideaProperties;
         private final String ideType;
         private final String ideVersion;
+        private final String ideBuildType;
+        private final Path ideHome;
 
         StudioGradleBuildConfiguration(
             GradleBuildConfiguration gradleBuildConfiguration,
             List<String> studioJvmArguments,
             List<String> ideaProperties,
             String ideType,
-            String ideVersion
+            String ideVersion,
+            String ideBuildType,
+            Path ideHome
         ) {
             super(
                 gradleBuildConfiguration.getGradleVersion(),
@@ -73,6 +80,8 @@ public class StudioGradleScenarioDefinition extends GradleScenarioDefinition {
             this.ideaProperties = ideaProperties;
             this.ideType = ideType;
             this.ideVersion = ideVersion;
+            this.ideBuildType = ideBuildType;
+            this.ideHome = ideHome;
         }
 
         public List<String> getStudioJvmArgs() {
@@ -89,6 +98,14 @@ public class StudioGradleScenarioDefinition extends GradleScenarioDefinition {
 
         public String getIdeVersion() {
             return ideVersion;
+        }
+
+        public String getIdeBuildType() {
+            return ideBuildType;
+        }
+
+        public Path getIdeHome() {
+            return ideHome;
         }
     }
 }

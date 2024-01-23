@@ -1,5 +1,6 @@
 package org.gradle.profiler.ide.idea;
 
+import com.intellij.icons.ExpUiIcons;
 import com.intellij.ide.starter.community.PublicIdeDownloader;
 import com.intellij.ide.starter.community.model.BuildType;
 import com.intellij.ide.starter.ide.IdeArchiveExtractor;
@@ -28,7 +29,7 @@ public class IDEAProvider implements IdeProvider<IDEA> {
             "IC",
             "Idea",
             "idea",
-            BuildType.EAP.getType(),
+            ide.getBuildType(),
             Collections.emptyList(),
             "", // latest
             ide.getVersion(),

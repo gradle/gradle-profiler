@@ -3,7 +3,7 @@ plugins {
 }
 
 dependencies {
-    java17Implementation(libs.ideStarter) {
+    implementation(libs.ideStarter) {
         exclude(group = "io.ktor")
         exclude(group = "com.jetbrains.infra")
         exclude(group = "com.jetbrains.intellij.remoteDev")

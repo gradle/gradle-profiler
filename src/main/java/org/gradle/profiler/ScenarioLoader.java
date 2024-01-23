@@ -39,6 +39,8 @@ import org.gradle.profiler.studio.invoker.StudioGradleScenarioDefinition;
 
 import javax.annotation.Nullable;
 import java.io.File;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -91,6 +93,8 @@ class ScenarioLoader {
     private static final String ANDROID_STUDIO_JVM_ARGS = "studio-jvm-args";
     private static final String ANDROID_STUDIO_IDEA_PROPERTIES = "idea-properties";
     private static final String IDE_VERSION = "ide-version";
+    private static final String IDE_BUILD_TYPE = "ide-build-type";
+    private static final String IDE_HOME = "ide-home";
     private static final String IDE_TYPE = "ide-type";
     private static final String JVM_ARGS = "jvm-args";
 
@@ -314,8 +318,10 @@ class ScenarioLoader {
         List<String> ideaProperties = ConfigUtil.strings(androidStudioSync, ANDROID_STUDIO_IDEA_PROPERTIES, Collections.emptyList());
         String ideType = ConfigUtil.string(androidStudioSync, IDE_TYPE, null);
         String ideVersion = ConfigUtil.string(androidStudioSync, IDE_VERSION, null);
+        String ideBuildType = ConfigUtil.string(androidStudioSync, IDE_BUILD_TYPE, null);
+        Path ideHome = Path.of(ConfigUtil.string(androidStudioSync, IDE_HOME, null));
 
-        return new StudioGradleScenarioDefinition(gradleScenarioDefinition, studioJvmArgs, ideaProperties, ideType, ideVersion);
+        return new StudioGradleScenarioDefinition(gradleScenarioDefinition, studioJvmArgs, ideaProperties, ideType, ideVersion, ideBuildType, ideHome);
     }
 
     private static List<BuildMutator> getMutators(Config scenario, String scenarioName, InvocationSettings settings, int warmUpCount, int buildCount) {
