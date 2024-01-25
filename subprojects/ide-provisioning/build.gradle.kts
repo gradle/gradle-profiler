@@ -1,5 +1,6 @@
 plugins {
-    id("profiler.java-library")
+    id("profiler.embedded-library")
+    id("profiler.publication")
 }
 
 dependencies {
