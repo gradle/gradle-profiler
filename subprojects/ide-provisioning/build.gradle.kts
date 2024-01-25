@@ -3,6 +3,8 @@ plugins {
     id("profiler.publication")
 }
 
+description = "IDE provisioning capabilities for Gradle profiler"
+
 dependencies {
     implementation(libs.ideStarter) {
         exclude(group = "io.ktor")
