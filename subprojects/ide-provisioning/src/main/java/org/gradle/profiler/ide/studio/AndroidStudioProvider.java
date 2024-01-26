@@ -7,7 +7,10 @@ import org.gradle.profiler.ide.IdeProvider;
 import org.gradle.profiler.ide.UnpackUtils;
 
 import java.io.File;
+import java.io.IOException;
+import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.StandardCopyOption;
 
 public class AndroidStudioProvider implements IdeProvider<AndroidStudio> {
     private final IdeArchiveExtractor ideArchiveExtractor = IdeArchiveExtractor.INSTANCE;
@@ -26,11 +29,9 @@ public class AndroidStudioProvider implements IdeProvider<AndroidStudio> {
             .resolve(version)
             .toFile();
 
-        File unpackedIde = UnpackUtils.getSingleFileFrom(unpackDir);
-
-        if (unpackedIde != null) {
+        if (isDirNotEmpty(unpackDir)) {
             System.out.println("Downloading is skipped, get Android Studio from cache");
-            return unpackedIde;
+            return unpackDir;
         }
 
         File installer = downloadsDir
@@ -40,7 +41,32 @@ public class AndroidStudioProvider implements IdeProvider<AndroidStudio> {
         httpClient.download(getStudioDownloadUrl(ide, extension), installer, 3);
         ideArchiveExtractor.unpackIdeIfNeeded(installer, unpackDir);
 
-        return UnpackUtils.getSingleFileFrom(unpackDir);
+        Path contents = UnpackUtils.getSingleFileFrom(unpackDir)
+            .toPath()
+            .resolve("Contents");
+
+        removeLastPathSegment(contents);
+        return unpackDir;
+    }
+
+    private static boolean isDirNotEmpty(File file) {
+        File[] dirFiles = file.listFiles();
+        return file.exists() && dirFiles != null && dirFiles.length != 0;
+    }
+
+    private static void removeLastPathSegment(Path path) {
+        Path parent = path.getParent();
+        if (parent == null) {
+            throw new IllegalArgumentException("Can't remove last path segment for " + path);
+        }
+
+        Path target = parent.getParent().resolve(path.getFileName());
+        try {
+            Files.move(path, target, StandardCopyOption.REPLACE_EXISTING);
+            Files.delete(parent);
+        } catch (IOException e) {
+            throw new IllegalArgumentException("Can't remove last path segment for " + path);
+        }
     }
 
     private static String getExtension() {

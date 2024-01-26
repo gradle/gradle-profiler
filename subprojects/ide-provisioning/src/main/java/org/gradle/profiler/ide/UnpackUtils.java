@@ -1,16 +1,13 @@
 package org.gradle.profiler.ide;
 
-import org.jetbrains.annotations.Nullable;
-
 import java.io.File;
 
 public class UnpackUtils {
 
-    @Nullable
     public static File getSingleFileFrom(File dir) {
         File[] unpackedFiles = dir.listFiles();
         if (unpackedFiles == null || unpackedFiles.length == 0) {
-            return null;
+            throw new IllegalStateException("File is empty or not a directory");
         }
         if (unpackedFiles.length == 1) {
             return unpackedFiles[0];
