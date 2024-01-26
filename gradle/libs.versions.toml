@@ -1,6 +1,8 @@
 [versions]
 groovy = "3.0.15"
 spock = "2.1-groovy-3.0"
+testAndroidStudioVersion = "2023.3.1.6"
+testAndroidSdkVersion = "7.3.0"
 
 [libraries]
 toolingApi = "org.gradle:gradle-tooling-api:7.2"

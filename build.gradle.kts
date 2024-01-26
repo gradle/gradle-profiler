@@ -131,8 +131,8 @@ androidStudioTests {
     runAndroidStudioInHeadlessMode.set(autoDownloadAndRunInHeadless)
     autoDownloadAndroidStudio.set(autoDownloadAndRunInHeadless)
     // Iguana (2023.2.1.7) Canary 7
-    testAndroidStudioVersion.set("2023.2.1.7")
-    testAndroidSdkVersion.set("7.3.0")
+    testAndroidStudioVersion.set(libs.versions.testAndroidStudioVersion)
+    testAndroidSdkVersion.set(libs.versions.testAndroidSdkVersion)
     // For local development it's easier to setup Android SDK with Android Studio, since auto download needs ANDROID_HOME or ANDROID_SDK_ROOT
     // to be set with an accepted license in it. See https://developer.android.com/studio/intro/update.html#download-with-gradle.
     autoDownloadAndroidSdk.set(autoDownloadAndRunInHeadless)
