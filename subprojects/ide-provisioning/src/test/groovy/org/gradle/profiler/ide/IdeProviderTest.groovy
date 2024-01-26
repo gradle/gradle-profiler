@@ -17,7 +17,7 @@ class IdeProviderTest extends AbstractIdeProvisioningTest {
 
         then:
         outputContains("Downloading https://")
-        ideFile.exists()
+        ideFile.toPath().endsWith(expectedPathEnding)
 
         when:
         def ideFile2 = ideProvider.provideIde(ide, ideHomeDir, downloadsDir)
@@ -30,8 +30,8 @@ class IdeProviderTest extends AbstractIdeProvisioningTest {
         !downloadsDir.toFile().exists()
 
         where:
-        ide                              | title
-        IDEA.LATEST_RELEASE              | "IDEA Community"
-        new AndroidStudio("2023.2.1.16") | "Android Studio"
+        ide                              | title            | expectedPathEnding
+        new IDEA("release", "2023.2.3")  | "IDEA Community" | "IntelliJ IDEA CE.app"
+        new AndroidStudio("2023.2.1.16") | "Android Studio" | "2023.2.1.16"
     }
 }

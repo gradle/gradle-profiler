@@ -29,7 +29,7 @@ public class AndroidStudioProvider implements IdeProvider<AndroidStudio> {
             .resolve(version)
             .toFile();
 
-        if (isDirNotEmpty(unpackDir)) {
+        if (UnpackUtils.isDirNotEmpty(unpackDir)) {
             System.out.println("Downloading is skipped, get Android Studio from cache");
             return unpackDir;
         }
@@ -47,11 +47,6 @@ public class AndroidStudioProvider implements IdeProvider<AndroidStudio> {
 
         removeLastPathSegment(contents);
         return unpackDir;
-    }
-
-    private static boolean isDirNotEmpty(File file) {
-        File[] dirFiles = file.listFiles();
-        return file.exists() && dirFiles != null && dirFiles.length != 0;
     }
 
     private static void removeLastPathSegment(Path path) {

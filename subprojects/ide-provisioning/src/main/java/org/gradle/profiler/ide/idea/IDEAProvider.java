@@ -48,11 +48,9 @@ public class IDEAProvider implements IdeProvider<IDEA> {
             .resolve(version)
             .toFile();
 
-        File unpackedIde = UnpackUtils.getSingleFileFrom(unpackDir);
-
-        if (unpackedIde != null) {
+        if (UnpackUtils.isDirNotEmpty(unpackDir)) {
             System.out.println("Downloading is skipped, get " + ideInfo.getFullName() + " from cache");
-            return unpackedIde;
+            return UnpackUtils.getSingleFileFrom(unpackDir);
         }
 
         IdeInstallerFile installerFile = ideDownloader.downloadIdeInstaller(ideInfo, downloadsDir);
