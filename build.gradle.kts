@@ -102,9 +102,7 @@ tasks.test {
     // in some JVM implementations. For now assume that the current JVM has JFR support.
     // CI will inject the correct implementation.
     val launcher = project.javaToolchains.launcherFor {
-        val javaVersion = providers
-            .gradleProperty("testJavaVersion")
-            .getOrElse(JavaVersion.current().majorVersion)
+        val javaVersion = 17
         languageVersion.set(JavaLanguageVersion.of(javaVersion))
         providers.gradleProperty("testJavaVendor").map {
             when (it.toLowerCase()) {
