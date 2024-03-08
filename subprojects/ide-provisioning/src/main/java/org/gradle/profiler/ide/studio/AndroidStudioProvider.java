@@ -12,15 +12,12 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
 
-import static com.intellij.ide.starter.di.DiContainerKt.getDi;
-
 public class AndroidStudioProvider implements IdeProvider<AndroidStudio> {
     private final IdeArchiveExtractor ideArchiveExtractor = IdeArchiveExtractor.INSTANCE;
     private final HttpClient httpClient = HttpClient.INSTANCE;
 
     @Override
     public File provideIde(AndroidStudio ide, Path homeDir, Path downloadsDir) {
-        var v = getDi();
         if (ide.getVersion().isEmpty()) {
             throw new IllegalArgumentException("Android Studio version must be specified");
         }

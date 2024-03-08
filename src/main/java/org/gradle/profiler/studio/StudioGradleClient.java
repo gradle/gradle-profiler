@@ -5,6 +5,7 @@ import org.gradle.profiler.GradleClient;
 import org.gradle.profiler.InvocationSettings;
 import org.gradle.profiler.client.protocol.ServerConnection;
 import org.gradle.profiler.client.protocol.messages.*;
+import org.gradle.profiler.ide.RunIde;
 import org.gradle.profiler.instrument.GradleInstrumentation;
 import org.gradle.profiler.result.BuildActionResult;
 import org.gradle.profiler.studio.invoker.StudioBuildActionResult;
@@ -33,6 +34,9 @@ import static org.gradle.profiler.client.protocol.messages.StudioSyncRequestComp
 
 public class StudioGradleClient implements GradleClient {
 
+
+    private final InvocationSettings invocationSettings;
+
     public enum CleanCacheMode {
         BEFORE_SCENARIO,
         BEFORE_BUILD,
@@ -43,6 +47,7 @@ public class StudioGradleClient implements GradleClient {
     private static final Duration GRADLE_INVOCATION_STARTED_TIMEOUT = Duration.ofMillis(100);
     private static final Duration GRADLE_INVOCATION_COMPLETED_TIMEOUT = Duration.ofMinutes(60);
     private static final Duration SYNC_REQUEST_COMPLETED_TIMEOUT = Duration.ofMinutes(90);
+    private final StudioInstallDirSupplier studioInstallDirSupplier;
 
     private final StudioProcessController processController;
     private final StudioPluginInstaller studioPluginInstaller;
@@ -58,18 +63,24 @@ public class StudioGradleClient implements GradleClient {
     ) {
         this.isFirstRun = true;
         this.cleanCacheMode = cleanCacheMode;
-        Supplier<Path> studioInstallDirSupplier = new StudioInstallDirSupplier(invocationSettings, buildConfiguration);
+        this.studioInstallDirSupplier = new StudioInstallDirSupplier(invocationSettings, buildConfiguration);
         Optional<File> studioSandboxDir = invocationSettings.getStudioSandboxDir();
         this.sandbox = StudioSandboxCreator.createSandbox(studioSandboxDir.map(File::toPath).orElse(null));
         Path protocolJar = GradleInstrumentation.unpackPlugin("client-protocol").toPath();
         Path studioPlugin = GradleInstrumentation.unpackPlugin("studio-plugin").toPath();
         this.studioPluginInstaller = new StudioPluginInstaller(sandbox.getPluginsDir());
         studioPluginInstaller.installPlugin(Arrays.asList(studioPlugin, protocolJar));
+        this.invocationSettings = invocationSettings;
         this.processController = new StudioProcessController(studioInstallDirSupplier, sandbox, invocationSettings, buildConfiguration);
         this.executor = Executors.newSingleThreadExecutor();
     }
 
     public BuildActionResult sync(List<String> gradleArgs, List<String> jvmArgs) {
+        new RunIde().runIde(
+            invocationSettings.getProjectDir().getAbsolutePath(),
+            "2023.2.3",
+            studioInstallDirSupplier.get().toString()
+        );
         if (shouldCleanCache()) {
             processController.runAndWaitToStop((connections) -> {
                 System.out.println("* Cleaning Android Studio cache, this will require a restart...");
