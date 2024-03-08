@@ -4,12 +4,17 @@ import com.google.common.base.Stopwatch;
 import com.intellij.ide.caches.CachesInvalidator;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.ProjectUtil;
+import com.intellij.openapi.util.registry.Registry;
+import com.intellij.openapi.vfs.VirtualFile;
 import org.gradle.profiler.client.protocol.Client;
 import org.gradle.profiler.client.protocol.messages.StudioCacheCleanupCompleted;
 import org.gradle.profiler.client.protocol.messages.StudioRequest;
 import org.gradle.profiler.client.protocol.messages.StudioSyncRequestCompleted;
 import org.gradle.profiler.studio.plugin.system.GradleSystemListener;
 import org.gradle.profiler.studio.plugin.system.GradleSyncResult;
+import org.jetbrains.plugins.gradle.service.project.open.GradleProjectImportUtil;
+import org.jetbrains.plugins.gradle.settings.GradleSettings;
 
 import java.time.Duration;
 import java.util.concurrent.TimeUnit;
@@ -38,11 +43,23 @@ public class GradleProfilerClient {
     public StudioRequest listenForSyncRequests(Project project, GradleSystemListener gradleSystemListener) {
         StudioRequest request = receiveNextEvent();
         waitOnPostStartupActivities(project);
+        maybeImportProject(project);
         while (shouldHandleNextEvent(request)) {
             handleGradleProfilerRequest(request, project, gradleSystemListener);
             request = receiveNextEvent();
         }
         return request;
+    }
+
+    private void maybeImportProject(Project project) {
+        GradleSettings gradleSettings = GradleSettings.getInstance(project);
+        if (gradleSettings.getLinkedProjectsSettings().isEmpty()) {
+            VirtualFile projectDir = ProjectUtil.guessProjectDir(project);
+            // We disable auto import, because we want to control when the import happens,
+            // here we re-enable it and we start the import when we are ready
+            Registry.get("external.system.auto.import.disabled").setValue(true);
+            GradleProjectImportUtil.linkAndRefreshGradleProject(projectDir.getPath(), project);
+        }
     }
 
     private StudioRequest receiveNextEvent() {
