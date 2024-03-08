@@ -55,9 +55,7 @@ public class GradleProfilerClient {
         GradleSettings gradleSettings = GradleSettings.getInstance(project);
         if (gradleSettings.getLinkedProjectsSettings().isEmpty()) {
             VirtualFile projectDir = ProjectUtil.guessProjectDir(project);
-            // We disable auto import, because we want to control when the import happens,
-            // here we re-enable it and we start the import when we are ready
-            Registry.get("external.system.auto.import.disabled").setValue(true);
+            // We disabled auto import with 'external.system.auto.import.disabled=true', so we need to link and refresh the project manually
             GradleProjectImportUtil.linkAndRefreshGradleProject(projectDir.getPath(), project);
         }
     }

@@ -3,6 +3,7 @@ package org.gradle.profiler.studio.plugin
 import com.intellij.openapi.application.ApplicationInfo
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.project.ProjectUtil
+import com.intellij.openapi.util.registry.Registry
 import org.gradle.profiler.client.protocol.ServerConnection
 import org.gradle.profiler.client.protocol.messages.StudioRequest
 import org.gradle.profiler.client.protocol.messages.StudioSyncRequestCompleted
@@ -17,6 +18,11 @@ import static org.gradle.profiler.client.protocol.messages.StudioSyncRequestComp
 import static org.gradle.profiler.client.protocol.messages.StudioSyncRequestCompleted.StudioSyncRequestResult.SUCCEEDED
 
 class StudioPluginIntegrationTest extends StudioPluginSpecification {
+
+    def setup() {
+        // Our plugin expects auto-import is disabled
+        Registry.get("external.system.auto.import.disabled").setValue(true)
+    }
 
     def "should successfully sync Gradle project"() {
         given:
