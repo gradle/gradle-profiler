@@ -34,7 +34,7 @@ val androidStudioRuntime by configurations.creating
 
 dependencies {
     val fileExtension = when {
-        isWindows() -> "windows.zip"
+        isWindows() -> "windows-exe.zip"
         isMacOS() && isIntel() -> "mac.zip"
         isMacOS() && !isIntel() -> "mac_arm.zip"
         isLinux() -> "linux.tar.gz"
