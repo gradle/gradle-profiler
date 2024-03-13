@@ -3,7 +3,6 @@ package org.gradle.profiler.studio.plugin
 import com.android.tools.idea.sdk.Jdks
 import com.intellij.openapi.application.WriteAction
 import com.intellij.openapi.externalSystem.service.execution.ExternalSystemJdkUtil
-import com.intellij.openapi.externalSystem.settings.ExternalSystemSettingsListenerAdapter
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ex.ProjectManagerEx
 import com.intellij.openapi.projectRoots.ProjectJdkTable
@@ -53,7 +52,7 @@ class IdeSetupHelper extends HeavyPlatformTestCase {
                 ProjectRootManager.getInstance(project).setProjectSdk(jdk)
             }
             GradleSettings gradleSettings = GradleSettings.getInstance(project);
-            gradleSettings.subscribe(new ExternalSystemSettingsListenerAdapter<GradleProjectSettings>() {
+            gradleSettings.subscribe(new DefaultGradleSettingsListener() {
                 @Override
                 void onProjectsLinked(@NotNull Collection<GradleProjectSettings> linkedProjectsSettings) {
                     linkedProjectsSettings.each { it.gradleJvm = ExternalSystemJdkUtil.USE_PROJECT_JDK }

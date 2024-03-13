@@ -5,7 +5,6 @@ import com.intellij.ide.impl.TrustedProjects;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.externalSystem.service.notification.ExternalSystemProgressNotificationManager;
-import com.intellij.openapi.externalSystem.settings.ExternalSystemSettingsListenerAdapter;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.startup.StartupActivity;
 import com.intellij.openapi.util.registry.Registry;
@@ -84,7 +83,7 @@ public class GradleProfilerStartupActivity implements StartupActivity.DumbAware 
         GradleSettings gradleSettings = GradleSettings.getInstance(project);
         gradleSettings.getLinkedProjectsSettings()
             .forEach(settings -> settings.setResolveExternalAnnotations(false));
-        gradleSettings.subscribe(new ExternalSystemSettingsListenerAdapter<>() {
+        gradleSettings.subscribe(new DefaultGradleSettingsListener() {
             @Override
             public void onProjectsLinked(@NotNull Collection<GradleProjectSettings> linkedProjectsSettings) {
                 linkedProjectsSettings.forEach(settings -> settings.setResolveExternalAnnotations(false));

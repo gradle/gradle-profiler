@@ -93,6 +93,7 @@ public class StudioLauncherProvider {
         if (SHOULD_RUN_HEADLESS) {
             systemProperties.put("java.awt.headless", "true");
         }
+        systemProperties.put("external.system.auto.import.disabled", "true");
         systemProperties.forEach((k, v) -> jvmArgs.add(String.format("-D%s=%s", k, v)));
         return jvmArgs;
     }

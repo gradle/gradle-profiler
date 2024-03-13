@@ -43,6 +43,9 @@ java {
 
 tasks.test {
     useJUnitPlatform()
+    // Disable IntelliJ file system access check for tests: having this check enabled can fail
+    // CI builds since Gradle user home can be mounted, e.g. it can be located in the /mnt/tcagent1/.gradle
+    systemProperty("NO_FS_ROOTS_ACCESS_CHECK", "true")
 }
 
 intellij {
