@@ -21,6 +21,7 @@ description = "A tool to profile and benchmark Gradle builds"
 
 val gradleRuntime by configurations.creating
 val profilerPlugins by configurations.creating
+val ideImplementation by configurations.creating
 
 dependencies {
     implementation(libs.toolingApi)
@@ -42,6 +43,7 @@ dependencies {
         because("To write JSON output")
     }
     implementation(project(":client-protocol"))
+    implementation(project(":ide-provisioning-api"))
 
 
     gradleRuntime(gradleApi())
@@ -52,6 +54,7 @@ dependencies {
     profilerPlugins(project(":studio-agent"))
     profilerPlugins(project(":heap-dump"))
     profilerPlugins(project(":studio-plugin"))
+    ideImplementation(project(":ide-provisioning"))
 
     runtimeOnly("org.slf4j:slf4j-simple:1.7.10")
     testImplementation(libs.bundles.testDependencies)
@@ -87,12 +90,28 @@ val generateHtmlReportJavaScript = tasks.register<NpxTask>("generateHtmlReportJa
     args.addAll(source.absolutePath, "--outfile", output.get().asFile.absolutePath)
 }
 
+val listIdeProvisioningDependencies = tasks.register("listIdeProvisioningDependencies") {
+    val input = ideImplementation.minus(gradleRuntime)
+    val output = project.layout.buildDirectory.file("ide-provisioning/ide-provisioning.txt")
+    inputs.files(input)
+    outputs.file(output)
+    doLast {
+        output.get().asFile.writeText(input.joinToString("\n") { it.name })
+    }
+}
+
 tasks.processResources {
     into("META-INF/jars") {
         from(profilerPlugins.minus(gradleRuntime)) {
             // Removing the version from the JARs here, since they are referenced by name in production code.
             rename("""(.*)-\d\.\d.*\.jar""", "${'$'}1.jar")
         }
+    }
+    into("META-INF/jars") {
+        from(ideImplementation.minus(gradleRuntime))
+    }
+    into("META-INF/classpath") {
+        from(listIdeProvisioningDependencies)
     }
     from(generateHtmlReportJavaScript)
 }
