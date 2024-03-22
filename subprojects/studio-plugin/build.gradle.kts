@@ -6,7 +6,7 @@ plugins {
     groovy
     `java-test-fixtures`
     id("profiler.allprojects")
-    id("org.jetbrains.intellij") version "1.13.3"
+    id("org.jetbrains.intellij") version "1.17.2"
 }
 
 description = "Contains logic for Android Studio plugin that communicates with profiler"
