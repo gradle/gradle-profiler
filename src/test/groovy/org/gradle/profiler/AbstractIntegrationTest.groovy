@@ -1,5 +1,6 @@
 package org.gradle.profiler
 
+import org.apache.commons.io.output.TeeOutputStream
 import spock.lang.Specification
 
 class AbstractIntegrationTest extends Specification {

@@ -33,7 +33,7 @@ dependencies {
     implementation("com.github.javaparser:javaparser-core:3.18.0")
     implementation("net.sf.jopt-simple:jopt-simple:5.0.4")
     implementation("org.apache.ant:ant-compress:1.5")
-    implementation("commons-io:commons-io:2.6")
+    implementation(libs.commonIo)
     implementation("org.openjdk.jmc:flightrecorder:8.0.1")
     implementation("com.googlecode.plist:dd-plist:1.23") {
         because("To extract launch details from Android Studio installation")

@@ -1,5 +1,7 @@
 package org.gradle.profiler;
 
+import org.apache.commons.io.output.TeeOutputStream;
+
 import java.io.*;
 
 public class Logging {
