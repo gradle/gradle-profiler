@@ -1,6 +1,9 @@
 [versions]
 groovy = "3.0.15"
 spock = "2.1-groovy-3.0"
+# Iguana (2023.2.1.7) Canary 7
+testAndroidStudioVersion = "2023.2.1.7"
+testAndroidSdkVersion = "7.3.0"
 
 [libraries]
 toolingApi = "org.gradle:gradle-tooling-api:7.2"
