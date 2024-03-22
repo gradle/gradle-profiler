@@ -7,7 +7,7 @@ testAndroidSdkVersion = "7.3.0"
 
 [libraries]
 commonIo = "commons-io:commons-io:2.11.0"
-ideStarter = "com.jetbrains.intellij.tools:ide-starter-squashed:233.14475.28"
+ideStarter = "com.jetbrains.intellij.tools:ide-starter-squashed:233.15026.9"
 toolingApi = "org.gradle:gradle-tooling-api:7.2"
 
 spock-core = { module = "org.spockframework:spock-core", version.ref = "spock" }

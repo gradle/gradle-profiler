@@ -1,6 +1,5 @@
 plugins {
     id("profiler.embedded-library")
-    id("profiler.publication")
 }
 
 description = "Api for IDE provisioning capabilities for Gradle profiler"

@@ -16,6 +16,7 @@ dependencies {
     implementation(libs.ideStarter) {
         exclude(group = "io.ktor")
     }
+    implementation("org.kodein.di:kodein-di-jvm:7.20.2")
     testImplementation(libs.bundles.testDependencies)
     testImplementation(libs.commonIo)
 }

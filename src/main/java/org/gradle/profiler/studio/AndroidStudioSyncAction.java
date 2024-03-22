@@ -2,16 +2,9 @@ package org.gradle.profiler.studio;
 
 import org.gradle.profiler.BuildAction;
 import org.gradle.profiler.GradleClient;
-import org.gradle.profiler.ide.RunIde;
-import org.gradle.profiler.instrument.GradleInstrumentation;
 import org.gradle.profiler.result.BuildActionResult;
 
-import java.net.MalformedURLException;
-import java.net.URL;
-import java.net.URLClassLoader;
-import java.util.Arrays;
 import java.util.List;
-import java.util.ServiceLoader;
 
 /**
  * A mock-up of Android studio sync.
