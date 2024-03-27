@@ -58,29 +58,29 @@ exactly as you would use for the `gradle` command.
 Results will be written to a file called `profile-out/benchmark.html` and `profile-out/benchmark.csv`.
 
 When the profiler runs the build, it will use the tasks you specified. The profiler will use the default
-Gradle version, Java installation and JVM args that have been specified for your build, if any.
+Gradle version, Java installation, and JVM args that have been specified for your build, if any.
 This generally works the same way as if you were using the Gradle wrapper. For example, the profiler will use the values
 from your Gradle wrapper properties file, if present, to determine which Gradle version to run.
 
 You can use the `--gradle-version` option to specify a Gradle version or installation to use to benchmark the build.
-You can specify multiple versions and each of these is used to benchmark the build, allowing you to compare the behaviour of several different Gradle versions.
+You can specify multiple versions, and each of these is used to benchmark the build, allowing you to compare the behavior of several different Gradle versions.
 
 You can also use the `--measure-config-time` option to measure some additional details about configuration time.
 
 You can use `--measure-build-op` together with the fully qualified class name of the enveloping type of the `Details` interface to benchmark cumulative build operation time.
 For example, for Gradle 5.x there is a [`org.gradle.api.internal.tasks.SnapshotTaskInputsBuildOperationType`](https://github.com/gradle/gradle/blob/c671360a3f1729b406c5b8b5b0d22c7b81296993/subprojects/core/src/main/java/org/gradle/api/internal/tasks/SnapshotTaskInputsBuildOperationType.java) which can be used to capture snapshotting time.
 The time recorded is cumulative time, so the wall clock time spent on executing the measured build operations is probably smaller.
-If the build operation does not exists in a benchmarked version of Gradle, it is gracefully ignored.
+If the build operation does not exist in a benchmarked version of Gradle, it is gracefully ignored.
 In the resulting reports it will show up with 0 time.
 
 ### Regression detection
 
-If multiple versions are tested, then Gradle profiler determines whether there is an statistically significant difference in the run times by using a [Mann-Whitney U-Test](https://en.wikipedia.org/wiki/Mann%E2%80%93Whitney_U_test).
+If multiple versions are tested, then the Gradle profiler determines whether there is a statistically significant difference in the run times by using a [Mann-Whitney U-Test](https://en.wikipedia.org/wiki/Mann%E2%80%93Whitney_U_test).
 The result files contain the confidence if a sample has a different performance behavior - i.e. it is faster or slower - than the baseline.
 
 ## Profiling a build
 
-Profiling allows you to get deeper insight into the performance of your build.
+Profiling allows you to get a deeper insight into the performance of your build.
 
 To run the `gradle-profiler` app to profile a build use:
 
