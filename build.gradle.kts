@@ -107,7 +107,7 @@ tasks.test {
             .getOrElse(JavaVersion.current().majorVersion)
         languageVersion.set(JavaLanguageVersion.of(javaVersion))
         providers.gradleProperty("testJavaVendor").map {
-            when (it.toLowerCase()) {
+            when (it.lowercase()) {
                 "oracle" -> vendor.set(JvmVendorSpec.ORACLE)
                 "openjdk" -> vendor.set(JvmVendorSpec.ADOPTIUM)
             }
@@ -151,7 +151,7 @@ testReports.forEach { taskName, fileName ->
         inputs.files(tasks.processResources)
 
         from("src/main/resources/org/gradle/profiler/report")
-        into("$buildDir/test-html-report")
+        into(layout.buildDirectory.dir("test-html-report"))
         rename("report-template.html", "test-report-${fileName}.html")
         filter { line ->
             if (line == "@@BENCHMARK_RESULT_JSON@@") dataFile.readText()
@@ -237,7 +237,7 @@ tasks.register("releaseToSdkMan") {
     val versionString = project.version.toString()
 
     // We don't publish snapshots and alphas at all to SDKman.
-    val isSnapshotOrAlphaRelease = versionString.toLowerCase(Locale.US).run { contains("snapshot") || contains("alpha") }
+    val isSnapshotOrAlphaRelease = versionString.lowercase(Locale.US).run { contains("snapshot") || contains("alpha") }
     if (!isSnapshotOrAlphaRelease) {
         dependsOn(tasks.withType<SdkReleaseVersionTask>())
 
