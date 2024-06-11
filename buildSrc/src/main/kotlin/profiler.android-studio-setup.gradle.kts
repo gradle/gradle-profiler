@@ -57,7 +57,7 @@ val unpackAndroidStudio = tasks.register<Copy>("unpackAndroidStudio") {
             relativePath = RelativePath(true, *relativePath.segments.drop(1).toTypedArray())
         }
     }
-    into("$buildDir/android-studio")
+    into(layout.buildDirectory.dir("android-studio"))
 }
 
 val installAndroidSdk = tasks.register<InstallAndroidSdkTask>("installAndroidSdk") {
