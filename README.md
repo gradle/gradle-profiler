@@ -58,39 +58,39 @@ exactly as you would use for the `gradle` command.
 Results will be written to a file called `profile-out/benchmark.html` and `profile-out/benchmark.csv`.
 
 When the profiler runs the build, it will use the tasks you specified. The profiler will use the default
-Gradle version, Java installation and JVM args that have been specified for your build, if any.
+Gradle version, Java installation, and JVM args that have been specified for your build, if any.
 This generally works the same way as if you were using the Gradle wrapper. For example, the profiler will use the values
 from your Gradle wrapper properties file, if present, to determine which Gradle version to run.
 
 You can use the `--gradle-version` option to specify a Gradle version or installation to use to benchmark the build.
-You can specify multiple versions and each of these is used to benchmark the build, allowing you to compare the behaviour of several different Gradle versions.
+You can specify multiple versions, and each of these is used to benchmark the build, allowing you to compare the behavior of several different Gradle versions.
 
 You can also use the `--measure-config-time` option to measure some additional details about configuration time.
 
 You can use `--measure-build-op` together with the fully qualified class name of the enveloping type of the `Details` interface to benchmark cumulative build operation time.
 For example, for Gradle 5.x there is a [`org.gradle.api.internal.tasks.SnapshotTaskInputsBuildOperationType`](https://github.com/gradle/gradle/blob/c671360a3f1729b406c5b8b5b0d22c7b81296993/subprojects/core/src/main/java/org/gradle/api/internal/tasks/SnapshotTaskInputsBuildOperationType.java) which can be used to capture snapshotting time.
 The time recorded is cumulative time, so the wall clock time spent on executing the measured build operations is probably smaller.
-If the build operation does not exists in a benchmarked version of Gradle, it is gracefully ignored.
+If the build operation does not exist in a benchmarked version of Gradle, it is gracefully ignored.
 In the resulting reports it will show up with 0 time.
 
 ### Regression detection
 
-If multiple versions are tested, then Gradle profiler determines whether there is an statistically significant difference in the run times by using a [Mann-Whitney U-Test](https://en.wikipedia.org/wiki/Mann%E2%80%93Whitney_U_test).
+If multiple versions are tested, then the Gradle profiler determines whether there is a statistically significant difference in the run times by using a [Mann-Whitney U-Test](https://en.wikipedia.org/wiki/Mann%E2%80%93Whitney_U_test).
 The result files contain the confidence if a sample has a different performance behavior - i.e. it is faster or slower - than the baseline.
 
 ## Profiling a build
 
-Profiling allows you to get deeper insight into the performance of your build.
+Profiling allows you to get a deeper insight into the performance of your build.
 
-To run the `gradle-profiler` app to profile a build use:
+To run the `gradle-profiler` app to profile a building use:
 
     > gradle-profiler --profile <name-of-profiler> --project-dir <root-dir-of-build> <task>...
 
 The app will run the build several times to warm up a daemon, then enable the profiler and run the build.
 Once complete, the results are available under `profile-out/`.
 
-If you use Async profiler or JFR for profiling, Gradle profiler will also create flame graphs for each scenario.
-If you profile multiple scenarios or multiple versions, then Gradle profiler will create differential flame graphs as well.
+If you use the Async profiler or JFR for profiling, the Gradle profiler will also create flame graphs for each scenario.
+If you profile multiple scenarios or multiple versions, then the Gradle profiler will create differential flame graphs as well.
 
 ### Gradle build scans
 
@@ -102,28 +102,28 @@ In order to create a build scan of your build, use `--profile buildscan`. The bu
 
 ### Async Profiler
 
-Async profiler provides low-overhead CPU, allocation and perf event sampling on Linux and MacOS. 
+Async profiler provides low-overhead CPU, allocation, and perf event sampling on Linux and MacOS. 
 It also correctly handles native method calls, making it preferable to JFR on these operating systems. 
 
-You can use async profiler to profile a Gradle build using `--profile async-profiler`. By default, this will profile CPU usage, with some reasonable default settings. These settings can be configured using various command-line options, listed below.
+You can use the async profiler to profile a Gradle build using `--profile async-profiler`. By default, this will profile CPU usage, with some reasonable default settings. These settings can be configured using various command-line options, listed below.
 
 Alternatively, you can also use `--profile async-profiler-heap` to profile heap allocations, with some reasonable default settings.
 
-Finally, you can also use `--profile async-profiler-all` to profile cpu, heap allocations, and locks with some reasonable default settings.
+Finally, you can also use `--profile async-profiler-all` to profile CPU, heap allocations, and locks with some reasonable default settings.
 
 By default, an Async profiler release will be downloaded from [Github](https://github.com/jvm-profiling-tools/async-profiler/releases) and installed, if not already available.
 
-The output are flame and icicle graphs which show you the call tree and hotspots of your code.
+The output is flame and icicle graphs, which show you the call tree and hotspots of your code.
 
-The following options are supported and closely mimic the options of Async profiler. Have a look at its readme to find out more about each option:
+The following options are supported and closely mimic the options of the Async profiler. Have a look at its readme to find out more about each option:
 
 - `--async-profiler-event`: The event to sample, e.g. `cpu`, `wall`, `lock` or `alloc`. Defaults to `cpu`. Multiple events can be profiled by using this parameter multiple times.
 - `--async-profiler-count`: The count to use when aggregating event data. Either `samples` or `total`. `total` is especially useful for allocation profiling. Defaults to `samples`. Corresponds to the `--samples` and `--total` command line options for Async profiler.
 - `--async-profiler-interval`: The sampling interval in ns, defaults to 10_000_000 (10 ms).
-- `--async-profiler-alloc-interval`: The sampling interval in bytes for allocation profiling, defaults to 10 bytes. Corresponds to the `--alloc` command line option for Async profiler.
-- `--async-profiler-lock-threshold`: lock profiling threshold in nanoseconds, defaults to 250 microseconds. Corresponds to the `--lock` command line option for Async profiler.
+- `--async-profiler-alloc-interval`: The sampling interval in bytes for allocation profiling, defaults to 10 bytes. Corresponds to the `--alloc` command line option for the Async profiler.
+- `--async-profiler-lock-threshold`: lock profiling threshold in nanoseconds, defaults to 250 microseconds. Corresponds to the `--lock` command line option for the Async profiler.
 - `--async-profiler-stackdepth`: The maximum stack depth. Lower this if profiles with deep recursion get too large. Defaults to 2048.
-- `--async-profiler-system-threads`: Whether to show system threads like GC and JIT compilation in the profile. Usually makes them harder to read, but can be useful if you suspect problems in that area. Defaults to `false`. 
+- `--async-profiler-system-threads`: Whether to show system threads like GC and JIT compilation in the profile. Usually, it makes them harder to read, but it can be useful if you suspect problems in that area. Defaults to `false`. 
 
 You can also use either the `ASYNC_PROFILER_HOME` environment variable or the `--async-profiler-home` command line option to point to the Async profiler install directory.
 
@@ -161,7 +161,7 @@ All probes are disabled when using sampling or memory allocation profiling.
 
 ### Java Flight Recorder
 
-JFR provides low overhead CPU, allocation, IO wait and lock profiling and runs on all major operating systems.
+JFR provides low-overhead CPU, allocation, IO wait, and lock profiling, and runs on all major operating systems.
 It is available on Oracle JDK since Java 7 and on OpenJDK since Java 11 (make sure you have at least [11.0.3](https://bugs.openjdk.java.net/browse/JDK-8219347)).
 
 To our knowledge, it is the only low-overhead allocation profiler for Windows.
@@ -178,9 +178,9 @@ To capture a heap dump at the end of each measured build, add the `--profile hea
 
 ### Chrome Trace
 
-Chrome traces are a low-level event dump (e.g. projects being evaluated, tasks being run etc.).
-They are useful when you can't create a build scan, but need to look at the overall structure of a build.
-It also displays CPU load, memory usage and GC activity. Using chrome-trace requires Gradle 3.3+.
+Chrome traces are a low-level event dump (e.g., projects being evaluated, tasks being run, etc.).
+They are useful when you can't create a build scan but need to look at the overall structure of a build.
+It also displays CPU load, memory usage, and GC activity. Using chrome-trace requires Gradle 3.3+.
 
 Add the `--profile chrome-trace` option and open the result in Google Chrome in chrome://tracing. 
 
@@ -189,9 +189,9 @@ Add the `--profile chrome-trace` option and open the result in Google Chrome in 
 - `--project-dir`: Directory containing the build to run (required).
 - `--benchmark`: Benchmark the build. Runs the builds more times and writes the results to a CSV file.
 - `--profile <profiler>`: Profile the build using the specified profiler. See above for details on each profiler.
-- `--output-dir <dir>`: Directory to write results to. Default value is `profile-out`. If profile-out directory already exists, it tries to find a `profile-out-<index>` directory, that does not exist.
+- `--output-dir <dir>`: Directory to write results to. The default value is `profile-out`. If the profile-out directory already exists, it tries to find a `profile-out-<index>` directory that does not exist.
 - `--warmups`: Specifies the number of warm-up builds to run for each scenario. Defaults to 2 for profiling, 6 for benchmarking, and 1 when not using a warm daemon.
-- `--iterations`: Specifies the number of builds to run for each scenario. Defaults to 1 for profiling, 10 for benchmarking.
+- `--iterations`: Specifies the number of builds to run for each scenario. Defaults to 1 for profiling and 10 for benchmarking.
 - `--bazel`: Benchmark scenarios using Bazel instead of Gradle. By default, only Gradle scenarios are run. You cannot profile a Bazel build using this tool.
 - `--buck`: Benchmark scenarios using Buck instead of Gradle. By default, only Gradle scenarios are run. You cannot profile a Buck build using this tool.
 - `--maven`: Benchmark scenarios using Maven instead of Gradle. By default, only Gradle scenarios are run. You cannot profile a Maven build using this tool.
@@ -209,7 +209,7 @@ The following command line options only apply when measuring Gradle builds:
 - `--measure-local-build-cache`: Measure the size of the local build cache.
 - `-D<key>=<value>`: Defines a system property when running the build, overriding the default for the build.
 - `--studio-install-dir`: The Android Studio installation directory. Required when measuring Android Studio sync.
-- `--studio-sandbox-dir`: The Android Studio sandbox directory. It's recommended to use it since it isolates the Android Studio process from your other Android Studio processes. By default, this will be set to `<output-dir>/studio-sandbox`. If you want Android Studio to keep old data (e.g. indexes) you should set and reuse your own folder. 
+- `--studio-sandbox-dir`: The Android Studio sandbox directory. It's recommended to use it since it isolates the Android Studio process from your other Android Studio processes. By default, this will be set to `<output-dir>/studio-sandbox`. If you want Android Studio to keep old data (e.g., indexes), you should set and reuse your own folder. 
 - `--no-studio-sandbox`: Do not use the Android Studio sandbox but use the default Android Studio folders for the Android Studio data.
 - `--no-diffs`: Do not generate differential flame graphs.
 
@@ -285,13 +285,13 @@ Here is an example:
         }
     }
 
-Values are optional and default to the values provided on the command-line or defined in the build.
+Values are optional and default to the values provided on the command line or defined in the build.
 
 ### Profiling incremental builds
 
 A scenario can define changes that should be applied to the source before each build. You can use this to benchmark or profile an incremental build. The following mutations are available:
 
-- `apply-build-script-change-to`: Add a statement to a Groovy or Kotlin DSL build script, init script or settings script. Each iteration adds a new statement and removes the statement added by the previous iteration.
+- `apply-build-script-change-to`: Add a statement to a Groovy or Kotlin DSL build script, init script, or settings script. Each iteration adds a new statement and removes the statement added by the previous iteration.
 - `apply-project-dependency-change-to`: Add project dependencies to a Groovy or a Kotlin DSL build script. Each iteration adds a new combination of projects as dependencies and removes the projects added by the previous iteration.
 - `apply-abi-change-to`: Add a public method to a Java or Kotlin source class. Each iteration adds a new method and removes the method added by the previous iteration.
 - `apply-non-abi-change-to`: Change the body of a public method in a Java or Kotlin source class.
@@ -300,12 +300,12 @@ A scenario can define changes that should be applied to the source before each b
 - `apply-property-resource-change-to`: Add an entry to a properties file. Each iteration adds a new entry and removes the entry added by the previous iteration.
 - `apply-android-resource-change-to`: Add a string resource to an Android resource file. Each iteration adds a new resource and removes the resource added by the previous iteration.
 - `apply-android-resource-value-change-to`: Change a string resource in an Android resource file.
-- `apply-android-manifest-change-to`: Add a permission to an Android manifest file.
-- `apply-android-layout-change-to`: Add a hidden view with id to an Android layout file. Supports traditional layouts as well as Databinding layouts with a ViewGroup as the root element.
+- `apply-android-manifest-change-to`: Add permission to an Android manifest file.
+- `apply-android-layout-change-to`: Add a hidden view with ID to an Android layout file. Supports traditional layouts as well as Databinding layouts with a ViewGroup as the root element.
 - `apply-kotlin-composable-change-to`: Add a `@Composable` function to a Kotlin source file.
 - `clear-build-cache-before`: Deletes the contents of the build cache before the scenario is executed (`SCENARIO`), before cleanup (`CLEANUP`) or before the build is executed (`BUILD`).
 - `clear-gradle-user-home-before`: Deletes the contents of the Gradle user home directory before the scenario is executed (`SCENARIO`), before cleanup (`CLEANUP`) or before the build is executed (`BUILD`).
-   The mutator retains the `wrapper` cache in the Gradle user home, since the downloaded wrapper in that location is used to run Gradle.
+   The mutator retains the `wrapper` cache in the Gradle user home since the downloaded wrapper in that location is used to run Gradle.
    Requires to use the `none` daemon option to use with `CLEANUP` or `BUILD`.
 - `clear-configuration-cache-state-before`: Deletes the contents of the `.gradle/configuration-cache-state` directory before the scenario is executed (`SCENARIO`), before cleanup (`CLEANUP`) or before the build is executed (`BUILD`).
 - `clear-project-cache-before`: Deletes the contents of the `.gradle` and `buildSrc/.gradle` project cache directories before the scenario is executed (`SCENARIO`), before cleanup (`CLEANUP`) or before the build is executed (`BUILD`).
