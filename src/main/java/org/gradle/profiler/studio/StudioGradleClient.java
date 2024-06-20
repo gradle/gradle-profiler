@@ -5,6 +5,8 @@ import org.gradle.profiler.GradleClient;
 import org.gradle.profiler.InvocationSettings;
 import org.gradle.profiler.client.protocol.ServerConnection;
 import org.gradle.profiler.client.protocol.messages.*;
+import org.gradle.profiler.ide.RunIdeContext;
+import org.gradle.profiler.ide.RunIdeStarter;
 import org.gradle.profiler.instrument.GradleInstrumentation;
 import org.gradle.profiler.result.BuildActionResult;
 import org.gradle.profiler.studio.invoker.StudioBuildActionResult;
@@ -16,12 +18,15 @@ import org.gradle.profiler.studio.tools.StudioSandboxCreator;
 import org.gradle.profiler.studio.tools.StudioSandboxCreator.StudioSandbox;
 
 import java.io.File;
+import java.net.URL;
+import java.net.URLClassLoader;
 import java.nio.file.Path;
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
+import java.util.ServiceLoader;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -31,6 +36,8 @@ import static org.gradle.profiler.client.protocol.messages.StudioRequest.StudioR
 import static org.gradle.profiler.client.protocol.messages.StudioSyncRequestCompleted.StudioSyncRequestResult.FAILED;
 
 public class StudioGradleClient implements GradleClient {
+
+
 
     public enum CleanCacheMode {
         BEFORE_SCENARIO,
@@ -48,11 +55,13 @@ public class StudioGradleClient implements GradleClient {
     private final CleanCacheMode cleanCacheMode;
     private final ExecutorService executor;
     private final StudioSandbox sandbox;
+    private final InvocationSettings invocationSettings;
     private boolean isFirstRun;
 
     public StudioGradleClient(StudioGradleBuildConfiguration buildConfiguration, InvocationSettings invocationSettings, CleanCacheMode cleanCacheMode) {
         this.isFirstRun = true;
         this.cleanCacheMode = cleanCacheMode;
+        this.invocationSettings = invocationSettings;
         Path studioInstallDir = invocationSettings.getStudioInstallDir().toPath();
         Optional<File> studioSandboxDir = invocationSettings.getStudioSandboxDir();
         this.sandbox = StudioSandboxCreator.createSandbox(studioSandboxDir.map(File::toPath).orElse(null));
@@ -64,7 +73,22 @@ public class StudioGradleClient implements GradleClient {
         this.executor = Executors.newSingleThreadExecutor();
     }
 
+    private RunIdeContext newIdeContext() {
+        URL[] classpath = GradleInstrumentation.getClasspath("ide-provisioning");
+        RunIdeStarter ideStarter = ServiceLoader.load(RunIdeStarter.class, new URLClassLoader(classpath, RunIdeStarter.class.getClassLoader())).iterator().next();
+        return ideStarter.newContext(
+            invocationSettings.getProjectDir().getAbsolutePath(),
+            invocationSettings.getStudioInstallDir().getAbsolutePath()
+        );
+    }
+
     public BuildActionResult sync(List<String> gradleArgs, List<String> jvmArgs) {
+        newIdeContext()
+            .withCommands()
+            .waitForSmartMode()
+            .importGradleProject()
+            .exitApp();
+
         if (shouldCleanCache()) {
             processController.runAndWaitToStop((connections) -> {
                 System.out.println("* Cleaning Android Studio cache, this will require a restart...");
