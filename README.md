@@ -404,3 +404,39 @@ You can compare Gradle against Bazel, Buck, and Maven by specifying their equiva
             targets = ["//thing/res_debug"]
         }
     }
+## Configuring Profiling Options
+
+The Gradle Profiler allows you to configure various JVM options using the `GRADLE_PROFILER_OPTS` environment variable. This variable enables you to customize the behavior of the profiler to suit your specific requirements.
+
+### Usage
+
+To set JVM options for the Gradle Profiler, you can use the `GRADLE_PROFILER_OPTS` environment variable. This variable allows you to specify a range of JVM options, including memory settings, garbage collection algorithms, and system properties. Here's an example of how to use `GRADLE_PROFILER_OPTS` to increase the maximum heap size (`-Xmx`):
+
+```bash
+export GRADLE_PROFILER_OPTS="-Xmx4g"
+```
+### Additional Configuration
+In addition to setting the maximum heap size, you can use GRADLE_PROFILER_OPTS to configure other JVM options. Here are some examples of additional configurations:
+- Enabling a specific garbage collector algorithm:
+```bash
+export GRADLE_PROFILER_OPTS="-Xmx4g -XX:+UseG1GC"
+```
+- Setting a custom system property:
+```bash
+export GRADLE_PROFILER_OPTS="-Xmx4g -Dmy.property=value"
+```
+- Specifying additional JVM arguments:
+```bash
+export GRADLE_PROFILER_OPTS="-Xmx4g -XX:MaxMetaspaceSize=256m"
+```
+You can combine multiple JVM options within the GRADLE_PROFILER_OPTS variable, separated by spaces.
+### Applying Configuration
+Make sure to apply the configuration before running the Gradle Profiler. You can set the GRADLE_PROFILER_OPTS environment variable in your shell profile (e.g., .bashrc, .zshrc) or directly in your terminal session before executing the profiler commands.
+
+```bash
+# Set GRADLE_PROFILER_OPTS environment variable
+export GRADLE_PROFILER_OPTS="-Xmx4g"
+# Run Gradle Profiler commands
+gradle-profiler --benchmark --project-dir <root-dir-of-build> <task>...
+```
+By configuring GRADLE_PROFILER_OPTS, you can fine-tune the JVM settings to optimize the performance of the Gradle Profiler according to your specific use case.
