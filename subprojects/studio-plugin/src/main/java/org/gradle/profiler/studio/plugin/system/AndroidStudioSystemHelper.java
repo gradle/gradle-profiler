@@ -46,9 +46,7 @@ public class AndroidStudioSystemHelper {
      * Starts a manual sync and returns a result.
      */
     public static GradleSyncResult startManualSync(Project project, GradleSystemListener gradleSystemListener) {
-        GradleSyncResult result = doGradleSync(project, gradleSystemListener);
-        waitOnBackgroundProcessesFinish(project);
-        return result;
+        return doGradleSync(project, gradleSystemListener);
     }
 
     private static GradleSyncResult doGradleSync(Project project, GradleSystemListener gradleSystemListener) {
@@ -71,11 +69,9 @@ public class AndroidStudioSystemHelper {
         }
     }
 
-    /**
-     * Registers a listener that waits on next gradle sync if it's in progress.
-     */
-    public static void waitOnPreviousGradleSyncFinish(Project project) {
-        if (ProjectSystemUtil.getSyncManager(project).isSyncInProgress()) {
+    /** Registers a listener that wait for the startup sync to finish */
+    public static void waitOnStartupSyncToFinish(Project project) {
+        if (ProjectSystemUtil.getSyncManager(project).getLastSyncResult() != UNKNOWN) {
             MessageBusConnection connection = project.getMessageBus().connect();
             CompletableFuture<Void> future = new CompletableFuture<>();
             connection.subscribe(PROJECT_SYSTEM_SYNC_TOPIC, syncResult -> future.complete(null));
