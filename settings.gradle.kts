@@ -20,10 +20,10 @@ rootProject.children.forEach {
 }
 
 /**
- * Intellij-gradle-plugin requires Java 11.
+ * Building gradle-profile requires JDK 17.
  */
 fun checkIfCurrentJavaIsCompatible() {
-    if (!JavaVersion.current().isCompatibleWith(JavaVersion.VERSION_11)) {
-        throw GradleException("This project should be run with Java 11 or later, but it was run with Java ${JavaVersion.current()}.")
+    if (!JavaVersion.current().isCompatibleWith(JavaVersion.VERSION_17)) {
+        throw GradleException("This project should be build with JDK 17, but it was run with Java ${JavaVersion.current()}.")
     }
 }
