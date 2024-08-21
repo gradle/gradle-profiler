@@ -21,6 +21,9 @@ import java.io.PrintWriter;
 
 import static org.gradle.profiler.buildscan.GradleEnterpriseInitScript.PUBLISH_AND_TAG;
 
+/**
+ * An init script to apply Gradle Enterprise plugin that is already available, used for Gradle 6+.
+ */
 public class GradleEnterpriseAlreadyAppliedInitScript extends GeneratedInitScript {
 
     @Override
