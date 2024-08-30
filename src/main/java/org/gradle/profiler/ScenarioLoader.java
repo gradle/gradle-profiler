@@ -263,8 +263,9 @@ class ScenarioLoader {
                 File mavenHome = getToolHome(executionInstructions);
                 File outputDir = new File(scenarioBaseDir, "maven");
                 int warmUpCount = getWarmUpCount(settings, scenario);
+                Map<String, String> systemProperties = ConfigUtil.map(scenario, SYSTEM_PROPERTIES, settings.getSystemProperties());
                 List<BuildMutator> mutators = getMutators(scenario, scenarioName, settings, warmUpCount, buildCount);
-                definitions.add(new MavenScenarioDefinition(scenarioName, title, targets, mutators, warmUpCount, buildCount, outputDir, mavenHome));
+                definitions.add(new MavenScenarioDefinition(scenarioName, title, targets, systemProperties, mutators, warmUpCount, buildCount, outputDir, mavenHome));
             } else if (!settings.isBazel() && !settings.isBuck() && !settings.isMaven()) {
                 List<GradleBuildConfiguration> versions = ConfigUtil.strings(scenario, VERSIONS, settings.getVersions()).stream().map(inspector::readConfiguration).collect(
                     Collectors.toList());

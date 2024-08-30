@@ -8,12 +8,16 @@ import org.gradle.profiler.OperatingSystem;
 import javax.annotation.Nullable;
 import java.io.File;
 import java.util.List;
+import java.util.Map;
 
 public class MavenScenarioDefinition extends BuildToolCommandLineScenarioDefinition {
+    private final Map<String, String> systemProperties;
+
     public MavenScenarioDefinition(
         String scenarioName,
         @Nullable String title,
         List<String> targets,
+        Map<String, String> systemProperties,
         List<BuildMutator> buildMutators,
         int warmUpCount,
         int buildCount,
@@ -21,6 +25,7 @@ public class MavenScenarioDefinition extends BuildToolCommandLineScenarioDefinit
         @Nullable File mavenHome
     ) {
         super(scenarioName, title, targets, buildMutators, warmUpCount, buildCount, outputDir, mavenHome);
+        this.systemProperties = systemProperties;
     }
 
     @Override
@@ -55,5 +60,9 @@ public class MavenScenarioDefinition extends BuildToolCommandLineScenarioDefinit
     @Override
     protected String getToolHomeEnvName() {
         return "MAVEN_HOME";
+    }
+
+    public Map<String, String> getSystemProperties() {
+        return systemProperties;
     }
 }
