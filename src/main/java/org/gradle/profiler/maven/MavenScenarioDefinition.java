@@ -7,6 +7,7 @@ import org.gradle.profiler.OperatingSystem;
 
 import javax.annotation.Nullable;
 import java.io.File;
+import java.io.PrintStream;
 import java.util.List;
 import java.util.Map;
 
@@ -64,5 +65,16 @@ public class MavenScenarioDefinition extends BuildToolCommandLineScenarioDefinit
 
     public Map<String, String> getSystemProperties() {
         return systemProperties;
+    }
+
+    @Override
+    protected void printDetail(PrintStream out) {
+        super.printDetail(out);
+        if (!getSystemProperties().isEmpty()) {
+            out.println("  System properties:");
+            for (Map.Entry<String, String> entry : getSystemProperties().entrySet()) {
+                out.println("    " + entry.getKey() + "=" + entry.getValue());
+            }
+        }
     }
 }
