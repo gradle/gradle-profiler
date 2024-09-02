@@ -10,7 +10,7 @@ import java.text.MessageFormat;
 import java.util.Objects;
 import java.util.stream.Stream;
 
-public class ShowBuildCacheSizeMutator extends AbstractBuildMutator {
+public class ShowBuildCacheSizeMutator implements BuildMutator {
 
     private final File gradleUserHome;
 
@@ -61,5 +61,10 @@ public class ShowBuildCacheSizeMutator extends AbstractBuildMutator {
         BuildMutator createBuildMutator(InvocationSettings settings) {
             return new ShowBuildCacheSizeMutator(settings.getGradleUserHome());
         }
+    }
+
+    @Override
+    public String toString() {
+        return getClass().getSimpleName();
     }
 }

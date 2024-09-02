@@ -7,25 +7,25 @@ import org.gradle.profiler.ScenarioContext;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.UncheckedIOException;
 
-public class DeleteFileMutator extends AbstractBuildMutator {
+public class DeleteFileMutator extends AbstractFileSystemMutator {
 
-    private final File targetFile;
+    private final File target;
 
-    public DeleteFileMutator(File targetFile) {
-        this.targetFile = targetFile;
+    public DeleteFileMutator(File target) {
+        this.target = target;
     }
 
     @Override
     public void beforeScenario(ScenarioContext context) {
-        System.out.println("Removing file: '" + targetFile.getAbsolutePath() + "'");
+        System.out.println("Removing file: '" + target.getAbsolutePath() + "'");
         try {
-            if (targetFile.exists()) {
-                FileUtils.forceDelete(targetFile);
+            if (target.exists()) {
+                FileUtils.forceDelete(target);
             }
-        } catch (
-        IOException e) {
-            throw new IllegalStateException("Failed to delete '" + targetFile.getAbsolutePath() + "'", e);
+        } catch (IOException e) {
+            throw new UncheckedIOException("Failed to delete '" + target.getAbsolutePath() + "'", e);
         }
     }
 
@@ -34,7 +34,8 @@ public class DeleteFileMutator extends AbstractBuildMutator {
         @Override
         public BuildMutator configure(String key, BuildMutatorConfiguratorSpec spec) {
             String target = ConfigUtil.string(spec.getScenario(), key);
-            return new DeleteFileMutator(new File(target));
+            File projectDir = spec.getInvocationSettings().getProjectDir();
+            return new DeleteFileMutator(resolveProjectFile(projectDir, target));
         }
     }
 }

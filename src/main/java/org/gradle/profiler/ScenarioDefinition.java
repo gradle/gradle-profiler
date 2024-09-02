@@ -41,7 +41,7 @@ public abstract class ScenarioDefinition {
     }
 
     /**
-     * A specific title defined for the scenario to be used in reports (defaults to {@link #getName()}.
+     * A specific title defined for the scenario to be used in reports (defaults to {@link #getName()}).
      */
     public String getTitle() {
         return title != null ? title : name;

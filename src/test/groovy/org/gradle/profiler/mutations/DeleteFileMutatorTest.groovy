@@ -2,7 +2,7 @@ package org.gradle.profiler.mutations
 
 class DeleteFileMutatorTest extends AbstractMutatorTest {
 
-    def "Delete file"() {
+    def "deletes file"() {
         def testDir = tmpDir.newFolder()
         def expectedContents = "Copy file from source to target"
         def testFile = new File(testDir, "single-file.txt")
@@ -16,7 +16,7 @@ class DeleteFileMutatorTest extends AbstractMutatorTest {
         !testFile.exists()
     }
 
-    def "Delete Directory"() {
+    def "deletes directory"() {
         def testDir = new File(tmpDir.newFolder(), "delete-test-dir")
         def expectedContents = "Copy file from source to target"
         def nestedDir = new File(testDir, "nested")

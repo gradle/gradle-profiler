@@ -2,7 +2,7 @@ package org.gradle.profiler.mutations
 
 class CopyFileMutatorTest extends AbstractMutatorTest {
 
-    def "Copy file from source to target"() {
+    def "copies file from source to target"() {
         def testDir = tmpDir.newFolder()
         def expectedContents = "Copy file from source to target"
         def source = new File(testDir, "source.txt")
