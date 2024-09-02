@@ -26,6 +26,8 @@ public class MavenScenarioInvoker extends BuildToolCommandLineInvoker<MavenScena
 
         Map<String, String> profileEnvironment;
         SnapshotCapturingProfilerController controller;
+        // TODO This only works with Async profiler, since the only thing we call from the controller is stopSession()
+        //      Capture this in the type hierarchy somehow
         if (settings.getProfiler() instanceof InstrumentingProfiler) {
             InstrumentingProfiler profiler = (InstrumentingProfiler) settings.getProfiler();
             ScenarioSettings scenarioSettings = new ScenarioSettings(settings, scenario);
