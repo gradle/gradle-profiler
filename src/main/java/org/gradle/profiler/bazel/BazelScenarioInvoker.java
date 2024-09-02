@@ -13,7 +13,7 @@ public class BazelScenarioInvoker extends BuildToolCommandLineInvoker<BazelScena
     @Override
     public void run(BazelScenarioDefinition scenario, InvocationSettings settings, Consumer<BuildInvocationResult> resultConsumer) {
         if (settings.isProfile()) {
-            throw new IllegalArgumentException("Profiling is not supported for Buck builds");
+            throw new IllegalArgumentException("Profiling is not supported for Bazel builds");
         }
 
         List<String> targets = scenario.getTargets();
