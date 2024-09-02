@@ -1,5 +1,7 @@
 package org.gradle.profiler;
 
+import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableMap;
 import org.gradle.profiler.result.BuildActionResult;
 import org.gradle.profiler.result.BuildInvocationResult;
 
@@ -15,6 +17,18 @@ import static org.gradle.profiler.Phase.WARM_UP;
 
 public abstract class BuildToolCommandLineInvoker<T extends BuildToolCommandLineScenarioDefinition, R extends BuildInvocationResult> extends ScenarioInvoker<T, R> {
     protected void doRun(T scenario, InvocationSettings settings, Consumer<BuildInvocationResult> resultConsumer, List<String> commandLine, Map<String, String> envVars) {
+        doRun(scenario, settings, resultConsumer, commandLine, envVars, ImmutableList.of(), ImmutableMap.of());
+    }
+
+    protected void doRun(
+        T scenario,
+        InvocationSettings settings,
+        Consumer<BuildInvocationResult> resultConsumer,
+        List<String> commandLine,
+        Map<String, String> envVars,
+        List<String> profileCommandLine,
+        Map<String, String> profileEnvVars
+    ) {
         ScenarioContext scenarioContext = ScenarioContext.from(settings, scenario);
 
         BuildMutator mutator = CompositeBuildMutator.from(scenario.getBuildMutators());
@@ -22,11 +36,21 @@ public abstract class BuildToolCommandLineInvoker<T extends BuildToolCommandLine
         try {
             for (int iteration = 1; iteration <= scenario.getWarmUpCount(); iteration++) {
                 BuildContext buildContext = scenarioContext.withBuild(WARM_UP, iteration);
-                runMeasured(buildContext, mutator, measureCommandLineExecution(commandLine, envVars, settings.getProjectDir(), settings.getBuildLog()), resultConsumer);
+                BuildStepAction<R> action = measureCommandLineExecution(commandLine, envVars, settings.getProjectDir(), settings.getBuildLog());
+                runMeasured(buildContext, mutator, action, resultConsumer);
             }
             for (int iteration = 1; iteration <= scenario.getBuildCount(); iteration++) {
                 BuildContext buildContext = scenarioContext.withBuild(MEASURE, iteration);
-                runMeasured(buildContext, mutator, measureCommandLineExecution(commandLine, envVars, settings.getProjectDir(), settings.getBuildLog()), resultConsumer);
+                List<String> commandLineCombined = ImmutableList.<String>builder()
+                    .addAll(commandLine)
+                    .addAll(profileCommandLine)
+                    .build();
+                Map<String, String> envVarsCombined = ImmutableMap.<String, String>builder()
+                    .putAll(envVars)
+                    .putAll(profileEnvVars)
+                    .build();
+                BuildStepAction<R> action = measureCommandLineExecution(commandLineCombined, envVarsCombined, settings.getProjectDir(), settings.getBuildLog());
+                runMeasured(buildContext, mutator, action, resultConsumer);
             }
         } finally {
             mutator.afterScenario(scenarioContext);
@@ -45,6 +69,8 @@ public abstract class BuildToolCommandLineInvoker<T extends BuildToolCommandLine
 
             @Override
             public R run(BuildContext buildContext, BuildStep buildStep) {
+                Logging.detailed().println("  Command: " + commandLine);
+                Logging.detailed().println("  Environment: " + envVars);
                 CommandExec commandExec = new CommandExec()
                     .inDir(workingDir)
                     .environmentVariables(envVars);

@@ -1,5 +1,6 @@
 package org.gradle.profiler.maven;
 
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import org.gradle.profiler.BuildToolCommandLineInvoker;
 import org.gradle.profiler.InstrumentingProfiler;
@@ -23,8 +24,7 @@ public class MavenScenarioInvoker extends BuildToolCommandLineInvoker<MavenScena
         scenario.getSystemProperties().forEach((key, value) ->
             commandLine.add(String.format("-D%s=%s", key, value)));
 
-
-        Map<String, String> environment;
+        Map<String, String> profileEnvironment;
         SnapshotCapturingProfilerController controller;
         if (settings.getProfiler() instanceof InstrumentingProfiler) {
             InstrumentingProfiler profiler = (InstrumentingProfiler) settings.getProfiler();
@@ -32,17 +32,17 @@ public class MavenScenarioInvoker extends BuildToolCommandLineInvoker<MavenScena
             List<String> mavenOpts = new ArrayList<>();
             profiler.newInstrumentedBuildsJvmArgsCalculator(scenarioSettings)
                 .calculateJvmArgs(mavenOpts);
-            environment = ImmutableMap.of(
+            profileEnvironment = ImmutableMap.of(
                 "MAVEN_OPTS", String.join(" ", mavenOpts)
             );
 
             controller = profiler.newSnapshottingController(scenarioSettings);
         } else {
-            environment = ImmutableMap.of();
+            profileEnvironment = ImmutableMap.of();
             controller = null;
         }
 
-        doRun(scenario, settings, resultConsumer, commandLine, environment);
+        doRun(scenario, settings, resultConsumer, commandLine, ImmutableMap.of(), ImmutableList.of(), profileEnvironment);
 
         if (controller != null) {
             controller.stopSession();
