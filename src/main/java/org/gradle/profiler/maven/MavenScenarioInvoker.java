@@ -1,5 +1,6 @@
 package org.gradle.profiler.maven;
 
+import com.google.common.collect.ImmutableMap;
 import org.gradle.profiler.BuildToolCommandLineInvoker;
 import org.gradle.profiler.InvocationSettings;
 import org.gradle.profiler.result.BuildInvocationResult;
@@ -17,6 +18,6 @@ public class MavenScenarioInvoker extends BuildToolCommandLineInvoker<MavenScena
         scenario.getSystemProperties().forEach((key, value) ->
             commandLine.add(String.format("-D%s=%s", key, value)));
 
-        doRun(scenario, settings, resultConsumer, commandLine);
+        doRun(scenario, settings, resultConsumer, commandLine, ImmutableMap.of());
     }
 }

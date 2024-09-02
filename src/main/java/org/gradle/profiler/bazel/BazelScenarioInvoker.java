@@ -1,5 +1,6 @@
 package org.gradle.profiler.bazel;
 
+import com.google.common.collect.ImmutableMap;
 import org.gradle.profiler.BuildToolCommandLineInvoker;
 import org.gradle.profiler.InvocationSettings;
 import org.gradle.profiler.result.BuildInvocationResult;
@@ -17,6 +18,6 @@ public class BazelScenarioInvoker extends BuildToolCommandLineInvoker<BazelScena
         commandLine.add(scenario.getExecutablePath());
         commandLine.addAll(targets);
 
-        doRun(scenario, settings, resultConsumer, commandLine);
+        doRun(scenario, settings, resultConsumer, commandLine, ImmutableMap.of());
     }
 }

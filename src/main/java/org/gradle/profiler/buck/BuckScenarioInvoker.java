@@ -1,5 +1,6 @@
 package org.gradle.profiler.buck;
 
+import com.google.common.collect.ImmutableMap;
 import org.gradle.profiler.BuildToolCommandLineInvoker;
 import org.gradle.profiler.CommandExec;
 import org.gradle.profiler.InvocationSettings;
@@ -37,6 +38,6 @@ public class BuckScenarioInvoker extends BuildToolCommandLineInvoker<BuckScenari
         commandLine.add("build");
         commandLine.addAll(targets);
 
-        doRun(scenario, settings, resultConsumer, commandLine);
+        doRun(scenario, settings, resultConsumer, commandLine, ImmutableMap.of());
     }
 }
