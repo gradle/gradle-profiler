@@ -16,6 +16,10 @@ import java.util.stream.Collectors;
 public class BuckScenarioInvoker extends BuildToolCommandLineInvoker<BuckScenarioDefinition, BuildInvocationResult> {
     @Override
     public void run(BuckScenarioDefinition scenario, InvocationSettings settings, Consumer<BuildInvocationResult> resultConsumer) {
+        if (settings.isProfile()) {
+            throw new IllegalArgumentException("Profiling is not supported for Buck builds");
+        }
+
         String buckwExe = settings.getProjectDir() + "/buckw";
         List<String> targets = new ArrayList<>(scenario.getTargets());
         if (scenario.getType() != null) {

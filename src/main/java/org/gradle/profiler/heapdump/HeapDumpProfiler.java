@@ -11,6 +11,11 @@ import java.util.function.Consumer;
 
 public class HeapDumpProfiler extends Profiler {
     @Override
+    public boolean requiresGradle() {
+        return true;
+    }
+
+    @Override
     public GradleArgsCalculator newGradleArgsCalculator(ScenarioSettings settings) {
         return new GradleInstrumentation() {
             @Override

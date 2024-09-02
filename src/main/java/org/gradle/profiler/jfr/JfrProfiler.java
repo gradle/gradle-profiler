@@ -29,7 +29,7 @@ public class JfrProfiler extends InstrumentingProfiler {
     }
 
     @Override
-    protected SnapshotCapturingProfilerController doNewController(ScenarioSettings settings) {
+    public SnapshotCapturingProfilerController newSnapshottingController(ScenarioSettings settings) {
         return new JFRControl(jfrArgs, settings.computeJfrProfilerOutputLocation());
     }
 

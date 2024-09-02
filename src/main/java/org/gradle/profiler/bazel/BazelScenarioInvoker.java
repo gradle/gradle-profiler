@@ -12,6 +12,10 @@ import java.util.function.Consumer;
 public class BazelScenarioInvoker extends BuildToolCommandLineInvoker<BazelScenarioDefinition, BuildInvocationResult> {
     @Override
     public void run(BazelScenarioDefinition scenario, InvocationSettings settings, Consumer<BuildInvocationResult> resultConsumer) {
+        if (settings.isProfile()) {
+            throw new IllegalArgumentException("Profiling is not supported for Buck builds");
+        }
+
         List<String> targets = scenario.getTargets();
 
         List<String> commandLine = new ArrayList<>();
