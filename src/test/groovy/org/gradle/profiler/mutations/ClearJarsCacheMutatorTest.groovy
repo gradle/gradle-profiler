@@ -16,7 +16,7 @@ class ClearJarsCacheMutatorTest extends AbstractMutatorTest {
         ignored2.mkdirs()
 
         when:
-        def mutator = new ClearJarsCacheMutator(userHome, AbstractCleanupMutator.CleanupSchedule.BUILD)
+        def mutator = new ClearJarsCacheMutator(userHome, AbstractScheduledMutator.Schedule.BUILD)
         mutator.beforeBuild(buildContext)
 
         then:

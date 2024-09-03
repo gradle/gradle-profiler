@@ -1,10 +1,13 @@
 package org.gradle.profiler.mutations;
 
-import org.gradle.profiler.BuildMutator;
-
 import java.io.File;
 
-public class AbstractFileSystemMutator implements BuildMutator {
+public abstract class AbstractFileSystemMutator extends AbstractScheduledMutator {
+
+    protected AbstractFileSystemMutator(Schedule schedule) {
+        super(schedule);
+    }
+
     protected static File resolveProjectFile(File projectDir, String path) {
         File file = new File(path);
         if (file.isAbsolute()) {

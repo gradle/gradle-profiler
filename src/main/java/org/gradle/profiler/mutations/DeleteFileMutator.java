@@ -5,7 +5,6 @@ import org.apache.commons.io.FileUtils;
 import org.gradle.profiler.BuildMutator;
 import org.gradle.profiler.CompositeBuildMutator;
 import org.gradle.profiler.ConfigUtil;
-import org.gradle.profiler.ScenarioContext;
 
 import java.io.File;
 import java.io.IOException;
@@ -16,12 +15,13 @@ public class DeleteFileMutator extends AbstractFileSystemMutator {
 
     private final File target;
 
-    public DeleteFileMutator(File target) {
+    public DeleteFileMutator(File target, Schedule schedule) {
+        super(schedule);
         this.target = target;
     }
 
     @Override
-    public void beforeScenario(ScenarioContext context) {
+    protected void executeOnSchedule() {
         System.out.println("Removing file: '" + target.getAbsolutePath() + "'");
         try {
             if (target.exists()) {
@@ -43,8 +43,9 @@ public class DeleteFileMutator extends AbstractFileSystemMutator {
 
         private static DeleteFileMutator createMutator(BuildMutatorConfiguratorSpec spec, Config config) {
             String target = ConfigUtil.string(config, "target");
+            Schedule schedule = ConfigUtil.enumValue(config, "schedule", Schedule.class, Schedule.SCENARIO);
             File projectDir = spec.getProjectDir();
-            return new DeleteFileMutator(resolveProjectFile(projectDir, target));
+            return new DeleteFileMutator(resolveProjectFile(projectDir, target), schedule);
         }
     }
 }

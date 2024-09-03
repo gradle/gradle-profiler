@@ -20,7 +20,7 @@ class CopyFileMutatorTest extends AbstractMutatorTest {
 
         when:
         def mutator = new CopyFileMutator.Configurator().configure("copy-file", spec)
-        mutator.beforeScenario(buildContext)
+        mutator.beforeScenario(scenarioContext)
 
         then:
         target.exists()
@@ -33,28 +33,50 @@ class CopyFileMutatorTest extends AbstractMutatorTest {
         def expectedContents = "Copy file from source to target"
         def source = new File(testDir, "source.txt")
         source.text = expectedContents
-        def target1 = new File(testDir, "nested/target1.txt")
-        def target2 = new File(testDir, "nested/target2.txt")
+        def targetScenario = new File(testDir, "nested/target-scenario.txt")
+        def targetCleanup = new File(testDir, "nested/target-cleanup.txt")
+        def targetBuild = new File(testDir, "nested/target-build.txt")
 
         def spec = mockConfigSpec("""{
             copy-file = [{
                 source = "source.txt"
-                target = "nested/target1.txt"
+                target = "nested/target-scenario.txt"
             }, {
                 source = "source.txt"
-                target = "nested/target2.txt"
+                target = "nested/target-cleanup.txt"
+                schedule = CLEANUP
+            }, {
+                source = "source.txt"
+                target = "nested/target-build.txt"
+                schedule = BUILD
             }]
         }""")
         _ * spec.projectDir >> testDir
 
-        when:
         def mutator = new CopyFileMutator.Configurator().configure("copy-file", spec)
-        mutator.beforeScenario(buildContext)
+
+        when:
+        mutator.beforeScenario(scenarioContext)
 
         then:
-        target1.exists()
-        target1.text == expectedContents
-        target2.exists()
-        target2.text == expectedContents
+        targetScenario.exists()
+        targetScenario.text == expectedContents
+        !targetCleanup.exists()
+        !targetBuild.exists()
+
+        when:
+        mutator.beforeCleanup(buildContext)
+
+        then:
+        targetCleanup.exists()
+        targetCleanup.text == expectedContents
+        !targetBuild.exists()
+
+        when:
+        mutator.beforeBuild(buildContext)
+
+        then:
+        targetBuild.exists()
+        targetBuild.text == expectedContents
     }
 }

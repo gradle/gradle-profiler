@@ -17,7 +17,7 @@ class DeleteFileMutatorTest extends AbstractMutatorTest {
 
         when:
         def mutator = new DeleteFileMutator.Configurator().configure("delete-file", spec)
-        mutator.beforeScenario(buildContext)
+        mutator.beforeScenario(scenarioContext)
 
         then: "File should not exist"
         !testFile.exists()
@@ -40,7 +40,7 @@ class DeleteFileMutatorTest extends AbstractMutatorTest {
 
         when:
         def mutator = new DeleteFileMutator.Configurator().configure("delete-file", spec)
-        mutator.beforeScenario(buildContext)
+        mutator.beforeScenario(scenarioContext)
 
         then: "Directory should not exist"
         !targetDir.exists()
@@ -59,7 +59,7 @@ class DeleteFileMutatorTest extends AbstractMutatorTest {
 
         when:
         def mutator = new DeleteFileMutator.Configurator().configure("delete-file", spec)
-        mutator.beforeScenario(buildContext)
+        mutator.beforeScenario(scenarioContext)
 
         then: "File should not exist"
         !testFile.exists()
@@ -68,27 +68,47 @@ class DeleteFileMutatorTest extends AbstractMutatorTest {
     def "deletes multiple files"() {
         def testDir = tmpDir.newFolder()
         def expectedContents = "Copy file from source to target"
-        def file1 = new File(testDir, "file1.txt")
-        file1.text = expectedContents
-        def file2 = new File(testDir, "file2.txt")
-        file2.text = expectedContents
+        def fileScenario = new File(testDir, "file-scenario.txt")
+        fileScenario.text = expectedContents
+        def fileCleanup = new File(testDir, "file-cleanup.txt")
+        fileCleanup.text = expectedContents
+        def fileBuild = new File(testDir, "file-build.txt")
+        fileBuild.text = expectedContents
 
         def spec = mockConfigSpec("""{
             delete-file = [{
-                target = "file1.txt"
+                target = "file-scenario.txt"
             }, {
-                target = "file2.txt"
+                target = "file-cleanup.txt"
+                schedule = CLEANUP
+            }, {
+                target = "file-build.txt"
+                schedule = BUILD
             }]
         }""")
         _ * spec.projectDir >> testDir
 
-        when:
         def mutator = new DeleteFileMutator.Configurator().configure("delete-file", spec)
-        mutator.beforeScenario(buildContext)
+
+        when:
+        mutator.beforeScenario(scenarioContext)
 
         then: "Files should not exist"
-        !file1.exists()
-        !file2.exists()
-    }
+        !fileScenario.exists()
+        fileCleanup.exists()
+        fileBuild.exists()
 
+        when:
+        mutator.beforeCleanup(buildContext)
+
+        then:
+        !fileCleanup.exists()
+        fileBuild.exists()
+
+        when:
+        mutator.beforeBuild(buildContext)
+
+        then:
+        !fileBuild.exists()
+    }
 }

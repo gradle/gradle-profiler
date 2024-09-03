@@ -9,7 +9,7 @@ import org.gradle.profiler.gradle.GradleScenarioDefinition
 import org.gradle.profiler.gradle.LoadToolingModelAction
 import org.gradle.profiler.gradle.RunToolingAction
 import org.gradle.profiler.maven.MavenScenarioDefinition
-import org.gradle.profiler.mutations.AbstractCleanupMutator
+import org.gradle.profiler.mutations.AbstractScheduledMutator
 import org.gradle.profiler.report.Format
 import org.gradle.profiler.studio.AndroidStudioSyncAction
 import org.gradle.profiler.studio.invoker.StudioGradleScenarioDefinition
@@ -21,7 +21,7 @@ import spock.lang.Specification
 import spock.lang.Unroll
 
 import static org.gradle.profiler.ScenarioLoader.loadScenarios
-import static org.gradle.profiler.mutations.AbstractCleanupMutator.CleanupSchedule.*
+import static org.gradle.profiler.mutations.AbstractScheduledMutator.Schedule.*
 
 class ScenarioLoaderTest extends Specification {
     @Rule
@@ -554,7 +554,7 @@ class ScenarioLoaderTest extends Specification {
         noExceptionThrown()
 
         where:
-        schedule << AbstractCleanupMutator.CleanupSchedule.values()
+        schedule << AbstractScheduledMutator.Schedule.values()
     }
 
     @Unroll

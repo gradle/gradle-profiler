@@ -6,7 +6,7 @@ import java.io.File;
 
 public class ClearArtifactTransformCacheMutator extends AbstractCacheCleanupMutator {
 
-    public ClearArtifactTransformCacheMutator(File gradleUserHome, CleanupSchedule schedule) {
+    public ClearArtifactTransformCacheMutator(File gradleUserHome, Schedule schedule) {
         super(gradleUserHome, schedule, "transforms-");
     }
 
@@ -15,9 +15,9 @@ public class ClearArtifactTransformCacheMutator extends AbstractCacheCleanupMuta
         delete(cacheDir);
     }
 
-    public static class Configurator extends AbstractCleanupMutator.Configurator {
+    public static class Configurator extends AbstractScheduledMutator.Configurator {
         @Override
-        protected BuildMutator newInstance(BuildMutatorConfiguratorSpec spec, String key, CleanupSchedule schedule) {
+        protected BuildMutator newInstance(BuildMutatorConfiguratorSpec spec, String key, Schedule schedule) {
             return new ClearArtifactTransformCacheMutator(spec.getGradleUserHome(), schedule);
         }
     }
