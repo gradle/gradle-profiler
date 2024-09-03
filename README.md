@@ -291,27 +291,27 @@ Values are optional and default to the values provided on the command-line or de
 
 A scenario can define changes that should be applied to the source before each build. You can use this to benchmark or profile an incremental build. The following mutations are available:
 
-- `apply-build-script-change-to`: Add a statement to a Groovy or Kotlin DSL build script, init script or settings script. Each iteration adds a new statement and removes the statement added by the previous iteration.
-- `apply-project-dependency-change-to`: Add project dependencies to a Groovy or a Kotlin DSL build script. Each iteration adds a new combination of projects as dependencies and removes the projects added by the previous iteration.
 - `apply-abi-change-to`: Add a public method to a Java or Kotlin source class. Each iteration adds a new method and removes the method added by the previous iteration.
-- `apply-non-abi-change-to`: Change the body of a public method in a Java or Kotlin source class.
-- `apply-h-change-to`: Add a function to a C/C++ header file. Each iteration adds a new function declaration and removes the function added by the previous iteration. 
-- `apply-cpp-change-to`: Add a function to a C/C++ source file. Each iteration adds a new function and removes the function added by the previous iteration. 
-- `apply-property-resource-change-to`: Add an entry to a properties file. Each iteration adds a new entry and removes the entry added by the previous iteration.
+- `apply-android-layout-change-to`: Add a hidden view with id to an Android layout file. Supports traditional layouts as well as Databinding layouts with a ViewGroup as the root element.
+- `apply-android-manifest-change-to`: Add a permission to an Android manifest file.
 - `apply-android-resource-change-to`: Add a string resource to an Android resource file. Each iteration adds a new resource and removes the resource added by the previous iteration.
 - `apply-android-resource-value-change-to`: Change a string resource in an Android resource file.
-- `apply-android-manifest-change-to`: Add a permission to an Android manifest file.
-- `apply-android-layout-change-to`: Add a hidden view with id to an Android layout file. Supports traditional layouts as well as Databinding layouts with a ViewGroup as the root element.
+- `apply-build-script-change-to`: Add a statement to a Groovy or Kotlin DSL build script, init script or settings script. Each iteration adds a new statement and removes the statement added by the previous iteration.
+- `apply-cpp-change-to`: Add a function to a C/C++ source file. Each iteration adds a new function and removes the function added by the previous iteration. 
+- `apply-h-change-to`: Add a function to a C/C++ header file. Each iteration adds a new function declaration and removes the function added by the previous iteration. 
 - `apply-kotlin-composable-change-to`: Add a `@Composable` function to a Kotlin source file.
+- `apply-non-abi-change-to`: Change the body of a public method in a Java or Kotlin source class.
+- `apply-project-dependency-change-to`: Add project dependencies to a Groovy or a Kotlin DSL build script. Each iteration adds a new combination of projects as dependencies and removes the projects added by the previous iteration.
+- `apply-property-resource-change-to`: Add an entry to a properties file. Each iteration adds a new entry and removes the entry added by the previous iteration.
+- `clear-android-studio-cache-before`: Invalidates the Android Studio caches before the scenario is executed (`SCENARIO`) or before the build is executed (`BUILD`). Due to Android Studio client specifics before cleanup (`CLEANUP`) is not supported. Note: cleaning the Android Studio caches is run only when Android Studio sync (`android-studio-sync`) is used.
 - `clear-build-cache-before`: Deletes the contents of the build cache before the scenario is executed (`SCENARIO`), before cleanup (`CLEANUP`) or before the build is executed (`BUILD`).
-- `clear-gradle-user-home-before`: Deletes the contents of the Gradle user home directory before the scenario is executed (`SCENARIO`), before cleanup (`CLEANUP`) or before the build is executed (`BUILD`).
-   The mutator retains the `wrapper` cache in the Gradle user home, since the downloaded wrapper in that location is used to run Gradle.
-   Requires to use the `none` daemon option to use with `CLEANUP` or `BUILD`.
 - `clear-configuration-cache-state-before`: Deletes the contents of the `.gradle/configuration-cache-state` directory before the scenario is executed (`SCENARIO`), before cleanup (`CLEANUP`) or before the build is executed (`BUILD`).
+- `clear-gradle-user-home-before`: Deletes the contents of the Gradle user home directory before the scenario is executed (`SCENARIO`), before cleanup (`CLEANUP`) or before the build is executed (`BUILD`).
+  The mutator retains the `wrapper` cache in the Gradle user home, since the downloaded wrapper in that location is used to run Gradle.
+  Requires to use the `none` daemon option to use with `CLEANUP` or `BUILD`.
+- `clear-jars-cache-before`: Deletes the contents of the instrumented jars cache before the scenario is executed (`SCENARIO`), before cleanup (`CLEANUP`) or before the build is executed (`BUILD`).
 - `clear-project-cache-before`: Deletes the contents of the `.gradle` and `buildSrc/.gradle` project cache directories before the scenario is executed (`SCENARIO`), before cleanup (`CLEANUP`) or before the build is executed (`BUILD`).
 - `clear-transform-cache-before`: Deletes the contents of the transform cache before the scenario is executed (`SCENARIO`), before cleanup (`CLEANUP`) or before the build is executed (`BUILD`).
-- `clear-jars-cache-before`: Deletes the contents of the instrumented jars cache before the scenario is executed (`SCENARIO`), before cleanup (`CLEANUP`) or before the build is executed (`BUILD`).
-- `clear-android-studio-cache-before`: Invalidates the Android Studio caches before the scenario is executed (`SCENARIO`) or before the build is executed (`BUILD`). Due to Android Studio client specifics before cleanup (`CLEANUP`) is not supported. Note: cleaning the Android Studio caches is run only when Android Studio sync (`android-studio-sync`) is used.
 - `git-checkout`: Checks out a specific commit for the build step, and a different one for the cleanup step.
 - `git-revert`: Reverts a given set of commits before the build and resets it afterward.
 - `iterations`: Number of builds to actually measure
