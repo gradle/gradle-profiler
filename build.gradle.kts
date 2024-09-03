@@ -31,16 +31,18 @@ dependencies {
     implementation("com.github.javaparser:javaparser-core:3.18.0")
     implementation("net.sf.jopt-simple:jopt-simple:5.0.4")
     implementation("org.apache.ant:ant-compress:1.5")
-    implementation("commons-io:commons-io:2.6")
+    implementation("org.apache.commons:commons-compress:1.27.1") {
+        because("Avoid old version of commons-compress introduced by ant-compress")
+    }
+    implementation("commons-io:commons-io:2.16.1")
     implementation("org.openjdk.jmc:flightrecorder:8.0.1")
     implementation("com.googlecode.plist:dd-plist:1.23") {
         because("To extract launch details from Android Studio installation")
     }
-    implementation("com.google.code.gson:gson:2.8.6") {
+    implementation("com.google.code.gson:gson:2.11.0") {
         because("To write JSON output")
     }
     implementation(project(":client-protocol"))
-
 
     gradleRuntime(gradleApi())
     gradleRuntime(libs.toolingApi)
