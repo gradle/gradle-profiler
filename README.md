@@ -312,8 +312,8 @@ A scenario can define changes that should be applied to the source before each b
 - `clear-jars-cache-before`: Deletes the contents of the instrumented jars cache before the scenario is executed (`SCENARIO`), before cleanup (`CLEANUP`) or before the build is executed (`BUILD`).
 - `clear-project-cache-before`: Deletes the contents of the `.gradle` and `buildSrc/.gradle` project cache directories before the scenario is executed (`SCENARIO`), before cleanup (`CLEANUP`) or before the build is executed (`BUILD`).
 - `clear-transform-cache-before`: Deletes the contents of the transform cache before the scenario is executed (`SCENARIO`), before cleanup (`CLEANUP`) or before the build is executed (`BUILD`).
-- `copy-file`: Copies a file or a directory from one location to another. Has to specify a `source` and a `target` path; relative paths are resolved against the project directory.
-- `delete-file`: Deletes a file or a directory. Has to specify a `target` path; when relative it is resolved against the project directory.
+- `copy-file`: Copies a file or a directory from one location to another. Has to specify a `source` and a `target` path; relative paths are resolved against the project directory. Can take an array of operations.
+- `delete-file`: Deletes a file or a directory. Has to specify a `target` path; when relative it is resolved against the project directory. Can take an array of operations.
 - `git-checkout`: Checks out a specific commit for the build step, and a different one for the cleanup step.
 - `git-revert`: Reverts a given set of commits before the build and resets it afterward.
 - `iterations`: Number of builds to actually measure
@@ -346,10 +346,15 @@ They can be added to a scenario file like this:
         clear-build-cache-before = SCENARIO
         clear-transform-cache-before = BUILD
         show-build-cache-size = true
-        copy-file {
+        copy-file = {
             source = "../develocity.xml"
             target = ".mvn/develocity.xml"
         }
+        delete-file = [{
+            target = ".mvn/develocity.xml"
+        }, {
+            target = ".gradle"
+        }]
         git-checkout = {
             cleanup = "efb43a1"
             build = "master"

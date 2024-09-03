@@ -16,7 +16,7 @@ public abstract class BuildToolCommandLineInvoker<T extends BuildToolCommandLine
     protected void doRun(T scenario, InvocationSettings settings, Consumer<BuildInvocationResult> resultConsumer, List<String> commandLine) {
         ScenarioContext scenarioContext = ScenarioContext.from(settings, scenario);
 
-        BuildMutator mutator = new CompositeBuildMutator(scenario.getBuildMutators());
+        BuildMutator mutator = CompositeBuildMutator.from(scenario.getBuildMutators());
         mutator.beforeScenario(scenarioContext);
         try {
             for (int iteration = 1; iteration <= scenario.getWarmUpCount(); iteration++) {

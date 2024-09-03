@@ -2,12 +2,15 @@ package org.gradle.profiler.mutations;
 
 import com.typesafe.config.Config;
 import org.apache.commons.io.FileUtils;
+import org.gradle.profiler.BuildMutator;
+import org.gradle.profiler.CompositeBuildMutator;
 import org.gradle.profiler.ConfigUtil;
 import org.gradle.profiler.ScenarioContext;
 
 import java.io.File;
 import java.io.IOException;
 import java.io.UncheckedIOException;
+import java.util.stream.Collectors;
 
 public class DeleteFileMutator extends AbstractFileSystemMutator {
 
@@ -32,8 +35,13 @@ public class DeleteFileMutator extends AbstractFileSystemMutator {
     public static class Configurator implements BuildMutatorConfigurator {
 
         @Override
-        public DeleteFileMutator configure(String key, BuildMutatorConfiguratorSpec spec) {
-            Config config = spec.getScenario().getConfig(key);
+        public BuildMutator configure(String key, BuildMutatorConfiguratorSpec spec) {
+            return CompositeBuildMutator.from(ConfigUtil.configs(spec.getScenario(), key)
+                .stream().map(config -> createMutator(spec, config))
+                .collect(Collectors.toList()));
+        }
+
+        private static DeleteFileMutator createMutator(BuildMutatorConfiguratorSpec spec, Config config) {
             String target = ConfigUtil.string(config, "target");
             File projectDir = spec.getProjectDir();
             return new DeleteFileMutator(resolveProjectFile(projectDir, target));

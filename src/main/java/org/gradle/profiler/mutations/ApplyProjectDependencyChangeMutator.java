@@ -179,7 +179,7 @@ public class ApplyProjectDependencyChangeMutator extends AbstractFileChangeMutat
                 })
                 .collect(Collectors.toList());
 
-            return new CompositeBuildMutator(mutatorsForKey);
+            return CompositeBuildMutator.from(mutatorsForKey);
         }
 
         private ProjectCombinations getProjectCombinations(BuildMutatorConfiguratorSpec spec, int numberOfProjects, int appliedProjectDependencies) {
