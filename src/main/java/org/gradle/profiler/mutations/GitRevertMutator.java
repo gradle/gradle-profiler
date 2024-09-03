@@ -4,7 +4,6 @@ import org.gradle.profiler.BuildContext;
 import org.gradle.profiler.BuildMutator;
 import org.gradle.profiler.CommandExec;
 import org.gradle.profiler.ConfigUtil;
-import org.gradle.profiler.InvocationSettings;
 import org.gradle.profiler.ScenarioContext;
 
 import java.io.File;
@@ -63,8 +62,7 @@ public class GitRevertMutator extends AbstractGitMutator {
 			if (commits.isEmpty()) {
 				throw new IllegalArgumentException("No commits specified for git-revert");
 			}
-			InvocationSettings settings = spec.getInvocationSettings();
-			return new GitRevertMutator(settings.getProjectDir(), commits);
+			return new GitRevertMutator(spec.getProjectDir(), commits);
 		}
 	}
 

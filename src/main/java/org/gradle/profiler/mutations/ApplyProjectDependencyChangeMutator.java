@@ -166,17 +166,16 @@ public class ApplyProjectDependencyChangeMutator extends AbstractFileChangeMutat
         @Override
         public BuildMutator configure(String key, BuildMutatorConfiguratorSpec spec) {
             Config config = spec.getScenario().getConfig(key);
-            validateConfig(key, spec.getScenarioName(), spec.getInvocationSettings().getScenarioFile(), config);
+            validateConfig(key, spec.getScenarioName(), spec.getScenarioFile(), config);
             int appliedProjectCount = getAppliedProjectCount(config);
-            InvocationSettings settings = spec.getInvocationSettings();
-            List<File> sourceFiles = sourceFiles(config, spec.getScenarioName(), settings.getProjectDir(), FILES_KEY);
+            List<File> sourceFiles = sourceFiles(config, spec.getScenarioName(), spec.getProjectDir(), FILES_KEY);
             ProjectCombinations combinations = getProjectCombinations(spec, sourceFiles.size(), appliedProjectCount);
 
             AtomicInteger index = new AtomicInteger();
             List<BuildMutator> mutatorsForKey = sourceFiles.stream()
                 .map(sourceFileToChange -> {
                     boolean shouldCreateProjects = index.getAndIncrement() == 0;
-                    return new ApplyProjectDependencyChangeMutator(settings.getProjectDir(), sourceFileToChange, combinations, shouldCreateProjects);
+                    return new ApplyProjectDependencyChangeMutator(spec.getProjectDir(), sourceFileToChange, combinations, shouldCreateProjects);
                 })
                 .collect(Collectors.toList());
 

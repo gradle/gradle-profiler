@@ -25,24 +25,24 @@ val profilerPlugins by configurations.creating
 dependencies {
     implementation(libs.toolingApi)
     implementation("com.google.code.findbugs:annotations:3.0.1")
-    implementation("com.google.guava:guava:27.1-android") {
-        because("Gradle uses the android variant as well and we are running the same code there.")
-    }
+    implementation("com.google.guava:guava:32.1.2-jre")
     implementation("com.typesafe:config:1.3.3")
     implementation("org.apache.commons:commons-math3:3.6.1")
     implementation("com.github.javaparser:javaparser-core:3.18.0")
     implementation("net.sf.jopt-simple:jopt-simple:5.0.4")
     implementation("org.apache.ant:ant-compress:1.5")
-    implementation("commons-io:commons-io:2.6")
+    implementation("org.apache.commons:commons-compress:1.27.1") {
+        because("Avoid old version of commons-compress introduced by ant-compress")
+    }
+    implementation("commons-io:commons-io:2.16.1")
     implementation("org.openjdk.jmc:flightrecorder:8.0.1")
     implementation("com.googlecode.plist:dd-plist:1.23") {
         because("To extract launch details from Android Studio installation")
     }
-    implementation("com.google.code.gson:gson:2.8.6") {
+    implementation("com.google.code.gson:gson:2.11.0") {
         because("To write JSON output")
     }
     implementation(project(":client-protocol"))
-
 
     gradleRuntime(gradleApi())
     gradleRuntime(libs.toolingApi)

@@ -1,8 +1,6 @@
 package org.gradle.profiler.mutations;
 
-import com.typesafe.config.Config;
 import org.gradle.profiler.BuildMutator;
-import org.gradle.profiler.InvocationSettings;
 
 import java.io.File;
 import java.util.Arrays;
@@ -26,8 +24,8 @@ public class ClearBuildCacheMutator extends AbstractCacheCleanupMutator {
 
     public static class Configurator extends AbstractCleanupMutator.Configurator {
         @Override
-        protected BuildMutator newInstance(Config scenario, String scenarioName, InvocationSettings settings, String key, CleanupSchedule schedule) {
-            return new ClearBuildCacheMutator(settings.getGradleUserHome(), schedule);
+        protected BuildMutator newInstance(BuildMutatorConfiguratorSpec spec, String key, CleanupSchedule schedule) {
+            return new ClearBuildCacheMutator(spec.getGradleUserHome(), schedule);
         }
     }
 }

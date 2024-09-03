@@ -5,7 +5,6 @@ import org.gradle.profiler.BuildContext;
 import org.gradle.profiler.BuildMutator;
 import org.gradle.profiler.CommandExec;
 import org.gradle.profiler.ConfigUtil;
-import org.gradle.profiler.InvocationSettings;
 import org.gradle.profiler.ScenarioContext;
 
 import java.io.File;
@@ -69,8 +68,7 @@ public class GitCheckoutMutator extends AbstractGitMutator {
 			if (build == null) {
 				throw new IllegalArgumentException("No git-checkout target specified for build");
 			}
-			InvocationSettings settings = spec.getInvocationSettings();
-			return new GitCheckoutMutator(settings.getProjectDir(), cleanup, build);
+			return new GitCheckoutMutator(spec.getProjectDir(), cleanup, build);
 		}
 	}
 

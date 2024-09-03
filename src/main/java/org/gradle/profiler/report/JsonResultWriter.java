@@ -11,6 +11,7 @@ import org.gradle.profiler.gradle.GradleScenarioDefinition;
 import org.gradle.profiler.OperatingSystem;
 import org.gradle.profiler.ScenarioDefinition;
 import org.gradle.profiler.Version;
+import org.gradle.profiler.maven.MavenScenarioDefinition;
 import org.gradle.profiler.result.BuildInvocationResult;
 import org.gradle.profiler.result.Sample;
 
@@ -41,6 +42,7 @@ public class JsonResultWriter {
             .registerTypeHierarchyAdapter(BuildScenarioResult.class, (JsonSerializer<? extends BuildScenarioResult<?>>) this::serializeScenarioResult)
             .registerTypeHierarchyAdapter(ScenarioDefinition.class, new ScenarioSerializer<>())
             .registerTypeHierarchyAdapter(GradleScenarioDefinition.class, new GradleScenarioSerializer())
+            .registerTypeHierarchyAdapter(MavenScenarioDefinition.class, new MavenScenarioSerializer())
             .registerTypeHierarchyAdapter(Temporal.class, (JsonSerializer<Temporal>) (date, type, context) -> new JsonPrimitive(DateTimeFormatter.ISO_INSTANT.format(date)))
             .create();
         gson.toJson(new Output(title, reportDate, new Environment(), scenarios), writer);
@@ -150,6 +152,15 @@ public class JsonResultWriter {
             json.add("mutators", toJson(scenario.getBuildMutators().stream().map(Object::toString)));
             json.add("args", toJson(scenario.getGradleArgs().stream()));
             json.add("jvmArgs", toJson(Stream.concat(scenario.getBuildConfiguration().getJvmArguments().stream(), scenario.getJvmArgs().stream())));
+            json.add("systemProperties", toJson(scenario.getSystemProperties()));
+            return json;
+        }
+    }
+
+    private static class MavenScenarioSerializer extends ScenarioSerializer<MavenScenarioDefinition> {
+        @Override
+        public JsonObject serialize(MavenScenarioDefinition scenario, Type typeOfSrc, JsonSerializationContext context) {
+            JsonObject json = super.serialize(scenario, typeOfSrc, context);
             json.add("systemProperties", toJson(scenario.getSystemProperties()));
             return json;
         }

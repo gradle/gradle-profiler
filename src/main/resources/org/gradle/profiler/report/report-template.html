@@ -282,14 +282,6 @@ div.controls .btn {
                                                 </ul>
                                             </li>
                                             <li>
-                                                <span class="description">System properties:</span>
-                                                <ul>
-                                                    <li v-for="(value, key) in scenario.definition.systemProperties">
-                                                        <span class="data">{{ key }} = {{ value }}</span>
-                                                    </li>
-                                                </ul>
-                                            </li>
-                                            <li>
                                                 <span class="description">JVM arguments:</span>
                                                 <ul>
                                                     <li v-for="arg in scenario.definition.jvmArgs">
@@ -312,6 +304,14 @@ div.controls .btn {
                                                 <span class="data">{{ scenario.definition.tasks }}</span>
                                             </li>
                                         </template>
+                                        <li v-if="scenario.definition.systemProperties">
+                                            <span class="description">System properties:</span>
+                                            <ul>
+                                                <li v-for="(value, key) in scenario.definition.systemProperties">
+                                                    <span class="data">{{ key }} = {{ value }}</span>
+                                                </li>
+                                            </ul>
+                                        </li>
                                     </ul>
                                 </td>
                             </tr>
