@@ -8,6 +8,7 @@ import org.gradle.profiler.ScenarioContext;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.UncheckedIOException;
 
 public class CopyFileMutator extends AbstractFileSystemMutator {
 
@@ -29,7 +30,7 @@ public class CopyFileMutator extends AbstractFileSystemMutator {
             }
             Files.copy(source, target);
         } catch (IOException e) {
-            throw new IllegalStateException("Failed to copy '" + source.getAbsolutePath() + "' to '" + target.getAbsolutePath() + "'", e);
+            throw new UncheckedIOException("Failed to copy '" + source.getAbsolutePath() + "' to '" + target.getAbsolutePath() + "'", e);
         }
     }
 
