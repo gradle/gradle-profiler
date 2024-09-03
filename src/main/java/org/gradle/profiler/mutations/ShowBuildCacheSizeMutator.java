@@ -2,7 +2,6 @@ package org.gradle.profiler.mutations;
 
 import org.gradle.profiler.BuildContext;
 import org.gradle.profiler.BuildMutator;
-import org.gradle.profiler.InvocationSettings;
 import org.gradle.profiler.ScenarioContext;
 
 import java.io.File;
@@ -58,8 +57,8 @@ public class ShowBuildCacheSizeMutator implements BuildMutator {
 
     public static class Configurator extends AbstractBuildMutatorWithoutOptionsConfigurator {
         @Override
-        BuildMutator createBuildMutator(InvocationSettings settings) {
-            return new ShowBuildCacheSizeMutator(settings.getGradleUserHome());
+        BuildMutator createBuildMutator(BuildMutatorConfiguratorSpec spec) {
+            return new ShowBuildCacheSizeMutator(spec.getGradleUserHome());
         }
     }
 

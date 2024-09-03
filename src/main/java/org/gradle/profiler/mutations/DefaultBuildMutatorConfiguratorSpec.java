@@ -4,6 +4,8 @@ import com.typesafe.config.Config;
 import org.gradle.profiler.InvocationSettings;
 import org.gradle.profiler.mutations.BuildMutatorConfigurator.BuildMutatorConfiguratorSpec;
 
+import java.io.File;
+
 public class DefaultBuildMutatorConfiguratorSpec implements BuildMutatorConfiguratorSpec {
     private final Config scenario;
     private final String scenarioName;
@@ -40,8 +42,17 @@ public class DefaultBuildMutatorConfiguratorSpec implements BuildMutatorConfigur
     }
 
     @Override
-    public InvocationSettings getInvocationSettings() {
-        return invocationSettings;
+    public File getScenarioFile() {
+        return invocationSettings.getScenarioFile();
     }
 
+    @Override
+    public File getProjectDir() {
+        return invocationSettings.getProjectDir();
+    }
+
+    @Override
+    public File getGradleUserHome() {
+        return invocationSettings.getGradleUserHome();
+    }
 }

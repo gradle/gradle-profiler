@@ -34,7 +34,7 @@ public class DeleteFileMutator extends AbstractFileSystemMutator {
         @Override
         public BuildMutator configure(String key, BuildMutatorConfiguratorSpec spec) {
             String target = ConfigUtil.string(spec.getScenario(), key);
-            File projectDir = spec.getInvocationSettings().getProjectDir();
+            File projectDir = spec.getProjectDir();
             return new DeleteFileMutator(resolveProjectFile(projectDir, target));
         }
     }

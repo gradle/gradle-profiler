@@ -1,12 +1,10 @@
 package org.gradle.profiler.mutations;
 
-import com.typesafe.config.Config;
 import org.apache.commons.io.FileUtils;
 import org.gradle.profiler.BuildContext;
 import org.gradle.profiler.BuildInvoker;
 import org.gradle.profiler.BuildMutator;
 import org.gradle.profiler.ConfigUtil;
-import org.gradle.profiler.InvocationSettings;
 import org.gradle.profiler.ScenarioContext;
 
 import java.io.File;
@@ -70,10 +68,10 @@ public abstract class AbstractCleanupMutator implements BuildMutator {
             if (schedule == null) {
                 throw new IllegalArgumentException("Schedule for cleanup is not specified");
             }
-            return newInstance(spec.getScenario(), spec.getScenarioName(), spec.getInvocationSettings(), key, schedule);
+            return newInstance(spec, key, schedule);
         }
 
-        protected abstract BuildMutator newInstance(Config scenario, String scenarioName, InvocationSettings settings, String key, CleanupSchedule schedule);
+        protected abstract BuildMutator newInstance(BuildMutatorConfiguratorSpec spec, String key, CleanupSchedule schedule);
     }
 
     @Override

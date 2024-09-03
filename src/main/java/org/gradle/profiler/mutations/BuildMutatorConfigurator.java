@@ -4,6 +4,8 @@ import com.typesafe.config.Config;
 import org.gradle.profiler.BuildMutator;
 import org.gradle.profiler.InvocationSettings;
 
+import java.io.File;
+
 public interface BuildMutatorConfigurator {
     BuildMutator configure(String key, BuildMutatorConfiguratorSpec spec);
 
@@ -16,6 +18,10 @@ public interface BuildMutatorConfigurator {
 
         int getBuildCount();
 
-        InvocationSettings getInvocationSettings();
+        File getScenarioFile();
+
+        File getProjectDir();
+
+        File getGradleUserHome();
     }
 }
