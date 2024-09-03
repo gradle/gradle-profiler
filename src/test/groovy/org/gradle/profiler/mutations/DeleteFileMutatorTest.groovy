@@ -45,4 +45,23 @@ class DeleteFileMutatorTest extends AbstractMutatorTest {
         then: "Directory should not exist"
         !targetDir.exists()
     }
+
+    def "has no problem if target does not exist"() {
+        def testDir = tmpDir.newFolder()
+        def testFile = new File(testDir, "missing-file.txt")
+
+        def spec = mockConfigSpec("""{
+            delete-file {
+                target = "missing-file.txt"
+            }
+        }""")
+        _ * spec.projectDir >> testDir
+
+        when:
+        def mutator = new DeleteFileMutator.Configurator().configure("delete-file", spec)
+        mutator.beforeScenario(buildContext)
+
+        then: "File should not exist"
+        !testFile.exists()
+    }
 }
