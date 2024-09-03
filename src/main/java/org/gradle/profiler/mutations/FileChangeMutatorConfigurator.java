@@ -24,7 +24,7 @@ public class FileChangeMutatorConfigurator implements BuildMutatorConfigurator {
             mutatorsForKey.add(getBuildMutatorForFile(sourceFileToChange));
         }
 
-        return new CompositeBuildMutator(mutatorsForKey);
+        return CompositeBuildMutator.from(mutatorsForKey);
     }
 
     private BuildMutator getBuildMutatorForFile(File sourceFileToChange) {

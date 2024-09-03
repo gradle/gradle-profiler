@@ -1,6 +1,7 @@
 package org.gradle.profiler;
 
 import com.typesafe.config.Config;
+import com.typesafe.config.ConfigException.WrongType;
 import com.typesafe.config.ConfigValue;
 
 import java.util.Collections;
@@ -22,6 +23,18 @@ public class ConfigUtil {
 			return defaultValues;
 		}
 	}
+
+    public static List<? extends Config> configs(Config config, String key) {
+        if (config.hasPath(key)) {
+            try {
+                return config.getConfigList(key);
+            } catch (WrongType e) {
+                return Collections.singletonList(config.getConfig(key));
+            }
+        } else {
+            return Collections.emptyList();
+        }
+    }
 
 	public static Integer optionalInteger(Config config, String key) {
 		if (config.hasPath(key)) {

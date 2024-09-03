@@ -32,7 +32,7 @@ class DeleteFileMutatorTest extends AbstractMutatorTest {
         new File(testDir, "file.txt").text = expectedContents
 
         def spec = mockConfigSpec("""{
-            delete-file {
+            delete-file = {
                 target = "target-dir"
             }
         }""")
@@ -51,7 +51,7 @@ class DeleteFileMutatorTest extends AbstractMutatorTest {
         def testFile = new File(testDir, "missing-file.txt")
 
         def spec = mockConfigSpec("""{
-            delete-file {
+            delete-file = {
                 target = "missing-file.txt"
             }
         }""")
@@ -64,4 +64,31 @@ class DeleteFileMutatorTest extends AbstractMutatorTest {
         then: "File should not exist"
         !testFile.exists()
     }
+
+    def "deletes multiple files"() {
+        def testDir = tmpDir.newFolder()
+        def expectedContents = "Copy file from source to target"
+        def file1 = new File(testDir, "file1.txt")
+        file1.text = expectedContents
+        def file2 = new File(testDir, "file2.txt")
+        file2.text = expectedContents
+
+        def spec = mockConfigSpec("""{
+            delete-file = [{
+                target = "file1.txt"
+            }, {
+                target = "file2.txt"
+            }]
+        }""")
+        _ * spec.projectDir >> testDir
+
+        when:
+        def mutator = new DeleteFileMutator.Configurator().configure("delete-file", spec)
+        mutator.beforeScenario(buildContext)
+
+        then: "Files should not exist"
+        !file1.exists()
+        !file2.exists()
+    }
+
 }
