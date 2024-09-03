@@ -8,8 +8,15 @@ class DeleteFileMutatorTest extends AbstractMutatorTest {
         def testFile = new File(testDir, "single-file.txt")
         testFile.text = expectedContents
 
+        def spec = mockConfigSpec("""{
+            delete-file {
+                target = "single-file.txt"
+            }
+        }""")
+        _ * spec.projectDir >> testDir
+
         when:
-        def mutator = new DeleteFileMutator(testFile)
+        def mutator = new DeleteFileMutator.Configurator().configure("delete-file", spec)
         mutator.beforeScenario(buildContext)
 
         then: "File should not exist"
@@ -17,18 +24,25 @@ class DeleteFileMutatorTest extends AbstractMutatorTest {
     }
 
     def "deletes directory"() {
-        def testDir = new File(tmpDir.newFolder(), "delete-test-dir")
+        def testDir = tmpDir.newFolder()
         def expectedContents = "Copy file from source to target"
-        def nestedDir = new File(testDir, "nested")
-        nestedDir.mkdirs()
-        new File(nestedDir, "another-file.txt").text = expectedContents
+        def targetDir = new File(testDir, "target-dir")
+        targetDir.mkdirs()
+        new File(targetDir, "another-file.txt").text = expectedContents
         new File(testDir, "file.txt").text = expectedContents
 
+        def spec = mockConfigSpec("""{
+            delete-file {
+                target = "target-dir"
+            }
+        }""")
+        _ * spec.projectDir >> testDir
+
         when:
-        def mutator = new DeleteFileMutator(testDir)
+        def mutator = new DeleteFileMutator.Configurator().configure("delete-file", spec)
         mutator.beforeScenario(buildContext)
 
         then: "Directory should not exist"
-        !testDir.exists()
+        !targetDir.exists()
     }
 }

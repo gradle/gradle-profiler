@@ -1,7 +1,7 @@
 package org.gradle.profiler.mutations;
 
+import com.typesafe.config.Config;
 import org.apache.commons.io.FileUtils;
-import org.gradle.profiler.BuildMutator;
 import org.gradle.profiler.ConfigUtil;
 import org.gradle.profiler.ScenarioContext;
 
@@ -32,8 +32,9 @@ public class DeleteFileMutator extends AbstractFileSystemMutator {
     public static class Configurator implements BuildMutatorConfigurator {
 
         @Override
-        public BuildMutator configure(String key, BuildMutatorConfiguratorSpec spec) {
-            String target = ConfigUtil.string(spec.getScenario(), key);
+        public DeleteFileMutator configure(String key, BuildMutatorConfiguratorSpec spec) {
+            Config config = spec.getScenario().getConfig(key);
+            String target = ConfigUtil.string(config, "target");
             File projectDir = spec.getProjectDir();
             return new DeleteFileMutator(resolveProjectFile(projectDir, target));
         }
