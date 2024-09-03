@@ -24,6 +24,7 @@ import org.gradle.profiler.mutations.ApplyProjectDependencyChangeMutator;
 import org.gradle.profiler.mutations.ApplyValueChangeToAndroidResourceFileMutator;
 import org.gradle.profiler.mutations.BuildMutatorConfigurator;
 import org.gradle.profiler.mutations.BuildMutatorConfigurator.BuildMutatorConfiguratorSpec;
+import org.gradle.profiler.mutations.DefaultBuildMutatorConfiguratorSpec;
 import org.gradle.profiler.mutations.ClearArtifactTransformCacheMutator;
 import org.gradle.profiler.mutations.ClearBuildCacheMutator;
 import org.gradle.profiler.mutations.ClearConfigurationCacheStateMutator;
@@ -321,7 +322,7 @@ class ScenarioLoader {
     }
 
     private static List<BuildMutator> getMutators(Config scenario, String scenarioName, InvocationSettings settings, int warmUpCount, int buildCount) {
-        BuildMutatorConfiguratorSpec spec = new BuildMutatorConfiguratorSpec(scenario, scenarioName, settings, warmUpCount, buildCount);
+        BuildMutatorConfiguratorSpec spec = new DefaultBuildMutatorConfiguratorSpec(scenario, scenarioName, settings, warmUpCount, buildCount);
         return BUILD_MUTATOR_CONFIGURATORS.entrySet().stream()
             .filter(entry -> scenario.hasPath(entry.getKey()))
             .map(entry -> entry.getValue().configure(entry.getKey(), spec))
