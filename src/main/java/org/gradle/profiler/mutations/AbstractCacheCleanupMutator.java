@@ -2,19 +2,19 @@ package org.gradle.profiler.mutations;
 
 import java.io.File;
 
-public abstract class AbstractCacheCleanupMutator extends AbstractCleanupMutator {
+public abstract class AbstractCacheCleanupMutator extends AbstractScheduledMutator {
 
     private final File gradleUserHome;
     private final String cacheNamePrefix;
 
-    public AbstractCacheCleanupMutator(File gradleUserHome, CleanupSchedule schedule, String cacheNamePrefix) {
+    public AbstractCacheCleanupMutator(File gradleUserHome, Schedule schedule, String cacheNamePrefix) {
         super(schedule);
         this.gradleUserHome = gradleUserHome;
         this.cacheNamePrefix = cacheNamePrefix;
     }
 
     @Override
-    protected void cleanup() {
+    protected void executeOnSchedule() {
         System.out.println("> Cleaning " + cacheNamePrefix + " caches in " + gradleUserHome);
         File cachesDir = new File(gradleUserHome, "caches");
         if (cachesDir.isDirectory()) {

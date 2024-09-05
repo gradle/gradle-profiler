@@ -7,16 +7,16 @@ import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.nio.file.Files;
 
-public class ClearGradleUserHomeMutator extends AbstractCleanupMutator {
+public class ClearGradleUserHomeMutator extends AbstractScheduledMutator {
     private final File gradleUserHome;
 
-    public ClearGradleUserHomeMutator(File gradleUserHome, CleanupSchedule schedule) {
+    public ClearGradleUserHomeMutator(File gradleUserHome, Schedule schedule) {
         super(schedule);
         this.gradleUserHome = gradleUserHome;
     }
 
     @Override
-    protected void cleanup() {
+    protected void executeOnSchedule() {
         System.out.println(String.format("> Cleaning Gradle user home: %s", gradleUserHome.getAbsolutePath()));
         if (!gradleUserHome.exists()) {
             throw new IllegalArgumentException(String.format(
@@ -34,9 +34,9 @@ public class ClearGradleUserHomeMutator extends AbstractCleanupMutator {
         }
     }
 
-    public static class Configurator extends AbstractCleanupMutator.Configurator {
+    public static class Configurator extends AbstractScheduledMutator.Configurator {
         @Override
-        protected BuildMutator newInstance(BuildMutatorConfiguratorSpec spec, String key, CleanupSchedule schedule) {
+        protected BuildMutator newInstance(BuildMutatorConfiguratorSpec spec, String key, Schedule schedule) {
             return new ClearGradleUserHomeMutator(spec.getGradleUserHome(), schedule);
         }
     }

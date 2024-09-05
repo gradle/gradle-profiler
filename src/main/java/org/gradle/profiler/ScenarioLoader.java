@@ -10,7 +10,7 @@ import org.gradle.profiler.bazel.BazelScenarioDefinition;
 import org.gradle.profiler.buck.BuckScenarioDefinition;
 import org.gradle.profiler.gradle.*;
 import org.gradle.profiler.maven.MavenScenarioDefinition;
-import org.gradle.profiler.mutations.AbstractCleanupMutator.CleanupSchedule;
+import org.gradle.profiler.mutations.AbstractScheduledMutator.Schedule;
 import org.gradle.profiler.mutations.ApplyAbiChangeToSourceFileMutator;
 import org.gradle.profiler.mutations.ApplyBuildScriptChangeFileMutator;
 import org.gradle.profiler.mutations.ApplyChangeToAndroidLayoutFileMutator;
@@ -444,7 +444,7 @@ class ScenarioLoader {
     }
 
     private static GradleBuildInvoker getAndroidStudioInvoker(Config config) {
-        CleanupSchedule schedule = ConfigUtil.enumValue(config, CLEAR_ANDROID_STUDIO_CACHE_BEFORE, CleanupSchedule.class, null);
+        Schedule schedule = ConfigUtil.enumValue(config, CLEAR_ANDROID_STUDIO_CACHE_BEFORE, Schedule.class, null);
         if (schedule == null) {
             return GradleBuildInvoker.AndroidStudio;
         }

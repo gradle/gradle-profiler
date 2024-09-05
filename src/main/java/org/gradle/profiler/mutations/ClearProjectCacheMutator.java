@@ -7,16 +7,16 @@ import java.io.File;
 import java.io.IOException;
 import java.io.UncheckedIOException;
 
-public class ClearProjectCacheMutator extends AbstractCleanupMutator {
+public class ClearProjectCacheMutator extends AbstractScheduledMutator {
     private final File projectDir;
 
-    public ClearProjectCacheMutator(File projectDir, CleanupSchedule schedule) {
+    public ClearProjectCacheMutator(File projectDir, Schedule schedule) {
         super(schedule);
         this.projectDir = projectDir;
     }
 
     @Override
-    protected void cleanup() {
+    protected void executeOnSchedule() {
         deleteGradleCache("project", projectDir);
         File buildSrc = new File(projectDir, "buildSrc");
         if (buildSrc.exists()) {
@@ -34,9 +34,9 @@ public class ClearProjectCacheMutator extends AbstractCleanupMutator {
         }
     }
 
-    public static class Configurator extends AbstractCleanupMutator.Configurator {
+    public static class Configurator extends AbstractScheduledMutator.Configurator {
         @Override
-        protected BuildMutator newInstance(BuildMutatorConfiguratorSpec spec, String key, CleanupSchedule schedule) {
+        protected BuildMutator newInstance(BuildMutatorConfiguratorSpec spec, String key, Schedule schedule) {
             return new ClearProjectCacheMutator(spec.getProjectDir(), schedule);
         }
     }

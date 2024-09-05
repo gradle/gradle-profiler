@@ -6,7 +6,7 @@ import java.io.File;
 
 public class ClearJarsCacheMutator extends AbstractCacheCleanupMutator {
 
-    public ClearJarsCacheMutator(File gradleUserHome, CleanupSchedule schedule) {
+    public ClearJarsCacheMutator(File gradleUserHome, Schedule schedule) {
         super(gradleUserHome, schedule, "jars-");
     }
 
@@ -15,9 +15,9 @@ public class ClearJarsCacheMutator extends AbstractCacheCleanupMutator {
         delete(cacheDir);
     }
 
-    public static class Configurator extends AbstractCleanupMutator.Configurator {
+    public static class Configurator extends AbstractScheduledMutator.Configurator {
         @Override
-        protected BuildMutator newInstance(BuildMutatorConfiguratorSpec spec, String key, CleanupSchedule schedule) {
+        protected BuildMutator newInstance(BuildMutatorConfiguratorSpec spec, String key, Schedule schedule) {
             return new ClearJarsCacheMutator(spec.getGradleUserHome(), schedule);
         }
     }

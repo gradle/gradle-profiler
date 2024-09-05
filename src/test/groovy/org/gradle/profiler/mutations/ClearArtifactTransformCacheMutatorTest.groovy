@@ -16,7 +16,7 @@ class ClearArtifactTransformCacheMutatorTest extends AbstractMutatorTest {
         ignored2.mkdirs()
 
         when:
-        def mutator = new ClearArtifactTransformCacheMutator(userHome, AbstractCleanupMutator.CleanupSchedule.BUILD)
+        def mutator = new ClearArtifactTransformCacheMutator(userHome, AbstractScheduledMutator.Schedule.BUILD)
         mutator.beforeBuild(buildContext)
 
         then:

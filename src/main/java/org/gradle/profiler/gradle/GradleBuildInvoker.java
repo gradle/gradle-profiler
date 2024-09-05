@@ -28,7 +28,7 @@ public class GradleBuildInvoker extends BuildInvoker {
     }
 
     @Override
-    public boolean allowsCleanupBetweenBuilds() {
+    public boolean allowsMutationBetweenBuilds() {
         // Warm daemons keep caches open and thus they cannot be removed
         return !isReuseDaemon();
     }

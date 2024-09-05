@@ -28,7 +28,7 @@ public class BuildInvoker {
         return 2;
     }
 
-    public boolean allowsCleanupBetweenBuilds() {
+    public boolean allowsMutationBetweenBuilds() {
         return true;
     }
 
