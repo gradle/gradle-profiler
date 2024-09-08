@@ -3,7 +3,6 @@ package org.gradle.profiler.studio;
 import org.gradle.profiler.BuildAction;
 import org.gradle.profiler.GradleClient;
 import org.gradle.profiler.result.BuildActionResult;
-import org.gradle.profiler.studio.StudioGradleClient;
 
 import java.util.List;
 
