@@ -1,6 +1,7 @@
 package org.gradle.profiler;
 
 import javax.annotation.Nullable;
+import javax.annotation.OverridingMethodsMustInvokeSuper;
 import java.io.File;
 import java.io.PrintStream;
 import java.util.List;
@@ -33,9 +34,14 @@ public abstract class BuildToolCommandLineScenarioDefinition extends ScenarioDef
         out.println("  Targets: " + getTargets());
     }
 
-    public String getExecutablePath() {
+    public String getExecutablePath(File projectDir) {
         String toolHomePath = getToolHome() == null ? System.getenv(getToolHomeEnvName()) : getToolHome().getAbsolutePath();
-        return toolHomePath == null ? getExecutableName() : toolHomePath + "/bin/" + getExecutableName();
+        return toolHomePath == null ? getExecutablePathWithoutToolHome(projectDir) : toolHomePath + "/bin/" + getExecutableName();
+    }
+
+    @OverridingMethodsMustInvokeSuper
+    protected String getExecutablePathWithoutToolHome(File projectDir) {
+        return getExecutableName();
     }
 
     @Override
