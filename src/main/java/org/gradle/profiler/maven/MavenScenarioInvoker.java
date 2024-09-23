@@ -19,7 +19,7 @@ public class MavenScenarioInvoker extends BuildToolCommandLineInvoker<MavenScena
     @Override
     public void run(MavenScenarioDefinition scenario, InvocationSettings settings, Consumer<BuildInvocationResult> resultConsumer) throws IOException, InterruptedException {
         List<String> commandLine = new ArrayList<>();
-        commandLine.add(scenario.getExecutablePath());
+        commandLine.add(scenario.getExecutablePath(settings.getProjectDir()));
         commandLine.addAll(scenario.getTargets());
         scenario.getSystemProperties().forEach((key, value) ->
             commandLine.add(String.format("-D%s=%s", key, value)));

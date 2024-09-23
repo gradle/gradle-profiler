@@ -59,6 +59,19 @@ public class MavenScenarioDefinition extends BuildToolCommandLineScenarioDefinit
     }
 
     @Override
+    protected String getExecutablePathWithoutToolHome(File projectDir) {
+        String wrapperName = OperatingSystem.isWindows()
+            ? "mvnw.cmd"
+            : "mvnw";
+        File wrapper = new File(projectDir, wrapperName);
+        if (wrapper.isFile()) {
+            return wrapper.getAbsolutePath();
+        } else {
+            return super.getExecutablePathWithoutToolHome(projectDir);
+        }
+    }
+
+    @Override
     protected String getToolHomeEnvName() {
         return "MAVEN_HOME";
     }

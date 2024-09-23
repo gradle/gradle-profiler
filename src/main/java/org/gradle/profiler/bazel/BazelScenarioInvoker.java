@@ -19,7 +19,7 @@ public class BazelScenarioInvoker extends BuildToolCommandLineInvoker<BazelScena
         List<String> targets = scenario.getTargets();
 
         List<String> commandLine = new ArrayList<>();
-        commandLine.add(scenario.getExecutablePath());
+        commandLine.add(scenario.getExecutablePath(settings.getProjectDir()));
         commandLine.addAll(targets);
 
         doRun(scenario, settings, resultConsumer, commandLine, ImmutableMap.of());
