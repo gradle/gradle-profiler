@@ -18,6 +18,12 @@ import java.util.function.Consumer;
  * <p>The profiler may support starting recording multiple times for a given JVM. The implementation should indicate this by overriding {@link #canRestartRecording(ScenarioSettings)}.</p>
  */
 public abstract class InstrumentingProfiler extends Profiler {
+
+    @Override
+    public boolean requiresGradle() {
+        return false;
+    }
+
     /**
      * Calculates the JVM args for all builds, including warm-ups.
      *
@@ -67,7 +73,7 @@ public abstract class InstrumentingProfiler extends Profiler {
      */
     @Override
     public ProfilerController newController(String pid, ScenarioSettings settings) {
-        SnapshotCapturingProfilerController controller = doNewController(settings);
+        SnapshotCapturingProfilerController controller = newSnapshottingController(settings);
         if (settings.getScenario().getInvoker().isDoesNotUseDaemon()) {
             return new SessionOnlyController(pid, controller);
         }
@@ -109,7 +115,7 @@ public abstract class InstrumentingProfiler extends Profiler {
      */
     protected abstract JvmArgsCalculator jvmArgsWithInstrumentation(ScenarioSettings settings, boolean startRecordingOnProcessStart, boolean captureSnapshotOnProcessExit);
 
-    protected abstract SnapshotCapturingProfilerController doNewController(ScenarioSettings settings);
+    public abstract SnapshotCapturingProfilerController newSnapshottingController(ScenarioSettings settings);
 
     public interface SnapshotCapturingProfilerController {
         void startRecording(String pid) throws IOException, InterruptedException;

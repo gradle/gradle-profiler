@@ -238,7 +238,7 @@ class ScenarioLoader {
             String title = scenario.hasPath(TITLE) ? scenario.getString(TITLE) : null;
 
             int buildCount = getBuildCount(settings, scenario);
-            File scenarioBaseDir = selectedScenarios.size() == 1 ? settings.getOutputDir() : new File(settings.getOutputDir(), GradleScenarioDefinition.safeFileName(scenarioName));
+            File scenarioBaseDir = selectedScenarios.size() == 1 ? settings.getOutputDir() : new File(settings.getOutputDir(), ScenarioDefinition.safeFileName(scenarioName));
 
             if (scenario.hasPath(BAZEL) && settings.isBazel()) {
                 Config executionInstructions = getConfig(scenarioFile, settings, scenarioName, scenario, BAZEL, BAZEL_KEYS);
@@ -331,8 +331,8 @@ class ScenarioLoader {
     }
 
     private static Config getConfig(File scenarioFile, InvocationSettings settings, String scenarioName, Config scenario, String toolName, List<String> toolKeys) {
-        if (settings.isProfile()) {
-            throw new IllegalArgumentException("Can only profile scenario '" + scenarioName + "' when building using Gradle.");
+        if (settings.getProfiler().requiresGradle()) {
+            throw new IllegalArgumentException("Profiler " + settings.getProfiler() + " is not compatible with " + toolName + " scenarios.");
         }
         Config executionInstructions = scenario.getConfig(toolName);
         for (String key : scenario.getObject(toolName).keySet()) {

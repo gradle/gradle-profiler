@@ -287,9 +287,26 @@ Here is an example:
 
 Values are optional and default to the values provided on the command-line or defined in the build.
 
-### Profiling incremental builds
+### Benchmark options
 
-A scenario can define changes that should be applied to the source before each build. You can use this to benchmark or profile an incremental build. The following mutations are available:
+- `iterations`: Number of builds to actually measure
+- `warm-ups`: Number of warmups to perform before measurement
+- `jvm-args`: Sets or overrides the jvm arguments set by `org.gradle.jvmargs` in gradle.properties.
+
+### Profiling change handling
+
+How a build tool handles changes to the source code can have a significant impact on the performance of the build.
+Gradle Profiler can simulate different kinds of changes to the source code to measure the impact of these changes on the build performance.
+These changes are applied by mutators at different points in the build benchmark process.
+Some mutators execute at a specific point, others can be configured to execute at a specific point, specified by the `schedule` parameter:
+
+- `SCENARIO`: before the scenario is executed,
+- `CLEANUP`: before cleaning preceeding each build invocation,
+- `BUILD`: before the build invocation (after cleanup).
+
+#### Source code mutators
+
+These mutations are applied before each build, and they introduce different kinds of change to the source code.
 
 - `apply-abi-change-to`: Add a public method to a Java or Kotlin source class. Each iteration adds a new method and removes the method added by the previous iteration.
 - `apply-android-layout-change-to`: Add a hidden view with id to an Android layout file. Supports traditional layouts as well as Databinding layouts with a ViewGroup as the root element.
@@ -303,23 +320,29 @@ A scenario can define changes that should be applied to the source before each b
 - `apply-non-abi-change-to`: Change the body of a public method in a Java or Kotlin source class.
 - `apply-project-dependency-change-to`: Add project dependencies to a Groovy or a Kotlin DSL build script. Each iteration adds a new combination of projects as dependencies and removes the projects added by the previous iteration.
 - `apply-property-resource-change-to`: Add an entry to a properties file. Each iteration adds a new entry and removes the entry added by the previous iteration.
-- `clear-android-studio-cache-before`: Invalidates the Android Studio caches before the scenario is executed (`SCENARIO`) or before the build is executed (`BUILD`). Due to Android Studio client specifics before cleanup (`CLEANUP`) is not supported. Note: cleaning the Android Studio caches is run only when Android Studio sync (`android-studio-sync`) is used.
-- `clear-build-cache-before`: Deletes the contents of the build cache before the scenario is executed (`SCENARIO`), before cleanup (`CLEANUP`) or before the build is executed (`BUILD`).
-- `clear-configuration-cache-state-before`: Deletes the contents of the `.gradle/configuration-cache-state` directory before the scenario is executed (`SCENARIO`), before cleanup (`CLEANUP`) or before the build is executed (`BUILD`).
-- `clear-gradle-user-home-before`: Deletes the contents of the Gradle user home directory before the scenario is executed (`SCENARIO`), before cleanup (`CLEANUP`) or before the build is executed (`BUILD`).
+
+#### Cache cleanup
+
+When simulating scenarios like ephemeral builds, it is important to make sure caches are not present.
+These mutators can be scheduled to execute at different points in the build benchmark process, specified by the `schedule` parameter.
+
+- `clear-android-studio-cache-before`: Invalidates the Android Studio caches. Due to Android Studio client specifics scheduling to run before cleanup (`CLEANUP`) is not supported. Note: cleaning the Android Studio caches is run only when Android Studio sync (`android-studio-sync`) is used.
+- `clear-build-cache-before`: Deletes the contents of the build cache at the given schedule.
+- `clear-configuration-cache-state-before`: Deletes the contents of the `.gradle/configuration-cache-state` directory.
+- `clear-gradle-user-home-before`: Deletes the contents of the Gradle user home directory.
   The mutator retains the `wrapper` cache in the Gradle user home, since the downloaded wrapper in that location is used to run Gradle.
-  Requires to use the `none` daemon option to use with `CLEANUP` or `BUILD`.
-- `clear-jars-cache-before`: Deletes the contents of the instrumented jars cache before the scenario is executed (`SCENARIO`), before cleanup (`CLEANUP`) or before the build is executed (`BUILD`).
-- `clear-project-cache-before`: Deletes the contents of the `.gradle` and `buildSrc/.gradle` project cache directories before the scenario is executed (`SCENARIO`), before cleanup (`CLEANUP`) or before the build is executed (`BUILD`).
-- `clear-transform-cache-before`: Deletes the contents of the transform cache before the scenario is executed (`SCENARIO`), before cleanup (`CLEANUP`) or before the build is executed (`BUILD`).
-- `copy-file`: Copies a file or a directory from one location to another. Has to specify a `source` and a `target` path; relative paths are resolved against the project directory. Can also specify a schedule (defaults `SCENARIO`). Can take an array of operations.
-- `delete-file`: Deletes a file or a directory. Has to specify a `target` path; when relative it is resolved against the project directory. Can also specify a schedule (defaults `SCENARIO`). Can take an array of operations.
+  Requires to use the `none` daemon option to use with `CLEANUP` or `BUILD` schedules.
+- `clear-jars-cache-before`: Deletes the contents of the instrumented jars cache.
+- `clear-project-cache-before`: Deletes the contents of the `.gradle` and `buildSrc/.gradle` project cache directories.
+- `clear-transform-cache-before`: Deletes the contents of the transform cache.
+- `show-build-cache-size`: Shows the number of files and their size in the build cache before scenario execution, and after each cleanup and build round.
+
+#### File operations
+
+- `copy-file`: Copies a file or a directory from one location to another. Has to specify a `source` and a `target` path; relative paths are resolved against the project directory. Can take an array of operations. Defaults to `SCNEARIO` schedule.
+- `delete-file`: Deletes a file or a directory. Has to specify a `target` path; when relative it is resolved against the project directory. Can take an array of operations. Defaults to `SCNEARIO` schedule.
 - `git-checkout`: Checks out a specific commit for the build step, and a different one for the cleanup step.
-- `git-revert`: Reverts a given set of commits before the build and resets it afterward.
-- `iterations`: Number of builds to actually measure
-- `jvm-args`: Sets or overrides the jvm arguments set by `org.gradle.jvmargs` in gradle.properties.
-- `show-build-cache-size`: Shows the number of files and their size in the build cache before scenario execution, and after each cleanup and build round..
-- `warm-ups`: Number of warmups to perform before measurement
+- `git-revert`: Reverts a given set of commits before the build and resets it afterward. 
 
 They can be added to a scenario file like this:
 

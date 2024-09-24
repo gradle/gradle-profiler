@@ -1,8 +1,12 @@
 package org.gradle.profiler;
 
+import org.apache.commons.io.FileUtils;
+
 import javax.annotation.Nullable;
 import java.io.File;
+import java.io.IOException;
 import java.io.PrintStream;
+import java.io.UncheckedIOException;
 import java.util.List;
 import java.util.function.Consumer;
 
@@ -28,6 +32,11 @@ public abstract class ScenarioDefinition {
         this.warmUpCount = warmUpCount;
         this.buildCount = buildCount;
         this.outputDir = outputDir;
+        try {
+            FileUtils.forceMkdir(outputDir);
+        } catch (IOException e) {
+            throw new UncheckedIOException(e);
+        }
     }
 
     public void validate() {
@@ -98,6 +107,7 @@ public abstract class ScenarioDefinition {
     }
 
     public void visitProblems(InvocationSettings settings, Consumer<String> reporter) {
+        settings.getProfiler().validate(new ScenarioSettings(settings, this), reporter);
     }
 
     protected void printDetail(PrintStream out) {
@@ -108,4 +118,8 @@ public abstract class ScenarioDefinition {
     public abstract boolean doesCleanup();
 
     public abstract BuildConfiguration getBuildConfiguration();
+
+    public static String safeFileName(String name) {
+        return name.replace("/", "-");
+    }
 }

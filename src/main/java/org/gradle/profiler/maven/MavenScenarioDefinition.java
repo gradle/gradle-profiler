@@ -36,7 +36,7 @@ public class MavenScenarioDefinition extends BuildToolCommandLineScenarioDefinit
 
     @Override
     public String getProfileName() {
-        throw new UnsupportedOperationException();
+        return safeFileName(getName()) + "-mvn";
     }
 
     @Override

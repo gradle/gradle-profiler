@@ -1,8 +1,11 @@
 package org.gradle.profiler.gradle;
 
-import org.gradle.profiler.*;
+import org.gradle.profiler.BuildAction;
+import org.gradle.profiler.BuildMutator;
+import org.gradle.profiler.GradleBuildConfiguration;
+import org.gradle.profiler.InvocationSettings;
+import org.gradle.profiler.ScenarioDefinition;
 import org.gradle.profiler.buildops.BuildOperationUtil;
-import org.gradle.profiler.gradle.GradleBuildInvoker;
 import org.gradle.util.GradleVersion;
 
 import java.io.File;
@@ -58,10 +61,6 @@ public class GradleScenarioDefinition extends ScenarioDefinition {
     @Override
     public String getProfileName() {
         return safeFileName(getName()) + "-" + buildConfiguration.getGradleVersion().getVersion();
-    }
-
-    public static String safeFileName(String name) {
-        return name.replace("/", "-");
     }
 
     @Override
@@ -133,7 +132,7 @@ public class GradleScenarioDefinition extends ScenarioDefinition {
         if (settings.isMeasureConfigTime() && isBuildServiceUnsupported()) {
             reporter.accept("Measuring build configuration is only supported for Gradle 6.1-milestone-3 and later");
         }
-        settings.getProfiler().validate(new ScenarioSettings(settings, this), reporter);
+        super.visitProblems(settings, reporter);
     }
 
     private boolean isBuildServiceUnsupported() {

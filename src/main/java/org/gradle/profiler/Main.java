@@ -88,6 +88,10 @@ public class Main {
             for (ScenarioDefinition scenario : scenarios) {
                 scenarioCount++;
                 Logging.startOperation("Running scenario " + scenario.getDisplayName() + " (scenario " + scenarioCount + "/" + totalScenarios + ")");
+                if (settings.isProfile() && scenario.getWarmUpCount() == 0) {
+                    throw new IllegalStateException("Using the --profile option requires at least one warm-up");
+                }
+
                 if (scenario instanceof BazelScenarioDefinition) {
                     invoke(bazelScenarioInvoker, (BazelScenarioDefinition) scenario, settings, benchmarkResults, failures);
                 } else if (scenario instanceof BuckScenarioDefinition) {

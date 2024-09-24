@@ -14,6 +14,11 @@ class CompositeProfiler extends Profiler {
     }
 
     @Override
+    public boolean requiresGradle() {
+        return delegates.stream().anyMatch(Profiler::requiresGradle);
+    }
+
+    @Override
     public String toString() {
         return delegates.stream().map(Object::toString).collect(Collectors.joining(", "));
     }

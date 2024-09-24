@@ -34,6 +34,11 @@ public class BuildScanProfiler extends Profiler {
     }
 
     @Override
+    public boolean requiresGradle() {
+        return true;
+    }
+
+    @Override
     public String toString() {
         return "buildscan";
     }

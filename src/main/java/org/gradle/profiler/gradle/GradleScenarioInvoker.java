@@ -52,10 +52,6 @@ public class GradleScenarioInvoker extends ScenarioInvoker<GradleScenarioDefinit
 
     @Override
     public void run(GradleScenarioDefinition scenario, InvocationSettings settings, Consumer<GradleBuildInvocationResult> resultConsumer) throws IOException, InterruptedException {
-        if (settings.isProfile() && scenario.getWarmUpCount() == 0) {
-            throw new IllegalStateException("Using the --profile option requires at least one warm-up");
-        }
-
         ScenarioSettings scenarioSettings = new ScenarioSettings(settings, scenario);
         FileUtils.forceMkdir(scenario.getOutputDir());
         JvmArgsCalculator allBuildsJvmArgsCalculator = settings.getProfiler().newJvmArgsCalculator(scenarioSettings);
