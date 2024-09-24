@@ -6,7 +6,6 @@ import com.android.tools.idea.projectsystem.ProjectSystemUtil;
 import com.google.common.base.Strings;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.progress.ProgressIndicator;
-import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.wm.IdeFrame;
@@ -46,9 +45,7 @@ public class AndroidStudioSystemHelper {
      * Starts a manual sync and returns a result.
      */
     public static GradleSyncResult startManualSync(Project project, GradleSystemListener gradleSystemListener) {
-        GradleSyncResult result = doGradleSync(project, gradleSystemListener);
-        waitOnBackgroundProcessesFinish(project);
-        return result;
+        return doGradleSync(project, gradleSystemListener);
     }
 
     private static GradleSyncResult doGradleSync(Project project, GradleSystemListener gradleSystemListener) {
@@ -71,11 +68,9 @@ public class AndroidStudioSystemHelper {
         }
     }
 
-    /**
-     * Registers a listener that waits on next gradle sync if it's in progress.
-     */
-    public static void waitOnPreviousGradleSyncFinish(Project project) {
-        if (ProjectSystemUtil.getSyncManager(project).isSyncInProgress()) {
+    /** Registers a listener that wait for the startup sync to finish */
+    public static void waitOnStartupSyncToFinish(Project project) {
+        if (ProjectSystemUtil.getSyncManager(project).getLastSyncResult() != UNKNOWN) {
             MessageBusConnection connection = project.getMessageBus().connect();
             CompletableFuture<Void> future = new CompletableFuture<>();
             connection.subscribe(PROJECT_SYSTEM_SYNC_TOPIC, syncResult -> future.complete(null));
@@ -89,8 +84,6 @@ public class AndroidStudioSystemHelper {
      * It seems there is no better way to do it atm.
      */
     public static void waitOnBackgroundProcessesFinish(Project project) {
-        // Run a dummy read action just so we wait on all indexing done
-        DumbService.getInstance(project).runReadActionInSmartMode(() -> {});
         IdeFrame frame = WindowManagerEx.getInstanceEx().findFrameFor(project);
         StatusBarEx statusBar = frame == null ? null : (StatusBarEx) frame.getStatusBar();
         if (statusBar != null) {
