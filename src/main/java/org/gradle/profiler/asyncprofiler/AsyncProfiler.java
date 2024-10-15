@@ -24,7 +24,7 @@ public class AsyncProfiler extends InstrumentingProfiler {
     }
 
     @Override
-    protected SnapshotCapturingProfilerController doNewController(ScenarioSettings settings) {
+    public SnapshotCapturingProfilerController newSnapshottingController(ScenarioSettings settings) {
         return new AsyncProfilerController(config, settings);
     }
 

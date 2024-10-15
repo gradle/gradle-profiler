@@ -18,14 +18,24 @@ package org.gradle.profiler;
 import java.io.File;
 import java.util.function.Consumer;
 
-public class Profiler {
+public abstract class Profiler {
 
     public static final Profiler NONE = new Profiler() {
+        @Override
+        public boolean requiresGradle() {
+            return false;
+        }
+
         @Override
         public String toString() {
             return "none";
         }
     };
+
+    /**
+     * Whether this profiler supports only Gradle builds.
+     */
+    public abstract boolean requiresGradle();
 
     public void validate(ScenarioSettings settings, Consumer<String> reporter) {
     }

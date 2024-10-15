@@ -14,6 +14,12 @@ public class ChromeTraceProfiler extends Profiler {
     }
 
     @Override
+    public boolean requiresGradle() {
+        return true;
+    }
+
+
+    @Override
     public void summarizeResultFile(File resultFile, Consumer<String> consumer) {
         if (resultFile.getName().endsWith("-trace.json")) {
             consumer.accept(resultFile.getAbsolutePath());

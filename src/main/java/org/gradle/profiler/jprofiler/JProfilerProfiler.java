@@ -32,7 +32,7 @@ public class JProfilerProfiler extends InstrumentingProfiler {
     }
 
     @Override
-    protected SnapshotCapturingProfilerController doNewController(ScenarioSettings settings) {
+    public SnapshotCapturingProfilerController newSnapshottingController(ScenarioSettings settings) {
         return new JProfilerController(settings, jProfilerConfig);
     }
 

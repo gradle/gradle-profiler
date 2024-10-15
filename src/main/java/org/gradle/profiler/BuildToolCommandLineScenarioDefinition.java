@@ -59,7 +59,7 @@ public abstract class BuildToolCommandLineScenarioDefinition extends ScenarioDef
 
     @Override
     public boolean createsMultipleProcesses() {
-        return false;
+        return true;
     }
 
     @Override

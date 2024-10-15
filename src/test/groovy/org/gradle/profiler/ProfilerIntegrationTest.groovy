@@ -1173,10 +1173,10 @@ class ProfilerIntegrationTest extends AbstractProfilerIntegrationTest {
         new Main().run("--project-dir", projectDir.absolutePath, "--output-dir", outputDir.absolutePath, "--buck", "--profile", "jfr", "--scenario-file", scenarios.absolutePath, "--gradle-version", minimalSupportedGradleVersion, "buildTarget")
 
         then:
-        thrown(IllegalArgumentException)
+        thrown(Exception)
 
         and:
-        output.contains("Can only profile scenario 'buildTarget' when building using Gradle.")
+        output.contains("Profiling is not supported for Buck builds")
     }
 
     def "can profile a scenario that contains buck build instructions when building with Gradle"() {
@@ -1272,10 +1272,10 @@ class ProfilerIntegrationTest extends AbstractProfilerIntegrationTest {
         new Main().run("--project-dir", projectDir.absolutePath, "--output-dir", outputDir.absolutePath, "--bazel", "--profile", "jfr", "--scenario-file", scenarios.absolutePath, "--gradle-version", minimalSupportedGradleVersion, "buildTarget")
 
         then:
-        thrown(IllegalArgumentException)
+        thrown(Exception)
 
         and:
-        output.contains("Can only profile scenario 'buildTarget' when building using Gradle.")
+        output.contains("Profiling is not supported for Bazel builds")
     }
 
     def "can profile a scenario that contains bazel build instructions when building with Gradle"() {
