@@ -19,13 +19,16 @@ import org.gradle.profiler.GeneratedInitScript;
 
 import java.io.PrintWriter;
 
+/**
+ * An init script to set up Gradle Enterprise plugin dependency and apply it, used for Gradle 6+.
+ */
 public class GradleEnterpriseInitScript extends GeneratedInitScript {
 
     static final String PUBLISH_AND_TAG = "" +
-        "        if (System.getProperty('org.gradle.profiler.phase') == 'MEASURE') {\n" +
-        "            publishAlways()\n" +
-        "        }\n" +
-        "        tag('GRADLE_PROFILER')\n";
+        "        background {\n" +
+        "            publishAlwaysIf(System.getProperty('org.gradle.profiler.phase') == 'MEASURE')\n" +
+        "            tag('GRADLE_PROFILER')\n" +
+        "        }\n";
 
     private final String version;
 
