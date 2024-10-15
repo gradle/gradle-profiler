@@ -5,7 +5,6 @@ import com.intellij.ide.caches.CachesInvalidator;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectUtil;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.gradle.profiler.client.protocol.Client;
 import org.gradle.profiler.client.protocol.messages.StudioCacheCleanupCompleted;
@@ -23,9 +22,8 @@ import static org.gradle.profiler.client.protocol.messages.StudioRequest.StudioR
 import static org.gradle.profiler.client.protocol.messages.StudioRequest.StudioRequestType.STOP_RECEIVING_EVENTS;
 import static org.gradle.profiler.studio.plugin.system.AndroidStudioSystemHelper.getStartupSyncResult;
 import static org.gradle.profiler.studio.plugin.system.AndroidStudioSystemHelper.startManualSync;
-import static org.gradle.profiler.studio.plugin.system.AndroidStudioSystemHelper.waitOnBackgroundProcessesFinish;
 import static org.gradle.profiler.studio.plugin.system.AndroidStudioSystemHelper.waitOnPostStartupActivities;
-import static org.gradle.profiler.studio.plugin.system.AndroidStudioSystemHelper.waitOnPreviousGradleSyncFinish;
+import static org.gradle.profiler.studio.plugin.system.AndroidStudioSystemHelper.waitOnStartupSyncToFinish;
 
 public class GradleProfilerClient {
 
@@ -89,8 +87,9 @@ public class GradleProfilerClient {
 
         // In some cases sync could happen before we trigger it,
         // for example when we open a project for the first time.
-        waitOnPreviousGradleSyncFinish(project);
-        waitOnBackgroundProcessesFinish(project);
+        if (isStartup) {
+            waitOnStartupSyncToFinish(project);
+        }
 
         LOG.info(String.format("[SYNC REQUEST %s] Sync has started%n", request.getId()));
         Stopwatch stopwatch = isStartup ? startupStopwatch : Stopwatch.createStarted();
