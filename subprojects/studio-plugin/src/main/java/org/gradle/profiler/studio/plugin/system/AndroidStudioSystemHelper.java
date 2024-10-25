@@ -14,8 +14,8 @@ import com.intellij.openapi.wm.ex.StatusBarEx;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
 import com.intellij.util.messages.MessageBusConnection;
 import org.gradle.profiler.client.protocol.messages.StudioSyncRequestCompleted.StudioSyncRequestResult;
+import org.jetbrains.annotations.Nullable;
 
-import javax.annotation.Nullable;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.function.Supplier;
@@ -35,7 +35,7 @@ public class AndroidStudioSystemHelper {
      */
     public static GradleSyncResult getStartupSyncResult(Project project, GradleSystemListener gradleSystemListener) {
         ProjectSystemSyncManager.SyncResult lastSyncResult = ProjectSystemUtil.getSyncManager(project).getLastSyncResult();
-        if (lastSyncResult == UNKNOWN) {
+        if (lastSyncResult == UNKNOWN || lastSyncResult == SKIPPED) {
             // Sync was not run before, we need to run it manually
             return startManualSync(project, gradleSystemListener);
         }
@@ -78,7 +78,7 @@ public class AndroidStudioSystemHelper {
         if (ProjectSystemUtil.getSyncManager(project).isSyncInProgress()) {
             MessageBusConnection connection = project.getMessageBus().connect();
             CompletableFuture<Void> future = new CompletableFuture<>();
-            connection.subscribe(PROJECT_SYSTEM_SYNC_TOPIC, syncResult -> future.complete(null));
+            connection.subscribe(PROJECT_SYSTEM_SYNC_TOPIC, (ProjectSystemSyncManager.SyncResultListener) syncResult -> future.complete(null));
             future.join();
         }
     }

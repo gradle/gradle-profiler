@@ -46,7 +46,6 @@ class AndroidStudioIntegrationTest extends AbstractProfilerIntegrationTest {
 
         then:
         logFile.find("Gradle invocation 1 has completed in").size() == 5
-        logFile.find("Gradle invocation 2 has completed in").size() == 0
         logFile.find("Full sync has completed in").size() == 5
         logFile.find("and it SUCCEEDED").size() == 5
         logFile.find("* Cleaning Android Studio cache, this will require a restart...").size() == 0
@@ -73,22 +72,17 @@ class AndroidStudioIntegrationTest extends AbstractProfilerIntegrationTest {
 
         then:
         logFile.find("Gradle invocation 1 has completed in").size() == 2
-        logFile.find("Gradle invocation 2 has completed in").size() == 2
-        def firstDurations = (logFile.text =~ /Gradle invocation 1 has completed in: (\d+)ms/)
+        def duration = (logFile.text =~ /Gradle invocation 1 has completed in: (\d+)ms/)
             .findAll()
             .collect { it[1] as Integer }
-        def secondDurations = (logFile.text =~ /Gradle invocation 2 has completed in: (\d+)ms/)
-            .findAll()
-            .collect { it[1] as Integer }
-        logFile.find("Full Gradle execution time: ${firstDurations[0] + secondDurations[0]}ms").size() == 1
-        logFile.find("Full Gradle execution time: ${firstDurations[1] + secondDurations[1]}ms").size() == 1
+        logFile.find("Full Gradle execution time: ${duration[0]}ms").size() == 1
         logFile.find("Full sync has completed in").size() == 2
         logFile.find("and it SUCCEEDED").size() == 2
         logFile.find("* Cleaning Android Studio cache, this will require a restart...").size() == 0
         logFile.find("* Starting Android Studio").size() == 1
 
         and:
-        resultFile.lines[3] == "value,total execution time,Gradle execution time #1,Gradle execution time #2,Gradle total execution time,IDE execution time"
+        resultFile.lines[3] == "value,total execution time,Gradle total execution time,IDE execution time"
     }
 
     def "benchmarks Android Studio sync by cleaning ide cache before build"() {
