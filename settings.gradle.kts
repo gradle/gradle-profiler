@@ -14,6 +14,8 @@ include("client-protocol")
 include("instrumentation-support")
 include("studio-agent")
 include("studio-plugin")
+include("ide-provisioning-api")
+include("ide-provisioning")
 
 rootProject.children.forEach {
     it.projectDir = rootDir.resolve( "subprojects/${it.name}")
