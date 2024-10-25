@@ -1,4 +1,5 @@
 .idea/
+.intellijPlatform/
 *.iml
 *.ipr
 *.iws
