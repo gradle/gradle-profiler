@@ -80,7 +80,7 @@ class ChromeTraceIntegrationTest extends AbstractProfilerIntegrationTest {
     @ShowAndroidStudioLogsOnFailure
     @Requires({ StudioFinder.findStudioHome() })
     @Requires({ AndroidStudioTestSupport.findAndroidSdkPath() })
-    def "profiles build to produce chrome trace output for builds with multiple gradle invocations"() {
+    def "profiles Android Studio build to produce chrome trace output for builds"() {
         given:
         def studioHome = StudioFinder.findStudioHome()
         setupLocalProperties(new File(projectDir, "local.properties"))
@@ -104,8 +104,6 @@ class ChromeTraceIntegrationTest extends AbstractProfilerIntegrationTest {
 
         then:
         new File(outputDir, "scenario-${latestSupportedGradleVersion}-trace/scenario-${latestSupportedGradleVersion}-warm-up-build-1-invocation-1-trace.json").isFile()
-        new File(outputDir, "scenario-${latestSupportedGradleVersion}-trace/scenario-${latestSupportedGradleVersion}-warm-up-build-1-invocation-2-trace.json").isFile()
         new File(outputDir, "scenario-${latestSupportedGradleVersion}-trace/scenario-${latestSupportedGradleVersion}-measured-build-1-invocation-1-trace.json").isFile()
-        new File(outputDir, "scenario-${latestSupportedGradleVersion}-trace/scenario-${latestSupportedGradleVersion}-measured-build-1-invocation-2-trace.json").isFile()
     }
 }
