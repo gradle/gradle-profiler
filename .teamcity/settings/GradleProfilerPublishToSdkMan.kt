@@ -28,9 +28,9 @@ class GradleProfilerPublishToSdkMan(publishingBuild: GradleProfilerPublishing) :
     }
 
     params {
-        // Java home must always use Java11
+        // Java home must always use Java17
         // since intellij-gradle-plugin is not compatible with Java8
-        javaHome(os, JavaVersion.OPENJDK_11)
+        javaHome(os, JavaVersion.OPENJDK_17)
         text("additional.gradle.parameters", "")
 
         param("env.ORG_GRADLE_PROJECT_sdkmanKey", "%gradleprofiler.sdkman.key%")
