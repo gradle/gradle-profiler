@@ -17,7 +17,7 @@ fun BuildType.agentRequirement(os: Os, arch: Arch = Arch.AMD64) {
 fun toolchainConfiguration(os: Os) = listOf(
     "-Porg.gradle.java.installations.auto-detect=false",
     "-Porg.gradle.java.installations.auto-download=false",
-    """"-Porg.gradle.java.installations.paths=%${os.name}.java8.oracle.64bit%,%${os.name}.java11.openjdk.64bit%""""
+    """"-Porg.gradle.java.installations.paths=%${os.name}.java8.oracle.64bit%,%${os.name}.java11.openjdk.64bit%,%${os.name}.java17.openjdk.64bit%""""
 ).joinToString(" ")
 
 fun ParametrizedWithType.javaHome(os: Os, javaVersion: JavaVersion) {
