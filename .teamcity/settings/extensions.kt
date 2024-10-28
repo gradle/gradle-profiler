@@ -20,8 +20,10 @@ fun toolchainConfiguration(os: Os) = listOf(
     """"-Porg.gradle.java.installations.paths=%${os.name}.java8.oracle.64bit%,%${os.name}.java11.openjdk.64bit%,%${os.name}.java17.openjdk.64bit%""""
 ).joinToString(" ")
 
-fun ParametrizedWithType.javaHome(os: Os, javaVersion: JavaVersion) {
-    param("env.JAVA_HOME", javaVersion.javaHome(os))
+fun ParametrizedWithType.javaHome(os: Os) {
+    // Java home must always use Java17
+    // since intellij-gradle-plugin requires Java17
+    param("env.JAVA_HOME", JavaVersion.OPENJDK_17.javaHome(os))
 }
 
 fun ParametrizedWithType.androidHome(os: Os) {
