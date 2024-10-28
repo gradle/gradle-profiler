@@ -16,7 +16,7 @@ abstract class AbstractProfilerIntegrationTest extends AbstractIntegrationTest {
 
     static List<String> gradleVersionsSupportedOnCurrentJvm(List<String> gradleVersions) {
         gradleVersions.findAll {
-            JavaVersion.current().isJava11Compatible() ? GradleVersion.version(it) >= GradleVersion.version("5.0") : true
+            JavaVersion.current().isCompatibleWith(JavaVersion.VERSION_17) ? GradleVersion.version(it) >= GradleVersion.version("7.3") : true
         }
     }
 
@@ -26,7 +26,7 @@ abstract class AbstractProfilerIntegrationTest extends AbstractIntegrationTest {
         "4.0", "4.7",
         "5.2.1", "5.6.3",
         "6.0.1", "6.1", "6.6.1",
-        "7.1.1", "7.5"
+        "7.1.1", "7.6.4"
     ])
 
     @Shared

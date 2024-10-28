@@ -10,9 +10,7 @@ open class GradleProfilerTest(os: Os, javaVersion: JavaVersion, arch: Arch = Arc
     gradleProfilerVcs()
 
     params {
-        // Java home must always use Java11
-        // since intellij-gradle-plugin is not compatible with Java8
-        javaHome(os, JavaVersion.OPENJDK_11)
+        javaHome(os)
         androidHome(os)
     }
 
@@ -64,14 +62,14 @@ object LinuxJava8 : GradleProfilerTest(Os.linux, JavaVersion.ORACLE_JAVA_8, {
     name = "Linux - Java 8"
 })
 
-object LinuxJava11 : GradleProfilerTest(Os.linux, JavaVersion.OPENJDK_11, {
-    name = "Linux - Java 11"
+object LinuxJava17 : GradleProfilerTest(Os.linux, JavaVersion.OPENJDK_17, {
+    name = "Linux - Java 17"
 })
 
-object MacOSJava8 : GradleProfilerTest(Os.macos, JavaVersion.ORACLE_JAVA_8, {
-    name = "MacOS - Java 8"
+object MacOSJava17 : GradleProfilerTest(Os.macos, JavaVersion.OPENJDK_17, {
+    name = "MacOS - Java 17"
 })
 
-object WindowsJava11 : GradleProfilerTest(Os.windows, JavaVersion.OPENJDK_11, {
-    name = "Windows - Java 11"
+object WindowsJava17 : GradleProfilerTest(Os.windows, JavaVersion.OPENJDK_17, {
+    name = "Windows - Java 17"
 })
