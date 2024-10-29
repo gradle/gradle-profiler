@@ -7,6 +7,7 @@ plugins {
     `java-test-fixtures`
     id("profiler.allprojects")
     id("org.jetbrains.intellij") version "1.17.4"
+    id("org.jetbrains.kotlin.jvm") version "2.0.21"
 }
 
 description = "Contains logic for Android Studio plugin that communicates with profiler"

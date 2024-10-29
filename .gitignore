@@ -16,6 +16,7 @@
 **/.settings/
 
 .gradle/
+.kotlin/
 
 .DS_Store
 
