@@ -386,13 +386,13 @@ class BuildOperationInstrumentationIntegrationTest extends AbstractProfilerInteg
         output.contains("Scenario using Gradle ${gradleVersion}: Measuring build configuration is only supported for Gradle 6.1-milestone-3 and later")
 
         where:
-        gradleVersion << gradleVersionsSupportedOnCurrentJvm([minimalSupportedGradleVersion, "4.0", "4.10", "6.0"])
+        gradleVersion << gradleVersionsSupportedOnCurrentJvm([minimalSupportedGradleVersion, "6.0"])
     }
 
     def "complains when attempting to benchmark configuration time for build using unsupported Gradle version from scenario file"() {
         given:
         instrumentedBuildScript()
-        def unsupportedGradleVersions = gradleVersionsSupportedOnCurrentJvm(["${minimalSupportedGradleVersion}", "4.0", "4.10", "6.0"])
+        def unsupportedGradleVersions = gradleVersionsSupportedOnCurrentJvm(["${minimalSupportedGradleVersion}", "6.0"])
         def scenarioFile = file("performance.scenarios")
         scenarioFile.text = """
             assemble {
