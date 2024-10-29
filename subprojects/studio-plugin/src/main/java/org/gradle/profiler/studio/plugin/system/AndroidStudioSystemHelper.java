@@ -37,9 +37,14 @@ public class AndroidStudioSystemHelper {
         ProjectSystemSyncManager.SyncResult lastSyncResult = ProjectSystemUtil.getSyncManager(project).getLastSyncResult();
         if (lastSyncResult == UNKNOWN || lastSyncResult == SKIPPED) {
             // Sync was not run before, we need to run it manually
-            return startManualSync(project, gradleSystemListener);
+            GradleSyncResult result = startManualSync(project, gradleSystemListener);
+            if (result.getResult() == StudioSyncRequestResult.FAILED) {
+                // If it fails, it might fail because another sync just started a millisecond before we could start it
+                waitOnPreviousGradleSyncFinish(project);
+                waitOnBackgroundProcessesFinish(project);
+            }
         }
-        return convertToGradleSyncResult(lastSyncResult, gradleSystemListener.getLastException());
+        return convertToGradleSyncResult(ProjectSystemUtil.getSyncManager(project).getLastSyncResult(), gradleSystemListener.getLastException());
     }
 
     /**
