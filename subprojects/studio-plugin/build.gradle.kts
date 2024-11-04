@@ -6,7 +6,8 @@ plugins {
     groovy
     `java-test-fixtures`
     id("profiler.allprojects")
-    id("org.jetbrains.intellij") version "1.17.2"
+    id("org.jetbrains.intellij") version "1.17.4"
+    id("org.jetbrains.kotlin.jvm") version "2.0.21"
 }
 
 description = "Contains logic for Android Studio plugin that communicates with profiler"
@@ -37,7 +38,7 @@ project.configurations
 
 java {
     toolchain {
-        languageVersion.set(JavaLanguageVersion.of(11))
+        languageVersion.set(JavaLanguageVersion.of(17))
     }
 }
 
@@ -50,10 +51,10 @@ tasks.test {
 
 intellij {
     pluginName.set("gradle-profiler-studio-plugin")
-    version.set("2021.1.1")
+    version.set("2023.1.1")
     // Don't override "since-build" and "until-build" properties in plugin.xml,
     // so we don't need to update plugin to use it also on future IntelliJ versions.
     updateSinceUntilBuild.set(false)
     // Any plugin here must be also added to resources/META-INF/plugin.xml
-    plugins.set(listOf("java", "gradle", "android"))
+    plugins.set(listOf("java", "gradle", "org.jetbrains.android"))
 }

@@ -2,17 +2,23 @@ import extensions.AndroidStudioTestExtension
 import tasks.InstallAndroidSdkTask
 import providers.AndroidStudioInstallation
 import providers.AndroidStudioSystemProperties
+import tasks.ExtractAndroidStudioTask
 
 repositories {
-    ivy {
-        // Url of Android Studio archive
-        url = uri("https://redirector.gvt1.com/edgedl/android/studio/ide-zips")
-        patternLayout {
-            artifact("[revision]/[artifact]-[revision]-[ext]")
-        }
-        metadataSources { artifact() }
-        content {
-            includeGroup("android-studio")
+    listOf(
+        // Urls of Android Studio archive
+        "https://redirector.gvt1.com/edgedl/android/studio/ide-zips",
+        "https://redirector.gvt1.com/edgedl/android/studio/install"
+    ).forEach {
+        ivy {
+            url = uri(it)
+            patternLayout {
+                artifact("[revision]/[artifact]-[revision]-[ext]")
+            }
+            metadataSources { artifact() }
+            content {
+                includeGroup("android-studio")
+            }
         }
     }
 }
@@ -35,29 +41,17 @@ val androidStudioRuntime by configurations.creating
 dependencies {
     val fileExtension = when {
         isWindows() -> "windows.zip"
-        isMacOS() && isIntel() -> "mac.zip"
-        isMacOS() && !isIntel() -> "mac_arm.zip"
+        isMacOS() && isIntel() -> "mac.dmg"
+        isMacOS() && !isIntel() -> "mac_arm.dmg"
         isLinux() -> "linux.tar.gz"
         else -> throw IllegalStateException("Unsupported OS: $os")
     }
     androidStudioRuntime(extension.testAndroidStudioVersion.map { version -> "android-studio:android-studio:$version@$fileExtension" })
 }
 
-val unpackAndroidStudio = tasks.register<Copy>("unpackAndroidStudio") {
-    from(Callable {
-        val singleFile = androidStudioRuntime.singleFile
-        when {
-            singleFile.name.endsWith(".tar.gz") -> tarTree(singleFile)
-            else -> zipTree(singleFile)
-        }
-    }) {
-        eachFile {
-            // Remove top folder when unzipping, that way we get rid of Android Studio.app folder that can cause issues on Mac
-            // where MacOS would kill the Android Studio process right after start, issue: https://github.com/gradle/gradle-profiler/issues/469
-            relativePath = RelativePath(true, *relativePath.segments.drop(1).toTypedArray())
-        }
-    }
-    into(layout.buildDirectory.dir("android-studio"))
+val unpackAndroidStudio = tasks.register<ExtractAndroidStudioTask>("unpackAndroidStudio") {
+    androidStudioLocation = androidStudioRuntime
+    outputDir = layout.buildDirectory.dir("android-studio")
 }
 
 val installAndroidSdk = tasks.register<InstallAndroidSdkTask>("installAndroidSdk") {
@@ -68,7 +62,7 @@ val installAndroidSdk = tasks.register<InstallAndroidSdkTask>("installAndroidSdk
 }
 
 val androidStudioInstallation = objects.newInstance<AndroidStudioInstallation>().apply {
-    studioInstallLocation.fileProvider(unpackAndroidStudio.map { it.destinationDir })
+    studioInstallLocation = unpackAndroidStudio.flatMap { it.outputDir }
 }
 
 tasks.withType<Test>().configureEach {

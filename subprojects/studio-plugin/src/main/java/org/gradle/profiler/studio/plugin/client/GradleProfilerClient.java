@@ -5,14 +5,13 @@ import com.intellij.ide.caches.CachesInvalidator;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectUtil;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.gradle.profiler.client.protocol.Client;
 import org.gradle.profiler.client.protocol.messages.StudioCacheCleanupCompleted;
 import org.gradle.profiler.client.protocol.messages.StudioRequest;
 import org.gradle.profiler.client.protocol.messages.StudioSyncRequestCompleted;
-import org.gradle.profiler.studio.plugin.system.GradleSystemListener;
 import org.gradle.profiler.studio.plugin.system.GradleSyncResult;
+import org.gradle.profiler.studio.plugin.system.GradleSystemListener;
 import org.jetbrains.plugins.gradle.service.project.open.GradleProjectImportUtil;
 import org.jetbrains.plugins.gradle.settings.GradleSettings;
 
@@ -54,8 +53,8 @@ public class GradleProfilerClient {
     private void maybeImportProject(Project project) {
         GradleSettings gradleSettings = GradleSettings.getInstance(project);
         if (gradleSettings.getLinkedProjectsSettings().isEmpty()) {
-            VirtualFile projectDir = ProjectUtil.guessProjectDir(project);
             // We disabled auto import with 'external.system.auto.import.disabled=true', so we need to link and refresh the project manually
+            VirtualFile projectDir = ProjectUtil.guessProjectDir(project);
             GradleProjectImportUtil.linkAndRefreshGradleProject(projectDir.getPath(), project);
         }
     }
@@ -89,8 +88,13 @@ public class GradleProfilerClient {
 
         // In some cases sync could happen before we trigger it,
         // for example when we open a project for the first time.
-        waitOnPreviousGradleSyncFinish(project);
-        waitOnBackgroundProcessesFinish(project);
+        // Also in some versions sync triggers first and then indexing and in others it's the opposite,
+        // so we wait for sync finishing and then for background processes and then for sync again.
+        if (isStartup) {
+            waitOnPreviousGradleSyncFinish(project);
+            waitOnBackgroundProcessesFinish(project);
+            waitOnPreviousGradleSyncFinish(project);
+        }
 
         LOG.info(String.format("[SYNC REQUEST %s] Sync has started%n", request.getId()));
         Stopwatch stopwatch = isStartup ? startupStopwatch : Stopwatch.createStarted();

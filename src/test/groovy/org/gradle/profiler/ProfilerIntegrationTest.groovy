@@ -367,11 +367,12 @@ class ProfilerIntegrationTest extends AbstractProfilerIntegrationTest {
             println "<tasks: " + gradle.startParameter.taskNames + ">"
             println "<daemon: " + gradle.services.get(org.gradle.internal.environment.GradleBuildEnvironment).longLivingProcess + ">"
         """
+        def buildScanVersion = "2.2.1"
 
         when:
         new Main().
             run("--project-dir", projectDir.absolutePath, "--output-dir", outputDir.absolutePath, "--gradle-version", minimalSupportedGradleVersion,
-                "--profile", "buildscan", "--buildscan-version", "1.2",
+                "--profile", "buildscan", "--buildscan-version", buildScanVersion,
                 "--profile", "jfr",
                 "assemble")
 
@@ -380,7 +381,7 @@ class ProfilerIntegrationTest extends AbstractProfilerIntegrationTest {
         logFile.find("<gradle-version: $minimalSupportedGradleVersion>").size() == 4
         logFile.find("<daemon: true").size() == 4
         logFile.find("<tasks: [assemble]>").size() == 3
-        assertBuildScanPublished("1.2")
+        assertBuildScanPublished(buildScanVersion)
 
         def profileFile = new File(outputDir, "${minimalSupportedGradleVersion}.jfr")
         profileFile.isFile()
