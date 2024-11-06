@@ -1,0 +1,21 @@
+name: Publish BuildScan Commit Status
+
+on:
+  status
+
+permissions:
+  statuses: write
+
+jobs:
+  build_scan_commit_status:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout gradle-github-actions Repo
+        uses: actions/checkout@v4
+        with:
+          repository: gradle/gradle-github-actions
+          ref: main
+          token: ${{ secrets.GH_PAT }}
+          path: .github/actions/gradle-github-actions
+      - name: Publish BuildScan Commit Status
+        uses: ./.github/actions/gradle-github-actions/buildscan-commit-status-action
