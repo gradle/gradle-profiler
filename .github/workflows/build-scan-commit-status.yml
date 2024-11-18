@@ -26,7 +26,7 @@ jobs:
         with:
           repository: gradle/gradle-github-actions
           ref: main
-          token: ${{ secrets.GH_PAT }}
+          token: ${{ env.GH_PAT }}
           path: .github/actions/gradle-github-actions
       - name: Publish BuildScan Commit Status
         uses: ./.github/actions/gradle-github-actions/buildscan-commit-status-action
