@@ -5,11 +5,22 @@ on:
 
 permissions:
   statuses: write
+  id-token: write
 
 jobs:
   build_scan_commit_status:
     runs-on: ubuntu-latest
     steps:
+      - name: configure aws credentials
+        uses: aws-actions/configure-aws-credentials@v3
+        with:
+          role-to-assume: arn:aws:iam::992382829881:role/GitHubActions_SecretAccess_gradle_profiler_all
+          aws-region: "eu-central-1"
+      - name: get secrets
+        uses: aws-actions/aws-secretsmanager-get-secrets@v2
+        with:
+          secret-ids: |
+            GH_PAT, gha/gradle-profiler/_all/GH_BOT_GITHUB_TOKEN
       - name: Checkout gradle-github-actions Repo
         uses: actions/checkout@v4
         with:
