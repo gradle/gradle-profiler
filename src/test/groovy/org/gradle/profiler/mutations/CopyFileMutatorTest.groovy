@@ -27,6 +27,33 @@ class CopyFileMutatorTest extends AbstractMutatorTest {
         target.text == expectedContents
     }
 
+    def "copies directory and contents from source to target"() {
+        def testDir = tmpDir.newFolder()
+
+        def expectedContents = "Copy file from source to target"
+        def source = new File(testDir, "source/file.txt")
+        source.parentFile.mkdirs()
+        source.text = expectedContents
+
+        def target = new File(testDir, "nested/target/file.txt")
+
+        def spec = mockConfigSpec("""{
+            copy-file = {
+                source = "source"
+                target = "nested/target"
+            }
+        }""")
+        _ * spec.projectDir >> testDir
+
+        when:
+        def mutator = new CopyFileMutator.Configurator().configure("copy-file", spec)
+        mutator.beforeScenario(scenarioContext)
+
+        then:
+        target.exists()
+        target.text == expectedContents
+    }
+
     def "copies multiple sets of source and target"() {
         def testDir = tmpDir.newFolder()
 

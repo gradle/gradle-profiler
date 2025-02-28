@@ -3,6 +3,8 @@ package org.gradle.profiler.mutations;
 import com.google.common.base.Strings;
 import com.google.common.io.Files;
 import com.typesafe.config.Config;
+
+import org.apache.commons.io.FileUtils;
 import org.gradle.profiler.BuildMutator;
 import org.gradle.profiler.CompositeBuildMutator;
 import org.gradle.profiler.ConfigUtil;
@@ -30,7 +32,11 @@ public class CopyFileMutator extends AbstractFileSystemMutator {
             if (!target.exists()) {
                 Files.createParentDirs(target);
             }
-            Files.copy(source, target);
+            if(source.isDirectory()) {
+                FileUtils.copyDirectory(source, target);
+            } else {
+                Files.copy(source, target);
+            }
         } catch (IOException e) {
             throw new UncheckedIOException("Failed to copy '" + source.getAbsolutePath() + "' to '" + target.getAbsolutePath() + "'", e);
         }
