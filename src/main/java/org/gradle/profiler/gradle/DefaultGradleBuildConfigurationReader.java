@@ -16,6 +16,7 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.PrintWriter;
+import java.net.URI;
 import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -88,6 +89,12 @@ public class DefaultGradleBuildConfigurationReader implements GradleBuildConfigu
             }
             if (versionString.matches("\\d+(\\.\\d+)+(-.+)?")) {
                 return probe(connector().useGradleVersion(versionString));
+            }
+            try {
+                URI distributionUri = URI.create(versionString);
+                return probe(connector().useDistribution(distributionUri));
+            } catch (IllegalArgumentException e) {
+                // do nothing because versionString is not gradle distribution uri
             }
         } catch (IOException e) {
             throw new RuntimeException("Could not locate Gradle distribution for requested version '" + versionString + "'.", e);
