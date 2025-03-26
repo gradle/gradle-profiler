@@ -8,9 +8,12 @@ import org.gradle.api.services.BuildServiceParameters;
 import org.gradle.build.event.BuildEventsListenerRegistry;
 import org.gradle.tooling.events.FinishEvent;
 import org.gradle.tooling.events.OperationCompletionListener;
-import org.gradle.util.GFileUtils;
 
 import java.io.File;
+import java.io.IOException;
+import java.io.UncheckedIOException;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
 
 public abstract class AbstractPidCollectorBuildService implements BuildService<AbstractPidCollectorBuildService.Parameters>, OperationCompletionListener {
 
@@ -26,7 +29,11 @@ public abstract class AbstractPidCollectorBuildService implements BuildService<A
     }
 
     protected AbstractPidCollectorBuildService() {
-        GFileUtils.writeFile(getPid().toString(), getParameters().getPidFile().get().getAsFile());
+        try {
+            Files.write(getParameters().getPidFile().get().getAsFile().toPath(), getPid().toString().getBytes(StandardCharsets.UTF_8));
+        } catch (IOException e) {
+            throw new UncheckedIOException(e);
+        }
     }
 
     protected abstract Long getPid();
