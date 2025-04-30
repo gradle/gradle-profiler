@@ -192,7 +192,9 @@ nexusPublishing {
 }
 
 buildScan {
-    isCaptureTaskInputFiles = true
+    capture {
+        isTaskInputFiles = true
+    }
 }
 
 val releaseTagName = "v$version"
