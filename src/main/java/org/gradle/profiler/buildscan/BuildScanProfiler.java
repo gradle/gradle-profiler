@@ -66,7 +66,7 @@ public class BuildScanProfiler extends Profiler {
                 Matcher buildMatcher = RUNNING_BUILD.matcher(line);
                 if (buildMatcher.matches()) {
                     measuredBuildNumber = buildMatcher.group(1);
-                } else if (line.equals("Publishing build scan...")) {
+                } else if (line.equals("Publishing build scan...") || line.equals("Publishing Build Scan...")) {
                     nextLineIsBuildScanUrl = true;
                 } else {
                     Matcher scenarioMatcher = RUNNING_SCENARIO.matcher(line);
