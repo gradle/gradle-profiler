@@ -50,6 +50,7 @@ class JsonResultWriterTest extends Specification {
             gradleHomeDir,
             javaHomeDir,
             ["-Xmx512m"],
+            false,
             false
         )
 

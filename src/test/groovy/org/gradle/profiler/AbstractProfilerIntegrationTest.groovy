@@ -25,7 +25,7 @@ abstract class AbstractProfilerIntegrationTest extends AbstractIntegrationTest {
         "5.6.4",
         "6.9.4",
         "7.6.4",
-        "8.0.2", "8.10.2"
+        "8.0.2", "8.14.3"
     ])
 
     @Shared
@@ -87,13 +87,13 @@ abstract class AbstractProfilerIntegrationTest extends AbstractIntegrationTest {
         """
     }
 
-    void assertBuildScanPublished(String buildScanPluginVersion = null) {
+    void assertBuildScanPublished(String buildScanPluginVersion = null, int numberOfScans = 1) {
         if (buildScanPluginVersion) {
             assert logFile.find("Using build scan plugin " + buildScanPluginVersion).size() == 1
         } else {
             assert logFile.find("Using build scan plugin specified in the build").size() == 1
         }
-        assert logFile.find("Publishing build").size() == 1: ("LOG FILE:" + logFile.text)
+        assert logFile.find(~/Publishing [bB]uild .*/).size() == numberOfScans: ("LOG FILE:" + logFile.text)
     }
 
     def instrumentedBuildScript() {

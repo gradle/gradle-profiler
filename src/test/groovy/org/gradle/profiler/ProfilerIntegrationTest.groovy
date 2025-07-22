@@ -250,21 +250,24 @@ class ProfilerIntegrationTest extends AbstractProfilerIntegrationTest {
         assertBuildScanPublished()
     }
 
-    def "uses Gradle Enterprise plugin version used by the build if present"() {
+    def "uses #pluginName plugin version used by the build if present"() {
+        def isEnterprisePlugin = pluginName == 'Enterprise'
+        def useOrService = "termsOf${isEnterprisePlugin ? 'Service' : 'Use'}"
+
         given:
         settingsFile.text = """
             plugins {
-                id "com.gradle.enterprise" version "3.0"
+                id "$pluginId" version "$pluginVersion"
             }
 
-            plugins.withId('com.gradle.enterprise') {
-                println("Enterprise plugin loaded from: " + it.class.protectionDomain.codeSource.location.path)
+            plugins.withId('$pluginId') {
+                println("$pluginName plugin loaded from: " + it.class.protectionDomain.codeSource.location.path)
             }
 
-            gradleEnterprise {
+            $extensionName {
                 buildScan {
-                    termsOfServiceUrl = 'https://gradle.com/terms-of-service';
-                    termsOfServiceAgree = 'yes'
+                    ${useOrService}Url = 'https://gradle.com/terms-of-service';
+                    ${useOrService}Agree = 'yes'
                 }
             }
         """
@@ -278,7 +281,7 @@ class ProfilerIntegrationTest extends AbstractProfilerIntegrationTest {
         when:
         new Main().run(
             "--project-dir", projectDir.absolutePath, "--output-dir", outputDir.absolutePath,
-                "--gradle-version", latestSupportedGradleVersion, "--profile", "buildscan", "assemble"
+            "--gradle-version", latestSupportedGradleVersion, "--profile", "buildscan", "assemble"
         )
 
         then:
@@ -287,8 +290,14 @@ class ProfilerIntegrationTest extends AbstractProfilerIntegrationTest {
         logFile.find("<daemon: true").size() == 4
         logFile.find("<tasks: [assemble]>").size() == 3
         // Enterprise plugin is applied in the build so it's used in probe version build, 2 warm ups and 1 build == 4
-        logFile.find(~/Enterprise plugin loaded from:.*gradle-enterprise-gradle-plugin-3.0.jar.*/).size() == 4
-        assertBuildScanPublished()
+        logFile.find(~/$pluginName plugin loaded from:.*$jarFileName-${pluginVersion}.jar.*/).size() == 4
+        // The Develocity plugin publishes by default, so the probing build will also publish
+        assertBuildScanPublished(null, isEnterprisePlugin ? 1 : 2)
+
+        where:
+        pluginName   | pluginId                | extensionName      | jarFileName                       | pluginVersion
+        'Enterprise' | 'com.gradle.enterprise' | 'gradleEnterprise' | 'gradle-enterprise-gradle-plugin' | '3.0'
+        'Develocity' | 'com.gradle.develocity' | 'develocity'       | 'develocity-gradle-plugin'        | '4.1'
     }
 
     def "profiles build using Build Scans overridden version specified in Gradle #gradleVersion and tasks"() {
@@ -305,7 +314,7 @@ class ProfilerIntegrationTest extends AbstractProfilerIntegrationTest {
         } else if (GradleVersion.version(gradleVersion) < GradleVersion.version("6.0")) {
             requestedBuildScanVersion = "2.2.1"
         } else {
-            requestedBuildScanVersion = "3.0"
+            requestedBuildScanVersion = "4.0"
         }
 
         when:
@@ -325,11 +334,11 @@ class ProfilerIntegrationTest extends AbstractProfilerIntegrationTest {
         gradleVersion << [minimalSupportedGradleVersion, latestSupportedGradleVersion]
     }
 
-    def "profiles build using requested Gradle Enterprise version"() {
+    def "profiles build using requested Develocity plugin version"() {
         given:
         settingsFile << """
-            plugins.withId('com.gradle.enterprise') {
-                println("Enterprise plugin loaded from: " + it.class.protectionDomain.codeSource.location.path)
+            plugins.withId('com.gradle.develocity') {
+                println("Develocity plugin loaded from: " + it.class.protectionDomain.codeSource.location.path)
             }
         """
         buildFile.text = """
@@ -338,7 +347,7 @@ class ProfilerIntegrationTest extends AbstractProfilerIntegrationTest {
             println "<tasks: " + gradle.startParameter.taskNames + ">"
             println "<daemon: " + gradle.services.get(org.gradle.internal.environment.GradleBuildEnvironment).longLivingProcess + ">"
         """
-        def requestedGradleEnterpriseVersion = "3.0"
+        def requestedGradleEnterpriseVersion = "4.0"
 
         when:
         new Main().run(
@@ -352,8 +361,8 @@ class ProfilerIntegrationTest extends AbstractProfilerIntegrationTest {
         logFile.find("<gradle-version: $latestSupportedGradleVersion>").size() == 4
         logFile.find("<daemon: true").size() == 4
         logFile.find("<tasks: [assemble]>").size() == 3
-        // Enterprise plugin is not applied to probe version build, but just to 2 warm ups and 1 build == 3
-        logFile.find(~/Enterprise plugin loaded from:.*gradle-enterprise-gradle-plugin-3.0.jar.*/).size() == 3
+        // Develocity plugin is not applied to probe version build, but just to 2 warm ups and 1 build == 3
+        logFile.find(~/Develocity plugin loaded from:.*develocity-gradle-plugin-4.0.jar.*/).size() == 3
         assertBuildScanPublished(requestedGradleEnterpriseVersion)
     }
 

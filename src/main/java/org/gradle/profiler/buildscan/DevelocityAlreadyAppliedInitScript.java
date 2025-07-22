@@ -19,21 +19,17 @@ import org.gradle.profiler.GeneratedInitScript;
 
 import java.io.PrintWriter;
 
-/**
- * An init script to apply Gradle Enterprise plugin that is already available, used for Gradle 6+.
- */
-public class GradleEnterpriseAlreadyAppliedInitScript extends GeneratedInitScript {
+import static org.gradle.profiler.buildscan.DevelocityInitScript.PUBLISH_AND_TAG;
 
-    static final String PUBLISH_AND_TAG = "" +
-        "        background {\n" +
-        "            publishAlwaysIf(System.getProperty('org.gradle.profiler.phase') == 'MEASURE')\n" +
-        "            tag('GRADLE_PROFILER')\n" +
-        "        }\n";
+/**
+ * An init script to apply Develocity plugin that is already available, used for Gradle 6+.
+ */
+public class DevelocityAlreadyAppliedInitScript extends GeneratedInitScript {
 
     @Override
     public void writeContents(final PrintWriter writer) {
         writer.write("settingsEvaluated {\n");
-        writer.write("    it.extensions[\"gradleEnterprise\"].buildScan.with {\n");
+        writer.write("    it.extensions[\"develocity\"].buildScan.with {\n");
         writer.write(PUBLISH_AND_TAG);
         writer.write("    }\n");
         writer.write("}\n");
