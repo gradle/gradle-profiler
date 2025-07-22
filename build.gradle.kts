@@ -191,10 +191,6 @@ nexusPublishing {
     }
 }
 
-buildScan {
-    isCaptureTaskInputFiles = true
-}
-
 val releaseTagName = "v$version"
 
 tasks.register<Exec>("gitTag") {
