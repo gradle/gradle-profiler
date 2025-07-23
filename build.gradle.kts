@@ -69,6 +69,12 @@ tasks.withType<Jar>().configureEach {
     }
 }
 
+java {
+    toolchain {
+        languageVersion.set(JavaLanguageVersion.of(17))
+    }
+}
+
 application.mainClass.set("org.gradle.profiler.Main")
 
 node {

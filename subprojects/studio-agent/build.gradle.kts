@@ -4,13 +4,21 @@ plugins {
 
 java {
     toolchain {
-        languageVersion.set(JavaLanguageVersion.of(11))
+        languageVersion.set(JavaLanguageVersion.of(17))
     }
 }
 
 dependencies {
     implementation("org.ow2.asm:asm:9.2")
     implementation(project(":client-protocol"))
+}
+
+tasks.compileJava {
+    // Need to set target/source compatibility, since `--add-exports` is not compatible with `--release`.
+    targetCompatibility = "17"
+    sourceCompatibility = "17"
+    options.compilerArgs.add("--add-exports")
+    options.compilerArgs.add("java.base/jdk.internal.misc=ALL-UNNAMED")
 }
 
 tasks.compileJava {

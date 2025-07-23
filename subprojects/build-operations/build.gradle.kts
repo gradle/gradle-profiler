@@ -8,11 +8,11 @@ dependencies {
 
 java {
     toolchain {
-        languageVersion.set(JavaLanguageVersion.of(11))
+        languageVersion.set(JavaLanguageVersion.of(17))
     }
 }
 
 tasks.withType<AbstractCompile>().configureEach {
-    targetCompatibility = "8"
-    sourceCompatibility = "8"
+    targetCompatibility = "17"
+    sourceCompatibility = "17"
 }
