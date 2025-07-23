@@ -22,17 +22,19 @@ import java.io.PrintWriter;
 /**
  * An init script to set up Gradle Enterprise plugin dependency and apply it, used for Gradle 6+.
  */
-public class GradleEnterpriseInitScript extends GeneratedInitScript {
+public class DevelocityInitScript extends GeneratedInitScript {
 
     static final String PUBLISH_AND_TAG = "" +
         "        background {\n" +
-        "            publishAlwaysIf(System.getProperty('org.gradle.profiler.phase') == 'MEASURE')\n" +
-        "            tag('GRADLE_PROFILER')\n" +
-        "        }\n";
+        "            publishing {\n" +
+        "                onlyIf { System.getProperty('org.gradle.profiler.phase') == 'MEASURE' }\n" +
+        "            }\n" +
+        "        }\n" +
+        "        tag('GRADLE_PROFILER')\n";
 
     private final String version;
 
-    public GradleEnterpriseInitScript(String version) {
+    public DevelocityInitScript(String version) {
         this.version = version;
     }
 
@@ -43,17 +45,17 @@ public class GradleEnterpriseInitScript extends GeneratedInitScript {
         writer.write("      gradlePluginPortal()\n");
         writer.write("    }\n");
         writer.write("    dependencies {\n");
-        writer.write("        classpath(\"com.gradle:gradle-enterprise-gradle-plugin:" + version + "\")\n");
+        writer.write("        classpath(\"com.gradle.develocity:com.gradle.develocity.gradle.plugin:" + version + "\")\n");
         writer.write("    }\n");
         writer.write("}\n");
         writer.write("\n");
         writer.write("settingsEvaluated {\n");
-        writer.write("    if (!it.pluginManager.hasPlugin(\"com.gradle.enterprise\")) {\n");
-        writer.write("        it.pluginManager.apply(com.gradle.enterprise.gradleplugin.GradleEnterprisePlugin)\n");
+        writer.write("    if (!it.pluginManager.hasPlugin(\"com.gradle.develocity\")) {\n");
+        writer.write("        it.pluginManager.apply(com.gradle.develocity.agent.gradle.DevelocityPlugin)\n");
         writer.write("    }\n");
-        writer.write("    it.extensions[\"gradleEnterprise\"].buildScan.with {\n");
-        writer.write("        termsOfServiceUrl = 'https://gradle.com/terms-of-service'\n");
-        writer.write("        termsOfServiceAgree = 'yes'\n");
+        writer.write("    it.extensions[\"develocity\"].buildScan.with {\n");
+        writer.write("        termsOfUseUrl = 'https://gradle.com/help/legal-terms-of-use'\n");
+        writer.write("        termsOfUseAgree = 'yes'\n");
         writer.write(PUBLISH_AND_TAG);
         writer.write("    }\n");
         writer.write("}\n");

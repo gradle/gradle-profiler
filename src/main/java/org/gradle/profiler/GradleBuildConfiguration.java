@@ -14,6 +14,7 @@ public class GradleBuildConfiguration implements BuildConfiguration {
     private final File javaHome;
     private final List<String> jvmArguments;
     private final boolean usesScanPlugin;
+    private final boolean usesDevelocityPlugin;
     private final List<String> clientJvmArguments;
 
     public GradleBuildConfiguration(
@@ -21,9 +22,10 @@ public class GradleBuildConfiguration implements BuildConfiguration {
         File gradleHome,
         File javaHome,
         List<String> jvmArguments,
-        boolean usesScanPlugin
+        boolean usesScanPlugin,
+        boolean usesDevelocityPlugin
     ) {
-       this(gradleVersion, gradleHome, javaHome, jvmArguments, usesScanPlugin, Collections.emptyList());
+       this(gradleVersion, gradleHome, javaHome, jvmArguments, usesScanPlugin, usesDevelocityPlugin, Collections.emptyList());
     }
 
     public GradleBuildConfiguration(
@@ -32,6 +34,7 @@ public class GradleBuildConfiguration implements BuildConfiguration {
         File javaHome,
         List<String> jvmArguments,
         boolean usesScanPlugin,
+        boolean usesDevelocityPlugin,
         List<String> gradleOpts
     ) {
         this.gradleVersion = gradleVersion;
@@ -39,6 +42,7 @@ public class GradleBuildConfiguration implements BuildConfiguration {
         this.javaHome = javaHome;
         this.usesScanPlugin = usesScanPlugin;
         this.jvmArguments = jvmArguments;
+        this.usesDevelocityPlugin = usesDevelocityPlugin;
         this.clientJvmArguments = gradleOpts;
     }
 
@@ -60,6 +64,10 @@ public class GradleBuildConfiguration implements BuildConfiguration {
 
     public boolean isUsesScanPlugin() {
         return usesScanPlugin;
+    }
+
+    public boolean isUsesDevelocityPlugin() {
+        return usesDevelocityPlugin;
     }
 
     /**

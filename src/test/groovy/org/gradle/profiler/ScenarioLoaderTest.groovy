@@ -377,7 +377,7 @@ class ScenarioLoaderTest extends Specification {
     def "can load default Android studio sync scenario"() {
         def settings = settings()
         def configurationReader = Mock(GradleBuildConfigurationReader)
-        configurationReader.readConfiguration() >> new GradleBuildConfiguration(null, null, null, null, false)
+        configurationReader.readConfiguration() >> new GradleBuildConfiguration(null, null, null, null, false, false)
 
         scenarioFile << """
             default {

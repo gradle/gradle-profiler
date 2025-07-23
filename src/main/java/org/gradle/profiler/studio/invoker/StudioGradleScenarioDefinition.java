@@ -37,7 +37,8 @@ public class StudioGradleScenarioDefinition extends GradleScenarioDefinition {
                 gradleBuildConfiguration.getGradleHome(),
                 gradleBuildConfiguration.getJavaHome(),
                 gradleBuildConfiguration.getJvmArguments(),
-                gradleBuildConfiguration.isUsesScanPlugin()
+                gradleBuildConfiguration.isUsesScanPlugin(),
+                gradleBuildConfiguration.isUsesDevelocityPlugin()
             );
             this.studioJvmArgs = studioJvmArguments;
             this.ideaProperties = ideaProperties;

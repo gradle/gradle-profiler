@@ -1,6 +1,11 @@
 package org.gradle.profiler.buildscan;
 
-import org.gradle.profiler.*;
+import org.gradle.profiler.BuildConfiguration;
+import org.gradle.profiler.GeneratedInitScript;
+import org.gradle.profiler.GradleArgsCalculator;
+import org.gradle.profiler.GradleBuildConfiguration;
+import org.gradle.profiler.Profiler;
+import org.gradle.profiler.ScenarioSettings;
 import org.gradle.util.GradleVersion;
 
 import java.io.File;
@@ -17,13 +22,20 @@ public class BuildScanProfiler extends Profiler {
     private static final GradleVersion GRADLE_5 = GradleVersion.version("5.0");
     private static final GradleVersion GRADLE_6 = GradleVersion.version("6.0");
 
+    /**
+     * The effective version of the Build Scan or Develocity plugin to use.
+     * <p>
+     * Depending on the Gradle version, we return:
+     * - Build Scan plugin version for Gradle < 6.x
+     * - Develocity plugin version for Gradle >= 6.x
+     */
     public static String defaultBuildScanVersion(GradleVersion gradleVersion) {
         if (gradleVersion.compareTo(GRADLE_5) < 0) {
             return "1.16";
         } else if (gradleVersion.compareTo(GRADLE_6) < 0) {
             return "2.4.2";
         } else {
-            return "3.5.2";
+            return "4.1";
         }
     }
 
@@ -101,13 +113,15 @@ public class BuildScanProfiler extends Profiler {
     }
 
     private Optional<GeneratedInitScript> getInitScript(GradleBuildConfiguration buildConfiguration) {
-        if (buildConfiguration.isUsesScanPlugin() && buildConfiguration.getGradleVersion().compareTo(GRADLE_6) >= 0) {
+        if (buildConfiguration.isUsesDevelocityPlugin()) {
+            return Optional.of(new DevelocityAlreadyAppliedInitScript());
+        } else if (buildConfiguration.isUsesScanPlugin() && buildConfiguration.getGradleVersion().compareTo(GRADLE_6) >= 0) {
             return Optional.of(new GradleEnterpriseAlreadyAppliedInitScript());
         } else if (!buildConfiguration.isUsesScanPlugin()) {
-            String effectiveBuildScanVersion = getEffectiveBuildScanVersion(buildConfiguration);
+            String effectiveDevelocityPluginVersion = getEffectiveBuildScanOrDevelocityPluginVersion(buildConfiguration);
             return (buildConfiguration.getGradleVersion().compareTo(GRADLE_6) < 0)
-                ? Optional.of(new BuildScanInitScript(effectiveBuildScanVersion))
-                : Optional.of(new GradleEnterpriseInitScript(effectiveBuildScanVersion));
+                ? Optional.of(new BuildScanInitScript(effectiveDevelocityPluginVersion))
+                : Optional.of(new DevelocityInitScript(effectiveDevelocityPluginVersion));
         }
         return Optional.empty();
     }
@@ -119,7 +133,7 @@ public class BuildScanProfiler extends Profiler {
             if (buildConfiguration.isUsesScanPlugin()) {
                 System.out.println("Using build scan plugin specified in the build");
             } else {
-                System.out.println("Using build scan plugin " + getEffectiveBuildScanVersion(buildConfiguration));
+                System.out.println("Using build scan plugin " + getEffectiveBuildScanOrDevelocityPluginVersion(buildConfiguration));
             }
             if (buildConfiguration.getGradleVersion().compareTo(GRADLE_5) < 0) {
                 gradleArgs.add("-Dscan");
@@ -129,7 +143,15 @@ public class BuildScanProfiler extends Profiler {
         };
     }
 
-    private String getEffectiveBuildScanVersion(GradleBuildConfiguration buildConfiguration) {
+    /**
+     * The effective version of the Build Scan or Develocity plugin to use.
+     * <p>
+     * Depending on the Gradle version, and whether the configuration specified a version, we return:
+     * - Version specified in the configuration if available
+     * - Build Scan plugin version for Gradle < 6.x
+     * - Develocity plugin version for Gradle >= 6.x
+     */
+    private String getEffectiveBuildScanOrDevelocityPluginVersion(GradleBuildConfiguration buildConfiguration) {
         return buildScanVersion != null ? buildScanVersion : defaultBuildScanVersion(buildConfiguration.getGradleVersion());
     }
 }
