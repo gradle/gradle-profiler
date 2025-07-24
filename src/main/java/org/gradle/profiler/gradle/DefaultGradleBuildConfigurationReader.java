@@ -51,6 +51,7 @@ public class DefaultGradleBuildConfigurationReader implements GradleBuildConfigu
                 "settingsEvaluated {\n" +
                     "   def detailsFile = new File(new URI('" + buildDetails.toURI() + "'))\n" +
                     "   detailsFile.text = \"isEnterprisePluginApplied=${it.pluginManager.hasPlugin('com.gradle.enterprise')}\\n\"\n" +
+                    "   detailsFile << \"isDevelocityPluginApplied=${it.pluginManager.hasPlugin('com.gradle.develocity')}\\n\"\n" +
                     "}\n"
             );
             String gradleHome = OperatingSystem.isWindows()
@@ -115,7 +116,8 @@ public class DefaultGradleBuildConfigurationReader implements GradleBuildConfigu
             return new BuildDetails(
                 properties.getProperty("gradleHome").trim(),
                 properties.getProperty("isBuildScanPluginApplied", "false").trim().equals("true"),
-                properties.getProperty("isEnterprisePluginApplied", "false").trim().equals("true")
+                properties.getProperty("isEnterprisePluginApplied", "false").trim().equals("true"),
+                properties.getProperty("isDevelocityPluginApplied", "false").trim().equals("true")
             );
         } catch (IOException e) {
             throw new RuntimeException("Could not read the build's configuration.", e);
@@ -137,7 +139,8 @@ public class DefaultGradleBuildConfigurationReader implements GradleBuildConfigu
                 new File(buildDetails.getGradleHome()),
                 javaEnvironment.getJavaHome(),
                 allJvmArgs,
-                usesAnyScanPlugin
+                usesAnyScanPlugin,
+                buildDetails.isDevelocityPluginApplied()
             );
         }
         daemonControl.stop(version);
@@ -175,11 +178,13 @@ public class DefaultGradleBuildConfigurationReader implements GradleBuildConfigu
         private final String gradleHome;
         private final boolean isBuildScanPluginApplied;
         private final boolean isEnterprisePluginApplied;
+        private final boolean isDevelocityPluginApplied;
 
-        private BuildDetails(String gradleHome, boolean isBuildScanPluginApplied, boolean isEnterprisePluginApplied) {
+        private BuildDetails(String gradleHome, boolean isBuildScanPluginApplied, boolean isEnterprisePluginApplied, boolean isDevelocityPluginApplied) {
             this.gradleHome = gradleHome;
             this.isBuildScanPluginApplied = isBuildScanPluginApplied;
             this.isEnterprisePluginApplied = isEnterprisePluginApplied;
+            this.isDevelocityPluginApplied = isDevelocityPluginApplied;
         }
 
         public String getGradleHome() {
@@ -187,7 +192,11 @@ public class DefaultGradleBuildConfigurationReader implements GradleBuildConfigu
         }
 
         public boolean usesAnyScanPlugin() {
-            return isBuildScanPluginApplied || isEnterprisePluginApplied;
+            return isBuildScanPluginApplied || isEnterprisePluginApplied || isDevelocityPluginApplied;
+        }
+
+        public boolean isDevelocityPluginApplied() {
+            return isDevelocityPluginApplied;
         }
     }
 }

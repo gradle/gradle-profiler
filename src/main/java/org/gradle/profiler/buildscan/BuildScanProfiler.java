@@ -101,9 +101,15 @@ public class BuildScanProfiler extends Profiler {
     }
 
     private Optional<GeneratedInitScript> getInitScript(GradleBuildConfiguration buildConfiguration) {
+        if (buildConfiguration.isUsesDevelocityPlugin() && buildConfiguration.getGradleVersion().compareTo(GRADLE_6) >= 0) {
+            return Optional.of(new DevelocityAlreadyAppliedInitScript());
+        }
+
         if (buildConfiguration.isUsesScanPlugin() && buildConfiguration.getGradleVersion().compareTo(GRADLE_6) >= 0) {
             return Optional.of(new GradleEnterpriseAlreadyAppliedInitScript());
-        } else if (!buildConfiguration.isUsesScanPlugin()) {
+        }
+
+        if (!buildConfiguration.isUsesScanPlugin()) {
             String effectiveBuildScanVersion = getEffectiveBuildScanVersion(buildConfiguration);
             return (buildConfiguration.getGradleVersion().compareTo(GRADLE_6) < 0)
                 ? Optional.of(new BuildScanInitScript(effectiveBuildScanVersion))
