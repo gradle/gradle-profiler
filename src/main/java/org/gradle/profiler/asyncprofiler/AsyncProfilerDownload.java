@@ -57,7 +57,12 @@ public class AsyncProfilerDownload {
         }
 
         try {
-            URL download = new URL(String.format("https://github.com/jvm-profiling-tools/async-profiler/releases/download/v%s/async-profiler-%s-%s.%s", ASYNC_PROFILER_VERSION, ASYNC_PROFILER_VERSION, platformName, extension));
+            URL download = new URL(String.format(
+                "https://github.com/jvm-profiling-tools/async-profiler/releases/download/v%1$s/async-profiler-%1$s-%2$s.%3$s",
+                ASYNC_PROFILER_VERSION,
+                platformName,
+                extension
+            ));
             Logging.startOperation("Download and install " + download);
 
             Files.createDirectories(installDist.toPath());
