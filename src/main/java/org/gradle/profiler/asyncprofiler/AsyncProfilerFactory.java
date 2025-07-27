@@ -85,7 +85,16 @@ public class AsyncProfilerFactory extends ProfilerFactory {
         int lockThreshold = lockThresholdOption.value(parsedOptions);
         int stackDepth = stackDepthOption.value(parsedOptions);
         Boolean showSystemThreads = systemThreadOption.value(parsedOptions);
-        return new AsyncProfilerConfig(profilerHome, events, counter, interval, allocInterval, lockThreshold, stackDepth, showSystemThreads);
+        return new AsyncProfilerConfig(
+            profilerHome,
+            events,
+            counter,
+            interval,
+            allocInterval,
+            lockThreshold,
+            stackDepth,
+            showSystemThreads
+        );
     }
 
     private File getProfilerHome(OptionSet parsedOptions) {

@@ -18,7 +18,16 @@ public class AsyncProfilerConfig {
     private final int stackDepth;
     private final boolean includeSystemThreads;
 
-    public AsyncProfilerConfig(File profilerHome, List<String> events, Counter counter, int interval, int allocSampleSize, int lockThreshold, int stackDepth, boolean includeSystemThreads) {
+    public AsyncProfilerConfig(
+        File profilerHome,
+        List<String> events,
+        Counter counter,
+        int interval,
+        int allocSampleSize,
+        int lockThreshold,
+        int stackDepth,
+        boolean includeSystemThreads
+    ) {
         this.profilerHome = profilerHome;
         this.events = events;
         this.counter = counter;
