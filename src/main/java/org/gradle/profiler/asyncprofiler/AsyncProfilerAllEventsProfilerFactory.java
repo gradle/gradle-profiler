@@ -7,9 +7,10 @@ import org.gradle.profiler.Profiler;
 public class AsyncProfilerAllEventsProfilerFactory extends AsyncProfilerFactory {
     @Override
     public Profiler createFromOptions(OptionSet parsedOptions) {
+        // TODO support all event from 4.1
         AsyncProfilerConfig config = super.createConfig(parsedOptions);
         AsyncProfilerConfig overrides = new AsyncProfilerConfig(
-            config.getProfilerHome(),
+            config.getDistribution(),
             ImmutableList.of("cpu", "alloc", "lock"),
             AsyncProfilerConfig.Counter.SAMPLES,
             config.getInterval(),
