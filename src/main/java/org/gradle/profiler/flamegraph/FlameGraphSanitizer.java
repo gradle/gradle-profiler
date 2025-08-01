@@ -13,6 +13,7 @@ import java.io.FileInputStream;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -83,33 +84,31 @@ public class FlameGraphSanitizer {
 
     public void sanitize(final File in, File out) {
         out.getParentFile().mkdirs();
-        try (BufferedWriter writer = new BufferedWriter(new FileWriter(out))) {
-            try (BufferedReader reader = new BufferedReader(new InputStreamReader(new FileInputStream(in)))) {
-                String line;
-                StringBuilder sb = new StringBuilder();
-                while ((line = reader.readLine()) != null) {
-                    int endOfStack = line.lastIndexOf(" ");
-                    if (endOfStack <= 0) {
-                        continue;
-                    }
-                    String stackTrace = line.substring(0, endOfStack);
-                    String invocationCount = line.substring(endOfStack + 1);
-                    List<String> stackTraceElements = STACKTRACE_SPLITTER.splitToList(stackTrace);
-                    List<String> sanitizedStackElements = sanitizeFunction.map(stackTraceElements);
-                    if (!sanitizedStackElements.isEmpty()) {
-                        sb.setLength(0);
-                        STACKTRACE_JOINER.appendTo(sb, sanitizedStackElements);
-                        sb.append(" ");
-                        sb.append(invocationCount);
-                        sb.append("\n");
-                        writer.write(sb.toString());
-                    }
+        try (BufferedWriter writer = new BufferedWriter(new FileWriter(out));
+             BufferedReader reader = Files.newBufferedReader(in.toPath())) {
+            String line;
+            StringBuilder sb = new StringBuilder();
+            while ((line = reader.readLine()) != null) {
+                int endOfStack = line.lastIndexOf(" ");
+                if (endOfStack <= 0) {
+                    continue;
+                }
+                String stackTrace = line.substring(0, endOfStack);
+                String invocationCount = line.substring(endOfStack + 1);
+                List<String> stackTraceElements = STACKTRACE_SPLITTER.splitToList(stackTrace);
+                List<String> sanitizedStackElements = sanitizeFunction.map(stackTraceElements);
+                if (!sanitizedStackElements.isEmpty()) {
+                    sb.setLength(0);
+                    STACKTRACE_JOINER.appendTo(sb, sanitizedStackElements);
+                    sb.append(" ");
+                    sb.append(invocationCount);
+                    sb.append("\n");
+                    writer.write(sb.toString());
                 }
             }
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
-
     }
 
     public interface SanitizeFunction {

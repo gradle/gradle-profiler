@@ -19,8 +19,9 @@ class AsyncProfilerJvmArgsCalculator implements JvmArgsCalculator {
 
     @Override
     public void calculateJvmArgs(List<String> jvmArgs) {
+        // TODO support all events
         StringBuilder agent = new StringBuilder()
-            .append("-agentpath:").append(profilerConfig.getProfilerHome()).append("/build/libasyncProfiler.so=start")
+            .append("-agentpath:").append(profilerConfig.getDistribution().getLibrary()).append("=start")
             .append(",event=").append(profilerConfig.getJoinedEvents())
             .append(",interval=").append(profilerConfig.getInterval())
             .append(",jstackdepth=").append(profilerConfig.getStackDepth())
