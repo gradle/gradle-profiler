@@ -9,7 +9,7 @@ public class AsyncProfilerHeapAllocationProfilerFactory extends AsyncProfilerFac
     public Profiler createFromOptions(OptionSet parsedOptions) {
         AsyncProfilerConfig config = super.createConfig(parsedOptions);
         AsyncProfilerConfig overrides = new AsyncProfilerConfig(
-            config.getProfilerHome(),
+            config.getDistribution(),
             ImmutableList.of("alloc"),
             AsyncProfilerConfig.Counter.TOTAL,
             config.getInterval(),

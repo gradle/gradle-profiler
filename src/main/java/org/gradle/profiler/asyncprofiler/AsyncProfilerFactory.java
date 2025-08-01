@@ -14,6 +14,7 @@ import java.util.Locale;
 
 public class AsyncProfilerFactory extends ProfilerFactory {
     static final String ASYNC_PROFILER_HOME = "ASYNC_PROFILER_HOME";
+    static final String ASYNC_PROFILER_HOME_OPTION = "async-profiler-home";
     private ArgumentAcceptingOptionSpec<File> profilerHomeOption;
     private ArgumentAcceptingOptionSpec<String> eventOption;
     private ArgumentAcceptingOptionSpec<AsyncProfilerConfig.Counter> counterOption;
@@ -30,7 +31,8 @@ public class AsyncProfilerFactory extends ProfilerFactory {
 
     @Override
     public void addOptions(OptionParser parser) {
-        profilerHomeOption = parser.accepts("async-profiler-home", "Async Profiler home directory")
+        // TODO add all events from 4.1
+        profilerHomeOption = parser.accepts(ASYNC_PROFILER_HOME_OPTION, "Async Profiler home directory")
             .availableIf("profile")
             .withRequiredArg()
             .ofType(File.class);
@@ -77,7 +79,7 @@ public class AsyncProfilerFactory extends ProfilerFactory {
     }
 
     AsyncProfilerConfig createConfig(OptionSet parsedOptions) {
-        File profilerHome = getProfilerHome(parsedOptions);
+        AsyncProfilerDistribution apDistribution = getAPDistribution(parsedOptions);
         List<String> events = eventOption.values(parsedOptions);
         AsyncProfilerConfig.Counter counter = counterOption.value(parsedOptions);
         int interval = intervalOption.value(parsedOptions);
@@ -86,7 +88,7 @@ public class AsyncProfilerFactory extends ProfilerFactory {
         int stackDepth = stackDepthOption.value(parsedOptions);
         Boolean showSystemThreads = systemThreadOption.value(parsedOptions);
         return new AsyncProfilerConfig(
-            profilerHome,
+            apDistribution,
             events,
             counter,
             interval,
@@ -97,22 +99,25 @@ public class AsyncProfilerFactory extends ProfilerFactory {
         );
     }
 
-    private File getProfilerHome(OptionSet parsedOptions) {
+    private AsyncProfilerDistribution getAPDistribution(OptionSet parsedOptions) {
         File profilerHome = profilerHomeOption.value(parsedOptions);
+        String source = profilerHome != null ? "--" + ASYNC_PROFILER_HOME_OPTION : null;
         if (profilerHome == null) {
             String homePath = System.getenv(ASYNC_PROFILER_HOME);
             profilerHome = homePath != null ? new File(homePath) : null;
+            source = homePath != null ? ASYNC_PROFILER_HOME : null;
         }
         if (profilerHome != null && !profilerHome.isDirectory()) {
-            throw new IllegalStateException(ASYNC_PROFILER_HOME + " is not a directory.");
+            throw new IllegalStateException(ASYNC_PROFILER_HOME + " or --" + ASYNC_PROFILER_HOME_OPTION + " path is not a directory.");
         }
         if (profilerHome == null) {
             profilerHome = AsyncProfilerDownload.defaultHome();
+            source = "DOWNLOAD";
         }
         if (profilerHome == null) {
             throw new IllegalStateException("Async profiler not supported on " + OperatingSystem.getId());
         }
-        return profilerHome;
+        return new AsyncProfilerDistribution(profilerHome, source);
     }
 
     private static class CounterConverter implements ValueConverter<AsyncProfilerConfig.Counter> {

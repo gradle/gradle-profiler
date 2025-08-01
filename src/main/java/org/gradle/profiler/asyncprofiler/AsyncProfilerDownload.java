@@ -9,6 +9,7 @@ import org.apache.commons.compress.compressors.gzip.GzipCompressorInputStream;
 import org.gradle.profiler.Logging;
 import org.gradle.profiler.OperatingSystem;
 
+import java.io.BufferedInputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
@@ -28,7 +29,7 @@ import static java.nio.file.StandardCopyOption.REPLACE_EXISTING;
  * Downloads a version of async profiler and installs into ~/.gradle-profiler-dist.
  */
 public class AsyncProfilerDownload {
-    private static final String ASYNC_PROFILER_VERSION = "2.7";
+    private static final String ASYNC_PROFILER_VERSION = "4.1";
 
     /**
      * Attempts to locate a default install of async profiler. Uses a previously downloaded installation, or downloads if not available.
@@ -41,6 +42,9 @@ public class AsyncProfilerDownload {
         if (OperatingSystem.isMacOS()) {
             platformName = "macos";
             extension = "zip";
+        } else if (OperatingSystem.isLinuxAarch64()) {
+            platformName = "linux-arm64";
+            extension = "tar.gz";
         } else if (OperatingSystem.isLinuxX86()) {
             platformName = "linux-x64";
             extension = "tar.gz";
@@ -58,7 +62,7 @@ public class AsyncProfilerDownload {
 
         try {
             URL download = new URL(String.format(
-                "https://github.com/jvm-profiling-tools/async-profiler/releases/download/v%1$s/async-profiler-%1$s-%2$s.%3$s",
+                "https://github.com/async-profiler/async-profiler/releases/download/v%1$s/async-profiler-%1$s-%2$s.%3$s",
                 ASYNC_PROFILER_VERSION,
                 platformName,
                 extension
@@ -85,13 +89,13 @@ public class AsyncProfilerDownload {
     }
 
     private static void unzipTo(File source, File destDir) throws IOException {
-        try (ZipArchiveInputStream zipStream = new ZipArchiveInputStream(new FileInputStream(source))) {
+        try (ZipArchiveInputStream zipStream = new ZipArchiveInputStream(new BufferedInputStream(Files.newInputStream(source.toPath())))) {
             extract(zipStream, destDir.toPath());
         }
     }
 
     private static void untarTo(File source, File destDir) throws IOException {
-        try (TarArchiveInputStream tarStream = new TarArchiveInputStream(new GzipCompressorInputStream(new FileInputStream(source)))) {
+        try (TarArchiveInputStream tarStream = new TarArchiveInputStream(new GzipCompressorInputStream(new BufferedInputStream(Files.newInputStream(source.toPath()))))) {
             extract(tarStream, destDir.toPath());
         }
     }
@@ -129,7 +133,7 @@ public class AsyncProfilerDownload {
     }
 
     private static void copyTo(URL source, File dest) throws IOException {
-        try (InputStream inputStream = source.openConnection().getInputStream()) {
+        try (InputStream inputStream = new BufferedInputStream(source.openConnection().getInputStream())) {
             Files.copy(inputStream, dest.toPath(), REPLACE_EXISTING);
         }
     }
