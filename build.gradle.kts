@@ -14,7 +14,7 @@ plugins {
     id("profiler.publication")
     id("com.github.node-gradle.node") version "3.4.0"
     id("io.sdkman.vendors") version "2.0.0"
-    id("io.github.gradle-nexus.publish-plugin") version "1.1.0"
+    id("io.github.gradle-nexus.publish-plugin") version "2.0.0"
 }
 
 description = "A tool to profile and benchmark Gradle builds"
@@ -185,8 +185,8 @@ nexusPublishing {
     packageGroup.set(project.group.toString())
     repositories {
         sonatype {
-            nexusUrl.set(uri("https://s01.oss.sonatype.org/service/local/"))
-            snapshotRepositoryUrl.set(uri("https://s01.oss.sonatype.org/content/repositories/snapshots/"))
+            nexusUrl.set(uri("https://ossrh-staging-api.central.sonatype.com/service/local/"))
+            snapshotRepositoryUrl.set(uri("https://central.sonatype.com/repository/maven-snapshots/"))
         }
     }
 }
