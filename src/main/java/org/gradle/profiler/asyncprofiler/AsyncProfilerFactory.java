@@ -45,17 +45,17 @@ public class AsyncProfilerFactory extends ProfilerFactory {
             .withRequiredArg()
             .withValuesConvertedBy(new CounterConverter())
             .defaultsTo(AsyncProfilerConfig.Counter.SAMPLES);
-        intervalOption = parser.accepts("async-profiler-interval", "The sampling interval in nanoseconds.")
+        intervalOption = parser.accepts("async-profiler-interval", "The sampling interval in nanoseconds. Default is 10ms.")
             .availableIf("profile")
             .withRequiredArg()
             .ofType(Integer.class)
             .defaultsTo(10_000_000);
-        allocIntervalOption = parser.accepts("async-profiler-alloc-interval", "The sampling interval in bytes for allocation profiling.")
+        allocIntervalOption = parser.accepts("async-profiler-alloc-interval", "The sampling interval in bytes for allocation profiling. Default is 512 KiB.")
             .availableIf("profile")
             .withRequiredArg()
             .ofType(Integer.class)
-            .defaultsTo(10);
-        lockThresholdOption = parser.accepts("async-profiler-lock-threshold", "lock profiling threshold in nanoseconds")
+            .defaultsTo(524_287);
+        lockThresholdOption = parser.accepts("async-profiler-lock-threshold", "lock profiling threshold in nanoseconds. Default is 250 us.")
             .availableIf("profile")
             .withRequiredArg()
             .ofType(Integer.class)
