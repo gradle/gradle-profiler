@@ -1,5 +1,6 @@
 package org.gradle.profiler.asyncprofiler;
 
+import com.google.common.base.Joiner;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import org.gradle.profiler.CommandExec;
@@ -54,11 +55,16 @@ public class AsyncProfilerController implements InstrumentingProfiler.SnapshotCa
     @Override
     public void startRecording(String pid) throws IOException, InterruptedException {
         // TODO support all events, custom options ?
+        //  e.g. asprof --all -e cycles --alloc 2m --lock 10ms -f profile.jfr
+        List<String> events = new ArrayList<>(profilerConfig.getEvents());
+        boolean profileAllocations = events.remove(AsyncProfilerConfig.EVENT_ALLOC);
+        boolean profileLocks = events.remove(AsyncProfilerConfig.EVENT_LOCK);
+
         ImmutableList.Builder<String> arguments = ImmutableList.builder();
         arguments.add(
             profilerConfig.getDistribution().getExecutable().getAbsolutePath(),
             "start",
-            "-e", profilerConfig.getJoinedEvents(),
+            "-e", Joiner.on(",").join(events),
             "-i", String.valueOf(profilerConfig.getInterval()),
             "-j", String.valueOf(profilerConfig.getStackDepth()),
             "--" + profilerConfig.getCounter().name().toLowerCase(Locale.ROOT),
@@ -66,10 +72,10 @@ public class AsyncProfilerController implements InstrumentingProfiler.SnapshotCa
             "-o", outputType.getCommandLineOption(),
             "-f", outputType.individualOutputFileFor(scenarioSettings).getAbsolutePath()
         );
-        if (profilerConfig.getEvents().contains(AsyncProfilerConfig.EVENT_ALLOC)) {
+        if (profileAllocations) {
             arguments.add("--alloc", String.valueOf(profilerConfig.getAllocSampleSize()));
         }
-        if (profilerConfig.getEvents().contains(AsyncProfilerConfig.EVENT_LOCK)) {
+        if (profileLocks) {
             arguments.add("--lock", String.valueOf(profilerConfig.getLockThreshold()));
         }
         arguments.add(pid);
