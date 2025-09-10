@@ -26,8 +26,8 @@ public class BuildScanProfiler extends Profiler {
      * The effective version of the Build Scan or Develocity plugin to use.
      * <p>
      * Depending on the Gradle version, we return:
-     * - Build Scan plugin version for Gradle < 6.x
-     * - Develocity plugin version for Gradle >= 6.x
+     * - Build Scan plugin version for Gradle &lt; 6.x
+     * - Develocity plugin version for Gradle &gt;= 6.x
      */
     public static String defaultBuildScanVersion(GradleVersion gradleVersion) {
         if (gradleVersion.compareTo(GRADLE_5) < 0) {
