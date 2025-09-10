@@ -1,7 +1,7 @@
-import jetbrains.buildServer.configs.kotlin.v2019_2.BuildType
-import jetbrains.buildServer.configs.kotlin.v2019_2.FailureAction
-import jetbrains.buildServer.configs.kotlin.v2019_2.ReuseBuilds
-import jetbrains.buildServer.configs.kotlin.v2019_2.triggers.vcs
+import jetbrains.buildServer.configs.kotlin.BuildType
+import jetbrains.buildServer.configs.kotlin.FailureAction
+import jetbrains.buildServer.configs.kotlin.ReuseBuilds
+import jetbrains.buildServer.configs.kotlin.triggers.vcs
 
 class GradleProfilerTestTrigger(testBuilds: List<BuildType>) : BuildType({
     name = "Tests (Trigger)"

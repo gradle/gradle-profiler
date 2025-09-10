@@ -1,5 +1,5 @@
-import jetbrains.buildServer.configs.kotlin.v2019_2.ParameterDisplay
-import jetbrains.buildServer.configs.kotlin.v2019_2.Project
+import jetbrains.buildServer.configs.kotlin.ParameterDisplay
+import jetbrains.buildServer.configs.kotlin.Project
 
 fun Project.configureGradleProfilerProject() {
     description = "Runs tests and integration tests of the Gradle Profiler (https://github.com/gradle/gradle-profiler)"
