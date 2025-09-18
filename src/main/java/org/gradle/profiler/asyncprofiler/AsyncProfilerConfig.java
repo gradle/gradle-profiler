@@ -2,14 +2,13 @@ package org.gradle.profiler.asyncprofiler;
 
 import com.google.common.base.Joiner;
 
-import java.io.File;
 import java.util.List;
 
 public class AsyncProfilerConfig {
     public static final String EVENT_ALLOC = "alloc";
     public static final String EVENT_LOCK = "lock";
 
-    private final File profilerHome;
+    private final AsyncProfilerDistribution asyncProfilerDistribution;
     private final List<String> events;
     private final Counter counter;
     private final int interval;
@@ -18,8 +17,17 @@ public class AsyncProfilerConfig {
     private final int stackDepth;
     private final boolean includeSystemThreads;
 
-    public AsyncProfilerConfig(File profilerHome, List<String> events, Counter counter, int interval, int allocSampleSize, int lockThreshold, int stackDepth, boolean includeSystemThreads) {
-        this.profilerHome = profilerHome;
+    public AsyncProfilerConfig(
+        AsyncProfilerDistribution asyncProfilerDistribution,
+        List<String> events,
+        Counter counter,
+        int interval,
+        int allocSampleSize,
+        int lockThreshold,
+        int stackDepth,
+        boolean includeSystemThreads
+    ) {
+        this.asyncProfilerDistribution = asyncProfilerDistribution;
         this.events = events;
         this.counter = counter;
         this.interval = interval;
@@ -29,8 +37,8 @@ public class AsyncProfilerConfig {
         this.includeSystemThreads = includeSystemThreads;
     }
 
-    public File getProfilerHome() {
-        return profilerHome;
+    public AsyncProfilerDistribution getDistribution() {
+        return asyncProfilerDistribution;
     }
 
     public String getJoinedEvents() {
