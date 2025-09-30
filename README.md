@@ -75,7 +75,7 @@ In the resulting reports it will show up with 0 time.
 
 ### Regression detection
 
-If multiple versions are tested, then Gradle profiler determines whether there is an statistically significant difference in the run times by using a [Mann-Whitney U-Test](https://en.wikipedia.org/wiki/Mann%E2%80%93Whitney_U_test).
+If multiple versions are tested, then Gradle profiler determines whether there is a statistically significant difference in the run times by using a [Mann-Whitney U-Test](https://en.wikipedia.org/wiki/Mann%E2%80%93Whitney_U_test).
 The result files contain the confidence if a sample has a different performance behavior - i.e. it is faster or slower - than the baseline.
 
 ## Profiling a build
@@ -113,7 +113,7 @@ Finally, you can also use `--profile async-profiler-all` to profile cpu, heap al
 
 By default, an Async profiler release will be downloaded from [Github](https://github.com/jvm-profiling-tools/async-profiler/releases) and installed, if not already available.
 
-The output are flame and icicle graphs which show you the call tree and hotspots of your code.
+The outputs are flame and icicle graphs which show you the call tree and hotspots of your code.
 
 The following options are supported and closely mimic the options of Async profiler. Have a look at its readme to find out more about each option:
 
@@ -189,7 +189,7 @@ Add the `--profile chrome-trace` option and open the result in Google Chrome in 
 - `--project-dir`: Directory containing the build to run (required).
 - `--benchmark`: Benchmark the build. Runs the builds more times and writes the results to a CSV file.
 - `--profile <profiler>`: Profile the build using the specified profiler. See above for details on each profiler.
-- `--output-dir <dir>`: Directory to write results to. Default value is `profile-out`. If profile-out directory already exists, it tries to find a `profile-out-<index>` directory, that does not exist.
+- `--output-dir <dir>`: Directory to write results to. Default value is `profile-out`. If the profile-out directory already exists, it tries to find a `profile-out-<index>` directory that does not exist.
 - `--warmups`: Specifies the number of warm-up builds to run for each scenario. Defaults to 2 for profiling, 6 for benchmarking, and 1 when not using a warm daemon.
 - `--iterations`: Specifies the number of builds to run for each scenario. Defaults to 1 for profiling, 10 for benchmarking.
 - `--bazel`: Benchmark scenarios using Bazel instead of Gradle. By default, only Gradle scenarios are run. You cannot profile a Bazel build using this tool.
@@ -300,7 +300,7 @@ These changes are applied by mutators at different points in the build benchmark
 Some mutators execute at a specific point, others can be configured to execute at a specific point, specified by the `schedule` parameter:
 
 - `SCENARIO`: before the scenario is executed,
-- `CLEANUP`: before cleaning preceeding each build invocation,
+- `CLEANUP`: before cleaning preceding each build invocation,
 - `BUILD`: before the build invocation (after cleanup).
 
 #### Source code mutators
@@ -338,8 +338,8 @@ These mutators can be scheduled to execute at different points in the build benc
 
 #### File operations
 
-- `copy-file`: Copies a file or a directory from one location to another. Has to specify a `source` and a `target` path; relative paths are resolved against the project directory. Can take an array of operations. Defaults to `SCNEARIO` schedule.
-- `delete-file`: Deletes a file or a directory. Has to specify a `target` path; when relative it is resolved against the project directory. Can take an array of operations. Defaults to `SCNEARIO` schedule.
+- `copy-file`: Copies a file or a directory from one location to another. Has to specify a `source` and a `target` path; relative paths are resolved against the project directory. Can take an array of operations. Defaults to `SCENARIO` schedule.
+- `delete-file`: Deletes a file or a directory. Has to specify a `target` path; when relative it is resolved against the project directory. Can take an array of operations. Defaults to `SCENARIO` schedule.
 - `git-checkout`: Checks out a specific commit for the build step, and a different one for the cleanup step.
 - `git-revert`: Reverts a given set of commits before the build and resets it afterward. 
 
@@ -352,9 +352,9 @@ They can be added to a scenario file like this:
         apply-project-dependency-change-to {
             files = ["build.gradle"]
             # Default number of dependency-count is 3.
-            # Gradle Profiler will simulate changes to project dependencies by generate some additional projects and then add a combination of project dependencies to every non-generated subprojects before each iteration.
+            # Gradle Profiler will simulate changes to project dependencies by generating some additional projects and then adding a combination of project dependencies to every non-generated subproject before each iteration.
             # The profiler will generate the minimal number of subprojects to allow for a unique combination of dependencies to be used for each iteration.
-            # Note: Number of generated projects is calculated as binomial coffiecient: "from `x` choose `dependency-count` = `iterations * files`", where number of generated projects is `x`.
+            # Note: Number of generated projects is calculated as binomial coefficient: "from `x` choose `dependency-count` = `iterations * files`", where number of generated projects is `x`.
             dependency-count = 3
         }
         apply-abi-change-to = "src/main/java/MyThing.java"
@@ -399,7 +399,7 @@ You can compare Gradle against Bazel, Buck, and Maven by specifying their equiva
         tasks = ["build"]
         cleanup-tasks = ["clean"]
         maven {
-            # If empty, it will be infered from MAVEN_HOME environment variable
+            # If empty, it will be inferred from MAVEN_HOME environment variable
             home = "/path/to/maven/home"
             targets = ["clean", "build"]
         }
@@ -413,7 +413,7 @@ You can compare Gradle against Bazel, Buck, and Maven by specifying their equiva
         tasks = ["assemble"]
 
         bazel {
-            # If empty, it will be infered from BAZEL_HOME environment variable
+            # If empty, it will be inferred from BAZEL_HOME environment variable
             home = "/path/to/bazel/home"
             targets = ["build" "//some/target"]
         }
@@ -427,7 +427,7 @@ You can compare Gradle against Bazel, Buck, and Maven by specifying their equiva
         tasks = ["assemble"]
 
         buck {
-            # If empty, it will be infered from BUCK_HOME environment variable
+            # If empty, it will be inferred from BUCK_HOME environment variable
             home = "/path/to/buck/home"
             type = "android_binary" // can be a Buck build rule type or "all"
         }
