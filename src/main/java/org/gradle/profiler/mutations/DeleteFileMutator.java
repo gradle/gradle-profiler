@@ -22,7 +22,7 @@ public class DeleteFileMutator extends AbstractFileSystemMutator {
 
     @Override
     protected void executeOnSchedule() {
-        System.out.println("Removing file: '" + target.getAbsolutePath() + "'");
+        System.out.printf("> Removing file: '%s'%n", target.getAbsolutePath());
         try {
             if (target.exists()) {
                 FileUtils.forceDelete(target);

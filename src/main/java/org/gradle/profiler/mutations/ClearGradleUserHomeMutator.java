@@ -17,7 +17,7 @@ public class ClearGradleUserHomeMutator extends AbstractScheduledMutator {
 
     @Override
     protected void executeOnSchedule() {
-        System.out.println(String.format("> Cleaning Gradle user home: %s", gradleUserHome.getAbsolutePath()));
+        System.out.printf("> Cleaning Gradle user home: %s%n", gradleUserHome.getAbsolutePath());
         if (!gradleUserHome.exists()) {
             throw new IllegalArgumentException(String.format(
                 "Cannot delete Gradle user home directory (%s) since it does not exist",
