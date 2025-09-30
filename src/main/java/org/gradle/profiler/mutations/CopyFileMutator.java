@@ -28,7 +28,7 @@ public class CopyFileMutator extends AbstractFileSystemMutator {
     @Override
     protected void executeOnSchedule() {
         try {
-            System.out.println("Copying '" + source.getAbsolutePath() + "' to '" + target.getAbsolutePath() + "'");
+            System.out.printf("> Copying '%s' to '%s'%n", source.getAbsolutePath(), target.getAbsolutePath());
             if (!target.exists()) {
                 Files.createParentDirs(target);
             }
