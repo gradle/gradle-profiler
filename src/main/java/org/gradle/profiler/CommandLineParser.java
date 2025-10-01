@@ -68,6 +68,7 @@ class CommandLineParser {
         OptionSpecBuilder measureGarbageCollectionOption = parser.accepts("measure-gc", "Measure the GC time during each invocation");
         OptionSpecBuilder measureLocalBuildCacheOption = parser.accepts("measure-local-build-cache", "Measure the size of the local build cache");
         OptionSpecBuilder measureConfigTimeOption = parser.accepts("measure-config-time", "Include a breakdown of configuration time in benchmark results");
+        OptionSpecBuilder buildOpsTraceOption = parser.accepts("build-ops-trace", "Enable Gradle build operations trace");
         OptionSpecBuilder dryRunOption = parser.accepts("dry-run", "Verify configuration");
         OptionSpecBuilder bazelOption = parser.accepts("bazel", "Benchmark scenarios using Bazel");
         OptionSpecBuilder buckOption = parser.accepts("buck", "Benchmark scenarios using buck");
@@ -119,6 +120,7 @@ class CommandLineParser {
         boolean measureGarbageCollection = parsedOptions.has(measureGarbageCollectionOption);
         boolean measureLocalBuildCache = parsedOptions.has(measureLocalBuildCacheOption);
         boolean measureConfig = parsedOptions.has(measureConfigTimeOption);
+        boolean buildOperationsTrace = parsedOptions.has(buildOpsTraceOption);
         List<String> benchmarkedBuildOperations = parsedOptions.valuesOf(benchmarkBuildOperation);
 
         List<String> targetNames = parsedOptions.nonOptionArguments().stream().map(Object::toString).collect(Collectors.toList());
@@ -188,6 +190,7 @@ class CommandLineParser {
             .setMeasureLocalBuildCache(measureLocalBuildCache)
             .setMeasureConfigTime(measureConfig)
             .setMeasuredBuildOperations(benchmarkedBuildOperations)
+            .setBuildOperationsTrace(buildOperationsTrace)
             .setCsvFormat(csvFormat)
             .setBenchmarkTitle(benchmarkTitle)
             .build();

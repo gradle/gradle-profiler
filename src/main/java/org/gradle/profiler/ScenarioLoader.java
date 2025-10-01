@@ -210,7 +210,8 @@ class ScenarioLoader {
                 getWarmUpCount(settings, settings.getInvoker(), settings.getWarmUpCount()),
                 getBuildCount(settings),
                 outputDir,
-                settings.getMeasuredBuildOperations()
+                settings.getMeasuredBuildOperations(),
+                settings.isBuildOperationsTrace()
             ));
         }
         return scenarios;
@@ -287,7 +288,7 @@ class ScenarioLoader {
                 BuildAction cleanupAction = getCleanupAction(scenario);
                 Map<String, String> systemProperties = ConfigUtil.map(scenario, SYSTEM_PROPERTIES, settings.getSystemProperties());
                 List<String> jvmArgs = ConfigUtil.strings(scenario, JVM_ARGS);
-                boolean buildOperationsTrace = ConfigUtil.bool(scenario, BUILD_OPERATIONS_TRACE, false);
+                boolean buildOperationsTrace = getBuildOperationsTrace(settings, scenario);
                 List<BuildMutator> mutators = getMutators(scenario, scenarioName, settings, warmUpCount, buildCount);
                 for (GradleBuildConfiguration version : versions) {
                     File outputDir = versions.size() == 1 ? scenarioBaseDir : new File(scenarioBaseDir, version.getGradleVersion().getVersion());
@@ -356,6 +357,15 @@ class ScenarioLoader {
             .addAll(ConfigUtil.strings(scenario, MEASURED_BUILD_OPERATIONS))
             .build()
             .asList();
+    }
+
+    private static boolean getBuildOperationsTrace(InvocationSettings settings, Config scenario) {
+        // CLI flag overrides scenario file setting
+        if (settings.isBuildOperationsTrace()) {
+            return true;
+        }
+        // Otherwise use scenario file setting, defaulting to false
+        return ConfigUtil.bool(scenario, BUILD_OPERATIONS_TRACE, false);
     }
 
     private static int getBuildCount(InvocationSettings settings) {

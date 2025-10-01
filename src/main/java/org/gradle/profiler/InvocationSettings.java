@@ -31,6 +31,7 @@ public class InvocationSettings {
     private final boolean measureLocalBuildCache;
     private final boolean measureConfigTime;
     private final List<String> measuredBuildOperations;
+    private final boolean buildOperationsTrace;
     private final Format csvFormat;
     private final String benchmarkTitle;
     /**
@@ -62,6 +63,7 @@ public class InvocationSettings {
         boolean measureLocalBuildCache,
         boolean measureConfigTime,
         List<String> measuredBuildOperations,
+        boolean buildOperationsTrace,
         Format csvFormat,
         String benchmarkTitle,
         File buildLog
@@ -86,6 +88,7 @@ public class InvocationSettings {
         this.measureLocalBuildCache = measureLocalBuildCache;
         this.measureConfigTime = measureConfigTime;
         this.measuredBuildOperations = measuredBuildOperations;
+        this.buildOperationsTrace = buildOperationsTrace;
         this.csvFormat = csvFormat;
         this.benchmarkTitle = benchmarkTitle;
         this.buildLog = buildLog;
@@ -192,6 +195,10 @@ public class InvocationSettings {
         return measuredBuildOperations;
     }
 
+    public boolean isBuildOperationsTrace() {
+        return buildOperationsTrace;
+    }
+
     public Format getCsvFormat() {
         return csvFormat;
     }
@@ -227,6 +234,7 @@ public class InvocationSettings {
             .setMeasureGarbageCollection(measureGarbageCollection)
             .setMeasureConfigTime(measureConfigTime)
             .setMeasuredBuildOperations(measuredBuildOperations)
+            .setBuildOperationsTrace(buildOperationsTrace)
             .setCsvFormat(csvFormat)
             .setBenchmarkTitle(benchmarkTitle)
             .setBuildLog(buildLog);
@@ -278,6 +286,7 @@ public class InvocationSettings {
         private boolean measureLocalBuildCache;
         private boolean measureConfigTime;
         private List<String> measuredBuildOperations;
+        private boolean buildOperationsTrace;
         private Format csvFormat;
         private String benchmarkTitle;
         private File buildLog;
@@ -382,6 +391,11 @@ public class InvocationSettings {
             return this;
         }
 
+        public InvocationSettingsBuilder setBuildOperationsTrace(boolean buildOperationsTrace) {
+            this.buildOperationsTrace = buildOperationsTrace;
+            return this;
+        }
+
         public InvocationSettingsBuilder setCsvFormat(Format csvFormat) {
             this.csvFormat = csvFormat;
             return this;
@@ -422,6 +436,7 @@ public class InvocationSettings {
                 measureLocalBuildCache,
                 measureConfigTime,
                 measuredBuildOperations,
+                buildOperationsTrace,
                 csvFormat,
                 benchmarkTitle,
                 buildLog
