@@ -75,12 +75,12 @@ public class JfrToStacksConverter {
         File stacks = File.createTempFile("stacks", ".txt");
         convertToStacks(recordings, stacks, new Options(type, level.isShowArguments(), level.isShowLineNumbers()));
         if (stacks.length() == 0) {
-            stacks.delete();
+            Files.delete(stacks.toPath());
             return null;
         }
         File sanitizedStacks = new File(baseDir, eventFileBaseName + Stacks.STACKS_FILE_SUFFIX);
         sanitizers.get(level).sanitize(stacks, sanitizedStacks);
-        stacks.delete();
+        Files.delete(stacks.toPath());
         return sanitizedStacks;
     }
 
