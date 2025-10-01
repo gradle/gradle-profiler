@@ -9,7 +9,7 @@ import org.junit.Rule
 import org.junit.rules.TemporaryFolder
 import spock.lang.Specification
 
-abstract class AbstractMutatorTest extends Specification {
+abstract class AbstractMutatorTest extends Specification implements FileTreeFixture {
     @Rule
     TemporaryFolder tmpDir = new TemporaryFolder()
     def scenarioContext = new DefaultScenarioContext(UUID.fromString("276d92f3-16ac-4064-9a18-5f1dfd67992f"), "testScenario")
