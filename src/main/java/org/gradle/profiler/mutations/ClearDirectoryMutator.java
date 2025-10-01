@@ -16,18 +16,20 @@ import java.util.stream.Stream;
 
 public class ClearDirectoryMutator extends AbstractFileSystemMutator {
 
+    private final String description;
     private final File target;
     private final List<String> keep;
 
-    public ClearDirectoryMutator(File target, Schedule schedule, List<String> keep) {
+    public ClearDirectoryMutator(String description, File target, Schedule schedule, List<String> keep) {
         super(schedule);
+        this.description = description;
         this.target = target;
         this.keep = keep;
     }
 
     @Override
     protected void executeOnSchedule() {
-        System.out.printf("> Clearing directory: '%s'%n", target.getAbsolutePath());
+        System.out.printf("> Clearing %s: '%s'%n", description, target.getAbsolutePath());
         if (!target.exists()) {
             return;
         }
@@ -59,7 +61,7 @@ public class ClearDirectoryMutator extends AbstractFileSystemMutator {
             Schedule schedule = ConfigUtil.enumValue(config, "schedule", Schedule.class, Schedule.SCENARIO);
             List<String> keep = ConfigUtil.strings(config, "keep");
             File projectDir = spec.getProjectDir();
-            return new ClearDirectoryMutator(resolveProjectFile(projectDir, target), schedule, keep);
+            return new ClearDirectoryMutator("directory", resolveProjectFile(projectDir, target), schedule, keep);
         }
     }
 }
