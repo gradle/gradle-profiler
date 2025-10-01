@@ -25,6 +25,7 @@ public class GradleScenarioDefinition extends ScenarioDefinition {
     private final Map<String, String> systemProperties;
     private final List<String> jvmArgs;
     private final List<String> measuredBuildOperations;
+    private final boolean buildOperationsTrace;
 
     public GradleScenarioDefinition(
         String name,
@@ -40,7 +41,8 @@ public class GradleScenarioDefinition extends ScenarioDefinition {
         int buildCount,
         File outputDir,
         List<String> jvmArgs,
-        List<String> measuredBuildOperations
+        List<String> measuredBuildOperations,
+        boolean buildOperationsTrace
     ) {
         super(name, title, buildMutators, warmUpCount, buildCount, outputDir);
         this.invoker = invoker;
@@ -51,6 +53,7 @@ public class GradleScenarioDefinition extends ScenarioDefinition {
         this.systemProperties = systemProperties;
         this.jvmArgs = jvmArgs;
         this.measuredBuildOperations = measuredBuildOperations;
+        this.buildOperationsTrace = buildOperationsTrace;
     }
 
     @Override
@@ -111,6 +114,17 @@ public class GradleScenarioDefinition extends ScenarioDefinition {
         return measuredBuildOperations;
     }
 
+    public boolean isBuildOperationsTrace() {
+        return buildOperationsTrace;
+    }
+
+    /**
+     * Value for `org.gradle.internal.operations.trace` Gradle system property.
+     */
+    public String getBuildOperationsTracePathPrefix() {
+        return new File(getOutputDir(), safeFileName(getName())).getAbsolutePath();
+    }
+
     public boolean createsMultipleProcesses() {
         if (getBuildCount() <= 1) {
             return false;
@@ -160,6 +174,9 @@ public class GradleScenarioDefinition extends ScenarioDefinition {
                 .map(BuildOperationUtil::getSimpleBuildOperationName)
                 .sorted()
                 .collect(Collectors.joining(", ")));
+        }
+        if (buildOperationsTrace) {
+            out.println("  Build operations trace: " + getBuildOperationsTracePathPrefix());
         }
     }
 }

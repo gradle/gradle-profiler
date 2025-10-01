@@ -35,7 +35,8 @@ public class AdhocGradleScenarioDefinition extends GradleScenarioDefinition {
             buildCount,
             outputDir,
             Collections.emptyList(),
-            measuredBuildOperations
+            measuredBuildOperations,
+            false
         );
     }
 
