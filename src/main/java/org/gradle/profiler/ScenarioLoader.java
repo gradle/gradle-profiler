@@ -24,6 +24,7 @@ import org.gradle.profiler.mutations.ApplyProjectDependencyChangeMutator;
 import org.gradle.profiler.mutations.ApplyValueChangeToAndroidResourceFileMutator;
 import org.gradle.profiler.mutations.BuildMutatorConfigurator;
 import org.gradle.profiler.mutations.BuildMutatorConfigurator.BuildMutatorConfiguratorSpec;
+import org.gradle.profiler.mutations.ClearDirectoryMutator;
 import org.gradle.profiler.mutations.DefaultBuildMutatorConfiguratorSpec;
 import org.gradle.profiler.mutations.ClearArtifactTransformCacheMutator;
 import org.gradle.profiler.mutations.ClearBuildCacheMutator;
@@ -94,6 +95,7 @@ class ScenarioLoader {
     private static final String ANDROID_STUDIO_JVM_ARGS = "studio-jvm-args";
     private static final String ANDROID_STUDIO_IDEA_PROPERTIES = "idea-properties";
     private static final String JVM_ARGS = "jvm-args";
+    private static final String CLEAR_DIR = "clear-dir";
     private static final String DELETE_FILE = "delete-file";
     private static final String COPY_FILE = "copy-file";
 
@@ -120,6 +122,7 @@ class ScenarioLoader {
         .put(SHOW_BUILD_CACHE_SIZE, new ShowBuildCacheSizeMutator.Configurator())
         .put(GIT_CHECKOUT, new GitCheckoutMutator.Configurator())
         .put(GIT_REVERT, new GitRevertMutator.Configurator())
+        .put(CLEAR_DIR, new ClearDirectoryMutator.Configurator())
         .put(DELETE_FILE, new DeleteFileMutator.Configurator())
         .put(COPY_FILE, new CopyFileMutator.Configurator())
         .build();
