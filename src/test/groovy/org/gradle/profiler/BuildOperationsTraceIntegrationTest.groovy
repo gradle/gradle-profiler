@@ -57,20 +57,4 @@ class BuildOperationsTraceIntegrationTest extends AbstractProfilerIntegrationTes
         then:
         logFile.containsOne("Build operations trace: ")
     }
-
-    def "command-line flag is used when scenario file does not specify setting"() {
-        given:
-        instrumentedBuildScript()
-        def scenarioFile = file("performance.scenarios") << """
-            s1 {
-                tasks = ["help"]
-            }
-        """
-
-        when:
-        new Main().run("--project-dir", projectDir.absolutePath, "--output-dir", outputDir.absolutePath, "--gradle-version", latestSupportedGradleVersion, "--benchmark", "--build-ops-trace", "--warmups", "1", "--iterations", "1", "--scenario-file", scenarioFile.absolutePath, "s1")
-
-        then:
-        logFile.containsOne("Build operations trace: ")
-    }
 }

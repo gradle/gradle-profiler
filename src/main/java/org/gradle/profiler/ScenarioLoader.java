@@ -360,11 +360,9 @@ class ScenarioLoader {
     }
 
     private static boolean getBuildOperationsTrace(InvocationSettings settings, Config scenario) {
-        // CLI flag overrides scenario file setting
         if (settings.isBuildOperationsTrace()) {
             return true;
         }
-        // Otherwise use scenario file setting, defaulting to false
         return ConfigUtil.bool(scenario, BUILD_OPERATIONS_TRACE, false);
     }
 
