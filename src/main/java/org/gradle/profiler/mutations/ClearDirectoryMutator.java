@@ -32,12 +32,14 @@ public class ClearDirectoryMutator extends AbstractFileSystemMutator {
             return;
         }
 
-        try {
-            try (Stream<Path> contents = Files.list(target.toPath())) {
-                contents
-                    .filter(path -> !keep.contains(path.getFileName().toString()))
-                    .forEach(path -> deleteFileOrDirectory(path.toFile()));
-            }
+        if (!target.isDirectory()) {
+            throw new IllegalArgumentException(String.format("Cannot clear '%s' since it is not a directory", target.getAbsolutePath()));
+        }
+
+        try (Stream<Path> contents = Files.list(target.toPath())) {
+            contents
+                .filter(path -> !keep.contains(path.getFileName().toString()))
+                .forEach(path -> deleteFileOrDirectory(path.toFile()));
         } catch (IOException e) {
             throw new UncheckedIOException(e);
         }
