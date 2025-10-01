@@ -9,7 +9,7 @@ import org.gradle.profiler.ScenarioContext;
 
 import java.io.File;
 import java.io.IOException;
-import java.nio.file.Files;
+import java.io.UncheckedIOException;
 
 public abstract class AbstractScheduledMutator implements BuildMutator {
 
@@ -49,15 +49,13 @@ public abstract class AbstractScheduledMutator implements BuildMutator {
 
     abstract protected void executeOnSchedule();
 
-    protected static void delete(File f) {
+    protected static void deleteFileOrDirectory(File target) {
         try {
-            if (f.isFile()) {
-                Files.delete(f.toPath());
-            } else {
-                FileUtils.deleteDirectory(f);
+            if (target.exists()) {
+                FileUtils.forceDelete(target);
             }
         } catch (IOException e) {
-            throw new IllegalStateException("Could not delete " + f, e);
+            throw new UncheckedIOException("Failed to delete '" + target.getAbsolutePath() + "'", e);
         }
     }
 

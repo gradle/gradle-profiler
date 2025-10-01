@@ -12,7 +12,7 @@ public class ClearArtifactTransformCacheMutator extends AbstractCacheCleanupMuta
 
     @Override
     protected void cleanupCacheDir(File cacheDir) {
-        delete(cacheDir);
+        deleteFileOrDirectory(cacheDir);
     }
 
     public static class Configurator extends AbstractScheduledMutator.Configurator {

@@ -14,7 +14,7 @@ public class ClearBuildCacheMutator extends AbstractCacheCleanupMutator {
 
     @Override
     protected void cleanupCacheDir(File cacheDir) {
-        Arrays.stream(Objects.requireNonNull(cacheDir.listFiles(ClearBuildCacheMutator::shouldRemoveFile))).forEach(AbstractScheduledMutator::delete);
+        Arrays.stream(Objects.requireNonNull(cacheDir.listFiles(ClearBuildCacheMutator::shouldRemoveFile))).forEach(AbstractScheduledMutator::deleteFileOrDirectory);
     }
 
     private static boolean shouldRemoveFile(File file) {

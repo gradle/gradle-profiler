@@ -12,7 +12,7 @@ public class ClearJarsCacheMutator extends AbstractCacheCleanupMutator {
 
     @Override
     protected void cleanupCacheDir(File cacheDir) {
-        delete(cacheDir);
+        deleteFileOrDirectory(cacheDir);
     }
 
     public static class Configurator extends AbstractScheduledMutator.Configurator {
