@@ -6,6 +6,8 @@ import java.io.File;
 import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.stream.Stream;
 
 public class ClearGradleUserHomeMutator extends AbstractScheduledMutator {
     private final File gradleUserHome;
@@ -24,11 +26,14 @@ public class ClearGradleUserHomeMutator extends AbstractScheduledMutator {
                 gradleUserHome
             ));
         }
+
         try {
-            Files.list(gradleUserHome.toPath())
-                // Don't delete the wrapper dir, since this is where the Gradle distribution we are going to run is located
-                .filter(path -> !path.getFileName().toString().equals("wrapper"))
-                .forEach(path -> deleteFileOrDirectory(path.toFile()));
+            try (Stream<Path> contents = Files.list(gradleUserHome.toPath())) {
+                contents
+                    // Don't delete the wrapper dir, since this is where the Gradle distribution we are going to run is located
+                    .filter(path -> !path.getFileName().toString().equals("wrapper"))
+                    .forEach(path -> deleteFileOrDirectory(path.toFile()));
+            }
         } catch (IOException e) {
             throw new UncheckedIOException(e);
         }
