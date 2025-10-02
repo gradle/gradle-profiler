@@ -80,6 +80,8 @@ public class GradleScenarioInvoker extends ScenarioInvoker<GradleScenarioDefinit
 
             List<String> allBuildsJvmArgs = new ArrayList<>(buildConfiguration.getJvmArguments());
             if (scenario.isBuildOperationsTrace()) {
+                // While these options can work as regular Gradle properties,
+                // we are adding them to the jvmargs to ensure IDE Sync scenarios can also pick them up
                 allBuildsJvmArgs.add("-Dorg.gradle.internal.operations.trace.tree=false");
                 allBuildsJvmArgs.add("-Dorg.gradle.internal.operations.trace=" + scenario.getBuildOperationsTracePathPrefix());
             }
