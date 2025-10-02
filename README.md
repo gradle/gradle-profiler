@@ -67,13 +67,16 @@ You can specify multiple versions and each of these is used to benchmark the bui
 
 You can also use the `--measure-config-time` option to measure some additional details about configuration time.
 
-You can use `--build-ops-trace` to produce a full Gradle build operations trace. This will generate detailed trace files in the output directory that capture all internal Gradle build operations.
-
 You can use `--measure-build-op` together with the fully qualified class name of the enveloping type of the `Details` interface to benchmark cumulative build operation time.
 For example, for Gradle 5.x there is a [`org.gradle.api.internal.tasks.SnapshotTaskInputsBuildOperationType`](https://github.com/gradle/gradle/blob/c671360a3f1729b406c5b8b5b0d22c7b81296993/subprojects/core/src/main/java/org/gradle/api/internal/tasks/SnapshotTaskInputsBuildOperationType.java) which can be used to capture snapshotting time.
 The time recorded is cumulative time, so the wall clock time spent on executing the measured build operations is probably smaller.
 If the build operation does not exists in a benchmarked version of Gradle, it is gracefully ignored.
 In the resulting reports it will show up with 0 time.
+
+You can use `--build-ops-trace` to produce a full Gradle build operations trace.
+This will generate a `<scenario-name>-log.txt` file in the output directory, containing internal Gradle build operations.
+Note that the format of the file is not stable and may change in the future without any notice.
+You can use the [trace converter](https://github.com/gradle/gradle-trace-converter) tool to convert the file to Chrome Trace, viewable in [Perfetto](https://ui.perfetto.dev/).
 
 ### Regression detection
 
@@ -205,7 +208,9 @@ The following command line options only apply when measuring Gradle builds:
 - `--no-daemon`: Uses the `gradle` command-line client with the `--no-daemon` option to run the builds. The default is to use the Gradle tooling API and Gradle daemon.
 - `--cold-daemon`: Use a cold daemon (one that has just started) rather than a warm daemon (one that has already run some builds). The default is to use a warm daemon.
 - `--cli`: Uses the `gradle` command-line client to run the builds. The default is to use the Gradle tooling API and Gradle daemon.
-- `--build-ops-trace`: Produce a full Gradle build operations trace. Generates detailed trace files in the output directory capturing all internal Gradle build operations.
+- `--build-ops-trace`: Produce a full Gradle build operations trace as `<scenario-name>-log.txt` in the output directory.
+  The file format is not stable and may change in the future without any notice.
+  It can be [converted](https://github.com/gradle/gradle-trace-converter) to Chrome Trace.
 - `--measure-build-op`: Additionally measure the cumulative time spent in the given build operation. Only supported for Gradle 6.1 and later.
 - `--measure-config-time`: Measure some additional details about configuration time. Only supported for Gradle 6.1 and later.
 - `--measure-gc`: Measure the garbage collection time. Only supported for Gradle 6.1 and later.
@@ -295,7 +300,9 @@ Values are optional and default to the values provided on the command-line or de
 - `iterations`: Number of builds to actually measure
 - `warm-ups`: Number of warmups to perform before measurement
 - `jvm-args`: Sets or overrides the jvm arguments set by `org.gradle.jvmargs` in gradle.properties.
-- `build-ops-trace`: When set to `true`, produces a full Gradle build operations trace in the output directory. Default is `false`.
+- `build-ops-trace`: When set to `true`, produces a full Gradle build operations trace as `<scenario-name>-log.txt` in the output directory.
+  The file format is not stable and may change in the future without any notice.
+  It can be [converted](https://github.com/gradle/gradle-trace-converter) to Chrome Trace.
 
 ### Profiling change handling
 
