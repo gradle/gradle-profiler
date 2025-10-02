@@ -9,10 +9,16 @@ import java.io.File;
 
 public abstract class AbstractFileChangeMutator implements BuildMutator {
     protected final File sourceFile;
+    private final String changeDescription;
     private String originalText;
 
-    protected AbstractFileChangeMutator(File sourceFile) {
+    protected AbstractFileChangeMutator(File sourceFile, String changeDescription) {
         this.sourceFile = sourceFile;
+        this.changeDescription = changeDescription;
+    }
+
+    protected AbstractFileChangeMutator(File sourceFile) {
+        this(sourceFile, "change");
     }
 
     @Override
@@ -22,6 +28,7 @@ public abstract class AbstractFileChangeMutator implements BuildMutator {
 
     @Override
     public void beforeBuild(BuildContext context) {
+        System.out.printf("> Applying %s to '%s'%n", changeDescription, sourceFile);
         StringBuilder modifiedText = new StringBuilder(originalText);
         applyChangeTo(context, modifiedText);
         FileSupport.writeUnchecked(sourceFile.toPath(), modifiedText.toString());
@@ -43,8 +50,7 @@ public abstract class AbstractFileChangeMutator implements BuildMutator {
     }
 
     @Override
-    public String toString()
-    {
+    public String toString() {
         return getClass().getSimpleName() + '(' + sourceFile + ')';
     }
 }

@@ -6,7 +6,7 @@ import java.io.File;
 
 public class ApplyBuildScriptChangeFileMutator extends AbstractFileChangeMutator {
     public ApplyBuildScriptChangeFileMutator(File sourceFile) {
-        super(sourceFile);
+        super(sourceFile, "build script change");
     }
 
     @Override
