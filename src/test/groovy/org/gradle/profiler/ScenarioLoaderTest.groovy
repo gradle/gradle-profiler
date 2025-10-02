@@ -595,4 +595,26 @@ class ScenarioLoaderTest extends Specification {
         where:
         schedule << [BUILD, CLEANUP]
     }
+
+    @Unroll
+    def "can load scenario with build operations trace = #trace"() {
+        def settings = settings()
+
+        scenarioFile << """
+            default {
+                tasks = ["help"]
+                build-ops-trace = $trace
+            }
+        """
+        def scenarios = loadScenarios(scenarioFile, settings, Mock(GradleBuildConfigurationReader))
+
+        expect:
+        scenarios*.name == ["default"]
+        def scenario = scenarios[0] as GradleScenarioDefinition
+        scenario.isBuildOperationsTrace() == trace
+        scenario.getBuildOperationsTracePathPrefix().endsWith("default")
+
+        where:
+        trace << [true, false]
+    }
 }

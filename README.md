@@ -73,6 +73,11 @@ The time recorded is cumulative time, so the wall clock time spent on executing 
 If the build operation does not exists in a benchmarked version of Gradle, it is gracefully ignored.
 In the resulting reports it will show up with 0 time.
 
+You can use `--build-ops-trace` to produce a full Gradle build operations trace.
+This will generate a `<scenario-name>-log.txt` file in the output directory, containing internal Gradle build operations.
+Note that the format of the file is not stable and may change in the future without any notice.
+You can use the [trace converter](https://github.com/gradle/gradle-trace-converter) tool to convert the file to Chrome Trace, viewable in [Perfetto](https://ui.perfetto.dev/).
+
 ### Regression detection
 
 If multiple versions are tested, then Gradle profiler determines whether there is a statistically significant difference in the run times by using a [Mann-Whitney U-Test](https://en.wikipedia.org/wiki/Mann%E2%80%93Whitney_U_test).
@@ -203,6 +208,9 @@ The following command line options only apply when measuring Gradle builds:
 - `--no-daemon`: Uses the `gradle` command-line client with the `--no-daemon` option to run the builds. The default is to use the Gradle tooling API and Gradle daemon.
 - `--cold-daemon`: Use a cold daemon (one that has just started) rather than a warm daemon (one that has already run some builds). The default is to use a warm daemon.
 - `--cli`: Uses the `gradle` command-line client to run the builds. The default is to use the Gradle tooling API and Gradle daemon.
+- `--build-ops-trace`: Produce a full Gradle build operations trace as `<scenario-name>-log.txt` in the output directory.
+  The file format is not stable and may change in the future without any notice.
+  It can be [converted](https://github.com/gradle/gradle-trace-converter) to Chrome Trace.
 - `--measure-build-op`: Additionally measure the cumulative time spent in the given build operation. Only supported for Gradle 6.1 and later.
 - `--measure-config-time`: Measure some additional details about configuration time. Only supported for Gradle 6.1 and later.
 - `--measure-gc`: Measure the garbage collection time. Only supported for Gradle 6.1 and later.
@@ -244,6 +252,7 @@ Here is an example:
         cleanup-tasks = ["clean"]
         run-using = tooling-api // value can be "cli" or "tooling-api"
         daemon = warm // value can be "warm", "cold", or "none"
+        build-ops-trace = true // produce full Gradle build operations trace
         measured-build-ops = ["org.gradle.api.internal.tasks.SnapshotTaskInputsBuildOperationType"] // see --measure-build-op
 
         buck {
@@ -291,6 +300,9 @@ Values are optional and default to the values provided on the command-line or de
 - `iterations`: Number of builds to actually measure
 - `warm-ups`: Number of warmups to perform before measurement
 - `jvm-args`: Sets or overrides the jvm arguments set by `org.gradle.jvmargs` in gradle.properties.
+- `build-ops-trace`: When set to `true`, produces a full Gradle build operations trace as `<scenario-name>-log.txt` in the output directory.
+  The file format is not stable and may change in the future without any notice.
+  It can be [converted](https://github.com/gradle/gradle-trace-converter) to Chrome Trace.
 
 ### Profiling change handling
 

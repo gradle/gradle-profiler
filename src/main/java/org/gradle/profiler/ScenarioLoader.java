@@ -61,6 +61,7 @@ class ScenarioLoader {
     private static final String TOOL_HOME = "home";
     private static final String WARM_UP_COUNT = "warm-ups";
     private static final String ITERATIONS = "iterations";
+    private static final String BUILD_OPERATIONS_TRACE = "build-ops-trace";
     private static final String MEASURED_BUILD_OPERATIONS = "measured-build-ops";
     private static final String APPLY_BUILD_SCRIPT_CHANGE_TO = "apply-build-script-change-to";
     private static final String APPLY_PROJECT_DEPENDENCY_CHANGE_TO = "apply-project-dependency-change-to";
@@ -147,7 +148,8 @@ class ScenarioLoader {
             TOOL_HOME,
             ANDROID_STUDIO_SYNC,
             DAEMON,
-            JVM_ARGS
+            JVM_ARGS,
+            BUILD_OPERATIONS_TRACE
         ))
         .add(CLEAR_ANDROID_STUDIO_CACHE_BEFORE)
         .build();
@@ -208,7 +210,8 @@ class ScenarioLoader {
                 getWarmUpCount(settings, settings.getInvoker(), settings.getWarmUpCount()),
                 getBuildCount(settings),
                 outputDir,
-                settings.getMeasuredBuildOperations()
+                settings.getMeasuredBuildOperations(),
+                settings.isBuildOperationsTrace()
             ));
         }
         return scenarios;
@@ -285,6 +288,7 @@ class ScenarioLoader {
                 BuildAction cleanupAction = getCleanupAction(scenario);
                 Map<String, String> systemProperties = ConfigUtil.map(scenario, SYSTEM_PROPERTIES, settings.getSystemProperties());
                 List<String> jvmArgs = ConfigUtil.strings(scenario, JVM_ARGS);
+                boolean buildOperationsTrace = getBuildOperationsTrace(settings, scenario);
                 List<BuildMutator> mutators = getMutators(scenario, scenarioName, settings, warmUpCount, buildCount);
                 for (GradleBuildConfiguration version : versions) {
                     File outputDir = versions.size() == 1 ? scenarioBaseDir : new File(scenarioBaseDir, version.getGradleVersion().getVersion());
@@ -302,7 +306,8 @@ class ScenarioLoader {
                         buildCount,
                         outputDir,
                         jvmArgs,
-                        measuredBuildOperations
+                        measuredBuildOperations,
+                        buildOperationsTrace
                     );
                     ScenarioDefinition scenarioDefinition = scenario.hasPath(ANDROID_STUDIO_SYNC)
                         ? newStudioGradleScenarioDefinition(gradleScenarioDefinition, scenario)
@@ -352,6 +357,13 @@ class ScenarioLoader {
             .addAll(ConfigUtil.strings(scenario, MEASURED_BUILD_OPERATIONS))
             .build()
             .asList();
+    }
+
+    private static boolean getBuildOperationsTrace(InvocationSettings settings, Config scenario) {
+        if (settings.isBuildOperationsTrace()) {
+            return true;
+        }
+        return ConfigUtil.bool(scenario, BUILD_OPERATIONS_TRACE, false);
     }
 
     private static int getBuildCount(InvocationSettings settings) {

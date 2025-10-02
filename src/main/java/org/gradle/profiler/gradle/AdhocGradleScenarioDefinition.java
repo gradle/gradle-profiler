@@ -19,7 +19,8 @@ public class AdhocGradleScenarioDefinition extends GradleScenarioDefinition {
         int warmUpCount,
         int buildCount,
         File outputDir,
-        List<String> measuredBuildOperations
+        List<String> measuredBuildOperations,
+        boolean buildOperationsTrace
     ) {
         super(
             "default",
@@ -35,7 +36,8 @@ public class AdhocGradleScenarioDefinition extends GradleScenarioDefinition {
             buildCount,
             outputDir,
             Collections.emptyList(),
-            measuredBuildOperations
+            measuredBuildOperations,
+            buildOperationsTrace
         );
     }
 

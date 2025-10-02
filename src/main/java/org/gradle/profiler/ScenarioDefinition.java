@@ -120,6 +120,6 @@ public abstract class ScenarioDefinition {
     public abstract BuildConfiguration getBuildConfiguration();
 
     public static String safeFileName(String name) {
-        return name.replace("/", "-");
+        return name.replaceAll("[^a-zA-Z0-9._-]", "-");
     }
 }
