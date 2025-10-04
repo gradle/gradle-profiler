@@ -265,7 +265,13 @@ public class InvocationSettings {
         out.println("Benchmark: " + isBenchmark());
         out.println("Versions: " + getVersions());
         out.println("Gradle User Home: " + getGradleUserHome());
-        out.println("Targets: " + getTargets());
+        if (getScenarioGroup() != null) {
+            out.println("Targets: '" + getScenarioGroup() + "' (group)");
+        } else if (getTargets() != null && !getTargets().isEmpty()) {
+            out.println("Targets: " + getTargets());
+        } else {
+            out.println("Targets: default scenarios");
+        }
         if (warmupCount != null) {
             out.println("Warm-ups: " + warmupCount);
         }
