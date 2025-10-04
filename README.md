@@ -198,6 +198,7 @@ Add the `--profile chrome-trace` option and open the result in Google Chrome in 
 - `--csv-format <format>`: Format of the CSV output file. Values: `wide` (default) or `long`. The `wide` format produces a matrix with scenarios as columns. The `long` format produces one row per iteration/sample, which is more suitable for concatenating multiple benchmark results together.
 - `--warmups`: Specifies the number of warm-up builds to run for each scenario. Defaults to 2 for profiling, 6 for benchmarking, and 1 when not using a warm daemon.
 - `--iterations`: Specifies the number of builds to run for each scenario. Defaults to 1 for profiling, 10 for benchmarking.
+- `--group <group-name>`: Run scenarios from the specified scenario group.
 - `--bazel`: Benchmark scenarios using Bazel instead of Gradle. By default, only Gradle scenarios are run. You cannot profile a Bazel build using this tool.
 - `--buck`: Benchmark scenarios using Buck instead of Gradle. By default, only Gradle scenarios are run. You cannot profile a Buck build using this tool.
 - `--maven`: Benchmark scenarios using Maven instead of Gradle. By default, only Gradle scenarios are run. You cannot profile a Maven build using this tool.
@@ -295,6 +296,32 @@ Here is an example:
     }
 
 Values are optional and default to the values provided on the command-line or defined in the build.
+
+### Scenario groups
+
+You can organize scenarios into groups to run related scenarios together. Define groups using the `scenario-groups` top-level element:
+
+    scenario-groups {
+        smoke-tests = ["assemble", "clean_build"]
+        performance-suite = ["incremental_build", "full_build", "no_op"]
+    }
+
+    assemble {
+        tasks = ["assemble"]
+    }
+
+    clean_build {
+        cleanup-tasks = ["clean"]
+        tasks = ["build"]
+    }
+
+    # ... definition of other scenarios ...
+
+To run scenarios from a specific group:
+
+    > gradle-profiler --benchmark --scenario-file performance.scenarios --group smoke-tests
+
+This will run only the scenarios defined in the `smoke-tests` group (`assemble` and `clean_build`).
 
 ### Benchmark options
 

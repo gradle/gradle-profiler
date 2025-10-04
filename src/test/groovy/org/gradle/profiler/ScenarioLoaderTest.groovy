@@ -644,4 +644,131 @@ class ScenarioLoaderTest extends Specification {
         where:
         trace << [true, false]
     }
+
+    def "can load scenarios from a group"() {
+        def settings = settingsBuilder().setScenarioGroup("smoke-tests").build()
+
+        scenarioFile << """
+            scenario-groups {
+                smoke-tests = ["scenario1", "scenario2"]
+            }
+
+            scenario1 {
+                tasks = ["help"]
+            }
+            scenario2 {
+                tasks = ["build"]
+            }
+            scenario3 {
+                tasks = ["clean"]
+            }
+        """
+        def scenarios = loadScenarios(scenarioFile, settings, Mock(GradleBuildConfigurationReader))
+
+        expect:
+        scenarios*.name == ["scenario1", "scenario2"]
+    }
+
+    def "throws error when group does not exist"() {
+        def settings = settingsBuilder().setScenarioGroup("nonexistent").build()
+
+        scenarioFile << """
+            scenario-groups {
+                smoke-tests = ["scenario1"]
+            }
+
+            scenario1 {
+                tasks = ["help"]
+            }
+        """
+
+        when:
+        loadScenarios(scenarioFile, settings, Mock(GradleBuildConfigurationReader))
+
+        then:
+        def ex = thrown IllegalArgumentException
+        ex.message == "Unknown scenario group 'nonexistent' requested. Available groups are: smoke-tests"
+    }
+
+    def "throws error when scenario-groups is missing"() {
+        def settings = settingsBuilder().setScenarioGroup("smoke-tests").build()
+
+        scenarioFile << """
+            scenario1 {
+                tasks = ["help"]
+            }
+        """
+
+        when:
+        loadScenarios(scenarioFile, settings, Mock(GradleBuildConfigurationReader))
+
+        then:
+        def ex = thrown IllegalArgumentException
+        ex.message.startsWith("Unknown scenario group 'smoke-tests' requested. No 'scenario-groups' defined in scenario file")
+    }
+
+    def "throws error when mixing group with individual scenario names"() {
+        def settings = settingsBuilder().setScenarioGroup("smoke-tests").setTargets(["scenario1"]).build()
+
+        scenarioFile << """
+            scenario-groups {
+                smoke-tests = ["scenario1"]
+            }
+
+            scenario1 {
+                tasks = ["help"]
+            }
+        """
+
+        when:
+        loadScenarios(scenarioFile, settings, Mock(GradleBuildConfigurationReader))
+
+        then:
+        def ex = thrown IllegalArgumentException
+        ex.message == "Cannot specify both --group and individual scenario names. Use either only '--group smoke-tests' OR specify scenario names directly."
+    }
+
+    def "throws error when scenario in group does not exist"() {
+        def settings = settingsBuilder().setScenarioGroup("smoke-tests").build()
+
+        scenarioFile << """
+            scenario-groups {
+                smoke-tests = ["scenario1", "nonexistent"]
+            }
+
+            scenario1 {
+                tasks = ["help"]
+            }
+            scenario2 {
+                tasks = ["build"]
+            }
+        """
+
+        when:
+        loadScenarios(scenarioFile, settings, Mock(GradleBuildConfigurationReader))
+
+        then:
+        def ex = thrown IllegalArgumentException
+        ex.message == "Unknown scenario 'nonexistent' in group 'smoke-tests'. Available scenarios are: scenario1, scenario2"
+    }
+
+    def "scenario-groups and default-scenarios are not treated as scenarios"() {
+        def settings = settings()
+
+        scenarioFile << """
+            default-scenarios = ["scenario1"]
+
+            scenario-groups {
+                smoke-tests = ["scenario1"]
+            }
+
+            scenario1 {
+                tasks = ["help"]
+            }
+        """
+        def scenarios = loadScenarios(scenarioFile, settings, Mock(GradleBuildConfigurationReader))
+
+        expect:
+        scenarios*.name == ["scenario1"]
+    }
 }
