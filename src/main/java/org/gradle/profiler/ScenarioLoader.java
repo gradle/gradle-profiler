@@ -77,6 +77,7 @@ class ScenarioLoader {
     private static final String ITERATIONS = "iterations";
     private static final String BUILD_OPERATIONS_TRACE = "build-ops-trace";
     private static final String MEASURED_BUILD_OPERATIONS = "measured-build-ops";
+    private static final String SCENARIO_GROUPS = "scenario-groups";
     private static final String DEFAULT_SCENARIOS = "default-scenarios";
     private static final String APPLY_BUILD_SCRIPT_CHANGE_TO = "apply-build-script-change-to";
     private static final String APPLY_PROJECT_DEPENDENCY_CHANGE_TO = "apply-project-dependency-change-to";
@@ -169,7 +170,10 @@ class ScenarioLoader {
         .add(CLEAR_ANDROID_STUDIO_CACHE_BEFORE)
         .build();
 
-    private static final Set<String> RESERVED_TOP_LEVEL_KEYS = ImmutableSet.of(DEFAULT_SCENARIOS);
+    private static final Set<String> RESERVED_TOP_LEVEL_KEYS = ImmutableSet.of(
+        DEFAULT_SCENARIOS,
+        SCENARIO_GROUPS
+    );
 
     private static final List<String> BAZEL_KEYS = Arrays.asList(TARGETS, TOOL_HOME);
     private static final List<String> BUCK_KEYS = Arrays.asList(TARGETS, TYPE, TOOL_HOME);
@@ -236,7 +240,7 @@ class ScenarioLoader {
 
     static List<ScenarioDefinition> loadScenarios(File scenarioFile, InvocationSettings settings, GradleBuildConfigurationReader inspector) {
         Config config = ConfigFactory.parseFile(scenarioFile, ConfigParseOptions.defaults().setAllowMissing(false)).resolve();
-        Set<String> selectedScenarios = selectScenarios(config, settings);
+        Set<String> selectedScenarios = selectScenarios(config, settings, scenarioFile);
 
         List<ScenarioDefinition> definitions = new ArrayList<>();
         for (String scenarioName : selectedScenarios) {
@@ -553,12 +557,14 @@ class ScenarioLoader {
         }
     }
 
-    private static Set<String> selectScenarios(Config config, InvocationSettings settings) {
+    private static Set<String> selectScenarios(Config config, InvocationSettings settings, File scenarioFile) {
         SortedSet<String> availableScenarios = config.root().keySet().stream()
             .filter(key -> !RESERVED_TOP_LEVEL_KEYS.contains(key))
             .collect(Collectors.toCollection(TreeSet::new));
 
-        if (!settings.getTargets().isEmpty()) {
+        if (settings.getScenarioGroup() != null) {
+            return selectScenariosFromGroup(config, settings, availableScenarios, scenarioFile);
+        } else if (!settings.getTargets().isEmpty()) {
             return selectScenariosFromTargets(settings, availableScenarios);
         } else if (config.hasPath(DEFAULT_SCENARIOS)) {
             return selectDefaultScenarios(config.getStringList(DEFAULT_SCENARIOS), availableScenarios);
@@ -575,6 +581,35 @@ class ScenarioLoader {
     private static Set<String> selectScenariosFromTargets(InvocationSettings settings, Collection<String> availableScenarios) {
         List<String> targets = settings.getTargets();
         checkScenariosAvailability(targets, "requested", availableScenarios);
+        return new LinkedHashSet<>(targets);
+    }
+
+    private static Set<String> selectScenariosFromGroup(Config config, InvocationSettings settings, Set<String> availableScenarios, File scenarioFile) {
+        String groupName = settings.getScenarioGroup();
+
+        if (!config.hasPath(SCENARIO_GROUPS)) {
+            throw new IllegalArgumentException(String.format(
+                "Unknown scenario group '%s' requested. No '%s' defined in scenario file %s", groupName, SCENARIO_GROUPS, scenarioFile
+            ));
+        }
+
+        Config scenarioGroups = config.getConfig(SCENARIO_GROUPS);
+        Set<String> availableGroups = scenarioGroups.root().keySet();
+
+        if (!availableGroups.contains(groupName)) {
+            throw new IllegalArgumentException(String.format(
+                "Unknown scenario group '%s' requested. Available groups are: %s", groupName, String.join(", ", availableGroups)
+            ));
+        }
+
+        if (!settings.getTargets().isEmpty()) {
+            throw new IllegalArgumentException(
+                "Cannot specify both --group and individual scenario names. Use either only '--group " + groupName + "' OR specify scenario names directly.");
+        }
+
+        List<String> targets = scenarioGroups.getStringList(groupName);
+        checkScenariosAvailability(targets, "in group '" + groupName + "'", availableScenarios);
+
         return new LinkedHashSet<>(targets);
     }
 

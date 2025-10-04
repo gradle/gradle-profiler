@@ -81,6 +81,10 @@ class CommandLineParser {
             "Title to show on benchmark report")
             .withOptionalArg()
             .ofType(String.class);
+        ArgumentAcceptingOptionSpec<String> groupOption = parser.accepts("group",
+            "Run scenarios from a group")
+            .withRequiredArg()
+            .ofType(String.class);
 
         OptionSet parsedOptions;
         try {
@@ -168,6 +172,7 @@ class CommandLineParser {
         }
         Format csvFormat = Format.parse(parsedOptions.valueOf(csvFormatOption));
         String benchmarkTitle = parsedOptions.valueOf(benchmarkTitleOption);
+        String scenarioGroup = parsedOptions.valueOf(groupOption);
 
         return new InvocationSettings.InvocationSettingsBuilder()
             .setProjectDir(projectDir)
@@ -193,6 +198,7 @@ class CommandLineParser {
             .setBuildOperationsTrace(buildOperationsTrace)
             .setCsvFormat(csvFormat)
             .setBenchmarkTitle(benchmarkTitle)
+            .setScenarioGroup(scenarioGroup)
             .build();
     }
 
