@@ -21,7 +21,9 @@ import spock.lang.Specification
 import spock.lang.Unroll
 
 import static org.gradle.profiler.ScenarioLoader.loadScenarios
-import static org.gradle.profiler.mutations.AbstractScheduledMutator.Schedule.*
+import static org.gradle.profiler.mutations.AbstractScheduledMutator.Schedule.BUILD
+import static org.gradle.profiler.mutations.AbstractScheduledMutator.Schedule.CLEANUP
+import static org.gradle.profiler.mutations.AbstractScheduledMutator.Schedule.SCENARIO
 
 class ScenarioLoaderTest extends Specification {
     @Rule
@@ -38,12 +40,9 @@ class ScenarioLoaderTest extends Specification {
         scenarioFile = tmpDir.newFile()
     }
 
-    private settings(
+    private settingsBuilder(
         BuildInvoker invoker = GradleBuildInvoker.Cli,
-        boolean benchmark = true,
-        Integer warmups = null,
-        Integer iterations = null,
-        List<String> measuredBuildOperations = []
+        boolean benchmark = true
     ) {
         new InvocationSettings.InvocationSettingsBuilder()
             .setProjectDir(projectDir)
@@ -58,13 +57,18 @@ class ScenarioLoaderTest extends Specification {
             .setSysProperties([:])
             .setGradleUserHome(gradleUserHomeDir)
             .setStudioInstallDir(tmpDir.newFolder())
-            .setWarmupCount(warmups)
-            .setIterations(iterations)
             .setMeasureGarbageCollection(false)
             .setMeasureConfigTime(false)
-            .setMeasuredBuildOperations(measuredBuildOperations)
-            .setCsvFormat(Format.WIDE
-            ).build()
+            .setMeasuredBuildOperations([])
+            .setCsvFormat(Format.WIDE)
+    }
+
+    private settings(
+        BuildInvoker invoker = GradleBuildInvoker.Cli,
+        boolean benchmark = true
+    ) {
+        settingsBuilder(invoker, benchmark)
+            .build()
     }
 
     def "can load single scenario"() {
@@ -212,8 +216,8 @@ class ScenarioLoaderTest extends Specification {
     }
 
     def "uses warm-up and iteration counts based on command-line options when Gradle invocation defined by scenario"() {
-        def benchmarkSettings = settings(GradleBuildInvoker.ToolingApi, true, 123, 509)
-        def profileSettings = settings(GradleBuildInvoker.ToolingApi, false, 25, 44)
+        def benchmarkSettings = settingsBuilder(GradleBuildInvoker.ToolingApi, true).setWarmupCount(123).setIterations(509).build()
+        def profileSettings = settingsBuilder(GradleBuildInvoker.ToolingApi, false).setWarmupCount(25).setIterations(44).build()
 
         scenarioFile << """
             default {
@@ -301,7 +305,7 @@ class ScenarioLoaderTest extends Specification {
     }
 
     def "can load build operations to benchmark"() {
-        def benchmarkSettings = settings(GradleBuildInvoker.ToolingApi, true, null, null, ["BuildOpCmdLine"])
+        def benchmarkSettings = settingsBuilder(GradleBuildInvoker.ToolingApi).setMeasuredBuildOperations(["BuildOpCmdLine"]).build()
 
         scenarioFile << """
             default {
@@ -414,6 +418,29 @@ class ScenarioLoaderTest extends Specification {
         scenarios*.name == ["alma", "bela"]
         (scenarios[0] as GradleScenarioDefinition).action.tasks == ["alma"]
         (scenarios[1] as GradleScenarioDefinition).action.tasks == ["bela"]
+    }
+
+    def "fails when default scenario does not exist"() {
+        def settings = settings()
+
+        scenarioFile << """
+            default-scenarios = ["alma", "nonexistent"]
+
+            default {
+                tasks = ["help"]
+            }
+
+            alma {
+                tasks = ["alma"]
+            }
+        """
+
+        when:
+        loadScenarios(scenarioFile, settings, Mock(GradleBuildConfigurationReader))
+
+        then:
+        def ex = thrown IllegalArgumentException
+        ex.message == "Unknown scenario 'nonexistent' in default scenarios. Available scenarios are: alma, default"
     }
 
     def "loads included config"() {
@@ -616,5 +643,132 @@ class ScenarioLoaderTest extends Specification {
 
         where:
         trace << [true, false]
+    }
+
+    def "can load scenarios from a group"() {
+        def settings = settingsBuilder().setScenarioGroup("smoke-tests").build()
+
+        scenarioFile << """
+            scenario-groups {
+                smoke-tests = ["scenario1", "scenario2"]
+            }
+
+            scenario1 {
+                tasks = ["help"]
+            }
+            scenario2 {
+                tasks = ["build"]
+            }
+            scenario3 {
+                tasks = ["clean"]
+            }
+        """
+        def scenarios = loadScenarios(scenarioFile, settings, Mock(GradleBuildConfigurationReader))
+
+        expect:
+        scenarios*.name == ["scenario1", "scenario2"]
+    }
+
+    def "throws error when group does not exist"() {
+        def settings = settingsBuilder().setScenarioGroup("nonexistent").build()
+
+        scenarioFile << """
+            scenario-groups {
+                smoke-tests = ["scenario1"]
+            }
+
+            scenario1 {
+                tasks = ["help"]
+            }
+        """
+
+        when:
+        loadScenarios(scenarioFile, settings, Mock(GradleBuildConfigurationReader))
+
+        then:
+        def ex = thrown IllegalArgumentException
+        ex.message == "Unknown scenario group 'nonexistent' requested. Available groups are: smoke-tests"
+    }
+
+    def "throws error when scenario-groups is missing"() {
+        def settings = settingsBuilder().setScenarioGroup("smoke-tests").build()
+
+        scenarioFile << """
+            scenario1 {
+                tasks = ["help"]
+            }
+        """
+
+        when:
+        loadScenarios(scenarioFile, settings, Mock(GradleBuildConfigurationReader))
+
+        then:
+        def ex = thrown IllegalArgumentException
+        ex.message.startsWith("Unknown scenario group 'smoke-tests' requested. No 'scenario-groups' defined in scenario file")
+    }
+
+    def "throws error when mixing group with individual scenario names"() {
+        def settings = settingsBuilder().setScenarioGroup("smoke-tests").setTargets(["scenario1"]).build()
+
+        scenarioFile << """
+            scenario-groups {
+                smoke-tests = ["scenario1"]
+            }
+
+            scenario1 {
+                tasks = ["help"]
+            }
+        """
+
+        when:
+        loadScenarios(scenarioFile, settings, Mock(GradleBuildConfigurationReader))
+
+        then:
+        def ex = thrown IllegalArgumentException
+        ex.message == "Cannot specify both --group and individual scenario names. Use either only '--group smoke-tests' OR specify scenario names directly."
+    }
+
+    def "throws error when scenario in group does not exist"() {
+        def settings = settingsBuilder().setScenarioGroup("smoke-tests").build()
+
+        scenarioFile << """
+            scenario-groups {
+                smoke-tests = ["scenario1", "nonexistent"]
+            }
+
+            scenario1 {
+                tasks = ["help"]
+            }
+            scenario2 {
+                tasks = ["build"]
+            }
+        """
+
+        when:
+        loadScenarios(scenarioFile, settings, Mock(GradleBuildConfigurationReader))
+
+        then:
+        def ex = thrown IllegalArgumentException
+        ex.message == "Unknown scenario 'nonexistent' in group 'smoke-tests'. Available scenarios are: scenario1, scenario2"
+    }
+
+    def "scenario-groups and default-scenarios are not treated as scenarios"() {
+        def settings = settings()
+
+        scenarioFile << """
+            default-scenarios = ["scenario1"]
+
+            scenario-groups {
+                smoke-tests = ["scenario1"]
+            }
+
+            scenario1 {
+                tasks = ["help"]
+            }
+        """
+        def scenarios = loadScenarios(scenarioFile, settings, Mock(GradleBuildConfigurationReader))
+
+        expect:
+        scenarios*.name == ["scenario1"]
     }
 }
