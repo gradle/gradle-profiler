@@ -35,7 +35,7 @@ dependencies {
         because("Avoid old version of commons-compress introduced by ant-compress")
     }
     implementation("commons-io:commons-io:2.16.1")
-    implementation("org.openjdk.jmc:flightrecorder:8.0.1")
+    implementation("org.openjdk.jmc:flightrecorder:8.3.1")
     implementation("com.googlecode.plist:dd-plist:1.23") {
         because("To extract launch details from Android Studio installation")
     }
@@ -124,6 +124,7 @@ tasks.test {
     // So I suppose the problem is that the JVM shares the TAPI client, and one of the tests leave the client in a bad state.
     // We now use forkEvery = 1 to run each test class in its own JVM, so we don't run into this problem any more.
     setForkEvery(1)
+    maxHeapSize = "2g"
 }
 
 androidStudioTests {
