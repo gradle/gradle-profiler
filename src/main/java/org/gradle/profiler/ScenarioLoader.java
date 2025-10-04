@@ -8,7 +8,12 @@ import com.typesafe.config.ConfigFactory;
 import com.typesafe.config.ConfigParseOptions;
 import org.gradle.profiler.bazel.BazelScenarioDefinition;
 import org.gradle.profiler.buck.BuckScenarioDefinition;
-import org.gradle.profiler.gradle.*;
+import org.gradle.profiler.gradle.AdhocGradleScenarioDefinition;
+import org.gradle.profiler.gradle.GradleBuildInvoker;
+import org.gradle.profiler.gradle.GradleScenarioDefinition;
+import org.gradle.profiler.gradle.LoadToolingModelAction;
+import org.gradle.profiler.gradle.RunTasksAction;
+import org.gradle.profiler.gradle.RunToolingAction;
 import org.gradle.profiler.maven.MavenScenarioDefinition;
 import org.gradle.profiler.mutations.AbstractScheduledMutator.Schedule;
 import org.gradle.profiler.mutations.ApplyAbiChangeToSourceFileMutator;
@@ -24,26 +29,35 @@ import org.gradle.profiler.mutations.ApplyProjectDependencyChangeMutator;
 import org.gradle.profiler.mutations.ApplyValueChangeToAndroidResourceFileMutator;
 import org.gradle.profiler.mutations.BuildMutatorConfigurator;
 import org.gradle.profiler.mutations.BuildMutatorConfigurator.BuildMutatorConfiguratorSpec;
-import org.gradle.profiler.mutations.ClearDirectoryMutator;
-import org.gradle.profiler.mutations.DefaultBuildMutatorConfiguratorSpec;
 import org.gradle.profiler.mutations.ClearArtifactTransformCacheMutator;
 import org.gradle.profiler.mutations.ClearBuildCacheMutator;
 import org.gradle.profiler.mutations.ClearConfigurationCacheStateMutator;
+import org.gradle.profiler.mutations.ClearDirectoryMutator;
 import org.gradle.profiler.mutations.ClearGradleUserHomeMutator;
 import org.gradle.profiler.mutations.ClearJarsCacheMutator;
 import org.gradle.profiler.mutations.ClearProjectCacheMutator;
 import org.gradle.profiler.mutations.CopyFileMutator;
+import org.gradle.profiler.mutations.DefaultBuildMutatorConfiguratorSpec;
+import org.gradle.profiler.mutations.DeleteFileMutator;
 import org.gradle.profiler.mutations.FileChangeMutatorConfigurator;
 import org.gradle.profiler.mutations.GitCheckoutMutator;
 import org.gradle.profiler.mutations.GitRevertMutator;
-import org.gradle.profiler.mutations.DeleteFileMutator;
 import org.gradle.profiler.mutations.ShowBuildCacheSizeMutator;
 import org.gradle.profiler.studio.AndroidStudioSyncAction;
 import org.gradle.profiler.studio.invoker.StudioGradleScenarioDefinition;
 
 import javax.annotation.Nullable;
 import java.io.File;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.SortedSet;
+import java.util.TreeSet;
 import java.util.stream.Collectors;
 
 class ScenarioLoader {
@@ -63,6 +77,7 @@ class ScenarioLoader {
     private static final String ITERATIONS = "iterations";
     private static final String BUILD_OPERATIONS_TRACE = "build-ops-trace";
     private static final String MEASURED_BUILD_OPERATIONS = "measured-build-ops";
+    private static final String DEFAULT_SCENARIOS = "default-scenarios";
     private static final String APPLY_BUILD_SCRIPT_CHANGE_TO = "apply-build-script-change-to";
     private static final String APPLY_PROJECT_DEPENDENCY_CHANGE_TO = "apply-project-dependency-change-to";
     private static final String APPLY_ABI_CHANGE_TO = "apply-abi-change-to";
@@ -154,6 +169,8 @@ class ScenarioLoader {
         .add(CLEAR_ANDROID_STUDIO_CACHE_BEFORE)
         .build();
 
+    private static final Set<String> RESERVED_TOP_LEVEL_KEYS = ImmutableSet.of(DEFAULT_SCENARIOS);
+
     private static final List<String> BAZEL_KEYS = Arrays.asList(TARGETS, TOOL_HOME);
     private static final List<String> BUCK_KEYS = Arrays.asList(TARGETS, TYPE, TOOL_HOME);
     private static final List<String> MAVEN_KEYS = Arrays.asList(TARGETS, TOOL_HOME);
@@ -218,22 +235,10 @@ class ScenarioLoader {
     }
 
     static List<ScenarioDefinition> loadScenarios(File scenarioFile, InvocationSettings settings, GradleBuildConfigurationReader inspector) {
-        List<ScenarioDefinition> definitions = new ArrayList<>();
         Config config = ConfigFactory.parseFile(scenarioFile, ConfigParseOptions.defaults().setAllowMissing(false)).resolve();
-        Set<String> roots = config.root().keySet();
-        Set<String> selectedScenarios;
-        if (!settings.getTargets().isEmpty()) {
-            for (String target : settings.getTargets()) {
-                if (!roots.contains(target)) {
-                    throw new IllegalArgumentException("Unknown scenario '" + target + "' requested. Available scenarios are: " + roots.stream().sorted().collect(Collectors.joining(", ")));
-                }
-            }
-            selectedScenarios = new LinkedHashSet<>(settings.getTargets());
-        } else if (roots.contains("default-scenarios")) {
-            selectedScenarios = new LinkedHashSet<>(config.getStringList("default-scenarios"));
-        } else {
-            selectedScenarios = new TreeSet<>(roots);
-        }
+        Set<String> selectedScenarios = selectScenarios(config, settings);
+
+        List<ScenarioDefinition> definitions = new ArrayList<>();
         for (String scenarioName : selectedScenarios) {
             Config scenario = config.getConfig(scenarioName);
             for (String key : config.getObject(scenarioName).keySet()) {
@@ -545,6 +550,41 @@ class ScenarioLoader {
             return Class.forName(typeName);
         } catch (ClassNotFoundException e) {
             throw new IllegalArgumentException("Unrecognized " + description + " '" + typeName + "' defined in scenario file " + scenarioFile);
+        }
+    }
+
+    private static Set<String> selectScenarios(Config config, InvocationSettings settings) {
+        SortedSet<String> availableScenarios = config.root().keySet().stream()
+            .filter(key -> !RESERVED_TOP_LEVEL_KEYS.contains(key))
+            .collect(Collectors.toCollection(TreeSet::new));
+
+        if (!settings.getTargets().isEmpty()) {
+            return selectScenariosFromTargets(settings, availableScenarios);
+        } else if (config.hasPath(DEFAULT_SCENARIOS)) {
+            return selectDefaultScenarios(config.getStringList(DEFAULT_SCENARIOS), availableScenarios);
+        } else {
+            return availableScenarios;
+        }
+    }
+
+    private static LinkedHashSet<String> selectDefaultScenarios(List<String> defaultTargets, Collection<String> availableScenarios) {
+        checkScenariosAvailability(defaultTargets, "in default scenarios", availableScenarios);
+        return new LinkedHashSet<>(defaultTargets);
+    }
+
+    private static Set<String> selectScenariosFromTargets(InvocationSettings settings, Collection<String> availableScenarios) {
+        List<String> targets = settings.getTargets();
+        checkScenariosAvailability(targets, "requested", availableScenarios);
+        return new LinkedHashSet<>(targets);
+    }
+
+    private static void checkScenariosAvailability(List<String> candidateScenarios, String source, Collection<String> availableScenarios) {
+        for (String target : candidateScenarios) {
+            if (!availableScenarios.contains(target)) {
+                throw new IllegalArgumentException(String.format(
+                    "Unknown scenario '%s' %s. Available scenarios are: %s", target, source, String.join(", ", availableScenarios)
+                ));
+            }
         }
     }
 }

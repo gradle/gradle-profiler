@@ -416,6 +416,29 @@ class ScenarioLoaderTest extends Specification {
         (scenarios[1] as GradleScenarioDefinition).action.tasks == ["bela"]
     }
 
+    def "fails when default scenario does not exist"() {
+        def settings = settings()
+
+        scenarioFile << """
+            default-scenarios = ["alma", "nonexistent"]
+
+            default {
+                tasks = ["help"]
+            }
+
+            alma {
+                tasks = ["alma"]
+            }
+        """
+
+        when:
+        loadScenarios(scenarioFile, settings, Mock(GradleBuildConfigurationReader))
+
+        then:
+        def ex = thrown IllegalArgumentException
+        ex.message == "Unknown scenario 'nonexistent' in default scenarios. Available scenarios are: alma, default"
+    }
+
     def "loads included config"() {
         def settings = settings()
 
