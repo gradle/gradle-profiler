@@ -63,8 +63,8 @@ class ScenarioLoaderTest extends Specification {
             .setMeasureGarbageCollection(false)
             .setMeasureConfigTime(false)
             .setMeasuredBuildOperations(measuredBuildOperations)
-            .setCsvFormat(Format.WIDE
-            ).build()
+            .setCsvFormat(Format.WIDE)
+            .build()
     }
 
     def "can load single scenario"() {
