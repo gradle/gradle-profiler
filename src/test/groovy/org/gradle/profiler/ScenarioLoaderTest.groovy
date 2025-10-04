@@ -21,7 +21,9 @@ import spock.lang.Specification
 import spock.lang.Unroll
 
 import static org.gradle.profiler.ScenarioLoader.loadScenarios
-import static org.gradle.profiler.mutations.AbstractScheduledMutator.Schedule.*
+import static org.gradle.profiler.mutations.AbstractScheduledMutator.Schedule.BUILD
+import static org.gradle.profiler.mutations.AbstractScheduledMutator.Schedule.CLEANUP
+import static org.gradle.profiler.mutations.AbstractScheduledMutator.Schedule.SCENARIO
 
 class ScenarioLoaderTest extends Specification {
     @Rule
@@ -38,12 +40,9 @@ class ScenarioLoaderTest extends Specification {
         scenarioFile = tmpDir.newFile()
     }
 
-    private settings(
+    private settingsBuilder(
         BuildInvoker invoker = GradleBuildInvoker.Cli,
-        boolean benchmark = true,
-        Integer warmups = null,
-        Integer iterations = null,
-        List<String> measuredBuildOperations = []
+        boolean benchmark = true
     ) {
         new InvocationSettings.InvocationSettingsBuilder()
             .setProjectDir(projectDir)
@@ -58,12 +57,17 @@ class ScenarioLoaderTest extends Specification {
             .setSysProperties([:])
             .setGradleUserHome(gradleUserHomeDir)
             .setStudioInstallDir(tmpDir.newFolder())
-            .setWarmupCount(warmups)
-            .setIterations(iterations)
             .setMeasureGarbageCollection(false)
             .setMeasureConfigTime(false)
-            .setMeasuredBuildOperations(measuredBuildOperations)
+            .setMeasuredBuildOperations([])
             .setCsvFormat(Format.WIDE)
+    }
+
+    private settings(
+        BuildInvoker invoker = GradleBuildInvoker.Cli,
+        boolean benchmark = true
+    ) {
+        settingsBuilder(invoker, benchmark)
             .build()
     }
 
@@ -212,8 +216,8 @@ class ScenarioLoaderTest extends Specification {
     }
 
     def "uses warm-up and iteration counts based on command-line options when Gradle invocation defined by scenario"() {
-        def benchmarkSettings = settings(GradleBuildInvoker.ToolingApi, true, 123, 509)
-        def profileSettings = settings(GradleBuildInvoker.ToolingApi, false, 25, 44)
+        def benchmarkSettings = settingsBuilder(GradleBuildInvoker.ToolingApi, true).setWarmupCount(123).setIterations(509).build()
+        def profileSettings = settingsBuilder(GradleBuildInvoker.ToolingApi, false).setWarmupCount(25).setIterations(44).build()
 
         scenarioFile << """
             default {
@@ -301,7 +305,7 @@ class ScenarioLoaderTest extends Specification {
     }
 
     def "can load build operations to benchmark"() {
-        def benchmarkSettings = settings(GradleBuildInvoker.ToolingApi, true, null, null, ["BuildOpCmdLine"])
+        def benchmarkSettings = settingsBuilder(GradleBuildInvoker.ToolingApi).setMeasuredBuildOperations(["BuildOpCmdLine"]).build()
 
         scenarioFile << """
             default {
