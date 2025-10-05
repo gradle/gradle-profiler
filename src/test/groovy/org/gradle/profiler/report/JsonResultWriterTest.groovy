@@ -68,7 +68,8 @@ class JsonResultWriterTest extends Specification {
             4,
             releaseOutputDir,
             ["-Xmx1024m"],
-            ["some-build-op"]
+            ["some-build-op"],
+            false
         )
         def scenarioContext1 = new TestScenarioContext("release@0")
         def scenario2 = new GradleScenarioDefinition(
@@ -85,7 +86,8 @@ class JsonResultWriterTest extends Specification {
             4,
             debugOutputDir,
             ["-Xmx1024m"],
-            ["some-build-op"]
+            ["some-build-op"],
+            true
         )
         def scenarioContext2 = new TestScenarioContext("debug@1")
         def result1 = new BuildScenarioResultImpl<BuildInvocationResult>(scenario1, { [BuildInvocationResult.EXECUTION_TIME, TestSample.INSTANCE] })

@@ -1623,7 +1623,7 @@ class ProfilerIntegrationTest extends AbstractProfilerIntegrationTest {
         benchmarkScenario(scenarios)
 
         then:
-        output.count("> Cleaning Gradle user home: ") == 2
+        output.count("> Clearing Gradle User Home directory: ") == 2
     }
 
     def "does Git revert when asked"() {
