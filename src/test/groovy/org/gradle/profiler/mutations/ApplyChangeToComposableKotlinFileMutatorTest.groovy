@@ -9,7 +9,7 @@ class ApplyChangeToComposableKotlinFileMutatorTest extends AbstractMutatorTest {
         "}\n"
 
     static APPLIED_COMPOSABLE_CONTENT =
-        "@androidx.compose.runtime.Composable fun M_276d92f3_16ac_4064_9a18_5f1dfd67992f_testScenario_3c4925d7_MEASURE_7() {}\n"
+        "\n\n@androidx.compose.runtime.Composable fun M_276d92f3_16ac_4064_9a18_5f1dfd67992f_testScenario_3c4925d7_MEASURE_7() {}\n"
 
     def "adds public function at end of source file replacing its body"() {
         def sourceFile = tmpDir.newFile("Thing.kt")
