@@ -252,3 +252,7 @@ tasks.register("releaseToSdkMan") {
         }
     }
 }
+
+tasks.updateDaemonJvm {
+    toolchainDownloadUrls.empty()
+}
