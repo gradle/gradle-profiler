@@ -12,7 +12,7 @@ public class ApplyNonAbiChangeToKotlinSourceFileMutator extends AbstractKotlinSo
 
     @Override
     protected void applyChangeTo(BuildContext context, StringBuilder text) {
-        text.append('\n')
+        text.append("\n\n")
             .append("private fun _m")
             .append(context.getUniqueScenarioId())
             .append("() {println(\"")

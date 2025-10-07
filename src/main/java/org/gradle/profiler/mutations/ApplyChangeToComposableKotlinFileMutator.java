@@ -16,8 +16,9 @@ public class ApplyChangeToComposableKotlinFileMutator extends AbstractKotlinSour
 
     @Override
     protected void applyChangeTo(BuildContext context, StringBuilder text) {
-        text.append("@androidx.compose.runtime.Composable fun M")
-                .append(context.getUniqueBuildId())
-                .append("() {}\n");
+        text.append("\n\n")
+            .append("@androidx.compose.runtime.Composable fun M")
+            .append(context.getUniqueBuildId())
+            .append("() {}\n");
     }
 }
