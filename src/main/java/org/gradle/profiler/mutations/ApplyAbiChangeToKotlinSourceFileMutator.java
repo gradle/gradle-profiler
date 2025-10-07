@@ -7,7 +7,7 @@ import java.io.File;
 public class ApplyAbiChangeToKotlinSourceFileMutator extends AbstractKotlinSourceFileMutator {
 
     public ApplyAbiChangeToKotlinSourceFileMutator(File sourceFile) {
-        super(sourceFile);
+        super(sourceFile, "ABI change");
     }
 
     @Override

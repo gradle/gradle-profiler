@@ -11,7 +11,7 @@ import java.io.File;
 public class ApplyChangeToComposableKotlinFileMutator extends AbstractKotlinSourceFileMutator {
 
     public ApplyChangeToComposableKotlinFileMutator(File sourceFile) {
-        super(sourceFile);
+        super(sourceFile, "ABI change of @Composable");
     }
 
     @Override
