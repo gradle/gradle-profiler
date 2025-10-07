@@ -562,9 +562,16 @@ class ScenarioLoader {
             .filter(key -> !RESERVED_TOP_LEVEL_KEYS.contains(key))
             .collect(Collectors.toCollection(TreeSet::new));
 
-        if (settings.getScenarioGroup() != null) {
+        boolean groupRequested = settings.getScenarioGroup() != null;
+        boolean targetsRequested = !settings.getTargets().isEmpty();
+        if (groupRequested && targetsRequested) {
+            throw new IllegalArgumentException(
+                "Cannot specify both --group and individual scenario names. Use either only '--group " + settings.getScenarioGroup() + "' OR specify scenario names directly.");
+        }
+
+        if (groupRequested) {
             return selectScenariosFromGroup(config, settings, availableScenarios, scenarioFile);
-        } else if (!settings.getTargets().isEmpty()) {
+        } else if (targetsRequested) {
             return selectScenariosFromTargets(settings, availableScenarios);
         } else if (config.hasPath(DEFAULT_SCENARIOS)) {
             return selectDefaultScenarios(config.getStringList(DEFAULT_SCENARIOS), availableScenarios);
@@ -600,11 +607,6 @@ class ScenarioLoader {
             throw new IllegalArgumentException(String.format(
                 "Unknown scenario group '%s' requested. Available groups are: %s", groupName, String.join(", ", availableGroups)
             ));
-        }
-
-        if (!settings.getTargets().isEmpty()) {
-            throw new IllegalArgumentException(
-                "Cannot specify both --group and individual scenario names. Use either only '--group " + groupName + "' OR specify scenario names directly.");
         }
 
         List<String> targets = scenarioGroups.getStringList(groupName);
