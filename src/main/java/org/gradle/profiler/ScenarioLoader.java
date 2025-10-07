@@ -636,10 +636,6 @@ class ScenarioLoader {
      * Formats resolved scenario configurations as a string.
      *
      * <p>Each scenario output is standalone and can be copied into a new scenario file as-is.
-     *
-     * @param scenarioFile The scenario configuration file to read
-     * @param settings Invocation settings that determine which scenarios to dump (via targets, groups, or defaults)
-     * @return A formatted string containing all selected scenarios with their resolved configurations
      */
     public static String dumpScenarios(File scenarioFile, InvocationSettings settings) {
         Config config = parseScenarioFile(scenarioFile);
