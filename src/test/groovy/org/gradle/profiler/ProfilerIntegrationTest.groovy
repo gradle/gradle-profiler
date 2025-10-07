@@ -7,7 +7,6 @@ import spock.lang.IgnoreIf
 import spock.lang.Requires
 import spock.lang.Unroll
 
-@Unroll
 class ProfilerIntegrationTest extends AbstractProfilerIntegrationTest {
 
     def "complains when neither profile or benchmark requested"() {
