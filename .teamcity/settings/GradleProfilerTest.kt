@@ -1,18 +1,19 @@
 import jetbrains.buildServer.configs.kotlin.BuildType
 import jetbrains.buildServer.configs.kotlin.DslContext
 import jetbrains.buildServer.configs.kotlin.buildFeatures.commitStatusPublisher
+import jetbrains.buildServer.configs.kotlin.buildFeatures.parallelTests
 import jetbrains.buildServer.configs.kotlin.buildSteps.gradle
 import jetbrains.buildServer.configs.kotlin.failureConditions.BuildFailureOnText
 import jetbrains.buildServer.configs.kotlin.failureConditions.failOnText
 import jetbrains.buildServer.configs.kotlin.ui.add
 
-open class GradleProfilerTest(os: Os, javaVersion: JavaVersion, arch: Arch = Arch.AMD64) : BuildType({
+open class GradleProfilerTest(os: Os, javaVersion: JavaVersion, arch: Arch) : BuildType({
     gradleProfilerVcs()
 
     params {
         // Java home must always use Java11
         // since intellij-gradle-plugin is not compatible with Java8
-        javaHome(os, JavaVersion.OPENJDK_11)
+        javaHome(os, arch, JavaVersion.OPENJDK_11)
         androidHome(os)
     }
 
@@ -21,7 +22,7 @@ open class GradleProfilerTest(os: Os, javaVersion: JavaVersion, arch: Arch = Arc
             tasks = "clean test"
             buildFile = ""
             gradleParams = "-s" +
-                " --build-cache ${toolchainConfiguration(os)}" +
+                " --build-cache ${toolchainConfiguration(os, arch)}" +
                 " -PtestJavaVersion=${javaVersion.majorVersion}" +
                 " -PtestJavaVendor=${javaVersion.vendor}" +
                 " -PautoDownloadAndRunInHeadless=true"
@@ -30,6 +31,16 @@ open class GradleProfilerTest(os: Os, javaVersion: JavaVersion, arch: Arch = Arc
     }
 
     features {
+        parallelTests {
+            numberOfBatches = if (os == Os.macos && arch == Arch.AMD64) {
+                2 // only 2 Intel mac's left
+            } else if (os == Os.windows) {
+                8 // balance so Windows and Linux run with similar wall clock time
+            } else {
+                4
+            }
+        }
+
         commitStatusPublisher {
             vcsRootExtId = "${DslContext.settingsRoot.id}"
             publisher = github {
@@ -55,23 +66,24 @@ open class GradleProfilerTest(os: Os, javaVersion: JavaVersion, arch: Arch = Arc
 
     agentRequirement(os, arch)
 }) {
-    constructor(os: Os, javaVersion: JavaVersion, init: GradleProfilerTest.() -> Unit) : this(os, javaVersion) {
+    constructor(os: Os, javaVersion: JavaVersion, arch: Arch, init: GradleProfilerTest.() -> Unit) : this(os, javaVersion, arch) {
         init()
     }
 }
 
-object LinuxJava8 : GradleProfilerTest(Os.linux, JavaVersion.ORACLE_JAVA_8, {
+object LinuxJava8 : GradleProfilerTest(Os.linux, JavaVersion.ORACLE_JAVA_8, Arch.AMD64, {
     name = "Linux - Java 8"
 })
 
-object LinuxJava11 : GradleProfilerTest(Os.linux, JavaVersion.OPENJDK_11, {
+object LinuxJava11 : GradleProfilerTest(Os.linux, JavaVersion.OPENJDK_11, Arch.AMD64, {
     name = "Linux - Java 11"
 })
 
-object MacOSJava8 : GradleProfilerTest(Os.macos, JavaVersion.ORACLE_JAVA_8, {
-    name = "MacOS - Java 8"
+
+object MacOSJava8 : GradleProfilerTest(Os.macos, JavaVersion.ORACLE_JAVA_8, Arch.AMD64, {
+    name = "macOS - Java 8"
 })
 
-object WindowsJava11 : GradleProfilerTest(Os.windows, JavaVersion.OPENJDK_11, {
+object WindowsJava11 : GradleProfilerTest(Os.windows, JavaVersion.OPENJDK_11, Arch.AMD64, {
     name = "Windows - Java 11"
 })

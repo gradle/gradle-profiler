@@ -13,6 +13,7 @@ class GradleProfilerPublishToSdkMan(publishingBuild: GradleProfilerPublishing) :
 
     gradleProfilerVcs()
     val os = Os.linux
+    val arch = Arch.AMD64
 
     triggers {
         finishBuildTrigger {
@@ -30,7 +31,7 @@ class GradleProfilerPublishToSdkMan(publishingBuild: GradleProfilerPublishing) :
     params {
         // Java home must always use Java11
         // since intellij-gradle-plugin is not compatible with Java8
-        javaHome(os, JavaVersion.OPENJDK_11)
+        javaHome(os, arch, JavaVersion.OPENJDK_11)
         text("additional.gradle.parameters", "")
 
         param("env.ORG_GRADLE_PROJECT_sdkmanKey", "%gradleprofiler.sdkman.key%")
@@ -42,12 +43,12 @@ class GradleProfilerPublishToSdkMan(publishingBuild: GradleProfilerPublishing) :
     steps {
         gradle {
             tasks = "releaseToSdkMan %additional.gradle.parameters%"
-            gradleParams = toolchainConfiguration(os) + " -Dgradle.cache.remote.push=true"
+            gradleParams = toolchainConfiguration(os, arch) + " -Dgradle.cache.remote.push=true"
             buildFile = ""
         }
     }
 
-    agentRequirement(Os.linux)
+    agentRequirement(os, arch)
 
     dependencies {
         artifacts(publishingBuild) {

@@ -8,7 +8,7 @@ fun Project.configureGradleProfilerProject() {
         MacOSJava8,
         WindowsJava11,
         LinuxJava8,
-        LinuxJava11
+        LinuxJava11,
     )
 
     testBuilds.forEach(this::buildType)
@@ -18,6 +18,7 @@ fun Project.configureGradleProfilerProject() {
     buildType(GradleProfilerPublishToSdkMan(GradleProfilerPublishing))
 
     params {
+        text("JdkProviderEnabled", "true")
         password("gradleprofiler.sdkman.key", "credentialsJSON:28e1a1ff-4594-4972-824c-5c3cdcaefc05", display = ParameterDisplay.HIDDEN)
         password("gradleprofiler.sdkman.token", "credentialsJSON:a8c19c49-5e95-408c-bc5f-4f89c9c4c24c", display = ParameterDisplay.HIDDEN)
         param("env.DEVELOCITY_ACCESS_KEY", "%ge.gradle.org.access.key%")

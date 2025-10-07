@@ -3,25 +3,32 @@ import jetbrains.buildServer.configs.kotlin.CheckoutMode
 import jetbrains.buildServer.configs.kotlin.DslContext
 import jetbrains.buildServer.configs.kotlin.ParametrizedWithType
 
-fun BuildType.agentRequirement(os: Os, arch: Arch = Arch.AMD64) {
+fun BuildType.agentRequirement(os: Os, arch: Arch) {
     requirements {
         contains("teamcity.agent.jvm.os.name", os.requirementName)
-        if (os == Os.macos) {
-            contains("teamcity.agent.jvm.os.arch", arch.nameOnMac)
-        } else {
-            contains("teamcity.agent.jvm.os.arch", arch.nameOnLinuxWindows)
-        }
+        contains("teamcity.agent.jvm.os.arch", arch.localName(os))
     }
 }
 
-fun toolchainConfiguration(os: Os) = listOf(
-    "-Porg.gradle.java.installations.auto-detect=false",
-    "-Porg.gradle.java.installations.auto-download=false",
-    """"-Porg.gradle.java.installations.paths=%${os.name}.java8.oracle.64bit%,%${os.name}.java11.openjdk.64bit%,%${os.name}.java17.openjdk.64bit%""""
-).joinToString(" ")
+fun javaInstallationsFor(os: Os, arch: Arch) = listOf(
+    if (os == Os.macos && arch == Arch.AARCH64) JavaVersion.ZULU_JAVA_8 else JavaVersion.ORACLE_JAVA_8,
+    JavaVersion.OPENJDK_11,
+    JavaVersion.OPENJDK_17,
+).map { it.javaHome(os, arch) }
 
-fun ParametrizedWithType.javaHome(os: Os, javaVersion: JavaVersion) {
-    param("env.JAVA_HOME", javaVersion.javaHome(os))
+fun toolchainConfiguration(os: Os, arch: Arch): String {
+    return listOf(
+        "-Porg.gradle.java.installations.auto-detect=false",
+        "-Porg.gradle.java.installations.auto-download=false",
+        "\"-Porg.gradle.java.installations.paths=${javaInstallationsFor(os, arch).joinToString(",")}\"",
+        "-Dorg.gradle.java.installations.auto-detect=false",
+        "-Dorg.gradle.java.installations.auto-download=false",
+        "\"-Dorg.gradle.java.installations.paths=${javaInstallationsFor(os, arch).joinToString(",")}\"",
+    ).joinToString(" ")
+}
+
+fun ParametrizedWithType.javaHome(os: Os, arch: Arch, javaVersion: JavaVersion) {
+    param("env.JAVA_HOME", javaVersion.javaHome(os, arch))
 }
 
 fun ParametrizedWithType.androidHome(os: Os) {
@@ -33,11 +40,14 @@ fun ParametrizedWithType.androidHome(os: Os) {
     param("env.ANDROID_SDK_ROOT", androidHome)
 }
 
-enum class JavaVersion(val majorVersion: String, val vendor: String, private val javaHomePostfix: String) {
-    ORACLE_JAVA_8("8", "oracle", "java8.oracle.64bit"),
-    OPENJDK_11("11", "openjdk", "java11.openjdk.64bit");
+enum class JavaVersion(val majorVersion: String, val vendor: String) {
+    ORACLE_JAVA_8("8", "oracle"),
+    ZULU_JAVA_8("8", "zulu"),
+    OPENJDK_11("11", "openjdk"),
+    OPENJDK_17("17", "openjdk"),
+    ;
 
-    fun javaHome(os: Os) = "%${os.name}.$javaHomePostfix%"
+    fun javaHome(os: Os, arch: Arch) = "%${os.name}.java${majorVersion}.${vendor}.${arch.jdkName}%"
 }
 
 fun BuildType.gradleProfilerVcs() {
