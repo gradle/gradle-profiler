@@ -270,6 +270,10 @@ tasks.register("releaseToSdkMan") {
     }
 }
 
+tasks.updateDaemonJvm {
+    toolchainDownloadUrls.empty()
+}
+
 tasks.register<Sync>("install") {
     val installDirName = "gradle-profiler.install.dir"
     val installDir = providers.gradleProperty(installDirName).orElse("distribution")
