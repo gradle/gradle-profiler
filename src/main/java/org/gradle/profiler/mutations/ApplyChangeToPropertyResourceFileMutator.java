@@ -6,7 +6,7 @@ import java.io.File;
 
 public class ApplyChangeToPropertyResourceFileMutator extends AbstractFileChangeMutator {
     public ApplyChangeToPropertyResourceFileMutator(File sourceFile) {
-        super(sourceFile);
+        super(sourceFile, "property file change");
     }
 
     @Override

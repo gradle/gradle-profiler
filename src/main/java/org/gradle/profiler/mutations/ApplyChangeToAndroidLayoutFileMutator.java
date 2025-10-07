@@ -14,7 +14,7 @@ import java.io.File;
  */
 public class ApplyChangeToAndroidLayoutFileMutator extends AbstractFileChangeMutator {
     public ApplyChangeToAndroidLayoutFileMutator(File sourceFile) {
-        super(sourceFile);
+        super(sourceFile, "Android layout change");
     }
 
     @Override

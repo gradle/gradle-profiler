@@ -40,7 +40,7 @@ public class ApplyProjectDependencyChangeMutator extends AbstractFileChangeMutat
     private String originalSettingsText;
 
     public ApplyProjectDependencyChangeMutator(File projectDir, File sourceFile, ProjectCombinations projectCombinations, boolean shouldCreateProjects) {
-        super(sourceFile);
+        super(sourceFile, "project dependency change");
         this.projectDir = projectDir;
         this.settingsFile = getSettingsFile();
         this.projectCombinations = projectCombinations;

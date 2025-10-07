@@ -13,7 +13,7 @@ import java.util.List;
 
 public class ApplyAbiChangeToJavaSourceFileMutator extends AbstractJavaSourceFileMutator {
     public ApplyAbiChangeToJavaSourceFileMutator(File sourceFile) {
-        super(sourceFile);
+        super(sourceFile, "ABI change");
     }
 
     @Override

@@ -20,7 +20,7 @@ public class ApplyChangeToNativeSourceFileMutator extends AbstractFileChangeMuta
     );
 
     public ApplyChangeToNativeSourceFileMutator(File file) {
-        super(file);
+        super(file, "native source file change");
         String fileExtension = getSourceFileExtension();
         boolean isSupportedExtension = nativeSourcecodeFileEndings.contains(fileExtension) || nativeHeaderFileEndings.contains(fileExtension);
 

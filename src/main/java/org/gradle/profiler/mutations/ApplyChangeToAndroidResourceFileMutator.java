@@ -6,7 +6,7 @@ import java.io.File;
 
 public class ApplyChangeToAndroidResourceFileMutator extends AbstractFileChangeMutator {
     public ApplyChangeToAndroidResourceFileMutator(File sourceFile) {
-        super(sourceFile);
+        super(sourceFile, "Android resource change");
     }
 
     @Override
