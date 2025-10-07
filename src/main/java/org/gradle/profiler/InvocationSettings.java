@@ -34,6 +34,7 @@ public class InvocationSettings {
     private final boolean buildOperationsTrace;
     private final Format csvFormat;
     private final String benchmarkTitle;
+    private final String scenarioGroup;
     /**
      * The log file which the build should write stdout and stderr to.
      * If {@code null}, the stdout and stderr are stored in memory.
@@ -66,6 +67,7 @@ public class InvocationSettings {
         boolean buildOperationsTrace,
         Format csvFormat,
         String benchmarkTitle,
+        String scenarioGroup,
         File buildLog
     ) {
         this.benchmark = benchmark;
@@ -91,6 +93,7 @@ public class InvocationSettings {
         this.buildOperationsTrace = buildOperationsTrace;
         this.csvFormat = csvFormat;
         this.benchmarkTitle = benchmarkTitle;
+        this.scenarioGroup = scenarioGroup;
         this.buildLog = buildLog;
     }
 
@@ -210,6 +213,17 @@ public class InvocationSettings {
         return benchmarkTitle;
     }
 
+    /**
+     * The name of the scenario group to run, if specified via --group.
+     * When set, only scenarios from this group will be executed.
+     *
+     * @return the scenario group name, or null if not specified
+     */
+    @Nullable
+    public String getScenarioGroup() {
+        return scenarioGroup;
+    }
+
     public UUID getInvocationId() {
         return invocationId;
     }
@@ -237,6 +251,7 @@ public class InvocationSettings {
             .setBuildOperationsTrace(buildOperationsTrace)
             .setCsvFormat(csvFormat)
             .setBenchmarkTitle(benchmarkTitle)
+            .setScenarioGroup(scenarioGroup)
             .setBuildLog(buildLog);
     }
 
@@ -250,7 +265,13 @@ public class InvocationSettings {
         out.println("Benchmark: " + isBenchmark());
         out.println("Versions: " + getVersions());
         out.println("Gradle User Home: " + getGradleUserHome());
-        out.println("Targets: " + getTargets());
+        if (getScenarioGroup() != null) {
+            out.println("Targets: '" + getScenarioGroup() + "' (group)");
+        } else if (getTargets() != null && !getTargets().isEmpty()) {
+            out.println("Targets: " + getTargets());
+        } else {
+            out.println("Targets: default scenarios");
+        }
         if (warmupCount != null) {
             out.println("Warm-ups: " + warmupCount);
         }
@@ -289,6 +310,7 @@ public class InvocationSettings {
         private boolean buildOperationsTrace;
         private Format csvFormat;
         private String benchmarkTitle;
+        private String scenarioGroup;
         private File buildLog;
 
         public InvocationSettingsBuilder setProjectDir(File projectDir) {
@@ -409,6 +431,18 @@ public class InvocationSettings {
             return this;
         }
 
+        /**
+         * Sets the scenario group to run. When set, only scenarios from this group will be executed.
+         * Cannot be combined with individual scenario names.
+         *
+         * @param scenarioGroup the scenario group name, or null
+         * @return this builder
+         */
+        public InvocationSettingsBuilder setScenarioGroup(@Nullable String scenarioGroup) {
+            this.scenarioGroup = scenarioGroup;
+            return this;
+        }
+
         public InvocationSettingsBuilder setBuildLog(File buildLog) {
             this.buildLog = buildLog;
             return this;
@@ -439,6 +473,7 @@ public class InvocationSettings {
                 buildOperationsTrace,
                 csvFormat,
                 benchmarkTitle,
+                scenarioGroup,
                 buildLog
             );
         }
