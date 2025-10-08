@@ -225,7 +225,7 @@ The following command line options only apply when measuring Gradle builds:
 
 ## Advanced profiling scenarios
 
-A scenario file can be provided to define more complex scenarios to benchmark or profile. Use the `--scenario-file` option to provide this. The scenario file is defined in [Typesafe config](https://github.com/typesafehub/config) format.
+A scenario file can be provided to define more complex scenarios to benchmark or profile. Use the `--scenario-file` option to provide this. The scenario file is defined in [HOCON] format.
 
 The scenario file defines one or more scenarios. You can select which scenarios to run by specifying its name on the command-line when running `gradle-profiler`, e.g.
 
@@ -434,7 +434,7 @@ They can be added to a scenario file like this:
 
 ### Troubleshooting scenario configuration
 
-Gradle Profiler supports defining scenarios in the `--scenario-file` using [Typesafe config](https://github.com/typesafehub/config) format.
+Gradle Profiler supports defining scenarios in the `--scenario-file` using [HOCON] format.
 This format is very flexible and supports advanced features like merging of objects and value substitutions.
 
 If you encounter problems with scenario configuration, you can use the `--dump-scenarios` option to dump the resolved configuration.
@@ -528,3 +528,6 @@ You can compare Gradle against Bazel, Buck, and Maven by specifying their equiva
             targets = ["//thing/res_debug"]
         }
     }
+
+[//]: # (Links)
+[HOCON]: https://github.com/lightbend/config
