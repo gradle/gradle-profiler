@@ -6,6 +6,9 @@ import com.google.common.collect.ImmutableSet;
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
 import com.typesafe.config.ConfigParseOptions;
+import com.typesafe.config.ConfigRenderOptions;
+
+import java.util.Arrays;
 import org.gradle.profiler.bazel.BazelScenarioDefinition;
 import org.gradle.profiler.buck.BuckScenarioDefinition;
 import org.gradle.profiler.gradle.AdhocGradleScenarioDefinition;
@@ -239,7 +242,7 @@ class ScenarioLoader {
     }
 
     static List<ScenarioDefinition> loadScenarios(File scenarioFile, InvocationSettings settings, GradleBuildConfigurationReader inspector) {
-        Config config = ConfigFactory.parseFile(scenarioFile, ConfigParseOptions.defaults().setAllowMissing(false)).resolve();
+        Config config = parseScenarioFile(scenarioFile);
         Set<String> selectedScenarios = selectScenarios(config, settings, scenarioFile);
 
         List<ScenarioDefinition> definitions = new ArrayList<>();
@@ -329,6 +332,10 @@ class ScenarioLoader {
         definitions.forEach(ScenarioDefinition::validate);
 
         return definitions;
+    }
+
+    private static Config parseScenarioFile(File scenarioFile) {
+        return ConfigFactory.parseFile(scenarioFile, ConfigParseOptions.defaults().setAllowMissing(false)).resolve();
     }
 
     private static StudioGradleScenarioDefinition newStudioGradleScenarioDefinition(GradleScenarioDefinition gradleScenarioDefinition, Config scenario) {
@@ -623,5 +630,49 @@ class ScenarioLoader {
                 ));
             }
         }
+    }
+
+    /**
+     * Formats resolved scenario configurations as a string.
+     *
+     * <p>Each scenario output is standalone and can be copied into a new scenario file as-is.
+     */
+    public static String dumpScenarios(File scenarioFile, InvocationSettings settings) {
+        Config config = parseScenarioFile(scenarioFile);
+        Set<String> selectedScenarios = selectScenarios(config, settings, scenarioFile);
+
+        ConfigRenderOptions renderOptions = ConfigRenderOptions.defaults()
+            .setOriginComments(false)
+            .setComments(false)
+            .setJson(false)
+            .setFormatted(true);
+
+        StringBuilder output = new StringBuilder();
+        int scenarioCount = selectedScenarios.size();
+        int scenarioIndex = 0;
+        for (String scenarioName : selectedScenarios) {
+            scenarioIndex++;
+            output.append('\n');
+
+            Config scenario = config.getConfig(scenarioName);
+
+
+            output.append(String.format("# Scenario %d/%d", scenarioIndex, scenarioCount));
+            String title = scenario.hasPath(TITLE) ? scenario.getString(TITLE) : null;
+            if (title != null) {
+                output.append(" '").append(title).append("'");
+            }
+            output.append('\n');
+
+            output.append(scenarioName).append(" {\n");
+
+            String rendered = scenario.root().render(renderOptions);
+            Arrays.stream(rendered.split("\n"))
+                .filter(line -> !line.isEmpty())
+                .forEach(line -> output.append("    ").append(line).append("\n"));
+
+            output.append("}\n");
+        }
+        return output.toString();
     }
 }

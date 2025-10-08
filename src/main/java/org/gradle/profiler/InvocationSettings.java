@@ -16,6 +16,7 @@ public class InvocationSettings {
     private final boolean generateDiffs;
     private final boolean benchmark;
     private final boolean dryRun;
+    private final boolean dumpScenarios;
     private final File scenarioFile;
     private final File outputDir;
     private final BuildInvoker invoker;
@@ -51,6 +52,7 @@ public class InvocationSettings {
         File outputDir,
         BuildInvoker invoker,
         boolean dryRun,
+        boolean dumpScenarios,
         File scenarioFile,
         List<String> versions,
         List<String> targets,
@@ -77,6 +79,7 @@ public class InvocationSettings {
         this.outputDir = outputDir;
         this.invoker = invoker;
         this.dryRun = dryRun;
+        this.dumpScenarios = dumpScenarios;
         this.scenarioFile = scenarioFile;
         this.versions = versions;
         this.targets = targets;
@@ -112,6 +115,10 @@ public class InvocationSettings {
 
     public boolean isDryRun() {
         return dryRun;
+    }
+
+    public boolean isDumpScenarios() {
+        return dumpScenarios;
     }
 
     public boolean isBenchmark() {
@@ -235,6 +242,7 @@ public class InvocationSettings {
             .setGenerateDiffs(generateDiffs)
             .setBenchmark(benchmark)
             .setDryRun(dryRun)
+            .setDumpScenarios(dumpScenarios)
             .setScenarioFile(scenarioFile)
             .setOutputDir(outputDir)
             .setInvoker(invoker)
@@ -292,6 +300,7 @@ public class InvocationSettings {
         private boolean generateDiffs;
         private boolean benchmark;
         private boolean dryRun;
+        private boolean dumpScenarios;
         private File scenarioFile;
         private File outputDir;
         private BuildInvoker invoker;
@@ -335,6 +344,11 @@ public class InvocationSettings {
 
         public InvocationSettingsBuilder setDryRun(boolean dryRun) {
             this.dryRun = dryRun;
+            return this;
+        }
+
+        public InvocationSettingsBuilder setDumpScenarios(boolean dumpScenarios) {
+            this.dumpScenarios = dumpScenarios;
             return this;
         }
 
@@ -457,6 +471,7 @@ public class InvocationSettings {
                 outputDir,
                 invoker,
                 dryRun,
+                dumpScenarios,
                 scenarioFile,
                 versions,
                 targets,

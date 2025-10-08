@@ -70,6 +70,7 @@ class CommandLineParser {
         OptionSpecBuilder measureConfigTimeOption = parser.accepts("measure-config-time", "Include a breakdown of configuration time in benchmark results");
         OptionSpecBuilder buildOpsTraceOption = parser.accepts("build-ops-trace", "Enable Gradle build operations trace");
         OptionSpecBuilder dryRunOption = parser.accepts("dry-run", "Verify configuration");
+        OptionSpecBuilder dumpScenariosOption = parser.accepts("dump-scenarios", "Dump resolved config for scenario(s) without running");
         OptionSpecBuilder bazelOption = parser.accepts("bazel", "Benchmark scenarios using Bazel");
         OptionSpecBuilder buckOption = parser.accepts("buck", "Benchmark scenarios using buck");
         OptionSpecBuilder mavenOption = parser.accepts("maven", "Benchmark scenarios using Maven");
@@ -113,7 +114,8 @@ class CommandLineParser {
         Profiler profiler = profilerFactory.createFromOptions(parsedOptions);
         boolean generateDiffs = !parsedOptions.has(noDifferentialFlamegraphOption) && hasProfiler && profiler.isCreatesStacksFiles();
         boolean benchmark = parsedOptions.has(benchmarkOption);
-        if (!benchmark && !hasProfiler) {
+        boolean dumpScenarios = parsedOptions.has(dumpScenariosOption);
+        if (!benchmark && !hasProfiler && !dumpScenarios) {
             return fail(parser, "Neither --profile or --benchmark specified.");
         }
 
@@ -182,6 +184,7 @@ class CommandLineParser {
             .setOutputDir(outputDir)
             .setInvoker(invoker)
             .setDryRun(dryRun)
+            .setDumpScenarios(dumpScenarios)
             .setScenarioFile(scenarioFile)
             .setVersions(gradleVersions)
             .setTargets(targetNames)

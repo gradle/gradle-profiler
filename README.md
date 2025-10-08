@@ -432,6 +432,50 @@ They can be added to a scenario file like this:
         jvm-args = ["-Xmx2500m", "-XX:MaxMetaspaceSize=512m"]
     }
 
+### Troubleshooting scenario configuration
+
+Gradle Profiler supports defining scenarios in the `--scenario-file` using [Typesafe config](https://github.com/typesafehub/config) format.
+This format is very flexible and supports advanced features like merging of objects and value substitutions.
+
+If you encounter problems with scenario configuration, you can use the `--dump-scenarios` option to dump the resolved configuration.
+This will output the normalized scenario configuration without running any builds.
+This configuration is what Gradle Profiler effectively sees when resolving the definition of a given scenario.
+However, it does not include any values provided on the command-line, as it only considers the scenario file itself.
+
+    > gradle-profiler --scenario-file performance.scenarios --dump-scenarios clean_build
+
+In the case of a scenario file like this:
+
+    base {
+        daemon = cold
+        iterations = 10
+    }
+    
+    clean_build = ${base} {
+        title = "Clean build"
+        tasks = [build]
+        cleanup-tasks = [clean]
+    }
+
+This will output the resolved configuration (keys are always sorted alphabetically):
+
+    # Scenario 1/1 'Clean build'
+    clean_build {
+        cleanup-tasks=[
+            clean
+        ]
+        daemon=cold
+        iterations=10
+        tasks=[
+            build
+        ]
+        title="Clean build"
+    }
+
+You can specify multiple scenarios or use `--group` to dump all scenarios in a group. If no scenarios are specified, it will dump the `default-scenarios`.
+
+The printed scenarios are valid scenario definitions that can be used as-is in scenario files.
+
 ### Comparing against other build tools
 
 You can compare Gradle against Bazel, Buck, and Maven by specifying their equivalent invocations in the scenario file. Only benchmarking mode is supported.
