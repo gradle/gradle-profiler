@@ -80,4 +80,18 @@ public abstract class AbstractScheduledMutator implements BuildMutator {
     public enum Schedule {
         SCENARIO, CLEANUP, BUILD
     }
+
+    /**
+     * Directory against which to resolve relative paths.
+     */
+    public enum FileRoot {
+        /**
+         * --project-dir (default)
+         */
+        PROJECT,
+        /**
+         * Gradle User Home, which by default is ./gradle-user-home relative to the working dir, not the project dir.
+         */
+        GRADLE_USER_HOME
+    }
 }
