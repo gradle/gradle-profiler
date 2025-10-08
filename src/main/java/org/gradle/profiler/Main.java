@@ -52,12 +52,7 @@ public class Main {
             }
 
             if (settings.isDumpScenarios()) {
-                if (settings.getScenarioFile() == null) {
-                    System.err.println("--dump-scenarios requires a scenario file (--scenario-file)");
-                    throw new IllegalArgumentException("--dump-scenarios requires a scenario file");
-                }
-                String output = ScenarioLoader.dumpScenarios(settings.getScenarioFile(), settings);
-                System.out.print(output);
+                printScenariosConfigDump(settings);
                 return;
             }
 
@@ -145,6 +140,15 @@ public class Main {
             System.out.println();
             System.out.flush();
         }
+    }
+
+    private static void printScenariosConfigDump(InvocationSettings settings) {
+        if (settings.getScenarioFile() == null) {
+            System.err.println("--dump-scenarios requires a scenario file (--scenario-file)");
+            throw new IllegalArgumentException("--dump-scenarios requires a scenario file");
+        }
+        String output = ScenarioLoader.dumpScenarios(settings.getScenarioFile(), settings);
+        System.out.print(output);
     }
 
     private <S extends ScenarioDefinition, R extends BuildInvocationResult> void invoke(ScenarioInvoker<S, R> invoker, S scenario, InvocationSettings settings, BenchmarkResultCollector benchmarkResults, List<Throwable> failures) throws IOException {
