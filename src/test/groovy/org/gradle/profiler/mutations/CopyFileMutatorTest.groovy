@@ -106,4 +106,58 @@ class CopyFileMutatorTest extends AbstractMutatorTest {
         targetBuild.exists()
         targetBuild.text == expectedContents
     }
+
+    def "copies file with GRADLE_USER_HOME root"() {
+        def projectDir = tmpDir.newFolder()
+        def gradleUserHome = tmpDir.newFolder()
+
+        def sourceDir = file(gradleUserHome, "src")
+        writeTree(sourceDir, [
+            "file.txt": "content"
+        ])
+
+        def spec = mockConfigSpec("""{
+            copy-file {
+                root = GRADLE_USER_HOME
+                source = "src/file.txt"
+                target = "src/file.txt.bak"
+            }
+        }""")
+        _ * spec.projectDir >> projectDir
+        _ * spec.gradleUserHome >> gradleUserHome
+
+        when:
+        def mutator = new CopyFileMutator.Configurator().configure("copy-file", spec)
+        mutator.beforeScenario(scenarioContext)
+
+        then:
+        tree(sourceDir) == [
+            "file.txt": "content",
+            "file.txt.bak": "content"
+        ]
+    }
+
+    def "absolute path ignores root parameter in copy"() {
+        def sourceDir = tmpDir.newFolder()
+        writeTree(sourceDir, [
+            "source.txt": "content"
+        ])
+        def spec = mockConfigSpec("""{
+            copy-file {
+                root = GRADLE_USER_HOME
+                source = "${file(sourceDir, "source.txt").absolutePath}"
+                target = "${file(sourceDir, "target.txt").absolutePath}"
+            }
+        }""")
+
+        when:
+        def mutator = new CopyFileMutator.Configurator().configure("copy-file", spec)
+        mutator.beforeScenario(scenarioContext)
+
+        then:
+        tree(sourceDir) == [
+            "source.txt": "content",
+            "target.txt": "content"
+        ]
+    }
 }

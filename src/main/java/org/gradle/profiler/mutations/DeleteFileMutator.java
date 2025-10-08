@@ -44,8 +44,10 @@ public class DeleteFileMutator extends AbstractFileSystemMutator {
         private static DeleteFileMutator createMutator(BuildMutatorConfiguratorSpec spec, Config config) {
             String target = ConfigUtil.string(config, "target");
             Schedule schedule = ConfigUtil.enumValue(config, "schedule", Schedule.class, Schedule.SCENARIO);
+            FileRoot root = ConfigUtil.enumValue(config, "root", FileRoot.class, FileRoot.PROJECT);
             File projectDir = spec.getProjectDir();
-            return new DeleteFileMutator(resolveProjectFile(projectDir, target), schedule);
+            File gradleUserHome = spec.getGradleUserHome();
+            return new DeleteFileMutator(resolveFile(root, projectDir, gradleUserHome, target), schedule);
         }
     }
 }

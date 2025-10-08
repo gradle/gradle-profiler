@@ -60,12 +60,18 @@ public class CopyFileMutator extends AbstractFileSystemMutator {
             String source = ConfigUtil.string(config, "source", null);
             String target = ConfigUtil.string(config, "target", null);
             Schedule schedule = ConfigUtil.enumValue(config, "schedule", Schedule.class, Schedule.SCENARIO);
+            FileRoot root = ConfigUtil.enumValue(config, "root", FileRoot.class, FileRoot.PROJECT);
 
             if (Strings.isNullOrEmpty(source) || Strings.isNullOrEmpty(target)) {
                 throw new IllegalArgumentException("The `source` and `target` are required for copy-file");
             }
             File projectDir = spec.getProjectDir();
-            return new CopyFileMutator(resolveProjectFile(projectDir, source), resolveProjectFile(projectDir, target), schedule);
+            File gradleUserHome = spec.getGradleUserHome();
+            return new CopyFileMutator(
+                resolveFile(root, projectDir, gradleUserHome, source),
+                resolveFile(root, projectDir, gradleUserHome, target),
+                schedule
+            );
         }
     }
 }

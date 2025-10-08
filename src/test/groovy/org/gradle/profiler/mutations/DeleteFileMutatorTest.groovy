@@ -111,4 +111,52 @@ class DeleteFileMutatorTest extends AbstractMutatorTest {
         then:
         !fileBuild.exists()
     }
+
+    def "deletes file with GRADLE_USER_HOME root"() {
+        def projectDir = tmpDir.newFolder()
+        def gradleUserHome = tmpDir.newFolder()
+
+        def targetFile = file(gradleUserHome, "caches/file.bin")
+        writeTree(targetFile.parentFile, [
+            "file.bin": "content"
+        ])
+
+        def spec = mockConfigSpec("""{
+            delete-file {
+                root = GRADLE_USER_HOME
+                target = "caches/file.bin"
+            }
+        }""")
+        _ * spec.projectDir >> projectDir
+        _ * spec.gradleUserHome >> gradleUserHome
+
+        when:
+        def mutator = new DeleteFileMutator.Configurator().configure("delete-file", spec)
+        mutator.beforeScenario(scenarioContext)
+
+        then:
+        !targetFile.exists()
+    }
+
+    def "absolute path ignores root parameter in delete"() {
+        def absoluteDir = tmpDir.newFolder()
+        def targetFile = file(absoluteDir, "file.txt")
+        writeTree(absoluteDir, [
+            "file.txt": "content"
+        ])
+
+        def spec = mockConfigSpec("""{
+            delete-file {
+                root = GRADLE_USER_HOME
+                target = "${targetFile.absolutePath}"
+            }
+        }""")
+
+        when:
+        def mutator = new DeleteFileMutator.Configurator().configure("delete-file", spec)
+        mutator.beforeScenario(scenarioContext)
+
+        then:
+        !targetFile.exists()
+    }
 }
