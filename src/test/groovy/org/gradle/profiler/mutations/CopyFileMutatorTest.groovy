@@ -145,8 +145,8 @@ class CopyFileMutatorTest extends AbstractMutatorTest {
         def spec = mockConfigSpec("""{
             copy-file {
                 root = GRADLE_USER_HOME
-                source = "${file(sourceDir, "source.txt").absolutePath}"
-                target = "${file(sourceDir, "target.txt").absolutePath}"
+                source = "${normaliseFileSeparators(file(sourceDir, "source.txt").absolutePath)}"
+                target = "${normaliseFileSeparators(file(sourceDir, "target.txt").absolutePath)}"
             }
         }""")
 

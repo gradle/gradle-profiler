@@ -10,6 +10,16 @@ trait FileTreeFixture {
     }
 
     /**
+     * Normalises file separators in a path to forward slashes.
+     * This is necessary for Windows paths to avoid invalid escape sequences in configuration strings.
+     * <p>
+     * Example: {@code C:\Users\test} becomes {@code C:/Users/test}
+     */
+    String normaliseFileSeparators(String path) {
+        path.replace(File.separatorChar, '/' as char)
+    }
+
+    /**
      * Creates a directory (including parent directories) and returns it for chaining.
      */
     File mkdirs(File dir) {

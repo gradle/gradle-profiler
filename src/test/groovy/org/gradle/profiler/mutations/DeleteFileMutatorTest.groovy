@@ -148,7 +148,7 @@ class DeleteFileMutatorTest extends AbstractMutatorTest {
         def spec = mockConfigSpec("""{
             delete-file {
                 root = GRADLE_USER_HOME
-                target = "${targetFile.absolutePath}"
+                target = "${normaliseFileSeparators(targetFile.absolutePath)}"
             }
         }""")
 

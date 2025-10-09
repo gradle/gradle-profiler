@@ -229,7 +229,7 @@ class ClearDirectoryMutatorTest extends AbstractMutatorTest {
 
         def spec = mockConfigSpec("""{
             clear-dir {
-                target = "${targetDir.absolutePath}"
+                target = "${normaliseFileSeparators(targetDir.absolutePath)}"
                 root = GRADLE_USER_HOME
             }
         }""")
