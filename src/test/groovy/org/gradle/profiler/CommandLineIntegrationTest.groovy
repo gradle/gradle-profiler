@@ -53,15 +53,12 @@ class CommandLineIntegrationTest extends AbstractIntegrationTest {
         new Main().run("--benchmark", "--scenario-file", scenarioFile.absolutePath, "--dump-scenarios", "my-scenario")
 
         then:
-        output == """
-# Scenario 1/1
+        output.trim() == """# Scenario 1/1
 my-scenario {
     tasks=[
         help
     ]
     warm-ups=3
-}
-
-"""
+}"""
     }
 }
