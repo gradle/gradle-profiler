@@ -17,8 +17,6 @@ class GradleProfilerTestTrigger(testBuilds: List<BuildType>) : BuildType({
         }
     }
 
-    agentRequirement(Os.linux)
-
     dependencies {
         testBuilds.forEach {
             snapshot(it) {

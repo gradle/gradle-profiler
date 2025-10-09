@@ -13,11 +13,12 @@ object GradleProfilerPublishing : BuildType({
 
     gradleProfilerVcs()
     val os = Os.linux
+    val arch = Arch.AMD64
 
     params {
         // Java home must always use Java11
         // since intellij-gradle-plugin is not compatible with Java8
-        javaHome(os, JavaVersion.OPENJDK_11)
+        javaHome(os, arch, JavaVersion.OPENJDK_11)
         password("pgpSigningKey", "credentialsJSON:20c56c10-3c97-4753-91c2-685ddf26700e", display = ParameterDisplay.HIDDEN)
         password("pgpSigningPassphrase", "credentialsJSON:d49291bd-101e-4165-a9a8-912ca457926b", display = ParameterDisplay.HIDDEN)
         password("mavenCentralStagingRepoUser", "credentialsJSON:ce6ff00a-dc06-4b9b-aa1f-7b01bea2eb2f", display = ParameterDisplay.HIDDEN)
@@ -38,11 +39,11 @@ object GradleProfilerPublishing : BuildType({
     steps {
         gradle {
             tasks = "clean createBuildReceipt publishToSonatype closeAndReleaseSonatypeStagingRepository gitPushTag %additional.gradle.parameters%"
-            gradleParams = toolchainConfiguration(os) + " -Dgradle.cache.remote.push=true"
+            gradleParams = toolchainConfiguration(os, arch) + " -Dgradle.cache.remote.push=true"
             param("org.jfrog.artifactory.selectedDeployableServer.defaultModuleVersionConfiguration", "GLOBAL")
             buildFile = ""
         }
     }
 
-    agentRequirement(Os.linux)
+    agentRequirement(os, arch)
 })
