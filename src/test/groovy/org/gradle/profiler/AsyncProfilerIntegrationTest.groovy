@@ -6,6 +6,14 @@ import spock.lang.Unroll
 @Unroll
 @Requires({ !OperatingSystem.isWindows() })
 class AsyncProfilerIntegrationTest extends AbstractProfilerIntegrationTest implements FlameGraphFixture {
+
+    def setup() {
+        // fix SIGBUS crashes on macOS with Java 11+
+        file("gradle.properties") << """
+            org.gradle.jvmargs=-Xmx4G
+        """.stripIndent()
+    }
+
     def "profiles build CPU usage using async-profiler with tooling API and warm daemon"() {
         given:
         instrumentedBuildScript()
