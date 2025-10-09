@@ -11,13 +11,14 @@ import java.io.File;
 public class ApplyChangeToComposableKotlinFileMutator extends AbstractKotlinSourceFileMutator {
 
     public ApplyChangeToComposableKotlinFileMutator(File sourceFile) {
-        super(sourceFile);
+        super(sourceFile, "ABI change of @Composable");
     }
 
     @Override
     protected void applyChangeTo(BuildContext context, StringBuilder text) {
-        text.append("@androidx.compose.runtime.Composable fun M")
-                .append(context.getUniqueBuildId())
-                .append("() {}\n");
+        text.append("\n\n")
+            .append("@androidx.compose.runtime.Composable fun M")
+            .append(context.getUniqueBuildId())
+            .append("() {}\n");
     }
 }

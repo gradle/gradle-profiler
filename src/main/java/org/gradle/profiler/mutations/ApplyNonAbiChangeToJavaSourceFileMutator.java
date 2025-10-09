@@ -12,7 +12,7 @@ import java.util.List;
 
 public class ApplyNonAbiChangeToJavaSourceFileMutator extends AbstractJavaSourceFileMutator {
     public ApplyNonAbiChangeToJavaSourceFileMutator(File sourceFile) {
-        super(sourceFile);
+        super(sourceFile, "non-ABI change");
     }
 
     @Override
