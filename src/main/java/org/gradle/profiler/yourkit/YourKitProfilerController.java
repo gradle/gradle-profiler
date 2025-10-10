@@ -41,10 +41,6 @@ public class YourKitProfilerController implements InstrumentingProfiler.Snapshot
         }
     }
 
-    @Override
-    public void stopSession() {
-    }
-
     private void runYourKitCommand(String command) {
         File controllerJar = findControllerJar();
         new CommandExec().run(System.getProperty("java.home") + "/bin/java",
