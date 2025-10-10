@@ -60,8 +60,10 @@ public class ClearDirectoryMutator extends AbstractFileSystemMutator {
             String target = ConfigUtil.string(config, "target");
             Schedule schedule = ConfigUtil.enumValue(config, "schedule", Schedule.class, Schedule.SCENARIO);
             List<String> keep = ConfigUtil.strings(config, "keep");
+            FileRoot root = ConfigUtil.enumValue(config, "root", FileRoot.class, FileRoot.PROJECT);
             File projectDir = spec.getProjectDir();
-            return new ClearDirectoryMutator("directory", resolveProjectFile(projectDir, target), schedule, keep);
+            File gradleUserHome = spec.getGradleUserHome();
+            return new ClearDirectoryMutator("directory", resolveFile(root, projectDir, gradleUserHome, target), schedule, keep);
         }
     }
 }

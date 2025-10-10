@@ -166,4 +166,138 @@ class ClearDirectoryMutatorTest extends AbstractMutatorTest {
         then: "Build directory should be cleared"
         tree(dirBuild) == [:]
     }
+
+    def "clears directory with explicit PROJECT root"() {
+        def projectDir = tmpDir.newFolder()
+        def targetDir = file(projectDir, "target-dir")
+        writeTree(targetDir, [
+            "file1.txt": "content1",
+            "file2.txt": "content2"
+        ])
+
+        def spec = mockConfigSpec("""{
+            clear-dir {
+                target = "target-dir"
+                root = PROJECT
+            }
+        }""")
+        _ * spec.projectDir >> projectDir
+
+        when:
+        def mutator = new ClearDirectoryMutator.Configurator().configure("clear-dir", spec)
+        mutator.beforeScenario(scenarioContext)
+
+        then:
+        tree(targetDir) == [:]
+    }
+
+    def "clears directory with GRADLE_USER_HOME root"() {
+        def projectDir = tmpDir.newFolder()
+        def gradleUserHome = tmpDir.newFolder()
+        def targetDir = file(gradleUserHome, "caches/build-cache")
+        writeTree(targetDir, [
+            "abc123": "cached1",
+            "def456": "cached2"
+        ])
+
+        def spec = mockConfigSpec("""{
+            clear-dir {
+                target = "caches/build-cache"
+                root = GRADLE_USER_HOME
+            }
+        }""")
+        _ * spec.projectDir >> projectDir
+        _ * spec.gradleUserHome >> gradleUserHome
+
+        when:
+        def mutator = new ClearDirectoryMutator.Configurator().configure("clear-dir", spec)
+        mutator.beforeScenario(scenarioContext)
+
+        then:
+        tree(targetDir) == [:]
+    }
+
+    def "absolute path ignores root parameter"() {
+        def projectDir = tmpDir.newFolder()
+        def gradleUserHome = tmpDir.newFolder()
+        def absoluteDir = tmpDir.newFolder()
+        def targetDir = file(absoluteDir, "absolute-target")
+        writeTree(targetDir, [
+            "file1.txt": "content1",
+            "file2.txt": "content2"
+        ])
+
+        def spec = mockConfigSpec("""{
+            clear-dir {
+                target = "${normaliseFileSeparators(targetDir.absolutePath)}"
+                root = GRADLE_USER_HOME
+            }
+        }""")
+        _ * spec.projectDir >> projectDir
+        _ * spec.gradleUserHome >> gradleUserHome
+
+        when:
+        def mutator = new ClearDirectoryMutator.Configurator().configure("clear-dir", spec)
+        mutator.beforeScenario(scenarioContext)
+
+        then:
+        tree(targetDir) == [:]
+    }
+
+    def "keep list works with GRADLE_USER_HOME root"() {
+        def projectDir = tmpDir.newFolder()
+        def gradleUserHome = tmpDir.newFolder()
+        def targetDir = file(gradleUserHome, "caches/modules-2")
+        writeTree(targetDir, [
+            "modules-2.lock": "lock",
+            "files-2.1": ["some-cache": "data"],
+            "metadata-2.96": ["descriptor.bin": "metadata"]
+        ])
+
+        def spec = mockConfigSpec("""{
+            clear-dir {
+                target = "caches/modules-2"
+                root = GRADLE_USER_HOME
+                keep = ["modules-2.lock"]
+            }
+        }""")
+        _ * spec.projectDir >> projectDir
+        _ * spec.gradleUserHome >> gradleUserHome
+
+        when:
+        def mutator = new ClearDirectoryMutator.Configurator().configure("clear-dir", spec)
+        mutator.beforeScenario(scenarioContext)
+
+        then:
+        tree(targetDir) == ["modules-2.lock": "lock"]
+    }
+
+    def "multiple directories with different roots"() {
+        def projectDir = tmpDir.newFolder()
+        def gradleUserHome = tmpDir.newFolder()
+        def projectTarget = file(projectDir, "build/tmp")
+        def gradleTarget = file(gradleUserHome, "caches/jars-3")
+        writeTree(projectTarget, ["temp.txt": "temp"])
+        writeTree(gradleTarget, ["some.jar": "jar"])
+
+        def spec = mockConfigSpec("""{
+            clear-dir = [{
+                target = "build/tmp"
+                root = PROJECT
+            }, {
+                target = "caches/jars-3"
+                root = GRADLE_USER_HOME
+            }]
+        }""")
+        _ * spec.projectDir >> projectDir
+        _ * spec.gradleUserHome >> gradleUserHome
+
+        when:
+        def mutator = new ClearDirectoryMutator.Configurator().configure("clear-dir", spec)
+        mutator.beforeScenario(scenarioContext)
+
+        then:
+        tree(projectTarget) == [:]
+        tree(gradleTarget) == [:]
+    }
 }

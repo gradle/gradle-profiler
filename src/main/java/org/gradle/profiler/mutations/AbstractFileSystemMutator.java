@@ -9,11 +9,17 @@ public abstract class AbstractFileSystemMutator extends AbstractScheduledMutator
     }
 
     protected static File resolveProjectFile(File projectDir, String path) {
+        return resolveFile(FileRoot.PROJECT, projectDir, null, path);
+    }
+
+    protected static File resolveFile(FileRoot root, File projectDir, File gradleUserHome, String path) {
         File file = new File(path);
         if (file.isAbsolute()) {
             return file;
         }
-        return new File(projectDir, path);
+
+        File baseDir = root == FileRoot.GRADLE_USER_HOME ? gradleUserHome : projectDir;
+        return new File(baseDir, path);
     }
 
     @Override
