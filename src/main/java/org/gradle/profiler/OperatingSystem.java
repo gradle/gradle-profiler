@@ -15,6 +15,10 @@ public class OperatingSystem {
         return OS_NAME.startsWith("mac");
     }
 
+    public static boolean isLinuxAarch64() {
+        return OS_NAME.startsWith("linux") && (OS_ARCH.equals("arm64") || OS_ARCH.equals("aarch64"));
+    }
+
     public static boolean isLinuxX86() {
         return OS_NAME.startsWith("linux") && (OS_ARCH.equals("amd64") || OS_ARCH.equals("x86_64") || OS_ARCH.equals("x86"));
     }
