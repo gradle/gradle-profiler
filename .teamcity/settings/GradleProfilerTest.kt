@@ -32,10 +32,8 @@ open class GradleProfilerTest(os: Os, javaVersion: JavaVersion, arch: Arch) : Bu
 
     features {
         parallelTests {
-            numberOfBatches = if (os == Os.macos && arch == Arch.AMD64) {
-                2 // only 2 Intel mac's left
-            } else if (os == Os.windows) {
-                8 // balance so Windows and Linux run with similar wall clock time
+            numberOfBatches = if (os == Os.windows) {
+                8 // balance so Windows, Linux and macOS run with similar wall clock time
             } else {
                 4
             }
@@ -79,11 +77,46 @@ object LinuxJava11 : GradleProfilerTest(Os.linux, JavaVersion.OPENJDK_11, Arch.A
     name = "Linux - Java 11"
 })
 
+object LinuxJava17 : GradleProfilerTest(Os.linux, JavaVersion.OPENJDK_17, Arch.AMD64, {
+    name = "Linux - Java 17"
+})
 
-object MacOSJava8 : GradleProfilerTest(Os.macos, JavaVersion.ORACLE_JAVA_8, Arch.AMD64, {
-    name = "macOS - Java 8"
+object LinuxJava21 : GradleProfilerTest(Os.linux, JavaVersion.OPENJDK_21, Arch.AMD64, {
+    name = "Linux - Java 21"
+})
+
+object LinuxJava25 : GradleProfilerTest(Os.linux, JavaVersion.OPENJDK_25, Arch.AMD64, {
+    name = "Linux - Java 25"
+})
+
+object MacOSJava11 : GradleProfilerTest(Os.macos, JavaVersion.OPENJDK_11, Arch.AARCH64, {
+    name = "macOS - Java 11"
+})
+
+object MacOSJava17 : GradleProfilerTest(Os.macos, JavaVersion.OPENJDK_17, Arch.AARCH64, {
+    name = "macOS - Java 17"
+})
+
+object MacOSJava21 : GradleProfilerTest(Os.macos, JavaVersion.OPENJDK_21, Arch.AARCH64, {
+    name = "macOS - Java 21"
+})
+
+object MacOSJava25 : GradleProfilerTest(Os.macos, JavaVersion.OPENJDK_25, Arch.AARCH64, {
+    name = "macOS - Java 25"
 })
 
 object WindowsJava11 : GradleProfilerTest(Os.windows, JavaVersion.OPENJDK_11, Arch.AMD64, {
     name = "Windows - Java 11"
+})
+
+object WindowsJava17 : GradleProfilerTest(Os.windows, JavaVersion.OPENJDK_17, Arch.AMD64, {
+    name = "Windows - Java 17"
+})
+
+object WindowsJava21 : GradleProfilerTest(Os.windows, JavaVersion.OPENJDK_21, Arch.AMD64, {
+    name = "Windows - Java 21"
+})
+
+object WindowsJava25 : GradleProfilerTest(Os.windows, JavaVersion.OPENJDK_25, Arch.AMD64, {
+    name = "Windows - Java 25"
 })
