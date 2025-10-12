@@ -6,10 +6,11 @@ plugins {
 
 rootProject.name = "gradle-profiler"
 
-include("chrome-trace")
 include("build-operations")
-include("heap-dump")
+include("chrome-trace")
 include("client-protocol")
+include("flamegraph")
+include("heap-dump")
 include("instrumentation-support")
 include("studio-agent")
 include("studio-plugin")
