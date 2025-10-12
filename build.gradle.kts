@@ -12,7 +12,7 @@ plugins {
     application
     `maven-publish`
     id("profiler.publication")
-    id("com.github.node-gradle.node") version "3.4.0"
+    id("com.github.node-gradle.node") version "7.1.0"
     id("io.sdkman.vendors") version "2.0.0"
     id("io.github.gradle-nexus.publish-plugin") version "2.0.0"
 }
