@@ -14,16 +14,55 @@ interface Job<I, P, R> {
  * A React hook that manages a pool of Web Workers to execute tasks concurrently.
  */
 export default <I, P, R>(
-    workerUrl: string,
-): ((id: I, message: P, transfer: Transferable[]) => Promise<R>) => {
+    WorkerFactory: new () => Worker,
+): ((id: I, message: P, transfer?: Transferable[]) => Promise<R>) => {
     const workerPool = useRef<Worker[]>([])
     const idleWorkers = useRef<Worker[]>([])
     const jobQueue = useRef<Job<I, P, R>[]>([])
+    const activeJobs = useRef<Map<Worker, Job<I, P, R>>>(new Map())
 
-    // Initialize and clean up worker instances and associated state.
+    const dispatch = useCallback(() => {
+        if (jobQueue.current.length > 0 && idleWorkers.current.length > 0) {
+            const job = jobQueue.current.shift()!
+            const worker = idleWorkers.current.shift()!
+
+            activeJobs.current.set(worker, job)
+            worker.postMessage(job.message, job.transfer || [])
+        }
+    }, [])
+
+    const onWorkerMessage = useCallback(
+        (event: MessageEvent, worker: Worker) => {
+            const job = activeJobs.current.get(worker)
+            if (job) {
+                job.resolve(event.data)
+                activeJobs.current.delete(worker)
+                idleWorkers.current.push(worker)
+                dispatch()
+            }
+        },
+        [dispatch],
+    )
+
+    const onWorkerError = useCallback(
+        (error: ErrorEvent, worker: Worker) => {
+            const job = activeJobs.current.get(worker)
+            if (job) {
+                job.reject(error)
+                activeJobs.current.delete(worker)
+                idleWorkers.current.push(worker)
+                dispatch()
+            }
+        },
+        [dispatch],
+    )
+
+    // Initialize worker pool
     useEffect(() => {
         for (let i = 0; i < POOL_SIZE; i++) {
-            const worker = new Worker(workerUrl, { type: "module" })
+            const worker = new WorkerFactory()
+            worker.onmessage = (event) => onWorkerMessage(event, worker)
+            worker.onerror = (error) => onWorkerError(error, worker)
             workerPool.current.push(worker)
             idleWorkers.current.push(worker)
         }
@@ -33,42 +72,20 @@ export default <I, P, R>(
             workerPool.current = []
             idleWorkers.current = []
             jobQueue.current = []
+            activeJobs.current.clear()
         }
-    }, [workerUrl])
-
-    // When called, attempts to schedule the next job in the queue on a worker.
-    const dispatch = useCallback(() => {
-        if (jobQueue.current.length > 0 && idleWorkers.current.length > 0) {
-            const job = jobQueue.current.shift()!
-            const worker = idleWorkers.current.shift()!
-
-            worker.onmessage = (event) => {
-                job.resolve(event.data)
-                idleWorkers.current.push(worker)
-                dispatch()
-            }
-
-            worker.onerror = (error) => {
-                job.reject(error)
-                idleWorkers.current.push(worker)
-                dispatch()
-            }
-
-            worker.postMessage(job.message, job.transfer || [])
-        }
-    }, [])
+    }, [WorkerFactory, onWorkerMessage, onWorkerError])
 
     return useCallback(
-        (id: I, message: P, transfer: Transferable[]): Promise<R> => {
+        (id: I, message: P, transfer: Transferable[] = []): Promise<R> => {
             return new Promise((resolve, reject) => {
-                const job = {
+                jobQueue.current.push({
                     id,
                     message,
                     transfer,
                     resolve,
                     reject,
-                }
-                jobQueue.current.push(job)
+                })
                 dispatch()
             })
         },
