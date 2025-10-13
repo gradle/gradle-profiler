@@ -107,7 +107,7 @@ tasks.test {
             .getOrElse(JavaVersion.current().majorVersion)
         languageVersion.set(JavaLanguageVersion.of(javaVersion))
         providers.gradleProperty("testJavaVendor").map {
-            when (it.lowercase()) {
+            when (it.lowercase(Locale.US)) {
                 "oracle" -> vendor.set(JvmVendorSpec.ORACLE)
                 "openjdk" -> vendor.set(JvmVendorSpec.ADOPTIUM)
             }
@@ -145,7 +145,7 @@ val testReports = mapOf(
     "testHtmlReportWithOps" to "example-with-build-operations",
     "testHtmlReportRegression" to "example-regression"
 )
-testReports.forEach { taskName, fileName ->
+testReports.forEach { (taskName, fileName) ->
     tasks.register<ProcessResources>(taskName) {
         val dataFile = file("src/test/resources/org/gradle/profiler/report/${fileName}.json")
         inputs.file(dataFile)
