@@ -1,0 +1,9 @@
+plugins {
+    id("profiler.embedded-library")
+}
+
+dependencies {
+    implementation(gradleApi())
+
+    testImplementation(libs.bundles.testDependencies)
+}
