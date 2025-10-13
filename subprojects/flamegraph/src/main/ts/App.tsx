@@ -13,6 +13,7 @@ import {
 } from "./worker"
 import DataWorker from "./worker?worker&url"
 import useWorkerPool from "./useWorkerPool.ts"
+import { Stack, Row, Grow } from "./containers.tsx"
 
 /**
  * Nodes with pixel width below this threshold will not be rendered.
@@ -394,18 +395,15 @@ const Flamegraph: React.FC<{
 
     return (
         <>
-            <div
+            <Row
+                wide
                 style={{
                     position: "absolute",
-                    display: "flex",
                     justifyContent: "flex-end",
-                    width: "100%",
                 }}
             >
-                <div
+                <Stack
                     style={{
-                        display: "flex",
-                        flexDirection: "column",
                         width: 500,
                         background: "rgba(0, 0, 0, 0.6)",
                         marginRight: "40px",
@@ -418,7 +416,7 @@ const Flamegraph: React.FC<{
                     >
                         Reset
                     </button>
-                    <div style={{ display: "flex", alignItems: "center" }}>
+                    <Row>
                         Center ({Math.round(colorCenter)})
                         <Slider
                             min={0}
@@ -426,8 +424,8 @@ const Flamegraph: React.FC<{
                             value={colorCenter}
                             onChange={setColorCenter}
                         />
-                    </div>
-                    <div style={{ display: "flex", alignItems: "center" }}>
+                    </Row>
+                    <Row>
                         Temperature ({colorWidth.toFixed(2)})
                         <Slider
                             min={0}
@@ -435,7 +433,7 @@ const Flamegraph: React.FC<{
                             value={colorWidth}
                             onChange={setColorWidth}
                         />
-                    </div>
+                    </Row>
 
                     <button
                         onClick={() => showMergedSubgraph(rootNode)}
@@ -443,17 +441,11 @@ const Flamegraph: React.FC<{
                     >
                         Merge
                     </button>
-                </div>
-            </div>
+                </Stack>
+            </Row>
 
             <ColorContext.Provider value={{ colorCenter, colorWidth }}>
-                <div
-                    style={{
-                        display: "flex",
-                        flexDirection: "column",
-                        height: "100%",
-                    }}
-                >
+                <Stack tall>
                     <div
                         style={{
                             flexGrow: 1,
@@ -496,7 +488,7 @@ const Flamegraph: React.FC<{
                     </div>
 
                     <NodeDetails nodeId={hoveredNode} graph={graph} />
-                </div>
+                </Stack>
             </ColorContext.Provider>
         </>
     )
@@ -507,7 +499,7 @@ const FlamegraphTab: React.FC<{
     submitJob: (id: string, job: Job) => void
 }> = ({ state, submitJob }) => {
     return (
-        <div style={{ flexGrow: 1, minHeight: 0 }}>
+        <Grow>
             {state.progress && <div>{state.progress}</div>}
             {state.error && <div>Error: {state.error}</div>}
             {state.result?.error && (
@@ -528,7 +520,7 @@ const FlamegraphTab: React.FC<{
                     submitJob={(id, job) => submitJob(id, job, [])}
                 />
             ) : null}
-        </div>
+        </Grow>
     )
 }
 
@@ -620,9 +612,7 @@ const App = (): React.JSX.Element => {
 
     const selectedTabData = selectedTab ? allTabData.get(selectedTab) : null
     return (
-        <div
-            style={{ height: "100%", display: "flex", flexDirection: "column" }}
-        >
+        <Stack tall>
             <div>
                 {[...allTabData.keys()].map((id) => (
                     <button key={id} onClick={() => setSelectedTab(id)}>
@@ -633,7 +623,7 @@ const App = (): React.JSX.Element => {
             {selectedTabData && (
                 <FlamegraphTab state={selectedTabData} submitJob={submitJob} />
             )}
-        </div>
+        </Stack>
     )
 }
 
