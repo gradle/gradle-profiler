@@ -496,7 +496,7 @@ const Flamegraph: React.FC<{
 
 const FlamegraphTab: React.FC<{
     state: WorkerState
-    submitJob: (id: string, job: Job) => void
+    submitJob: (id: string, job: Job, transfer: Transferable[]) => void
 }> = ({ state, submitJob }) => {
     return (
         <Grow>
@@ -535,6 +535,8 @@ const App = (): React.JSX.Element => {
         DataWorker,
     )
 
+    const [customStackName, setCustomStackName] = useState("simple-stacks")
+
     const [selectedTab, setSelectedTab] = useState<string | null>(null)
     const [allTabData, setAllAllTabData] = useState<Map<string, WorkerState>>(
         new Map(),
@@ -569,6 +571,7 @@ const App = (): React.JSX.Element => {
 
     const loadStacks = React.useCallback(
         async (stackName: string) => {
+            setCustomStackName("")
             setTabData(stackName, { progress: "Downloading stack file..." })
 
             const response = await fetch(`/test/${stackName}.txt`)
@@ -593,23 +596,6 @@ const App = (): React.JSX.Element => {
         [submitJob],
     )
 
-    // TODO: Hacky way to load sample -stacks file for testing.
-    // We should replace this with a file picker, drag-and-drop, and/or a way
-    // to embed this application in a profiling result so that it automatically
-    // has access to the profile's stacks.
-    if (allTabData.size == 0) {
-        return (
-            <>
-                <button onClick={() => loadStacks("simple-stacks")}>
-                    Render Simple Stacks
-                </button>
-                <button onClick={() => loadStacks("more-complex-stacks")}>
-                    Render Complex Stacks
-                </button>
-            </>
-        )
-    }
-
     const selectedTabData = selectedTab ? allTabData.get(selectedTab) : null
     return (
         <Stack tall>
@@ -619,6 +605,19 @@ const App = (): React.JSX.Element => {
                         {id}
                     </button>
                 ))}
+                <input
+                    value={customStackName}
+                    placeholder={"Stack name"}
+                    onChange={(e) => setCustomStackName(e.target.value)}
+                    onKeyDown={(e) => {
+                        if (e.key === "Enter") {
+                            loadStacks(customStackName)
+                        }
+                    }}
+                />
+                <button onClick={() => loadStacks(customStackName)}>
+                    Load
+                </button>
             </div>
             {selectedTabData && (
                 <FlamegraphTab state={selectedTabData} submitJob={submitJob} />

@@ -12,6 +12,18 @@ Run `./gradlew :flamegraph:serve`
 
 This serves a live development version of the flamegraph app at http://localhost:5173/
 
+### Test files
+
+To test the flamegraph tool, place `*-stacks.txt` files in the `src/main/public/test` directory.
+
+By default, a `simple-stacks.txt` file is included as a basic demo.
+
+### Building the production version
+
+Run `./gradlew :flamegraph:build`.
+
+The production build outputs will be placed in `build/vite`.
+
 ### Managed node installation
 
 This build manages (downloads) its own version of node and npm.
