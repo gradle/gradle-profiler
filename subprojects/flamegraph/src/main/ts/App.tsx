@@ -11,7 +11,7 @@ import {
     type WorkerParams,
     type WorkerResponse,
 } from "./worker"
-import DataWorker from "./worker?worker&url"
+import DataWorker from "./worker?worker&inline"
 import useWorkerPool from "./useWorkerPool.ts"
 import { Stack, Row, Grow } from "./containers.tsx"
 
