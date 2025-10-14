@@ -36,7 +36,7 @@ NPM commands: `./gradlew :flamegraph:npm --cmd "whatever you want"`
 
 For example, to install a new package:
 
-`./gradlew :flamegraph:npm --cmd "install some-package"`
+`./gradlew :flamegraph:npm --cmd "install --save fflate"`
 
 ### NPX
 
