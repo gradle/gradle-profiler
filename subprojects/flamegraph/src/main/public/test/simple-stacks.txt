@@ -1,9 +1,0 @@
-first;foo 100
-first;bar 200
-first;baz 300
-first;baz;a 100
-first;baz;b 100
-first;baz;d 10
-second;foo 300
-second;bar 200
-second;baz 100

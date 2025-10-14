@@ -13,7 +13,7 @@ import {
 } from "./worker"
 import DataWorker from "./worker?worker&inline"
 import useWorkerPool from "./useWorkerPool.ts"
-import { Stack, Row, Grow } from "./containers.tsx"
+import { Grow, Row, Stack } from "./containers.tsx"
 
 /**
  * Nodes with pixel width below this threshold will not be rendered.
@@ -289,10 +289,11 @@ const Slider: React.FC<{
 
 const Flamegraph: React.FC<{
     graph: StackGraph
+    rootNode: number
+    setRootNode: (nodeId: number) => void
     submitJob: (id: string, job: Job) => void
-}> = ({ graph, submitJob }) => {
+}> = ({ graph, rootNode, setRootNode, submitJob }) => {
     const [hoveredNode, setHoveredNode] = useState<number | null>(null)
-    const [rootNode, setRootNode] = useState(0)
 
     const svgRef = useRef<SVGSVGElement | null>(null)
     const [svgWidth, setSvgWidth] = useState<number | null>(null)
@@ -384,9 +385,7 @@ const Flamegraph: React.FC<{
         }
     }, [svgHeight])
 
-    // Reset the root node when the graph changes
     useEffect(() => {
-        setRootNode(0)
         setHoveredNode(null)
     }, [graph])
 
@@ -496,27 +495,32 @@ const Flamegraph: React.FC<{
 
 const FlamegraphTab: React.FC<{
     state: WorkerState
+    setState: (state: WorkerState) => void
     submitJob: (id: string, job: Job, transfer: Transferable[]) => void
-}> = ({ state, submitJob }) => {
+}> = ({ state, setState, submitJob }) => {
     return (
         <Grow>
             {state.progress && <div>{state.progress}</div>}
-            {state.error && <div>Error: {state.error}</div>}
-            {state.result?.error && (
+            {state.error && (
                 <>
-                    <div>Error: {state.result.error.message}</div>
+                    <div>Error: {state.error.message}</div>
                     <div>
-                        {state.result.error.stack
-                            ?.split("\n")
-                            .map((line, index) => (
-                                <div key={index}>{line}</div>
-                            ))}
+                        {state.error.stack?.split("\n").map((line, index) => (
+                            <div key={index}>{line}</div>
+                        ))}
                     </div>
                 </>
             )}
-            {state.result && state.result.result ? (
+            {state.graph ? (
                 <Flamegraph
-                    graph={state.result.result.graph}
+                    graph={state.graph.graph}
+                    rootNode={state.graph.rootNode}
+                    setRootNode={(nodeId) => {
+                        setState({
+                            ...state,
+                            graph: { ...state.graph, rootNode: nodeId },
+                        })
+                    }}
                     submitJob={(id, job) => submitJob(id, job, [])}
                 />
             ) : null}
@@ -524,10 +528,27 @@ const FlamegraphTab: React.FC<{
     )
 }
 
+interface GraphState {
+    graph: StackGraph
+    rootNode: number
+}
+
 interface WorkerState {
-    error?: string
+    error?: {
+        message: string
+        stack?: string
+    }
     progress?: string
-    result?: WorkerResponse
+    graph?: GraphState
+}
+
+const stringToStream = (str: string): ReadableStream<Uint8Array> => {
+    return new ReadableStream({
+        start(controller) {
+            controller.enqueue(new TextEncoder().encode(str))
+            controller.close()
+        },
+    })
 }
 
 const App = (): React.JSX.Element => {
@@ -535,7 +556,7 @@ const App = (): React.JSX.Element => {
         DataWorker,
     )
 
-    const [customStackName, setCustomStackName] = useState("simple-stacks")
+    const [customStackName, setCustomStackName] = useState("")
 
     const [selectedTab, setSelectedTab] = useState<string | null>(null)
     const [allTabData, setAllAllTabData] = useState<Map<string, WorkerState>>(
@@ -559,7 +580,14 @@ const App = (): React.JSX.Element => {
             const params: WorkerParams = { job: job }
             try {
                 const result = await runJob(id, params, transfer)
-                setTabData(id, { result: result })
+                if ("error" in result) {
+                    setTabData(id, { error: result.error })
+                    return
+                } else if ("result" in result) {
+                    setTabData(id, {
+                        graph: { graph: result.result.graph, rootNode: 0 },
+                    })
+                }
             } catch (err) {
                 setTabData(id, {
                     error: err instanceof Error ? err.message : String(err),
@@ -596,6 +624,63 @@ const App = (): React.JSX.Element => {
         [submitJob],
     )
 
+    // Load the demo stacks
+    useEffect(() => {
+        const stream = stringToStream(`alpha;component_one;foo;auth 10
+alpha;component_one;foo;process;db_read;connection_pool;check_idle_connections;check_feature_flag 65
+alpha;component_one;foo;process;db_read 150
+alpha;component_one;foo;process;transform;serialization_helper;object_mapper;write_buffer 20
+alpha;component_one;foo;logging 5
+alpha;component_two;foo;auth 12
+alpha;component_two;foo;process;db_read 40
+alpha;component_two;foo;process;transform;serialization_helper;object_mapper;instrumentation.increment_counter 45
+alpha;component_two;foo;process;transform 130
+alpha;component_two;foo;validate 50
+alpha;component_two;foo;logging 5
+asset_pipeline;process_image;decode_png 80
+asset_pipeline;process_image;resize 120
+asset_pipeline;process_image;compress_jpeg 150
+beta;foo;auth 5
+beta;foo;process;db_read;query_planner;optimizer;gc.safepoint 25
+beta;foo;process;db_read 10
+beta;foo;logging 3
+gamma;middleware;foo;auth 9
+gamma;middleware;foo;process;db_read 60
+gamma;middleware;foo;process;transform;serialization_helper;object_mapper;check_feature_flag 35
+gamma;middleware;foo;process;transform 55
+gamma;middleware;foo;logging 4
+alpha;component_one;foo;auth 14
+alpha;component_one;foo;process;db_read 135
+alpha;component_one;foo;process;transform;serialization_helper;object_mapper;instrumentation.increment_counter 30
+alpha;component_one;foo;process;transform 35
+alpha;component_one;foo;logging 6
+init_subsystem;load_config;parse_yaml 90
+init_subsystem;connect_downstream_api 110
+delta;service;foo;auth 20
+delta;service;foo;process;db_read 90
+delta;service;foo;process;transform 80
+delta;service;foo;validate 45
+delta;service;foo;logging 8
+beta;foo;auth 7
+beta;foo;process;db_read;connection_pool;check_idle_connections;check_feature_flag 15
+beta;foo;process;db_read 15
+beta;foo;logging 4
+gamma;middleware;foo;auth 11
+gamma;middleware;foo;process;db_read 55
+gamma;middleware;foo;process;transform 65
+gamma;middleware;foo;process;db_read;query_planner;optimizer;gc.safepoint 45
+gamma;middleware;foo;logging 5
+`)
+        submitJob(
+            "demo",
+            {
+                type: "parseStream",
+                stream,
+            },
+            [stream],
+        )
+    }, [])
+
     const selectedTabData = selectedTab ? allTabData.get(selectedTab) : null
     return (
         <Stack tall>
@@ -615,12 +700,19 @@ const App = (): React.JSX.Element => {
                         }
                     }}
                 />
-                <button onClick={() => loadStacks(customStackName)}>
+                <button
+                    onClick={() => loadStacks(customStackName)}
+                    disabled={customStackName === ""}
+                >
                     Load
                 </button>
             </div>
             {selectedTabData && (
-                <FlamegraphTab state={selectedTabData} submitJob={submitJob} />
+                <FlamegraphTab
+                    state={selectedTabData}
+                    setState={(newState) => setTabData(selectedTab, newState)}
+                    submitJob={submitJob}
+                />
             )}
         </Stack>
     )
