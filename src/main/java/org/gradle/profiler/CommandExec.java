@@ -8,18 +8,14 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
 import java.util.function.Supplier;
 import java.util.stream.Stream;
 
@@ -226,28 +222,6 @@ public class CommandExec {
             if (result != 0) {
                 throw new RuntimeException(commandErrorMessage(processBuilder, diagnosticOutput.get()));
             }
-        }
-
-        public void waitForSuccess(long timeout, TimeUnit unit) throws ExecutionException, InterruptedException, TimeoutException {
-            Future<?> future = executor.submit((Runnable) this::waitForSuccess);
-            future.get(timeout, unit);
-        }
-
-        public void interrupt() {
-            int pid;
-            try {
-                Field field = process.getClass().getDeclaredField("pid");
-                field.setAccessible(true);
-                pid = (int) field.get(process);
-            } catch (Exception e) {
-                throw new IllegalStateException(e);
-            }
-            run("kill", String.valueOf(pid));
-            try {
-                process.waitFor();
-            } catch (InterruptedException ignore) {
-            }
-            shutdownExecutor();
         }
 
         public void kill() {
