@@ -21,8 +21,6 @@ object GradleProfilerPublishing : BuildType({
         javaHome(os, arch, JavaVersion.OPENJDK_11)
         password("pgpSigningKey", "credentialsJSON:20c56c10-3c97-4753-91c2-685ddf26700e", display = ParameterDisplay.HIDDEN)
         password("pgpSigningPassphrase", "credentialsJSON:d49291bd-101e-4165-a9a8-912ca457926b", display = ParameterDisplay.HIDDEN)
-        password("mavenCentralStagingRepoUser", "credentialsJSON:ce6ff00a-dc06-4b9b-aa1f-7b01bea2eb2f", display = ParameterDisplay.HIDDEN)
-        password("mavenCentralStagingRepoPassword", "credentialsJSON:f3c71885-0cec-49c9-adcf-d21536fcf1ca", display = ParameterDisplay.HIDDEN)
         text("additional.gradle.parameters", "")
 
         param("env.ORG_GRADLE_PROJECT_githubToken", "%github.bot-teamcity.token%")
