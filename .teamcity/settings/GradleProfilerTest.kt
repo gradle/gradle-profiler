@@ -32,10 +32,8 @@ open class GradleProfilerTest(os: Os, javaVersion: JavaVersion, arch: Arch) : Bu
 
     features {
         parallelTests {
-            numberOfBatches = if (os == Os.macos && arch == Arch.AMD64) {
-                2 // only 2 Intel mac's left
-            } else if (os == Os.windows) {
-                8 // balance so Windows and Linux run with similar wall clock time
+            numberOfBatches = if (os == Os.windows) {
+                8 // balance so Windows, Linux and macOS run with similar wall clock time
             } else {
                 4
             }
@@ -79,9 +77,8 @@ object LinuxJava11 : GradleProfilerTest(Os.linux, JavaVersion.OPENJDK_11, Arch.A
     name = "Linux - Java 11"
 })
 
-
-object MacOSJava8 : GradleProfilerTest(Os.macos, JavaVersion.ORACLE_JAVA_8, Arch.AMD64, {
-    name = "macOS - Java 8"
+object MacOSJava11 : GradleProfilerTest(Os.macos, JavaVersion.OPENJDK_11, Arch.AARCH64, {
+    name = "macOS - Java 11"
 })
 
 object WindowsJava11 : GradleProfilerTest(Os.windows, JavaVersion.OPENJDK_11, Arch.AMD64, {
