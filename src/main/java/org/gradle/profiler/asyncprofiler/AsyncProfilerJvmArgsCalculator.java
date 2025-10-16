@@ -25,8 +25,8 @@ class AsyncProfilerJvmArgsCalculator implements JvmArgsCalculator {
         // TODO support --all events
         //  e.g. -agentpath:/path/to/libasyncProfiler.so=start,all,alloc=2m,lock=10ms,file=profile.jfr
         List<String> events = new ArrayList<>(profilerConfig.getEvents());
-        boolean profileAllocations = events.remove(AsyncProfilerConfig.EVENT_ALLOC);
-        boolean profileLocks = events.remove(AsyncProfilerConfig.EVENT_LOCK);
+        boolean profileAllocations = events.size() > 1 && events.remove(AsyncProfilerConfig.EVENT_ALLOC);
+        boolean profileLocks = events.size() > 1 && events.remove(AsyncProfilerConfig.EVENT_LOCK);
 
         StringBuilder agent = new StringBuilder()
             .append("-agentpath:").append(profilerConfig.getDistribution().getLibrary()).append("=start")
