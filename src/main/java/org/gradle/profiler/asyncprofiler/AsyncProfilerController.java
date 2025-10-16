@@ -137,7 +137,7 @@ public class AsyncProfilerController implements InstrumentingProfiler.SnapshotCa
             case "cpu":
                 return EventType.CPU;
             case "wall":
-                return EventType.CPU; // TODO see if WALL event makes sense.
+                return EventType.WALL;
             case "alloc":
                 return EventType.ALLOCATION;
             case "lock":
