@@ -21,6 +21,7 @@ public class AsyncProfilerFactory extends ProfilerFactory {
     private ArgumentAcceptingOptionSpec<Integer> intervalOption;
     private ArgumentAcceptingOptionSpec<Integer> allocIntervalOption;
     private ArgumentAcceptingOptionSpec<Integer> lockThresholdOption;
+    private ArgumentAcceptingOptionSpec<Integer> wallIntervalOption;
     private ArgumentAcceptingOptionSpec<Integer> stackDepthOption;
     private ArgumentAcceptingOptionSpec<Boolean> systemThreadOption;
 
@@ -60,6 +61,11 @@ public class AsyncProfilerFactory extends ProfilerFactory {
             .withRequiredArg()
             .ofType(Integer.class)
             .defaultsTo(250_000);
+        wallIntervalOption = parser.accepts("async-profiler-wall-interval", "wall clock profiling interval in nanoseconds. Default is 10ms.")
+            .availableIf("profile")
+            .withRequiredArg()
+            .ofType(Integer.class)
+            .defaultsTo(10_000_000);
         stackDepthOption = parser.accepts("async-profiler-stackdepth", "The maximum Java stack depth.")
             .availableIf("profile")
             .withRequiredArg()
@@ -85,6 +91,7 @@ public class AsyncProfilerFactory extends ProfilerFactory {
         int interval = intervalOption.value(parsedOptions);
         int allocInterval = allocIntervalOption.value(parsedOptions);
         int lockThreshold = lockThresholdOption.value(parsedOptions);
+        int wallInterval = wallIntervalOption.value(parsedOptions);
         int stackDepth = stackDepthOption.value(parsedOptions);
         Boolean showSystemThreads = systemThreadOption.value(parsedOptions);
         return new AsyncProfilerConfig(
@@ -94,6 +101,7 @@ public class AsyncProfilerFactory extends ProfilerFactory {
             interval,
             allocInterval,
             lockThreshold,
+            wallInterval,
             stackDepth,
             showSystemThreads
         );
