@@ -57,8 +57,8 @@ public class AsyncProfilerController implements InstrumentingProfiler.SnapshotCa
         // TODO support all events, custom options ?
         //  e.g. asprof --all -e cycles --alloc 2m --lock 10ms -f profile.jfr
         List<String> events = new ArrayList<>(profilerConfig.getEvents());
-        boolean profileAllocations = events.remove(AsyncProfilerConfig.EVENT_ALLOC);
-        boolean profileLocks = events.remove(AsyncProfilerConfig.EVENT_LOCK);
+        boolean profileAllocations = events.size() > 1 && events.remove(AsyncProfilerConfig.EVENT_ALLOC);
+        boolean profileLocks = events.size() > 1 && events.remove(AsyncProfilerConfig.EVENT_LOCK);
 
         ImmutableList.Builder<String> arguments = ImmutableList.builder();
         arguments.add(
