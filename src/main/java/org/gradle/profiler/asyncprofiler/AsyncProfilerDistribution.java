@@ -1,16 +1,11 @@
 package org.gradle.profiler.asyncprofiler;
 
+import org.checkerframework.checker.nullness.qual.NonNull;
 import org.gradle.profiler.CommandExec;
 import org.gradle.profiler.OperatingSystem;
 
 import java.io.File;
-import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.attribute.PosixFilePermission;
-import java.nio.file.attribute.PosixFilePermissions;
 import java.util.Arrays;
-import java.util.EnumSet;
-import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -76,7 +71,7 @@ public class AsyncProfilerDistribution {
     private final String source;
     private final File executable;
     private final File library;
-    private final String version;
+    private final Version version;
 
     AsyncProfilerDistribution(File home, String source) {
         this.source = source;
@@ -120,9 +115,9 @@ public class AsyncProfilerDistribution {
         );
         Matcher matcher = Pattern.compile("Async-profiler ([\\d.]+).+").matcher(output);
         if (matcher.find()) {
-            version = matcher.group(1).trim();
+            version = new Version(matcher.group(1).trim());
         } else {
-            version = "unknown";
+            version = Version.UNKNOWN;
         }
     }
 
@@ -134,7 +129,62 @@ public class AsyncProfilerDistribution {
         return library;
     }
 
-    public String getVersion(File asyncProfilerHome) {
+    public Version getVersion() {
         return version;
+    }
+
+    /**
+     * Async Profiler Version. Async profiler versions are usually in the form <code>major.minor</code>, but nothing
+     * prevents to move to <code>major.minor.patch</code> or else. At this point, async-profiler had versions
+     * <em>2.9</em>, <em>3.0</em>, <em>4.0</em>, <em>4.1</em>, so this code knows about major and minor only.
+     */
+    public static class Version implements Comparable<Version> {
+        public static final Version UNKNOWN = new Version("unknown") {
+            @Override
+            public int compareTo(Version other) {
+                return 0;
+            }
+        };
+        public static final Version AP_3_0 = new Version("4.0");
+        public static final Version AP_4_0 = new Version("4.0");
+        public static final Version AP_4_1 = new Version("4.1");
+
+        public final int major;
+        public final int minor;
+        public final String stringVersion;
+
+        public Version(String stringVersion) {
+            if (stringVersion.equals("unknown")) {
+                this.major = -1;
+                this.minor = -1;
+                this.stringVersion = stringVersion;
+                return;
+            }
+            String[] parts = stringVersion.split("\\.");
+            if (parts.length < 2) {
+                throw new IllegalArgumentException("Invalid version: " + stringVersion);
+            }
+            try {
+                major = Integer.parseInt(parts[0]);
+                minor = Integer.parseInt(parts[1]);
+            } catch (NumberFormatException e) {
+                throw new IllegalArgumentException("Invalid version: " + stringVersion, e);
+            }
+            this.stringVersion = stringVersion;
+        }
+
+
+        @Override
+        public int compareTo(Version other) {
+            if (this == UNKNOWN || other == UNKNOWN) {
+                // Make UNKNOWN always above to parseable versions
+                return this == other ? 0 : (this == UNKNOWN ? 1 : -1);
+            }
+            int majorDiff = Integer.compare(this.major, other.major);
+            if (majorDiff != 0) {
+                return majorDiff;
+            }
+            return Integer.compare(this.minor, other.minor);
+        }
     }
 }

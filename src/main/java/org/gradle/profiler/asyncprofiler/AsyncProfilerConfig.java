@@ -7,6 +7,7 @@ import java.util.List;
 public class AsyncProfilerConfig {
     public static final String EVENT_ALLOC = "alloc";
     public static final String EVENT_LOCK = "lock";
+    public static final String EVENT_WALL = "wall";
 
     private final AsyncProfilerDistribution asyncProfilerDistribution;
     private final List<String> events;
@@ -14,6 +15,7 @@ public class AsyncProfilerConfig {
     private final int interval;
     private final int allocSampleSize;
     private final int lockThreshold;
+    private final int wallInterval;
     private final int stackDepth;
     private final boolean includeSystemThreads;
 
@@ -24,6 +26,7 @@ public class AsyncProfilerConfig {
         int interval,
         int allocSampleSize,
         int lockThreshold,
+        int wallInterval,
         int stackDepth,
         boolean includeSystemThreads
     ) {
@@ -33,6 +36,7 @@ public class AsyncProfilerConfig {
         this.interval = interval;
         this.allocSampleSize = allocSampleSize;
         this.lockThreshold = lockThreshold;
+        this.wallInterval = wallInterval;
         this.stackDepth = stackDepth;
         this.includeSystemThreads = includeSystemThreads;
     }
@@ -63,6 +67,10 @@ public class AsyncProfilerConfig {
 
     public int getLockThreshold() {
         return lockThreshold;
+    }
+
+    public int getWallInterval() {
+        return wallInterval;
     }
 
     public int getStackDepth() {

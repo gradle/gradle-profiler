@@ -16,6 +16,7 @@ public class AsyncProfilerAllEventsProfilerFactory extends AsyncProfilerFactory 
             config.getInterval(),
             config.getAllocSampleSize(),
             config.getLockThreshold(),
+            config.getWallInterval(),
             config.getStackDepth(),
             config.isIncludeSystemThreads()
         );

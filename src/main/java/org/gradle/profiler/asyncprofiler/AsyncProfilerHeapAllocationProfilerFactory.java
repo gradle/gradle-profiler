@@ -15,6 +15,7 @@ public class AsyncProfilerHeapAllocationProfilerFactory extends AsyncProfilerFac
             config.getInterval(),
             config.getAllocSampleSize(),
             config.getLockThreshold(),
+            config.getWallInterval(),
             config.getStackDepth(),
             config.isIncludeSystemThreads()
         );
