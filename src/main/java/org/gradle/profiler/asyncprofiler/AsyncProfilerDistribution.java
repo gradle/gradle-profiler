@@ -1,6 +1,5 @@
 package org.gradle.profiler.asyncprofiler;
 
-import org.checkerframework.checker.nullness.qual.NonNull;
 import org.gradle.profiler.CommandExec;
 import org.gradle.profiler.OperatingSystem;
 
