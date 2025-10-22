@@ -42,6 +42,9 @@ class AsyncProfilerIntegrationTest extends AbstractProfilerIntegrationTest imple
 
         and:
         assertGraphsGeneratedForScenario("allocation", "cpu", "monitor-blocked")
+        if (!OperatingSystem.isMacOS()) {
+            assertGraphsGeneratedForScenario("wall")
+        }
     }
 
     def "profiles wall clock time using async-profiler with tooling API and warm daemon"() {

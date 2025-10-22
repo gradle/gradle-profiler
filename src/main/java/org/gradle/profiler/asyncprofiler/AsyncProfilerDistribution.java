@@ -95,7 +95,7 @@ public class AsyncProfilerDistribution {
             executable = new File(home, "profiler.sh");
             library = new File(home, "build/libasyncProfiler.so");
         }
-        System.out.println(asprofBinary.getAbsolutePath());
+        System.out.println(asprofBinary.getAbsolutePath()); // TODO remove
         if (!executable.isFile() // || !Files.isExecutable(executable.toPath())
             || !library.isFile() // || !Files.isExecutable(library.toPath())
         ) {
@@ -116,7 +116,7 @@ public class AsyncProfilerDistribution {
         if (matcher.find()) {
             version = new Version(matcher.group(1).trim());
         } else {
-            version = Version.UNKNOWN;
+            throw new IllegalStateException("Unknown async-profiler distribution at: " + home);
         }
     }
 
@@ -138,15 +138,7 @@ public class AsyncProfilerDistribution {
      * <em>2.9</em>, <em>3.0</em>, <em>4.0</em>, <em>4.1</em>, so this code knows about major and minor only.
      */
     public static class Version implements Comparable<Version> {
-        public static final Version UNKNOWN = new Version("unknown") {
-            @Override
-            public int compareTo(Version other) {
-                return 0;
-            }
-        };
-        public static final Version AP_3_0 = new Version("4.0");
-        public static final Version AP_4_0 = new Version("4.0");
-        public static final Version AP_4_1 = new Version("4.1");
+        public static final Version AP_3_0 = new Version("3.0");
 
         public final int major;
         public final int minor;
@@ -175,10 +167,6 @@ public class AsyncProfilerDistribution {
 
         @Override
         public int compareTo(Version other) {
-            if (this == UNKNOWN || other == UNKNOWN) {
-                // Make UNKNOWN always above to parseable versions
-                return this == other ? 0 : (this == UNKNOWN ? 1 : -1);
-            }
             int majorDiff = Integer.compare(this.major, other.major);
             if (majorDiff != 0) {
                 return majorDiff;
