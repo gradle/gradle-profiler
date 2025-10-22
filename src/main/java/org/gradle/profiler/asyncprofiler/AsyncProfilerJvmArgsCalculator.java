@@ -8,8 +8,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 
-import static org.gradle.profiler.asyncprofiler.AsyncProfilerDistribution.Version.AP_3_0;
-
 class AsyncProfilerJvmArgsCalculator implements JvmArgsCalculator {
     private final AsyncProfilerConfig profilerConfig;
     private final ScenarioSettings scenarioSettings;
@@ -27,16 +25,16 @@ class AsyncProfilerJvmArgsCalculator implements JvmArgsCalculator {
         //  e.g. -agentpath:/path/to/libasyncProfiler.so=start,all,alloc=2m,lock=10ms,file=profile.jfr
         //       -agentpath:/path/to/libasyncProfiler.so=start,all,event=cycles,nativemem=10,lock=100,alloc=1000,wall=10000,proc=10,file=%f.jfr
 
-        //  | Events            | Generated Command                                                    |
-        //  |-------------------|----------------------------------------------------------------------|
-        //  | ["alloc"]         | -agentpath:/path/to/libasyncProfiler.dylib=start,alloc=524287,file=out.jfr |
-        //  | ["cpu"]           | -agentpath:/path/to/libasyncProfiler.dylib=start,event=cpu,interval=10000000,file=out.jfr |
+        //  | Events            | Generated Command                                                                                      |
+        //  |-------------------|--------------------------------------------------------------------------------------------------------|
+        //  | ["alloc"]         | -agentpath:/path/to/libasyncProfiler.dylib=start,alloc=524287,file=out.jfr                             |
+        //  | ["cpu"]           | -agentpath:/path/to/libasyncProfiler.dylib=start,event=cpu,interval=10000000,file=out.jfr              |
         //  | ["cpu", "alloc"]  | -agentpath:/path/to/libasyncProfiler.dylib=start,event=cpu,interval=10000000,alloc=524287,file=out.jfr |
-        //  | ["alloc"]         | -agentpath:/path/to/libasyncProfiler.dylib=start,alloc=524287,file=out.jfr |
+        //  | ["alloc"]         | -agentpath:/path/to/libasyncProfiler.dylib=start,alloc=524287,file=out.jfr                             |
 
         List<String> events = new ArrayList<>(profilerConfig.getEvents());
 
-        // For agent-based profiling: alloc/lock/wall always use auxiliary options (both 2.9 and 3.0+)
+        // For agent-based profiling: alloc/lock/wall always use auxiliary options
         boolean useAllocOption = events.remove(AsyncProfilerConfig.EVENT_ALLOC);
         boolean useLockOption = events.remove(AsyncProfilerConfig.EVENT_LOCK);
         boolean useWallOption = events.remove(AsyncProfilerConfig.EVENT_WALL);
@@ -57,7 +55,7 @@ class AsyncProfilerJvmArgsCalculator implements JvmArgsCalculator {
             .append(",").append(outputType.getCommandLineOption())
             .append(",").append(profilerConfig.getCounter().name().toLowerCase(Locale.ROOT))
             .append(",file=").append(outputType.individualOutputFileFor(scenarioSettings))
-            .append(",ann");
+            .append(",ann"); // annotate java methods
 
         if (useAllocOption) {
             agent.append(",alloc=").append(profilerConfig.getAllocSampleSize());

@@ -9,32 +9,14 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 /**
- * Model an async-profiler distribution.
+ * Model an async-profiler distribution, from 3+.
  * <p>
- * Async-Profiler executable was as shell script up to version 2.x, also
- * the async profile library had the `.so` extension even on macOS, (a .dyli symlink
- * was introduced in 2.8). TODO check that <===
- * </p>
- * <p>
- * Starting from async-profiler 3.0, the executable is a binary.
+ * Note, that Async-Profiler executable was as shell script up to version 2.x, also
+ * the async profile library had the `.so` extension even on macOS, (a .dylib symlink
+ * was introduced in 2.8). Starting from async-profiler 3.0, the executable is a binary.
  * </p>
  *
  * <p>
- * Here's the different layouts: TODO add linux example
- * <pre><code>
- * async-profiler-2.9-macos
- * ├── build
- * │   ├── async-profiler.jar
- * │   ├── converter.jar
- * │   ├── jattach
- * │   ├── libasyncProfiler.dylib -> libasyncProfiler.so
- * │   └── libasyncProfiler.so
- * ├── CHANGELOG.md
- * ├── LICENSE
- * ├── profiler.sh
- * └── README.md
- * </code></pre>
- *
  * <pre><code>
  * async-profiler-3.0-macos
  * ├── bin
@@ -49,11 +31,7 @@ import java.util.regex.Pattern;
  * </code></pre>
  *
  * <pre><code>
- *
- * </code></pre>
- *
- * <pre><code>
- * async-profiler-4.1-macos
+ * async-profiler-4.2-macos
  * ├── bin
  * │   ├── asprof
  * │   └── jfrconv
@@ -91,7 +69,7 @@ public class AsyncProfilerDistribution {
 
             library = new File(home, "lib/libasyncProfiler" + libExtension);
         } else {
-            // Fallback to async-profiler 2.x
+            // Understand async-profiler 2.x, so we can at least report the version used
             executable = new File(home, "profiler.sh");
             library = new File(home, "build/libasyncProfiler.so");
         }
@@ -115,6 +93,9 @@ public class AsyncProfilerDistribution {
         Matcher matcher = Pattern.compile("Async-profiler ([\\d.]+).+").matcher(output);
         if (matcher.find()) {
             version = new Version(matcher.group(1).trim());
+            if (version.major < 3) {
+                throw new IllegalStateException("Async-profiler version " + version.stringVersion + " found at " + home + ", but version 3.0 or higher is required.");
+            }
         } else {
             throw new IllegalStateException("Unknown async-profiler distribution at: " + home);
         }
@@ -138,8 +119,6 @@ public class AsyncProfilerDistribution {
      * <em>2.9</em>, <em>3.0</em>, <em>4.0</em>, <em>4.1</em>, so this code knows about major and minor only.
      */
     public static class Version implements Comparable<Version> {
-        public static final Version AP_3_0 = new Version("3.0");
-
         public final int major;
         public final int minor;
         public final String stringVersion;
