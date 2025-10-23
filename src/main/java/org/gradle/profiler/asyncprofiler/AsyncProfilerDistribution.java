@@ -108,12 +108,6 @@ public class AsyncProfilerDistribution {
         public final String stringVersion;
 
         public Version(String stringVersion) {
-            if (stringVersion.equals("unknown")) {
-                this.major = -1;
-                this.minor = -1;
-                this.stringVersion = stringVersion;
-                return;
-            }
             String[] parts = stringVersion.split("\\.");
             if (parts.length < 2) {
                 throw new IllegalArgumentException("Invalid version: " + stringVersion);
