@@ -3,24 +3,23 @@ package org.gradle.profiler.asyncprofiler;
 import com.google.common.collect.ImmutableSet;
 import org.apache.commons.compress.archivers.ArchiveEntry;
 import org.apache.commons.compress.archivers.ArchiveInputStream;
+import org.apache.commons.compress.archivers.tar.TarArchiveEntry;
 import org.apache.commons.compress.archivers.tar.TarArchiveInputStream;
-import org.apache.commons.compress.archivers.zip.ZipArchiveInputStream;
+import org.apache.commons.compress.archivers.zip.ZipArchiveEntry;
+import org.apache.commons.compress.archivers.zip.ZipFile;
 import org.apache.commons.compress.compressors.gzip.GzipCompressorInputStream;
 import org.gradle.profiler.Logging;
 import org.gradle.profiler.OperatingSystem;
 
 import java.io.BufferedInputStream;
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URL;
-import java.nio.file.FileVisitResult;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.SimpleFileVisitor;
+import java.nio.file.*;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.nio.file.attribute.PosixFilePermission;
+import java.util.Enumeration;
 import java.util.Set;
 
 import static java.nio.file.StandardCopyOption.REPLACE_EXISTING;
@@ -89,47 +88,72 @@ public class AsyncProfilerDownload {
     }
 
     private static void unzipTo(File source, File destDir) throws IOException {
-        try (ZipArchiveInputStream zipStream = new ZipArchiveInputStream(new BufferedInputStream(Files.newInputStream(source.toPath())))) {
-            extract(zipStream, destDir.toPath());
+        // NOTE: streaming zip files prevent to read unix file permissions, one need to use the ZipFile API instead
+        try (final ZipFile zipFile = ZipFile.builder().setFile(source).get()) {
+            Enumeration<ZipArchiveEntry> entries = zipFile.getEntries();
+            while (entries.hasMoreElements()) {
+                ZipArchiveEntry entry = entries.nextElement();
+                try (InputStream entryInputStream = zipFile.getInputStream(entry)) {
+                    extractEntry(destDir.toPath(), entryInputStream, entry);
+                }
+            }
         }
     }
 
     private static void untarTo(File source, File destDir) throws IOException {
-        try (TarArchiveInputStream tarStream = new TarArchiveInputStream(new GzipCompressorInputStream(new BufferedInputStream(Files.newInputStream(source.toPath()))))) {
-            extract(tarStream, destDir.toPath());
+        try (BufferedInputStream bis = new BufferedInputStream(Files.newInputStream(source.toPath()));
+             GzipCompressorInputStream gzipIs = new GzipCompressorInputStream(bis);
+             TarArchiveInputStream tarStream = new TarArchiveInputStream(gzipIs)) {
+            ArchiveEntry entry;
+            while ((entry = tarStream.getNextEntry()) != null) {
+                extractEntry(destDir.toPath(), tarStream, entry);
+            }
         }
     }
 
-    private static void extract(ArchiveInputStream archiveStream, Path destDir) throws IOException {
-        ArchiveEntry entry;
-        while ((entry = archiveStream.getNextEntry()) != null) {
-            if (entry.isDirectory()) {
-                continue;
-            }
-            String name = entry.getName();
-            Path file = destDir.resolve(name).normalize();
-            if (!file.startsWith(destDir)) {
-                // Ignore files outside destination dir
-                continue;
-            }
-            Files.createDirectories(file.getParent());
-            Files.copy(archiveStream, file, REPLACE_EXISTING);
-            boolean executable = isExecutable(entry);
-            if (executable) {
-                Set<PosixFilePermission> permissions = Files.getPosixFilePermissions(file);
-                ImmutableSet.Builder<PosixFilePermission> withExecute = ImmutableSet.builder();
-                withExecute.addAll(permissions);
+    private static void extractEntry(Path destDir, InputStream inputStream, ArchiveEntry entry) throws IOException {
+        if (entry.isDirectory()) {
+            return;
+        }
+
+        Path file = destDir.resolve(entry.getName()).normalize();
+        if (!file.startsWith(destDir)) {
+            // Ignore files outside destination dir
+            return;
+        }
+        Files.createDirectories(file.getParent());
+        Files.copy(inputStream, file, StandardCopyOption.REPLACE_EXISTING);
+
+        applyExecutablePermissions(getUnixMode(entry), file);
+    }
+
+    @SuppressWarnings("OctalInteger")
+    private static void applyExecutablePermissions(int mode, Path file) throws IOException {
+        if (mode != 0) {
+            Set<PosixFilePermission> permissions = Files.getPosixFilePermissions(file);
+            ImmutableSet.Builder<PosixFilePermission> withExecute = ImmutableSet.builder();
+            withExecute.addAll(permissions);
+            if ((mode & 0100) != 0) {
                 withExecute.add(PosixFilePermission.OWNER_EXECUTE);
-                Files.setPosixFilePermissions(file, withExecute.build());
             }
+            if ((mode & 0010) != 0) {
+                withExecute.add(PosixFilePermission.GROUP_EXECUTE);
+            }
+            if ((mode & 0001) != 0) {
+                withExecute.add(PosixFilePermission.OTHERS_EXECUTE);
+            }
+            Files.setPosixFilePermissions(file, withExecute.build());
         }
     }
 
-    private static boolean isExecutable(ArchiveEntry entry) {
-        return entry.getName().endsWith(".sh")
-            || entry.getName().endsWith(".so")
-            || entry.getName().endsWith(".dylib")
-            || entry.getName().endsWith("jattach");
+    private static int getUnixMode(ArchiveEntry entry) {
+        if (entry instanceof TarArchiveEntry) {
+            return ((TarArchiveEntry) entry).getMode();
+        } else if (entry instanceof ZipArchiveEntry) {
+            return ((ZipArchiveEntry) entry).getUnixMode();
+        } else {
+            return 0;
+        }
     }
 
     private static void copyTo(URL source, File dest) throws IOException {

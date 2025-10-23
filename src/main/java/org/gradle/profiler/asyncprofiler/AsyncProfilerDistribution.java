@@ -45,14 +45,11 @@ import java.util.regex.Pattern;
  * </p>
  */
 public class AsyncProfilerDistribution {
-    private final String source;
     private final File executable;
     private final File library;
     private final Version version;
 
     AsyncProfilerDistribution(File home, String source) {
-        this.source = source;
-
         // Handles async-profiler 3.0+
         File asprofBinary = new File(home, "bin/asprof");
         if (asprofBinary.isFile()) {
@@ -73,19 +70,6 @@ public class AsyncProfilerDistribution {
             executable = new File(home, "profiler.sh");
             library = new File(home, "build/libasyncProfiler.so");
         }
-        System.out.println(asprofBinary.getAbsolutePath()); // TODO remove
-        if (!executable.isFile() // || !Files.isExecutable(executable.toPath())
-            || !library.isFile() // || !Files.isExecutable(library.toPath())
-        ) {
-            throw new IllegalStateException("Invalid async-profiler distribution at: " + home);
-        }
-
-        try {
-            executable.setExecutable(true);
-            library.setExecutable(true);
-        } catch (Exception e) {
-            throw new IllegalStateException("Could not set executable permissions");
-        }
 
         String output = new CommandExec().runAndCollectOutput(
             Arrays.asList(executable.getAbsolutePath(), "--version")
@@ -94,10 +78,10 @@ public class AsyncProfilerDistribution {
         if (matcher.find()) {
             version = new Version(matcher.group(1).trim());
             if (version.major < 3) {
-                throw new IllegalStateException("Async-profiler version " + version.stringVersion + " found at " + home + ", but version 3.0 or higher is required.");
+                throw new IllegalStateException("Async-profiler version " + version.stringVersion + " found at " + home + ", but version 3.0 or higher is required." + " (source: " + source + ")");
             }
         } else {
-            throw new IllegalStateException("Unknown async-profiler distribution at: " + home);
+            throw new IllegalStateException("Unknown async-profiler distribution at: " + home + " (source: " + source + ")");
         }
     }
 
