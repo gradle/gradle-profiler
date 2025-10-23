@@ -51,12 +51,12 @@ public class AsyncProfilerDownload {
             return null;
         }
 
-        File installDist = new File(new File(System.getProperty("user.home")), ".gradle-profiler-dist/" + ASYNC_PROFILER_VERSION + "-" + platformName);
-        File marker = new File(installDist, "ok");
-        File homeDir = new File(installDist, String.format("async-profiler-%s-%s", ASYNC_PROFILER_VERSION, platformName));
+        Path installDist = Paths.get(System.getProperty("user.home"), ".gradle-profiler-dist", ASYNC_PROFILER_VERSION + "-" + platformName);
+        Path marker = installDist.resolve("ok");
+        Path homeDir = installDist.resolve(String.format("async-profiler-%s-%s", ASYNC_PROFILER_VERSION, platformName));
 
-        if (marker.isFile()) {
-            return homeDir;
+        if (Files.isReadable(marker)) {
+            return homeDir.toFile();
         }
 
         try {
@@ -68,8 +68,8 @@ public class AsyncProfilerDownload {
             ));
             Logging.startOperation("Download and install " + download);
 
-            Files.createDirectories(installDist.toPath());
-            File bundle = new File(installDist, String.format("async-profiler.%s", extension));
+            Files.createDirectories(installDist);
+            Path bundle = installDist.resolve(String.format("async-profiler.%s", extension));
             copyTo(download, bundle);
 
             deleteDir(homeDir);
@@ -79,34 +79,34 @@ public class AsyncProfilerDownload {
                 unzipTo(bundle, installDist);
             }
 
-            marker.createNewFile();
+            Files.createFile(marker);
         } catch (IOException e) {
             throw new RuntimeException("Could not install async-profiler", e);
         }
 
-        return homeDir;
+        return homeDir.toFile();
     }
 
-    private static void unzipTo(File source, File destDir) throws IOException {
+    private static void unzipTo(Path source, Path destDir) throws IOException {
         // NOTE: streaming zip files prevent to read unix file permissions, one need to use the ZipFile API instead
-        try (final ZipFile zipFile = ZipFile.builder().setFile(source).get()) {
+        try (final ZipFile zipFile = ZipFile.builder().setPath(source).get()) {
             Enumeration<ZipArchiveEntry> entries = zipFile.getEntries();
             while (entries.hasMoreElements()) {
                 ZipArchiveEntry entry = entries.nextElement();
                 try (InputStream entryInputStream = zipFile.getInputStream(entry)) {
-                    extractEntry(destDir.toPath(), entryInputStream, entry);
+                    extractEntry(destDir, entryInputStream, entry);
                 }
             }
         }
     }
 
-    private static void untarTo(File source, File destDir) throws IOException {
-        try (BufferedInputStream bis = new BufferedInputStream(Files.newInputStream(source.toPath()));
+    private static void untarTo(Path source, Path destDir) throws IOException {
+        try (BufferedInputStream bis = new BufferedInputStream(Files.newInputStream(source));
              GzipCompressorInputStream gzipIs = new GzipCompressorInputStream(bis);
              TarArchiveInputStream tarStream = new TarArchiveInputStream(gzipIs)) {
             ArchiveEntry entry;
             while ((entry = tarStream.getNextEntry()) != null) {
-                extractEntry(destDir.toPath(), tarStream, entry);
+                extractEntry(destDir, tarStream, entry);
             }
         }
     }
@@ -156,15 +156,15 @@ public class AsyncProfilerDownload {
         }
     }
 
-    private static void copyTo(URL source, File dest) throws IOException {
+    private static void copyTo(URL source, Path dest) throws IOException {
         try (InputStream inputStream = new BufferedInputStream(source.openConnection().getInputStream())) {
-            Files.copy(inputStream, dest.toPath(), REPLACE_EXISTING);
+            Files.copy(inputStream, dest, REPLACE_EXISTING);
         }
     }
 
-    private static void deleteDir(File homeDir) throws IOException {
-        if (homeDir.exists()) {
-            Files.walkFileTree(homeDir.toPath(), new SimpleFileVisitor<Path>() {
+    private static void deleteDir(Path homeDir) throws IOException {
+        if (Files.isDirectory(homeDir)) {
+            Files.walkFileTree(homeDir, new SimpleFileVisitor<Path>() {
                 @Override
                 public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
                     Files.delete(file);
