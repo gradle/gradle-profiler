@@ -1,16 +1,32 @@
 package org.gradle.profiler.asyncprofiler;
 
 import com.google.common.collect.ImmutableList;
-import joptsimple.OptionParser;
 import joptsimple.OptionSet;
+import org.gradle.profiler.OperatingSystem;
 import org.gradle.profiler.Profiler;
-import org.gradle.profiler.ProfilerFactory;
 
 public class AsyncProfilerAllEventsProfilerFactory extends AsyncProfilerFactory {
     @Override
     public Profiler createFromOptions(OptionSet parsedOptions) {
+        // TODO support all event from 4.1
         AsyncProfilerConfig config = super.createConfig(parsedOptions);
-        AsyncProfilerConfig overrides = new AsyncProfilerConfig(config.getProfilerHome(), ImmutableList.of("cpu", "alloc", "lock"), AsyncProfilerConfig.Counter.SAMPLES, config.getInterval(), config.getAllocSampleSize(), config.getLockThreshold(), config.getStackDepth(), config.isIncludeSystemThreads());
+
+        ImmutableList.Builder<String> allEvents = ImmutableList.<String>builder().add("cpu", "alloc", "lock");
+        // Combined cpu + wall is only supported on Linux at this time
+        if (!OperatingSystem.isMacOS()) {
+            allEvents.add("wall");
+        }
+        AsyncProfilerConfig overrides = new AsyncProfilerConfig(
+            config.getDistribution(),
+            allEvents.build(),
+            AsyncProfilerConfig.Counter.SAMPLES,
+            config.getInterval(),
+            config.getAllocSampleSize(),
+            config.getLockThreshold(),
+            config.getWallInterval(),
+            config.getStackDepth(),
+            config.isIncludeSystemThreads()
+        );
         return new AsyncProfiler(overrides);
     }
 

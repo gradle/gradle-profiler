@@ -18,7 +18,10 @@ public enum EventType {
     CPU("cpu", "CPU", "samples", ValueField.COUNT, "Method Profiling Sample", "Method Profiling Sample Native"),
     ALLOCATION("allocation", "Allocation size", "kB", ValueField.ALLOCATION_SIZE, "Allocation in new TLAB", "Allocation outside TLAB"),
     MONITOR_BLOCKED("monitor-blocked", "Java Monitor Blocked", "ns", ValueField.DURATION, "Java Monitor Blocked", "Java Thread Park"),
-    IO("io", "File and Socket IO", "ns", ValueField.DURATION, "File Read", "File Write", "Socket Read", "Socket Write");
+    IO("io", "File and Socket IO", "ns", ValueField.DURATION, "File Read", "File Write", "Socket Read", "Socket Write"),
+    // Dedicated wall clock event since async-profiler 4.0 https://github.com/async-profiler/async-profiler/commit/f53bfd4a5859a383c65a2ba5659afe04863e075a
+    WALL("wall", "Wall", "samples", ValueField.COUNT, "Wall Clock Sample")
+    ;
 
     private final String id;
     private final String displayName;

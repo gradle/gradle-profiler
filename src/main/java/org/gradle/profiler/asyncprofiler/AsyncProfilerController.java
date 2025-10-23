@@ -1,5 +1,6 @@
 package org.gradle.profiler.asyncprofiler;
 
+import com.google.common.base.Joiner;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import org.gradle.profiler.CommandExec;
@@ -53,23 +54,52 @@ public class AsyncProfilerController implements InstrumentingProfiler.SnapshotCa
 
     @Override
     public void startRecording(String pid) throws IOException, InterruptedException {
+        // TODO support all events, custom options ?
+        //  e.g. asprof --all -e cycles --alloc 2m --lock 10ms -f profile.jfr
+
+        //  | Version | Events            | Generated Command                                                    |
+        //  |---------|-------------------|----------------------------------------------------------------------|
+        //  | 3.0+    | ["alloc"]         | asprof start --alloc 524287 -f out.jfr <pid>                         |
+        //  | 3.0+    | ["cpu", "alloc"]  | asprof start -e cpu -i 10000000 --alloc 524287 -f out.jfr <pid>      |
+        //  | 3.0+    | ["wall"]          | asprof start --wall 10000000 -f out.jfr <pid>                        |
+        //  | 3.0+    | ["cpu", "wall"]   | asprof start -e cpu -i 10000000 --wall 10000000 -f out.jfr <pid>     |
+        //  | 3.0+    | ["alloc", "lock"] | asprof start --alloc 524287 --lock 250000 -f out.jfr <pid>           |
+
+        List<String> events = new ArrayList<>(profilerConfig.getEvents());
+        // v3.0+: alloc/lock/wall always become auxiliary options
+        boolean useAllocOption = events.size() > 1 && events.remove(AsyncProfilerConfig.EVENT_ALLOC);
+        boolean useLockOption = events.size() > 1 && events.remove(AsyncProfilerConfig.EVENT_LOCK);
+        boolean useWallOption = events.size() > 1 && events.remove(AsyncProfilerConfig.EVENT_WALL);
+
         ImmutableList.Builder<String> arguments = ImmutableList.builder();
         arguments.add(
-            getProfilerScript().getAbsolutePath(),
-            "start",
-            "-e", profilerConfig.getJoinedEvents(),
-            "-i", String.valueOf(profilerConfig.getInterval()),
+            profilerConfig.getDistribution().getExecutable().getAbsolutePath(),
+            "start"
+        );
+
+        // -e and -i: used for primary events only (like cpu)
+        if (!events.isEmpty()) {
+            arguments.add(
+                "-e", Joiner.on(",").join(events),
+                "-i", String.valueOf(profilerConfig.getInterval())
+            );
+        }
+
+        arguments.add(
             "-j", String.valueOf(profilerConfig.getStackDepth()),
             "--" + profilerConfig.getCounter().name().toLowerCase(Locale.ROOT),
-            "-a",
+            "--ann", // annotate java methods
             "-o", outputType.getCommandLineOption(),
             "-f", outputType.individualOutputFileFor(scenarioSettings).getAbsolutePath()
         );
-        if (profilerConfig.getEvents().contains(AsyncProfilerConfig.EVENT_ALLOC)) {
+        if (useAllocOption) {
             arguments.add("--alloc", String.valueOf(profilerConfig.getAllocSampleSize()));
         }
-        if (profilerConfig.getEvents().contains(AsyncProfilerConfig.EVENT_LOCK)) {
+        if (useLockOption) {
             arguments.add("--lock", String.valueOf(profilerConfig.getLockThreshold()));
+        }
+        if (useWallOption) {
+            arguments.add("--wall", String.valueOf(profilerConfig.getWallInterval()));
         }
         arguments.add(pid);
         new CommandExec().run(arguments.build());
@@ -78,11 +108,11 @@ public class AsyncProfilerController implements InstrumentingProfiler.SnapshotCa
     @Override
     public void stopRecording(String pid) {
         new CommandExec().run(
-            getProfilerScript().getAbsolutePath(),
+            profilerConfig.getDistribution().getExecutable().getAbsolutePath(),
             "stop",
             "-o", outputType.getCommandLineOption(),
             "-f", outputType.individualOutputFileFor(scenarioSettings).getAbsolutePath(),
-            "-a",
+            "--ann", // annotate java methods
             pid
         );
     }
@@ -130,7 +160,7 @@ public class AsyncProfilerController implements InstrumentingProfiler.SnapshotCa
             case "cpu":
                 return EventType.CPU;
             case "wall":
-                return EventType.CPU;
+                return EventType.WALL;
             case "alloc":
                 return EventType.ALLOCATION;
             case "lock":
@@ -150,10 +180,6 @@ public class AsyncProfilerController implements InstrumentingProfiler.SnapshotCa
         throw new RuntimeException("No stacks have been captured by Async profiler. If you are on Linux, you may need to set two runtime variables:\n" +
             "# sysctl kernel.perf_event_paranoid=1\n" +
             "# sysctl kernel.kptr_restrict=0");
-    }
-
-    private File getProfilerScript() {
-        return new File(profilerConfig.getProfilerHome(), "profiler.sh");
     }
 
     private static final class RemoveSystemThreads implements SanitizeFunction {

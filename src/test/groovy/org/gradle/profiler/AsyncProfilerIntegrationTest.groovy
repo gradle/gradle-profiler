@@ -42,6 +42,9 @@ class AsyncProfilerIntegrationTest extends AbstractProfilerIntegrationTest imple
 
         and:
         assertGraphsGeneratedForScenario("allocation", "cpu", "monitor-blocked")
+        if (!OperatingSystem.isMacOS()) {
+            assertGraphsGeneratedForScenario("wall")
+        }
     }
 
     def "profiles wall clock time using async-profiler with tooling API and warm daemon"() {
@@ -61,7 +64,7 @@ class AsyncProfilerIntegrationTest extends AbstractProfilerIntegrationTest imple
         logFile.containsOne("<invocations: 3>")
 
         and:
-        assertGraphsGeneratedForScenario("allocation", "cpu")
+        assertGraphsGeneratedForScenario("allocation", "wall") // Since async-profiler 4.0, wall clock have their own event
     }
 
     def "profiles heap allocation using async-profiler with tooling API and warm daemon"() {
