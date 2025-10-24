@@ -1,0 +1,34 @@
+html {
+    box-sizing: border-box;
+}
+
+body, html, #root {
+    margin: 0;
+    padding: 0;
+    height: 100%;
+    font-size: 16px;
+}
+
+*, *::before, *::after {
+    box-sizing: inherit; /* Every element inherits the box-sizing from its parent */
+}
+
+body {
+    background-color: black;
+    color: white;
+    line-height: 1.5;
+}
+
+h1, h2, h3, h4, h5, h6 {
+    margin: 0;
+    padding: 0;
+}
+
+table {
+    border-collapse: collapse;
+    border-spacing: 0;
+}
+
+table td {
+    padding: 0;
+}
