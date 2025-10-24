@@ -25,7 +25,8 @@ public class AsyncProfilerWallProfilerFactory extends AsyncProfilerFactory {
             config.getLockThreshold(),
             config.getWallInterval(),
             config.getStackDepth(),
-            config.isIncludeSystemThreads()
+            config.isIncludeSystemThreads(),
+            AsyncProfilerOutputType.JFR
         );
         return new AsyncProfiler(overrides);
     }
