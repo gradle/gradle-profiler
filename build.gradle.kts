@@ -118,11 +118,11 @@ tasks.test {
     environment("JAVA_HOME" to javaLauncher.get().metadata.installationPath)
 
     // We had some build failures on macOS, where it seems to be a Socket was already closed when trying to download the Gradle distribution.
-    // The tests failing were consistenly in ProfilerIntegrationTest.
+    // The tests failing were consistently in ProfilerIntegrationTest.
     // Running only ProfilerIntegrationTest did not expose the failures.
     // The problem went away when running every test class in its on JVM.
     // So I suppose the problem is that the JVM shares the TAPI client, and one of the tests leave the client in a bad state.
-    // We now use forkEvery = 1 to run each test class in its own JVM, so we don't run into this problem any more.
+    // We now use forkEvery = 1 to run each test class in its own JVM, so we don't run into this problem anymore.
     setForkEvery(1)
     maxHeapSize = "2g"
 }
