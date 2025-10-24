@@ -114,7 +114,9 @@ You can use async profiler to profile a Gradle build using `--profile async-prof
 
 Alternatively, you can also use `--profile async-profiler-heap` to profile heap allocations, with some reasonable default settings.
 
-Finally, you can also use `--profile async-profiler-all` to profile cpu, heap allocations, and locks with some reasonable default settings.
+Or, you can also use `--profile async-profiler-wall` to profile wall allocations, with some reasonable default settings. On Linux this option will also profile cpu events.
+
+Finally, you can also use `--profile async-profiler-all` to profile cpu, heap allocations, and locks with some reasonable default settings. On Linux this option will also profile wall events.
 
 By default, an Async profiler release will be downloaded from [Github](https://github.com/jvm-profiling-tools/async-profiler/releases) and installed, if not already available.
 
@@ -126,7 +128,8 @@ The following options are supported and closely mimic the options of Async profi
 - `--async-profiler-count`: The count to use when aggregating event data. Either `samples` or `total`. `total` is especially useful for allocation profiling. Defaults to `samples`. Corresponds to the `--samples` and `--total` command line options for Async profiler.
 - `--async-profiler-interval`: The sampling interval in ns, defaults to 10_000_000 (10 ms).
 - `--async-profiler-alloc-interval`: The sampling interval in bytes for allocation profiling, defaults to 10 bytes. Corresponds to the `--alloc` command line option for Async profiler.
-- `--async-profiler-lock-threshold`: lock profiling threshold in nanoseconds, defaults to 250 microseconds. Corresponds to the `--lock` command line option for Async profiler.
+- `--async-profiler-lock-threshold`: Lock profiling threshold in nanoseconds, defaults to 250 microseconds. Corresponds to the `--lock` command line option for Async profiler.
+- `--async-profiler-wall-interval`: Wall clock profiling interval in nanoseconds. Defaults to 10_000_000 (10 ms).
 - `--async-profiler-stackdepth`: The maximum stack depth. Lower this if profiles with deep recursion get too large. Defaults to 2048.
 - `--async-profiler-system-threads`: Whether to show system threads like GC and JIT compilation in the profile. Usually makes them harder to read, but can be useful if you suspect problems in that area. Defaults to `false`. 
 

@@ -29,8 +29,9 @@ public enum AsyncProfilerOutputType {
     public static AsyncProfilerOutputType from(AsyncProfilerConfig config, ScenarioDefinition scenarioDefinition) {
         // TODO autoselect from scenario
         return (config.getEvents().size() > 1 || scenarioDefinition.createsMultipleProcesses())
+            // Only JFR supports multiple events
             ? AsyncProfilerOutputType.JFR
-            : AsyncProfilerOutputType.STACKS;
+            : config.getPreferredOutputType();
     }
 
     private final String commandLineOption;

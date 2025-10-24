@@ -18,6 +18,7 @@ public class AsyncProfilerConfig {
     private final int wallInterval;
     private final int stackDepth;
     private final boolean includeSystemThreads;
+    private final AsyncProfilerOutputType preferredOutputType;
 
     public AsyncProfilerConfig(
         AsyncProfilerDistribution asyncProfilerDistribution,
@@ -28,7 +29,8 @@ public class AsyncProfilerConfig {
         int lockThreshold,
         int wallInterval,
         int stackDepth,
-        boolean includeSystemThreads
+        boolean includeSystemThreads,
+        AsyncProfilerOutputType preferredOutputType
     ) {
         this.asyncProfilerDistribution = asyncProfilerDistribution;
         this.events = events;
@@ -39,6 +41,7 @@ public class AsyncProfilerConfig {
         this.wallInterval = wallInterval;
         this.stackDepth = stackDepth;
         this.includeSystemThreads = includeSystemThreads;
+        this.preferredOutputType = preferredOutputType;
     }
 
     public AsyncProfilerDistribution getDistribution() {
@@ -79,6 +82,10 @@ public class AsyncProfilerConfig {
 
     public boolean isIncludeSystemThreads() {
         return includeSystemThreads;
+    }
+
+    public AsyncProfilerOutputType getPreferredOutputType() {
+        return preferredOutputType;
     }
 
     public enum Counter {

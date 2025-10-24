@@ -103,7 +103,8 @@ public class AsyncProfilerFactory extends ProfilerFactory {
             lockThreshold,
             wallInterval,
             stackDepth,
-            showSystemThreads
+            showSystemThreads,
+            AsyncProfilerOutputType.STACKS
         );
     }
 
