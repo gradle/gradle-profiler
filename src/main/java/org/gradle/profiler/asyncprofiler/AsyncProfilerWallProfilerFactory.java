@@ -7,16 +7,15 @@ import org.gradle.profiler.Profiler;
 
 import java.util.List;
 
-public class AsyncProfilerAllEventsProfilerFactory extends AsyncProfilerFactory {
+public class AsyncProfilerWallProfilerFactory extends AsyncProfilerFactory {
     @Override
     public Profiler createFromOptions(OptionSet parsedOptions) {
-        // TODO support all event from 4.1
         AsyncProfilerConfig config = super.createConfig(parsedOptions);
 
         // Combined cpu + wall events are not supported on macOS at this time
         List<String> allEvents = OperatingSystem.isMacOS()
-            ? ImmutableList.of("cpu", "alloc", "lock")
-            : ImmutableList.of("cpu", "wall", "alloc", "lock");
+            ? ImmutableList.of("wall")
+            : ImmutableList.of("cpu", "wall");
         AsyncProfilerConfig overrides = new AsyncProfilerConfig(
             config.getDistribution(),
             allEvents,
@@ -33,6 +32,6 @@ public class AsyncProfilerAllEventsProfilerFactory extends AsyncProfilerFactory 
 
     @Override
     public String getName() {
-        return "async-profiler-all";
+        return "async-profiler-wall";
     }
 }
