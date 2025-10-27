@@ -67,6 +67,25 @@ class AsyncProfilerIntegrationTest extends AbstractProfilerIntegrationTest imple
         assertGraphsGeneratedForScenario("allocation", "wall") // Since async-profiler 4.0, wall clock have their own event
     }
 
+    def "profiles wall clock time allocation using async-profiler with tooling API and warm daemon using async-profiler-wall option"() {
+        given:
+        instrumentedBuildScript()
+
+        when:
+        new Main().run("--project-dir", projectDir.absolutePath, "--output-dir", outputDir.absolutePath,
+            "--iterations", "3",
+            "--gradle-version", latestSupportedGradleVersion,
+            "--profile", "async-profiler-wall", "assemble")
+
+        then:
+        logFile.find("<daemon: true").size() == 6
+        logFile.containsOne("<invocations: 3>")
+
+        and:
+        def expectedEvents = OperatingSystem.isMacOS() ? ["wall"] : ["cpu", "wall"]
+        assertGraphsGeneratedForScenario(*expectedEvents)
+    }
+
     def "profiles heap allocation using async-profiler with tooling API and warm daemon"() {
         given:
         instrumentedBuildScript()

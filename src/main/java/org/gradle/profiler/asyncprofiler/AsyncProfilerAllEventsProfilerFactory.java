@@ -5,27 +5,30 @@ import joptsimple.OptionSet;
 import org.gradle.profiler.OperatingSystem;
 import org.gradle.profiler.Profiler;
 
+import java.util.List;
+
 public class AsyncProfilerAllEventsProfilerFactory extends AsyncProfilerFactory {
     @Override
     public Profiler createFromOptions(OptionSet parsedOptions) {
         // TODO support all event from 4.1
         AsyncProfilerConfig config = super.createConfig(parsedOptions);
 
-        ImmutableList.Builder<String> allEvents = ImmutableList.<String>builder().add("cpu", "alloc", "lock");
-        // Combined cpu + wall is only supported on Linux at this time
-        if (!OperatingSystem.isMacOS()) {
-            allEvents.add("wall");
-        }
+        // Combined cpu + wall events is not supported on macOS at this time
+        // see also https://github.com/async-profiler/async-profiler/issues/740
+        List<String> allEvents = OperatingSystem.isMacOS()
+            ? ImmutableList.of("cpu", "alloc", "lock")
+            : ImmutableList.of("cpu", "wall", "alloc", "lock");
         AsyncProfilerConfig overrides = new AsyncProfilerConfig(
             config.getDistribution(),
-            allEvents.build(),
+            allEvents,
             AsyncProfilerConfig.Counter.SAMPLES,
             config.getInterval(),
             config.getAllocSampleSize(),
             config.getLockThreshold(),
             config.getWallInterval(),
             config.getStackDepth(),
-            config.isIncludeSystemThreads()
+            config.isIncludeSystemThreads(),
+            AsyncProfilerOutputType.JFR
         );
         return new AsyncProfiler(overrides);
     }

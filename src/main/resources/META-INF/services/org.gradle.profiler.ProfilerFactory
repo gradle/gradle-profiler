@@ -1,4 +1,5 @@
 org.gradle.profiler.heapdump.HeapDumpProfilerFactory
+org.gradle.profiler.asyncprofiler.AsyncProfilerWallProfilerFactory
 org.gradle.profiler.asyncprofiler.AsyncProfilerHeapAllocationProfilerFactory
 org.gradle.profiler.asyncprofiler.AsyncProfilerAllEventsProfilerFactory
 org.gradle.profiler.asyncprofiler.AsyncProfilerFactory
