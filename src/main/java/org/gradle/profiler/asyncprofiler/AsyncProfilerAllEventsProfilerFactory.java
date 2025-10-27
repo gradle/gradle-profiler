@@ -13,7 +13,8 @@ public class AsyncProfilerAllEventsProfilerFactory extends AsyncProfilerFactory 
         // TODO support all event from 4.1
         AsyncProfilerConfig config = super.createConfig(parsedOptions);
 
-        // Combined cpu + wall events are not supported on macOS at this time
+        // Combined cpu + wall events is not supported on macOS at this time
+        // see also https://github.com/async-profiler/async-profiler/issues/740
         List<String> allEvents = OperatingSystem.isMacOS()
             ? ImmutableList.of("cpu", "alloc", "lock")
             : ImmutableList.of("cpu", "wall", "alloc", "lock");
@@ -27,7 +28,7 @@ public class AsyncProfilerAllEventsProfilerFactory extends AsyncProfilerFactory 
             config.getWallInterval(),
             config.getStackDepth(),
             config.isIncludeSystemThreads(),
-            config.getPreferredOutputType()
+            AsyncProfilerOutputType.JFR
         );
         return new AsyncProfiler(overrides);
     }

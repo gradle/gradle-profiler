@@ -13,6 +13,7 @@ public class AsyncProfilerWallProfilerFactory extends AsyncProfilerFactory {
         AsyncProfilerConfig config = super.createConfig(parsedOptions);
 
         // Combined cpu + wall events are not supported on macOS at this time
+        // see also https://github.com/async-profiler/async-profiler/issues/740
         List<String> allEvents = OperatingSystem.isMacOS()
             ? ImmutableList.of("wall")
             : ImmutableList.of("cpu", "wall");
