@@ -21,6 +21,10 @@ tasks.compileJava {
     options.compilerArgs.add("java.base/jdk.internal.misc=ALL-UNNAMED")
 }
 
+tasks.javadoc {
+    (options as StandardJavadocDocletOptions).addStringOption("-add-exports", "java.base/jdk.internal.misc=ALL-UNNAMED")
+}
+
 tasks.jar {
     manifest {
         attributes("Premain-Class" to "org.gradle.profiler.studio.agent.Agent")

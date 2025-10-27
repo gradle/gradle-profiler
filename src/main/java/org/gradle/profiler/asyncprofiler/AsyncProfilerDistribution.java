@@ -16,7 +16,6 @@ import java.util.regex.Pattern;
  * was introduced in 2.8). Starting from async-profiler 3.0, the executable is a binary.
  * </p>
  *
- * <p>
  * <pre><code>
  * async-profiler-3.0-macos
  * ├── bin
@@ -42,7 +41,6 @@ import java.util.regex.Pattern;
  * ├── LICENSE
  * └── README.md
  * </code></pre>
- * </p>
  */
 public class AsyncProfilerDistribution {
     private final File executable;
