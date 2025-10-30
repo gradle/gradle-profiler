@@ -42,6 +42,11 @@ java {
     }
 }
 
+tasks.withType<AbstractCompile>().configureEach {
+    targetCompatibility = "11"
+    sourceCompatibility = "11"
+}
+
 tasks.test {
     useJUnitPlatform()
     // Disable IntelliJ file system access check for tests: having this check enabled can fail
