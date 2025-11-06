@@ -24,12 +24,12 @@ class TeeOutputStream extends OutputStream {
 
     @Override
     public void flush() throws IOException {
-        withAll(stream -> stream.flush());
+        withAll(OutputStream::flush);
     }
 
     @Override
     public void close() throws IOException {
-        withAll(stream -> stream.close());
+        withAll(OutputStream::close);
     }
 
     private void withAll(IOAction action) throws IOException {
