@@ -8,6 +8,7 @@ export default {
     build: {
         outDir: "../../../build/vite",
         emptyOutDir: true,
+        minify: false,
     },
     base: "./",
     plugins: [react(), viteSingleFile()],

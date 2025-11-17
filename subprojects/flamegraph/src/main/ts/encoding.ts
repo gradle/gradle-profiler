@@ -1,4 +1,4 @@
-import { decompressSync, gzipSync } from "fflate"
+import { Gunzip, gzipSync } from "fflate"
 
 /**
  * Converts a Uint8Array into a Base64 encoded string.
@@ -40,9 +40,21 @@ export const compressAndEncodeData = (dataToCompress: Uint8Array): string => {
  */
 export const decodeAndDecompressData = (
     base64CompressedStr: string,
-): Uint8Array => {
-    const compressedData = base64ToUint8Array(base64CompressedStr)
-    return decompressSync(compressedData)
+): ReadableStream<Uint8Array> => {
+    const gunzip = new Gunzip()
+    return new ReadableStream({
+        async start(controller) {
+            gunzip.ondata = (chunk, final) => {
+                controller.enqueue(chunk)
+                if (final) {
+                    controller.close()
+                }
+            }
+
+            const compressedData = base64ToUint8Array(base64CompressedStr)
+            gunzip.push(compressedData, true)
+        },
+    })
 }
 
 /**
@@ -50,11 +62,4 @@ export const decodeAndDecompressData = (
  */
 export const toBytes = (str: string): Uint8Array => {
     return new TextEncoder().encode(str)
-}
-
-/**
- * Creates a ReadableStream from a Uint8Array.
- */
-export const toStream = (data2: Uint8Array): ReadableStream<Uint8Array> => {
-    return new Response(data2).body!
 }

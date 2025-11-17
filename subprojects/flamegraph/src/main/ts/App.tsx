@@ -15,7 +15,6 @@ import DataWorker from "./worker?worker&inline"
 import useWorkerPool from "./useWorkerPool.ts"
 import { Grow, Row, Stack } from "./containers.tsx"
 import { ENCODED_DEMO_STACKS } from "./demo.ts"
-import { decodeAndDecompressData, toStream } from "./encoding.ts"
 
 /**
  * Nodes with pixel width below this threshold will not be rendered.
@@ -32,75 +31,20 @@ const NODE_HEIGHT = 22
  */
 const NODE_TEXT_PADDING_LEFT = 5
 
-/**
- * Compute a hash from a portion of a string.
- */
-const hash = (str: string, start: number, end: number): number => {
-    let hash = 0
-    for (let i = start; i < end; i++) {
-        hash = 31 * hash + str.charCodeAt(i)
-    }
-    return hash
-}
-
-const hueFor = (str: string, start: number, end: number): number => {
-    return hash(str, start, end) % 360
-}
-
-const partialHueFor = (
-    packageName: string,
-    offset: number,
-    colorContext: ColorContextType,
-): number => {
-    const nextPart = packageName.indexOf("/", offset)
-    if (nextPart === -1) {
-        return hueFor(packageName, offset, packageName.length)
-    } else {
-        const part = hueFor(packageName, offset, nextPart)
-        let rest = partialHueFor(packageName, nextPart + 1, colorContext)
-        return (
-            (part + rest * colorContext.colorWidth) /
-            (colorContext.colorWidth + 1)
-        )
-    }
-}
-
-const totalHueFor = (
-    packageName: string,
-    colorContext: ColorContextType,
-): number => {
-    return (
-        (colorContext.colorCenter +
-            colorContext.colorWidth *
-                partialHueFor(packageName, 0, colorContext)) %
-        360
-    )
-}
-
-const generateColorFor = (
-    str: string,
-    darken: boolean,
-    colorContext: ColorContextType,
-): string => {
-    const lightness = darken ? 41 : 50
-    const hue = totalHueFor(str, colorContext)
+const generateColorFor = (hue: number): string => {
+    const lightness = 50
     return `hsl(${hue}, 100%, ${lightness}%)`
 }
 
 /**
  * Given a string, deterministically generate a color.
  */
-const colorFor = (
-    str: string,
-    shouldHighlight: boolean,
-    colorContext: ColorContextType,
-): string => {
+const colorFor = (str: string, colorContext: ColorContextType): string => {
     const lastSlash = str.lastIndexOf("/")
     if (lastSlash !== -1) {
-        const javaPackage = str.substring(0, lastSlash)
-        return generateColorFor(javaPackage, shouldHighlight, colorContext)
+        return generateColorFor(colorContext.colorCenter)
     }
-    return generateColorFor(str, shouldHighlight, colorContext)
+    return generateColorFor(colorContext.colorCenter)
 }
 
 const simpleName = (fullName: string): string => {
@@ -122,7 +66,6 @@ const FlamegraphNode = ({
     svgHeight,
     totalValue,
     onClick,
-    hoveredNode,
 }: {
     nodeId: number
     graph: StackGraph
@@ -132,7 +75,6 @@ const FlamegraphNode = ({
     svgHeight: number
     totalValue: number
     onClick: (nodeId: number) => void
-    hoveredNode: number | null
 }) => {
     const value = graph.values[nodeId]
     if (value == undefined) {
@@ -155,12 +97,6 @@ const FlamegraphNode = ({
         return null
     }
 
-    // Determine if this node should be highlighted
-    const isActiveHover = hoveredNode !== null && hoveredNode === nodeId
-    const isSimilarHover =
-        hoveredNode !== null && graph.nodeNames[hoveredNode] === name
-    const shouldHighlight = isActiveHover || isSimilarHover
-
     // Recursively render children
     let childXOffset = xOffset
     const childElements = children.map((childId) => {
@@ -179,7 +115,6 @@ const FlamegraphNode = ({
                 svgWidth={svgWidth}
                 svgHeight={svgHeight}
                 onClick={onClick}
-                hoveredNode={hoveredNode}
             />
         )
         childXOffset += childValue
@@ -206,9 +141,10 @@ const FlamegraphNode = ({
             >
                 <rect
                     data-node-id={nodeId}
+                    data-name={name}
                     width={value}
                     height={NODE_HEIGHT}
-                    fill={colorFor(name, shouldHighlight, colorContext)}
+                    fill={colorFor(name, colorContext)}
                 >
                     <title>{nodeDetails(nodeId, graph)}</title>
                 </rect>
@@ -254,12 +190,10 @@ const NodeDetails: React.FC<{ nodeId: number | null; graph: StackGraph }> = ({
 
 interface ColorContextType {
     colorCenter: number
-    colorWidth: number
 }
 
 const ColorContext = createContext<ColorContextType>({
     colorCenter: 50,
-    colorWidth: 100,
 })
 
 const Slider: React.FC<{
@@ -346,20 +280,29 @@ const Flamegraph: React.FC<{
     }, [graph, rootNode])
 
     const handleMouseMove: React.MouseEventHandler<SVGSVGElement> = (event) => {
-        const findHoveredNode = () => {
-            const target = event.target
-            if (target instanceof Element) {
-                const nodeIdAttr = target.getAttribute("data-node-id")
-                if (nodeIdAttr) {
-                    return parseInt(nodeIdAttr, 10)
-                }
-            }
-            return null
-        }
+        const svg = svgRef.current
+        if (!svg) return
 
-        const newHoveredNode = findHoveredNode()
-        if (newHoveredNode != hoveredNode) {
-            setHoveredNode(newHoveredNode)
+        svg.querySelectorAll("rect.similar-hover").forEach((el) => {
+            el.classList.remove("similar-hover")
+        })
+
+        const target = event.target
+        if (target instanceof SVGElement && target.tagName === "rect") {
+            const name = target.getAttribute("data-name")
+            const nodeId = target.getAttribute("data-node-id")
+            setHoveredNode(nodeId ? parseInt(nodeId, 10) : null)
+
+            if (name) {
+                const similarNodes = svg.querySelectorAll(
+                    `rect[data-name="${name}"]`,
+                )
+                similarNodes.forEach((node) => {
+                    node.classList.add("similar-hover")
+                })
+            }
+        } else {
+            setHoveredNode(null)
         }
     }
 
@@ -392,7 +335,6 @@ const Flamegraph: React.FC<{
     }, [graph])
 
     const [colorCenter, setColorCenter] = useState(80)
-    const [colorWidth, setColorWidth] = useState(0.4)
 
     return (
         <>
@@ -426,16 +368,6 @@ const Flamegraph: React.FC<{
                             onChange={setColorCenter}
                         />
                     </Row>
-                    <Row>
-                        Temperature ({colorWidth.toFixed(2)})
-                        <Slider
-                            min={0}
-                            max={4}
-                            value={colorWidth}
-                            onChange={setColorWidth}
-                        />
-                    </Row>
-
                     <button
                         onClick={() => showMergedSubgraph(rootNode)}
                         disabled={rootNode === 0}
@@ -445,7 +377,7 @@ const Flamegraph: React.FC<{
                 </Stack>
             </Row>
 
-            <ColorContext.Provider value={{ colorCenter, colorWidth }}>
+            <ColorContext.Provider value={{ colorCenter }}>
                 <Stack tall>
                     <div
                         style={{
@@ -457,6 +389,7 @@ const Flamegraph: React.FC<{
                     >
                         {rootValue && (
                             <svg
+                                className={"flamegraph-svg"}
                                 style={{
                                     width: "100%",
                                     marginTop: "auto",
@@ -481,7 +414,6 @@ const Flamegraph: React.FC<{
                                             setRootNode(nodeId)
                                             setHoveredNode(null)
                                         }}
-                                        hoveredNode={hoveredNode}
                                     />
                                 )}
                             </svg>
@@ -500,6 +432,7 @@ const FlamegraphTab: React.FC<{
     setState: (state: WorkerState) => void
     submitJob: (id: string, job: Job, transfer: Transferable[]) => void
 }> = ({ state, setState, submitJob }) => {
+    const graphState = state.graph
     return (
         <Grow>
             {state.progress && <div>{state.progress}</div>}
@@ -513,14 +446,14 @@ const FlamegraphTab: React.FC<{
                     </div>
                 </>
             )}
-            {state.graph ? (
+            {graphState ? (
                 <Flamegraph
-                    graph={state.graph.graph}
-                    rootNode={state.graph.rootNode}
+                    graph={graphState.graph}
+                    rootNode={graphState.rootNode}
                     setRootNode={(nodeId) => {
                         setState({
                             ...state,
-                            graph: { ...state.graph, rootNode: nodeId },
+                            graph: { ...graphState, rootNode: nodeId },
                         })
                     }}
                     submitJob={(id, job) => submitJob(id, job, [])}
@@ -583,7 +516,10 @@ const App = (): React.JSX.Element => {
                 }
             } catch (err) {
                 setTabData(id, {
-                    error: err instanceof Error ? err.message : String(err),
+                    error: {
+                        message:
+                            err instanceof Error ? err.message : String(err),
+                    },
                 })
             }
         },
@@ -595,7 +531,7 @@ const App = (): React.JSX.Element => {
             setCustomStackName("")
             setTabData(stackName, { progress: "Downloading stack file..." })
 
-            const response = await fetch(`/test/${stackName}.txt`)
+            const response = await fetch(stackName)
             if (!response.ok) {
                 throw new Error(
                     `HTTP error! status: ${response.status} - Could not find stacks file`,
@@ -617,17 +553,25 @@ const App = (): React.JSX.Element => {
         [submitJob],
     )
 
-    // Load the demo stacks
     useEffect(() => {
-        const stream = toStream(decodeAndDecompressData(ENCODED_DEMO_STACKS))
-        submitJob(
-            "demo",
-            {
-                type: "parseStream",
-                stream,
-            },
-            [stream],
-        )
+        let stacksObj = window.__ENCODED_EMBEDDED_STACKS__
+        if (stacksObj) {
+            for (const [stackName, encodedStack] of Object.entries(stacksObj)) {
+                submitJob(
+                    stackName,
+                    { type: "parseEncodedData", encodedData: encodedStack },
+                    [],
+                )
+            }
+            delete window.__ENCODED_EMBEDDED_STACKS__
+        } else {
+            // No embedded stacks. Load the demo stacks.
+            submitJob(
+                "demo",
+                { type: "parseEncodedData", encodedData: ENCODED_DEMO_STACKS },
+                [],
+            )
+        }
     }, [])
 
     const selectedTabData = selectedTab ? allTabData.get(selectedTab) : null
@@ -656,7 +600,7 @@ const App = (): React.JSX.Element => {
                     Load
                 </button>
             </div>
-            {selectedTabData && (
+            {selectedTab && selectedTabData && (
                 <FlamegraphTab
                     state={selectedTabData}
                     setState={(newState) => setTabData(selectedTab, newState)}

@@ -1,3 +1,10 @@
+import { decodeAndDecompressData } from "./encoding.ts"
+
+export interface ParseEncodedDataJob {
+    encodedData: string
+    type: "parseEncodedData"
+}
+
 export interface ParseStreamJob {
     stream: ReadableStream<Uint8Array>
     type: "parseStream"
@@ -9,7 +16,7 @@ export interface MergeChildrenJob {
     type: "mergeChildren"
 }
 
-export type Job = ParseStreamJob | MergeChildrenJob
+export type Job = ParseStreamJob | ParseEncodedDataJob | MergeChildrenJob
 
 export interface WorkerParams {
     job: Job
@@ -128,10 +135,12 @@ const parseLine = (
     throw new Error("Unexpected end of line")
 }
 
-const processStream = async (job: ParseStreamJob): Promise<WorkerResult> => {
+const processStream = async (
+    stream: ReadableStream<Uint8Array>,
+): Promise<WorkerResult> => {
     const root = 0
 
-    const reader = job.stream.getReader()
+    const reader = stream.getReader()
     const decoder = new TextDecoder()
 
     let graph: StackGraph = {
@@ -226,9 +235,12 @@ const mergeChildren = async (job: MergeChildrenJob): Promise<WorkerResult> => {
 
 const process = async (job: Job): Promise<WorkerResult> => {
     if (job.type == "parseStream") {
-        return await processStream(job)
+        return await processStream(job.stream)
     } else if (job.type == "mergeChildren") {
         return await mergeChildren(job)
+    } else if (job.type == "parseEncodedData") {
+        const stream = decodeAndDecompressData(job.encodedData)
+        return await processStream(stream)
     }
 
     throw new Error("Unknown job type")
