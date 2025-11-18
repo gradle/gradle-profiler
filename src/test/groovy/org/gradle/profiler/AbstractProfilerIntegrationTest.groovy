@@ -1,14 +1,94 @@
 package org.gradle.profiler
 
-import org.gradle.api.JavaVersion
 import org.gradle.util.GradleVersion
 import org.junit.Rule
 import org.junit.rules.TemporaryFolder
 import spock.lang.Shared
+import spock.util.environment.Jvm
 
 import java.util.regex.Pattern
 
 abstract class AbstractProfilerIntegrationTest extends AbstractIntegrationTest {
+    // copied from org.gradle.integtests.fixtures.executer.DefaultGradleDistribution in gradle/gradle
+    private static class DefaultGradleDistribution {
+        /**
+         * The java version mapped to the first Gradle version that supports it.
+         *
+         * @see <a href="https://docs.gradle.org/current/userguide/compatibility.html#java_runtime">link</a>
+         */
+        private static final TreeMap<Integer, String> MAX_SUPPORTED_JAVA_VERSIONS = [
+            9: "4.3",
+            10: "4.7",
+            11: "5.0",
+            12: "5.4", // 5.4 officially added support for JDK 12, but it worked before then.
+            13: "6.0",
+            14: "6.3",
+            15: "6.7",
+            16: "7.0",
+            17: "7.3",
+            18: "7.5",
+            19: "7.6",
+            20: "8.3",
+            21: "8.5",
+            22: "8.8",
+            23: "8.10",
+            24: "8.14",
+            25: "9.1.0",
+        ]
+
+        /**
+         * The java version mapped to the first Gradle version that required it as
+         * a minimum for the daemon.
+         */
+        private static final TreeMap<Integer, String> MIN_SUPPORTED_DAEMON_JAVA_VERSIONS = [
+            8: "5.0",
+            17: "9.0",
+        ]
+
+        private final GradleVersion version;
+
+        DefaultGradleDistribution(GradleVersion gradleVersion) {
+            this.version = gradleVersion;
+        }
+
+        boolean daemonWorksWith(int jvmVersion) {
+            return jvmVersion >= getMinSupportedDaemonJavaVersion() && jvmVersion <= getMaxSupportedJavaVersion()
+        }
+
+        private int getMaxSupportedJavaVersion() {
+            return findHighestSupportedKey(MAX_SUPPORTED_JAVA_VERSIONS)
+                .orElse(8) // Java 8 support was added in Gradle 2.0
+        }
+
+        private int getMinSupportedDaemonJavaVersion() {
+            return findHighestSupportedKey(MIN_SUPPORTED_DAEMON_JAVA_VERSIONS)
+                .orElse(7) // Java 7 has been required since Gradle 3.0
+        }
+
+        /**
+         * Find the highest key such that the corresponding value is the
+         * same or newer than the current Gradle version.
+         */
+        private Optional<Integer> findHighestSupportedKey(NavigableMap<Integer, String> versionMap) {
+            return versionMap.descendingMap().entrySet().stream()
+                .filter { isSameOrNewer(it.value) }
+                .findFirst()
+                .map { it.key }
+        }
+
+        private boolean isNewer(String otherVersion) {
+            version > GradleVersion.version(otherVersion)
+        }
+
+        private boolean isSameOrNewer(String otherVersion) {
+            return isVersion(otherVersion) || isNewer(otherVersion)
+        }
+
+        private boolean isVersion(String otherVersionString) {
+            GradleVersion otherVersion = GradleVersion.version(otherVersionString);
+            return version == otherVersion || (version.isSnapshot() && version.getBaseVersion() == otherVersion.getBaseVersion());
+        }
+    }
 
     private static int NUMBER_OF_HEADERS = 4
 
@@ -16,7 +96,7 @@ abstract class AbstractProfilerIntegrationTest extends AbstractIntegrationTest {
 
     static List<String> gradleVersionsSupportedOnCurrentJvm(List<String> gradleVersions) {
         gradleVersions.findAll {
-            JavaVersion.current().isJava11Compatible() ? GradleVersion.version(it) >= GradleVersion.version("5.0") : true
+            new DefaultGradleDistribution(GradleVersion.version(it)).daemonWorksWith(Jvm.current.javaSpecVersionNumber.major)
         }
     }
 
@@ -25,7 +105,9 @@ abstract class AbstractProfilerIntegrationTest extends AbstractIntegrationTest {
         "5.6.4",
         "6.9.4",
         "7.6.4",
-        "8.0.2", "8.14.3"
+        "8.0.2",
+        "8.14.3",
+        "9.1.0",
     ])
 
     @Shared
@@ -34,7 +116,13 @@ abstract class AbstractProfilerIntegrationTest extends AbstractIntegrationTest {
     String latestSupportedGradleVersion = supportedGradleVersions.last()
 
     static String buildScanPluginVersion(String gradleVersion) {
-        (GradleVersion.version(gradleVersion) < GradleVersion.version("5.0")) ? '1.16' : '3.5'
+        if ((GradleVersion.version(gradleVersion) < GradleVersion.version("5.0"))) {
+            return "1.16"
+        }
+        if ((GradleVersion.version(gradleVersion) < GradleVersion.version("9.1.0"))) {
+            return "3.5"
+        }
+        return "3.19.2"
     }
 
     static String transformCacheLocation(String gradleVersionString) {
