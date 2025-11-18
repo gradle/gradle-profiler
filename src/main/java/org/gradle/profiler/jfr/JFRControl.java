@@ -42,10 +42,6 @@ public class JFRControl implements InstrumentingProfiler.SnapshotCapturingProfil
     }
 
     @Override
-    public void captureSnapshot(String pid) {
-    }
-
-    @Override
     public void stopSession() {
         String jfrFileName = jfrFile.getName();
         String outputBaseName = jfrFileName.substring(0, jfrFileName.length() - 4);
