@@ -2,12 +2,6 @@ plugins {
     id("profiler.embedded-library")
 }
 
-java {
-    toolchain {
-        languageVersion.set(JavaLanguageVersion.of(11))
-    }
-}
-
 dependencies {
     implementation("org.ow2.asm:asm:9.2")
     implementation(project(":client-protocol"))
