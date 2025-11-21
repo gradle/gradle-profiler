@@ -22,7 +22,7 @@ jobs:
           secret-ids: |
             GH_PAT, gha/gradle-profiler/_all/GH_BOT_GITHUB_TOKEN
       - name: Checkout gradle-github-actions Repo
-        uses: actions/checkout@v5
+        uses: actions/checkout@v6
         with:
           repository: gradle/gradle-github-actions
           ref: main
