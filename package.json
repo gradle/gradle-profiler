@@ -1,4 +1,5 @@
 {
+  "name": "gradle-profiler",
   "dependencies": {
     "mann-whitney-utest": "1.0.5"
   },
