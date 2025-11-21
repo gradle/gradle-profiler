@@ -37,11 +37,14 @@ Binaries are available and linked from the [releases](https://github.com/gradle/
 
 First, build and install the `gradle-profiler` app using:
 
-    > ./gradlew installDist
+    > ./gradlew install
 
-This will install the executable into `./build/install/gradle-profiler/bin`. The examples below assume that you add this location to your PATH or create a `gradle-profiler` alias for it.
+This will install the executable into `./distribution/gradle-profiler/bin`. The examples below assume that you add this location to your PATH or create a `gradle-profiler` alias for it.
 
 NOTE: You have to use Java 11 or later to build this project.
+
+You can choose a different installation location by providing the `gradle-profiler.install.dir` property.
+E.g. `./gradlew install -Pgradle-profiler.install.dir=/usr/local/bin`.
 
 ## Benchmarking a build
 

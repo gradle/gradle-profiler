@@ -29,3 +29,6 @@ hs_err_pid*.log
 
 /local.properties
 /incoming-distributions/
+
+# Default installation directory
+/distribution
