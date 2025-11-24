@@ -253,3 +253,16 @@ tasks.register("releaseToSdkMan") {
         }
     }
 }
+
+tasks.register<Sync>("install") {
+    val installDirName = "gradle-profiler.install.dir"
+    val installDir = providers.gradleProperty(installDirName).orElse("distribution")
+        .map { layout.settingsDirectory.file(it) }
+
+    from(tasks.named<Sync>("installDist").map { it.destinationDir })
+    into(installDir)
+
+    doLast {
+        println("Installed gradle-profiler to '${installDir.get()}'")
+    }
+}
