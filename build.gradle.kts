@@ -22,6 +22,12 @@ description = "A tool to profile and benchmark Gradle builds"
 val gradleRuntime by configurations.creating
 val profilerPlugins by configurations.creating
 
+java {
+    toolchain {
+        languageVersion.set(JavaLanguageVersion.of(17))
+    }
+}
+
 dependencies {
     // gradle/gradle uses these as part of Gradle Profiler-as-a-library
     api(project(":build-action"))
@@ -31,6 +37,7 @@ dependencies {
     implementation(project(":client-protocol"))
     implementation(project(":scenario-definition"))
     implementation(project(":perfetto-trace"))
+    implementation(project(":idea-sync"))
 
     implementation("com.google.code.findbugs:annotations:3.0.1")
     implementation("com.google.guava:guava:32.1.2-jre")

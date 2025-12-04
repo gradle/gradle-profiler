@@ -11,6 +11,8 @@ import org.gradle.profiler.gradle.DaemonControl;
 import org.gradle.profiler.gradle.DefaultGradleBuildConfigurationReader;
 import org.gradle.profiler.gradle.GradleScenarioDefinition;
 import org.gradle.profiler.gradle.GradleScenarioInvoker;
+import org.gradle.profiler.idea.IdeaGradleScenarioDefinition;
+import org.gradle.profiler.idea.IdeaGradleScenarioInvoker;
 import org.gradle.profiler.instrument.PidInstrumentation;
 import org.gradle.profiler.maven.MavenScenarioDefinition;
 import org.gradle.profiler.maven.MavenScenarioInvoker;
@@ -83,6 +85,7 @@ public class Main {
 
             GradleScenarioInvoker gradleScenarioInvoker = new GradleScenarioInvoker(daemonControl, pidInstrumentation);
             StudioGradleScenarioInvoker studioGradleScenarioInvoker = new StudioGradleScenarioInvoker(gradleScenarioInvoker);
+            IdeaGradleScenarioInvoker ideaGradleScenarioInvoker = new IdeaGradleScenarioInvoker(gradleScenarioInvoker);
             BazelScenarioInvoker bazelScenarioInvoker = new BazelScenarioInvoker();
             BuckScenarioInvoker buckScenarioInvoker = new BuckScenarioInvoker();
             MavenScenarioInvoker mavenScenarioInvoker = new MavenScenarioInvoker();
@@ -105,6 +108,8 @@ public class Main {
                     invoke(mavenScenarioInvoker, (MavenScenarioDefinition) scenario, settings, benchmarkResults, failures);
                 } else if (scenario instanceof StudioGradleScenarioDefinition) {
                     invoke(studioGradleScenarioInvoker, (StudioGradleScenarioDefinition) scenario, settings, benchmarkResults, failures);
+                } else if (scenario instanceof IdeaGradleScenarioDefinition) {
+                    invoke(ideaGradleScenarioInvoker, (IdeaGradleScenarioDefinition) scenario, settings, benchmarkResults, failures);
                 } else if (scenario instanceof GradleScenarioDefinition) {
                     invoke(gradleScenarioInvoker, (GradleScenarioDefinition) scenario, settings, benchmarkResults, failures);
                 } else {
