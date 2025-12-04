@@ -32,6 +32,18 @@ repositories {
     }
 }
 
+repositories {
+    maven {
+        url = uri("https://www.jetbrains.com/intellij-repository/releases")
+    }
+
+    maven {
+        url = uri("https://cache-redirector.jetbrains.com/intellij-dependencies")
+    }
+}
+
+
+
 dependencies {
     // gradle/gradle uses these as part of Gradle Profiler-as-a-library
     api(project(":build-action"))
