@@ -1,4 +1,4 @@
-package org.gradle.profiler.idea
+package org.gradle.profiler.idea.starter
 
 import com.intellij.ide.starter.ide.IdeDownloader
 import com.intellij.ide.starter.ide.IdeInstaller
