@@ -5,6 +5,7 @@ import com.intellij.driver.sdk.plugins.gradle.ImportGradleProjectUtil
 import com.intellij.driver.sdk.setupOrDetectSdk
 import com.intellij.driver.sdk.singleProject
 import com.intellij.driver.sdk.waitForProjectOpen
+import com.intellij.ide.starter.ci.CIServer
 import com.intellij.ide.starter.di.di
 import com.intellij.ide.starter.driver.engine.BackgroundRun
 import com.intellij.ide.starter.driver.engine.runIdeWithDriver
@@ -21,14 +22,18 @@ import org.gradle.profiler.client.protocol.Server
 import org.gradle.profiler.client.protocol.ServerConnection
 import org.gradle.profiler.client.protocol.messages.GradleInvocationParameters
 import org.gradle.profiler.client.protocol.messages.StudioAgentConnectionParameters
+import org.gradle.profiler.idea.starter.DefaultIdeInstallerFactory
+import org.gradle.profiler.idea.starter.NoOpCIServer
 import org.gradle.profiler.result.BuildActionResult
 import org.kodein.di.DI
 import org.kodein.di.bindSingleton
 import java.io.File
+import java.io.OutputStream
 import java.nio.file.Path
 import java.time.Duration
 import java.time.Duration.ofMinutes
 import java.time.Instant
+import kotlin.io.path.absolute
 import kotlin.io.path.createDirectories
 import kotlin.io.path.div
 
@@ -56,6 +61,9 @@ class IdeaGradleClient(
         val ideaHome = invocationSettings.ideaHome
         di = DI {
             extend(di)
+            bindSingleton<CIServer>(overrides = true) {
+                NoOpCIServer
+            }
             bindSingleton<IdeInstallerFactory>(overrides = true) {
                 DefaultIdeInstallerFactory((ideaHome / "installers").createDirectories())
             }
@@ -90,7 +98,7 @@ class IdeaGradleClient(
             invocationSettings.ideInfo,
             LocalProjectInfo(projectDir)
         )
-        val testContext = Starter.newContext("IDEA Sync", testCase)
+        val testContext = Starter.newContext("Profile IDEA Sync", testCase)
         val profilerAgentServer = Server("agent")
 
         ideaRun = testContext
