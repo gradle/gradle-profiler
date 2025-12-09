@@ -98,6 +98,13 @@ tasks.processResources {
     from(generateHtmlReportJavaScript)
 }
 
+fun launcherJavaHomeFor(javaVersion: Int): String {
+    return javaToolchains
+        .launcherFor { languageVersion = JavaLanguageVersion.of(javaVersion) }
+        .map { it.metadata.installationPath.asFile.absolutePath.toString() }
+        .get()
+}
+
 tasks.test {
     // If testJavaVersion is not set use the current JVM. Some tests require JFR, which is only available
     // in some JVM implementations. For now assume that the current JVM has JFR support.
@@ -127,10 +134,9 @@ tasks.test {
     setForkEvery(1)
     maxHeapSize = "2g"
 
-    // Required for DaemonJavaVersionIntegrationTest
-    val javaHomeForJava8 = javaToolchains.launcherFor { languageVersion = JavaLanguageVersion.of(8) }
-        .map { it.metadata.installationPath.asFile.absolutePath.toString() }
-    systemProperty("javaHomes.java8", javaHomeForJava8.get())
+    // Used by tests to select a different Daemon JVM when Test JVM is unsupported by older Gradle versions
+    systemProperty("javaHomes.java8", launcherJavaHomeFor(8))
+    systemProperty("javaHomes.java11", launcherJavaHomeFor(11))
 }
 
 androidStudioTests {
