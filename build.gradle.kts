@@ -126,6 +126,11 @@ tasks.test {
     // We now use forkEvery = 1 to run each test class in its own JVM, so we don't run into this problem anymore.
     setForkEvery(1)
     maxHeapSize = "2g"
+
+    // Required for DaemonJavaVersionIntegrationTest
+    val javaHomeForJava8 = javaToolchains.launcherFor { languageVersion = JavaLanguageVersion.of(8) }
+        .map { it.metadata.installationPath.asFile.absolutePath.toString() }
+    systemProperty("javaHomes.java8", javaHomeForJava8.get())
 }
 
 androidStudioTests {
