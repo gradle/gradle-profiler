@@ -105,9 +105,8 @@ abstract class AbstractProfilerIntegrationTest extends AbstractIntegrationTest {
         "5.6.4",
         "6.9.4",
         "7.6.4",
-        "8.0.2",
         "8.14.3",
-        "9.1.0",
+        "9.2.1",
     ])
 
     @Shared
@@ -115,14 +114,12 @@ abstract class AbstractProfilerIntegrationTest extends AbstractIntegrationTest {
     @Shared
     String latestSupportedGradleVersion = supportedGradleVersions.last()
 
+    // https://docs.gradle.com/develocity/current/miscellaneous/compatibility/#build-scans
     static String buildScanPluginVersion(String gradleVersion) {
         if ((GradleVersion.version(gradleVersion) < GradleVersion.version("5.0"))) {
             return "1.16"
         }
-        if ((GradleVersion.version(gradleVersion) < GradleVersion.version("9.1.0"))) {
-            return "3.5"
-        }
-        return "3.19.2"
+        return "4.2.2"
     }
 
     static String transformCacheLocation(String gradleVersionString) {
