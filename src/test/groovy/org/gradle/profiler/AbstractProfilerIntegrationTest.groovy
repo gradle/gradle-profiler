@@ -32,6 +32,8 @@ abstract class AbstractProfilerIntegrationTest extends AbstractIntegrationTest {
     String minimalSupportedGradleVersion = supportedGradleVersions.first()
     @Shared
     String latestSupportedGradleVersion = supportedGradleVersions.last()
+    @Shared
+    String latestJava8CompatibleDaemonGradleVersion = supportedGradleVersions.findAll { it.startsWith("8.") }.last()
 
     static String buildScanPluginVersion(String gradleVersion) {
         (GradleVersion.version(gradleVersion) < GradleVersion.version("5.0")) ? '1.16' : '3.5'
