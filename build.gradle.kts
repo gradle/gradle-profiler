@@ -24,9 +24,12 @@ val profilerPlugins by configurations.creating
 
 dependencies {
     implementation(libs.toolingApi)
+    implementation(project(":build-action"))
+    implementation(project(":client-protocol"))
+    implementation(project(":scenario-definition"))
+
     implementation("com.google.code.findbugs:annotations:3.0.1")
     implementation("com.google.guava:guava:32.1.2-jre")
-    implementation("com.typesafe:config:1.3.3")
     implementation("org.apache.commons:commons-math3:3.6.1")
     implementation("com.github.javaparser:javaparser-core:3.18.0")
     implementation("net.sf.jopt-simple:jopt-simple:5.0.4")
@@ -42,8 +45,6 @@ dependencies {
     implementation("com.google.code.gson:gson:2.11.0") {
         because("To write JSON output")
     }
-    implementation(project(":client-protocol"))
-    implementation(project(":build-action"))
 
     gradleRuntime(gradleApi())
     gradleRuntime(libs.toolingApi)
