@@ -18,7 +18,7 @@ repositories {
 }
 
 dependencies {
-    implementation(project(":core"))
+    implementation(project(":build-action"))
     implementation(project(":client-protocol"))
     implementation("com.jetbrains.intellij.tools:ide-starter-squashed:252.27397.103")
     implementation("com.jetbrains.intellij.tools:ide-starter-driver:252.27397.103")
