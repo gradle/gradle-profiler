@@ -18,27 +18,7 @@ package org.gradle.profiler;
 import java.io.IOException;
 
 public interface ProfilerController {
-    ProfilerController EMPTY = new ProfilerController() {
-        @Override
-        public void startSession() {
-
-        }
-
-        @Override
-        public void startRecording() {
-
-        }
-
-        @Override
-        public void stopRecording(String pid) {
-
-        }
-
-        @Override
-        public void stopSession() {
-
-        }
-    };
+    ProfilerController EMPTY = new ProfilerController() {};
 
     /**
      * Connects the profiler to the daemon and does any other one-time setup work.
@@ -46,13 +26,13 @@ public interface ProfilerController {
      * connect without starting data collection, it should defer startup to {@link #startRecording()}
      * instead.
      */
-    void startSession() throws IOException, InterruptedException;
+    default void startSession() throws IOException, InterruptedException {}
 
     /**
-     * Tells the profiler to start collecting data (again). Profilers may chose to throw an
+     * Tells the profiler to start collecting data (again). Profilers may choose to throw an
      * exception if they don't support multiple start/stop operations.
      */
-    void startRecording() throws IOException, InterruptedException;
+    default void startRecording() throws IOException, InterruptedException {}
 
     /**
      * Tells the profiler to stop collecting data for now, e.g. so it doesn't
@@ -61,11 +41,11 @@ public interface ProfilerController {
      * and throw an exception when {@link #startRecording()} is called another
      * time.
      */
-    void stopRecording(String pid) throws IOException, InterruptedException;
+    default void stopRecording(String pid) throws IOException, InterruptedException {}
 
     /**
      * Ends the profiling session, writing the collected results to disk
      * and disconnecting the profiler from the daemon.
      */
-    void stopSession() throws IOException, InterruptedException;
+    default void stopSession() throws IOException, InterruptedException {}
 }
