@@ -14,5 +14,7 @@ spock-junit4 = { module = "org.spockframework:spock-junit4", version.ref = "spoc
 groovy-core = { module = "org.codehaus.groovy:groovy", version.ref = "groovy" }
 groovy-xml = { module = "org.codehaus.groovy:groovy-xml", version.ref = "groovy" }
 
+typesafe-config = { module = "com.typesafe:config", version = "1.3.3" }
+
 [bundles]
 testDependencies = ["spock-core", "spock-junit4", "groovy-core"]
