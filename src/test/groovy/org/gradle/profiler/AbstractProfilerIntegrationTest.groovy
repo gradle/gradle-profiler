@@ -14,9 +14,20 @@ abstract class AbstractProfilerIntegrationTest extends AbstractIntegrationTest {
 
     static final SAMPLE = "-?\\d+(?:\\.\\d+)"
 
+
+    // The thresholds are chosen based on the observed test failures and not on some general compatibility information
+    static minimalGradleVersionSupportingJava11 = GradleVersion.version("5.0")
+    static minimalGradleVersionSupportingJava17 = GradleVersion.version("7.0")
+
     static List<String> gradleVersionsSupportedOnCurrentJvm(List<String> gradleVersions) {
         gradleVersions.findAll {
-            JavaVersion.current().isJava11Compatible() ? GradleVersion.version(it) >= GradleVersion.version("5.0") : true
+            if (JavaVersion.current().isCompatibleWith(JavaVersion.VERSION_17)) {
+                return GradleVersion.version(it) >= minimalGradleVersionSupportingJava17
+            } else if (JavaVersion.current().isCompatibleWith(JavaVersion.VERSION_11)) {
+                return GradleVersion.version(it) >= minimalGradleVersionSupportingJava11
+            } else {
+                return true
+            }
         }
     }
 
