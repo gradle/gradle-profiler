@@ -47,7 +47,7 @@ public class ApplyChangeToAndroidLayoutFileMutator extends AbstractFileChangeMut
     }
 
     private String generateUniqueViewItem(BuildContext context) {
-        return "<View \n" +
+        return "<View\n" +
                "    android:id=\"@+id/view" + context.getUniqueBuildId() + "\"\n" +
                "    android:visibility=\"gone\"\n" +
                "    android:layout_width=\"5dp\"\n" +
