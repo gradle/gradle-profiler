@@ -10,48 +10,52 @@ on:
     - cron: '38 8 * * 2'
 
 jobs:
-  analyze:
-    name: Analyze
+  # Job for Java and Kotlin, which require build steps
+  analyze-jvm:
+    name: Analyze ${{ matrix.language }}
     runs-on: ubuntu-latest
-    permissions:
-      actions: read
-      contents: read
-      security-events: write
-
     strategy:
       fail-fast: false
       matrix:
-        language: [ 'java', 'kotlin', 'javascript' ]
-
+        language: [ 'java', 'kotlin' ]
     steps:
       - name: Checkout repository
         uses: actions/checkout@v6
-
-      # Initializes the CodeQL tools for scanning.
+      # The conditional steps here help the codeql analysis by producing the compiled results
+      # They are defined manually, because codeql heuristics don't correctly detect the build setup
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '11'
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v4
+      - name: Build with Gradle
+        run: ./gradlew clean assemble
       - name: Initialize CodeQL
         # Should use the same action version as the `analyze` step below
         uses: github/codeql-action/init@v4
         with:
           languages: ${{ matrix.language }}
-          build-mode: ${{ (matrix.language == 'java' || matrix.language == 'kotlin') && 'manual' || 'none' }}
+          build-mode: 'manual'
+      - name: Perform CodeQL Analysis
+        # Should use the same action version as the `init` step above
+        uses: github/codeql-action/analyze@v4
 
-      # The conditional steps here help the codeql analysis by producing the compiled results
-      # They are defined manually, because codeql heuristics don't correctly detect the build setup
-      - name: Setup Java
-        if: matrix.language == 'java' || matrix.language == 'kotlin'
-        uses: actions/setup-java@v4
+  # Job for JavaScript, which does not require build steps
+  analyze-js:
+    name: Analyze javascript
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v6
+       # Initializes the CodeQL tools for scanning.
+      - name: Initialize CodeQL
+        # Should use the same action version as the `analyze` step below
+        uses: github/codeql-action/init@v4
         with:
-          distribution: 'temurin'
-          java-version: '11'
-
-      - name: Setup Gradle
-        if: matrix.language == 'java' || matrix.language == 'kotlin'
-        uses: gradle/actions/setup-gradle@v4
-
-      - name: Build with Gradle
-        if: matrix.language == 'java' || matrix.language == 'kotlin'
-        run: ./gradlew clean assemble
-
+          languages: 'javascript'
+          build-mode: 'none'
       - name: Perform CodeQL Analysis
         # Should use the same action version as the `init` step above
         uses: github/codeql-action/analyze@v4
