@@ -16,9 +16,9 @@ object GradleProfilerPublishing : BuildType({
     val arch = Arch.AMD64
 
     params {
-        // Java home must always use Java11
-        // since intellij-gradle-plugin is not compatible with Java8
-        javaHome(os, arch, JavaVersion.OPENJDK_11)
+        // Always use Java 17 to run the build
+        javaHome(os, arch, JavaVersion.OPENJDK_17)
+
         password("pgpSigningKey", "credentialsJSON:20c56c10-3c97-4753-91c2-685ddf26700e", display = ParameterDisplay.HIDDEN)
         password("pgpSigningPassphrase", "credentialsJSON:d49291bd-101e-4165-a9a8-912ca457926b", display = ParameterDisplay.HIDDEN)
         text("additional.gradle.parameters", "")

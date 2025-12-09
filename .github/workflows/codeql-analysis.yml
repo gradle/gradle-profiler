@@ -42,7 +42,7 @@ jobs:
         uses: actions/setup-java@v4
         with:
           distribution: 'temurin'
-          java-version: '11'
+          java-version: '17'
 
       - name: Setup Gradle
         if: matrix.language == 'java' || matrix.language == 'kotlin'
