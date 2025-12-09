@@ -19,6 +19,12 @@ plugins {
 
 description = "A tool to profile and benchmark Gradle builds"
 
+java {
+    toolchain {
+        languageVersion.set(JavaLanguageVersion.of(17))
+    }
+}
+
 val gradleRuntime by configurations.creating
 val profilerPlugins by configurations.creating
 

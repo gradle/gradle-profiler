@@ -5,10 +5,10 @@ fun Project.configureGradleProfilerProject() {
     description = "Runs tests and integration tests of the Gradle Profiler (https://github.com/gradle/gradle-profiler)"
 
     val testBuilds = listOf(
-        MacOSJava11,
-        WindowsJava11,
+        MacOSJava17,
+        WindowsJava17,
         LinuxJava8,
-        LinuxJava11,
+        LinuxJava17,
     )
 
     testBuilds.forEach(this::buildType)

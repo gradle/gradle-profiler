@@ -17,14 +17,14 @@ include("studio-agent")
 include("studio-plugin")
 
 rootProject.children.forEach {
-    it.projectDir = rootDir.resolve( "subprojects/${it.name}")
+    it.projectDir = rootDir.resolve("subprojects/${it.name}")
 }
 
 /**
- * Intellij-gradle-plugin requires Java 11.
+ * Multiple modules, including Gradle Profiler require Java 17 toolchain
  */
 fun checkIfCurrentJavaIsCompatible() {
-    if (!JavaVersion.current().isCompatibleWith(JavaVersion.VERSION_11)) {
-        throw GradleException("This project should be run with Java 11 or later, but it was run with Java ${JavaVersion.current()}.")
+    if (!JavaVersion.current().isCompatibleWith(JavaVersion.VERSION_17)) {
+        throw GradleException("This project should be run with Java 17 or later, but it was run with Java ${JavaVersion.current()}.")
     }
 }
