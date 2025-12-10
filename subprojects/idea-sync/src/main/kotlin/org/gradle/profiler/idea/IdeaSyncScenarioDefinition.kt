@@ -1,6 +1,7 @@
 package org.gradle.profiler.idea
 
 import com.typesafe.config.Config
+import org.gradle.profiler.ConfigUtil
 
 private const val IDEA_JVM_ARGS_KEY = "idea-jvm-args"
 
@@ -17,10 +18,9 @@ class IdeaSyncScenarioDefinition(
         )
 
         @JvmStatic
-        fun ofConfig(config: Config): IdeaSyncScenarioDefinition = with(config) {
+        fun ofConfig(config: Config): IdeaSyncScenarioDefinition =
             IdeaSyncScenarioDefinition(
-                ideaJvmArgs = emptyList() //TODO
+                ideaJvmArgs = ConfigUtil.strings(config, IDEA_JVM_ARGS_KEY)
             )
-        }
     }
 }
