@@ -7,7 +7,6 @@ import spock.lang.IgnoreIf
 import spock.lang.Requires
 import spock.lang.Unroll
 
-@Unroll
 class ProfilerIntegrationTest extends AbstractProfilerIntegrationTest {
 
     def "complains when neither profile or benchmark requested"() {
@@ -1396,7 +1395,7 @@ class ProfilerIntegrationTest extends AbstractProfilerIntegrationTest {
         def scenarios = file("performance.scenario")
         scenarios.text = """
             buildTarget {
-                versions = ["5.2"]
+                versions = ["$gradleVersion"]
                 // Warm daemons don't allow cleaning caches
                 daemon = cold
                 clear-build-cache-before = BUILD
@@ -1410,6 +1409,9 @@ class ProfilerIntegrationTest extends AbstractProfilerIntegrationTest {
 
         then:
         noExceptionThrown()
+
+        where:
+        gradleVersion << [minimalSupportedGradleVersion]
     }
 
     def "clears transform cache when asked"() {
@@ -1537,7 +1539,7 @@ class ProfilerIntegrationTest extends AbstractProfilerIntegrationTest {
         def scenarios = file("performance.scenario")
         scenarios.text = """
             buildTarget {
-                versions = ["5.2"]
+                versions = ["$gradleVersion"]
                 clear-build-cache-before = SCENARIO
                 show-build-cache-size = true
                 gradle-args = ["--build-cache"]
@@ -1551,6 +1553,9 @@ class ProfilerIntegrationTest extends AbstractProfilerIntegrationTest {
 
         then:
         output.count("> Build cache size:") == 4
+
+        where:
+        gradleVersion << [minimalSupportedGradleVersion]
     }
 
     def "clean project cache when configured (buildSrc: #buildSrc)"() {

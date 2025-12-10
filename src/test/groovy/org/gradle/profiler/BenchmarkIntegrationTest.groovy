@@ -4,11 +4,16 @@ package org.gradle.profiler
 class BenchmarkIntegrationTest extends AbstractProfilerIntegrationTest {
 
     def "recovers from measured build failure running benchmarks"() {
+        def (gradleVersion1, gradleVersion2) = currentJvmSupportedGradleVersionRange()
+
         given:
-        brokenBuild(8)
+        brokenBuild(gradleVersion1, 8)
 
         when:
-        new Main().run("--project-dir", projectDir.absolutePath, "--output-dir", outputDir.absolutePath, "--gradle-version", minimalSupportedGradleVersion, "--gradle-version", "5.0", "--benchmark", "assemble")
+        run([
+            "--gradle-version", gradleVersion1, "--gradle-version", gradleVersion2,
+            "--benchmark", "assemble"
+        ])
 
         then:
         def e = thrown(Main.ScenarioFailedException)
@@ -18,15 +23,15 @@ class BenchmarkIntegrationTest extends AbstractProfilerIntegrationTest {
         output.contains("java.lang.RuntimeException: broken!")
 
         // Probe version, 6 warm up, 10 builds
-        logFile.find("<gradle-version: $minimalSupportedGradleVersion>").size() == 10
-        logFile.find("<gradle-version: 5.0>").size() == 17
+        logFile.find("<gradle-version: $gradleVersion1>").size() == 10
+        logFile.find("<gradle-version: $gradleVersion2>").size() == 17
         logFile.find("<tasks: [:help]>").size() == 2
         logFile.find("<tasks: [assemble]>").size() == 9 + 16
 
         def lines = resultFile.lines
         lines.size() == totalLinesForExecutions(16)
         lines.get(0) == "scenario,default,default"
-        lines.get(1) == "version,Gradle ${minimalSupportedGradleVersion},Gradle 5.0"
+        lines.get(1) == "version,Gradle $gradleVersion1,Gradle $gradleVersion2"
         lines.get(2) == "tasks,assemble,assemble"
         lines.get(3) == "value,total execution time,total execution time"
         lines.get(4).matches("warm-up build #1,$SAMPLE,$SAMPLE")
@@ -38,11 +43,16 @@ class BenchmarkIntegrationTest extends AbstractProfilerIntegrationTest {
     }
 
     def "recovers from failure in warm-up build while running benchmarks"() {
+        def (gradleVersion1, gradleVersion2) = currentJvmSupportedGradleVersionRange()
+
         given:
-        brokenBuild(3)
+        brokenBuild(gradleVersion1, 3)
 
         when:
-        new Main().run("--project-dir", projectDir.absolutePath, "--output-dir", outputDir.absolutePath, "--gradle-version", minimalSupportedGradleVersion, "--gradle-version", "5.0", "--benchmark", "assemble")
+        run([
+            "--gradle-version", gradleVersion1, "--gradle-version", gradleVersion2,
+            "--benchmark", "assemble"
+        ])
 
         then:
         def e = thrown(Main.ScenarioFailedException)
@@ -52,15 +62,15 @@ class BenchmarkIntegrationTest extends AbstractProfilerIntegrationTest {
         output.contains("java.lang.RuntimeException: broken!")
 
         // Probe version, 6 warm up, 10 builds
-        logFile.find("<gradle-version: $minimalSupportedGradleVersion>").size() == 5
-        logFile.find("<gradle-version: 5.0>").size() == 17
+        logFile.find("<gradle-version: $gradleVersion1>").size() == 5
+        logFile.find("<gradle-version: $gradleVersion2>").size() == 17
         logFile.find("<tasks: [:help]>").size() == 2
         logFile.find("<tasks: [assemble]>").size() == 4 + 16
 
         def lines = resultFile.lines
         lines.size() == totalLinesForExecutions(16)
         lines.get(0) == "scenario,default,default"
-        lines.get(1) == "version,Gradle ${minimalSupportedGradleVersion},Gradle 5.0"
+        lines.get(1) == "version,Gradle $gradleVersion1,Gradle $gradleVersion2"
         lines.get(2) == "tasks,assemble,assemble"
         lines.get(3) == "value,total execution time,total execution time"
         lines.get(4).matches("warm-up build #1,$SAMPLE,$SAMPLE")
@@ -75,11 +85,16 @@ class BenchmarkIntegrationTest extends AbstractProfilerIntegrationTest {
     }
 
     def "recovers from failure to run any builds while running benchmarks"() {
+        def (gradleVersion1, gradleVersion2) = currentJvmSupportedGradleVersionRange()
+
         given:
-        brokenBuild(0)
+        brokenBuild(gradleVersion1, 0)
 
         when:
-        new Main().run("--project-dir", projectDir.absolutePath, "--output-dir", outputDir.absolutePath, "--gradle-version", minimalSupportedGradleVersion, "--gradle-version", "5.0", "--benchmark", "assemble")
+        run([
+            "--gradle-version", gradleVersion1, "--gradle-version", gradleVersion2,
+            "--benchmark", "assemble"
+        ])
 
         then:
         def e = thrown(Main.ScenarioFailedException)
@@ -89,15 +104,15 @@ class BenchmarkIntegrationTest extends AbstractProfilerIntegrationTest {
         output.contains("java.lang.RuntimeException: broken!")
 
         // Probe version, 6 warm up, 10 builds
-        logFile.find("<gradle-version: $minimalSupportedGradleVersion>").size() == 2
-        logFile.find("<gradle-version: 5.0>").size() == 17
+        logFile.find("<gradle-version: $gradleVersion1>").size() == 2
+        logFile.find("<gradle-version: $gradleVersion2>").size() == 17
         logFile.find("<tasks: [:help]>").size() == 2
         logFile.find("<tasks: [assemble]>").size() == 1 + 16
 
         def lines = resultFile.lines
         lines.size() == totalLinesForExecutions(16)
         lines.get(0) == "scenario,default,default"
-        lines.get(1) == "version,Gradle ${minimalSupportedGradleVersion},Gradle 5.0"
+        lines.get(1) == "version,Gradle $gradleVersion1,Gradle $gradleVersion2"
         lines.get(2) == "tasks,assemble,assemble"
         lines.get(3) == "value,total execution time,total execution time"
         lines.get(4).matches("warm-up build #1,,$SAMPLE")
@@ -108,7 +123,7 @@ class BenchmarkIntegrationTest extends AbstractProfilerIntegrationTest {
         lines.get(19).matches("measured build #10,,$SAMPLE")
     }
 
-    def brokenBuild(int successfulIterations) {
+    def brokenBuild(String brokenGradleVersion, int successfulIterations) {
         instrumentedBuildScript()
         buildFile << """
 class Holder {
@@ -116,7 +131,7 @@ class Holder {
 }
 
 assemble.doFirst {
-    if (gradle.gradleVersion == "${minimalSupportedGradleVersion}" && Holder.counter++ >= ${successfulIterations}) {
+    if (gradle.gradleVersion == "${brokenGradleVersion}" && Holder.counter++ >= ${successfulIterations}) {
         throw new RuntimeException("broken!")
     }
 }
