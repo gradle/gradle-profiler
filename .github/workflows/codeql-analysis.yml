@@ -21,35 +21,39 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        language: [ 'java', 'kotlin', 'javascript' ]
+        include:
+          - language: java-kotlin
+            build-mode: manual
+          - language: javascript
+            build-mode: none
 
     steps:
       - name: Checkout repository
         uses: actions/checkout@v6
 
-      # Initializes the CodeQL tools for scanning.
+      # https://github.com/github/codeql-action
       - name: Initialize CodeQL
         # Should use the same action version as the `analyze` step below
         uses: github/codeql-action/init@v4
         with:
           languages: ${{ matrix.language }}
-          build-mode: ${{ (matrix.language == 'java' || matrix.language == 'kotlin') && 'manual' || 'none' }}
+          build-mode: ${{ matrix.build-mode }}
 
       # The conditional steps here help the codeql analysis by producing the compiled results
       # They are defined manually, because codeql heuristics don't correctly detect the build setup
-      - name: Setup Java
-        if: matrix.language == 'java' || matrix.language == 'kotlin'
+      - if: ${{ matrix.build-mode == 'manual' }}
+        name: Setup Java
         uses: actions/setup-java@v4
         with:
           distribution: 'temurin'
           java-version: '11'
 
-      - name: Setup Gradle
-        if: matrix.language == 'java' || matrix.language == 'kotlin'
+      - if: ${{ matrix.build-mode == 'manual' }}
+        name: Setup Gradle
         uses: gradle/actions/setup-gradle@v4
 
-      - name: Build with Gradle
-        if: matrix.language == 'java' || matrix.language == 'kotlin'
+      - if: ${{ matrix.build-mode == 'manual' }}
+        name: Build with Gradle
         run: ./gradlew clean assemble
 
       - name: Perform CodeQL Analysis
