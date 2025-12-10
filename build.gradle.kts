@@ -99,6 +99,13 @@ tasks.processResources {
     from(generateHtmlReportJavaScript)
 }
 
+fun launcherJavaHomeFor(javaVersion: Int): String {
+    return javaToolchains
+        .launcherFor { languageVersion = JavaLanguageVersion.of(javaVersion) }
+        .map { it.metadata.installationPath.asFile.absolutePath.toString() }
+        .get()
+}
+
 tasks.test {
     // If testJavaVersion is not set use the current JVM. Some tests require JFR, which is only available
     // in some JVM implementations. For now assume that the current JVM has JFR support.
@@ -127,6 +134,10 @@ tasks.test {
     // We now use forkEvery = 1 to run each test class in its own JVM, so we don't run into this problem anymore.
     setForkEvery(1)
     maxHeapSize = "2g"
+
+    // Used by tests to select a different Daemon JVM when Test JVM is unsupported by older Gradle versions
+    systemProperty("javaHomes.java8", launcherJavaHomeFor(8))
+    systemProperty("javaHomes.java11", launcherJavaHomeFor(11))
 }
 
 androidStudioTests {

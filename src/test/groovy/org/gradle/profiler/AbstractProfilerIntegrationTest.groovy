@@ -6,6 +6,7 @@ import org.junit.Rule
 import org.junit.rules.TemporaryFolder
 import spock.lang.Shared
 
+import javax.annotation.Nullable
 import java.util.regex.Pattern
 
 abstract class AbstractProfilerIntegrationTest extends AbstractIntegrationTest {
@@ -112,6 +113,32 @@ abstract class AbstractProfilerIntegrationTest extends AbstractIntegrationTest {
         ] + moreArgs
 
         new Main().run(*args)
+    }
+
+    // It seems it's not effectful to pass `org.gradle.java.home` as a system property or as part of jvmargs
+    def downgradeDaemonJvmIfTestJvmUnsupported(String gradleVersion, @Nullable File dir = null) {
+        def currentJvm = JavaVersion.current()
+        def targetGradleVersion = GradleVersion.version(gradleVersion)
+
+        String downgradeJavaHome = null
+        if (currentJvm.isCompatibleWith(JavaVersion.VERSION_11) && targetGradleVersion < minimalGradleVersionSupportingJava11) {
+            downgradeJavaHome = getJavaHomeProperty("javaHomes.java8", "Java 8")
+        } else if (currentJvm.isCompatibleWith(JavaVersion.VERSION_17) && targetGradleVersion < minimalGradleVersionSupportingJava17) {
+            downgradeJavaHome = getJavaHomeProperty("javaHomes.java11", "Java 11")
+        }
+
+        if (downgradeJavaHome != null) {
+            def parentDir = dir != null ? dir : projectDir
+            new File(parentDir, "gradle.properties") << "\norg.gradle.java.home=${downgradeJavaHome}"
+        }
+    }
+
+    private static String getJavaHomeProperty(String systemProperty, String description) {
+        def javaHome = System.getProperty(systemProperty)
+        if (javaHome == null) {
+            throw new IllegalStateException("This test requires Java Home for $description to be provided in the '$systemProperty' system property")
+        }
+        return javaHome
     }
 
     def setup() {
