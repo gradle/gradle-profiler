@@ -22,5 +22,5 @@ include("gradle-trace-converter-app")
 include("build-operations-measuring")
 
 rootProject.children.forEach {
-    it.projectDir = rootDir.resolve( "subprojects/${it.name}")
+    it.projectDir = rootDir.resolve("subprojects/${it.name}")
 }
