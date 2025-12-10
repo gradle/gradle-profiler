@@ -6,7 +6,7 @@ testAndroidStudioVersion = "2024.2.1.10"
 testAndroidSdkVersion = "7.3.0"
 
 [libraries]
-toolingApi = "org.gradle:gradle-tooling-api:7.2"
+toolingApi = "org.gradle:gradle-tooling-api:8.14.3"
 
 spock-core = { module = "org.spockframework:spock-core", version.ref = "spock" }
 spock-junit4 = { module = "org.spockframework:spock-junit4", version.ref = "spock" }
