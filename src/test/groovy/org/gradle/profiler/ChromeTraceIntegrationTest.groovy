@@ -3,26 +3,17 @@ package org.gradle.profiler
 import org.gradle.profiler.spock.extensions.ShowAndroidStudioLogsOnFailure
 import org.gradle.profiler.studio.AndroidStudioTestSupport
 import org.gradle.profiler.studio.tools.StudioFinder
-import org.gradle.util.GradleVersion
 import spock.lang.Requires
-import spock.lang.Shared
 import spock.lang.Unroll
 
 import static org.gradle.profiler.studio.AndroidStudioTestSupport.setupLocalProperties
 
 class ChromeTraceIntegrationTest extends AbstractProfilerIntegrationTest {
 
-    static final MINIMAL_SUPPORTED_VERSION_FOR_CHROME_TRACE = GradleVersion.version("3.5")
-
     File sandboxDir
 
     def setup() {
         sandboxDir = tmpDir.newFolder('sandbox')
-    }
-
-    @Shared
-    List<String> supportedGradleVersionsForChromeTrace = super.supportedGradleVersions.findAll { gradleVersion ->
-        GradleVersion.version(gradleVersion) >= MINIMAL_SUPPORTED_VERSION_FOR_CHROME_TRACE
     }
 
     @Unroll
@@ -40,7 +31,7 @@ class ChromeTraceIntegrationTest extends AbstractProfilerIntegrationTest {
         new File(outputDir, "${versionUnderTest}-trace/${versionUnderTest}-measured-build-1-invocation-1-trace.json").isFile()
 
         where:
-        versionUnderTest << supportedGradleVersionsForChromeTrace
+        versionUnderTest << supportedGradleVersions
     }
 
     @Unroll
@@ -57,7 +48,7 @@ class ChromeTraceIntegrationTest extends AbstractProfilerIntegrationTest {
         new File(outputDir, "${versionUnderTest}-trace/${versionUnderTest}-measured-build-1-invocation-1-trace.json").isFile()
 
         where:
-        versionUnderTest << supportedGradleVersionsForChromeTrace
+        versionUnderTest << supportedGradleVersions
     }
 
     @Unroll
@@ -74,7 +65,7 @@ class ChromeTraceIntegrationTest extends AbstractProfilerIntegrationTest {
         new File(outputDir, "${versionUnderTest}-trace/${versionUnderTest}-measured-build-1-invocation-1-trace.json").isFile()
 
         where:
-        versionUnderTest << supportedGradleVersionsForChromeTrace
+        versionUnderTest << supportedGradleVersions
     }
 
     @ShowAndroidStudioLogsOnFailure

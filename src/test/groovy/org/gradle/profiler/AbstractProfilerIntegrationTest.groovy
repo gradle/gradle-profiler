@@ -6,6 +6,7 @@ import org.junit.Rule
 import org.junit.rules.TemporaryFolder
 import spock.lang.Shared
 
+import javax.annotation.Nullable
 import java.util.regex.Pattern
 
 abstract class AbstractProfilerIntegrationTest extends AbstractIntegrationTest {
@@ -14,18 +15,30 @@ abstract class AbstractProfilerIntegrationTest extends AbstractIntegrationTest {
 
     static final SAMPLE = "-?\\d+(?:\\.\\d+)"
 
+    static minimalTestedGradleVersion = GradleVersion.version("6.0")
+
+    // See: https://github.com/gradle/gradle/blob/bc997dc1751c50fa0cdb1aa1fefe4844b81eca9f/testing/internal-integ-testing/src/main/groovy/org/gradle/integtests/fixtures/executer/DefaultGradleDistribution.groovy#L32-L50
+    static minimalGradleVersionSupportingJava11 = GradleVersion.version("5.0")
+    static minimalGradleVersionSupportingJava17 = GradleVersion.version("7.3")
+
     static List<String> gradleVersionsSupportedOnCurrentJvm(List<String> gradleVersions) {
         gradleVersions.findAll {
-            JavaVersion.current().isJava11Compatible() ? GradleVersion.version(it) >= GradleVersion.version("5.0") : true
+            if (JavaVersion.current().isCompatibleWith(JavaVersion.VERSION_17)) {
+                return GradleVersion.version(it) >= minimalGradleVersionSupportingJava17
+            } else if (JavaVersion.current().isCompatibleWith(JavaVersion.VERSION_11)) {
+                return GradleVersion.version(it) >= minimalGradleVersionSupportingJava11
+            } else {
+                return true
+            }
         }
     }
 
     @Shared
     List<String> supportedGradleVersions = gradleVersionsSupportedOnCurrentJvm([
-        "5.6.4",
         "6.9.4",
         "7.6.4",
-        "8.0.2", "8.14.3"
+        "8.0.2",
+        "8.14.3"
     ])
 
     @Shared
@@ -33,8 +46,22 @@ abstract class AbstractProfilerIntegrationTest extends AbstractIntegrationTest {
     @Shared
     String latestSupportedGradleVersion = supportedGradleVersions.last()
 
-    static String buildScanPluginVersion(String gradleVersion) {
-        (GradleVersion.version(gradleVersion) < GradleVersion.version("5.0")) ? '1.16' : '3.5'
+    /**
+     * Returns the range of Gradle versions supported by the current JVM,
+     * ensuring range bounds are distinct.
+     */
+    List<String> currentJvmSupportedGradleVersionRange() {
+        assert minimalSupportedGradleVersion != latestSupportedGradleVersion
+        [minimalSupportedGradleVersion, latestSupportedGradleVersion]
+    }
+
+    // https://docs.gradle.com/develocity/current/miscellaneous/compatibility/#build-scans
+    static String develocityPluginVersion(String gradleVersion) {
+        if (GradleVersion.version(gradleVersion) < minimalTestedGradleVersion) {
+            throw new IllegalArgumentException("Gradle versions before $minimalTestedGradleVersion are not supported for testing")
+        }
+
+        "4.2.2"
     }
 
     static String transformCacheLocation(String gradleVersionString) {
@@ -77,6 +104,41 @@ abstract class AbstractProfilerIntegrationTest extends AbstractIntegrationTest {
 
     File file(String path) {
         return new File(projectDir, path)
+    }
+
+    void run(List<String> moreArgs) {
+        def args = [
+            "--project-dir", projectDir.absolutePath,
+            "--output-dir", outputDir.absolutePath,
+        ] + moreArgs
+
+        new Main().run(*args)
+    }
+
+    // It seems it's not effectful to pass `org.gradle.java.home` as a system property or as part of jvmargs
+    def downgradeDaemonJvmIfTestJvmUnsupported(String gradleVersion, @Nullable File dir = null) {
+        def currentJvm = JavaVersion.current()
+        def targetGradleVersion = GradleVersion.version(gradleVersion)
+
+        String downgradeJavaHome = null
+        if (currentJvm.isCompatibleWith(JavaVersion.VERSION_11) && targetGradleVersion < minimalGradleVersionSupportingJava11) {
+            downgradeJavaHome = getJavaHomeProperty("javaHomes.java8", "Java 8")
+        } else if (currentJvm.isCompatibleWith(JavaVersion.VERSION_17) && targetGradleVersion < minimalGradleVersionSupportingJava17) {
+            downgradeJavaHome = getJavaHomeProperty("javaHomes.java11", "Java 11")
+        }
+
+        if (downgradeJavaHome != null) {
+            def parentDir = dir != null ? dir : projectDir
+            new File(parentDir, "gradle.properties") << "\norg.gradle.java.home=${downgradeJavaHome}"
+        }
+    }
+
+    private static String getJavaHomeProperty(String systemProperty, String description) {
+        def javaHome = System.getProperty(systemProperty)
+        if (javaHome == null) {
+            throw new IllegalStateException("This test requires Java Home for $description to be provided in the '$systemProperty' system property")
+        }
+        return javaHome
     }
 
     def setup() {

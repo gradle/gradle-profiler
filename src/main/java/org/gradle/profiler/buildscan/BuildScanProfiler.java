@@ -35,7 +35,7 @@ public class BuildScanProfiler extends Profiler {
         } else if (gradleVersion.compareTo(GRADLE_6) < 0) {
             return "2.4.2";
         } else {
-            return "4.1";
+            return "4.2.2";
         }
     }
 

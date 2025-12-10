@@ -43,10 +43,10 @@ class BenchmarkResultCollectorTest extends Specification {
         return Stub(BuildInvocationResult)
     }
 
-    def scenario(String name = "one", String version = "4.6") {
+    def scenario(String name = "one") {
         def definition = Stub(ScenarioDefinition)
         definition.name >> name
-        definition.buildToolDisplayName >> "Gradle $version"
+        definition.buildToolDisplayName >> "Gradle"
         return definition
     }
 }

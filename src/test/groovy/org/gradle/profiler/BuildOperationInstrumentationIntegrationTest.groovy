@@ -1,6 +1,5 @@
 package org.gradle.profiler
 
-import spock.lang.Unroll
 
 import static org.hamcrest.CoreMatchers.equalTo
 import static org.hamcrest.CoreMatchers.everyItem
@@ -11,7 +10,6 @@ import static org.junit.Assert.assertTrue
 
 class BuildOperationInstrumentationIntegrationTest extends AbstractProfilerIntegrationTest {
 
-    @Unroll
     def "can benchmark GC time for build using #gradleVersion (configuration-cache: #configurationCache)"() {
         given:
         instrumentedBuildScript()
@@ -63,7 +61,6 @@ class BuildOperationInstrumentationIntegrationTest extends AbstractProfilerInteg
         latestSupportedGradleVersion | true
     }
 
-    @Unroll
     def "can benchmark local build cache size for build using #gradleVersion (configuration-cache: #configurationCache)"() {
         given:
         instrumentedBuildScript()
@@ -132,7 +129,6 @@ class BuildOperationInstrumentationIntegrationTest extends AbstractProfilerInteg
         latestSupportedGradleVersion | true
     }
 
-    @Unroll
     def "can benchmark configuration time for build using #gradleVersion (configuration-cache: #configurationCache)"() {
         given:
         instrumentedBuildScript()
@@ -178,7 +174,6 @@ class BuildOperationInstrumentationIntegrationTest extends AbstractProfilerInteg
         latestSupportedGradleVersion | true
     }
 
-    @Unroll
     def "can benchmark snapshotting build operation time via #via for build using #gradleVersion (configuration-cache: #configurationCache)"() {
         given:
         instrumentedBuildForSnapshottingBenchmark()
@@ -258,7 +253,6 @@ class BuildOperationInstrumentationIntegrationTest extends AbstractProfilerInteg
         }
     }
 
-    @Unroll
     def "can combine measuring configuration time and build operation using #gradleVersion (configuration-cache: #configurationCache)"() {
         given:
         instrumentedBuildForSnapshottingBenchmark()
@@ -312,7 +306,6 @@ class BuildOperationInstrumentationIntegrationTest extends AbstractProfilerInteg
         latestSupportedGradleVersion | true
     }
 
-    @Unroll
     def "gracefully ignores non-existent build-operation with #gradleVersion"() {
         given:
         instrumentedBuildForSnapshottingBenchmark()
@@ -371,32 +364,34 @@ class BuildOperationInstrumentationIntegrationTest extends AbstractProfilerInteg
         sourceFile.text = "class A {}"
     }
 
-    @Unroll
     def "complains when attempting to benchmark configuration time for build using #gradleVersion"() {
+        // Gradle version that does not support measuring configuration time
+        def unsupportedGradleVersion = minimalTestedGradleVersion.version
+        downgradeDaemonJvmIfTestJvmUnsupported(unsupportedGradleVersion)
+
         given:
         instrumentedBuildScript()
 
         when:
-        new Main().run("--project-dir", projectDir.absolutePath, "--output-dir", outputDir.absolutePath, "--gradle-version", gradleVersion, "--benchmark", "--measure-config-time", "assemble")
+        new Main().run("--project-dir", projectDir.absolutePath, "--output-dir", outputDir.absolutePath, "--gradle-version", unsupportedGradleVersion, "--benchmark", "--measure-config-time", "assemble")
 
         then:
         thrown(IllegalArgumentException)
 
         and:
-        output.contains("Scenario using Gradle ${gradleVersion}: Measuring build configuration is only supported for Gradle 6.1-milestone-3 and later")
-
-        where:
-        gradleVersion << gradleVersionsSupportedOnCurrentJvm([minimalSupportedGradleVersion, "6.0"])
+        output.contains("Scenario using Gradle ${unsupportedGradleVersion}: Measuring build configuration is only supported for Gradle 6.1-milestone-3 and later")
     }
 
     def "complains when attempting to benchmark configuration time for build using unsupported Gradle version from scenario file"() {
+        // Gradle version that does not support measuring configuration time
+        def unsupportedGradleVersion = minimalTestedGradleVersion.version
+        downgradeDaemonJvmIfTestJvmUnsupported(unsupportedGradleVersion)
         given:
         instrumentedBuildScript()
-        def unsupportedGradleVersions = gradleVersionsSupportedOnCurrentJvm(["${minimalSupportedGradleVersion}", "6.0"])
         def scenarioFile = file("performance.scenarios")
         scenarioFile.text = """
             assemble {
-                versions = ["${unsupportedGradleVersions.join('", "')}", "${latestSupportedGradleVersion}"]
+                versions = ["$unsupportedGradleVersion", "${latestSupportedGradleVersion}"]
             }
         """
 
@@ -407,8 +402,6 @@ class BuildOperationInstrumentationIntegrationTest extends AbstractProfilerInteg
         thrown(IllegalArgumentException)
 
         and:
-        unsupportedGradleVersions.each {
-            assert output.contains("Scenario assemble using Gradle ${it}: Measuring build configuration is only supported for Gradle 6.1-milestone-3 and later")
-        }
+        assert output.contains("Scenario assemble using Gradle ${unsupportedGradleVersion}: Measuring build configuration is only supported for Gradle 6.1-milestone-3 and later")
     }
 }
