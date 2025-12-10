@@ -9,6 +9,7 @@ fun Project.configureGradleProfilerProject() {
         WindowsJava11,
         LinuxJava8,
         LinuxJava11,
+        LinuxJava17,
     )
 
     testBuilds.forEach(this::buildType)

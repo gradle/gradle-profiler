@@ -77,6 +77,10 @@ object LinuxJava11 : GradleProfilerTest(Os.linux, JavaVersion.OPENJDK_11, Arch.A
     name = "Linux - Java 11"
 })
 
+object LinuxJava17 : GradleProfilerTest(Os.linux, JavaVersion.OPENJDK_17, Arch.AMD64, {
+    name = "Linux - Java 17"
+})
+
 object MacOSJava11 : GradleProfilerTest(Os.macos, JavaVersion.OPENJDK_11, Arch.AARCH64, {
     name = "macOS - Java 11"
 })
