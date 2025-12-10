@@ -19,5 +19,5 @@ include("scenario-definition")
 include("tooling-action")
 
 rootProject.children.forEach {
-    it.projectDir = rootDir.resolve( "subprojects/${it.name}")
+    it.projectDir = rootDir.resolve("subprojects/${it.name}")
 }
