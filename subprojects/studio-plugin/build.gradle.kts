@@ -5,9 +5,8 @@ import org.jetbrains.intellij.IntelliJPluginConstants.INTELLIJ_DEFAULT_DEPENDENC
 plugins {
     groovy
     `java-test-fixtures`
-    id("profiler.allprojects")
+    id("profiler.kotlin-library")
     id("org.jetbrains.intellij") version "1.17.4"
-    id("org.jetbrains.kotlin.jvm") version "2.0.21"
 }
 
 description = "Contains logic for Android Studio plugin that communicates with profiler"
