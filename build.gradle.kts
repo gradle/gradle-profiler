@@ -38,8 +38,6 @@ repositories {
     }
 }
 
-
-
 dependencies {
     implementation(libs.toolingApi)
     implementation(project(":build-action"))
