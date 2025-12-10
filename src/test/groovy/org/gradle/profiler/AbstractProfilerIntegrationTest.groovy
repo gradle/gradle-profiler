@@ -54,8 +54,13 @@ abstract class AbstractProfilerIntegrationTest extends AbstractIntegrationTest {
         [minimalSupportedGradleVersion, latestSupportedGradleVersion]
     }
 
-    static String buildScanPluginVersion(String gradleVersion) {
-        (GradleVersion.version(gradleVersion) < GradleVersion.version("5.0")) ? '1.16' : '3.5'
+    // https://docs.gradle.com/develocity/current/miscellaneous/compatibility/#build-scans
+    static String develocityPluginVersion(String gradleVersion) {
+        if (GradleVersion.version(gradleVersion) < minimalTestedGradleVersion) {
+            throw new IllegalArgumentException("Gradle versions before $minimalTestedGradleVersion are not supported for testing")
+        }
+
+        "4.2.2"
     }
 
     static String transformCacheLocation(String gradleVersionString) {

@@ -222,14 +222,17 @@ class ProfilerIntegrationTest extends AbstractProfilerIntegrationTest {
     }
 
     def "uses build scan version used by the build if present"() {
+        def develocityVersion = develocityPluginVersion(minimalSupportedGradleVersion)
         given:
-        buildFile.text = """
+        settingsFile.text = """
             plugins {
-                id 'com.gradle.build-scan' version '${buildScanPluginVersion(minimalSupportedGradleVersion)}'
+                id "com.gradle.develocity" version "${develocityVersion}"
             }
+            develocity.buildScan.termsOfUseUrl = "https://gradle.com/help/legal-terms-of-use"
+            develocity.buildScan.termsOfUseAgree = "yes"
+        """
+        buildFile.text = """
             apply plugin: BasePlugin
-
-            buildScan { termsOfServiceUrl = 'https://gradle.com/terms-of-service'; termsOfServiceAgree = 'yes' }
 
             println "<gradle-version: " + gradle.gradleVersion + ">"
             println "<tasks: " + gradle.startParameter.taskNames + ">"
@@ -246,7 +249,7 @@ class ProfilerIntegrationTest extends AbstractProfilerIntegrationTest {
         logFile.find("<gradle-version: $minimalSupportedGradleVersion>").size() == 4
         logFile.find("<daemon: true").size() == 4
         logFile.find("<tasks: [assemble]>").size() == 3
-        assertBuildScanPublished()
+        assertBuildScanPublished(null, 2)
     }
 
     def "uses #pluginName plugin version used by the build if present"() {
@@ -296,7 +299,7 @@ class ProfilerIntegrationTest extends AbstractProfilerIntegrationTest {
         where:
         pluginName   | pluginId                | extensionName      | jarFileName                       | pluginVersion
         'Enterprise' | 'com.gradle.enterprise' | 'gradleEnterprise' | 'gradle-enterprise-gradle-plugin' | '3.0'
-        'Develocity' | 'com.gradle.develocity' | 'develocity'       | 'develocity-gradle-plugin'        | '4.1'
+        'Develocity' | 'com.gradle.develocity' | 'develocity'       | 'develocity-gradle-plugin'        | '4.2.2'
     }
 
     def "profiles build using Build Scans overridden version specified in Gradle #gradleVersion and tasks"() {
@@ -313,7 +316,7 @@ class ProfilerIntegrationTest extends AbstractProfilerIntegrationTest {
         } else if (GradleVersion.version(gradleVersion) < GradleVersion.version("6.0")) {
             requestedBuildScanVersion = "2.2.1"
         } else {
-            requestedBuildScanVersion = "4.0"
+            requestedBuildScanVersion = "4.2.2"
         }
 
         when:
@@ -346,7 +349,7 @@ class ProfilerIntegrationTest extends AbstractProfilerIntegrationTest {
             println "<tasks: " + gradle.startParameter.taskNames + ">"
             println "<daemon: " + gradle.services.get(org.gradle.internal.environment.GradleBuildEnvironment).longLivingProcess + ">"
         """
-        def requestedGradleEnterpriseVersion = "4.0"
+        def requestedGradleEnterpriseVersion = "4.2.2"
 
         when:
         new Main().run(
