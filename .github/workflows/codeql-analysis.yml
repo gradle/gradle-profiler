@@ -54,7 +54,7 @@ jobs:
 
       - if: ${{ matrix.build-mode == 'manual' }}
         name: Build with Gradle
-        run: ./gradlew clean assemble
+        run: ./gradlew --no-build-cache clean assemble
 
       - name: Perform CodeQL Analysis
         # Should use the same action version as the `init` step above
