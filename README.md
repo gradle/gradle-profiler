@@ -229,6 +229,27 @@ The following command line options only apply when measuring Gradle builds:
 - `--no-studio-sandbox`: Do not use the Android Studio sandbox but use the default Android Studio folders for the Android Studio data.
 - `--no-diffs`: Do not generate differential flame graphs.
 
+## JVM requirements and options
+
+Gradle Profiler requires a Java 8 or later JVM to run.
+
+By default, Gradle Profiler starts the daemon for your build using the same JVM that was used to run it.
+In case your build requires an earlier version of the JVM or you require a specific JVM, you can configure it explicitly in your build.
+
+For Gradle 8.13 and later, the recommended approach is to [configure the Daemon JVM](https://docs.gradle.org/current/userguide/gradle_daemon.html#sec:configuring_daemon_jvm).
+However, it might require some additional setup in your build.
+You can follow the instructions in the linked documentation.
+Daemon JVM configuration can be checked into your VCS to make sure everyone on your team uses the same JVM version.
+
+A more ad hoc solution for benchmarking or profiling purposes is to specify the `org.gradle.java.home` property in the `gradle.properties` file in the root directory of your build.
+
+```properties
+# gradle.properties
+org.gradle.java.home=<path to a Java installation>
+```
+
+It will be respected when starting the daemon for your build, regardless of the JVM Gradle Profiler uses.
+
 ## Advanced profiling scenarios
 
 A scenario file can be provided to define more complex scenarios to benchmark or profile. Use the `--scenario-file` option to provide this. The scenario file is defined in [HOCON] format.
