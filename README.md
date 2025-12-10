@@ -250,6 +250,19 @@ org.gradle.java.home=<path to a Java installation>
 
 It will be respected when starting the daemon for your build, regardless of the JVM Gradle Profiler uses.
 
+## Gradle version compatibility
+
+Gradle Profiler supports benchmarking and profiling builds with Gradle 6.0 or later.
+
+Gradle Profiler is tested against the latest patch releases of Gradle 6.x through 8.x.
+
+If you require running your build with a specific Java version for the Gradle Daemon JVM,
+which is different from the JVM used to run Gradle Profiler,
+see the [JVM requirements and option](#jvm-requirements-and-options) section for details.
+
+If you require running Gradle Profiler for builds that use Gradle 5.x, consider using previous versions of Gradle Profiler.
+The last version that officially supports Gradle 5.x is [Gradle Profiler 0.23.0](https://github.com/gradle/gradle-profiler/releases/tag/v0.23.0).
+
 ## Advanced profiling scenarios
 
 A scenario file can be provided to define more complex scenarios to benchmark or profile. Use the `--scenario-file` option to provide this. The scenario file is defined in [HOCON] format.
