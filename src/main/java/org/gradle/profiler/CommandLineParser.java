@@ -36,6 +36,9 @@ class CommandLineParser {
         parser.nonOptions("The scenarios or task names to run");
         ArgumentAcceptingOptionSpec<File> projectOption = parser.accepts("project-dir", "The directory containing the build to run")
             .withRequiredArg().ofType(File.class).defaultsTo(new File(".").getCanonicalFile());
+        ArgumentAcceptingOptionSpec<File> javaHomeOption = parser.accepts("java-home", "The Java home to use")
+            .withOptionalArg()
+            .ofType(File.class);
         ArgumentAcceptingOptionSpec<String> gradleVersionOption = parser.accepts("gradle-version", "Gradle version or installation to use to run build")
             .withRequiredArg();
         ArgumentAcceptingOptionSpec<File> gradleUserHomeOption = parser.accepts("gradle-user-home", "The Gradle user home to use")
@@ -120,6 +123,7 @@ class CommandLineParser {
         }
 
         File outputDir = toAbsoluteFileOrNull(parsedOptions.valueOf(outputDirOption));
+        File javaHome = toAbsoluteFileOrNull(parsedOptions.valueOf(javaHomeOption));
         File gradleUserHome = toAbsoluteFileOrNull(parsedOptions.valueOf(gradleUserHomeOption));
         Integer warmups = parsedOptions.valueOf(warmupsOption);
         Integer iterations = parsedOptions.valueOf(iterationsOption);
@@ -189,6 +193,7 @@ class CommandLineParser {
             .setVersions(gradleVersions)
             .setTargets(targetNames)
             .setSysProperties(sysProperties)
+            .setJavaHome(javaHome)
             .setGradleUserHome(gradleUserHome)
             .setStudioInstallDir(studioInstallDir)
             .setStudioSandboxDir(studioSandboxDir)

@@ -12,6 +12,7 @@ import org.gradle.tooling.model.build.BuildEnvironment;
 import org.gradle.tooling.model.build.JavaEnvironment;
 import org.gradle.util.GradleVersion;
 
+import javax.annotation.Nullable;
 import java.io.File;
 import java.io.FileReader;
 import java.io.FileWriter;
@@ -59,10 +60,14 @@ public class DefaultGradleBuildConfigurationReader implements GradleBuildConfigu
             String gradleHome = OperatingSystem.isWindows()
                 ? "${gradle.gradleHomeDir.absolutePath.replace('\\\\', '/')}"
                 : "${gradle.gradleHomeDir}";
+            String javaHome = OperatingSystem.isWindows()
+                ? "${new File(System.getProperty('java.home')).absolutePath.replace('\\\\', '/')}"
+                : "${new File(System.getProperty('java.home')).absolutePath}";
             writer.println(
                 "rootProject {\n" +
                     "  afterEvaluate {\n" +
                     "    def detailsFile = new File(new URI('" + buildDetails.toURI() + "'))\n" +
+                    "    detailsFile << \"javaHome=" + javaHome + "\\n\"\n" +
                     "    detailsFile << \"gradleHome=" + gradleHome + "\\n\"\n" +
                     "    detailsFile << \"isBuildScanPluginApplied=${plugins.hasPlugin('com.gradle.build-scan')}\\n\"\n" +
                     "  }\n" +
@@ -72,7 +77,7 @@ public class DefaultGradleBuildConfigurationReader implements GradleBuildConfigu
     }
 
     @Override
-    public GradleBuildConfiguration readConfiguration(String gradleVersion) {
+    public GradleBuildConfiguration readConfiguration(String gradleVersion, @Nullable File javaHome) {
         GradleBuildConfiguration version = versions.get(gradleVersion);
         if (version == null) {
             version = doResolveVersion(gradleVersion);
@@ -99,7 +104,7 @@ public class DefaultGradleBuildConfigurationReader implements GradleBuildConfigu
     }
 
     @Override
-    public GradleBuildConfiguration readConfiguration() {
+    public GradleBuildConfiguration readConfiguration(, @Nullable File javaHome) {
         if (defaultVersion == null) {
             Logging.startOperation("Inspecting the build using its default Gradle version");
             defaultVersion = probe(connector());
@@ -111,11 +116,12 @@ public class DefaultGradleBuildConfigurationReader implements GradleBuildConfigu
         return GradleConnector.newConnector().useGradleUserHomeDir(gradleUserHome.getAbsoluteFile());
     }
 
-    private BuildDetails readBuildDetails() {
+    private static BuildDetails readBuildDetails(File buildDetails) {
         try (InputStream inputStream = Files.newInputStream(buildDetails.toPath())) {
             Properties properties = new Properties();
             properties.load(inputStream);
             return new BuildDetails(
+                properties.getProperty("javaHome").trim(),
                 properties.getProperty("gradleHome").trim(),
                 properties.getProperty("isBuildScanPluginApplied", "false").trim().equals("true"),
                 properties.getProperty("isEnterprisePluginApplied", "false").trim().equals("true"),
@@ -126,21 +132,22 @@ public class DefaultGradleBuildConfigurationReader implements GradleBuildConfigu
         }
     }
 
-    private GradleBuildConfiguration probe(GradleConnector connector) {
+    private GradleBuildConfiguration probe(GradleConnector connector, @Nullable File javaHome) {
         GradleBuildConfiguration version;
         try (ProjectConnection connection = connector.forProjectDirectory(projectDir).connect()) {
             BuildEnvironment buildEnvironment = connection.getModel(BuildEnvironment.class);
-            new ToolingApiGradleClient(connection).runTasks(ImmutableList.of(":help"), ImmutableList.of("-I", initScript.getAbsolutePath()), ImmutableList.of());
-            BuildDetails buildDetails = readBuildDetails();
             JavaEnvironment javaEnvironment = buildEnvironment.getJava();
-            List<String> allJvmArgs = new ArrayList<>(javaEnvironment.getJvmArguments());
+            List<String> jvmArguments = javaEnvironment.getJvmArguments();
+            BuildDetails buildDetails = extractBuildDetailsByRunningBuild(connection, javaHome, jvmArguments);
+            File resolvedJavaHome = javaHome != null ? javaHome : new File(buildDetails.getJavaHome());
+            List<String> allJvmArgs = new ArrayList<>(jvmArguments);
             allJvmArgs.addAll(readSystemPropertiesFromGradleProperties());
             boolean usesAnyScanPlugin = buildDetails.usesAnyScanPlugin();
             boolean usesDevelocityPlugin = buildDetails.usesDevelocityPlugin();
             version = new GradleBuildConfiguration(
                 GradleVersion.version(buildEnvironment.getGradle().getGradleVersion()),
                 new File(buildDetails.getGradleHome()),
-                javaEnvironment.getJavaHome(),
+                resolvedJavaHome,
                 allJvmArgs,
                 usesAnyScanPlugin,
                 usesDevelocityPlugin
@@ -148,6 +155,17 @@ public class DefaultGradleBuildConfigurationReader implements GradleBuildConfigu
         }
         daemonControl.stop(version);
         return version;
+    }
+
+    private BuildDetails extractBuildDetailsByRunningBuild(ProjectConnection connection, @Nullable File javaHome, List<String> jvmArguments) {
+        new ToolingApiGradleClient(connection)
+            .runTasks(
+                ImmutableList.of(":help"),
+                ImmutableList.of("-I", initScript.getAbsolutePath()),
+//                ImmutableList.of("-Dorg.gradle.jvmargs=-Dorg.gradle.java.home=" + "/Users/asemin/.sdkman/candidates/java/8.0.472-amzn")
+                ImmutableList.of("-Dorg.gradle.java.home=" + "/Users/asemin/.sdkman/candidates/java/8.0.472-amzn")
+            );
+        return readBuildDetails(buildDetails);
     }
 
     private List<String> readSystemPropertiesFromGradleProperties() {
@@ -178,16 +196,22 @@ public class DefaultGradleBuildConfigurationReader implements GradleBuildConfigu
     }
 
     private static class BuildDetails {
+        private final String javaHome;
         private final String gradleHome;
         private final boolean isBuildScanPluginApplied;
         private final boolean isEnterprisePluginApplied;
         private final boolean isDevelocityPluginApplied;
 
-        private BuildDetails(String gradleHome, boolean isBuildScanPluginApplied, boolean isEnterprisePluginApplied, boolean isDevelocityPluginApplied) {
+        private BuildDetails(String javaHome, String gradleHome, boolean isBuildScanPluginApplied, boolean isEnterprisePluginApplied, boolean isDevelocityPluginApplied) {
+            this.javaHome = javaHome;
             this.gradleHome = gradleHome;
             this.isBuildScanPluginApplied = isBuildScanPluginApplied;
             this.isEnterprisePluginApplied = isEnterprisePluginApplied;
             this.isDevelocityPluginApplied = isDevelocityPluginApplied;
+        }
+
+        public String getJavaHome() {
+            return javaHome;
         }
 
         public String getGradleHome() {

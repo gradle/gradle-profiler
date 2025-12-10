@@ -23,6 +23,7 @@ public class InvocationSettings {
     private final List<String> versions;
     private final List<String> targets;
     private final Map<String, String> sysProperties;
+    private final File javaHome;
     private final File gradleUserHome;
     private final File studioInstallDir;
     private final File studioSandboxDir;
@@ -57,6 +58,7 @@ public class InvocationSettings {
         List<String> versions,
         List<String> targets,
         Map<String, String> sysProperties,
+        @Nullable File javaHome,
         File gradleUserHome,
         @Nullable File studioInstallDir,
         File studioSandboxDir,
@@ -84,6 +86,7 @@ public class InvocationSettings {
         this.versions = versions;
         this.targets = targets;
         this.sysProperties = sysProperties;
+        this.javaHome = javaHome;
         this.gradleUserHome = gradleUserHome;
         this.studioInstallDir = studioInstallDir;
         this.studioSandboxDir = studioSandboxDir;
@@ -175,6 +178,10 @@ public class InvocationSettings {
 
     public Integer getBuildCount() {
         return iterations;
+    }
+
+    public File getJavaHome() {
+        return javaHome;
     }
 
     public File getGradleUserHome() {
@@ -307,6 +314,7 @@ public class InvocationSettings {
         private List<String> versions;
         private List<String> targets;
         private Map<String, String> sysProperties;
+        private File javaHome;
         private File gradleUserHome;
         private File studioInstallDir;
         private File studioSandboxDir;
@@ -379,6 +387,11 @@ public class InvocationSettings {
 
         public InvocationSettingsBuilder setSysProperties(Map<String, String> sysProperties) {
             this.sysProperties = sysProperties;
+            return this;
+        }
+
+        public InvocationSettingsBuilder setJavaHome(File javaHome) {
+            this.javaHome = javaHome;
             return this;
         }
 
@@ -476,6 +489,7 @@ public class InvocationSettings {
                 versions,
                 targets,
                 sysProperties,
+                javaHome,
                 gradleUserHome,
                 studioInstallDir,
                 studioSandboxDir,

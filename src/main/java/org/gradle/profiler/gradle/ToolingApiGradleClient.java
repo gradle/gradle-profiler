@@ -8,6 +8,8 @@ import org.gradle.tooling.GradleConnectionException;
 import org.gradle.tooling.LongRunningOperation;
 import org.gradle.tooling.ProjectConnection;
 
+import javax.annotation.Nullable;
+import java.io.File;
 import java.util.List;
 import java.util.function.Consumer;
 import java.util.function.Function;
@@ -45,9 +47,12 @@ public class ToolingApiGradleClient implements GradleInvoker, GradleClient {
     }
 
     @Override
-    public void runTasks(List<String> tasks, List<String> gradleArgs, List<String> jvmArgs) {
+    public void runTasks(List<String> tasks, List<String> gradleArgs, @Nullable File javaHome, List<String> jvmArgs) {
         runOperation(ProjectConnection::newBuild, build -> {
             build.forTasks(tasks.toArray(new String[0]));
+            if (javaHome != null) {
+                build.setJavaHome(javaHome);
+            }
             build.withArguments(gradleArgs);
             build.setJvmArguments(jvmArgs);
             build.run();
