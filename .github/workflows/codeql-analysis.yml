@@ -50,7 +50,7 @@ jobs:
 
       - if: ${{ matrix.build-mode == 'manual' }}
         name: Setup Gradle
-        uses: gradle/actions/setup-gradle@v4
+        uses: gradle/actions/setup-gradle@v5
 
       - if: ${{ matrix.build-mode == 'manual' }}
         name: Build with Gradle
