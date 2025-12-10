@@ -1,9 +1,8 @@
 package org.gradle.profiler
 
-import org.gradle.api.JavaVersion
+
 import org.gradle.profiler.buildscan.BuildScanProfiler
 import org.gradle.util.GradleVersion
-import spock.lang.IgnoreIf
 
 class DevelocityIntegrationTest extends AbstractProfilerIntegrationTest {
 
@@ -201,9 +200,9 @@ class DevelocityIntegrationTest extends AbstractProfilerIntegrationTest {
         assertBuildScanPublished(requestedGradleEnterpriseVersion)
     }
 
-    // JFR doesn't work on Java 11, yet
-    @IgnoreIf({ JavaVersion.current().isJava11Compatible() })
     def "profiles build using JFR, Build Scans, specified Gradle version and tasks"() {
+        def gradleVersion = minimalSupportedGradleVersion
+        def buildScanVersion = BuildScanProfiler.defaultBuildScanVersion(GradleVersion.version(gradleVersion))
         given:
         buildFile.text = """
             apply plugin: BasePlugin
@@ -211,11 +210,10 @@ class DevelocityIntegrationTest extends AbstractProfilerIntegrationTest {
             println "<tasks: " + gradle.startParameter.taskNames + ">"
             println "<daemon: " + gradle.services.get(org.gradle.internal.environment.GradleBuildEnvironment).longLivingProcess + ">"
         """
-        def buildScanVersion = "2.2.1"
 
         when:
         run([
-            "--gradle-version", minimalSupportedGradleVersion,
+            "--gradle-version", gradleVersion,
             "--profile", "buildscan", "--buildscan-version", buildScanVersion,
             "--profile", "jfr",
             "assemble"
@@ -223,12 +221,12 @@ class DevelocityIntegrationTest extends AbstractProfilerIntegrationTest {
 
         then:
         // Probe version, 2 warm up, 1 build
-        logFile.find("<gradle-version: $minimalSupportedGradleVersion>").size() == 4
+        logFile.find("<gradle-version: ${gradleVersion}>").size() == 4
         logFile.find("<daemon: true").size() == 4
         logFile.find("<tasks: [assemble]>").size() == 3
         assertBuildScanPublished(buildScanVersion)
 
-        def profileFile = new File(outputDir, "${minimalSupportedGradleVersion}.jfr")
+        def profileFile = new File(outputDir, "${gradleVersion}.jfr")
         profileFile.isFile()
     }
 }
