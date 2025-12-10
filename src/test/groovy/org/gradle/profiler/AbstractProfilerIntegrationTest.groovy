@@ -1,5 +1,6 @@
 package org.gradle.profiler
 
+import org.gradle.api.JavaVersion
 import org.gradle.util.GradleVersion
 import org.junit.Rule
 import org.junit.rules.TemporaryFolder
@@ -94,9 +95,11 @@ abstract class AbstractProfilerIntegrationTest extends AbstractIntegrationTest {
 
     static final SAMPLE = "-?\\d+(?:\\.\\d+)"
 
+    static int currentJvmMajor = JavaVersion.current().majorVersion.toInteger()
+
     static List<String> gradleVersionsSupportedOnCurrentJvm(List<String> gradleVersions) {
         gradleVersions.findAll {
-            new DefaultGradleDistribution(GradleVersion.version(it)).daemonWorksWith(Jvm.current.javaSpecVersionNumber.major)
+            new DefaultGradleDistribution(GradleVersion.version(it)).daemonWorksWith(currentJvmMajor)
         }
     }
 
