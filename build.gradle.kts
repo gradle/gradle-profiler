@@ -42,8 +42,6 @@ repositories {
     }
 }
 
-
-
 dependencies {
     // gradle/gradle uses these as part of Gradle Profiler-as-a-library
     api(project(":build-action"))
