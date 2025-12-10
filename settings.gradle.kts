@@ -20,7 +20,7 @@ include("build-action")
 include("scenario-definition")
 
 rootProject.children.forEach {
-    it.projectDir = rootDir.resolve( "subprojects/${it.name}")
+    it.projectDir = rootDir.resolve("subprojects/${it.name}")
 }
 
 /**

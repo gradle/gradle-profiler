@@ -8,6 +8,7 @@ kotlin {
 }
 
 repositories {
+    mavenCentral()
     maven {
         url = uri("https://www.jetbrains.com/intellij-repository/releases")
     }
