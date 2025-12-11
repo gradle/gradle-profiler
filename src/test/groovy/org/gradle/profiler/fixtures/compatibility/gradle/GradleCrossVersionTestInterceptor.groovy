@@ -48,7 +48,8 @@ class GradleCrossVersionTestInterceptor extends AbstractCrossVersionTestIntercep
         @Override
         protected void before(IMethodInvocation invocation) {
             super.before(invocation)
-            AbstractGradleCrossVersionTest.primaryGradleVersion = version;
+            def instance = invocation.getInstance() as AbstractGradleCrossVersionTest
+            instance.primaryGradleVersion = version
         }
 
         @Override
