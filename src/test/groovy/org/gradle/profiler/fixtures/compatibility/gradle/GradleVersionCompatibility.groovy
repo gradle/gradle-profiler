@@ -9,6 +9,8 @@ class GradleVersionCompatibility {
     static GradleVersion minimalGradleVersionSupportingJava11 = GradleVersion.version("5.0")
     static GradleVersion minimalGradleVersionSupportingJava17 = GradleVersion.version("7.3")
 
+    static GradleVersion minimalGradleVersionWithExperimentalConfigurationCache = GradleVersion.version("6.6")
+
     static GradleVersion minimalSupportedGradleVersion = GradleVersion.version("6.0")
 
     static List<GradleVersion> testedGradleVersions = gradleVersions(

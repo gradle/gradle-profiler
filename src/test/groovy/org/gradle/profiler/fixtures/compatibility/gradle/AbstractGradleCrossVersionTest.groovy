@@ -17,4 +17,8 @@ abstract class AbstractGradleCrossVersionTest extends AbstractBaseProfilerIntegr
     def setup() {
         downgradeDaemonJvmIfTestJvmUnsupported(gradleVersion)
     }
+
+    def gradleVersionWithExperimentalConfigurationCache() {
+        primaryGradleVersion >= GradleVersionCompatibility.minimalGradleVersionWithExperimentalConfigurationCache
+    }
 }
