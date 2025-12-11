@@ -1,25 +1,32 @@
 package org.gradle.profiler
 
-import org.gradle.profiler.fixtures.AbstractProfilerIntegrationTest
+import org.gradle.profiler.fixtures.compatibility.gradle.AbstractGradleCrossVersionTest
 import org.gradle.profiler.yourkit.YourKit
 import spock.lang.Requires
 
 
-class YourKitProfilerIntegrationTest extends AbstractProfilerIntegrationTest {
+class YourKitProfilerGradleCrossVersionTest extends AbstractGradleCrossVersionTest {
+
+    def setup() {
+        // reset to defaults
+        warmups = null
+        iterations = null
+    }
+
     @Requires({ YourKit.findYourKitHome() })
     def "profiles build using YourKit with tooling API and warm daemon to produce CPU tracing snapshot"() {
         given:
         instrumentedBuildScript()
 
         when:
-        new Main().run("--project-dir", projectDir.absolutePath, "--output-dir", outputDir.absolutePath, "--gradle-version", minimalSupportedGradleVersion, "--profile", "yourkit", "assemble")
+        run(["--gradle-version", gradleVersion, "--profile", "yourkit", "assemble"])
 
         then:
         logFile.find("<daemon: true").size() == 4
         logFile.containsOne("<invocations: 3>")
 
         and:
-        outputDir.listFiles().find { it.name.matches("${minimalSupportedGradleVersion}-.+\\.snapshot") }
+        outputDir.listFiles().find { it.name.matches("${gradleVersion}-.+\\.snapshot") }
     }
 
     @Requires({ YourKit.findYourKitHome() })
@@ -28,14 +35,14 @@ class YourKitProfilerIntegrationTest extends AbstractProfilerIntegrationTest {
         instrumentedBuildScript()
 
         when:
-        new Main().run("--project-dir", projectDir.absolutePath, "--output-dir", outputDir.absolutePath, "--gradle-version", minimalSupportedGradleVersion, "--profile", "yourkit", "--cli", "assemble")
+        run(["--gradle-version", gradleVersion, "--profile", "yourkit", "--cli", "assemble"])
 
         then:
         logFile.find("<daemon: true").size() == 4
         logFile.containsOne("<invocations: 3>")
 
         and:
-        outputDir.listFiles().find { it.name.matches("${minimalSupportedGradleVersion}-.+\\.snapshot") }
+        outputDir.listFiles().find { it.name.matches("${gradleVersion}-.+\\.snapshot") }
     }
 
     @Requires({ YourKit.findYourKitHome() })
@@ -44,14 +51,15 @@ class YourKitProfilerIntegrationTest extends AbstractProfilerIntegrationTest {
         instrumentedBuildScript()
 
         when:
-        new Main().run("--project-dir", projectDir.absolutePath, "--output-dir", outputDir.absolutePath, "--gradle-version", minimalSupportedGradleVersion, "--profile", "yourkit", "--iterations", "2", "--cli", "assemble")
+        iterations = 2
+        run(["--gradle-version", gradleVersion, "--profile", "yourkit", "--cli", "assemble"])
 
         then:
         logFile.find("<daemon: true").size() == 5
         logFile.containsOne("<invocations: 4>")
 
         and:
-        outputDir.listFiles().find { it.name.matches("${minimalSupportedGradleVersion}-.+\\.snapshot") }
+        outputDir.listFiles().find { it.name.matches("${gradleVersion}-.+\\.snapshot") }
     }
 
     @Requires({ YourKit.findYourKitHome() })
@@ -60,14 +68,14 @@ class YourKitProfilerIntegrationTest extends AbstractProfilerIntegrationTest {
         instrumentedBuildScript()
 
         when:
-        new Main().run("--project-dir", projectDir.absolutePath, "--output-dir", outputDir.absolutePath, "--gradle-version", minimalSupportedGradleVersion, "--cold-daemon", "--profile", "yourkit", "assemble")
+        run(["--gradle-version", gradleVersion, "--cold-daemon", "--profile", "yourkit", "assemble"])
 
         then:
         logFile.find("<daemon: true").size() == 3
         logFile.find("<invocations: 1>").size() == 3
 
         and:
-        outputDir.listFiles().find { it.name.matches("${minimalSupportedGradleVersion}-.+\\.snapshot") }
+        outputDir.listFiles().find { it.name.matches("${gradleVersion}-.+\\.snapshot") }
     }
 
     @Requires({ YourKit.findYourKitHome() })
@@ -76,14 +84,14 @@ class YourKitProfilerIntegrationTest extends AbstractProfilerIntegrationTest {
         instrumentedBuildScript()
 
         when:
-        new Main().run("--project-dir", projectDir.absolutePath, "--output-dir", outputDir.absolutePath, "--gradle-version", minimalSupportedGradleVersion, "--cold-daemon", "--profile", "yourkit", "--cli", "assemble")
+        run(["--gradle-version", gradleVersion, "--cold-daemon", "--profile", "yourkit", "--cli", "assemble"])
 
         then:
         logFile.find("<daemon: true").size() == 3
         logFile.find("<invocations: 1>").size() == 3
 
         and:
-        outputDir.listFiles().find { it.name.matches("${minimalSupportedGradleVersion}-.+\\.snapshot") }
+        outputDir.listFiles().find { it.name.matches("${gradleVersion}-.+\\.snapshot") }
     }
 
     @Requires({ YourKit.findYourKitHome() })
@@ -92,7 +100,7 @@ class YourKitProfilerIntegrationTest extends AbstractProfilerIntegrationTest {
         instrumentedBuildScript()
 
         when:
-        new Main().run("--project-dir", projectDir.absolutePath, "--output-dir", outputDir.absolutePath, "--gradle-version", minimalSupportedGradleVersion, "--profile", "yourkit", "--no-daemon", "assemble")
+        run(["--gradle-version", gradleVersion, "--profile", "yourkit", "--no-daemon", "assemble"])
 
         then:
         logFile.find("<daemon: true").size() == 1
@@ -100,7 +108,7 @@ class YourKitProfilerIntegrationTest extends AbstractProfilerIntegrationTest {
         logFile.find("<invocations: 1>").size() == 3
 
         and:
-        outputDir.listFiles().find { it.name.matches("${minimalSupportedGradleVersion}-.+\\.snapshot") }
+        outputDir.listFiles().find { it.name.matches("${gradleVersion}-.+\\.snapshot") }
     }
 
     @Requires({ YourKit.findYourKitHome() })
@@ -109,14 +117,14 @@ class YourKitProfilerIntegrationTest extends AbstractProfilerIntegrationTest {
         instrumentedBuildScript()
 
         when:
-        new Main().run("--project-dir", projectDir.absolutePath, "--output-dir", outputDir.absolutePath, "--gradle-version", minimalSupportedGradleVersion, "--profile", "yourkit-tracing", "assemble")
+        run(["--gradle-version", gradleVersion, "--profile", "yourkit-tracing", "assemble"])
 
         then:
         logFile.find("<daemon: true").size() == 4
         logFile.containsOne("<invocations: 3>")
 
         and:
-        outputDir.listFiles().find { it.name.matches("${minimalSupportedGradleVersion}-.+\\.snapshot") }
+        outputDir.listFiles().find { it.name.matches("${gradleVersion}-.+\\.snapshot") }
     }
 
     @Requires({ YourKit.findYourKitHome() })
@@ -125,14 +133,14 @@ class YourKitProfilerIntegrationTest extends AbstractProfilerIntegrationTest {
         instrumentedBuildScript()
 
         when:
-        new Main().run("--project-dir", projectDir.absolutePath, "--output-dir", outputDir.absolutePath, "--gradle-version", minimalSupportedGradleVersion, "--profile", "yourkit-tracing", "--cold-daemon", "assemble")
+        run(["--gradle-version", gradleVersion, "--profile", "yourkit-tracing", "--cold-daemon", "assemble"])
 
         then:
         logFile.find("<daemon: true").size() == 3
         logFile.find("<invocations: 1>").size() == 3
 
         and:
-        outputDir.listFiles().find { it.name.matches("${minimalSupportedGradleVersion}-.+\\.snapshot") }
+        outputDir.listFiles().find { it.name.matches("${gradleVersion}-.+\\.snapshot") }
     }
 
     @Requires({ YourKit.findYourKitHome() })
@@ -141,7 +149,7 @@ class YourKitProfilerIntegrationTest extends AbstractProfilerIntegrationTest {
         instrumentedBuildScript()
 
         when:
-        new Main().run("--project-dir", projectDir.absolutePath, "--output-dir", outputDir.absolutePath, "--gradle-version", minimalSupportedGradleVersion, "--profile", "yourkit-tracing", "--no-daemon", "assemble")
+        run(["--gradle-version", gradleVersion, "--profile", "yourkit-tracing", "--no-daemon", "assemble"])
 
         then:
         logFile.find("<daemon: true").size() == 1
@@ -149,7 +157,7 @@ class YourKitProfilerIntegrationTest extends AbstractProfilerIntegrationTest {
         logFile.find("<invocations: 1>").size() == 3
 
         and:
-        outputDir.listFiles().find { it.name.matches("${minimalSupportedGradleVersion}-.+\\.snapshot") }
+        outputDir.listFiles().find { it.name.matches("${gradleVersion}-.+\\.snapshot") }
     }
 
     @Requires({ YourKit.findYourKitHome() })
@@ -158,14 +166,14 @@ class YourKitProfilerIntegrationTest extends AbstractProfilerIntegrationTest {
         instrumentedBuildScript()
 
         when:
-        new Main().run("--project-dir", projectDir.absolutePath, "--output-dir", outputDir.absolutePath, "--gradle-version", minimalSupportedGradleVersion, "--profile", "yourkit-heap", "assemble")
+        run(["--gradle-version", gradleVersion, "--profile", "yourkit-heap", "assemble"])
 
         then:
         logFile.find("<daemon: true").size() == 4
         logFile.containsOne("<invocations: 3>")
 
         and:
-        outputDir.listFiles().find { it.name.matches("${minimalSupportedGradleVersion}-.+\\.snapshot") }
+        outputDir.listFiles().find { it.name.matches("${gradleVersion}-.+\\.snapshot") }
     }
 
     @Requires({ YourKit.findYourKitHome() })
@@ -174,14 +182,14 @@ class YourKitProfilerIntegrationTest extends AbstractProfilerIntegrationTest {
         instrumentedBuildScript()
 
         when:
-        new Main().run("--project-dir", projectDir.absolutePath, "--output-dir", outputDir.absolutePath, "--gradle-version", minimalSupportedGradleVersion, "--profile", "yourkit-heap", "--cold-daemon", "assemble")
+        run(["--gradle-version", gradleVersion, "--profile", "yourkit-heap", "--cold-daemon", "assemble"])
 
         then:
         logFile.find("<daemon: true").size() == 3
         logFile.find("<invocations: 1>").size() == 3
 
         and:
-        outputDir.listFiles().find { it.name.matches("${minimalSupportedGradleVersion}-.+\\.snapshot") }
+        outputDir.listFiles().find { it.name.matches("${gradleVersion}-.+\\.snapshot") }
     }
 
     @Requires({ YourKit.findYourKitHome() })
@@ -190,7 +198,7 @@ class YourKitProfilerIntegrationTest extends AbstractProfilerIntegrationTest {
         instrumentedBuildScript()
 
         when:
-        new Main().run("--project-dir", projectDir.absolutePath, "--output-dir", outputDir.absolutePath, "--gradle-version", minimalSupportedGradleVersion, "--profile", "yourkit-heap", "--no-daemon", "assemble")
+        run(["--gradle-version", gradleVersion, "--profile", "yourkit-heap", "--no-daemon", "assemble"])
 
         then:
         logFile.find("<daemon: true").size() == 1
@@ -198,7 +206,7 @@ class YourKitProfilerIntegrationTest extends AbstractProfilerIntegrationTest {
         logFile.find("<invocations: 1>").size() == 3
 
         and:
-        outputDir.listFiles().find { it.name.matches("${minimalSupportedGradleVersion}-.+\\.snapshot") }
+        outputDir.listFiles().find { it.name.matches("${gradleVersion}-.+\\.snapshot") }
     }
 
     def "cannot profile using YourKit with multiple iterations and cleanup steps"() {
@@ -213,13 +221,14 @@ class YourKitProfilerIntegrationTest extends AbstractProfilerIntegrationTest {
         """
 
         when:
-        new Main().run("--project-dir", projectDir.absolutePath, "--output-dir", outputDir.absolutePath, "--scenario-file", scenarioFile.absolutePath, "--gradle-version", minimalSupportedGradleVersion, "--profile", "yourkit", "--iterations", "2", "assemble")
+        iterations = 2
+        run(["--gradle-version", gradleVersion, "--gradle-version", gradleVersion, "--scenario-file", scenarioFile.absolutePath, "--profile", "yourkit", "assemble"])
 
         then:
         thrown(IllegalArgumentException)
 
         and:
-        output.contains("Scenario assemble using Gradle ${minimalSupportedGradleVersion}: Profiler YourKit does not support profiling multiple iterations with cleanup steps in between.")
+        output.contains("Scenario assemble using Gradle ${gradleVersion}: Profiler YourKit does not support profiling multiple iterations with cleanup steps in between.")
     }
 
     def "cannot profile using YourKit with multiple iterations and cold daemon"() {
@@ -227,13 +236,14 @@ class YourKitProfilerIntegrationTest extends AbstractProfilerIntegrationTest {
         instrumentedBuildScript()
 
         when:
-        new Main().run("--project-dir", projectDir.absolutePath, "--output-dir", outputDir.absolutePath, "--gradle-version", minimalSupportedGradleVersion, "--profile", "yourkit", "--iterations", "2", "--cold-daemon", "assemble")
+        iterations = 2
+        run(["--gradle-version", gradleVersion, "--gradle-version", gradleVersion, "--profile", "yourkit", "--cold-daemon", "assemble"])
 
         then:
         thrown(IllegalArgumentException)
 
         and:
-        output.contains("Scenario using Gradle ${minimalSupportedGradleVersion}: Profiler YourKit does not support profiling multiple daemons.")
+        output.contains("Scenario using Gradle ${gradleVersion}: Profiler YourKit does not support profiling multiple daemons.")
     }
 
     def "cannot profile using YourKit with multiple iterations and no daemon"() {
@@ -241,12 +251,13 @@ class YourKitProfilerIntegrationTest extends AbstractProfilerIntegrationTest {
         instrumentedBuildScript()
 
         when:
-        new Main().run("--project-dir", projectDir.absolutePath, "--output-dir", outputDir.absolutePath, "--gradle-version", minimalSupportedGradleVersion, "--profile", "yourkit", "--iterations", "2", "--no-daemon", "assemble")
+        iterations = 2
+        run(["--gradle-version", gradleVersion, "--gradle-version", gradleVersion, "--profile", "yourkit", "--no-daemon", "assemble"])
 
         then:
         thrown(IllegalArgumentException)
 
         and:
-        output.contains("Scenario using Gradle ${minimalSupportedGradleVersion}: Profiler YourKit does not support profiling multiple daemons.")
+        output.contains("Scenario using Gradle ${gradleVersion}: Profiler YourKit does not support profiling multiple daemons.")
     }
 }
