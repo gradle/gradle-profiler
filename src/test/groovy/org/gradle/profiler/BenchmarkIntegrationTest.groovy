@@ -12,6 +12,8 @@ class BenchmarkIntegrationTest extends AbstractProfilerIntegrationTest {
         brokenBuild(gradleVersion1, 8)
 
         when:
+        warmups = 6
+        iterations = 10
         run([
             "--gradle-version", gradleVersion1, "--gradle-version", gradleVersion2,
             "--benchmark", "assemble"
@@ -51,6 +53,8 @@ class BenchmarkIntegrationTest extends AbstractProfilerIntegrationTest {
         brokenBuild(gradleVersion1, 3)
 
         when:
+        warmups = 6
+        iterations = 10
         run([
             "--gradle-version", gradleVersion1, "--gradle-version", gradleVersion2,
             "--benchmark", "assemble"
@@ -93,6 +97,8 @@ class BenchmarkIntegrationTest extends AbstractProfilerIntegrationTest {
         brokenBuild(gradleVersion1, 0)
 
         when:
+        warmups = 6
+        iterations = 10
         run([
             "--gradle-version", gradleVersion1, "--gradle-version", gradleVersion2,
             "--benchmark", "assemble"
