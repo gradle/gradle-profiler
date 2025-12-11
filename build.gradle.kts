@@ -139,7 +139,8 @@ tasks.test {
     systemProperty("javaHomes.java8", launcherJavaHomeFor(8))
     systemProperty("javaHomes.java11", launcherJavaHomeFor(11))
 
-    systemProperty("org.gradle.integtest.versions", "partial")
+    // Run cross-version tests for all tested versions
+    systemProperty("org.gradle.integtest.versions", "all")
 }
 
 androidStudioTests {
