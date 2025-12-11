@@ -9,12 +9,7 @@ class DevelocityIntegrationTest extends AbstractProfilerIntegrationTest {
 
     def "profiles build using Build Scans, specified Gradle version and tasks"() {
         given:
-        buildFile.text = """
-            apply plugin: BasePlugin
-            println "<gradle-version: " + gradle.gradleVersion + ">"
-            println "<tasks: " + gradle.startParameter.taskNames + ">"
-            println "<daemon: " + gradle.services.get(org.gradle.internal.environment.GradleBuildEnvironment).longLivingProcess + ">"
-        """
+        instrumentedBuildScript()
 
         when:
         run([
@@ -24,19 +19,13 @@ class DevelocityIntegrationTest extends AbstractProfilerIntegrationTest {
         ])
 
         then:
-        // Probe version, 2 warm up, 1 build
-        logFile.find("<gradle-version: $minimalSupportedGradleVersion>").size() == 4
-        logFile.find("<daemon: true").size() == 4
-        logFile.find("<tasks: [assemble]>").size() == 3
+        checkInstrumentedBuildScriptOutputs(minimalSupportedGradleVersion, "assemble")
         assertBuildScanPublished(BuildScanProfiler.defaultBuildScanVersion(GradleVersion.version(minimalSupportedGradleVersion)))
     }
 
     def "profiles build using Build Scans with latest supported Gradle version"() {
         given:
-        buildFile.text = """
-            apply plugin: BasePlugin
-            println "<gradle-version: " + gradle.gradleVersion + ">"
-        """
+        instrumentedBuildScript()
 
         when:
         run([
@@ -46,7 +35,7 @@ class DevelocityIntegrationTest extends AbstractProfilerIntegrationTest {
         ])
 
         then:
-        logFile.find("<gradle-version: $latestSupportedGradleVersion>").size() == 4
+        checkInstrumentedBuildScriptOutputs(minimalSupportedGradleVersion, "assemble")
         assertBuildScanPublished(BuildScanProfiler.defaultBuildScanVersion(GradleVersion.version(latestSupportedGradleVersion)))
     }
 
@@ -60,13 +49,8 @@ class DevelocityIntegrationTest extends AbstractProfilerIntegrationTest {
             develocity.buildScan.termsOfUseUrl = "https://gradle.com/help/legal-terms-of-use"
             develocity.buildScan.termsOfUseAgree = "yes"
         """
-        buildFile.text = """
-            apply plugin: BasePlugin
 
-            println "<gradle-version: " + gradle.gradleVersion + ">"
-            println "<tasks: " + gradle.startParameter.taskNames + ">"
-            println "<daemon: " + gradle.services.get(org.gradle.internal.environment.GradleBuildEnvironment).longLivingProcess + ">"
-        """
+        instrumentedBuildScript()
 
         when:
         run([
@@ -76,10 +60,7 @@ class DevelocityIntegrationTest extends AbstractProfilerIntegrationTest {
         ])
 
         then:
-        // Probe version, 2 warm up, 1 build
-        logFile.find("<gradle-version: $minimalSupportedGradleVersion>").size() == 4
-        logFile.find("<daemon: true").size() == 4
-        logFile.find("<tasks: [assemble]>").size() == 3
+        checkInstrumentedBuildScriptOutputs(minimalSupportedGradleVersion, "assemble")
         assertBuildScanPublished(null, 2)
     }
 
@@ -104,12 +85,8 @@ class DevelocityIntegrationTest extends AbstractProfilerIntegrationTest {
                 }
             }
         """
-        buildFile.text = """
-            apply plugin: BasePlugin
-            println "<gradle-version: " + gradle.gradleVersion + ">"
-            println "<tasks: " + gradle.startParameter.taskNames + ">"
-            println "<daemon: " + gradle.services.get(org.gradle.internal.environment.GradleBuildEnvironment).longLivingProcess + ">"
-        """
+
+        instrumentedBuildScript()
 
         when:
         run([
@@ -119,12 +96,11 @@ class DevelocityIntegrationTest extends AbstractProfilerIntegrationTest {
         ])
 
         then:
-        // Probe version, 2 warm up, 1 build
-        logFile.find("<gradle-version: $latestSupportedGradleVersion>").size() == 4
-        logFile.find("<daemon: true").size() == 4
-        logFile.find("<tasks: [assemble]>").size() == 3
-        // Enterprise plugin is applied in the build so it's used in probe version build, 2 warm ups and 1 build == 4
-        logFile.find(~/$pluginName plugin loaded from:.*$jarFileName-${pluginVersion}.jar.*/).size() == 4
+        checkInstrumentedBuildScriptOutputs(minimalSupportedGradleVersion, "assemble")
+
+        // The plugin is applied in the build so it's used in probe run too
+        logFile.find(~/$pluginName plugin loaded from:.*$jarFileName-${pluginVersion}.jar.*/).size() == totalProbeAndRunCount
+
         // The Develocity plugin publishes by default, so the probing build will also publish
         assertBuildScanPublished(null, isEnterprisePlugin ? 1 : 2)
 
@@ -136,12 +112,8 @@ class DevelocityIntegrationTest extends AbstractProfilerIntegrationTest {
 
     def "profiles build using Build Scans overridden version specified in Gradle #gradleVersion and tasks"() {
         given:
-        buildFile.text = """
-            apply plugin: BasePlugin
-            println "<gradle-version: " + gradle.gradleVersion + ">"
-            println "<tasks: " + gradle.startParameter.taskNames + ">"
-            println "<daemon: " + gradle.services.get(org.gradle.internal.environment.GradleBuildEnvironment).longLivingProcess + ">"
-        """
+        instrumentedBuildScript()
+
         def requestedBuildScanVersion
         if (GradleVersion.version(gradleVersion) < GradleVersion.version("5.0")) {
             requestedBuildScanVersion = "1.2"
@@ -159,10 +131,7 @@ class DevelocityIntegrationTest extends AbstractProfilerIntegrationTest {
         ])
 
         then:
-        // Probe version, 2 warm up, 1 build
-        logFile.find("<gradle-version: $gradleVersion>").size() == 4
-        logFile.find("<daemon: true").size() == 4
-        logFile.find("<tasks: [assemble]>").size() == 3
+        checkInstrumentedBuildScriptOutputs(minimalSupportedGradleVersion, "assemble")
         assertBuildScanPublished(requestedBuildScanVersion)
 
         where:
@@ -176,41 +145,30 @@ class DevelocityIntegrationTest extends AbstractProfilerIntegrationTest {
                 println("Develocity plugin loaded from: " + it.class.protectionDomain.codeSource.location.path)
             }
         """
-        buildFile.text = """
-            apply plugin: BasePlugin
-            println "<gradle-version: " + gradle.gradleVersion + ">"
-            println "<tasks: " + gradle.startParameter.taskNames + ">"
-            println "<daemon: " + gradle.services.get(org.gradle.internal.environment.GradleBuildEnvironment).longLivingProcess + ">"
-        """
-        def requestedGradleEnterpriseVersion = "4.2.2"
+        instrumentedBuildScript()
 
         when:
         run([
             "--gradle-version", latestSupportedGradleVersion,
-            "--profile", "buildscan", "--buildscan-version", requestedGradleEnterpriseVersion,
+            "--profile", "buildscan", "--buildscan-version", pluginVersion,
             "assemble"
         ])
 
         then:
-        // Probe version, 2 warm up, 1 build
-        logFile.find("<gradle-version: $latestSupportedGradleVersion>").size() == 4
-        logFile.find("<daemon: true").size() == 4
-        logFile.find("<tasks: [assemble]>").size() == 3
-        // Develocity plugin is not applied to probe version build, but just to 2 warm ups and 1 build == 3
-        logFile.find(~/Develocity plugin loaded from:.*develocity-gradle-plugin-4.2.2.jar.*/).size() == 3
-        assertBuildScanPublished(requestedGradleEnterpriseVersion)
+        checkInstrumentedBuildScriptOutputs(latestSupportedGradleVersion, "assemble")
+
+        logFile.find(~/Develocity plugin loaded from:.*develocity-gradle-plugin-${pluginVersion}.jar.*/).size() == totalRunCount
+        assertBuildScanPublished(pluginVersion)
+
+        where:
+        pluginVersion << ["4.2.2"]
     }
 
     def "profiles build using JFR, Build Scans, specified Gradle version and tasks"() {
         def gradleVersion = minimalSupportedGradleVersion
         def buildScanVersion = BuildScanProfiler.defaultBuildScanVersion(GradleVersion.version(gradleVersion))
         given:
-        buildFile.text = """
-            apply plugin: BasePlugin
-            println "<gradle-version: " + gradle.gradleVersion + ">"
-            println "<tasks: " + gradle.startParameter.taskNames + ">"
-            println "<daemon: " + gradle.services.get(org.gradle.internal.environment.GradleBuildEnvironment).longLivingProcess + ">"
-        """
+        instrumentedBuildScript()
 
         when:
         run([
@@ -221,10 +179,7 @@ class DevelocityIntegrationTest extends AbstractProfilerIntegrationTest {
         ])
 
         then:
-        // Probe version, 2 warm up, 1 build
-        logFile.find("<gradle-version: ${gradleVersion}>").size() == 4
-        logFile.find("<daemon: true").size() == 4
-        logFile.find("<tasks: [assemble]>").size() == 3
+        checkInstrumentedBuildScriptOutputs(gradleVersion, "assemble")
         assertBuildScanPublished(buildScanVersion)
 
         def profileFile = new File(outputDir, "${gradleVersion}.jfr")

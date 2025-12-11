@@ -1,15 +1,15 @@
 package org.gradle.profiler
 
-import org.gradle.profiler.fixtures.AbstractProfilerIntegrationTest
+import org.gradle.profiler.fixtures.compatibility.gradle.AbstractGradleCrossVersionTest
 
-class BuildOperationsTraceIntegrationTest extends AbstractProfilerIntegrationTest {
+class BuildOperationsTraceGradleCrossVersionTest extends AbstractGradleCrossVersionTest {
 
     def "can enable build operations trace via command-line flag"() {
         given:
         instrumentedBuildScript()
 
         when:
-        new Main().run("--project-dir", projectDir.absolutePath, "--output-dir", outputDir.absolutePath, "--gradle-version", latestSupportedGradleVersion, "--benchmark", "--build-ops-trace", "--warmups", "1", "--iterations", "1", "help")
+        run(["--gradle-version", gradleVersion, "--benchmark", "--build-ops-trace", "help"])
 
         then:
         logFile.containsOne("Build operations trace: ")
@@ -26,7 +26,12 @@ class BuildOperationsTraceIntegrationTest extends AbstractProfilerIntegrationTes
         """
 
         when:
-        new Main().run("--project-dir", projectDir.absolutePath, "--output-dir", outputDir.absolutePath, "--gradle-version", latestSupportedGradleVersion, "--benchmark", "--warmups", "1", "--iterations", "1", "--scenario-file", scenarioFile.absolutePath, "s1")
+        run([
+            "--gradle-version", gradleVersion,
+            "--benchmark", "--build-ops-trace",
+            "--scenario-file", scenarioFile.absolutePath,
+            "s1"
+        ])
 
         then:
         logFile.containsOne("Build operations trace: ")
@@ -37,7 +42,7 @@ class BuildOperationsTraceIntegrationTest extends AbstractProfilerIntegrationTes
         instrumentedBuildScript()
 
         when:
-        new Main().run("--project-dir", projectDir.absolutePath, "--output-dir", outputDir.absolutePath, "--gradle-version", latestSupportedGradleVersion, "--benchmark", "--warmups", "1", "--iterations", "1", "help")
+        run(["--gradle-version", gradleVersion, "--benchmark", "help"])
 
         then:
         !logFile.find("Build operations trace: ").any()
@@ -54,7 +59,12 @@ class BuildOperationsTraceIntegrationTest extends AbstractProfilerIntegrationTes
         """
 
         when:
-        new Main().run("--project-dir", projectDir.absolutePath, "--output-dir", outputDir.absolutePath, "--gradle-version", latestSupportedGradleVersion, "--benchmark", "--build-ops-trace", "--warmups", "1", "--iterations", "1", "--scenario-file", scenarioFile.absolutePath, "s1")
+        run([
+            "--gradle-version", gradleVersion,
+            "--benchmark", "--build-ops-trace",
+            "--scenario-file", scenarioFile.absolutePath,
+            "s1"
+        ])
 
         then:
         logFile.containsOne("Build operations trace: ")

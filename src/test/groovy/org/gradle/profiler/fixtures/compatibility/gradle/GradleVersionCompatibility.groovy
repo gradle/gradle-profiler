@@ -12,6 +12,7 @@ class GradleVersionCompatibility {
     static GradleVersion minimalSupportedGradleVersion = GradleVersion.version("6.0")
 
     static List<GradleVersion> testedGradleVersions = gradleVersions(
+        minimalSupportedGradleVersion.version,
         "6.9.4",
         "7.6.4",
         "8.0.2",
