@@ -1,5 +1,6 @@
 package org.gradle.profiler
 
+import org.gradle.profiler.fixtures.AbstractProfilerIntegrationTest
 
 import java.text.NumberFormat
 

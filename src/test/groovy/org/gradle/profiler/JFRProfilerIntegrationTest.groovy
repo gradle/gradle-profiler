@@ -1,5 +1,7 @@
 package org.gradle.profiler
 
+import org.gradle.profiler.fixtures.AbstractProfilerIntegrationTest
+
 
 class JFRProfilerIntegrationTest extends AbstractProfilerIntegrationTest {
     def "can profile Gradle #versionUnderTest using JFR, tooling API and warm daemon"() {

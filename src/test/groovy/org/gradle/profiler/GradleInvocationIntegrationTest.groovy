@@ -1,5 +1,7 @@
 package org.gradle.profiler
 
+import org.gradle.profiler.fixtures.AbstractProfilerIntegrationTest
+
 
 class GradleInvocationIntegrationTest extends AbstractProfilerIntegrationTest {
     def "benchmarks using tooling API and warm daemon when invocation type is not specified"() {

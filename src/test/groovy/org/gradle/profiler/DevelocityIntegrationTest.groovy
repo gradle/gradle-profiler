@@ -1,7 +1,8 @@
 package org.gradle.profiler
 
-
 import org.gradle.profiler.buildscan.BuildScanProfiler
+import org.gradle.profiler.fixtures.AbstractProfilerIntegrationTest
+import org.gradle.profiler.fixtures.compatibility.gradle.GradleVersionCompatibility
 import org.gradle.util.GradleVersion
 
 class DevelocityIntegrationTest extends AbstractProfilerIntegrationTest {
@@ -228,5 +229,20 @@ class DevelocityIntegrationTest extends AbstractProfilerIntegrationTest {
 
         def profileFile = new File(outputDir, "${gradleVersion}.jfr")
         profileFile.isFile()
+    }
+
+    void assertBuildScanPublished(String buildScanPluginVersion = null, int numberOfScans = 1) {
+        if (buildScanPluginVersion) {
+            assert logFile.find("Using build scan plugin " + buildScanPluginVersion).size() == 1
+        } else {
+            assert logFile.find("Using build scan plugin specified in the build").size() == 1
+        }
+        assert logFile.find(~/Publishing [bB]uild .*/).size() == numberOfScans: ("LOG FILE:" + logFile.text)
+    }
+
+    // https://docs.gradle.com/develocity/current/miscellaneous/compatibility/#build-scans
+    static String develocityPluginVersion(String gradleVersion) {
+        GradleVersionCompatibility.checkSupported(gradleVersion)
+        "4.2.2"
     }
 }

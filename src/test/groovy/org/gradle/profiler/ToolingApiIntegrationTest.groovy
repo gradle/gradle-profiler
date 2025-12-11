@@ -1,5 +1,7 @@
 package org.gradle.profiler
 
+import org.gradle.profiler.fixtures.AbstractProfilerIntegrationTest
+
 class ToolingApiIntegrationTest extends AbstractProfilerIntegrationTest {
     def "runs benchmarks fetching tooling model"() {
         given:

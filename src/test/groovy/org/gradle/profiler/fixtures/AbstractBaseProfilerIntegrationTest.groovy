@@ -1,79 +1,22 @@
-package org.gradle.profiler
+package org.gradle.profiler.fixtures
 
 import org.gradle.api.JavaVersion
+import org.gradle.profiler.Main
 import org.gradle.util.GradleVersion
 import org.junit.Rule
 import org.junit.rules.TemporaryFolder
-import spock.lang.Shared
 
 import javax.annotation.Nullable
 import java.util.regex.Pattern
 
-abstract class AbstractProfilerIntegrationTest extends AbstractIntegrationTest {
+import static org.gradle.profiler.fixtures.compatibility.gradle.GradleVersionCompatibility.minimalGradleVersionSupportingJava11
+import static org.gradle.profiler.fixtures.compatibility.gradle.GradleVersionCompatibility.minimalGradleVersionSupportingJava17
+
+abstract class AbstractBaseProfilerIntegrationTest extends AbstractIntegrationTest {
 
     private static int NUMBER_OF_HEADERS = 4
 
     static final SAMPLE = "-?\\d+(?:\\.\\d+)"
-
-    static minimalTestedGradleVersion = GradleVersion.version("6.0")
-
-    // See: https://github.com/gradle/gradle/blob/bc997dc1751c50fa0cdb1aa1fefe4844b81eca9f/testing/internal-integ-testing/src/main/groovy/org/gradle/integtests/fixtures/executer/DefaultGradleDistribution.groovy#L32-L50
-    static minimalGradleVersionSupportingJava11 = GradleVersion.version("5.0")
-    static minimalGradleVersionSupportingJava17 = GradleVersion.version("7.3")
-
-    static List<String> gradleVersionsSupportedOnCurrentJvm(List<String> gradleVersions) {
-        gradleVersions.findAll {
-            if (JavaVersion.current().isCompatibleWith(JavaVersion.VERSION_17)) {
-                return GradleVersion.version(it) >= minimalGradleVersionSupportingJava17
-            } else if (JavaVersion.current().isCompatibleWith(JavaVersion.VERSION_11)) {
-                return GradleVersion.version(it) >= minimalGradleVersionSupportingJava11
-            } else {
-                return true
-            }
-        }
-    }
-
-    @Shared
-    List<String> supportedGradleVersions = gradleVersionsSupportedOnCurrentJvm([
-        "6.9.4",
-        "7.6.4",
-        "8.0.2",
-        "8.14.3"
-    ])
-
-    @Shared
-    String minimalSupportedGradleVersion = supportedGradleVersions.first()
-    @Shared
-    String latestSupportedGradleVersion = supportedGradleVersions.last()
-
-    /**
-     * Returns the range of Gradle versions supported by the current JVM,
-     * ensuring range bounds are distinct.
-     */
-    List<String> currentJvmSupportedGradleVersionRange() {
-        assert minimalSupportedGradleVersion != latestSupportedGradleVersion
-        [minimalSupportedGradleVersion, latestSupportedGradleVersion]
-    }
-
-    // https://docs.gradle.com/develocity/current/miscellaneous/compatibility/#build-scans
-    static String develocityPluginVersion(String gradleVersion) {
-        if (GradleVersion.version(gradleVersion) < minimalTestedGradleVersion) {
-            throw new IllegalArgumentException("Gradle versions before $minimalTestedGradleVersion are not supported for testing")
-        }
-
-        "4.2.2"
-    }
-
-    static String transformCacheLocation(String gradleVersionString) {
-        def gradleVersion = GradleVersion.version(gradleVersionString)
-        if (gradleVersion < GradleVersion.version("5.1")) {
-            return 'transforms-1/files-1.1'
-        }
-        if (gradleVersion < GradleVersion.version('6.8')) {
-            return 'transforms-2/files-2.1'
-        }
-        return "transforms-3"
-    }
 
     @Rule
     TemporaryFolder tmpDir = new TemporaryFolder()
@@ -147,15 +90,6 @@ abstract class AbstractProfilerIntegrationTest extends AbstractIntegrationTest {
         settingsFile.text = """
             rootProject.name = "example-project"
         """
-    }
-
-    void assertBuildScanPublished(String buildScanPluginVersion = null, int numberOfScans = 1) {
-        if (buildScanPluginVersion) {
-            assert logFile.find("Using build scan plugin " + buildScanPluginVersion).size() == 1
-        } else {
-            assert logFile.find("Using build scan plugin specified in the build").size() == 1
-        }
-        assert logFile.find(~/Publishing [bB]uild .*/).size() == numberOfScans: ("LOG FILE:" + logFile.text)
     }
 
     def instrumentedBuildScript() {

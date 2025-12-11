@@ -1,5 +1,6 @@
 package org.gradle.profiler
 
+import org.gradle.profiler.fixtures.AbstractIntegrationTest
 import org.junit.Rule
 import org.junit.rules.TemporaryFolder
 

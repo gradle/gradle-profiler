@@ -1,5 +1,7 @@
 package org.gradle.profiler
 
+import org.gradle.profiler.fixtures.AbstractProfilerIntegrationTest
+
 class PidInstrumentationIntegrationTest extends AbstractProfilerIntegrationTest {
 
     def "pid instrumentation works for cold daemon with configuration caching"() {
