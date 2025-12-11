@@ -138,6 +138,8 @@ tasks.test {
     // Used by tests to select a different Daemon JVM when Test JVM is unsupported by older Gradle versions
     systemProperty("javaHomes.java8", launcherJavaHomeFor(8))
     systemProperty("javaHomes.java11", launcherJavaHomeFor(11))
+
+    systemProperty("org.gradle.integtest.versions", "partial")
 }
 
 androidStudioTests {
