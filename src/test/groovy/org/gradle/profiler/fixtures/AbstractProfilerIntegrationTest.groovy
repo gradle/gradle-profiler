@@ -1,6 +1,7 @@
-package org.gradle.profiler
+package org.gradle.profiler.fixtures
 
 import org.gradle.api.JavaVersion
+import org.gradle.profiler.Main
 import org.gradle.util.GradleVersion
 import org.junit.Rule
 import org.junit.rules.TemporaryFolder

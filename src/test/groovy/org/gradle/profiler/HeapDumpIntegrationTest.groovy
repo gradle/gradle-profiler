@@ -1,5 +1,7 @@
 package org.gradle.profiler
 
+import org.gradle.profiler.fixtures.AbstractProfilerIntegrationTest
+
 class HeapDumpIntegrationTest extends AbstractProfilerIntegrationTest {
     def "can generate heap dump"() {
         given:

@@ -1,6 +1,6 @@
 package org.gradle.profiler
 
-
+import org.gradle.profiler.fixtures.AbstractProfilerIntegrationTest
 import org.gradle.util.GradleVersion
 import spock.lang.Requires
 

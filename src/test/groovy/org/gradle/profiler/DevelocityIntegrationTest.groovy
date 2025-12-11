@@ -2,6 +2,7 @@ package org.gradle.profiler
 
 
 import org.gradle.profiler.buildscan.BuildScanProfiler
+import org.gradle.profiler.fixtures.AbstractProfilerIntegrationTest
 import org.gradle.util.GradleVersion
 
 class DevelocityIntegrationTest extends AbstractProfilerIntegrationTest {

@@ -1,5 +1,7 @@
 package org.gradle.profiler
 
+import org.gradle.profiler.fixtures.AbstractProfilerIntegrationTest
+
 class BuildOperationsTraceIntegrationTest extends AbstractProfilerIntegrationTest {
 
     def "can enable build operations trace via command-line flag"() {

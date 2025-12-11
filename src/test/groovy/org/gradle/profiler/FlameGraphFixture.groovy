@@ -1,6 +1,7 @@
 package org.gradle.profiler
 
 import groovy.transform.SelfType
+import org.gradle.profiler.fixtures.AbstractProfilerIntegrationTest
 
 @SelfType(AbstractProfilerIntegrationTest)
 trait FlameGraphFixture {

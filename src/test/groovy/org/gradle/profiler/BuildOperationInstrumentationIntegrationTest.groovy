@@ -1,5 +1,6 @@
 package org.gradle.profiler
 
+import org.gradle.profiler.fixtures.AbstractProfilerIntegrationTest
 
 import static org.hamcrest.CoreMatchers.equalTo
 import static org.hamcrest.CoreMatchers.everyItem
