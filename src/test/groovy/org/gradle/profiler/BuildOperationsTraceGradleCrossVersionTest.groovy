@@ -9,7 +9,7 @@ class BuildOperationsTraceGradleCrossVersionTest extends AbstractGradleCrossVers
         instrumentedBuildScript()
 
         when:
-        run(["--gradle-version", gradleVersion, "--benchmark", "--build-ops-trace", "--warmups", "1", "--iterations", "1", "help"])
+        run(["--gradle-version", gradleVersion, "--benchmark", "--build-ops-trace", "help"])
 
         then:
         logFile.containsOne("Build operations trace: ")
@@ -29,7 +29,6 @@ class BuildOperationsTraceGradleCrossVersionTest extends AbstractGradleCrossVers
         run([
             "--gradle-version", gradleVersion,
             "--benchmark", "--build-ops-trace",
-            "--warmups", "1", "--iterations", "1",
             "--scenario-file", scenarioFile.absolutePath,
             "s1"
         ])
@@ -43,7 +42,7 @@ class BuildOperationsTraceGradleCrossVersionTest extends AbstractGradleCrossVers
         instrumentedBuildScript()
 
         when:
-        run(["--gradle-version", gradleVersion, "--benchmark", "--warmups", "1", "--iterations", "1", "help"])
+        run(["--gradle-version", gradleVersion, "--benchmark", "help"])
 
         then:
         !logFile.find("Build operations trace: ").any()
@@ -63,7 +62,6 @@ class BuildOperationsTraceGradleCrossVersionTest extends AbstractGradleCrossVers
         run([
             "--gradle-version", gradleVersion,
             "--benchmark", "--build-ops-trace",
-            "--warmups", "1", "--iterations", "1",
             "--scenario-file", scenarioFile.absolutePath,
             "s1"
         ])
