@@ -1,6 +1,7 @@
 package org.gradle.profiler
 
 import org.gradle.profiler.fixtures.AbstractProfilerIntegrationTest
+import org.gradle.profiler.fixtures.compatibility.gradle.GradleVersionCompatibility
 
 import static org.hamcrest.CoreMatchers.equalTo
 import static org.hamcrest.CoreMatchers.everyItem
@@ -367,7 +368,7 @@ class BuildOperationInstrumentationIntegrationTest extends AbstractProfilerInteg
 
     def "complains when attempting to benchmark configuration time for build using #gradleVersion"() {
         // Gradle version that does not support measuring configuration time
-        def unsupportedGradleVersion = minimalTestedGradleVersion.version
+        def unsupportedGradleVersion = GradleVersionCompatibility.minimalSupportedGradleVersion.version
         downgradeDaemonJvmIfTestJvmUnsupported(unsupportedGradleVersion)
 
         given:
@@ -385,7 +386,7 @@ class BuildOperationInstrumentationIntegrationTest extends AbstractProfilerInteg
 
     def "complains when attempting to benchmark configuration time for build using unsupported Gradle version from scenario file"() {
         // Gradle version that does not support measuring configuration time
-        def unsupportedGradleVersion = minimalTestedGradleVersion.version
+        def unsupportedGradleVersion = GradleVersionCompatibility.minimalSupportedGradleVersion.version
         downgradeDaemonJvmIfTestJvmUnsupported(unsupportedGradleVersion)
         given:
         instrumentedBuildScript()

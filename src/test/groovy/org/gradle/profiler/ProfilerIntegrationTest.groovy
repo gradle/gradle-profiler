@@ -1,6 +1,7 @@
 package org.gradle.profiler
 
 import org.gradle.profiler.fixtures.AbstractProfilerIntegrationTest
+import org.gradle.profiler.fixtures.compatibility.gradle.GradleVersionCompatibility
 import org.gradle.util.GradleVersion
 import spock.lang.Requires
 
@@ -1258,7 +1259,7 @@ class ProfilerIntegrationTest extends AbstractProfilerIntegrationTest {
 
             boolean transformedFileExists(File gradleHome) {
                 boolean found = false
-                def transformsCache = file("\${gradleHome}/caches/${transformCacheLocation(gradleVersion)}")
+                def transformsCache = file("\${gradleHome}/caches/${GradleVersionCompatibility.transformCacheLocation(gradleVersion)}")
                 if (transformsCache.exists()) {
                     transformsCache.eachFileRecurse {
                         if (it.name == 'guava-21.0.jar.txt') {
