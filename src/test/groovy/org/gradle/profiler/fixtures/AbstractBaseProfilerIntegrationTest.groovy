@@ -24,6 +24,9 @@ abstract class AbstractBaseProfilerIntegrationTest extends AbstractIntegrationTe
     File projectDir
     File outputDir
 
+    int warmups = 1
+    int iterations = 1
+
     LogFile getLogFile() {
         def f = new File(outputDir, "profile.log")
         assert f.isFile()
@@ -53,6 +56,8 @@ abstract class AbstractBaseProfilerIntegrationTest extends AbstractIntegrationTe
         def args = [
             "--project-dir", projectDir.absolutePath,
             "--output-dir", outputDir.absolutePath,
+            "--warmups", "$warmups",
+            "--iterations", "$iterations",
         ] + moreArgs
 
         new Main().run(*args)
@@ -104,6 +109,13 @@ class Counter {
     static int invocations = 0
 }
 """
+    }
+
+    def checkInstrumentedBuildScriptOutputs(String gradleVersion, int warmups = this.warmups, int iterations = this.iterations) {
+        def probe = 1
+        logFile.find("<gradle-version: $gradleVersion>").size() == probe + warmups + iterations
+        logFile.find("<daemon: true").size() == probe + warmups + iterations
+        logFile.find("<tasks: []>").size() == warmups + iterations
     }
 
     def writeBuckw() {
