@@ -4,7 +4,6 @@ import org.gradle.profiler.spock.extensions.ShowAndroidStudioLogsOnFailure
 import org.gradle.profiler.studio.AndroidStudioTestSupport
 import org.gradle.profiler.studio.tools.StudioFinder
 import spock.lang.Requires
-import spock.lang.Unroll
 
 import static org.gradle.profiler.studio.AndroidStudioTestSupport.setupLocalProperties
 
@@ -16,7 +15,6 @@ class ChromeTraceIntegrationTest extends AbstractProfilerIntegrationTest {
         sandboxDir = tmpDir.newFolder('sandbox')
     }
 
-    @Unroll
     def "profiles build to produce chrome trace output for Gradle #versionUnderTest using Tooling API and warm daemon"() {
         given:
         instrumentedBuildScript()
@@ -34,7 +32,6 @@ class ChromeTraceIntegrationTest extends AbstractProfilerIntegrationTest {
         versionUnderTest << supportedGradleVersions
     }
 
-    @Unroll
     def "profiles build to produce chrome trace output for Gradle #versionUnderTest using Tooling API and cold daemon"() {
         given:
         instrumentedBuildScript()
@@ -51,7 +48,6 @@ class ChromeTraceIntegrationTest extends AbstractProfilerIntegrationTest {
         versionUnderTest << supportedGradleVersions
     }
 
-    @Unroll
     def "profiles build to produce chrome trace output for Gradle #versionUnderTest using `gradle` command and no daemon"() {
         given:
         instrumentedBuildScript()

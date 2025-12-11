@@ -1,9 +1,7 @@
 package org.gradle.profiler
 
 import spock.lang.Requires
-import spock.lang.Unroll
 
-@Unroll
 @Requires({ !OperatingSystem.isWindows() })
 class AsyncProfilerIntegrationTest extends AbstractProfilerIntegrationTest implements FlameGraphFixture {
     def "profiles build CPU usage using async-profiler with tooling API and warm daemon"() {

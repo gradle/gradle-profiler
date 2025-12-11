@@ -2,9 +2,7 @@ package org.gradle.profiler
 
 import org.junit.Rule
 import org.junit.rules.TemporaryFolder
-import spock.lang.Unroll
 
-@Unroll
 class CommandLineIntegrationTest extends AbstractIntegrationTest {
 
     @Rule

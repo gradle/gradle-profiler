@@ -1,11 +1,9 @@
 package org.gradle.profiler
 
-import spock.lang.Unroll
 
 import java.text.NumberFormat
 
 class ShowBuildCacheSizeMutatorIntegrationTest extends AbstractProfilerIntegrationTest {
-    @Unroll
     def "displays local build cache size using #gradleVersion"() {
         given:
         buildFile << """

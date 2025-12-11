@@ -1,9 +1,7 @@
 package org.gradle.profiler
 
-import spock.lang.Unroll
 
 class JFRProfilerIntegrationTest extends AbstractProfilerIntegrationTest {
-    @Unroll
     def "can profile Gradle #versionUnderTest using JFR, tooling API and warm daemon"() {
         given:
         instrumentedBuildScript()
@@ -30,7 +28,6 @@ class JFRProfilerIntegrationTest extends AbstractProfilerIntegrationTest {
         latestSupportedGradleVersion  | _
     }
 
-    @Unroll
     def "can profile Gradle #versionUnderTest using JFR, `gradle` command and warm daemon"() {
         given:
         instrumentedBuildScript()
@@ -57,7 +54,6 @@ class JFRProfilerIntegrationTest extends AbstractProfilerIntegrationTest {
         latestSupportedGradleVersion  | _
     }
 
-    @Unroll
     def "can profile multiple iterations of Gradle #versionUnderTest using JFR, tooling API and warm daemon"() {
         given:
         instrumentedBuildScript()
@@ -84,7 +80,6 @@ class JFRProfilerIntegrationTest extends AbstractProfilerIntegrationTest {
         latestSupportedGradleVersion  | _
     }
 
-    @Unroll
     def "can profile Gradle #versionUnderTest using JFR, tooling API and cold daemon"() {
         given:
         instrumentedBuildScript()
@@ -111,7 +106,6 @@ class JFRProfilerIntegrationTest extends AbstractProfilerIntegrationTest {
         latestSupportedGradleVersion  | _
     }
 
-    @Unroll
     def "can profile Gradle #versionUnderTest using JFR, `gradle` command and cold daemon"() {
         given:
         instrumentedBuildScript()
@@ -138,7 +132,6 @@ class JFRProfilerIntegrationTest extends AbstractProfilerIntegrationTest {
         latestSupportedGradleVersion  | _
     }
 
-    @Unroll
     def "can profile Gradle #versionUnderTest using JFR with #iterations iterations"() {
         given:
         instrumentedBuildScript()
@@ -155,15 +148,14 @@ class JFRProfilerIntegrationTest extends AbstractProfilerIntegrationTest {
         logFile.find("* Running measured build").size() == iterations
         logFile.find("<invocations: 1>").size() == 2 + iterations
 
-        jfrFileDirectory.listFiles().findAll {it.name.endsWith(".jfr")}.size() == iterations
+        jfrFileDirectory.listFiles().findAll { it.name.endsWith(".jfr") }.size() == iterations
 
         where:
-        versionUnderTest              | iterations
-        latestSupportedGradleVersion  | 1
-        latestSupportedGradleVersion  | 2
+        versionUnderTest             | iterations
+        latestSupportedGradleVersion | 1
+        latestSupportedGradleVersion | 2
     }
 
-    @Unroll
     def "can profile Gradle no daemon #versionUnderTest with #iterations iterations"(String versionUnderTest, int iterations) {
         given:
         instrumentedBuildScript()
