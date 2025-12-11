@@ -1,10 +1,8 @@
 package org.gradle.profiler
 
-import org.gradle.api.JavaVersion
+
 import org.gradle.util.GradleVersion
-import spock.lang.IgnoreIf
 import spock.lang.Requires
-import spock.lang.Unroll
 
 class ProfilerIntegrationTest extends AbstractProfilerIntegrationTest {
 
@@ -665,7 +663,6 @@ class ProfilerIntegrationTest extends AbstractProfilerIntegrationTest {
         logFile.find("<sys-prop: value-2>").size() == 16
     }
 
-    @Unroll
     def "can use Gradle args to #name parallel mode"() {
         given:
         def scenarioFile = file("benchmark.conf")

@@ -18,7 +18,6 @@ import org.gradle.tooling.model.idea.IdeaProject
 import org.junit.Rule
 import org.junit.rules.TemporaryFolder
 import spock.lang.Specification
-import spock.lang.Unroll
 
 import static org.gradle.profiler.ScenarioLoader.loadScenarios
 import static org.gradle.profiler.mutations.AbstractScheduledMutator.Schedule.BUILD
@@ -475,7 +474,6 @@ class ScenarioLoaderTest extends Specification {
         }
     }
 
-    @Unroll
     def "can load Bazel scenario"(String home) {
         def settings = settings(BuildInvoker.Bazel)
 
@@ -497,7 +495,6 @@ class ScenarioLoaderTest extends Specification {
         home << [mockToolHome("bazel"), null]
     }
 
-    @Unroll
     def "can load Buck scenario"(String home) {
         def settings = settings(BuildInvoker.Buck)
 
@@ -518,7 +515,6 @@ class ScenarioLoaderTest extends Specification {
         home << [mockToolHome("buck"), null]
     }
 
-    @Unroll
     def "can load Maven scenario"(String home) {
         def settings = settings(BuildInvoker.Maven)
 
@@ -561,7 +557,6 @@ class ScenarioLoaderTest extends Specification {
         scenarios*.name == ["default"]
     }
 
-    @Unroll
     def "allows cleanup action scheduled for #schedule with cold daemon invoker"() {
         def settings = settings()
 
@@ -584,7 +579,6 @@ class ScenarioLoaderTest extends Specification {
         schedule << AbstractScheduledMutator.Schedule.values()
     }
 
-    @Unroll
     def "allows cleanup action scheduled for SCENARIO with warm daemon invoker"() {
         def settings = settings()
 
@@ -600,7 +594,6 @@ class ScenarioLoaderTest extends Specification {
         loadScenarios(scenarioFile, settings, Mock(GradleBuildConfigurationReader))
     }
 
-    @Unroll
     def "fails with cleanup action scheduled for #schedule with warm daemon invoker"() {
         def settings = settings()
 
@@ -623,7 +616,6 @@ class ScenarioLoaderTest extends Specification {
         schedule << [BUILD, CLEANUP]
     }
 
-    @Unroll
     def "can load scenario with build operations trace = #trace"() {
         def settings = settings()
 

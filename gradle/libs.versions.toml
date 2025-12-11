@@ -1,7 +1,7 @@
 [versions]
 kotlin = "2.1.20"
 groovy = "3.0.15"
-spock = "2.1-groovy-3.0"
+spock = "2.3-groovy-3.0"
 # Ladybug Patch 1 (2024.2.1.10)
 testAndroidStudioVersion = "2024.2.1.10"
 testAndroidSdkVersion = "7.3.0"

@@ -1,8 +1,6 @@
 package org.gradle.profiler.mutations
 
-import spock.lang.Unroll
 
-@Unroll
 class ApplyChangeToNativeSourceFileMutatorTest extends AbstractMutatorTest {
 
     def "adds and replaces method to end of #extension source file"() {
