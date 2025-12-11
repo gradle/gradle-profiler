@@ -24,8 +24,9 @@ abstract class AbstractBaseProfilerIntegrationTest extends AbstractIntegrationTe
     File projectDir
     File outputDir
 
-    int warmups = 1
-    int iterations = 1
+    // Can be set to null to use defaults instead
+    Integer warmups = 1
+    Integer iterations = 1
 
     def getTotalRunCount() {
         warmups + iterations
@@ -65,9 +66,14 @@ abstract class AbstractBaseProfilerIntegrationTest extends AbstractIntegrationTe
         def args = [
             "--project-dir", projectDir.absolutePath,
             "--output-dir", outputDir.absolutePath,
-            "--warmups", "$warmups",
-            "--iterations", "$iterations",
-        ] + moreArgs
+        ]
+        if (warmups != null) {
+            args += ["--warmups", "$warmups"]
+        }
+        if (iterations != null) {
+            args += ["--iterations", "$iterations"]
+        }
+        args += moreArgs
 
         new Main().run(*args)
     }
