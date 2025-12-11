@@ -27,6 +27,15 @@ abstract class AbstractBaseProfilerIntegrationTest extends AbstractIntegrationTe
     int warmups = 1
     int iterations = 1
 
+    def getTotalRunCount() {
+        warmups + iterations
+    }
+
+    def getTotalProbeAndRunCount() {
+        // we always do one probe
+        1 + totalRunCount
+    }
+
     LogFile getLogFile() {
         def f = new File(outputDir, "profile.log")
         assert f.isFile()
@@ -112,10 +121,14 @@ class Counter {
     }
 
     def checkInstrumentedBuildScriptOutputs(String gradleVersion, int warmups = this.warmups, int iterations = this.iterations) {
+        checkInstrumentedBuildScriptOutputs(gradleVersion, "", warmups, iterations)
+    }
+
+    def checkInstrumentedBuildScriptOutputs(String gradleVersion, String tasks, int warmups = this.warmups, int iterations = this.iterations) {
         def probe = 1
         logFile.find("<gradle-version: $gradleVersion>").size() == probe + warmups + iterations
         logFile.find("<daemon: true").size() == probe + warmups + iterations
-        logFile.find("<tasks: []>").size() == warmups + iterations
+        logFile.find("<tasks: [$tasks]>").size() == warmups + iterations
     }
 
     def writeBuckw() {
