@@ -13,7 +13,7 @@ class ApplyChangeToNativeSourceFileMutatorTest extends AbstractMutatorTest {
         mutator.beforeBuild(buildContext)
 
         then:
-        sourceFile.text == " \nint _m_276d92f3_16ac_4064_9a18_5f1dfd67992f_testScenario_3c4925d7_MEASURE_7 () { }"
+        sourceFile.text == " \nint _m_276d92f3_16ac_4064_9a18_5f1dfd67992f_testScenario_3c4925d7_MEASURE_7(void) { volatile int dummy = 0; return (int)((unsigned long)&dummy & 0x7FFFFFFFul); }"
 
         where:
         extension << ["c", "C", "cpp", "CPP", "c++", "cxx"]
@@ -30,7 +30,7 @@ class ApplyChangeToNativeSourceFileMutatorTest extends AbstractMutatorTest {
         mutator.beforeBuild(buildContext)
 
         then:
-        sourceFile.text == "#ifndef ABC\n\nint _m_276d92f3_16ac_4064_9a18_5f1dfd67992f_testScenario_3c4925d7_MEASURE_7();\n#endif"
+        sourceFile.text == "#ifndef ABC\n\nint _m_276d92f3_16ac_4064_9a18_5f1dfd67992f_testScenario_3c4925d7_MEASURE_7(void);\n#endif"
 
         where:
         extension << ["h", "H", "hpp", "HPP", "hxx"]
@@ -50,14 +50,14 @@ class ApplyChangeToNativeSourceFileMutatorTest extends AbstractMutatorTest {
         mutatorC.beforeBuild(buildContext)
 
         then:
-        sourceFileCPP.text == " \nint _m_276d92f3_16ac_4064_9a18_5f1dfd67992f_testScenario_3c4925d7_MEASURE_7 () { }"
+        sourceFileCPP.text == " \nint _m_276d92f3_16ac_4064_9a18_5f1dfd67992f_testScenario_3c4925d7_MEASURE_7(void) { volatile int dummy = 0; return (int)((unsigned long)&dummy & 0x7FFFFFFFul); }"
 
         when:
         mutatorH.beforeScenario(scenarioContext)
         mutatorH.beforeBuild(buildContext)
 
         then:
-        sourceFileH.text == "#ifndef ABC\n\nint _m_276d92f3_16ac_4064_9a18_5f1dfd67992f_testScenario_3c4925d7_MEASURE_7();\n#endif"
+        sourceFileH.text == "#ifndef ABC\n\nint _m_276d92f3_16ac_4064_9a18_5f1dfd67992f_testScenario_3c4925d7_MEASURE_7(void);\n#endif"
     }
 
     def "complains when a file with not-allowed file extension is specified"() {
