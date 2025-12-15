@@ -26,6 +26,11 @@ abstract class AbstractBaseProfilerIntegrationTest extends AbstractIntegrationTe
     Integer warmups = 1
     Integer iterations = 1
 
+    def defaultWarmupsAndIterations() {
+        warmups = null
+        iterations = null
+    }
+
     def getTotalRunCount() {
         warmups + iterations
     }

@@ -9,9 +9,7 @@ import spock.lang.Requires
 class JProfilerGradleCrossVersionTest extends AbstractGradleCrossVersionTest {
 
     def setup() {
-        // reset to defaults
-        warmups = null
-        iterations = null
+        defaultWarmupsAndIterations()
     }
 
     def "profiles build using JProfiler with tooling API and warm daemon"() {
