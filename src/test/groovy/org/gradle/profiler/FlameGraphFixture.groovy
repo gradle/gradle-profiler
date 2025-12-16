@@ -1,17 +1,17 @@
 package org.gradle.profiler
 
 import groovy.transform.SelfType
-import org.gradle.profiler.fixtures.AbstractProfilerIntegrationTest
+import org.gradle.profiler.fixtures.AbstractBaseProfilerIntegrationTest
 
-@SelfType(AbstractProfilerIntegrationTest)
+@SelfType(AbstractBaseProfilerIntegrationTest)
 trait FlameGraphFixture {
 
-    void assertGraphsGeneratedForScenarios(String... scenarios) {
-        assertGraphsGenerated(scenarios as List<String>, [latestSupportedGradleVersion], ['cpu'])
+    void assertGraphsGeneratedForScenarios(String gradleVersion, List<String> scenarios) {
+        assertGraphsGenerated(scenarios, [gradleVersion], ['cpu'])
     }
 
-    void assertGraphsGeneratedForScenario(String... events = ["cpu"]) {
-        assertGraphsGenerated([null], [latestSupportedGradleVersion], events as List<String>)
+    void assertGraphsGeneratedForScenario(String gradleVersion, List<String> events = ["cpu"]) {
+        assertGraphsGenerated([null], [gradleVersion], events)
     }
 
     void assertGraphsGeneratedForVersions(String... versions) {
@@ -44,7 +44,7 @@ trait FlameGraphFixture {
         assert !(multipleScenarios && multipleVersions)
         def variation = multipleScenarios ? scenarios : versions
         variation.each { current ->
-            variation.findAll { it != current }.each {baseline ->
+            variation.findAll { it != current }.each { baseline ->
                 ["backward", "forward"].each { diffType ->
                     events.each { event ->
                         ["simplified"].each { type ->
