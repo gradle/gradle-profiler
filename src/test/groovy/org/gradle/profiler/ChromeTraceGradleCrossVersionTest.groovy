@@ -41,7 +41,7 @@ class ChromeTraceGradleCrossVersionTest extends AbstractGradleCrossVersionTest {
     @ShowAndroidStudioLogsOnFailure
     @Requires({ StudioFinder.findStudioHome() })
     @Requires({ AndroidStudioTestSupport.findAndroidSdkPath() })
-    // We don't control version of AS provided by the environment, so we assume that latest tested Gradle should be fineº
+    // We don't control version of AS provided by the environment, so we assume that latest tested Gradle should be fine
     @Requires({ it.instance.latestTestedGradleVersion() })
     def "profiles Android Studio build to produce chrome trace output for builds"() {
         given:
