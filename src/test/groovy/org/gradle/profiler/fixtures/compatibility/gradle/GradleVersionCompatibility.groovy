@@ -19,6 +19,7 @@ class GradleVersionCompatibility {
         "7.6.4",
         "8.0.2",
         "8.14.3",
+        "9.2.1"
     )
 
     static List<GradleVersion> gradleVersionsSupportedOnCurrentJvm(List<GradleVersion> gradleVersions) {
