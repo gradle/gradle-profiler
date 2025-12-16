@@ -29,4 +29,8 @@ abstract class AbstractGradleCrossVersionTest extends AbstractBaseProfilerIntegr
     def gradleVersionSupportsJava11() {
         primaryGradleVersion <= GradleVersionCompatibility.lastGradleVersionSupportingJava11
     }
+
+    def latestTestedGradleVersion() {
+        primaryGradleVersion == GradleVersionCompatibility.testedGradleVersions.last()
+    }
 }
