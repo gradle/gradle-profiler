@@ -1,7 +1,8 @@
 package org.gradle.profiler.fixtures.compatibility.gradle
 
-import org.gradle.api.JavaVersion
+
 import org.gradle.util.GradleVersion
+import spock.util.environment.Jvm
 
 class GradleVersionCompatibility {
 
@@ -19,18 +20,12 @@ class GradleVersionCompatibility {
         "7.6.4",
         "8.0.2",
         "8.14.3",
-        "9.2.1"
+        "9.1.0"
     )
 
     static List<GradleVersion> gradleVersionsSupportedOnCurrentJvm(List<GradleVersion> gradleVersions) {
         gradleVersions.findAll {
-            if (JavaVersion.current().isCompatibleWith(JavaVersion.VERSION_17)) {
-                return it >= minimalGradleVersionSupportingJava17
-            } else if (JavaVersion.current().isCompatibleWith(JavaVersion.VERSION_11)) {
-                return it >= minimalGradleVersionSupportingJava11
-            } else {
-                return true
-            }
+            new DefaultGradleDistribution(it).daemonWorksWith(Jvm.current.javaSpecVersionNumber.major)
         }
     }
 

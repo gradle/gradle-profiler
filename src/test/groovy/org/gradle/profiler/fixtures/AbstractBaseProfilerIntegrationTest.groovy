@@ -2,6 +2,7 @@ package org.gradle.profiler.fixtures
 
 import org.gradle.api.JavaVersion
 import org.gradle.profiler.Main
+import org.gradle.profiler.fixtures.compatibility.gradle.DefaultGradleDistribution
 import org.gradle.util.GradleVersion
 import org.junit.Rule
 import org.junit.rules.TemporaryFolder
@@ -82,15 +83,21 @@ abstract class AbstractBaseProfilerIntegrationTest extends AbstractIntegrationTe
     def downgradeDaemonJvmIfTestJvmUnsupported(String gradleVersion, @Nullable File dir = null) {
         def currentJvm = JavaVersion.current()
         def targetGradleVersion = GradleVersion.version(gradleVersion)
-
-        String downgradeJavaHome = null
-        if (currentJvm.isCompatibleWith(JavaVersion.VERSION_11) && targetGradleVersion < minimalGradleVersionSupportingJava11) {
-            downgradeJavaHome = getJavaHomeProperty("javaHomes.java8", "Java 8")
-        } else if (currentJvm.isCompatibleWith(JavaVersion.VERSION_17) && targetGradleVersion < minimalGradleVersionSupportingJava17) {
-            downgradeJavaHome = getJavaHomeProperty("javaHomes.java11", "Java 11")
+        def gradleDistribution = new DefaultGradleDistribution(targetGradleVersion)
+        if (gradleDistribution.daemonWorksWith(currentJvm.majorVersion as int)) {
+            return
         }
 
-        if (downgradeJavaHome != null) {
+        // Current JVM is not compatible, we need to find a suitable one to downgrade to.
+        // Let's try to find a suitable JVM from the ones we have available.
+        // We check in a sensible order: 17, 11, 8.
+        def availableJvms = [25, 21, 17, 11, 8]
+        def downgradeJavaVersion = availableJvms.find { version ->
+            System.getProperty("javaHomes.java${version}") != null && gradleDistribution.daemonWorksWith(version)
+        }
+
+        if (downgradeJavaVersion != null) {
+            def downgradeJavaHome = getJavaHomeProperty("javaHomes.java${downgradeJavaVersion}", "Java ${downgradeJavaVersion}")
             def parentDir = dir != null ? dir : projectDir
             new File(parentDir, "gradle.properties") << "\norg.gradle.java.home=${downgradeJavaHome}"
         }
