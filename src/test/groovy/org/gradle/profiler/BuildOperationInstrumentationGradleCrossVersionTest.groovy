@@ -1,7 +1,9 @@
 package org.gradle.profiler
 
-import org.gradle.profiler.fixtures.AbstractProfilerIntegrationTest
+
+import org.gradle.profiler.fixtures.compatibility.gradle.AbstractGradleCrossVersionTest
 import org.gradle.profiler.fixtures.compatibility.gradle.GradleVersionCompatibility
+import spock.lang.Requires
 
 import static org.hamcrest.CoreMatchers.equalTo
 import static org.hamcrest.CoreMatchers.everyItem
@@ -10,9 +12,16 @@ import static org.hamcrest.CoreMatchers.not
 import static org.junit.Assert.assertThat
 import static org.junit.Assert.assertTrue
 
-class BuildOperationInstrumentationIntegrationTest extends AbstractProfilerIntegrationTest {
+@Requires({ it.instance.gradleVersionWithAdvancedBenchmarking() })
+class BuildOperationInstrumentationGradleCrossVersionTest extends AbstractGradleCrossVersionTest {
 
-    def "can benchmark GC time for build using #gradleVersion (configuration-cache: #configurationCache)"() {
+    def setup() {
+        warmups = null
+        iterations = null
+    }
+
+    @Requires({ it.instance.gradleVersionWithExperimentalConfigurationCache() })
+    def "can benchmark GC time for build using (configuration-cache: #configurationCache)"() {
         given:
         instrumentedBuildScript()
 
@@ -23,9 +32,7 @@ class BuildOperationInstrumentationIntegrationTest extends AbstractProfilerInteg
         """
 
         and:
-        String[] args = [
-            "--project-dir", projectDir.absolutePath,
-            "--output-dir", outputDir.absolutePath,
+        def args = [
             "--gradle-version", gradleVersion,
             "--benchmark",
             "--measure-gc",
@@ -38,7 +45,7 @@ class BuildOperationInstrumentationIntegrationTest extends AbstractProfilerInteg
         }
 
         when:
-        new Main().run(*args)
+        run(args)
 
         then:
         def lines = resultFile.lines
@@ -57,13 +64,11 @@ class BuildOperationInstrumentationIntegrationTest extends AbstractProfilerInteg
         Double.valueOf(gcTime[0][1]) > 0
 
         where:
-        gradleVersion                | configurationCache
-        "6.1"                        | false
-        latestSupportedGradleVersion | false
-        latestSupportedGradleVersion | true
+        configurationCache << [false, true]
     }
 
-    def "can benchmark local build cache size for build using #gradleVersion (configuration-cache: #configurationCache)"() {
+    @Requires({ it.instance.gradleVersionWithExperimentalConfigurationCache() })
+    def "can benchmark local build cache size for build(configuration-cache: #configurationCache)"() {
         given:
         instrumentedBuildScript()
 
@@ -91,9 +96,7 @@ class BuildOperationInstrumentationIntegrationTest extends AbstractProfilerInteg
         """
 
         and:
-        String[] args = [
-            "--project-dir", projectDir.absolutePath,
-            "--output-dir", outputDir.absolutePath,
+        def args = [
             "--gradle-version", gradleVersion,
             "--benchmark",
             "--measure-local-build-cache",
@@ -106,7 +109,7 @@ class BuildOperationInstrumentationIntegrationTest extends AbstractProfilerInteg
         """
 
         when:
-        new Main().run(*args)
+        run(args)
 
         then:
         def lines = resultFile.lines
@@ -125,20 +128,16 @@ class BuildOperationInstrumentationIntegrationTest extends AbstractProfilerInteg
         Double.valueOf(localBuildCacheSize[0][1]) > 0
 
         where:
-        gradleVersion                | configurationCache
-        "6.1"                        | false
-        latestSupportedGradleVersion | false
-        latestSupportedGradleVersion | true
+        configurationCache << [false, true]
     }
 
-    def "can benchmark configuration time for build using #gradleVersion (configuration-cache: #configurationCache)"() {
+    @Requires({ it.instance.gradleVersionWithExperimentalConfigurationCache() })
+    def "can benchmark configuration time for build(configuration-cache: #configurationCache)"() {
         given:
         instrumentedBuildScript()
 
         and:
-        String[] args = [
-            "--project-dir", projectDir.absolutePath,
-            "--output-dir", outputDir.absolutePath,
+        def args = [
             "--gradle-version", gradleVersion,
             "--benchmark",
             "--measure-config-time",
@@ -151,7 +150,7 @@ class BuildOperationInstrumentationIntegrationTest extends AbstractProfilerInteg
         }
 
         when:
-        new Main().run(*args)
+        run(args)
 
         then:
         def lines = resultFile.lines
@@ -170,20 +169,20 @@ class BuildOperationInstrumentationIntegrationTest extends AbstractProfilerInteg
         Double.valueOf(taskStart[0][1]) > 0
 
         where:
-        gradleVersion                | configurationCache
-        "6.1"                        | false
-        latestSupportedGradleVersion | false
-        latestSupportedGradleVersion | true
+        configurationCache << [false, true]
     }
 
-    def "can benchmark snapshotting build operation time via #via for build using #gradleVersion (configuration-cache: #configurationCache)"() {
+    @Requires({ it.instance.gradleVersionWithExperimentalConfigurationCache() })
+    def "can benchmark snapshotting build operation time via #via for build(configuration-cache: #configurationCache)"() {
         given:
         instrumentedBuildForSnapshottingBenchmark()
+        println(via)
+        println(commandLine)
+        println(scenarioConfiguration)
+        println(configurationCache)
 
         and:
-        String[] args = [
-            "--project-dir", projectDir.absolutePath,
-            "--output-dir", outputDir.absolutePath,
+        def args = [
             "--gradle-version", gradleVersion,
             "--benchmark"
         ]
@@ -206,7 +205,7 @@ class BuildOperationInstrumentationIntegrationTest extends AbstractProfilerInteg
         args += scenarioConfiguration ? "default" : "assemble"
 
         when:
-        new Main().run(*args)
+        run(args)
 
         then:
         def lines = resultFile.lines
@@ -225,7 +224,7 @@ class BuildOperationInstrumentationIntegrationTest extends AbstractProfilerInteg
         lines.get(10).matches("measured build #1,$SAMPLE,$SAMPLE")
 
         where:
-        [via, commandLine, scenarioConfiguration, gradleVersion, configurationCache] << [
+        [via, commandLine, scenarioConfiguration, configurationCache] << [
             [
                 [
                     'command line',
@@ -243,26 +242,17 @@ class BuildOperationInstrumentationIntegrationTest extends AbstractProfilerInteg
                     'measured-build-ops = ["org.gradle.api.internal.tasks.SnapshotTaskInputsBuildOperationType"]'
                 ]
             ],
-            ["6.1", latestSupportedGradleVersion] as Set
-        ].combinations().collectMany {
-            def scenario = it[0]
-            def gradleVersion = it[1]
-            if (gradleVersion == latestSupportedGradleVersion) {
-                [scenario + gradleVersion + false, scenario + gradleVersion + true]
-            } else {
-                [scenario + gradleVersion + false]
-            }
-        }
+            [false, true]
+        ].combinations().collect { it[0] + it[1] }
     }
 
-    def "can combine measuring configuration time and build operation using #gradleVersion (configuration-cache: #configurationCache)"() {
+    @Requires({ it.instance.gradleVersionWithExperimentalConfigurationCache() })
+    def "can combine measuring configuration time and build operation(configuration-cache: #configurationCache)"() {
         given:
         instrumentedBuildForSnapshottingBenchmark()
 
         and:
-        String[] args = [
-            "--project-dir", projectDir.absolutePath,
-            "--output-dir", outputDir.absolutePath,
+        def args = [
             "--gradle-version", gradleVersion,
             "--benchmark",
             "--measure-config-time",
@@ -276,7 +266,7 @@ class BuildOperationInstrumentationIntegrationTest extends AbstractProfilerInteg
         }
 
         when:
-        new Main().run(*args)
+        run(args)
 
         then:
         def lines = resultFile.lines
@@ -302,20 +292,16 @@ class BuildOperationInstrumentationIntegrationTest extends AbstractProfilerInteg
         assertTrue("different build-op times", buildOps.size() > 1)
 
         where:
-        gradleVersion                | configurationCache
-        "6.1"                        | false
-        latestSupportedGradleVersion | false
-        latestSupportedGradleVersion | true
+        configurationCache << [false, true]
     }
 
-    def "gracefully ignores non-existent build-operation with #gradleVersion"() {
+    @Requires({ it.instance.gradleVersionWithAdvancedBenchmarking() })
+    def "gracefully ignores non-existent build-operation"() {
         given:
         instrumentedBuildForSnapshottingBenchmark()
 
         and:
-        String[] args = [
-            "--project-dir", projectDir.absolutePath,
-            "--output-dir", outputDir.absolutePath,
+        def args = [
             "--gradle-version", gradleVersion,
             "--benchmark",
             "--measure-build-op", "org.gradle.api.internal.NonExistentBuildOperationType",
@@ -324,7 +310,7 @@ class BuildOperationInstrumentationIntegrationTest extends AbstractProfilerInteg
         ]
 
         when:
-        new Main().run(*args)
+        run(args)
 
         then:
         def lines = resultFile.lines
@@ -347,26 +333,9 @@ class BuildOperationInstrumentationIntegrationTest extends AbstractProfilerInteg
         assertThat("non zero build-op times", buildOps, hasItem(not(equalTo(0D))))
         assertTrue("different execution times", executions.size() > 1)
         assertTrue("different build-op times", buildOps.size() > 1)
-
-        where:
-        gradleVersion << ["6.1", latestSupportedGradleVersion]
     }
 
-    private void instrumentedBuildForSnapshottingBenchmark() {
-        instrumentedBuildScript()
-        buildFile << """
-            apply plugin: 'java'
-        """
-
-        // We don't capture snapshotting time (yet) if the build cache is not enabled
-        file("gradle.properties").text = "org.gradle.caching=true"
-
-        def sourceFile = file("src/main/java/A.java")
-        sourceFile.parentFile.mkdirs()
-        sourceFile.text = "class A {}"
-    }
-
-    def "complains when attempting to benchmark configuration time for build using #gradleVersion"() {
+    def "complains when attempting to benchmark configuration time for build"() {
         // Gradle version that does not support measuring configuration time
         def unsupportedGradleVersion = GradleVersionCompatibility.minimalSupportedGradleVersion.version
         downgradeDaemonJvmIfTestJvmUnsupported(unsupportedGradleVersion)
@@ -375,7 +344,7 @@ class BuildOperationInstrumentationIntegrationTest extends AbstractProfilerInteg
         instrumentedBuildScript()
 
         when:
-        new Main().run("--project-dir", projectDir.absolutePath, "--output-dir", outputDir.absolutePath, "--gradle-version", unsupportedGradleVersion, "--benchmark", "--measure-config-time", "assemble")
+        run(["--gradle-version", unsupportedGradleVersion, "--benchmark", "--measure-config-time", "assemble"])
 
         then:
         thrown(IllegalArgumentException)
@@ -393,17 +362,31 @@ class BuildOperationInstrumentationIntegrationTest extends AbstractProfilerInteg
         def scenarioFile = file("performance.scenarios")
         scenarioFile.text = """
             assemble {
-                versions = ["$unsupportedGradleVersion", "${latestSupportedGradleVersion}"]
+                versions = ["$unsupportedGradleVersion", "$gradleVersion"]
             }
         """
 
         when:
-        new Main().run("--project-dir", projectDir.absolutePath, "--output-dir", outputDir.absolutePath, "--scenario-file", scenarioFile.absolutePath, "--benchmark", "--measure-config-time", "assemble")
+        run(["--scenario-file", scenarioFile.absolutePath, "--benchmark", "--measure-config-time", "assemble"])
 
         then:
         thrown(IllegalArgumentException)
 
         and:
         assert output.contains("Scenario assemble using Gradle ${unsupportedGradleVersion}: Measuring build configuration is only supported for Gradle 6.1-milestone-3 and later")
+    }
+
+    private void instrumentedBuildForSnapshottingBenchmark() {
+        instrumentedBuildScript()
+        buildFile << """
+            apply plugin: 'java'
+        """
+
+        // We don't capture snapshotting time (yet) if the build cache is not enabled
+        file("gradle.properties").text = "org.gradle.caching=true"
+
+        def sourceFile = file("src/main/java/A.java")
+        sourceFile.parentFile.mkdirs()
+        sourceFile.text = "class A {}"
     }
 }

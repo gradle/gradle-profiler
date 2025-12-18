@@ -4,11 +4,17 @@ import org.gradle.profiler.fixtures.compatibility.AbstractCrossVersionTestInterc
 import org.gradle.profiler.fixtures.multitest.AbstractMultiTestInterceptor.Execution as MultiTestExecution
 import org.gradle.util.GradleVersion
 import org.spockframework.runtime.extension.IMethodInvocation
+import spock.util.environment.Jvm
 
 class GradleCrossVersionTestInterceptor extends AbstractCrossVersionTestInterceptor<GradleVersion> {
 
     protected GradleCrossVersionTestInterceptor(Class<?> target) {
         super(target, AbstractGradleCrossVersionTest, "Gradle")
+    }
+
+    @Override
+    protected boolean isAvailable(GradleVersion version) {
+        return new DefaultGradleDistribution(version).daemonWorksWith(Jvm.current.javaSpecVersionNumber.major)
     }
 
     @Override
