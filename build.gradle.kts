@@ -106,6 +106,16 @@ fun launcherJavaHomeFor(javaVersion: Int): String {
         .get()
 }
 
+class AddOpensArgProvider(private val test: Test) : CommandLineArgumentProvider {
+    override fun asArguments(): Iterable<String> {
+        return if (test.javaVersion.isCompatibleWith(JavaVersion.VERSION_1_9)) {
+            listOf("--add-opens=java.base/java.lang=ALL-UNNAMED")
+        } else {
+            emptyList()
+        }
+    }
+}
+
 tasks.test {
     // If testJavaVersion is not set use the current JVM. Some tests require JFR, which is only available
     // in some JVM implementations. For now assume that the current JVM has JFR support.
@@ -136,7 +146,7 @@ tasks.test {
     maxHeapSize = "2g"
 
     // Required for mocks when running on Java 17+
-    jvmArgs("--add-opens=java.base/java.lang=ALL-UNNAMED")
+    jvmArgumentProviders.add(AddOpensArgProvider(this))
 
     // Used by tests to select a different Daemon JVM when Test JVM is unsupported by older Gradle versions
     systemProperty("javaHomes.java8", launcherJavaHomeFor(8))
