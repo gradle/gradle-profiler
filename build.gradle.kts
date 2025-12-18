@@ -135,6 +135,9 @@ tasks.test {
     setForkEvery(1)
     maxHeapSize = "2g"
 
+    // Required for mocks when running on Java 17+
+    jvmArgs("--add-opens=java.base/java.lang=ALL-UNNAMED")
+
     // Used by tests to select a different Daemon JVM when Test JVM is unsupported by older Gradle versions
     systemProperty("javaHomes.java8", launcherJavaHomeFor(8))
     systemProperty("javaHomes.java11", launcherJavaHomeFor(11))
@@ -175,7 +178,10 @@ testReports.forEach { (taskName, fileName) ->
         rename("report-template.html", "test-report-${fileName}.html")
         filter { line ->
             if (line == "@@BENCHMARK_RESULT_JSON@@") dataFile.readText()
-            else if (line == "@@SCRIPT@@") File(tasks.processResources.get().destinationDir, "org/gradle/profiler/report/report.js").readText(Charsets.UTF_8)
+            else if (line == "@@SCRIPT@@") File(
+                tasks.processResources.get().destinationDir,
+                "org/gradle/profiler/report/report.js"
+            ).readText(Charsets.UTF_8)
             else line
         }
     }
@@ -222,7 +228,12 @@ val gitPushTag = tasks.register<Exec>("gitPushTag") {
     mustRunAfter("closeSonatypeStagingRepository")
     dependsOn("gitTag")
     onlyIf { !isSnapshot() }
-    commandLine("git", "push", "https://bot-teamcity:${project.findProperty("githubToken")}@github.com/gradle/gradle-profiler.git", releaseTagName)
+    commandLine(
+        "git",
+        "push",
+        "https://bot-teamcity:${project.findProperty("githubToken")}@github.com/gradle/gradle-profiler.git",
+        releaseTagName
+    )
 }
 
 fun Project.isSnapshot() = version.toString().endsWith("-SNAPSHOT")
