@@ -353,10 +353,12 @@ class BuildOperationInstrumentationGradleCrossVersionTest extends AbstractGradle
         output.contains("Scenario using Gradle ${unsupportedGradleVersion}: Measuring build configuration is only supported for Gradle 6.1-milestone-3 and later")
     }
 
+    @Requires({ it.instance.gradleVersionSupportsJava11() })
     def "complains when attempting to benchmark configuration time for build using unsupported Gradle version from scenario file"() {
         // Gradle version that does not support measuring configuration time
         def unsupportedGradleVersion = GradleVersionCompatibility.minimalSupportedGradleVersion.version
         downgradeDaemonJvmIfTestJvmUnsupported(unsupportedGradleVersion)
+
         given:
         instrumentedBuildScript()
         def scenarioFile = file("performance.scenarios")

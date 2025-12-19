@@ -9,6 +9,7 @@ class GradleVersionCompatibility {
     // See: https://github.com/gradle/gradle/blob/bc997dc1751c50fa0cdb1aa1fefe4844b81eca9f/testing/internal-integ-testing/src/main/groovy/org/gradle/integtests/fixtures/executer/DefaultGradleDistribution.groovy#L32-L50
     static GradleVersion minimalGradleVersionSupportingJava11 = GradleVersion.version("5.0")
     static GradleVersion minimalGradleVersionSupportingJava17 = GradleVersion.version("7.3")
+    static GradleVersion lastGradleVersionSupportingJava11 = GradleVersion.version("8.14.3")
 
     static GradleVersion minimalGradleVersionWithExperimentalConfigurationCache = GradleVersion.version("6.6")
 

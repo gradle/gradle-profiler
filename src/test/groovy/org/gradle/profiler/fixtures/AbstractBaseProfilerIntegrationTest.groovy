@@ -10,9 +10,6 @@ import org.junit.rules.TemporaryFolder
 import javax.annotation.Nullable
 import java.util.regex.Pattern
 
-import static org.gradle.profiler.fixtures.compatibility.gradle.GradleVersionCompatibility.minimalGradleVersionSupportingJava11
-import static org.gradle.profiler.fixtures.compatibility.gradle.GradleVersionCompatibility.minimalGradleVersionSupportingJava17
-
 abstract class AbstractBaseProfilerIntegrationTest extends AbstractIntegrationTest {
 
     private static int NUMBER_OF_HEADERS = 4
