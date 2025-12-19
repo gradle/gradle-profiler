@@ -21,4 +21,8 @@ abstract class AbstractGradleCrossVersionTest extends AbstractBaseProfilerIntegr
     def gradleVersionWithExperimentalConfigurationCache() {
         primaryGradleVersion >= GradleVersionCompatibility.minimalGradleVersionWithExperimentalConfigurationCache
     }
+
+    def gradleVersionWithAdvancedBenchmarking() {
+        primaryGradleVersion >= GradleVersionCompatibility.minimalGradleVersionWithAdvancedBenchmarking
+    }
 }
