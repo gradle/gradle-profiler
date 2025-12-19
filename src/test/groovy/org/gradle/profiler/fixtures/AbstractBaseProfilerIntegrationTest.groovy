@@ -83,12 +83,16 @@ abstract class AbstractBaseProfilerIntegrationTest extends AbstractIntegrationTe
         def currentJvm = JavaVersion.current()
         def targetGradleVersion = GradleVersion.version(gradleVersion)
 
+        println("Java version: ${currentJvm}, targetGradle ${targetGradleVersion}")
+
         String downgradeJavaHome = null
         if (currentJvm.isCompatibleWith(JavaVersion.VERSION_11) && targetGradleVersion < minimalGradleVersionSupportingJava11) {
             downgradeJavaHome = getJavaHomeProperty("javaHomes.java8", "Java 8")
         } else if (currentJvm.isCompatibleWith(JavaVersion.VERSION_17) && targetGradleVersion < minimalGradleVersionSupportingJava17) {
             downgradeJavaHome = getJavaHomeProperty("javaHomes.java11", "Java 11")
         }
+
+        println("downgradeJavaHome: ${downgradeJavaHome}")
 
         if (downgradeJavaHome != null) {
             def parentDir = dir != null ? dir : projectDir

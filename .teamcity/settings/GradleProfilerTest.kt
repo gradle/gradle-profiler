@@ -21,7 +21,7 @@ open class GradleProfilerTest(os: Os, javaVersion: JavaVersion, arch: Arch) : Bu
         gradle {
             tasks = "clean test"
             buildFile = ""
-            gradleParams = "-s" +
+            gradleParams = "--tests BuildOperationInstrumentationGradleCrossVersionTest -s" +
                 " --build-cache ${toolchainConfiguration(os, arch)}" +
                 " -PtestJavaVersion=${javaVersion.majorVersion}" +
                 " -PtestJavaVendor=${javaVersion.vendor}" +
