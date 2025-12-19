@@ -4,6 +4,7 @@ import org.gradle.profiler.fixtures.AbstractProfilerIntegrationTest
 import spock.lang.Requires
 
 @Requires({ !OperatingSystem.isWindows() })
+@Requires({ it.instance.isCurrentJvmSupportedGradleVersionRange() })
 class DifferentialFlameGraphIntegrationTest extends AbstractProfilerIntegrationTest implements FlameGraphFixture {
     def "generates differential flame graphs with #profiler"() {
         given:
