@@ -1201,8 +1201,10 @@ class ProfilerIntegrationTest extends AbstractProfilerIntegrationTest {
 
     def "clears transform cache when asked"() {
         given:
-        String gradleVersion = "5.2"
+        String gradleVersion = minimalSupportedGradleVersion
         buildFile << """
+            import org.gradle.api.artifacts.transform.TransformParameters
+
             plugins {
                 id 'java-library'
             }
@@ -1218,36 +1220,33 @@ class ProfilerIntegrationTest extends AbstractProfilerIntegrationTest {
                     attribute(usage)
                 }
 
-                registerTransform {
+                registerTransform(FileSizer) {
                     from.attribute(artifactType, 'jar')
                     to.attribute(artifactType, 'size')
-                    artifactTransform(FileSizer)
                 }
 
-                compile 'com.google.guava:guava:21.0'
+                implementation 'com.google.guava:guava:21.0'
             }
             configurations {
-                compile {
+                runtimeClasspath {
                     attributes { attribute usage, 'api' }
                 }
             }
 
-            class FileSizer extends ArtifactTransform {
-                FileSizer() {
-                    println "Creating FileSizer"
-                }
+            abstract class FileSizer implements TransformAction<TransformParameters.None> {
+               @InputArtifact
+                abstract Provider<FileSystemLocation> getInputArtifact()
 
-                List<File> transform(File input) {
-                    assert outputDirectory.directory && outputDirectory.list().length == 0
-                    def output = new File(outputDirectory, input.name + ".txt")
+                void transform(TransformOutputs outputs) {
+                    def input = inputArtifact.get().asFile
+                    def output = outputs.file(input.name + ".txt")
                     println "Transforming \${input.name} to \${output.name}"
                     output.text = String.valueOf(input.length())
-                    return [output]
                 }
             }
 
             task resolve(type: Copy) {
-                def artifacts = configurations.compile.incoming.artifactView {
+                def artifacts = configurations.runtimeClasspath.incoming.artifactView {
                     attributes { it.attribute(artifactType, 'size') }
                 }.artifacts
                 from artifacts.artifactFiles
