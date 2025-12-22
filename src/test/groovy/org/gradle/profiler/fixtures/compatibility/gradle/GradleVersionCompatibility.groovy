@@ -1,8 +1,7 @@
 package org.gradle.profiler.fixtures.compatibility.gradle
 
-
+import org.gradle.api.JavaVersion
 import org.gradle.util.GradleVersion
-import spock.util.environment.Jvm
 
 class GradleVersionCompatibility {
 
@@ -29,7 +28,7 @@ class GradleVersionCompatibility {
 
     static List<GradleVersion> gradleVersionsSupportedOnCurrentJvm(List<GradleVersion> gradleVersions) {
         gradleVersions.findAll {
-            new DefaultGradleDistribution(it).daemonWorksWith(Jvm.current.javaSpecVersionNumber.major)
+            new DefaultGradleDistribution(it).daemonWorksWith(JavaVersion.current().majorVersion as int)
         }
     }
 
