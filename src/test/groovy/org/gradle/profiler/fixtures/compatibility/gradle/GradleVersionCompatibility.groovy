@@ -12,8 +12,11 @@ class GradleVersionCompatibility {
 
     static GradleVersion minimalGradleVersionWithExperimentalConfigurationCache = GradleVersion.version("6.6")
 
-    // advanced means support of --measure-build-op, --measure-config-time, --measure-gc
+    // `advanced` means support of --measure-build-op, --measure-config-time, --measure-gc
     static GradleVersion minimalGradleVersionWithAdvancedBenchmarking = GradleVersion.version("6.1")
+
+    // See: https://github.com/gradle/gradle-profiler/issues/603
+    static GradleVersion lastGradleVersionSupportingCleanTransformCaches = GradleVersion.version("8.6")
 
     static GradleVersion minimalSupportedGradleVersion = GradleVersion.version("6.0")
 

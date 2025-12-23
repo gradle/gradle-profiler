@@ -21,7 +21,7 @@ class BuildOperationInstrumentationGradleCrossVersionTest extends AbstractGradle
     }
 
     @Requires({ it.instance.gradleVersionWithExperimentalConfigurationCache() })
-    def "can benchmark GC time for build using (configuration-cache: #configurationCache)"() {
+    def "can benchmark GC time(configuration-cache: #configurationCache)"() {
         given:
         instrumentedBuildScript()
 
@@ -68,7 +68,7 @@ class BuildOperationInstrumentationGradleCrossVersionTest extends AbstractGradle
     }
 
     @Requires({ it.instance.gradleVersionWithExperimentalConfigurationCache() })
-    def "can benchmark local build cache size for build(configuration-cache: #configurationCache)"() {
+    def "can benchmark local build cache size(configuration-cache: #configurationCache)"() {
         given:
         instrumentedBuildScript()
 
@@ -132,7 +132,7 @@ class BuildOperationInstrumentationGradleCrossVersionTest extends AbstractGradle
     }
 
     @Requires({ it.instance.gradleVersionWithExperimentalConfigurationCache() })
-    def "can benchmark configuration time for build(configuration-cache: #configurationCache)"() {
+    def "can benchmark configuration time(configuration-cache: #configurationCache)"() {
         given:
         instrumentedBuildScript()
 
@@ -173,7 +173,7 @@ class BuildOperationInstrumentationGradleCrossVersionTest extends AbstractGradle
     }
 
     @Requires({ it.instance.gradleVersionWithExperimentalConfigurationCache() })
-    def "can benchmark snapshotting build operation time via #via for build(configuration-cache: #configurationCache)"() {
+    def "can benchmark snapshotting build operation time via #via(configuration-cache: #configurationCache)"() {
         given:
         instrumentedBuildForSnapshottingBenchmark()
         println(via)
@@ -335,7 +335,7 @@ class BuildOperationInstrumentationGradleCrossVersionTest extends AbstractGradle
         assertTrue("different build-op times", buildOps.size() > 1)
     }
 
-    def "complains when attempting to benchmark configuration time for build"() {
+    def "complains when attempting to benchmark configuration time"() {
         // Gradle version that does not support measuring configuration time
         def unsupportedGradleVersion = GradleVersionCompatibility.minimalSupportedGradleVersion.version
         downgradeDaemonJvmIfTestJvmUnsupported(unsupportedGradleVersion)
