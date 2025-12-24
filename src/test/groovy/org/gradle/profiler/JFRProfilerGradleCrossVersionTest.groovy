@@ -134,7 +134,7 @@ class JFRProfilerGradleCrossVersionTest extends AbstractGradleCrossVersionTest {
         iterationCount << [1, 2]
     }
 
-    def "can profile no daemon with #interactionCount iterations"() {
+    def "can profile no daemon with #iterationCount iterations"() {
         given:
         instrumentedBuildScript()
 
