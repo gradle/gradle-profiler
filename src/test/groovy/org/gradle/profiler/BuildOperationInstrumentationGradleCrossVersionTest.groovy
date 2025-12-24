@@ -275,15 +275,15 @@ class BuildOperationInstrumentationGradleCrossVersionTest extends AbstractGradle
 
         and:
         def buildLines = lines.subList(10, 19).collect { it.tokenize(',') }
-        def executions = buildLines.collect { Double.valueOf(it.get(1)) } as Set
-        def taskStarts = buildLines.collect { Double.valueOf(it.get(2)) } as Set
-        def buildOps = buildLines.collect { Double.valueOf(it.get(3)) } as Set
+        def executions = buildLines.collect { Double.valueOf(it.get(1)) }
+        def taskStarts = buildLines.collect { Double.valueOf(it.get(2)) }
+        def buildOps = buildLines.collect { Double.valueOf(it.get(3)) }
         assertThat("non zero execution times", executions, hasItem(not(equalTo(0D))))
         assertThat("non zero task start times", taskStarts, hasItem(not(equalTo(0D))))
         assertThat("non zero build-op times", buildOps, hasItem(not(equalTo(0D))))
-        assertTrue("different execution times", executions.size() > 1)
-        assertTrue("different task start times", taskStarts.size() > 1)
-        assertTrue("different build-op times", buildOps.size() > 1)
+        assertTrue("different execution times", executions.size() == 9)
+        assertTrue("different task start times", taskStarts.size() == 9)
+        assertTrue("different build-op times", buildOps.size() == 9)
 
         where:
         configurationCache << [false, true]
@@ -319,14 +319,14 @@ class BuildOperationInstrumentationGradleCrossVersionTest extends AbstractGradle
 
         and:
         def buildLines = lines.subList(10, 19).collect { it.tokenize(',') }
-        def executions = buildLines.collect { Double.valueOf(it.get(1)) } as Set
-        def buildNoops = buildLines.collect { Double.valueOf(it.get(2)) } as Set
-        def buildOps = buildLines.collect { Double.valueOf(it.get(3)) } as Set
+        def executions = buildLines.collect { Double.valueOf(it.get(1)) }
+        def buildNoops = buildLines.collect { Double.valueOf(it.get(2)) }
+        def buildOps = buildLines.collect { Double.valueOf(it.get(3)) }
         assertThat("non zero execution times", executions, hasItem(not(equalTo(0D))))
         assertThat("zero times for non-existent build-op", buildNoops, everyItem(equalTo(0D)))
         assertThat("non zero build-op times", buildOps, hasItem(not(equalTo(0D))))
-        assertTrue("different execution times", executions.size() > 1)
-        assertTrue("different build-op times", buildOps.size() > 1)
+        assertTrue("different execution times", executions.size() == 9)
+        assertTrue("different build-op times", buildOps.size() == 9)
     }
 
     private void instrumentedBuildForSnapshottingBenchmark() {
