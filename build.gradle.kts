@@ -106,6 +106,16 @@ fun launcherJavaHomeFor(javaVersion: Int): String {
         .get()
 }
 
+class AddOpensArgProvider(private val test: Test) : CommandLineArgumentProvider {
+    override fun asArguments(): Iterable<String> {
+        return if (test.javaVersion.isCompatibleWith(JavaVersion.VERSION_1_9)) {
+            listOf("--add-opens=java.base/java.lang=ALL-UNNAMED")
+        } else {
+            emptyList()
+        }
+    }
+}
+
 tasks.test {
     // If testJavaVersion is not set use the current JVM. Some tests require JFR, which is only available
     // in some JVM implementations. For now assume that the current JVM has JFR support.
@@ -135,9 +145,15 @@ tasks.test {
     setForkEvery(1)
     maxHeapSize = "2g"
 
+    // Required for mocks when running on Java 17+
+    jvmArgumentProviders.add(AddOpensArgProvider(this))
+
     // Used by tests to select a different Daemon JVM when Test JVM is unsupported by older Gradle versions
     systemProperty("javaHomes.java8", launcherJavaHomeFor(8))
     systemProperty("javaHomes.java11", launcherJavaHomeFor(11))
+    systemProperty("javaHomes.java17", launcherJavaHomeFor(17))
+    systemProperty("javaHomes.java21", launcherJavaHomeFor(21))
+    systemProperty("javaHomes.java25", launcherJavaHomeFor(25))
 
     // Run cross-version tests for all tested versions
     systemProperty("org.gradle.integtest.versions", "all")
@@ -172,7 +188,10 @@ testReports.forEach { (taskName, fileName) ->
         rename("report-template.html", "test-report-${fileName}.html")
         filter { line ->
             if (line == "@@BENCHMARK_RESULT_JSON@@") dataFile.readText()
-            else if (line == "@@SCRIPT@@") File(tasks.processResources.get().destinationDir, "org/gradle/profiler/report/report.js").readText(Charsets.UTF_8)
+            else if (line == "@@SCRIPT@@") File(
+                tasks.processResources.get().destinationDir,
+                "org/gradle/profiler/report/report.js"
+            ).readText(Charsets.UTF_8)
             else line
         }
     }
@@ -219,7 +238,12 @@ val gitPushTag = tasks.register<Exec>("gitPushTag") {
     mustRunAfter("closeSonatypeStagingRepository")
     dependsOn("gitTag")
     onlyIf { !isSnapshot() }
-    commandLine("git", "push", "https://bot-teamcity:${project.findProperty("githubToken")}@github.com/gradle/gradle-profiler.git", releaseTagName)
+    commandLine(
+        "git",
+        "push",
+        "https://bot-teamcity:${project.findProperty("githubToken")}@github.com/gradle/gradle-profiler.git",
+        releaseTagName
+    )
 }
 
 fun Project.isSnapshot() = version.toString().endsWith("-SNAPSHOT")
@@ -268,6 +292,10 @@ tasks.register("releaseToSdkMan") {
             dependsOn(tasks.withType<SdkAnnounceVersionTask>())
         }
     }
+}
+
+tasks.updateDaemonJvm {
+    toolchainDownloadUrls.empty()
 }
 
 tasks.register<Sync>("install") {

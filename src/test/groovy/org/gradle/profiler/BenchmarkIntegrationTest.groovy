@@ -1,8 +1,9 @@
 package org.gradle.profiler
 
 import org.gradle.profiler.fixtures.AbstractProfilerIntegrationTest
+import spock.lang.Requires
 
-
+@Requires({ it.instance.isCurrentJvmSupportsMultipleGradleVersions() })
 class BenchmarkIntegrationTest extends AbstractProfilerIntegrationTest {
 
     def "recovers from measured build failure running benchmarks"() {

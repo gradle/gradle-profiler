@@ -8,8 +8,15 @@ class GradleVersionCompatibility {
     // See: https://github.com/gradle/gradle/blob/bc997dc1751c50fa0cdb1aa1fefe4844b81eca9f/testing/internal-integ-testing/src/main/groovy/org/gradle/integtests/fixtures/executer/DefaultGradleDistribution.groovy#L32-L50
     static GradleVersion minimalGradleVersionSupportingJava11 = GradleVersion.version("5.0")
     static GradleVersion minimalGradleVersionSupportingJava17 = GradleVersion.version("7.3")
+    static GradleVersion lastGradleVersionSupportingJava11 = GradleVersion.version("8.14.3")
 
     static GradleVersion minimalGradleVersionWithExperimentalConfigurationCache = GradleVersion.version("6.6")
+
+    // `advanced` means support of --measure-build-op, --measure-config-time, --measure-gc
+    static GradleVersion minimalGradleVersionWithAdvancedBenchmarking = GradleVersion.version("6.1")
+
+    // See: https://github.com/gradle/gradle-profiler/issues/603
+    static GradleVersion lastGradleVersionSupportingCleanTransformCaches = GradleVersion.version("8.6")
 
     static GradleVersion minimalSupportedGradleVersion = GradleVersion.version("6.0")
 
@@ -19,17 +26,12 @@ class GradleVersionCompatibility {
         "7.6.4",
         "8.0.2",
         "8.14.3",
+        "9.1.0"
     )
 
     static List<GradleVersion> gradleVersionsSupportedOnCurrentJvm(List<GradleVersion> gradleVersions) {
         gradleVersions.findAll {
-            if (JavaVersion.current().isCompatibleWith(JavaVersion.VERSION_17)) {
-                return it >= minimalGradleVersionSupportingJava17
-            } else if (JavaVersion.current().isCompatibleWith(JavaVersion.VERSION_11)) {
-                return it >= minimalGradleVersionSupportingJava11
-            } else {
-                return true
-            }
+            new DefaultGradleDistribution(it).daemonWorksWith(JavaVersion.current().majorVersion as int)
         }
     }
 

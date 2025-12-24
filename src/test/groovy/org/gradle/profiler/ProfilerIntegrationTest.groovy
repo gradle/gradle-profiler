@@ -3,6 +3,7 @@ package org.gradle.profiler
 import org.gradle.profiler.fixtures.AbstractProfilerIntegrationTest
 import org.gradle.profiler.fixtures.compatibility.gradle.GradleVersionCompatibility
 import org.gradle.util.GradleVersion
+import spock.lang.Issue
 import spock.lang.Requires
 
 class ProfilerIntegrationTest extends AbstractProfilerIntegrationTest {
@@ -131,6 +132,7 @@ class ProfilerIntegrationTest extends AbstractProfilerIntegrationTest {
         output.contains("java.lang.RuntimeException: broken!")
     }
 
+    @Requires({ it.instance.isCurrentJvmSupportsMultipleGradleVersions() })
     def "profiles build using JFR, specified Gradle versions and tasks"() {
         given:
         buildFile.text = """
@@ -180,7 +182,7 @@ class ProfilerIntegrationTest extends AbstractProfilerIntegrationTest {
         profileFile.exists()
     }
 
-
+    @Requires({ it.instance.isCurrentJvmSupportsMultipleGradleVersions() })
     def "runs benchmarks using scenarios defined in scenario file"() {
         given:
         def scenarioFile = file("benchmark.conf")
@@ -305,6 +307,7 @@ class ProfilerIntegrationTest extends AbstractProfilerIntegrationTest {
         new File(outputDir, "help/help-${minimalSupportedGradleVersion}.jfr").file
     }
 
+    @Requires({ it.instance.isCurrentJvmSupportsMultipleGradleVersions() })
     def "profiles scenarios defined in scenario file using multiple Gradle versions"() {
         given:
         def scenarioFile = file("benchmark.conf")
@@ -345,6 +348,7 @@ class ProfilerIntegrationTest extends AbstractProfilerIntegrationTest {
         new File(outputDir, "help/$latestSupportedGradleVersion/help-${latestSupportedGradleVersion}.jfr").file
     }
 
+    @Requires({ it.instance.isCurrentJvmSupportsMultipleGradleVersions() })
     def "resolve placeholders in configuration"() {
         given:
 
@@ -463,6 +467,7 @@ class ProfilerIntegrationTest extends AbstractProfilerIntegrationTest {
         !logFile.find("Tasks: [help]")
     }
 
+    @Requires({ it.instance.isCurrentJvmSupportsMultipleGradleVersions() })
     def "dry run runs test builds to verify configuration"() {
         given:
         def scenarioFile = file("benchmark.conf")
@@ -533,7 +538,7 @@ class ProfilerIntegrationTest extends AbstractProfilerIntegrationTest {
         """
 
         when:
-        new Main().run("--project-dir", projectDir.absolutePath, "--output-dir", outputDir.absolutePath, "--gradle-version", GradleVersion.current().version, "--benchmark", "assemble")
+        new Main().run("--project-dir", projectDir.absolutePath, "--output-dir", outputDir.absolutePath, "--gradle-version", minimalSupportedGradleVersion, "--benchmark", "assemble")
 
         then:
         // Probe version, 6 warm up, 10 builds
@@ -549,7 +554,7 @@ class ProfilerIntegrationTest extends AbstractProfilerIntegrationTest {
         """
 
         when:
-        new Main().run("--project-dir", projectDir.absolutePath, "--output-dir", outputDir.absolutePath, "--gradle-version", GradleVersion.current().version, "--benchmark", "assemble")
+        new Main().run("--project-dir", projectDir.absolutePath, "--output-dir", outputDir.absolutePath, "--gradle-version", minimalSupportedGradleVersion, "--benchmark", "assemble")
 
         then:
         // Probe version, 6 warm up, 10 builds
@@ -1199,10 +1204,14 @@ class ProfilerIntegrationTest extends AbstractProfilerIntegrationTest {
         gradleVersion << [minimalSupportedGradleVersion]
     }
 
+    // See: https://github.com/gradle/gradle-profiler/issues/603")
+    @Requires({ GradleVersion.version(it.instance.minimalSupportedGradleVersion) <= GradleVersionCompatibility.lastGradleVersionSupportingCleanTransformCaches})
     def "clears transform cache when asked"() {
         given:
-        String gradleVersion = "5.2"
+        String gradleVersion = minimalSupportedGradleVersion
         buildFile << """
+            import org.gradle.api.artifacts.transform.TransformParameters
+
             plugins {
                 id 'java-library'
             }
@@ -1218,36 +1227,33 @@ class ProfilerIntegrationTest extends AbstractProfilerIntegrationTest {
                     attribute(usage)
                 }
 
-                registerTransform {
+                registerTransform(FileSizer) {
                     from.attribute(artifactType, 'jar')
                     to.attribute(artifactType, 'size')
-                    artifactTransform(FileSizer)
                 }
 
-                compile 'com.google.guava:guava:21.0'
+                implementation 'com.google.guava:guava:21.0'
             }
             configurations {
-                compile {
+                runtimeClasspath {
                     attributes { attribute usage, 'api' }
                 }
             }
 
-            class FileSizer extends ArtifactTransform {
-                FileSizer() {
-                    println "Creating FileSizer"
-                }
+            abstract class FileSizer implements TransformAction<TransformParameters.None> {
+               @InputArtifact
+                abstract Provider<FileSystemLocation> getInputArtifact()
 
-                List<File> transform(File input) {
-                    assert outputDirectory.directory && outputDirectory.list().length == 0
-                    def output = new File(outputDirectory, input.name + ".txt")
+                void transform(TransformOutputs outputs) {
+                    def input = inputArtifact.get().asFile
+                    def output = outputs.file(input.name + ".txt")
                     println "Transforming \${input.name} to \${output.name}"
                     output.text = String.valueOf(input.length())
-                    return [output]
                 }
             }
 
             task resolve(type: Copy) {
-                def artifacts = configurations.compile.incoming.artifactView {
+                def artifacts = configurations.runtimeClasspath.incoming.artifactView {
                     attributes { it.attribute(artifactType, 'size') }
                 }.artifacts
                 from artifacts.artifactFiles

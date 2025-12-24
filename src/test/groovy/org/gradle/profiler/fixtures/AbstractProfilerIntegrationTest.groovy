@@ -16,12 +16,16 @@ abstract class AbstractProfilerIntegrationTest extends AbstractBaseProfilerInteg
     @Shared
     String latestSupportedGradleVersion = supportedGradleVersions.last()
 
+    boolean isCurrentJvmSupportsMultipleGradleVersions() {
+        return minimalSupportedGradleVersion != latestSupportedGradleVersion
+    }
+
     /**
      * Returns the range of Gradle versions supported by the current JVM,
      * ensuring range bounds are distinct.
      */
     List<String> currentJvmSupportedGradleVersionRange() {
-        assert minimalSupportedGradleVersion != latestSupportedGradleVersion
+        assert isCurrentJvmSupportsMultipleGradleVersions()
         [minimalSupportedGradleVersion, latestSupportedGradleVersion]
     }
 

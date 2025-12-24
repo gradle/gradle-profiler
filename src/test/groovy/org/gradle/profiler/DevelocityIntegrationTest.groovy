@@ -106,7 +106,7 @@ class DevelocityIntegrationTest extends AbstractProfilerIntegrationTest {
 
         where:
         pluginName   | pluginId                | extensionName      | jarFileName                       | pluginVersion
-        'Enterprise' | 'com.gradle.enterprise' | 'gradleEnterprise' | 'gradle-enterprise-gradle-plugin' | '3.0'
+        'Enterprise' | 'com.gradle.enterprise' | 'gradleEnterprise' | 'gradle-enterprise-gradle-plugin' | '3.13.1'
         'Develocity' | 'com.gradle.develocity' | 'develocity'       | 'develocity-gradle-plugin'        | '4.2.2'
     }
 
