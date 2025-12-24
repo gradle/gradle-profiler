@@ -8,6 +8,7 @@ class PidInstrumentationGradleCrossVersionTest extends AbstractGradleCrossVersio
     @Requires({ it.instance.gradleVersionWithExperimentalConfigurationCache() })
     def "pid instrumentation works for cold daemon with configuration caching"() {
         given:
+        defaultWarmupsAndIterations()
         instrumentedBuildScript()
         file("gradle.properties") << """
             org.gradle.unsafe.configuration-cache=true
@@ -23,8 +24,6 @@ class PidInstrumentationGradleCrossVersionTest extends AbstractGradleCrossVersio
         """
 
         when:
-        warmups = null
-        iterations = null
         run(["--benchmark", "--scenario-file", scenarioFile.absolutePath, "s1"])
 
         then:
