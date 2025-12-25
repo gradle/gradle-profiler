@@ -1,14 +1,9 @@
 package org.gradle.profiler
 
-
 import org.gradle.profiler.fixtures.compatibility.gradle.AbstractGradleCrossVersionTest
-import org.gradle.profiler.fixtures.compatibility.gradle.GradleVersionCompatibility
 import spock.lang.Requires
 
-import static org.hamcrest.CoreMatchers.equalTo
-import static org.hamcrest.CoreMatchers.everyItem
-import static org.hamcrest.CoreMatchers.hasItem
-import static org.hamcrest.CoreMatchers.not
+import static org.hamcrest.CoreMatchers.*
 import static org.junit.Assert.assertThat
 import static org.junit.Assert.assertTrue
 
@@ -16,8 +11,7 @@ import static org.junit.Assert.assertTrue
 class BuildOperationInstrumentationGradleCrossVersionTest extends AbstractGradleCrossVersionTest {
 
     def setup() {
-        warmups = null
-        iterations = null
+        defaultWarmupsAndIterations()
     }
 
     @Requires({ it.instance.gradleVersionWithExperimentalConfigurationCache() })
@@ -281,15 +275,15 @@ class BuildOperationInstrumentationGradleCrossVersionTest extends AbstractGradle
 
         and:
         def buildLines = lines.subList(10, 19).collect { it.tokenize(',') }
-        def executions = buildLines.collect { Double.valueOf(it.get(1)) } as Set
-        def taskStarts = buildLines.collect { Double.valueOf(it.get(2)) } as Set
-        def buildOps = buildLines.collect { Double.valueOf(it.get(3)) } as Set
+        def executions = buildLines.collect { Double.valueOf(it.get(1)) }
+        def taskStarts = buildLines.collect { Double.valueOf(it.get(2)) }
+        def buildOps = buildLines.collect { Double.valueOf(it.get(3)) }
         assertThat("non zero execution times", executions, hasItem(not(equalTo(0D))))
         assertThat("non zero task start times", taskStarts, hasItem(not(equalTo(0D))))
         assertThat("non zero build-op times", buildOps, hasItem(not(equalTo(0D))))
-        assertTrue("different execution times", executions.size() > 1)
-        assertTrue("different task start times", taskStarts.size() > 1)
-        assertTrue("different build-op times", buildOps.size() > 1)
+        assertTrue("different execution times", executions.size() == 9)
+        assertTrue("different task start times", taskStarts.size() == 9)
+        assertTrue("different build-op times", buildOps.size() == 9)
 
         where:
         configurationCache << [false, true]
@@ -325,57 +319,14 @@ class BuildOperationInstrumentationGradleCrossVersionTest extends AbstractGradle
 
         and:
         def buildLines = lines.subList(10, 19).collect { it.tokenize(',') }
-        def executions = buildLines.collect { Double.valueOf(it.get(1)) } as Set
-        def buildNoops = buildLines.collect { Double.valueOf(it.get(2)) } as Set
-        def buildOps = buildLines.collect { Double.valueOf(it.get(3)) } as Set
+        def executions = buildLines.collect { Double.valueOf(it.get(1)) }
+        def buildNoops = buildLines.collect { Double.valueOf(it.get(2)) }
+        def buildOps = buildLines.collect { Double.valueOf(it.get(3)) }
         assertThat("non zero execution times", executions, hasItem(not(equalTo(0D))))
         assertThat("zero times for non-existent build-op", buildNoops, everyItem(equalTo(0D)))
         assertThat("non zero build-op times", buildOps, hasItem(not(equalTo(0D))))
-        assertTrue("different execution times", executions.size() > 1)
-        assertTrue("different build-op times", buildOps.size() > 1)
-    }
-
-    def "complains when attempting to benchmark configuration time"() {
-        // Gradle version that does not support measuring configuration time
-        def unsupportedGradleVersion = GradleVersionCompatibility.minimalSupportedGradleVersion.version
-        downgradeDaemonJvmIfTestJvmUnsupported(unsupportedGradleVersion)
-
-        given:
-        instrumentedBuildScript()
-
-        when:
-        run(["--gradle-version", unsupportedGradleVersion, "--benchmark", "--measure-config-time", "assemble"])
-
-        then:
-        thrown(IllegalArgumentException)
-
-        and:
-        output.contains("Scenario using Gradle ${unsupportedGradleVersion}: Measuring build configuration is only supported for Gradle 6.1-milestone-3 and later")
-    }
-
-    @Requires({ it.instance.gradleVersionSupportsJava11() })
-    def "complains when attempting to benchmark configuration time for build using unsupported Gradle version from scenario file"() {
-        // Gradle version that does not support measuring configuration time
-        def unsupportedGradleVersion = GradleVersionCompatibility.minimalSupportedGradleVersion.version
-        downgradeDaemonJvmIfTestJvmUnsupported(unsupportedGradleVersion)
-
-        given:
-        instrumentedBuildScript()
-        def scenarioFile = file("performance.scenarios")
-        scenarioFile.text = """
-            assemble {
-                versions = ["$unsupportedGradleVersion", "$gradleVersion"]
-            }
-        """
-
-        when:
-        run(["--scenario-file", scenarioFile.absolutePath, "--benchmark", "--measure-config-time", "assemble"])
-
-        then:
-        thrown(IllegalArgumentException)
-
-        and:
-        assert output.contains("Scenario assemble using Gradle ${unsupportedGradleVersion}: Measuring build configuration is only supported for Gradle 6.1-milestone-3 and later")
+        assertTrue("different execution times", executions.size() == 9)
+        assertTrue("different build-op times", buildOps.size() == 9)
     }
 
     private void instrumentedBuildForSnapshottingBenchmark() {

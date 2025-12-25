@@ -90,7 +90,7 @@ class DifferentialFlameGraphIntegrationTest extends AbstractProfilerIntegrationT
         logFile.find("<invocations: 3>").size() == 2
 
         and:
-        assertGraphsGeneratedForScenarios('upToDate', 'help')
+        assertGraphsGeneratedForScenarios(latestSupportedGradleVersion, ['upToDate', 'help'])
         assertDifferentialGraphsGenerated(['upToDate', 'help'], [latestSupportedGradleVersion])
 
 

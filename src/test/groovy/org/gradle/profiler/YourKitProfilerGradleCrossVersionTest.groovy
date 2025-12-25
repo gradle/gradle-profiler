@@ -8,9 +8,7 @@ import spock.lang.Requires
 class YourKitProfilerGradleCrossVersionTest extends AbstractGradleCrossVersionTest {
 
     def setup() {
-        // reset to defaults
-        warmups = null
-        iterations = null
+        defaultWarmupsAndIterations()
     }
 
     @Requires({ YourKit.findYourKitHome() })
@@ -222,7 +220,7 @@ class YourKitProfilerGradleCrossVersionTest extends AbstractGradleCrossVersionTe
 
         when:
         iterations = 2
-        run(["--gradle-version", gradleVersion, "--gradle-version", gradleVersion, "--scenario-file", scenarioFile.absolutePath, "--profile", "yourkit", "assemble"])
+        run(["--gradle-version", gradleVersion, "--scenario-file", scenarioFile.absolutePath, "--profile", "yourkit", "assemble"])
 
         then:
         thrown(IllegalArgumentException)
@@ -237,7 +235,7 @@ class YourKitProfilerGradleCrossVersionTest extends AbstractGradleCrossVersionTe
 
         when:
         iterations = 2
-        run(["--gradle-version", gradleVersion, "--gradle-version", gradleVersion, "--profile", "yourkit", "--cold-daemon", "assemble"])
+        run(["--gradle-version", gradleVersion, "--profile", "yourkit", "--cold-daemon", "assemble"])
 
         then:
         thrown(IllegalArgumentException)
@@ -252,7 +250,7 @@ class YourKitProfilerGradleCrossVersionTest extends AbstractGradleCrossVersionTe
 
         when:
         iterations = 2
-        run(["--gradle-version", gradleVersion, "--gradle-version", gradleVersion, "--profile", "yourkit", "--no-daemon", "assemble"])
+        run(["--gradle-version", gradleVersion, "--profile", "yourkit", "--no-daemon", "assemble"])
 
         then:
         thrown(IllegalArgumentException)
