@@ -289,7 +289,6 @@ class BuildOperationInstrumentationGradleCrossVersionTest extends AbstractGradle
         configurationCache << [false, true]
     }
 
-    @Requires({ it.instance.gradleVersionWithAdvancedBenchmarking() })
     def "gracefully ignores non-existent build-operation"() {
         given:
         instrumentedBuildForSnapshottingBenchmark()
@@ -336,7 +335,7 @@ class BuildOperationInstrumentationGradleCrossVersionTest extends AbstractGradle
         """
 
         // We don't capture snapshotting time (yet) if the build cache is not enabled
-        file("gradle.properties").text = "org.gradle.caching=true"
+        file("gradle.properties") << "\norg.gradle.caching=true"
 
         def sourceFile = file("src/main/java/A.java")
         sourceFile.parentFile.mkdirs()
