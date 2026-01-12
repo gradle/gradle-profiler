@@ -1,6 +1,6 @@
 package org.gradle.profiler.fixtures.compatibility.gradle
 
-import org.gradle.api.JavaVersion
+
 import org.gradle.profiler.fixtures.compatibility.AbstractCrossVersionTestInterceptor
 import org.gradle.profiler.fixtures.multitest.AbstractMultiTestInterceptor.Execution as MultiTestExecution
 import org.gradle.util.GradleVersion
@@ -10,11 +10,6 @@ class GradleCrossVersionTestInterceptor extends AbstractCrossVersionTestIntercep
 
     protected GradleCrossVersionTestInterceptor(Class<?> target) {
         super(target, AbstractGradleCrossVersionTest, "Gradle")
-    }
-
-    @Override
-    protected boolean isAvailable(GradleVersion version) {
-        return new DefaultGradleDistribution(version).daemonWorksWith(JavaVersion.current().majorVersion as int)
     }
 
     @Override
