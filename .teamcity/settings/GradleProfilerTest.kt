@@ -68,14 +68,6 @@ open class GradleProfilerTest(os: Os, javaVersion: JavaVersion, arch: Arch) : Bu
     }
 }
 
-object LinuxJava8 : GradleProfilerTest(Os.linux, JavaVersion.ORACLE_JAVA_8, Arch.AMD64, {
-    name = "Linux - Java 8"
-})
-
-object LinuxJava11 : GradleProfilerTest(Os.linux, JavaVersion.OPENJDK_11, Arch.AMD64, {
-    name = "Linux - Java 11"
-})
-
 object LinuxJava17 : GradleProfilerTest(Os.linux, JavaVersion.OPENJDK_17, Arch.AMD64, {
     name = "Linux - Java 17"
 })
@@ -88,10 +80,6 @@ object LinuxJava25 : GradleProfilerTest(Os.linux, JavaVersion.OPENJDK_25, Arch.A
     name = "Linux - Java 25"
 })
 
-object MacOSJava11 : GradleProfilerTest(Os.macos, JavaVersion.OPENJDK_11, Arch.AARCH64, {
-    name = "macOS - Java 11"
-})
-
 object MacOSJava17 : GradleProfilerTest(Os.macos, JavaVersion.OPENJDK_17, Arch.AARCH64, {
     name = "macOS - Java 17"
 })
@@ -102,10 +90,6 @@ object MacOSJava21 : GradleProfilerTest(Os.macos, JavaVersion.OPENJDK_21, Arch.A
 
 object MacOSJava25 : GradleProfilerTest(Os.macos, JavaVersion.OPENJDK_25, Arch.AARCH64, {
     name = "macOS - Java 25"
-})
-
-object WindowsJava11 : GradleProfilerTest(Os.windows, JavaVersion.OPENJDK_11, Arch.AMD64, {
-    name = "Windows - Java 11"
 })
 
 object WindowsJava17 : GradleProfilerTest(Os.windows, JavaVersion.OPENJDK_17, Arch.AMD64, {
