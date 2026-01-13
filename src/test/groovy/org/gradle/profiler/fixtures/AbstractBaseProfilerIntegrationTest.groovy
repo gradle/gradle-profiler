@@ -111,6 +111,7 @@ abstract class AbstractBaseProfilerIntegrationTest extends AbstractIntegrationTe
             throw new IllegalStateException("This test requires Java Home for $description to be provided in the '$systemProperty' system property")
         }
         return javaHome
+            .replace("\\", "\\\\") // escaping backslashes for Windows
     }
 
     def setup() {
