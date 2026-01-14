@@ -165,7 +165,11 @@ class IdeaGradleClient(
     }
 
     private fun closeIde() {
-        ideaRun?.closeIdeAndWait(takeScreenshot = false)
+        ideaRun?.let {
+            if (it.process.isAlive) {
+                it.closeIdeAndWait(takeScreenshot = false)
+            }
+        }
         profilerAgentConnection?.close()
         ideaRun = null
         profilerAgentConnection = null
