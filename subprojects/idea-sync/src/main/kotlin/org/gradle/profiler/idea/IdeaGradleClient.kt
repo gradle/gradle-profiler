@@ -28,12 +28,10 @@ import org.gradle.profiler.result.BuildActionResult
 import org.kodein.di.DI
 import org.kodein.di.bindSingleton
 import java.io.File
-import java.io.OutputStream
 import java.nio.file.Path
 import java.time.Duration
 import java.time.Duration.ofMinutes
 import java.time.Instant
-import kotlin.io.path.absolute
 import kotlin.io.path.createDirectories
 import kotlin.io.path.div
 
@@ -101,6 +99,7 @@ class IdeaGradleClient(
         val testContext = Starter.newContext("Profile IDEA Sync", testCase)
         val profilerAgentServer = Server("agent")
 
+        profilerLog("Launching IDEA ${invocationSettings.ideaVersion}")
         ideaRun = testContext
             // Indexing takes time and memory
             .skipIndicesInitialization()
@@ -166,7 +165,11 @@ class IdeaGradleClient(
     }
 
     private fun closeIde() {
-        ideaRun?.closeIdeAndWait(takeScreenshot = false)
+        ideaRun?.let {
+            if (it.process.isAlive) {
+                it.closeIdeAndWait(takeScreenshot = false)
+            }
+        }
         profilerAgentConnection?.close()
         ideaRun = null
         profilerAgentConnection = null
@@ -196,5 +199,11 @@ class IdeaGradleClient(
         )
         val totalTime = Duration.between(start, noIndicatorsSince)
         return IdeaBuildActionResult(gradleExecutionTime, totalTime)
+    }
+
+    private fun profilerLog(message: String) {
+        println()
+        println("* $message")
+        println()
     }
 }
