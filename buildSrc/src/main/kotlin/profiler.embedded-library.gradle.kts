@@ -3,6 +3,9 @@ plugins {
     id("groovy")
 }
 
+description =
+    "Project packaged into the Gradle profiler Jar for the further injection to Gradle build. Uses Java 11 for compatibility with older Gradle versions (< 7.3)"
+
 java {
     toolchain {
         languageVersion.set(JavaLanguageVersion.of(11))
