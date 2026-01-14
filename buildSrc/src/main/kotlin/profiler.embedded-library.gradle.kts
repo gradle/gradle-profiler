@@ -3,6 +3,12 @@ plugins {
     id("groovy")
 }
 
+java {
+    toolchain {
+        languageVersion.set(JavaLanguageVersion.of(11))
+    }
+}
+
 // These projects are packaged into the Gradle profiler Jar, so let's make them reproducible
 tasks.withType<Jar>().configureEach {
     isReproducibleFileOrder = true
