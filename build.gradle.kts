@@ -149,11 +149,7 @@ tasks.test {
     jvmArgumentProviders.add(AddOpensArgProvider(this))
 
     // Used by tests to select a different Daemon JVM when Test JVM is unsupported by older Gradle versions
-    systemProperty("javaHomes.java8", launcherJavaHomeFor(8))
     systemProperty("javaHomes.java11", launcherJavaHomeFor(11))
-    systemProperty("javaHomes.java17", launcherJavaHomeFor(17))
-    systemProperty("javaHomes.java21", launcherJavaHomeFor(21))
-    systemProperty("javaHomes.java25", launcherJavaHomeFor(25))
 
     // Run cross-version tests for all tested versions
     systemProperty("org.gradle.integtest.versions", "all")
