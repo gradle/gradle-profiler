@@ -111,7 +111,6 @@ class IdeaGradleClient(
             // This dir keeps sync statistics, we want it to be clean on each run
 //            .wipeEventLogDataDir()
             .applyVMOptionsPatch {
-                clearSystemProperty("ide.performance.screenshot")
                 addSystemProperty("gradle.compatibility.update.interval", 0)
 
                 // TODO Uncomment when start to use FUS events instead manual measuring
@@ -120,7 +119,11 @@ class IdeaGradleClient(
 //                addSystemProperty("idea.is.internal", "true")
 //                addSystemProperty("fus.internal.test.mode", "true")
             }
-            .runIdeWithDriver()
+            .runIdeWithDriver {
+                addVMOptionsPatch {
+                    clearSystemProperty("ide.performance.screenshot")
+                }
+            }
 
         profilerAgentConnection = profilerAgentServer.waitForIncoming(ofMinutes(2)).apply {
             send(StudioAgentConnectionParameters(gradleHome))
@@ -163,7 +166,7 @@ class IdeaGradleClient(
     }
 
     private fun closeIde() {
-        ideaRun?.closeIdeAndWait()
+        ideaRun?.closeIdeAndWait(takeScreenshot = false)
         profilerAgentConnection?.close()
         ideaRun = null
         profilerAgentConnection = null
