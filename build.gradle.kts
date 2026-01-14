@@ -54,10 +54,12 @@ dependencies {
     profilerPlugins(project(":studio-agent"))
     profilerPlugins(project(":heap-dump"))
     profilerPlugins(project(":studio-plugin"))
+    profilerPlugins(project(":tooling-action"))
 
     runtimeOnly("org.slf4j:slf4j-simple:1.7.10")
     testImplementation(libs.bundles.testDependencies)
     testImplementation(libs.groovy.xml)
+    testImplementation(project(":tooling-action"))
     testRuntimeOnly("cglib:cglib:3.2.6")
     testRuntimeOnly("org.objenesis:objenesis:2.6")
 }
