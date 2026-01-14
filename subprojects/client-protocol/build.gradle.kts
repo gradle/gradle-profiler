@@ -6,10 +6,8 @@ plugins {
 
 description = "A client protocol for Gradle profiler to profile Android Studio sync"
 
-java {
-    toolchain {
-        languageVersion = JavaLanguageVersion.of(8)
-    }
+tasks.compileJava {
+    options.release = 8
 }
 
 dependencies {

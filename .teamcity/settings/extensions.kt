@@ -11,6 +11,7 @@ fun BuildType.agentRequirement(os: Os, arch: Arch) {
 }
 
 fun javaInstallationsFor(os: Os, arch: Arch) = listOf(
+    JavaVersion.OPENJDK_11,
     JavaVersion.OPENJDK_17,
     JavaVersion.OPENJDK_21,
     JavaVersion.OPENJDK_25,
@@ -41,6 +42,7 @@ fun ParametrizedWithType.androidHome(os: Os) {
 }
 
 enum class JavaVersion(val majorVersion: String, val vendor: String) {
+    OPENJDK_11("11", "openjdk"),
     OPENJDK_17("17", "openjdk"),
     OPENJDK_21("21", "openjdk"),
     OPENJDK_25("25", "openjdk"),
