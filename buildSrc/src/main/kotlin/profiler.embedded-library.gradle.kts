@@ -4,11 +4,11 @@ plugins {
 }
 
 description =
-    "Project packaged into the Gradle profiler Jar for the further injection to Gradle build. Uses Java 11 for compatibility with older Gradle versions (< 7.3)"
+    "Project packaged into the Gradle profiler Jar for the further injection to Gradle build. Uses Java 8 for compatibility with older Gradle versions"
 
 java {
     toolchain {
-        languageVersion.set(JavaLanguageVersion.of(11))
+        languageVersion.set(JavaLanguageVersion.of(8))
     }
 }
 

@@ -35,12 +35,6 @@ project.configurations
     .getByName("testFixturesImplementation")
     .extendsFrom(ideaConfiguration, ideaPluginsConfiguration, intelliJDefaultDependenciesConfiguration)
 
-java {
-    toolchain {
-        languageVersion.set(JavaLanguageVersion.of(17))
-    }
-}
-
 tasks.test {
     useJUnitPlatform()
     // Disable IntelliJ file system access check for tests: having this check enabled can fail
