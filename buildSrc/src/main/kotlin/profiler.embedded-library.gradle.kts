@@ -4,12 +4,11 @@ plugins {
 }
 
 description =
-    "Project packaged into the Gradle profiler Jar for the further injection to Gradle build. Uses Java 8 for compatibility with older Gradle versions"
+    "Project packaged into the Gradle profiler Jar for the further injection to Gradle build. Uses Java 8 for compatibility with older Gradle versions."
 
 java {
-    toolchain {
-        languageVersion.set(JavaLanguageVersion.of(8))
-    }
+    sourceCompatibility = JavaVersion.VERSION_1_8
+    targetCompatibility = JavaVersion.VERSION_1_8
 }
 
 // These projects are packaged into the Gradle profiler Jar, so let's make them reproducible
