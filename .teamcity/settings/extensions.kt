@@ -11,6 +11,7 @@ fun BuildType.agentRequirement(os: Os, arch: Arch) {
 }
 
 fun javaInstallationsFor(os: Os, arch: Arch) = listOf(
+    if (os == Os.macos && arch == Arch.AARCH64) JavaVersion.ZULU_JAVA_8 else JavaVersion.ORACLE_JAVA_8,
     JavaVersion.OPENJDK_11,
     JavaVersion.OPENJDK_17,
     JavaVersion.OPENJDK_21,
@@ -42,6 +43,8 @@ fun ParametrizedWithType.androidHome(os: Os) {
 }
 
 enum class JavaVersion(val majorVersion: String, val vendor: String) {
+    ORACLE_JAVA_8("8", "oracle"),
+    ZULU_JAVA_8("8", "zulu"),
     OPENJDK_11("11", "openjdk"),
     OPENJDK_17("17", "openjdk"),
     OPENJDK_21("21", "openjdk"),
