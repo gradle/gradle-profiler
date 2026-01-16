@@ -1,10 +1,12 @@
-import org.gradle.api.tasks.testing.Test
 import org.gradle.internal.os.OperatingSystem
-import org.gradle.kotlin.dsl.withType
 
 plugins {
     id("profiler.allprojects")
     kotlin("jvm")
+}
+
+kotlin {
+    jvmToolchain(17)
 }
 
 tasks.withType<Test>().configureEach {

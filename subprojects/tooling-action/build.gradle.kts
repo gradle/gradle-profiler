@@ -3,5 +3,5 @@ plugins {
 }
 
 dependencies {
-    api(gradleApi())
+    implementation(libs.toolingApi)
 }

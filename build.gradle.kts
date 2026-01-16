@@ -58,6 +58,7 @@ dependencies {
     runtimeOnly("org.slf4j:slf4j-simple:1.7.10")
     testImplementation(libs.bundles.testDependencies)
     testImplementation(libs.groovy.xml)
+    testImplementation(project(":tooling-action"))
     testRuntimeOnly("cglib:cglib:3.2.6")
     testRuntimeOnly("org.objenesis:objenesis:2.6")
 }
@@ -149,11 +150,7 @@ tasks.test {
     jvmArgumentProviders.add(AddOpensArgProvider(this))
 
     // Used by tests to select a different Daemon JVM when Test JVM is unsupported by older Gradle versions
-    systemProperty("javaHomes.java8", launcherJavaHomeFor(8))
     systemProperty("javaHomes.java11", launcherJavaHomeFor(11))
-    systemProperty("javaHomes.java17", launcherJavaHomeFor(17))
-    systemProperty("javaHomes.java21", launcherJavaHomeFor(21))
-    systemProperty("javaHomes.java25", launcherJavaHomeFor(25))
 
     // Run cross-version tests for all tested versions
     systemProperty("org.gradle.integtest.versions", "all")
