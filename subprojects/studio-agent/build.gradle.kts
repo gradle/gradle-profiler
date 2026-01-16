@@ -7,12 +7,6 @@ dependencies {
     implementation(project(":client-protocol"))
 }
 
-java {
-    toolchain {
-        languageVersion.set(JavaLanguageVersion.of(11))
-    }
-}
-
 tasks.compileJava {
     // Need to set target/source compatibility, since `--add-exports` is not compatible with `--release`.
     targetCompatibility = "11"

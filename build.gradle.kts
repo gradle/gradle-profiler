@@ -54,7 +54,6 @@ dependencies {
     profilerPlugins(project(":studio-agent"))
     profilerPlugins(project(":heap-dump"))
     profilerPlugins(project(":studio-plugin"))
-    profilerPlugins(project(":tooling-action"))
 
     runtimeOnly("org.slf4j:slf4j-simple:1.7.10")
     testImplementation(libs.bundles.testDependencies)

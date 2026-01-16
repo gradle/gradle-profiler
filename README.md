@@ -231,7 +231,7 @@ The following command line options only apply when measuring Gradle builds:
 
 ## JVM requirements and options
 
-Gradle Profiler requires a Java 8 or later JVM to run.
+Gradle Profiler requires a Java 17 or later JVM to run.
 
 By default, Gradle Profiler starts the daemon for your build using the same JVM that was used to run it.
 In case your build requires an earlier version of the JVM or you require a specific JVM, you can configure it explicitly in your build.
@@ -254,7 +254,7 @@ It will be respected when starting the daemon for your build, regardless of the 
 
 Gradle Profiler supports benchmarking and profiling builds with Gradle 6.0 or later.
 
-Gradle Profiler is tested against the latest patch releases of Gradle 6.x through 8.x.
+Gradle Profiler is tested against the latest patch releases of Gradle 6.x through 9.x.
 
 If you require running your build with a specific Java version for the Gradle Daemon JVM,
 which is different from the JVM used to run Gradle Profiler,
