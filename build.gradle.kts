@@ -22,12 +22,6 @@ description = "A tool to profile and benchmark Gradle builds"
 val gradleRuntime by configurations.creating
 val profilerPlugins by configurations.creating
 
-java {
-    toolchain {
-        languageVersion.set(JavaLanguageVersion.of(17))
-    }
-}
-
 repositories {
     maven {
         url = uri("https://www.jetbrains.com/intellij-repository/releases")

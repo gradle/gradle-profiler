@@ -3,10 +3,6 @@ plugins {
     id("profiler.kotlin-library")
 }
 
-kotlin {
-    jvmToolchain(17)
-}
-
 repositories {
     mavenCentral()
     maven {
