@@ -581,5 +581,22 @@ You can compare Gradle against Bazel, Buck, and Maven by specifying their equiva
         }
     }
 
+## TroubleShooting
+
+### Profiling with Async Profiler
+
+#### No stack counts found on Linux
+
+Running async-profiler on Linux requires setting flags for Linux kernel. 
+See [async-profiler docs](https://github.com/jvm-profiling-tools/async-profiler#basic-usage) for explanation.
+Otherwise, it causes this RuntimeException when collecting profile results: 
+```
+java.lang.RuntimeException: Could not run command perl /tmp/flamegraph1180508986208029728.pl /home/user/dev/sandbox/GradleTaskTime/profile-out-2/5.6.simplified-stacks.txt --colors java --minwidth 1 --title CPU Flame Graph --countname samples
+Output:
+======
+ERROR: No stack counts found
+...
+```
+
 [//]: # (Links)
 [HOCON]: https://github.com/lightbend/config
