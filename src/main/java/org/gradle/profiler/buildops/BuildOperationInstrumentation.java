@@ -17,11 +17,27 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 public class BuildOperationInstrumentation extends GradleInstrumentation {
-    private final File configurationTimeDataFile;
-    private final Map<String, File> buildOperationDataFiles;
-    private final boolean measureConfigTime;
+    private final boolean measureGarbageCollection;
+    private final File totalGarbageCollectionTimeDataFile;
 
-    public BuildOperationInstrumentation(boolean measureConfigTime, List<String> measuredBuildOperations) throws IOException {
+    private final boolean measureLocalBuildCache;
+    private final File localBuildCacheDataFile;
+
+    private final boolean measureConfigTime;
+    private final File configurationTimeDataFile;
+
+    private final Map<String, File> buildOperationDataFiles;
+
+    public BuildOperationInstrumentation(
+        boolean measureGarbageCollection,
+        boolean measureLocalBuildCache,
+        boolean measureConfigTime,
+        List<String> measuredBuildOperations
+    ) throws IOException {
+        this.measureGarbageCollection = measureGarbageCollection;
+        this.totalGarbageCollectionTimeDataFile = File.createTempFile("gradle-profiler", "gc-time");
+        this.measureLocalBuildCache = measureLocalBuildCache;
+        this.localBuildCacheDataFile = File.createTempFile("gradle-profiler", "local-build-cache");
         this.measureConfigTime = measureConfigTime;
         this.configurationTimeDataFile = File.createTempFile("gradle-profiler", "build-ops-config-time");
         this.configurationTimeDataFile.deleteOnExit();
@@ -30,7 +46,7 @@ public class BuildOperationInstrumentation extends GradleInstrumentation {
     }
 
     public boolean requiresInitScript() {
-        return measureConfigTime || !buildOperationDataFiles.isEmpty();
+        return measureGarbageCollection || measureLocalBuildCache || measureConfigTime || !buildOperationDataFiles.isEmpty();
     }
 
     private static File createBuildOperationTempFile(String op) {
@@ -46,6 +62,12 @@ public class BuildOperationInstrumentation extends GradleInstrumentation {
     @Override
     protected void generateInitScriptBody(PrintWriter writer) {
         writer.print("new org.gradle.trace.buildops.BuildOperationTrace(gradle)");
+        if (measureGarbageCollection) {
+            writer.print(".measureGarbageCollection(" + newFile(totalGarbageCollectionTimeDataFile) + ")");
+        }
+        if (measureLocalBuildCache) {
+            writer.print(".measureLocalBuildCache(" + newFile(localBuildCacheDataFile) + ")");
+        }
         if (measureConfigTime) {
             writer.print(".measureConfigurationTime(" + newFile(configurationTimeDataFile) + ")");
         }
@@ -62,38 +84,69 @@ public class BuildOperationInstrumentation extends GradleInstrumentation {
         return "new File(new URI('" + dataFile.toURI() + "'))";
     }
 
+    /**
+     * This is the cumulative total GC time since the process started, not the GC time of the current invocation.
+     */
+    public Optional<Duration> getTotalGarbageCollectionTime() {
+        if (totalGarbageCollectionTimeDataFile.length() == 0) {
+            return Optional.empty();
+        }
+
+        return readExecutionDataFromFile(totalGarbageCollectionTimeDataFile)
+            .map(BuildOperationExecutionData::getValue)
+            .map(Duration::ofMillis);
+    }
+
+    public Optional<Long> getLocalBuildCacheSize() {
+        if (localBuildCacheDataFile.length() == 0) {
+            return Optional.empty();
+        }
+
+        return readExecutionDataFromFile(localBuildCacheDataFile)
+            .map(BuildOperationExecutionData::getValue);
+    }
+
     public Optional<Duration> getTimeToTaskExecution() {
         // Should have two implementations instead
         if (configurationTimeDataFile.length() == 0) {
             return Optional.empty();
         }
-        try {
-            try (Stream<String> lines = Files.lines(configurationTimeDataFile.toPath(), StandardCharsets.UTF_8)) {
-                return lines
-                    .reduce((first, second) -> second)
-                    .map(line -> Duration.ofMillis(Long.parseLong(line)));
-            }
-        } catch (IOException e) {
-            throw new RuntimeException("Could not read result from file.", e);
-        }
+
+        return readExecutionDataFromFile(configurationTimeDataFile)
+            .map(BuildOperationExecutionData::getValue)
+            .map(Duration::ofMillis);
     }
 
-    public Map<String, Duration> getCumulativeBuildOperationTimes() {
+    public Map<String, BuildOperationExecutionData> getTotalBuildOperationExecutionData() {
         return buildOperationDataFiles.entrySet().stream()
             .filter(entry -> entry.getValue().length() > 0)
             .collect(Collectors.toMap(
                 Map.Entry::getKey,
-                (entry -> readCumulativeTimeFromDataFile(entry.getValue())))
+                entry -> readExecutionDataFromFile(entry.getValue()).orElse(BuildOperationExecutionData.ZERO))
             );
     }
 
-    private static Duration readCumulativeTimeFromDataFile(File dataFile) {
+    private static Optional<BuildOperationExecutionData> readExecutionDataFromFile(File dataFile) {
         try {
             try (Stream<String> lines = Files.lines(dataFile.toPath(), StandardCharsets.UTF_8)) {
-                return Duration.ofMillis(lines.mapToLong(Long::parseLong).sum());
+                // Expecting the file to contain at most one line
+                // See `org.gradle.trace.buildops.BuildOperationTrace`
+                Optional<String> lastLine = lines.reduce((ignored, second) -> second);
+                return lastLine.map(BuildOperationInstrumentation::parseExecutionDataLine);
             }
         } catch (IOException e) {
-            throw new RuntimeException("Could not read result from file.", e);
+            throw new UncheckedIOException("Could not read result from file.", e);
         }
+    }
+
+    private static BuildOperationExecutionData parseExecutionDataLine(String line) {
+        int separatorIndex = line.indexOf(",");
+        if (separatorIndex == -1) {
+            throw new IllegalStateException("Unexpected line format: " + line);
+        }
+
+        long durationMillis = Long.parseLong(line.substring(0, separatorIndex));
+        int count = Integer.parseInt(line.substring(separatorIndex + 1));
+        return new BuildOperationExecutionData(durationMillis, count);
     }
 }

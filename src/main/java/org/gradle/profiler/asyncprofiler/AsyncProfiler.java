@@ -1,6 +1,5 @@
 package org.gradle.profiler.asyncprofiler;
 
-import org.gradle.profiler.GradleScenarioDefinition;
 import org.gradle.profiler.InstrumentingProfiler;
 import org.gradle.profiler.JvmArgsCalculator;
 import org.gradle.profiler.ScenarioSettings;
@@ -21,27 +20,37 @@ public class AsyncProfiler extends InstrumentingProfiler {
             // Can attach later instead
             return JvmArgsCalculator.DEFAULT;
         }
-        return new AsyncProfilerJvmArgsCalculator(config, settings, captureSnapshotOnProcessExit);
+        return new AsyncProfilerJvmArgsCalculator(config, settings);
     }
 
     @Override
-    protected SnapshotCapturingProfilerController doNewController(ScenarioSettings settings) {
+    public SnapshotCapturingProfilerController newSnapshottingController(ScenarioSettings settings) {
         return new AsyncProfilerController(config, settings);
     }
 
     @Override
     public void summarizeResultFile(File resultFile, Consumer<String> consumer) {
-        if (resultFile.getName().endsWith(".svg")) {
+        // TODO summarization add JFR ?
+        AsyncProfilerOutputType.allExtensions().stream().anyMatch(ext -> resultFile.getName().endsWith(".svg"));
+
+        if (resultFile.getName().endsWith(".html")
+            || resultFile.getName().endsWith(".svg")) {
             consumer.accept(resultFile.getAbsolutePath());
         }
     }
 
     @Override
-    public String toString() {
-        return "async profiler";
+    public void validate(ScenarioSettings settings, Consumer<String> reporter) {
+        validateMultipleIterationsWithCleanupAction(settings, reporter);
     }
 
-    static File stacksFileFor(GradleScenarioDefinition scenario) {
-        return new File(scenario.getOutputDir(), scenario.getProfileName() + ".stacks.txt");
+    @Override
+    public boolean isCreatesStacksFiles() {
+        return true;
+    }
+
+    @Override
+    public String toString() {
+        return "async-profiler";
     }
 }

@@ -1,50 +1,25 @@
 package org.gradle.profiler.mutations;
 
-import com.typesafe.config.Config;
 import org.gradle.profiler.BuildMutator;
 
 import java.io.File;
-import java.io.IOException;
-import java.io.UncheckedIOException;
-import java.nio.file.Files;
+import java.util.List;
 
-public class ClearGradleUserHomeMutator extends AbstractCleanupMutator {
-    private final File gradleUserHome;
+import static java.util.Collections.singletonList;
 
-    public ClearGradleUserHomeMutator(File gradleUserHome, CleanupSchedule schedule) {
-        super(schedule);
-        this.gradleUserHome = gradleUserHome;
+public class ClearGradleUserHomeMutator extends ClearDirectoryMutator {
+
+    // Don't delete the wrapper dir, since this is where the Gradle distribution we are going to run is located
+    private static final List<String> keepFiles = singletonList("wrapper");
+
+    public ClearGradleUserHomeMutator(File gradleUserHome, Schedule schedule) {
+        super("Gradle User Home directory", gradleUserHome, schedule, keepFiles);
     }
 
-    @Override
-    protected void cleanup() {
-        System.out.println(String.format("> Cleaning Gradle user home: %s", gradleUserHome.getAbsolutePath()));
-        if (!gradleUserHome.exists()) {
-            throw new IllegalArgumentException(String.format(
-                "Cannot delete Gradle user home directory (%s) since it does not exist",
-                gradleUserHome
-            ));
-        }
-        try {
-            Files.list(gradleUserHome.toPath())
-                // Don't delete the wrapper dir, since this is where the Gradle distribution we are going to run is located
-                .filter(path -> !path.getFileName().toString().equals("wrapper"))
-                .forEach(path -> delete(path.toFile()));
-        } catch (IOException e) {
-            throw new UncheckedIOException(e);
-        }
-    }
-
-    public static class Configurator extends AbstractCleanupMutator.Configurator {
-        private final File gradleUserHome;
-
-        public Configurator(File gradleUserHome) {
-            this.gradleUserHome = gradleUserHome;
-        }
-
+    public static class Configurator extends AbstractScheduledMutator.Configurator {
         @Override
-        protected BuildMutator newInstance(Config scenario, String scenarioName, File projectDir, String key, CleanupSchedule schedule) {
-            return new ClearGradleUserHomeMutator(gradleUserHome, schedule);
+        protected BuildMutator newInstance(BuildMutatorConfiguratorSpec spec, String key, Schedule schedule) {
+            return new ClearGradleUserHomeMutator(spec.getGradleUserHome(), schedule);
         }
     }
 }

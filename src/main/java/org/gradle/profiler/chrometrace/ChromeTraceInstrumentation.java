@@ -15,23 +15,24 @@
  */
 package org.gradle.profiler.chrometrace;
 
-import org.gradle.profiler.instrument.GradleInstrumentation;
-import org.gradle.profiler.GradleScenarioDefinition;
 import org.gradle.profiler.ScenarioSettings;
+import org.gradle.profiler.instrument.GradleInstrumentation;
 
 import java.io.File;
 import java.io.PrintWriter;
 
 public class ChromeTraceInstrumentation extends GradleInstrumentation {
-    private final File traceFile;
+    private final File traceFolder;
+    private final String traceFileBaseName;
 
     public ChromeTraceInstrumentation(ScenarioSettings scenarioSettings) {
-        GradleScenarioDefinition scenario = scenarioSettings.getScenario();
-        traceFile = new File(scenario.getOutputDir(), scenario.getProfileName() + "-trace.html");
+        traceFolder = scenarioSettings.profilerOutputLocationFor("-trace");
+        traceFolder.mkdirs();
+        traceFileBaseName = scenarioSettings.getProfilerOutputBaseName();
     }
 
     @Override
     protected void generateInitScriptBody(PrintWriter writer) {
-        writer.println("org.gradle.trace.GradleTracingPlugin.start(gradle, new File(new URI(\"" + traceFile.toURI() + "\")))");
+        writer.println("org.gradle.trace.GradleTracingPlugin.start(gradle, new File(new URI(\"" + traceFolder.toURI() + "\")), \"" + traceFileBaseName + "\")");
     }
 }

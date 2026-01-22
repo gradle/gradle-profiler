@@ -8,11 +8,12 @@ class ApplyChangeToAndroidLayoutFileMutatorTest extends AbstractMutatorTest {
         def mutator = new ApplyChangeToAndroidLayoutFileMutator(sourceFile)
 
         when:
+        mutator.beforeScenario(scenarioContext)
         mutator.beforeBuild(buildContext)
 
         then:
         sourceFile.text == """\
-        <LinearLayout><View 
+        <LinearLayout><View
             android:id="@+id/view_276d92f3_16ac_4064_9a18_5f1dfd67992f_testScenario_3c4925d7_MEASURE_7"
             android:visibility="gone"
             android:layout_width="5dp"
@@ -28,11 +29,12 @@ class ApplyChangeToAndroidLayoutFileMutatorTest extends AbstractMutatorTest {
         def mutator = new ApplyChangeToAndroidLayoutFileMutator(sourceFile)
 
         when:
+        mutator.beforeScenario(scenarioContext)
         mutator.beforeBuild(buildContext)
 
         then:
         sourceFile.text == """\
-        <layout><LinearLayout><View 
+        <layout><LinearLayout><View
             android:id="@+id/view_276d92f3_16ac_4064_9a18_5f1dfd67992f_testScenario_3c4925d7_MEASURE_7"
             android:visibility="gone"
             android:layout_width="5dp"
@@ -47,6 +49,7 @@ class ApplyChangeToAndroidLayoutFileMutatorTest extends AbstractMutatorTest {
         def mutator = new ApplyChangeToAndroidLayoutFileMutator(sourceFile)
 
         when:
+        mutator.beforeScenario(scenarioContext)
         mutator.afterScenario(scenarioContext)
 
         then:
@@ -59,7 +62,8 @@ class ApplyChangeToAndroidLayoutFileMutatorTest extends AbstractMutatorTest {
         def mutator = new ApplyChangeToAndroidLayoutFileMutator(sourceFile)
 
         when:
-        mutator.beforeBuild(buildContext)
+        mutator.beforeScenario(scenarioContext)
+        sourceFile.text = "some-change"
         mutator.afterScenario(scenarioContext)
 
         then:

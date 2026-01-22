@@ -3,53 +3,54 @@ package org.gradle.profiler.mutations;
 import org.gradle.profiler.BuildContext;
 import org.gradle.profiler.BuildMutator;
 import org.gradle.profiler.ScenarioContext;
+import org.gradle.profiler.mutations.support.FileSupport;
 
 import java.io.File;
-import java.io.IOException;
-import java.nio.file.Files;
 
 public abstract class AbstractFileChangeMutator implements BuildMutator {
     protected final File sourceFile;
-    private final String originalText;
+    private final String changeDescription;
+    private String originalText;
+
+    protected AbstractFileChangeMutator(File sourceFile, String changeDescription) {
+        this.sourceFile = sourceFile;
+        this.changeDescription = changeDescription;
+    }
 
     protected AbstractFileChangeMutator(File sourceFile) {
-        this.sourceFile = sourceFile;
-        try {
-            originalText = new String(Files.readAllBytes(sourceFile.toPath()));
-        } catch (IOException e) {
-            throw new RuntimeException("Could not read contents of source file " + sourceFile, e);
-        }
+        this(sourceFile, "change");
+    }
+
+    @Override
+    public void beforeScenario(ScenarioContext context) {
+        this.originalText = readText(sourceFile);
     }
 
     @Override
     public void beforeBuild(BuildContext context) {
+        System.out.printf("> Applying %s to '%s'%n", changeDescription, sourceFile);
         StringBuilder modifiedText = new StringBuilder(originalText);
         applyChangeTo(context, modifiedText);
-        try {
-            Files.write(sourceFile.toPath(), modifiedText.toString().getBytes());
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
+        FileSupport.writeUnchecked(sourceFile.toPath(), modifiedText.toString());
+    }
+
+    private String readText(File file) {
+        return FileSupport.readUnchecked(file.toPath());
     }
 
     protected abstract void applyChangeTo(BuildContext context, StringBuilder text);
 
-    private void revert() {
-        try {
-            Files.write(sourceFile.toPath(), originalText.getBytes());
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
-    }
-
     @Override
     public void afterScenario(ScenarioContext context) {
-        revert();
+        revert(sourceFile, originalText);
+    }
+
+    protected void revert(File file, String originalText) {
+        FileSupport.writeUnchecked(file.toPath(), originalText);
     }
 
     @Override
-    public String toString()
-    {
+    public String toString() {
         return getClass().getSimpleName() + '(' + sourceFile + ')';
     }
 }

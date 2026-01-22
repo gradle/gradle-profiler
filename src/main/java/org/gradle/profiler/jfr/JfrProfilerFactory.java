@@ -2,9 +2,9 @@ package org.gradle.profiler.jfr;
 
 import joptsimple.OptionParser;
 import joptsimple.OptionSet;
-import org.gradle.api.JavaVersion;
 import org.gradle.profiler.Profiler;
 import org.gradle.profiler.ProfilerFactory;
+import org.gradle.profiler.VersionUtils;
 
 import java.io.File;
 import java.io.IOException;
@@ -12,14 +12,23 @@ import java.io.InputStream;
 import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.StandardCopyOption;
+import java.util.Locale;
 
 public class JfrProfilerFactory extends ProfilerFactory {
     private final File defaultConfig = createDefaultConfig();
 
-    private static File createDefaultConfig() {
+    private File createDefaultConfig() {
         try {
             File jfcFile = File.createTempFile("gradle", ".jfc");
-            String jfcTemplateName = JavaVersion.current().isJava9Compatible() ? "gradle-java9.jfc" : "gradle.jfc";
+            String jfcTemplateName;
+            int javaVersion = VersionUtils.getJavaVersion();
+            if (isOracleVm()) {
+                jfcTemplateName = javaVersion >= 9 ? "oracle-java9.jfc" : "oracle.jfc";
+            } else if (javaVersion >= 8) {
+                jfcTemplateName = "openjdk.jfc";
+            } else {
+                throw new IllegalArgumentException("JFR is only supported on OpenJDK since Java 8 and Oracle JDK since Java 7");
+            }
             URL jfcResource = JfrProfiler.class.getResource(jfcTemplateName);
             try (InputStream stream = jfcResource.openStream()) {
                 Files.copy(stream, jfcFile.toPath(), StandardCopyOption.REPLACE_EXISTING);
@@ -29,6 +38,11 @@ public class JfrProfilerFactory extends ProfilerFactory {
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
+    }
+
+    @Override
+    public String getName() {
+        return "jfr";
     }
 
     @Override
@@ -50,5 +64,9 @@ public class JfrProfilerFactory extends ProfilerFactory {
             jfrSettings = new File(jfrSettings).getAbsolutePath();
         }
         return new JFRArgs(jfrSettings);
+    }
+
+    private boolean isOracleVm() {
+        return System.getProperty("java.vendor").toLowerCase(Locale.ROOT).contains("oracle");
     }
 }

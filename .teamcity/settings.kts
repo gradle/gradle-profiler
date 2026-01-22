@@ -1,6 +1,3 @@
-import jetbrains.buildServer.configs.kotlin.v2019_2.project
-import jetbrains.buildServer.configs.kotlin.v2019_2.version
-
 /*
 The settings script is an entry point for defining a TeamCity
 project hierarchy. The script should contain a single call to the
@@ -23,18 +20,11 @@ To debug in IntelliJ Idea, open the 'Maven Projects' tool window (View
 'Debug' option is available in the context menu for the task.
 */
 
-version = "2020.1"
+import jetbrains.buildServer.configs.kotlin.project
+import jetbrains.buildServer.configs.kotlin.version
+
+version = "2025.07"
 
 project {
-    description = "Runs tests and integration tests of the Gradle Profiler (https://github.com/gradle/gradle-profiler)"
-
-    buildType(MacOSJava18)
-    buildType(WindowsJava18)
-    buildType(LinuxJava18)
-
-    buildType(GradleProfilerPublishing)
-
-    params {
-        param("env.GRADLE_ENTERPRISE_ACCESS_KEY", "%ge.gradle.org.access.key%")
-    }
+    configureGradleProfilerProject()
 }

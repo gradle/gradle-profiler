@@ -29,12 +29,13 @@ public abstract class GradleInstrumentation implements GradleArgsCalculator {
     private void maybeGenerate() {
         File buildOpJar = unpackPlugin("build-operations");
         File chromeTraceJar = unpackPlugin("chrome-trace");
+        File heapDumpJar = unpackPlugin("heap-dump");
         initScript = new GeneratedInitScript() {
             @Override
             public void writeContents(final PrintWriter writer) {
                 writer.write("initscript {\n");
                 writer.write("    dependencies {\n");
-                writer.write("        classpath files('" + buildOpJar.toURI() + "', '" + chromeTraceJar.toURI() + "')\n");
+                writer.write("        classpath files('" + buildOpJar.toURI() + "', '" + chromeTraceJar.toURI() + "', '" + heapDumpJar.toURI() + "')\n");
                 writer.write("    }\n");
                 writer.write("}\n");
                 writer.write("\n");
@@ -45,7 +46,7 @@ public abstract class GradleInstrumentation implements GradleArgsCalculator {
 
     public static File unpackPlugin(String jarName) {
         try {
-            File pluginJar = File.createTempFile(jarName, "jar").getCanonicalFile();
+            File pluginJar = File.createTempFile(jarName, ".jar").getCanonicalFile();
             try (InputStream inputStream = GradleInstrumentation.class.getResourceAsStream("/META-INF/jars/" + jarName + ".jar")) {
                 Files.copy(inputStream, pluginJar.toPath(), StandardCopyOption.REPLACE_EXISTING);
             }

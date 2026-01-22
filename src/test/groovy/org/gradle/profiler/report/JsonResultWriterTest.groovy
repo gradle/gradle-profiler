@@ -5,15 +5,16 @@ import org.gradle.profiler.BuildAction
 import org.gradle.profiler.BuildContext
 import org.gradle.profiler.BuildScenarioResultImpl
 import org.gradle.profiler.GradleBuildConfiguration
-import org.gradle.profiler.GradleBuildInvoker
-import org.gradle.profiler.GradleScenarioDefinition
+import org.gradle.profiler.gradle.GradleBuildInvoker
+import org.gradle.profiler.gradle.GradleScenarioDefinition
 import org.gradle.profiler.OperatingSystem
 import org.gradle.profiler.Phase
-import org.gradle.profiler.RunTasksAction
+import org.gradle.profiler.gradle.RunTasksAction
 import org.gradle.profiler.ScenarioContext
 import org.gradle.profiler.mutations.ApplyAbiChangeToKotlinSourceFileMutator
+import org.gradle.profiler.result.BuildActionResult
 import org.gradle.profiler.result.BuildInvocationResult
-import org.gradle.profiler.result.Sample
+import org.gradle.profiler.result.SingleInvocationDurationSample
 import org.gradle.util.GradleVersion
 import org.junit.Rule
 import org.junit.rules.TemporaryFolder
@@ -49,6 +50,7 @@ class JsonResultWriterTest extends Specification {
             gradleHomeDir,
             javaHomeDir,
             ["-Xmx512m"],
+            false,
             false
         )
 
@@ -61,12 +63,13 @@ class JsonResultWriterTest extends Specification {
             BuildAction.NO_OP,
             ["-Palma=release"],
             ["org.gradle.test": "true"],
-            { -> mutator },
+            [ mutator ],
             2,
             4,
             releaseOutputDir,
             ["-Xmx1024m"],
-            ["some-build-op"]
+            ["some-build-op"],
+            false
         )
         def scenarioContext1 = new TestScenarioContext("release@0")
         def scenario2 = new GradleScenarioDefinition(
@@ -78,22 +81,23 @@ class JsonResultWriterTest extends Specification {
             BuildAction.NO_OP,
             ["-Palma=debug"],
             ["org.gradle.test": "true"],
-            { -> mutator },
+            [ mutator ],
             2,
             4,
             debugOutputDir,
             ["-Xmx1024m"],
-            ["some-build-op"]
+            ["some-build-op"],
+            true
         )
         def scenarioContext2 = new TestScenarioContext("debug@1")
-        def result1 = new BuildScenarioResultImpl<BuildInvocationResult>(scenario1, [BuildInvocationResult.EXECUTION_TIME, TestSample.INSTANCE])
+        def result1 = new BuildScenarioResultImpl<BuildInvocationResult>(scenario1, { [BuildInvocationResult.EXECUTION_TIME, TestSample.INSTANCE] })
         result1.accept(new GradleInvocationResult(scenarioContext1.withBuild(Phase.WARM_UP, 1), 100, 120))
         result1.accept(new GradleInvocationResult(scenarioContext1.withBuild(Phase.WARM_UP, 2),  80, 100))
         result1.accept(new GradleInvocationResult(scenarioContext1.withBuild(Phase.MEASURE, 1),  75,  90))
         result1.accept(new GradleInvocationResult(scenarioContext1.withBuild(Phase.MEASURE, 2),  70,  85))
         result1.accept(new GradleInvocationResult(scenarioContext1.withBuild(Phase.MEASURE, 3),  72,  80))
         result1.accept(new GradleInvocationResult(scenarioContext1.withBuild(Phase.MEASURE, 4),  68,  88))
-        def result2 = new BuildScenarioResultImpl<BuildInvocationResult>(scenario2, [BuildInvocationResult.EXECUTION_TIME, TestSample.INSTANCE])
+        def result2 = new BuildScenarioResultImpl<BuildInvocationResult>(scenario2, { [BuildInvocationResult.EXECUTION_TIME, TestSample.INSTANCE] })
         result2.accept(new GradleInvocationResult(scenarioContext2.withBuild(Phase.WARM_UP, 1), 110, 220))
         result2.accept(new GradleInvocationResult(scenarioContext2.withBuild(Phase.WARM_UP, 2),  90, 200))
         result2.accept(new GradleInvocationResult(scenarioContext2.withBuild(Phase.MEASURE, 1),  85, 190))
@@ -101,8 +105,7 @@ class JsonResultWriterTest extends Specification {
 
         when:
         writer.write("Test benchmark", Instant.ofEpochMilli(1600000000000), [result1, result2], stringWriter)
-        then:
-        stringWriter.toString() == """{
+        String expected = """{
   "title": "Test benchmark",
   "date": "2020-09-13T12:26:40Z",
   "environment": {
@@ -124,7 +127,9 @@ class JsonResultWriterTest extends Specification {
         "action": "run tasks :assemble",
         "cleanup": "do nothing",
         "invoker": "Tooling API",
-        "mutator": ${escape("ApplyAbiChangeToKotlinSourceFileMutator(${sourceFile.absolutePath})")},
+        "mutators": [
+          ${escape("ApplyAbiChangeToKotlinSourceFileMutator(${sourceFile.absolutePath})")}
+        ],
         "args": [
           "-Palma\\u003drelease"
         ],
@@ -139,10 +144,12 @@ class JsonResultWriterTest extends Specification {
       },
       "samples": [
         {
-          "name": "execution"
+          "name": "total execution time",
+          "unit": "ms"
         },
         {
-          "name": "Test sample"
+          "name": "Test sample",
+          "unit": "ms"
         }
       ],
       "iterations": [
@@ -152,7 +159,7 @@ class JsonResultWriterTest extends Specification {
           "iteration": 1,
           "title": "warm-up build #1",
           "values": {
-            "execution": 100.0,
+            "total execution time": 100.0,
             "Test sample": 120.0
           }
         },
@@ -162,7 +169,7 @@ class JsonResultWriterTest extends Specification {
           "iteration": 2,
           "title": "warm-up build #2",
           "values": {
-            "execution": 80.0,
+            "total execution time": 80.0,
             "Test sample": 100.0
           }
         },
@@ -172,7 +179,7 @@ class JsonResultWriterTest extends Specification {
           "iteration": 1,
           "title": "measured build #1",
           "values": {
-            "execution": 75.0,
+            "total execution time": 75.0,
             "Test sample": 90.0
           }
         },
@@ -182,7 +189,7 @@ class JsonResultWriterTest extends Specification {
           "iteration": 2,
           "title": "measured build #2",
           "values": {
-            "execution": 70.0,
+            "total execution time": 70.0,
             "Test sample": 85.0
           }
         },
@@ -192,7 +199,7 @@ class JsonResultWriterTest extends Specification {
           "iteration": 3,
           "title": "measured build #3",
           "values": {
-            "execution": 72.0,
+            "total execution time": 72.0,
             "Test sample": 80.0
           }
         },
@@ -202,7 +209,7 @@ class JsonResultWriterTest extends Specification {
           "iteration": 4,
           "title": "measured build #4",
           "values": {
-            "execution": 68.0,
+            "total execution time": 68.0,
             "Test sample": 88.0
           }
         }
@@ -222,7 +229,9 @@ class JsonResultWriterTest extends Specification {
         "action": "run tasks :assembleDebug",
         "cleanup": "do nothing",
         "invoker": "Tooling API",
-        "mutator": ${escape("ApplyAbiChangeToKotlinSourceFileMutator(${sourceFile.absolutePath})")},
+        "mutators": [
+          ${escape("ApplyAbiChangeToKotlinSourceFileMutator(${sourceFile.absolutePath})")}
+        ],
         "args": [
           "-Palma\\u003ddebug"
         ],
@@ -237,10 +246,12 @@ class JsonResultWriterTest extends Specification {
       },
       "samples": [
         {
-          "name": "execution"
+          "name": "total execution time",
+          "unit": "ms"
         },
         {
-          "name": "Test sample"
+          "name": "Test sample",
+          "unit": "ms"
         }
       ],
       "iterations": [
@@ -250,7 +261,7 @@ class JsonResultWriterTest extends Specification {
           "iteration": 1,
           "title": "warm-up build #1",
           "values": {
-            "execution": 110.0,
+            "total execution time": 110.0,
             "Test sample": 220.0
           }
         },
@@ -260,7 +271,7 @@ class JsonResultWriterTest extends Specification {
           "iteration": 2,
           "title": "warm-up build #2",
           "values": {
-            "execution": 90.0,
+            "total execution time": 90.0,
             "Test sample": 200.0
           }
         },
@@ -270,7 +281,7 @@ class JsonResultWriterTest extends Specification {
           "iteration": 1,
           "title": "measured build #1",
           "values": {
-            "execution": 85.0,
+            "total execution time": 85.0,
             "Test sample": 190.0
           }
         },
@@ -280,7 +291,7 @@ class JsonResultWriterTest extends Specification {
           "iteration": 2,
           "title": "measured build #2",
           "values": {
-            "execution": 80.0,
+            "total execution time": 80.0,
             "Test sample": 185.0
           }
         }
@@ -288,14 +299,19 @@ class JsonResultWriterTest extends Specification {
     }
   ]
 }"""
+        then:
+        stringWriter.toString() == expected
     }
 
-    static class TestSample implements Sample<BuildInvocationResult> {
+    static class TestSample extends SingleInvocationDurationSample<BuildInvocationResult> {
         static final TestSample INSTANCE = new TestSample()
-        final String name = "Test sample"
+
+        TestSample() {
+            super("Test sample")
+        }
 
         @Override
-        Duration extractFrom(BuildInvocationResult result) {
+        protected Duration extractTotalDurationFrom(BuildInvocationResult result) {
             return ((GradleInvocationResult) result).testTime
         }
     }
@@ -305,7 +321,7 @@ class JsonResultWriterTest extends Specification {
         final BuildContext context
 
         GradleInvocationResult(BuildContext context, long executionTime, long testTime) {
-            super(context, Duration.ofMillis(executionTime))
+            super(context, new BuildActionResult(Duration.ofMillis(executionTime)))
             this.testTime = Duration.ofMillis(testTime)
             this.context = context
         }

@@ -9,6 +9,7 @@ Profiling information can be captured using several different tools:
 - Using [JProfiler](https://www.ej-technologies.com/products/jprofiler/overview.html)
 - Using [YourKit](https://www.yourkit.com) profiler
 - Using [Java flight recorder](https://docs.oracle.com/javacomponents/jmc-5-4/jfr-runtime-guide/about.htm#JFRUH170)
+- Producing a heap dump in HPROF format
 - Producing [Chrome Trace](https://www.chromium.org/developers/how-tos/trace-event-profiling-tool) output
 
 ## Installing
@@ -20,6 +21,14 @@ Profiling information can be captured using several different tools:
     > sdk install gradleprofiler
     > gradle-profiler --benchmark help
 
+### Homebrew
+
+[Homebrew](https://brew.sh/) is the easiest and most flexible way to install the UNIX tools Apple didn’t include with macOS.
+
+    > brew install gradle-profiler
+    > gradle-profiler --benchmark help
+
+
 ### Download binaries
 
 Binaries are available and linked from the [releases](https://github.com/gradle/gradle-profiler/releases) page.
@@ -28,9 +37,14 @@ Binaries are available and linked from the [releases](https://github.com/gradle/
 
 First, build and install the `gradle-profiler` app using:
 
-    > ./gradlew installDist
+    > ./gradlew install
 
-This will install the executable into `./build/install/gradle-profiler/bin`. The examples below assume that you add this location to your PATH or create a `gradle-profiler` alias for it.
+This will install the executable into `./distribution/gradle-profiler/bin`. The examples below assume that you add this location to your PATH or create a `gradle-profiler` alias for it.
+
+NOTE: You have to use Java 11 or later to build this project.
+
+You can choose a different installation location by providing the `gradle-profiler.install.dir` property.
+E.g. `./gradlew install -Pgradle-profiler.install.dir=/usr/local/bin`.
 
 ## Benchmarking a build
 
@@ -59,10 +73,17 @@ You can also use the `--measure-config-time` option to measure some additional d
 You can use `--measure-build-op` together with the fully qualified class name of the enveloping type of the `Details` interface to benchmark cumulative build operation time.
 For example, for Gradle 5.x there is a [`org.gradle.api.internal.tasks.SnapshotTaskInputsBuildOperationType`](https://github.com/gradle/gradle/blob/c671360a3f1729b406c5b8b5b0d22c7b81296993/subprojects/core/src/main/java/org/gradle/api/internal/tasks/SnapshotTaskInputsBuildOperationType.java) which can be used to capture snapshotting time.
 The time recorded is cumulative time, so the wall clock time spent on executing the measured build operations is probably smaller.
+If the build operation does not exists in a benchmarked version of Gradle, it is gracefully ignored.
+In the resulting reports it will show up with 0 time.
+
+You can use `--build-ops-trace` to produce a full Gradle build operations trace.
+This will generate a `<scenario-name>-log.txt` file in the output directory, containing internal Gradle build operations.
+Note that the format of the file is not stable and may change in the future without any notice.
+You can use the [trace converter](https://github.com/gradle/gradle-trace-converter) tool to convert the file to Chrome Trace, viewable in [Perfetto](https://ui.perfetto.dev/).
 
 ### Regression detection
 
-If multiple versions are tested, then Gradle profiler determines whether there is an statistically significant difference in the run times by using a [Mann-Whitney U-Test](https://en.wikipedia.org/wiki/Mann%E2%80%93Whitney_U_test).
+If multiple versions are tested, then Gradle profiler determines whether there is a statistically significant difference in the run times by using a [Mann-Whitney U-Test](https://en.wikipedia.org/wiki/Mann%E2%80%93Whitney_U_test).
 The result files contain the confidence if a sample has a different performance behavior - i.e. it is faster or slower - than the baseline.
 
 ## Profiling a build
@@ -75,6 +96,9 @@ To run the `gradle-profiler` app to profile a build use:
 
 The app will run the build several times to warm up a daemon, then enable the profiler and run the build.
 Once complete, the results are available under `profile-out/`.
+
+If you use Async profiler or JFR for profiling, Gradle profiler will also create flame graphs for each scenario.
+If you profile multiple scenarios or multiple versions, then Gradle profiler will create differential flame graphs as well.
 
 ### Gradle build scans
 
@@ -93,18 +117,24 @@ You can use async profiler to profile a Gradle build using `--profile async-prof
 
 Alternatively, you can also use `--profile async-profiler-heap` to profile heap allocations, with some reasonable default settings.
 
+Or, you can also use `--profile async-profiler-wall` to profile wall allocations, with some reasonable default settings. On Linux this option will also profile cpu events.
+
+Finally, you can also use `--profile async-profiler-all` to profile cpu, heap allocations, and locks with some reasonable default settings. On Linux this option will also profile wall events.
+
 By default, an Async profiler release will be downloaded from [Github](https://github.com/jvm-profiling-tools/async-profiler/releases) and installed, if not already available.
 
-The output are flame and icicle graphs which show you the call tree and hotspots of your code.
+The outputs are flame and icicle graphs which show you the call tree and hotspots of your code.
 
 The following options are supported and closely mimic the options of Async profiler. Have a look at its readme to find out more about each option:
 
-- `--async-profiler-event`: The event to sample, e.g. `cpu` or `alloc`. Defaults to `cpu`
-- `--async-profiler-count`: The count to use when aggregating event data. Either `samples` or `total`. `total` is especially useful for allocation profiling. Defaults to `samples`
-- `--async-profiler-interval`: The sampling interval in ns, defaults to 10_000_000 (10ms)
+- `--async-profiler-event`: The event to sample, e.g. `cpu`, `wall`, `lock` or `alloc`. Defaults to `cpu`. Multiple events can be profiled by using this parameter multiple times.
+- `--async-profiler-count`: The count to use when aggregating event data. Either `samples` or `total`. `total` is especially useful for allocation profiling. Defaults to `samples`. Corresponds to the `--samples` and `--total` command line options for Async profiler.
+- `--async-profiler-interval`: The sampling interval in ns, defaults to 10_000_000 (10 ms).
+- `--async-profiler-alloc-interval`: The sampling interval in bytes for allocation profiling, defaults to 10 bytes. Corresponds to the `--alloc` command line option for Async profiler.
+- `--async-profiler-lock-threshold`: Lock profiling threshold in nanoseconds, defaults to 250 microseconds. Corresponds to the `--lock` command line option for Async profiler.
+- `--async-profiler-wall-interval`: Wall clock profiling interval in nanoseconds. Defaults to 10_000_000 (10 ms).
 - `--async-profiler-stackdepth`: The maximum stack depth. Lower this if profiles with deep recursion get too large. Defaults to 2048.
-- `--async-profiler-framebuffer`: The size of the frame buffer in bytes. Defaults to 10_000_000 (~10MB)
-- `--async-profiler-system-threads`: Whether to show system threads like GC and JIT compilation in the profile. Usually makes them harder to read, but can be useful if you suspect problems in that area. Defaults to `false` 
+- `--async-profiler-system-threads`: Whether to show system threads like GC and JIT compilation in the profile. Usually makes them harder to read, but can be useful if you suspect problems in that area. Defaults to `false`. 
 
 You can also use either the `ASYNC_PROFILER_HOME` environment variable or the `--async-profiler-home` command line option to point to the Async profiler install directory.
 
@@ -153,22 +183,28 @@ You will get both the JFR file and flame graph visualizations of the data, which
 In order to profile with JFR, add the `--profile jfr` option. 
 You can change the profiler settings using `--jfr-settings`, specifying either the path to a `.jfc` file or the name of a built-in template like `profile`.
 
+### Heap dump
+
+To capture a heap dump at the end of each measured build, add the `--profile heap-dump` option. You can use this with other `--profile` options.
+
 ### Chrome Trace
 
 Chrome traces are a low-level event dump (e.g. projects being evaluated, tasks being run etc.).
 They are useful when you can't create a build scan, but need to look at the overall structure of a build.
 It also displays CPU load, memory usage and GC activity. Using chrome-trace requires Gradle 3.3+.
 
-Add the `--profile chrome-trace` option and open the result in Google Chrome. 
+Add the `--profile chrome-trace` option and open the result in Google Chrome in chrome://tracing. 
 
 ## Command line options
 
 - `--project-dir`: Directory containing the build to run (required).
 - `--benchmark`: Benchmark the build. Runs the builds more times and writes the results to a CSV file.
 - `--profile <profiler>`: Profile the build using the specified profiler. See above for details on each profiler.
-- `--output-dir <dir>`: Directory to write results to.
+- `--output-dir <dir>`: Directory to write results to. Default value is `profile-out`. If the profile-out directory already exists, it tries to find a `profile-out-<index>` directory that does not exist.
+- `--csv-format <format>`: Format of the CSV output file. Values: `wide` (default) or `long`. The `wide` format produces a matrix with scenarios as columns. The `long` format produces one row per iteration/sample, which is more suitable for concatenating multiple benchmark results together.
 - `--warmups`: Specifies the number of warm-up builds to run for each scenario. Defaults to 2 for profiling, 6 for benchmarking, and 1 when not using a warm daemon.
 - `--iterations`: Specifies the number of builds to run for each scenario. Defaults to 1 for profiling, 10 for benchmarking.
+- `--group <group-name>`: Run scenarios from the specified scenario group.
 - `--bazel`: Benchmark scenarios using Bazel instead of Gradle. By default, only Gradle scenarios are run. You cannot profile a Bazel build using this tool.
 - `--buck`: Benchmark scenarios using Buck instead of Gradle. By default, only Gradle scenarios are run. You cannot profile a Buck build using this tool.
 - `--maven`: Benchmark scenarios using Maven instead of Gradle. By default, only Gradle scenarios are run. You cannot profile a Maven build using this tool.
@@ -180,14 +216,56 @@ The following command line options only apply when measuring Gradle builds:
 - `--no-daemon`: Uses the `gradle` command-line client with the `--no-daemon` option to run the builds. The default is to use the Gradle tooling API and Gradle daemon.
 - `--cold-daemon`: Use a cold daemon (one that has just started) rather than a warm daemon (one that has already run some builds). The default is to use a warm daemon.
 - `--cli`: Uses the `gradle` command-line client to run the builds. The default is to use the Gradle tooling API and Gradle daemon.
-- `--measure-config-time`: Measure some additional details about configuration time. Only supported for Gradle 6.1 and later.
+- `--build-ops-trace`: Produce a full Gradle build operations trace as `<scenario-name>-log.txt` in the output directory.
+  The file format is not stable and may change in the future without any notice.
+  It can be [converted](https://github.com/gradle/gradle-trace-converter) to Chrome Trace.
 - `--measure-build-op`: Additionally measure the cumulative time spent in the given build operation. Only supported for Gradle 6.1 and later.
+- `--measure-config-time`: Measure some additional details about configuration time. Only supported for Gradle 6.1 and later.
+- `--measure-gc`: Measure the garbage collection time. Only supported for Gradle 6.1 and later.
+- `--measure-local-build-cache`: Measure the size of the local build cache.
 - `-D<key>=<value>`: Defines a system property when running the build, overriding the default for the build.
-- `--studio-install-dir`: The Android Studio installation directory. Required when measuring Android Studio sync.
+- `--studio-install-dir`: The Android Studio installation directory. Required when measuring Android Studio sync. On macOS, it is the app directory, e.g. `~/Applications/Android Studio.app`.
+- `--studio-sandbox-dir`: The Android Studio sandbox directory. It's recommended to use it since it isolates the Android Studio process from your other Android Studio processes. By default, this will be set to `<output-dir>/studio-sandbox`. If you want Android Studio to keep old data (e.g. indexes) you should set and reuse your own folder. 
+- `--no-studio-sandbox`: Do not use the Android Studio sandbox but use the default Android Studio folders for the Android Studio data.
+- `--no-diffs`: Do not generate differential flame graphs.
+
+## JVM requirements and options
+
+Gradle Profiler requires a Java 17 or later JVM to run.
+
+By default, Gradle Profiler starts the daemon for your build using the same JVM that was used to run it.
+In case your build requires an earlier version of the JVM or you require a specific JVM, you can configure it explicitly in your build.
+
+For Gradle 8.13 and later, the recommended approach is to [configure the Daemon JVM](https://docs.gradle.org/current/userguide/gradle_daemon.html#sec:configuring_daemon_jvm).
+However, it might require some additional setup in your build.
+You can follow the instructions in the linked documentation.
+Daemon JVM configuration can be checked into your VCS to make sure everyone on your team uses the same JVM version.
+
+A more ad hoc solution for benchmarking or profiling purposes is to specify the `org.gradle.java.home` property in the `gradle.properties` file in the root directory of your build.
+
+```properties
+# gradle.properties
+org.gradle.java.home=<path to a Java installation>
+```
+
+It will be respected when starting the daemon for your build, regardless of the JVM Gradle Profiler uses.
+
+## Gradle version compatibility
+
+Gradle Profiler supports benchmarking and profiling builds with Gradle 6.0 or later.
+
+Gradle Profiler is tested against the latest patch releases of Gradle 6.x through 9.x.
+
+If you require running your build with a specific Java version for the Gradle Daemon JVM,
+which is different from the JVM used to run Gradle Profiler,
+see the [JVM requirements and option](#jvm-requirements-and-options) section for details.
+
+If you require running Gradle Profiler for builds that use Gradle 5.x, consider using previous versions of Gradle Profiler.
+The last version that officially supports Gradle 5.x is [Gradle Profiler 0.23.0](https://github.com/gradle/gradle-profiler/releases/tag/v0.23.0).
 
 ## Advanced profiling scenarios
 
-A scenario file can be provided to define more complex scenarios to benchmark or profile. Use the `--scenario-file` option to provide this. The scenario file is defined in [Typesafe config](https://github.com/typesafehub/config) format.
+A scenario file can be provided to define more complex scenarios to benchmark or profile. Use the `--scenario-file` option to provide this. The scenario file is defined in [HOCON] format.
 
 The scenario file defines one or more scenarios. You can select which scenarios to run by specifying its name on the command-line when running `gradle-profiler`, e.g.
 
@@ -216,6 +294,7 @@ Here is an example:
         cleanup-tasks = ["clean"]
         run-using = tooling-api // value can be "cli" or "tooling-api"
         daemon = warm // value can be "warm", "cold", or "none"
+        build-ops-trace = true // produce full Gradle build operations trace
         measured-build-ops = ["org.gradle.api.internal.tasks.SnapshotTaskInputsBuildOperationType"] // see --measure-build-op
 
         buck {
@@ -228,63 +307,175 @@ Here is an example:
     ideaModel {
         title = "IDEA model"
         # Fetch the IDEA tooling model
-        model = "org.gradle.tooling.model.idea.IdeaProject"
+        tooling-api {
+            model = "org.gradle.tooling.model.idea.IdeaProject"
+        }
+        # Can also run tasks
+        # tasks = ["assemble"]
+    }
+    toolingAction {
+        title = "IDEA model"
+        # Fetch the IDEA tooling model
+        tooling-api {
+            action = "org.gradle.profiler.toolingapi.FetchProjectPublications"
+        }
         # Can also run tasks
         # tasks = ["assemble"]
     }
     androidStudioSync {
         title = "Android Studio Sync"
         # Measure an Android studio sync
+        # Note: Android Studio Hedgehog (2023.1.1) or newer is required
+        # Note2: you need to have local.properties file in your project with sdk.dir set
         android-studio-sync {
+            # Override default Android Studio jvm args
+            # studio-jvm-args = ["-Xms256m", "-Xmx4096m"]
+            # Pass an IDEA properties to Android Studio. This can be used to set a registry values as well
+            # idea-properties = ["gradle.tooling.models.parallel.fetch=true"]
         }
     }
 
 Values are optional and default to the values provided on the command-line or defined in the build.
 
-### Profiling incremental builds
+### Scenario groups
 
-A scenario can define changes that should be applied to the source before each build. You can use this to benchmark or profile an incremental build. The following mutations are available:
+You can organize scenarios into groups to run related scenarios together. Define groups using the `scenario-groups` top-level element:
+
+    scenario-groups {
+        smoke-tests = ["assemble", "clean_build"]
+        performance-suite = ["incremental_build", "full_build", "no_op"]
+    }
+
+    assemble {
+        tasks = ["assemble"]
+    }
+
+    clean_build {
+        cleanup-tasks = ["clean"]
+        tasks = ["build"]
+    }
+
+    # ... definition of other scenarios ...
+
+To run scenarios from a specific group:
+
+    > gradle-profiler --benchmark --scenario-file performance.scenarios --group smoke-tests
+
+This will run only the scenarios defined in the `smoke-tests` group (`assemble` and `clean_build`).
+
+### Benchmark options
+
+- `iterations`: Number of builds to actually measure
+- `warm-ups`: Number of warmups to perform before measurement
+- `jvm-args`: Sets or overrides the jvm arguments set by `org.gradle.jvmargs` in gradle.properties.
+- `build-ops-trace`: When set to `true`, produces a full Gradle build operations trace as `<scenario-name>-log.txt` in the output directory.
+  The file format is not stable and may change in the future without any notice.
+  It can be [converted](https://github.com/gradle/gradle-trace-converter) to Chrome Trace.
+
+### Profiling change handling
+
+How a build tool handles changes to the source code can have a significant impact on the performance of the build.
+Gradle Profiler can simulate different kinds of changes to the source code to measure the impact of these changes on the build performance.
+These changes are applied by mutators at different points in the build benchmark process.
+Some mutators execute at a specific point, others can be configured to execute at a specific point, specified by the `schedule` parameter:
+
+- `SCENARIO`: before the scenario is executed,
+- `CLEANUP`: before cleaning preceding each build invocation,
+- `BUILD`: before the build invocation (after cleanup).
+
+#### Source code mutators
+
+These mutations are applied before each build, and they introduce different kinds of change to the source code.
 
 - `apply-abi-change-to`: Add a public method to a Java or Kotlin source class. Each iteration adds a new method and removes the method added by the previous iteration.
-- `apply-non-abi-change-to`: Change the body of a public method in a Java or Kotlin source class.
-- `apply-h-change-to`: Add a function to a C/C++ header file. Each iteration adds a new function declaration and removes the function added by the previous iteration. 
-- `apply-cpp-change-to`: Add a function to a C/C++ source file. Each iteration adds a new function and removes the function added by the previous iteration. 
-- `apply-property-resource-change-to`: Add an entry to a properties file. Each iteration adds a new entry and removes the entry added by the previous iteration.
+- `apply-android-layout-change-to`: Add a hidden view with id to an Android layout file. Supports traditional layouts as well as Databinding layouts with a ViewGroup as the root element.
+- `apply-android-manifest-change-to`: Add a permission to an Android manifest file.
 - `apply-android-resource-change-to`: Add a string resource to an Android resource file. Each iteration adds a new resource and removes the resource added by the previous iteration.
 - `apply-android-resource-value-change-to`: Change a string resource in an Android resource file.
-- `apply-android-manifest-change-to`: Add a permission to an Android manifest file.
-- `apply-android-layout-change-to`: Add a hidden view with id to an Android layout file. Supports traditional layouts as well as Databinding layouts with a ViewGroup as the root element.
-- `clear-build-cache-before`: Deletes the contents of the build cache before the scenario is executed (`SCENARIO`), before cleanup (`CLEANUP`) or before the build is executed (`BUILD`).
-- `clear-gradle-user-home-before`: Deletes the contents of the Gradle user home directory before the scenario is executed (`SCENARIO`), before cleanup (`CLEANUP`) or before the build is executed (`BUILD`).
-   The mutator retains the `wrapper` cache in the Gradle user home, since the downloaded wrapper in that location is used to run Gradle.
-   Requires to use the `none` daemon option to use with `CLEANUP` or `BUILD`.
-- `clear-configuration-cache-state-before`: Deletes the contents of the `.gradle/configuration-cache-state` directory before the scenario is executed (`SCENARIO`), before cleanup (`CLEANUP`) or before the build is executed (`BUILD`).
-- `clear-project-cache-before`: Deletes the contents of the `.gradle` and `buildSrc/.gradle` project cache directories before the scenario is executed (`SCENARIO`), before cleanup (`CLEANUP`) or before the build is executed (`BUILD`).
-- `clear-transform-cache-before`: Deletes the contents of the transform cache before the scenario is executed (`SCENARIO`), before cleanup (`CLEANUP`) or before the build is executed (`BUILD`).
-- `clear-jars-cache-before`: Deletes the contents of the instrumented jars cache before the scenario is executed (`SCENARIO`), before cleanup (`CLEANUP`) or before the build is executed (`BUILD`).
+- `apply-build-script-change-to`: Add a statement to a Groovy or Kotlin DSL build script, init script or settings script. Each iteration adds a new statement and removes the statement added by the previous iteration.
+- `apply-cpp-change-to`: Add a function to a C/C++ source file. Each iteration adds a new function and removes the function added by the previous iteration. 
+- `apply-h-change-to`: Add a function to a C/C++ header file. Each iteration adds a new function declaration and removes the function added by the previous iteration. 
+- `apply-kotlin-composable-change-to`: Add a `@Composable` function to a Kotlin source file.
+- `apply-non-abi-change-to`: Change the body of a public method in a Java or Kotlin source class.
+- `apply-project-dependency-change-to`: Add project dependencies to a Groovy or a Kotlin DSL build script. Each iteration adds a new combination of projects as dependencies and removes the projects added by the previous iteration.
+- `apply-property-resource-change-to`: Add an entry to a properties file. Each iteration adds a new entry and removes the entry added by the previous iteration.
+
+#### Cache cleanup
+
+When simulating scenarios like ephemeral builds, it is important to make sure caches are not present.
+These mutators can be scheduled to execute at different points in the build benchmark process, specified by the `schedule` parameter.
+
+- `clear-android-studio-cache-before`: Invalidates the Android Studio caches. Due to Android Studio client specifics scheduling to run before cleanup (`CLEANUP`) is not supported. Note: cleaning the Android Studio caches is run only when Android Studio sync (`android-studio-sync`) is used.
+- `clear-build-cache-before`: Deletes the contents of the build cache at the given schedule.
+- `clear-configuration-cache-state-before`: Deletes the contents of the `.gradle/configuration-cache-state` directory.
+- `clear-gradle-user-home-before`: Deletes the contents of the Gradle user home directory.
+  The mutator retains the `wrapper` cache in the Gradle user home, since the downloaded wrapper in that location is used to run Gradle.
+  Requires to use the `none` daemon option to use with `CLEANUP` or `BUILD` schedules.
+- `clear-jars-cache-before`: Deletes the contents of the instrumented jars cache.
+- `clear-project-cache-before`: Deletes the contents of the `.gradle` and `buildSrc/.gradle` project cache directories.
+- `clear-transform-cache-before`: Deletes the contents of the transform cache.
+- `show-build-cache-size`: Shows the number of files and their size in the build cache before scenario execution, and after each cleanup and build round.
+
+#### File operations
+
+- `copy-file`: Copies a file or a directory from one location to another. Has to specify a `source` and a `target` path; when relative they are resolved against the directory specified by `root` (see below). Can take an array of operations. Defaults to `SCENARIO` schedule.
+- `clear-dir`: Clears the contents of a directory without deleting the directory itself. Has to specify a `target` path; when relative it is resolved against the directory specified by `root` (see below). Optionally accepts a `keep` list of names, which are _direct_ children of `target` and which will not be deleted. Can take an array of operations. Defaults to `SCENARIO` schedule.
+- `delete-file`: Deletes a file or a directory. Has to specify a `target` path; when relative it is resolved against the directory specified by `root` (see below). Can take an array of operations. Defaults to `SCENARIO` schedule.
 - `git-checkout`: Checks out a specific commit for the build step, and a different one for the cleanup step.
-- `git-revert`: Reverts a given set of commits before the build and resets it afterward.
-- `iterations`: Number of builds to actually measure
-- `jvm-args`: Sets or overrides the jvm arguments set by `org.gradle.jvmargs` in gradle.properties.
-- `show-build-cache-size`: Shows the number of files and their size in the build cache before scenario execution, and after each cleanup and build round..
-- `warm-ups`: Number of warmups to perform before measurement
+- `git-revert`: Reverts a given set of commits before the build and resets it afterward. 
+
+Some file operations support the optional `root` parameter, which can be used to resolve relative paths:
+- `clear-dir`
+- `copy-file`
+- `delete-file`
+
+Possible values of the `root` parameter:
+- `PROJECT` - the project directory (default)
+- `GRADLE_USER_HOME` - the Gradle user home directory
 
 They can be added to a scenario file like this:
 
     incremental_build {
         tasks = ["assemble"]
 
+        apply-build-script-change-to = "build.gradle.kts"
+        apply-project-dependency-change-to {
+            files = ["build.gradle"]
+            # Default number of dependency-count is 3.
+            # Gradle Profiler will simulate changes to project dependencies by generating some additional projects and then adding a combination of project dependencies to every non-generated subproject before each iteration.
+            # The profiler will generate the minimal number of subprojects to allow for a unique combination of dependencies to be used for each iteration.
+            # Note: Number of generated projects is calculated as binomial coefficient: "from `x` choose `dependency-count` = `iterations * files`", where number of generated projects is `x`.
+            dependency-count = 3
+        }
         apply-abi-change-to = "src/main/java/MyThing.java"
         apply-non-abi-change-to = ["src/main/java/MyThing.java", "src/main/java/MyOtherThing.java"]
         apply-h-change-to = "src/main/headers/app.h"
         apply-cpp-change-to = "src/main/cpp/app.cpp"
         apply-property-resource-change-to = "src/main/resources/thing.properties"
-        apply-android-resource-change-to = "src/main/res/value/strings.xml"
-        apply-android-resource-value-change-to = "src/main/res/value/strings.xml"
+        apply-android-resource-change-to = "src/main/res/values/strings.xml"
+        apply-android-resource-value-change-to = "src/main/res/values/strings.xml"
         apply-android-manifest-change-to = "src/main/AndroidManifest.xml"
         clear-build-cache-before = SCENARIO
         clear-transform-cache-before = BUILD
         show-build-cache-size = true
+        clear-dir = [{
+            target = "build/tmp"
+        }, {
+            root = GRADLE_USER_HOME # to resolve relative paths; can be PROJECT or GRADLE_USER_HOME
+            target = "caches/build-cache"
+            keep = ["gc.properties"] # only names of direct children are supported
+        }]
+        copy-file = {
+            source = "../develocity.xml"
+            target = ".mvn/develocity.xml"
+        }
+        delete-file = [{
+            target = ".mvn/develocity.xml"
+            schedule = CLEANUP
+        }, {
+            target = ".gradle"
+            schedule = CLEANUP
+        }]
         git-checkout = {
             cleanup = "efb43a1"
             build = "master"
@@ -292,6 +483,50 @@ They can be added to a scenario file like this:
         git-revert = ["efb43a1"]
         jvm-args = ["-Xmx2500m", "-XX:MaxMetaspaceSize=512m"]
     }
+
+### Troubleshooting scenario configuration
+
+Gradle Profiler supports defining scenarios in the `--scenario-file` using [HOCON] format.
+This format is very flexible and supports advanced features like merging of objects and value substitutions.
+
+If you encounter problems with scenario configuration, you can use the `--dump-scenarios` option to dump the resolved configuration.
+This will output the normalized scenario configuration without running any builds.
+This configuration is what Gradle Profiler effectively sees when resolving the definition of a given scenario.
+However, it does not include any values provided on the command-line, as it only considers the scenario file itself.
+
+    > gradle-profiler --scenario-file performance.scenarios --dump-scenarios clean_build
+
+In the case of a scenario file like this:
+
+    base {
+        daemon = cold
+        iterations = 10
+    }
+    
+    clean_build = ${base} {
+        title = "Clean build"
+        tasks = [build]
+        cleanup-tasks = [clean]
+    }
+
+This will output the resolved configuration (keys are always sorted alphabetically):
+
+    # Scenario 1/1 'Clean build'
+    clean_build {
+        cleanup-tasks=[
+            clean
+        ]
+        daemon=cold
+        iterations=10
+        tasks=[
+            build
+        ]
+        title="Clean build"
+    }
+
+You can specify multiple scenarios or use `--group` to dump all scenarios in a group. If no scenarios are specified, it will dump the `default-scenarios`.
+
+The printed scenarios are valid scenario definitions that can be used as-is in scenario files.
 
 ### Comparing against other build tools
 
@@ -305,7 +540,7 @@ You can compare Gradle against Bazel, Buck, and Maven by specifying their equiva
         tasks = ["build"]
         cleanup-tasks = ["clean"]
         maven {
-            # If empty, it will be infered from MAVEN_HOME environment variable
+            # If empty, it will be inferred from MAVEN_HOME environment variable
             home = "/path/to/maven/home"
             targets = ["clean", "build"]
         }
@@ -319,7 +554,7 @@ You can compare Gradle against Bazel, Buck, and Maven by specifying their equiva
         tasks = ["assemble"]
 
         bazel {
-            # If empty, it will be infered from BAZEL_HOME environment variable
+            # If empty, it will be inferred from BAZEL_HOME environment variable
             home = "/path/to/bazel/home"
             targets = ["build" "//some/target"]
         }
@@ -333,7 +568,7 @@ You can compare Gradle against Bazel, Buck, and Maven by specifying their equiva
         tasks = ["assemble"]
 
         buck {
-            # If empty, it will be infered from BUCK_HOME environment variable
+            # If empty, it will be inferred from BUCK_HOME environment variable
             home = "/path/to/buck/home"
             type = "android_binary" // can be a Buck build rule type or "all"
         }
@@ -362,3 +597,6 @@ Output:
 ERROR: No stack counts found
 ...
 ```
+
+[//]: # (Links)
+[HOCON]: https://github.com/lightbend/config

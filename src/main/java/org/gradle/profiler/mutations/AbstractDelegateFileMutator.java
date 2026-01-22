@@ -8,8 +8,8 @@ import java.io.File;
 public abstract class AbstractDelegateFileMutator extends AbstractFileChangeMutator {
     private final AbstractFileChangeMutator fileChangeMutator;
 
-    AbstractDelegateFileMutator(File sourceFile) {
-        super(sourceFile);
+    AbstractDelegateFileMutator(File sourceFile, String changeDescription) {
+        super(sourceFile, changeDescription);
         fileChangeMutator = getFileChangeMutator(sourceFile);
     }
 

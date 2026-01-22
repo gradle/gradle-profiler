@@ -1,8 +1,5 @@
 package org.gradle.profiler.flamegraph;
 
-import static java.util.Arrays.asList;
-import static java.util.Collections.singletonList;
-
 import com.google.common.base.CharMatcher;
 import com.google.common.base.Joiner;
 import com.google.common.base.Splitter;
@@ -16,6 +13,7 @@ import java.io.FileInputStream;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -24,6 +22,9 @@ import java.util.ListIterator;
 import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+
+import static java.util.Arrays.asList;
+import static java.util.Collections.singletonList;
 
 /**
  * Simplifies stacks to make flame graphs more readable.
@@ -52,45 +53,62 @@ public class FlameGraphSanitizer {
 
     public static final SanitizeFunction SIMPLE_NAMES = new ToSimpleName();
 
+    public static final SanitizeFunction NORMALIZE_LAMBDA_NAMES = new NormalizeLambda();
+
     private final SanitizeFunction sanitizeFunction;
 
-    public FlameGraphSanitizer(SanitizeFunction... sanitizeFunctions) {
-        ImmutableList<SanitizeFunction> functions = ImmutableList.<SanitizeFunction>builder()
-                .addAll(Arrays.asList(sanitizeFunctions))
-                .add(new CollapseDuplicateFrames())
-                .build();
-        this.sanitizeFunction = new CompositeSanitizeFunction(functions);
+    public static FlameGraphSanitizer simplified(SanitizeFunction... additionalSanitizers) {
+        ImmutableList.Builder<SanitizeFunction> builder = ImmutableList.builder();
+        builder.add(additionalSanitizers);
+        builder.add(
+            FlameGraphSanitizer.COLLAPSE_BUILD_SCRIPTS,
+            FlameGraphSanitizer.COLLAPSE_GRADLE_INFRASTRUCTURE,
+            FlameGraphSanitizer.SIMPLE_NAMES,
+            FlameGraphSanitizer.NORMALIZE_LAMBDA_NAMES
+        );
+        builder.add(new CollapseDuplicateFrames());
+        return new FlameGraphSanitizer(builder.build());
+    }
+
+    public static FlameGraphSanitizer raw(SanitizeFunction... additionalSanitizers) {
+        ImmutableList.Builder<SanitizeFunction> builder = ImmutableList.builder();
+        builder.add(additionalSanitizers);
+        builder.add(FlameGraphSanitizer.COLLAPSE_BUILD_SCRIPTS, FlameGraphSanitizer.NORMALIZE_LAMBDA_NAMES);
+        builder.add(new CollapseDuplicateFrames());
+        return new FlameGraphSanitizer(builder.build());
+    }
+
+    public FlameGraphSanitizer(ImmutableList<SanitizeFunction> sanitizeFunctions) {
+        this.sanitizeFunction = new CompositeSanitizeFunction(sanitizeFunctions);
     }
 
     public void sanitize(final File in, File out) {
         out.getParentFile().mkdirs();
-        try (BufferedWriter writer = new BufferedWriter(new FileWriter(out))) {
-            try (BufferedReader reader = new BufferedReader(new InputStreamReader(new FileInputStream(in)))) {
-                String line;
-                StringBuilder sb = new StringBuilder();
-                while ((line = reader.readLine()) != null) {
-                    int endOfStack = line.lastIndexOf(" ");
-                    if (endOfStack <= 0) {
-                        continue;
-                    }
-                    String stackTrace = line.substring(0, endOfStack);
-                    String invocationCount = line.substring(endOfStack + 1);
-                    List<String> stackTraceElements = STACKTRACE_SPLITTER.splitToList(stackTrace);
-                    List<String> sanitizedStackElements = sanitizeFunction.map(stackTraceElements);
-                    if (!sanitizedStackElements.isEmpty()) {
-                        sb.setLength(0);
-                        STACKTRACE_JOINER.appendTo(sb, sanitizedStackElements);
-                        sb.append(" ");
-                        sb.append(invocationCount);
-                        sb.append("\n");
-                        writer.write(sb.toString());
-                    }
+        try (BufferedWriter writer = new BufferedWriter(new FileWriter(out));
+             BufferedReader reader = Files.newBufferedReader(in.toPath())) {
+            String line;
+            StringBuilder sb = new StringBuilder();
+            while ((line = reader.readLine()) != null) {
+                int endOfStack = line.lastIndexOf(" ");
+                if (endOfStack <= 0) {
+                    continue;
+                }
+                String stackTrace = line.substring(0, endOfStack);
+                String invocationCount = line.substring(endOfStack + 1);
+                List<String> stackTraceElements = STACKTRACE_SPLITTER.splitToList(stackTrace);
+                List<String> sanitizedStackElements = sanitizeFunction.map(stackTraceElements);
+                if (!sanitizedStackElements.isEmpty()) {
+                    sb.setLength(0);
+                    STACKTRACE_JOINER.appendTo(sb, sanitizedStackElements);
+                    sb.append(" ");
+                    sb.append(invocationCount);
+                    sb.append("\n");
+                    writer.write(sb.toString());
                 }
             }
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
-
     }
 
     public interface SanitizeFunction {
@@ -210,6 +228,18 @@ public class FlameGraphSanitizer {
                 }
             }
             return stack;
+        }
+    }
+
+    private static class NormalizeLambda extends FrameWiseSanitizeFunction {
+
+        private static final Pattern LAMBDA_PATTERN = Pattern.compile(Pattern.quote("$$Lambda$") + "[0-9]+[./][0-9]+(?:x[0-9a-fA-F]+)?");
+
+        @Override
+        protected String mapFrame(String frame) {
+            // Lambdas contain a name that's based on an index + timestamp or memory address at runtime and changes build-to-build.
+            // This makes comparing two builds very difficult when a lambda is in the stack
+            return LAMBDA_PATTERN.matcher(frame).replaceFirst("\\$\\$Lambda\\$");
         }
     }
 

@@ -7,9 +7,9 @@ import java.util.function.Function
 class ApplyNonAbiChangeToKotlinSourceFileMutatorTest extends AbstractMutatorTest {
 
     static Function<String, String> FUNCTION_TEXT = { qualifier ->
-        "class Thing { fun existingMethod() { }}\n" +
+        "class Thing { fun existingMethod() { }}\n\n" +
             "private fun _m_276d92f3_16ac_4064_9a18_5f1dfd67992f_testScenario_3c4925d7() {" +
-            "requireNotNull(\"_276d92f3_16ac_4064_9a18_5f1dfd67992f_testScenario_3c4925d7_$qualifier\")" +
+            "println(\"_276d92f3_16ac_4064_9a18_5f1dfd67992f_testScenario_3c4925d7_$qualifier\")" +
             "}"
     }
 
@@ -38,6 +38,7 @@ class ApplyNonAbiChangeToKotlinSourceFileMutatorTest extends AbstractMutatorTest
         def mutator = new ApplyNonAbiChangeToKotlinSourceFileMutator(sourceFile)
 
         when:
+        mutator.beforeScenario(scenarioContext)
         mutator.afterScenario(scenarioContext)
 
         then:
@@ -57,7 +58,7 @@ class ApplyNonAbiChangeToKotlinSourceFileMutatorTest extends AbstractMutatorTest
 
         when:
         mutator.beforeScenario(scenarioContext)
-        mutator.beforeBuild(buildContext)
+        sourceFile.text = "some-change"
         mutator.afterScenario(scenarioContext)
 
         then:

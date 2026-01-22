@@ -6,8 +6,8 @@ import joptsimple.OptionException;
 import joptsimple.OptionParser;
 import joptsimple.OptionSet;
 import joptsimple.OptionSpecBuilder;
-import org.gradle.profiler.report.CsvGenerator;
-import org.gradle.profiler.report.CsvGenerator.Format;
+import org.gradle.profiler.gradle.GradleBuildInvoker;
+import org.gradle.profiler.report.Format;
 
 import javax.annotation.Nullable;
 import java.io.File;
@@ -20,6 +20,7 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 class CommandLineParser {
+
     public static class SettingsNotAvailableException extends RuntimeException {
     }
 
@@ -42,6 +43,8 @@ class CommandLineParser {
             .ofType(File.class)
             .defaultsTo(new File("gradle-user-home"));
         ArgumentAcceptingOptionSpec<File> studioHomeOption = parser.accepts("studio-install-dir", "The Studio installation to use").withRequiredArg().ofType(File.class);
+        ArgumentAcceptingOptionSpec<File> studioSandboxOption = parser.accepts("studio-sandbox-dir", "The Studio sandbox dir to use").withRequiredArg().ofType(File.class);
+        OptionSpecBuilder disableStudioSandbox = parser.accepts("no-studio-sandbox", "Marks that Android Studio should not use sandbox");
         ArgumentAcceptingOptionSpec<File> scenarioFileOption = parser.accepts("scenario-file", "Scenario definition file to use").withRequiredArg().ofType(File.class);
         ArgumentAcceptingOptionSpec<String> sysPropOption = parser.accepts("D", "Defines a system property").withRequiredArg();
         ArgumentAcceptingOptionSpec<File> outputDirOption = parser.accepts("output-dir", "Directory to write results to").withRequiredArg()
@@ -53,6 +56,7 @@ class CommandLineParser {
             .withRequiredArg()
             .defaultsTo("jfr");
         ProfilerFactory.configureParser(parser);
+        OptionSpecBuilder noDifferentialFlamegraphOption = parser.accepts("no-diffs", "Do not generate differential flame graphs");
         OptionSpecBuilder benchmarkOption = parser.accepts("benchmark", "Collect benchmark metrics");
         ArgumentAcceptingOptionSpec<String> benchmarkBuildOperation = parser.accepts(
             "measure-build-op",
@@ -61,8 +65,12 @@ class CommandLineParser {
         OptionSpecBuilder noDaemonOption = parser.accepts("no-daemon", "Do not use the Gradle daemon");
         OptionSpecBuilder coldDaemonOption = parser.accepts("cold-daemon", "Use a cold Gradle daemon");
         OptionSpecBuilder cliOption = parser.accepts("cli", "Uses the command-line client to connect to the daemon");
-        OptionSpecBuilder measureConfigOption = parser.accepts("measure-config-time", "Include a breakdown of configuration time in benchmark results");
+        OptionSpecBuilder measureGarbageCollectionOption = parser.accepts("measure-gc", "Measure the GC time during each invocation");
+        OptionSpecBuilder measureLocalBuildCacheOption = parser.accepts("measure-local-build-cache", "Measure the size of the local build cache");
+        OptionSpecBuilder measureConfigTimeOption = parser.accepts("measure-config-time", "Include a breakdown of configuration time in benchmark results");
+        OptionSpecBuilder buildOpsTraceOption = parser.accepts("build-ops-trace", "Enable Gradle build operations trace");
         OptionSpecBuilder dryRunOption = parser.accepts("dry-run", "Verify configuration");
+        OptionSpecBuilder dumpScenariosOption = parser.accepts("dump-scenarios", "Dump resolved config for scenario(s) without running");
         OptionSpecBuilder bazelOption = parser.accepts("bazel", "Benchmark scenarios using Bazel");
         OptionSpecBuilder buckOption = parser.accepts("buck", "Benchmark scenarios using buck");
         OptionSpecBuilder mavenOption = parser.accepts("maven", "Benchmark scenarios using Maven");
@@ -73,6 +81,10 @@ class CommandLineParser {
         ArgumentAcceptingOptionSpec<String> benchmarkTitleOption = parser.accepts("title",
             "Title to show on benchmark report")
             .withOptionalArg()
+            .ofType(String.class);
+        ArgumentAcceptingOptionSpec<String> groupOption = parser.accepts("group",
+            "Run scenarios from a group")
+            .withRequiredArg()
             .ofType(String.class);
 
         OptionSet parsedOptions;
@@ -92,7 +104,7 @@ class CommandLineParser {
             return null;
         }
 
-        File projectDir = parsedOptions.valueOf(projectOption);
+        File projectDir = toAbsoluteFileOrNull(parsedOptions.valueOf(projectOption));
         boolean hasProfiler = parsedOptions.has(profilerOption);
         ProfilerFactory profilerFactory = ProfilerFactory.NONE;
         if (hasProfiler) {
@@ -100,22 +112,33 @@ class CommandLineParser {
             profilerFactory = ProfilerFactory.of(profilersList);
         }
         Profiler profiler = profilerFactory.createFromOptions(parsedOptions);
+        boolean generateDiffs = !parsedOptions.has(noDifferentialFlamegraphOption) && hasProfiler && profiler.isCreatesStacksFiles();
         boolean benchmark = parsedOptions.has(benchmarkOption);
-        if (!benchmark && !hasProfiler) {
+        boolean dumpScenarios = parsedOptions.has(dumpScenariosOption);
+        if (!benchmark && !hasProfiler && !dumpScenarios) {
             return fail(parser, "Neither --profile or --benchmark specified.");
         }
 
-        File outputDir = parsedOptions.valueOf(outputDirOption);
-        File gradleUserHome = parsedOptions.valueOf(gradleUserHomeOption);
+        File outputDir = toAbsoluteFileOrNull(parsedOptions.valueOf(outputDirOption));
+        File gradleUserHome = toAbsoluteFileOrNull(parsedOptions.valueOf(gradleUserHomeOption));
         Integer warmups = parsedOptions.valueOf(warmupsOption);
         Integer iterations = parsedOptions.valueOf(iterationsOption);
-        boolean measureConfig = parsedOptions.has(measureConfigOption);
+        boolean measureGarbageCollection = parsedOptions.has(measureGarbageCollectionOption);
+        boolean measureLocalBuildCache = parsedOptions.has(measureLocalBuildCacheOption);
+        boolean measureConfig = parsedOptions.has(measureConfigTimeOption);
+        boolean buildOperationsTrace = parsedOptions.has(buildOpsTraceOption);
         List<String> benchmarkedBuildOperations = parsedOptions.valuesOf(benchmarkBuildOperation);
 
         List<String> targetNames = parsedOptions.nonOptionArguments().stream().map(Object::toString).collect(Collectors.toList());
         List<String> gradleVersions = parsedOptions.valuesOf(gradleVersionOption);
-        File scenarioFile = parsedOptions.valueOf(scenarioFileOption);
-        File studioInstallDir = parsedOptions.valueOf(studioHomeOption);
+        File scenarioFile = toAbsoluteFileOrNull(parsedOptions.valueOf(scenarioFileOption));
+        File studioInstallDir = toAbsoluteFileOrNull(parsedOptions.valueOf(studioHomeOption));
+        File studioSandboxDir = toAbsoluteFileOrNull(parsedOptions.valueOf(studioSandboxOption));
+        if (parsedOptions.has(disableStudioSandbox)) {
+            studioSandboxDir = null;
+        } else if (studioSandboxDir == null) {
+            studioSandboxDir = new File(outputDir, "studio-sandbox");
+        }
 
         // TODO - should validate the various combinations of invocation options
         GradleBuildInvoker gradleInvoker = GradleBuildInvoker.ToolingApi;
@@ -149,28 +172,36 @@ class CommandLineParser {
                 sysProperties.put(value.substring(0, sep), value.substring(sep + 1));
             }
         }
-        CsvGenerator.Format csvFormat = CsvGenerator.Format.parse(parsedOptions.valueOf(csvFormatOption));
+        Format csvFormat = Format.parse(parsedOptions.valueOf(csvFormatOption));
         String benchmarkTitle = parsedOptions.valueOf(benchmarkTitleOption);
+        String scenarioGroup = parsedOptions.valueOf(groupOption);
 
         return new InvocationSettings.InvocationSettingsBuilder()
             .setProjectDir(projectDir)
             .setProfiler(profiler)
+            .setGenerateDiffs(generateDiffs)
             .setBenchmark(benchmark)
             .setOutputDir(outputDir)
             .setInvoker(invoker)
             .setDryRun(dryRun)
+            .setDumpScenarios(dumpScenarios)
             .setScenarioFile(scenarioFile)
             .setVersions(gradleVersions)
             .setTargets(targetNames)
             .setSysProperties(sysProperties)
             .setGradleUserHome(gradleUserHome)
             .setStudioInstallDir(studioInstallDir)
+            .setStudioSandboxDir(studioSandboxDir)
             .setWarmupCount(warmups)
             .setIterations(iterations)
+            .setMeasureGarbageCollection(measureGarbageCollection)
+            .setMeasureLocalBuildCache(measureLocalBuildCache)
             .setMeasureConfigTime(measureConfig)
             .setMeasuredBuildOperations(benchmarkedBuildOperations)
+            .setBuildOperationsTrace(buildOperationsTrace)
             .setCsvFormat(csvFormat)
             .setBenchmarkTitle(benchmarkTitle)
+            .setScenarioGroup(scenarioGroup)
             .build();
     }
 
@@ -200,5 +231,9 @@ class CommandLineParser {
 
     private void showVersion() {
         System.out.printf("Gradle Profiler version %s%n", CommandLineParser.class.getPackage().getImplementationVersion());
+    }
+
+    private File toAbsoluteFileOrNull(@Nullable File file) {
+        return file == null ? null : file.getAbsoluteFile();
     }
 }

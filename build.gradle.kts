@@ -1,70 +1,66 @@
-import com.moowork.gradle.node.npm.NpxTask
-import java.net.URI
+import com.github.gradle.node.npm.task.NpxTask
+import io.sdkman.vendors.tasks.SdkAnnounceVersionTask
+import io.sdkman.vendors.tasks.SdkDefaultVersionTask
+import io.sdkman.vendors.tasks.SdkReleaseVersionTask
+import io.sdkman.vendors.tasks.SdkmanVendorBaseTask
+import java.util.Locale
 
 plugins {
     id("profiler.java-library")
+    id("profiler.android-studio-setup")
     groovy
     application
     `maven-publish`
     id("profiler.publication")
-    id("com.github.node-gradle.node") version "2.2.4"
+    id("com.github.node-gradle.node") version "3.4.0"
+    id("io.sdkman.vendors") version "2.0.0"
+    id("io.github.gradle-nexus.publish-plugin") version "2.0.0"
 }
 
-allprojects {
-    group = "org.gradle.profiler"
-    version = property("profiler.version") as String
-}
+description = "A tool to profile and benchmark Gradle builds"
 
 val gradleRuntime by configurations.creating
 val profilerPlugins by configurations.creating
 
 dependencies {
-    implementation(versions.toolingApi)
+    implementation(libs.toolingApi)
+    implementation(project(":build-action"))
+    implementation(project(":client-protocol"))
+    implementation(project(":scenario-definition"))
+
     implementation("com.google.code.findbugs:annotations:3.0.1")
-    implementation("com.google.guava:guava:27.1-android") {
-        because("Gradle uses the android variant as well and we are running the same code there.")
-    }
-    implementation("net.sf.jopt-simple:jopt-simple:5.0.4")
-    implementation("com.typesafe:config:1.3.3")
+    implementation("com.google.guava:guava:32.1.2-jre")
     implementation("org.apache.commons:commons-math3:3.6.1")
-    implementation("com.github.javaparser:javaparser-core:3.1.3")
+    implementation("com.github.javaparser:javaparser-core:3.18.0")
+    implementation("net.sf.jopt-simple:jopt-simple:5.0.4")
     implementation("org.apache.ant:ant-compress:1.5")
-    implementation("commons-io:commons-io:2.6")
-    implementation("org.gradle.org.openjdk.jmc:flightrecorder:7.0.0-alpha01")
+    implementation("org.apache.commons:commons-compress:1.27.1") {
+        because("Avoid old version of commons-compress introduced by ant-compress")
+    }
+    implementation("commons-io:commons-io:2.16.1")
+    implementation("org.openjdk.jmc:flightrecorder:8.3.1")
     implementation("com.googlecode.plist:dd-plist:1.23") {
         because("To extract launch details from Android Studio installation")
     }
-    implementation("com.google.code.gson:gson:2.8.6") {
+    implementation("com.google.code.gson:gson:2.11.0") {
         because("To write JSON output")
     }
-    implementation(project(":client-protocol"))
 
     gradleRuntime(gradleApi())
-    gradleRuntime(versions.toolingApi)
+    gradleRuntime(libs.toolingApi)
     profilerPlugins(project(":chrome-trace"))
     profilerPlugins(project(":build-operations"))
     profilerPlugins(project(":instrumentation-support"))
     profilerPlugins(project(":studio-agent"))
+    profilerPlugins(project(":heap-dump"))
+    profilerPlugins(project(":studio-plugin"))
 
     runtimeOnly("org.slf4j:slf4j-simple:1.7.10")
-    testImplementation(versions.groovy)
-    testImplementation(versions.spock)
+    testImplementation(libs.bundles.testDependencies)
+    testImplementation(libs.groovy.xml)
+    testImplementation(project(":tooling-action"))
     testRuntimeOnly("cglib:cglib:3.2.6")
     testRuntimeOnly("org.objenesis:objenesis:2.6")
-}
-
-subprojects {
-    // Subprojects are packaged into the Gradle profiler Jar, so let's make them reproducible
-    tasks.withType<Jar>().configureEach {
-        isReproducibleFileOrder = true
-        isPreserveFileTimestamps = false
-        dirMode = Integer.parseInt("0755", 8)
-        fileMode = Integer.parseInt("0644", 8)
-    }
-}
-
-java {
-    withSourcesJar()
 }
 
 tasks.withType<Jar>().configureEach {
@@ -76,21 +72,22 @@ tasks.withType<Jar>().configureEach {
     }
 }
 
-application.mainClassName = "org.gradle.profiler.Main"
+application.mainClass.set("org.gradle.profiler.Main")
 
 node {
-    download = true
+    download.set(true)
+    version.set("17.6.0")
 }
 
 val generateHtmlReportJavaScript = tasks.register<NpxTask>("generateHtmlReportJavaScript") {
+    dependsOn(tasks.npmInstall)
     val source = file("src/main/js/org/gradle/profiler/report/report.js")
     val outputDir = layout.buildDirectory.dir("html-report")
     val output = outputDir.map { it.file("org/gradle/profiler/report/report.js") }
     inputs.file(source)
-    inputs.files(tasks.npmInstall)
     outputs.dir(outputDir)
-    command = "browserify"
-    setArgs(listOf(source.absolutePath, "--outfile", output.get().asFile))
+    command.set("browserify")
+    args.addAll(source.absolutePath, "--outfile", output.get().asFile.absolutePath)
 }
 
 tasks.processResources {
@@ -103,30 +100,95 @@ tasks.processResources {
     from(generateHtmlReportJavaScript)
 }
 
+fun launcherJavaHomeFor(javaVersion: Int): String {
+    return javaToolchains
+        .launcherFor { languageVersion = JavaLanguageVersion.of(javaVersion) }
+        .map { it.metadata.installationPath.asFile.absolutePath.toString() }
+        .get()
+}
+
+class AddOpensArgProvider(private val test: Test) : CommandLineArgumentProvider {
+    override fun asArguments(): Iterable<String> {
+        return if (test.javaVersion.isCompatibleWith(JavaVersion.VERSION_1_9)) {
+            listOf("--add-opens=java.base/java.lang=ALL-UNNAMED")
+        } else {
+            emptyList()
+        }
+    }
+}
+
 tasks.test {
-    // Use the current JVM. Some tests require JFR, which is only available in some JVM implementations
-    // For now assume that the current JVM has JFR support and that CI will inject the correct implementation
-    javaLauncher.set(null as JavaLauncher?)
+    // If testJavaVersion is not set use the current JVM. Some tests require JFR, which is only available
+    // in some JVM implementations. For now assume that the current JVM has JFR support.
+    // CI will inject the correct implementation.
+    val launcher = project.javaToolchains.launcherFor {
+        val javaVersion = providers
+            .gradleProperty("testJavaVersion")
+            .getOrElse(JavaVersion.current().majorVersion)
+        languageVersion.set(JavaLanguageVersion.of(javaVersion))
+        providers.gradleProperty("testJavaVendor").map {
+            when (it.lowercase(Locale.US)) {
+                "oracle" -> vendor.set(JvmVendorSpec.ORACLE)
+                "openjdk" -> vendor.set(JvmVendorSpec.ADOPTIUM)
+            }
+        }.getOrNull()
+    }
+    javaLauncher.set(launcher)
+    // So processes started from test also use same Java version
+    environment("JAVA_HOME" to javaLauncher.get().metadata.installationPath)
+
+    // We had some build failures on macOS, where it seems to be a Socket was already closed when trying to download the Gradle distribution.
+    // The tests failing were consistently in ProfilerIntegrationTest.
+    // Running only ProfilerIntegrationTest did not expose the failures.
+    // The problem went away when running every test class in its on JVM.
+    // So I suppose the problem is that the JVM shares the TAPI client, and one of the tests leave the client in a bad state.
+    // We now use forkEvery = 1 to run each test class in its own JVM, so we don't run into this problem anymore.
+    setForkEvery(1)
+    maxHeapSize = "2g"
+
+    // Required for mocks when running on Java 17+
+    jvmArgumentProviders.add(AddOpensArgProvider(this))
+
+    // Used by tests to select a different Daemon JVM when Test JVM is unsupported by older Gradle versions
+    systemProperty("javaHomes.java11", launcherJavaHomeFor(11))
+
+    // Run cross-version tests for all tested versions
+    systemProperty("org.gradle.integtest.versions", "all")
+}
+
+androidStudioTests {
+    val autoDownloadAndRunInHeadless = providers.gradleProperty("autoDownloadAndRunInHeadless").orNull == "true"
+    runAndroidStudioInHeadlessMode.set(autoDownloadAndRunInHeadless)
+    autoDownloadAndroidStudio.set(autoDownloadAndRunInHeadless)
+    testAndroidStudioVersion.set(libs.versions.testAndroidStudioVersion)
+    testAndroidSdkVersion.set(libs.versions.testAndroidSdkVersion)
+    // For local development it's easier to setup Android SDK with Android Studio, since auto download needs ANDROID_HOME or ANDROID_SDK_ROOT
+    // to be set with an accepted license in it. See https://developer.android.com/studio/intro/update.html#download-with-gradle.
+    autoDownloadAndroidSdk.set(autoDownloadAndRunInHeadless)
 }
 
 val testReports = mapOf(
     "testHtmlReport" to "example",
     "testHtmlReportSingle" to "example-single",
+    "testHtmlReportCacheSize" to "example-cache-size",
     "testHtmlReportWithOps" to "example-with-build-operations",
     "testHtmlReportRegression" to "example-regression"
 )
-testReports.forEach { taskName, fileName ->
+testReports.forEach { (taskName, fileName) ->
     tasks.register<ProcessResources>(taskName) {
         val dataFile = file("src/test/resources/org/gradle/profiler/report/${fileName}.json")
         inputs.file(dataFile)
         inputs.files(tasks.processResources)
 
         from("src/main/resources/org/gradle/profiler/report")
-        into("$buildDir/test-html-report")
+        into(layout.buildDirectory.dir("test-html-report"))
         rename("report-template.html", "test-report-${fileName}.html")
         filter { line ->
             if (line == "@@BENCHMARK_RESULT_JSON@@") dataFile.readText()
-            else if (line == "@@SCRIPT@@") File(tasks.processResources.get().destinationDir, "org/gradle/profiler/report/report.js").readText(Charsets.UTF_8)
+            else if (line == "@@SCRIPT@@") File(
+                tasks.processResources.get().destinationDir,
+                "org/gradle/profiler/report/report.js"
+            ).readText(Charsets.UTF_8)
             else line
         }
     }
@@ -144,16 +206,104 @@ publishing {
     publications {
         named<MavenPublication>("mavenJava") {
             artifact(profilerDistribution)
+            pom {
+                // For some reason adding the zip artifact changes the packaging to "pom"
+                packaging = "jar"
+            }
         }
     }
 }
 
-fun Project.gradleInternalRepositoryUrl(): URI {
-    val isSnapshot = version.toString().endsWith("-SNAPSHOT")
-    val repositoryQualifier = if (isSnapshot) "snapshots" else "releases"
-    return uri("https://repo.gradle.org/gradle/ext-$repositoryQualifier-local")
+nexusPublishing {
+    packageGroup.set(project.group.toString())
+    repositories {
+        sonatype {
+            nexusUrl.set(uri("https://ossrh-staging-api.central.sonatype.com/service/local/"))
+            snapshotRepositoryUrl.set(uri("https://central.sonatype.com/repository/maven-snapshots/"))
+        }
+    }
 }
 
-buildScan {
-    isCaptureTaskInputFiles = true
+val releaseTagName = "v$version"
+
+tasks.register<Exec>("gitTag") {
+    commandLine("git", "tag", releaseTagName)
+    onlyIf { !isSnapshot() }
+}
+
+val gitPushTag = tasks.register<Exec>("gitPushTag") {
+    mustRunAfter("closeSonatypeStagingRepository")
+    dependsOn("gitTag")
+    onlyIf { !isSnapshot() }
+    commandLine(
+        "git",
+        "push",
+        "https://bot-teamcity:${project.findProperty("githubToken")}@github.com/gradle/gradle-profiler.git",
+        releaseTagName
+    )
+}
+
+fun Project.isSnapshot() = version.toString().endsWith("-SNAPSHOT")
+
+sdkman {
+    api = "https://vendors.sdkman.io"
+    candidate = "gradleprofiler"
+    hashtag = "#gradleprofiler"
+    version = project.version.toString()
+    url = "https://repo1.maven.org/maven2/org/gradle/profiler/gradle-profiler/$version/gradle-profiler-$version.zip"
+    consumerKey = project.findProperty("sdkmanKey") as String?
+    consumerToken = project.findProperty("sdkmanToken") as String?
+}
+
+tasks.withType<SdkmanVendorBaseTask>().configureEach {
+    mustRunAfter(gitPushTag)
+}
+
+tasks.withType<SdkDefaultVersionTask>().configureEach {
+    mustRunAfter(tasks.withType<SdkReleaseVersionTask>())
+}
+
+tasks.withType<SdkAnnounceVersionTask>().configureEach {
+    mustRunAfter(tasks.withType<SdkReleaseVersionTask>())
+}
+
+tasks.register("releaseToSdkMan") {
+    val versionString = project.version.toString()
+
+    // We don't publish snapshots and alphas at all to SDKman.
+    val isSnapshotOrAlphaRelease = versionString.lowercase(Locale.US).run { contains("snapshot") || contains("alpha") }
+    if (!isSnapshotOrAlphaRelease) {
+        dependsOn(tasks.withType<SdkReleaseVersionTask>())
+
+        // We only announce and set the default version for final releases
+        // A release is not final if it contains things different to numbers and dots.
+        // For example:
+        //   - 1.3: final
+        //   - 1.3.25: final
+        //   - 1.3-rc-4: not final
+        //   - 1.3.RC5: not final
+        //   - 1.3-milestone5: not final
+        val isFinalRelease = Regex("""[0-9\.]*""").matchEntire(versionString) != null
+        if (isFinalRelease) {
+            dependsOn(tasks.withType<SdkDefaultVersionTask>())
+            dependsOn(tasks.withType<SdkAnnounceVersionTask>())
+        }
+    }
+}
+
+tasks.updateDaemonJvm {
+    toolchainDownloadUrls.empty()
+}
+
+tasks.register<Sync>("install") {
+    val installDirName = "gradle-profiler.install.dir"
+    val installDir = providers.gradleProperty(installDirName).orElse("distribution")
+        .map { layout.settingsDirectory.file(it) }
+
+    from(tasks.named<Sync>("installDist").map { it.destinationDir })
+    into(installDir)
+
+    doLast {
+        println("Installed gradle-profiler to '${installDir.get()}'")
+    }
 }

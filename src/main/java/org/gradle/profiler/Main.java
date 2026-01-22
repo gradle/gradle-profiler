@@ -1,15 +1,34 @@
 package org.gradle.profiler;
 
+import org.gradle.profiler.bazel.BazelScenarioDefinition;
+import org.gradle.profiler.bazel.BazelScenarioInvoker;
+import org.gradle.profiler.buck.BuckScenarioDefinition;
+import org.gradle.profiler.buck.BuckScenarioInvoker;
+import org.gradle.profiler.flamegraph.DifferentialStacksGenerator;
+import org.gradle.profiler.flamegraph.FlameGraphGenerator;
+import org.gradle.profiler.flamegraph.Stacks;
+import org.gradle.profiler.gradle.DaemonControl;
+import org.gradle.profiler.gradle.DefaultGradleBuildConfigurationReader;
+import org.gradle.profiler.gradle.GradleScenarioDefinition;
+import org.gradle.profiler.gradle.GradleScenarioInvoker;
 import org.gradle.profiler.instrument.PidInstrumentation;
+import org.gradle.profiler.maven.MavenScenarioDefinition;
+import org.gradle.profiler.maven.MavenScenarioInvoker;
 import org.gradle.profiler.report.CsvGenerator;
 import org.gradle.profiler.report.HtmlGenerator;
 import org.gradle.profiler.result.BuildInvocationResult;
+import org.gradle.profiler.result.SampleProvider;
+import org.gradle.profiler.studio.invoker.StudioGradleScenarioDefinition;
+import org.gradle.profiler.studio.invoker.StudioGradleScenarioInvoker;
 
 import java.io.File;
 import java.io.IOException;
 import java.time.Instant;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
+import java.util.function.Consumer;
+import java.util.stream.Collectors;
 
 public class Main {
     public static void main(String[] args) {
@@ -29,6 +48,11 @@ public class Main {
             Instant started = Instant.now();
             InvocationSettings settings = new CommandLineParser().parseSettings(args);
             if (settings == null) {
+                return;
+            }
+
+            if (settings.isDumpScenarios()) {
+                printScenariosConfigDump(settings);
                 return;
             }
 
@@ -55,7 +79,10 @@ public class Main {
             File htmlFile = new File(settings.getOutputDir(), "benchmark.html");
             BenchmarkResultCollector benchmarkResults = new BenchmarkResultCollector(new CsvGenerator(cvsFile, settings.getCsvFormat()), new HtmlGenerator(htmlFile));
             PidInstrumentation pidInstrumentation = new PidInstrumentation();
+
+
             GradleScenarioInvoker gradleScenarioInvoker = new GradleScenarioInvoker(daemonControl, pidInstrumentation);
+            StudioGradleScenarioInvoker studioGradleScenarioInvoker = new StudioGradleScenarioInvoker(gradleScenarioInvoker);
             BazelScenarioInvoker bazelScenarioInvoker = new BazelScenarioInvoker();
             BuckScenarioInvoker buckScenarioInvoker = new BuckScenarioInvoker();
             MavenScenarioInvoker mavenScenarioInvoker = new MavenScenarioInvoker();
@@ -66,12 +93,18 @@ public class Main {
             for (ScenarioDefinition scenario : scenarios) {
                 scenarioCount++;
                 Logging.startOperation("Running scenario " + scenario.getDisplayName() + " (scenario " + scenarioCount + "/" + totalScenarios + ")");
+                if (settings.isProfile() && scenario.getWarmUpCount() == 0) {
+                    throw new IllegalStateException("Using the --profile option requires at least one warm-up");
+                }
+
                 if (scenario instanceof BazelScenarioDefinition) {
                     invoke(bazelScenarioInvoker, (BazelScenarioDefinition) scenario, settings, benchmarkResults, failures);
                 } else if (scenario instanceof BuckScenarioDefinition) {
                     invoke(buckScenarioInvoker, (BuckScenarioDefinition) scenario, settings, benchmarkResults, failures);
                 } else if (scenario instanceof MavenScenarioDefinition) {
                     invoke(mavenScenarioInvoker, (MavenScenarioDefinition) scenario, settings, benchmarkResults, failures);
+                } else if (scenario instanceof StudioGradleScenarioDefinition) {
+                    invoke(studioGradleScenarioInvoker, (StudioGradleScenarioDefinition) scenario, settings, benchmarkResults, failures);
                 } else if (scenario instanceof GradleScenarioDefinition) {
                     invoke(gradleScenarioInvoker, (GradleScenarioDefinition) scenario, settings, benchmarkResults, failures);
                 } else {
@@ -83,6 +116,10 @@ public class Main {
                 // Write the final results and generate the reports
                 // This overwrites the existing reports, so may leave them in a corrupted state if this process crashes during the generation.
                 benchmarkResults.write(settings);
+            }
+            if (settings.isGenerateDiffs() && scenarios.size() > 1) {
+                List<Stacks> stacks = new DifferentialStacksGenerator().generateDifferentialStacks(settings.getOutputDir());
+                new FlameGraphGenerator().generateDifferentialGraphs(stacks);
             }
 
             System.out.println();
@@ -105,9 +142,20 @@ public class Main {
         }
     }
 
+    private static void printScenariosConfigDump(InvocationSettings settings) {
+        if (settings.getScenarioFile() == null) {
+            System.err.println("--dump-scenarios requires a scenario file (--scenario-file)");
+            throw new IllegalArgumentException("--dump-scenarios requires a scenario file");
+        }
+        String output = ScenarioLoader.dumpScenarios(settings.getScenarioFile(), settings);
+        System.out.print(output);
+    }
+
     private <S extends ScenarioDefinition, R extends BuildInvocationResult> void invoke(ScenarioInvoker<S, R> invoker, S scenario, InvocationSettings settings, BenchmarkResultCollector benchmarkResults, List<Throwable> failures) throws IOException {
         try {
-            invoker.run(scenario, settings, benchmarkResults);
+            SampleProvider<R> sampleProvider = invoker.samplesFor(settings, scenario);
+            Consumer<R> resultConsumer = benchmarkResults.scenario(scenario, sampleProvider);
+            invoker.run(scenario, settings, resultConsumer);
         } catch (Throwable t) {
             t.printStackTrace();
             failures.add(t);
@@ -139,10 +187,14 @@ public class Main {
         if (outputDir == null) {
             return;
         }
-        for (File file : outputDir.listFiles()) {
-            profiler.summarizeResultFile(file, line -> System.out.println("  " + line));
+        // Report results in a predictable order
+        List<File> results = Arrays.stream(outputDir.listFiles()).sorted().collect(Collectors.toList());
+        for (File file : results) {
+            if (file.isFile()) {
+                profiler.summarizeResultFile(file, line -> System.out.println("  " + line));
+            }
         }
-        for (File file : outputDir.listFiles()) {
+        for (File file : results) {
             if (file.isDirectory()) {
                 printResultFileSummaries(file, profiler);
             }

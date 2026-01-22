@@ -39,6 +39,7 @@ Array.prototype.unique = function() {
     return [...new Set(this)];
 }
 const dataFormat = new Intl.NumberFormat(navigator.language, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+const labelFormat = new Intl.NumberFormat(navigator.language, { minimumFractionDigits: 0, maximumFractionDigits: 2 });
 const dataDiffFormat = new Intl.NumberFormat(navigator.language, { minimumFractionDigits: 2, maximumFractionDigits: 2, signDisplay: "exceptZero" });
 const percentFormat = new Intl.NumberFormat(navigator.language, { style: 'percent', minimumFractionDigits: 2, maximumFractionDigits: 2 });
 const percentDiffFormat = new Intl.NumberFormat(navigator.language, { style: 'percent', minimumFractionDigits: 2, maximumFractionDigits: 2, signDisplay: "exceptZero"  });
@@ -111,7 +112,8 @@ new Vue({
                             pointBackgroundColor: sample.color,
                             borderColor: sample.color,
                             data: data,
-                            sample: sample
+                            sample: sample,
+                            yAxisID: sample.unit
                         };
                     }))
                 .flat();
@@ -167,7 +169,6 @@ new Vue({
                 sample.color = `hsl(${scenarioIndex * 360 / scenarios.length}, ${100 - 80 * sampleIndex / samples.length}%, ${30 + 40 * sampleIndex / samples.length}%)`;
                 sample.thickness = sampleIndex === 0 ? 3 : 2;
                 sample.selected = sampleIndex === 0;
-                sample.unit = "ms";
                 const data = measuredIterations(scenario).map(iteration => iteration.values[sample.name]);
                 OPERATIONS.forEach(operation => sample[operation.name] = operation.apply(data));
             });
@@ -184,6 +185,28 @@ new Vue({
         const maxMeasuredIterations = benchmarkResult.scenarios
             .map(scenario => measuredIterations(scenario).length)
             .max();
+        const scales = benchmarkResult.scenarios
+            .flatMap(scenario => scenario.samples)
+            .map(sample => sample.unit)
+            .unique()
+            .reduce((scales, unit) => {
+                scales[unit] = {
+                    type: "linear",
+                    display: "auto",
+                    beginAtZero: true,
+                    position: Object.keys(scales).length % 2 === 0
+                        ? "left"
+                        : "right",
+                    ticks: {
+                        callback: function(value, index, ticks) {
+                            return labelFormat.format(value) + ' ' + unit;
+                        }
+                    }
+                };
+                return scales;
+            }, {});
+        Chart.defaults.font.family = "Lato";
+        Chart.defaults.font.size = "14";
         const chart = this.chart = new Chart(ctx, {
             type: 'line',
             data: {
@@ -191,43 +214,25 @@ new Vue({
                 datasets: this.chartData
             },
             options: {
-                font: {
-                    family: "Roboto Mono"
-                },
                 plugins: {
-                    crosshair: {
-                        zoom: {
-                            enabled: false
-                        },
-                        snap: {
-                            enabled: false
+                    legend: {
+                        display: false
+                    },
+                    tooltip: {
+                        mode: "index",
+                        position: "average",
+                        itemSort: (a, b) => b.yLabel - a.yLabel,
+                        callbacks: {
+                            title: (tooltips, data) => `Build #${tooltips[0].label}`,
+                            label: (context) => dataFormat.format(context.parsed.y) + " " + context.dataset.sample.unit + " – " + context.dataset.label
                         }
                     }
                 },
-                responsive: false,
                 animation: {
                     duration: 0
                 },
-                legend: {
-                    display: false
-                },
-                tooltips: {
-                    mode: "index",
-                    position: "nearest",
-                    itemSort: (a, b) => b.yLabel - a.yLabel,
-                    callbacks: {
-                        title: (tooltips, data) => `Build #${tooltips[0].label}`,
-                        label: (context) => dataFormat.format(context.dataPoint.y) + " " + context.dataset.sample.unit + " – " + context.dataset.label
-                    }
-                },
-                hover: {
-                    intersect: false
-                },
-                scales: {
-                    y: {
-                        beginAtZero: true
-                    }
-                }
+                aspectRatio: 3,
+                scales: scales
             }
         });
         document.fonts.ready.then(() => chart.update());

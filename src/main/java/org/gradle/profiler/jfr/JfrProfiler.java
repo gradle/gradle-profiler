@@ -8,8 +8,6 @@ import java.io.File;
 import java.util.function.Consumer;
 
 public class JfrProfiler extends InstrumentingProfiler {
-    private static final String PROFILE_JFR_SUFFIX = ".jfr";
-
     private final JFRArgs jfrArgs;
 
     JfrProfiler(JFRArgs jfrArgs) {
@@ -31,19 +29,14 @@ public class JfrProfiler extends InstrumentingProfiler {
     }
 
     @Override
-    protected SnapshotCapturingProfilerController doNewController(ScenarioSettings settings) {
-        File jfrFile = getJfrFile(settings);
-        return new JFRControl(jfrArgs, jfrFile);
+    public SnapshotCapturingProfilerController newSnapshottingController(ScenarioSettings settings) {
+        return new JFRControl(jfrArgs, settings.computeJfrProfilerOutputLocation());
     }
 
     @Override
     protected JvmArgsCalculator jvmArgsWithInstrumentation(ScenarioSettings settings, boolean startRecordingOnProcessStart, boolean captureSnapshotOnProcessExit) {
-        File jfrFile = getJfrFile(settings);
+        File jfrFile = settings.computeJfrProfilerOutputLocation();
         return new JFRJvmArgsCalculator(jfrArgs, startRecordingOnProcessStart, captureSnapshotOnProcessExit, jfrFile);
-    }
-
-    private File getJfrFile(ScenarioSettings settings) {
-        return new File(settings.getScenario().getOutputDir(), settings.getScenario().getProfileName() + PROFILE_JFR_SUFFIX);
     }
 
     @Override
@@ -54,5 +47,10 @@ public class JfrProfiler extends InstrumentingProfiler {
     @Override
     protected boolean canRestartRecording(ScenarioSettings settings) {
         return !settings.getScenario().getInvoker().isReuseDaemon();
+    }
+
+    @Override
+    public boolean isCreatesStacksFiles() {
+        return true;
     }
 }

@@ -9,4 +9,9 @@ public class YourKitSamplingProfilerFactory extends ProfilerFactory {
     public Profiler createFromOptions(OptionSet parsedOptions) {
         return new YourKitProfiler(new YourKitConfig(false, true));
     }
+
+    @Override
+    public String getName() {
+        return "yourkit";
+    }
 }

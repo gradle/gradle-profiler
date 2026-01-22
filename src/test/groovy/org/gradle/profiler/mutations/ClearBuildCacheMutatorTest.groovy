@@ -1,8 +1,8 @@
 package org.gradle.profiler.mutations
 
-import static org.gradle.profiler.mutations.AbstractCleanupMutator.CleanupSchedule.BUILD
-import static org.gradle.profiler.mutations.AbstractCleanupMutator.CleanupSchedule.CLEANUP
-import static org.gradle.profiler.mutations.AbstractCleanupMutator.CleanupSchedule.SCENARIO
+import static org.gradle.profiler.mutations.AbstractScheduledMutator.Schedule.BUILD
+import static org.gradle.profiler.mutations.AbstractScheduledMutator.Schedule.CLEANUP
+import static org.gradle.profiler.mutations.AbstractScheduledMutator.Schedule.SCENARIO
 
 class ClearBuildCacheMutatorTest extends AbstractMutatorTest {
 
@@ -13,7 +13,7 @@ class ClearBuildCacheMutatorTest extends AbstractMutatorTest {
     def setup() {
         gradleUserHome = tmpDir.newFolder()
         buildCache1Entry = new File(gradleUserHome, "caches/build-cache-1/12345678901234567890123456789012")
-        buildCache2Entry = new File(gradleUserHome, "caches/build-cache-2/12345678901234567890123456789012")
+        buildCache2Entry = new File(gradleUserHome, "caches/build-cache-2/filestore.mv.db")
     }
 
     private void remakeCacheEntries() {

@@ -1,11 +1,11 @@
 package org.gradle.profiler
 
-import org.gradle.profiler.buildscan.BuildScanProfiler
+import org.gradle.profiler.fixtures.AbstractProfilerIntegrationTest
+import org.gradle.profiler.fixtures.compatibility.gradle.GradleVersionCompatibility
 import org.gradle.util.GradleVersion
+import spock.lang.Issue
 import spock.lang.Requires
-import spock.lang.Unroll
 
-@Unroll
 class ProfilerIntegrationTest extends AbstractProfilerIntegrationTest {
 
     def "complains when neither profile or benchmark requested"() {
@@ -22,10 +22,10 @@ class ProfilerIntegrationTest extends AbstractProfilerIntegrationTest {
     def "complains when scenario file contains unexpected entry"() {
         def scenarioFile = file("benchmark.conf")
         scenarioFile.text = """
-assemble {
-    gradle-version = 3.2
-}
-"""
+            assemble {
+                gradle-version = 3.2
+            }
+        """
 
         when:
         new Main().run("--project-dir", projectDir.absolutePath, "--scenario-file", scenarioFile.absolutePath, "--profile", "jfr")
@@ -40,13 +40,13 @@ assemble {
     def "complains when unknown scenario requested"() {
         def scenarioFile = file("benchmark.conf")
         scenarioFile.text = """
-assemble {
-    tasks = "assemble"
-}
-help {
-    tasks = "help"
-}
-"""
+            assemble {
+                tasks = "assemble"
+            }
+            help {
+                tasks = "help"
+            }
+        """
 
         when:
         new Main().run("--project-dir", projectDir.absolutePath, "--scenario-file", scenarioFile.absolutePath, "--profile", "jfr", "asmbl")
@@ -61,10 +61,10 @@ help {
     def "complains when profiling and skipping warm-up builds"() {
         given:
         buildFile.text = """
-apply plugin: BasePlugin
-println "<gradle-version: " + gradle.gradleVersion + ">"
-println "<tasks: " + gradle.startParameter.taskNames + ">"
-"""
+            apply plugin: BasePlugin
+            println "<gradle-version: " + gradle.gradleVersion + ">"
+            println "<tasks: " + gradle.startParameter.taskNames + ">"
+        """
 
         when:
         new Main().
@@ -81,19 +81,19 @@ println "<tasks: " + gradle.startParameter.taskNames + ">"
         given:
         def scenarioFile = file("benchmark.conf")
         scenarioFile.text = """
-assemble {
-    tasks = assemble
-}
-help {
-    tasks = help
-    warm-ups = 0
-}
-"""
+            assemble {
+                tasks = assemble
+            }
+            help {
+                tasks = help
+                warm-ups = 0
+            }
+        """
         buildFile.text = """
-apply plugin: BasePlugin
-println "<gradle-version: " + gradle.gradleVersion + ">"
-println "<tasks: " + gradle.startParameter.taskNames + ">"
-"""
+            apply plugin: BasePlugin
+            println "<gradle-version: " + gradle.gradleVersion + ">"
+            println "<tasks: " + gradle.startParameter.taskNames + ">"
+        """
 
         when:
         new Main().
@@ -109,11 +109,11 @@ println "<tasks: " + gradle.startParameter.taskNames + ">"
     def "reports build failures"() {
         given:
         buildFile.text = """
-apply plugin: BasePlugin
-assemble.doFirst {
-    throw new RuntimeException("broken!")
-}
-"""
+            apply plugin: BasePlugin
+            assemble.doFirst {
+                throw new RuntimeException("broken!")
+            }
+        """
 
         when:
         new Main().
@@ -132,37 +132,38 @@ assemble.doFirst {
         output.contains("java.lang.RuntimeException: broken!")
     }
 
+    @Requires({ it.instance.isCurrentJvmSupportsMultipleGradleVersions() })
     def "profiles build using JFR, specified Gradle versions and tasks"() {
         given:
         buildFile.text = """
-apply plugin: BasePlugin
-println "<gradle-version: " + gradle.gradleVersion + ">"
-println "<tasks: " + gradle.startParameter.taskNames + ">"
-println "<daemon: " + gradle.services.get(org.gradle.internal.environment.GradleBuildEnvironment).longLivingProcess + ">"
-"""
+            apply plugin: BasePlugin
+            println "<gradle-version: " + gradle.gradleVersion + ">"
+            println "<tasks: " + gradle.startParameter.taskNames + ">"
+            println "<daemon: " + gradle.services.get(org.gradle.internal.environment.GradleBuildEnvironment).longLivingProcess + ">"
+        """
 
         when:
         new Main().
-            run("--project-dir", projectDir.absolutePath, "--output-dir", outputDir.absolutePath, "--gradle-version", minimalSupportedGradleVersion, "--gradle-version", "3.0", "--profile", "jfr", "assemble")
+            run("--project-dir", projectDir.absolutePath, "--output-dir", outputDir.absolutePath, "--gradle-version", minimalSupportedGradleVersion, "--gradle-version", latestSupportedGradleVersion, "--profile", "jfr", "assemble")
 
         then:
         // Probe version, 2 warm up, 1 build
         logFile.containsOne("* Running scenario using Gradle $minimalSupportedGradleVersion (scenario 1/2)")
-        logFile.containsOne("* Running scenario using Gradle 3.0 (scenario 2/2)")
+        logFile.containsOne("* Running scenario using Gradle $latestSupportedGradleVersion (scenario 2/2)")
         logFile.find("<gradle-version: $minimalSupportedGradleVersion").size() == 4
-        logFile.find("<gradle-version: 3.0").size() == 4
+        logFile.find("<gradle-version: $latestSupportedGradleVersion").size() == 4
 
         new File(outputDir, "$minimalSupportedGradleVersion/${minimalSupportedGradleVersion}.jfr").file
-        new File(outputDir, "3.0/3.0.jfr").file
+        new File(outputDir, "$latestSupportedGradleVersion/${latestSupportedGradleVersion}.jfr").file
     }
 
     def "can specify the number of warm-up builds and iterations when profiling"() {
         given:
         buildFile.text = """
-apply plugin: BasePlugin
-println "<gradle-version: " + gradle.gradleVersion + ">"
-println "<tasks: " + gradle.startParameter.taskNames + ">"
-"""
+            apply plugin: BasePlugin
+            println "<gradle-version: " + gradle.gradleVersion + ">"
+            println "<tasks: " + gradle.startParameter.taskNames + ">"
+        """
 
         when:
         new Main().
@@ -181,144 +182,28 @@ println "<tasks: " + gradle.startParameter.taskNames + ">"
         profileFile.exists()
     }
 
-    def "profiles build using Build Scans, specified Gradle version and tasks"() {
-        given:
-        buildFile.text = """
-apply plugin: BasePlugin
-println "<gradle-version: " + gradle.gradleVersion + ">"
-println "<tasks: " + gradle.startParameter.taskNames + ">"
-println "<daemon: " + gradle.services.get(org.gradle.internal.environment.GradleBuildEnvironment).longLivingProcess + ">"
-"""
-
-        when:
-        new Main().
-            run("--project-dir", projectDir.absolutePath, "--output-dir", outputDir.absolutePath, "--gradle-version", minimalSupportedGradleVersion, "--profile", "buildscan",
-                "assemble")
-
-        then:
-        // Probe version, 2 warm up, 1 build
-        logFile.find("<gradle-version: $minimalSupportedGradleVersion>").size() == 4
-        logFile.find("<daemon: true").size() == 4
-        logFile.find("<tasks: [assemble]>").size() == 3
-        assertBuildScanPublished(BuildScanProfiler.defaultBuildScanVersion(GradleVersion.version(minimalSupportedGradleVersion)))
-    }
-
-    def "profiles build using Build Scans with latest supported Gradle version"() {
-        given:
-        buildFile.text = """
-apply plugin: BasePlugin
-println "<gradle-version: " + gradle.gradleVersion + ">"
-"""
-
-        when:
-        new Main().
-                run("--project-dir", projectDir.absolutePath, "--output-dir", outputDir.absolutePath, "--gradle-version", latestSupportedGradleVersion, "--profile", "buildscan",
-                        "assemble")
-
-        then:
-        logFile.find("<gradle-version: $latestSupportedGradleVersion>").size() == 4
-        assertBuildScanPublished(BuildScanProfiler.defaultBuildScanVersion(GradleVersion.version(latestSupportedGradleVersion)))
-    }
-
-    def "uses build scan version used by the build if present"() {
-        given:
-        buildFile.text = """
-plugins {
-    id 'com.gradle.build-scan' version '1.16'
-}
-apply plugin: BasePlugin
-
-buildScan { termsOfServiceUrl = 'https://gradle.com/terms-of-service'; termsOfServiceAgree = 'yes' }
-
-println "<gradle-version: " + gradle.gradleVersion + ">"
-println "<tasks: " + gradle.startParameter.taskNames + ">"
-println "<daemon: " + gradle.services.get(org.gradle.internal.environment.GradleBuildEnvironment).longLivingProcess + ">"
-"""
-
-        when:
-        new Main().
-            run("--project-dir", projectDir.absolutePath, "--output-dir", outputDir.absolutePath, "--gradle-version", minimalSupportedGradleVersion, "--profile", "buildscan",
-                "assemble")
-
-        then:
-        // Probe version, 2 warm up, 1 build
-        logFile.find("<gradle-version: $minimalSupportedGradleVersion>").size() == 4
-        logFile.find("<daemon: true").size() == 4
-        logFile.find("<tasks: [assemble]>").size() == 3
-        assertBuildScanPublished()
-    }
-
-    def "profiles build using Build Scans overridden version specified Gradle version and tasks"() {
-        given:
-        buildFile.text = """
-apply plugin: BasePlugin
-println "<gradle-version: " + gradle.gradleVersion + ">"
-println "<tasks: " + gradle.startParameter.taskNames + ">"
-println "<daemon: " + gradle.services.get(org.gradle.internal.environment.GradleBuildEnvironment).longLivingProcess + ">"
-"""
-
-        when:
-        new Main().
-            run("--project-dir", projectDir.absolutePath, "--output-dir", outputDir.absolutePath, "--gradle-version", minimalSupportedGradleVersion,
-                "--profile", "buildscan", "--buildscan-version", "1.2",
-                "assemble")
-
-        then:
-        // Probe version, 2 warm up, 1 build
-        logFile.find("<gradle-version: $minimalSupportedGradleVersion>").size() == 4
-        logFile.find("<daemon: true").size() == 4
-        logFile.find("<tasks: [assemble]>").size() == 3
-        assertBuildScanPublished("1.2")
-    }
-
-    def "profiles build using JFR, Build Scans, specified Gradle version and tasks"() {
-        given:
-        buildFile.text = """
-apply plugin: BasePlugin
-println "<gradle-version: " + gradle.gradleVersion + ">"
-println "<tasks: " + gradle.startParameter.taskNames + ">"
-println "<daemon: " + gradle.services.get(org.gradle.internal.environment.GradleBuildEnvironment).longLivingProcess + ">"
-"""
-
-        when:
-        new Main().
-            run("--project-dir", projectDir.absolutePath, "--output-dir", outputDir.absolutePath, "--gradle-version", minimalSupportedGradleVersion,
-                "--profile", "buildscan", "--buildscan-version", "1.2",
-                "--profile", "jfr",
-                "assemble")
-
-        then:
-        // Probe version, 2 warm up, 1 build
-        logFile.find("<gradle-version: $minimalSupportedGradleVersion>").size() == 4
-        logFile.find("<daemon: true").size() == 4
-        logFile.find("<tasks: [assemble]>").size() == 3
-        assertBuildScanPublished("1.2")
-
-        def profileFile = new File(outputDir, "${minimalSupportedGradleVersion}.jfr")
-        profileFile.isFile()
-    }
-
+    @Requires({ it.instance.isCurrentJvmSupportsMultipleGradleVersions() })
     def "runs benchmarks using scenarios defined in scenario file"() {
         given:
         def scenarioFile = file("benchmark.conf")
         scenarioFile.text = """
-assemble {
-    versions = ["3.0", "$minimalSupportedGradleVersion"]
-    tasks = assemble
-}
-help {
-    versions = "$minimalSupportedGradleVersion"
-    tasks = [help]
-    daemon = none
-}
-"""
+            assemble {
+                versions = ["$latestSupportedGradleVersion", "$minimalSupportedGradleVersion"]
+                tasks = assemble
+            }
+            help {
+                versions = "$minimalSupportedGradleVersion"
+                tasks = ["help"]
+                daemon = none
+            }
+        """
 
         buildFile.text = """
-apply plugin: BasePlugin
-println "<gradle-version: " + gradle.gradleVersion + ">"
-println "<tasks: " + gradle.startParameter.taskNames + ">"
-println "<daemon: " + gradle.services.get(org.gradle.internal.environment.GradleBuildEnvironment).longLivingProcess + ">"
-"""
+            apply plugin: BasePlugin
+            println "<gradle-version: " + gradle.gradleVersion + ">"
+            println "<tasks: " + gradle.startParameter.taskNames + ">"
+            println "<daemon: " + gradle.services.get(org.gradle.internal.environment.GradleBuildEnvironment).longLivingProcess + ">"
+        """
 
         when:
         new Main().run("--project-dir", projectDir.absolutePath, "--output-dir", outputDir.absolutePath, "--scenario-file", scenarioFile.absolutePath,
@@ -327,43 +212,44 @@ println "<daemon: " + gradle.services.get(org.gradle.internal.environment.Gradle
         then:
         // Probe version, 2 scenarios have 6 warm up, 10 builds, 1 scenario has 1 warm up, 10 builds
         logFile.find("<gradle-version: $minimalSupportedGradleVersion>").size() == 1 + 16 + 11
-        logFile.find("<gradle-version: 3.0").size() == 17
+        logFile.find("<gradle-version: $latestSupportedGradleVersion").size() == 17
+        logFile.find("<tasks: [:help]>").size() == 2 // Probe version
         logFile.find("<daemon: true").size() == 2 + 16 * 2
         logFile.find("<daemon: false").size() == 11
-        logFile.find("<tasks: [help]>").size() == 2 + 11
+        logFile.find("<tasks: [help]>").size() == 11
         logFile.find("<tasks: [assemble]>").size() == 16 * 2
 
-        logFile.containsOne("* Running scenario assemble using Gradle 3.0 (scenario 1/3)")
+        logFile.containsOne("* Running scenario assemble using Gradle $latestSupportedGradleVersion (scenario 1/3)")
         logFile.containsOne("* Running scenario assemble using Gradle $minimalSupportedGradleVersion (scenario 2/3)")
         logFile.containsOne("* Running scenario help using Gradle $minimalSupportedGradleVersion (scenario 3/3)")
 
         def lines = resultFile.lines
         lines.size() == totalLinesForExecutions(16)
         lines.get(0) == "scenario,assemble,assemble,help"
-        lines.get(1) == "version,Gradle 3.0,Gradle ${minimalSupportedGradleVersion},Gradle ${minimalSupportedGradleVersion}"
+        lines.get(1) == "version,Gradle $latestSupportedGradleVersion,Gradle ${minimalSupportedGradleVersion},Gradle ${minimalSupportedGradleVersion}"
         lines.get(2) == "tasks,assemble,assemble,help"
-        lines.get(3) == "value,execution,execution,execution"
+        lines.get(3) == "value,total execution time,total execution time,total execution time"
     }
 
     def "runs benchmarks using scenario provided on command line and defined in scenario file"() {
         given:
         def scenarioFile = file("benchmark.conf")
         scenarioFile.text = """
-xyz {
-    versions = ["$minimalSupportedGradleVersion"]
-}
-doNotRun {
-    versions = "$minimalSupportedGradleVersion"
-    tasks = [broken]
-}
-"""
+            xyz {
+                versions = ["$minimalSupportedGradleVersion"]
+            }
+            doNotRun {
+                versions = "$minimalSupportedGradleVersion"
+                tasks = [broken]
+            }
+        """
 
         buildFile.text = """
-apply plugin: BasePlugin
-println "<gradle-version: " + gradle.gradleVersion + ">"
-println "<tasks: " + gradle.startParameter.taskNames + ">"
-println "<daemon: " + gradle.services.get(org.gradle.internal.environment.GradleBuildEnvironment).longLivingProcess + ">"
-"""
+            apply plugin: BasePlugin
+            println "<gradle-version: " + gradle.gradleVersion + ">"
+            println "<tasks: " + gradle.startParameter.taskNames + ">"
+            println "<daemon: " + gradle.services.get(org.gradle.internal.environment.GradleBuildEnvironment).longLivingProcess + ">"
+        """
 
         when:
         new Main().run("--project-dir", projectDir.absolutePath, "--output-dir", outputDir.absolutePath, "--scenario-file", scenarioFile.absolutePath,
@@ -372,8 +258,8 @@ println "<daemon: " + gradle.services.get(org.gradle.internal.environment.Gradle
         then:
         // Probe version, 6 warm up, 10 builds
         logFile.find("<gradle-version: $minimalSupportedGradleVersion>").size() == 17
+        logFile.find("<tasks: [:help]>").size() == 1 // Probe version
         logFile.find("<daemon: true").size() == 17
-        logFile.find("<tasks: [help]>").size() == 1
         logFile.find("<tasks: []>").size() == 16
 
         logFile.containsOne("* Running scenario xyz using Gradle $minimalSupportedGradleVersion (scenario 1/1)")
@@ -383,26 +269,26 @@ println "<daemon: " + gradle.services.get(org.gradle.internal.environment.Gradle
         lines.get(0) == "scenario,xyz"
         lines.get(1) == "version,Gradle ${minimalSupportedGradleVersion}"
         lines.get(2) == "tasks,default tasks"
-        lines.get(3) == "value,execution"
+        lines.get(3) == "value,total execution time"
     }
 
     def "profiles scenarios defined in scenario file"() {
         given:
         def scenarioFile = file("benchmark.conf")
         scenarioFile.text = """
-assemble {
-    tasks = assemble
-}
-help {
-    tasks = help
-}
-"""
+            assemble {
+                tasks = assemble
+            }
+            help {
+                tasks = help
+            }
+        """
 
         buildFile.text = """
-apply plugin: BasePlugin
-println "<gradle-version: " + gradle.gradleVersion + ">"
-println "<tasks: " + gradle.startParameter.taskNames + ">"
-"""
+            apply plugin: BasePlugin
+            println "<gradle-version: " + gradle.gradleVersion + ">"
+            println "<tasks: " + gradle.startParameter.taskNames + ">"
+        """
 
         when:
         new Main().run("--project-dir", projectDir.absolutePath, "--output-dir", outputDir.absolutePath, "--scenario-file", scenarioFile.absolutePath,
@@ -410,7 +296,8 @@ println "<tasks: " + gradle.startParameter.taskNames + ">"
 
         then:
         logFile.find("<gradle-version: $minimalSupportedGradleVersion>").size() == 7
-        logFile.find("<tasks: [help]>").size() == 4
+        logFile.find("<tasks: [:help]>").size() == 1 // Probe version
+        logFile.find("<tasks: [help]>").size() == 3
         logFile.find("<tasks: [assemble]>").size() == 3
 
         logFile.containsOne("* Running scenario assemble using Gradle $minimalSupportedGradleVersion (scenario 1/2)")
@@ -420,155 +307,74 @@ println "<tasks: " + gradle.startParameter.taskNames + ">"
         new File(outputDir, "help/help-${minimalSupportedGradleVersion}.jfr").file
     }
 
-    def "runs benchmarks fetching tooling model"() {
-        given:
-        def scenarioFile = file("benchmark.conf")
-        scenarioFile.text = """
-ideaModel {
-    versions = ["$minimalSupportedGradleVersion", "$latestSupportedGradleVersion"]
-    model = "org.gradle.tooling.model.idea.IdeaProject"
-}
-"""
-
-        buildFile.text = """
-apply plugin: BasePlugin
-println "<gradle-version: " + gradle.gradleVersion + ">"
-println "<tasks: " + gradle.startParameter.taskNames + ">"
-println "<daemon: " + gradle.services.get(org.gradle.internal.environment.GradleBuildEnvironment).longLivingProcess + ">"
-plugins.withId("idea") {
-    // most likely due to IDEA model builder
-    println("<idea>")
-}
-"""
-
-        when:
-        new Main().run("--project-dir", projectDir.absolutePath, "--output-dir", outputDir.absolutePath, "--scenario-file", scenarioFile.absolutePath,
-            "--benchmark", "ideaModel")
-
-        then:
-        // Probe version, 6 warm up, 10 builds
-        logFile.find("<gradle-version: $minimalSupportedGradleVersion>").size() == 17
-        logFile.find("<gradle-version: $latestSupportedGradleVersion").size() == 17
-        logFile.find("<daemon: true").size() == 17 * 2
-        logFile.find("<tasks: []>").size() == 16 * 2
-        logFile.find("<idea>").size() == 16 * 2
-
-        logFile.containsOne("* Running scenario ideaModel using Gradle $minimalSupportedGradleVersion (scenario 1/2)")
-        logFile.containsOne("* Running scenario ideaModel using Gradle $latestSupportedGradleVersion (scenario 2/2)")
-
-        def lines = resultFile.lines
-        lines.size() == totalLinesForExecutions(16)
-        lines.get(0) == "scenario,ideaModel,ideaModel"
-        lines.get(1) == "version,Gradle $minimalSupportedGradleVersion,Gradle $latestSupportedGradleVersion"
-        lines.get(2) == "tasks,model IdeaProject,model IdeaProject"
-        lines.get(3) == "value,execution,execution"
-    }
-
-    def "profiles fetching tooling model using JFR"() {
-        given:
-        def scenarioFile = file("benchmark.conf")
-        scenarioFile.text = """
-ideaModel {
-    versions = ["$minimalSupportedGradleVersion", "$latestSupportedGradleVersion"]
-    model = "org.gradle.tooling.model.idea.IdeaProject"
-}
-"""
-
-        buildFile.text = """
-apply plugin: BasePlugin
-println "<gradle-version: " + gradle.gradleVersion + ">"
-println "<tasks: " + gradle.startParameter.taskNames + ">"
-println "<daemon: " + gradle.services.get(org.gradle.internal.environment.GradleBuildEnvironment).longLivingProcess + ">"
-plugins.withId("idea") {
-    // most likely due to IDEA model builder
-    println("<idea>")
-}
-"""
-
-        when:
-        new Main().run("--project-dir", projectDir.absolutePath, "--output-dir", outputDir.absolutePath, "--scenario-file", scenarioFile.absolutePath,
-            "--profile", "jfr", "ideaModel")
-
-        then:
-        // Probe version, 2 warm up, 1 profiled build
-        logFile.find("<gradle-version: $minimalSupportedGradleVersion>").size() == 4
-        logFile.find("<gradle-version: $latestSupportedGradleVersion>").size() == 4
-        logFile.find("<daemon: true").size() == 8
-        logFile.find("<tasks: []>").size() == 6
-        logFile.find("<idea>").size() == 6
-
-        logFile.containsOne("* Running scenario ideaModel using Gradle $minimalSupportedGradleVersion (scenario 1/2)")
-        logFile.containsOne("* Running scenario ideaModel using Gradle $latestSupportedGradleVersion (scenario 2/2)")
-
-        def profileFile = new File(outputDir, "ideaModel/$minimalSupportedGradleVersion/ideaModel-${minimalSupportedGradleVersion}.jfr")
-        profileFile.isFile()
-    }
-
+    @Requires({ it.instance.isCurrentJvmSupportsMultipleGradleVersions() })
     def "profiles scenarios defined in scenario file using multiple Gradle versions"() {
         given:
         def scenarioFile = file("benchmark.conf")
         scenarioFile.text = """
-assemble {
-    tasks = assemble
-}
-help {
-    tasks = help
-}
-"""
+            assemble {
+                tasks = assemble
+            }
+            help {
+                tasks = help
+            }
+        """
 
         buildFile.text = """
-apply plugin: BasePlugin
-println "<gradle-version: " + gradle.gradleVersion + ">"
-println "<tasks: " + gradle.startParameter.taskNames + ">"
-"""
+            apply plugin: BasePlugin
+            println "<gradle-version: " + gradle.gradleVersion + ">"
+            println "<tasks: " + gradle.startParameter.taskNames + ">"
+        """
 
         when:
         new Main().run("--project-dir", projectDir.absolutePath, "--output-dir", outputDir.absolutePath, "--scenario-file", scenarioFile.absolutePath,
-            "--profile", "jfr", "--gradle-version", minimalSupportedGradleVersion, "--gradle-version", "3.0")
+            "--profile", "jfr", "--gradle-version", minimalSupportedGradleVersion, "--gradle-version", latestSupportedGradleVersion)
 
         then:
         logFile.find("<gradle-version: $minimalSupportedGradleVersion>").size() == 7
-        logFile.find("<gradle-version: 3.0>").size() == 7
-        logFile.find("<tasks: [help]>").size() == 8
+        logFile.find("<gradle-version: $latestSupportedGradleVersion>").size() == 7
+        logFile.find("<tasks: [:help]>").size() == 2 // Probe version
+        logFile.find("<tasks: [help]>").size() == 6
         logFile.find("<tasks: [assemble]>").size() == 6
 
         logFile.containsOne("* Running scenario assemble using Gradle $minimalSupportedGradleVersion (scenario 1/4)")
-        logFile.containsOne("* Running scenario assemble using Gradle 3.0 (scenario 2/4)")
+        logFile.containsOne("* Running scenario assemble using Gradle $latestSupportedGradleVersion (scenario 2/4)")
         logFile.containsOne("* Running scenario help using Gradle $minimalSupportedGradleVersion (scenario 3/4)")
-        logFile.containsOne("* Running scenario help using Gradle 3.0 (scenario 4/4)")
+        logFile.containsOne("* Running scenario help using Gradle $latestSupportedGradleVersion (scenario 4/4)")
 
         new File(outputDir, "assemble/$minimalSupportedGradleVersion/assemble-${minimalSupportedGradleVersion}.jfr").file
-        new File(outputDir, "assemble/3.0/assemble-3.0.jfr").file
+        new File(outputDir, "assemble/$latestSupportedGradleVersion/assemble-${latestSupportedGradleVersion}.jfr").file
         new File(outputDir, "help/$minimalSupportedGradleVersion/help-${minimalSupportedGradleVersion}.jfr").file
-        new File(outputDir, "help/3.0/help-3.0.jfr").file
+        new File(outputDir, "help/$latestSupportedGradleVersion/help-${latestSupportedGradleVersion}.jfr").file
     }
 
+    @Requires({ it.instance.isCurrentJvmSupportsMultipleGradleVersions() })
     def "resolve placeholders in configuration"() {
         given:
 
         def scenarioFile = file("benchmark.conf")
         scenarioFile.text = """
-default-scenarios = ["assemble", "help"]
+            default-scenarios = ["assemble", "help"]
 
-baseVersion = "${minimalSupportedGradleVersion}"
+            baseVersion = "${minimalSupportedGradleVersion}"
 
-defaults = {
-    versions = [ \${baseVersion}, "3.0" ]
-}
+            defaults = {
+                versions = [ \${baseVersion}, "$latestSupportedGradleVersion" ]
+            }
 
-assemble = \${defaults} {
-    tasks = assemble
-}
-help = \${defaults} {
-    tasks = help
-}
-"""
+            assemble = \${defaults} {
+                tasks = assemble
+            }
+            help = \${defaults} {
+                tasks = help
+            }
+        """
 
         buildFile.text = """
-apply plugin: BasePlugin
-println "<gradle-version: " + gradle.gradleVersion + ">"
-println "<tasks: " + gradle.startParameter.taskNames + ">"
-"""
+            apply plugin: BasePlugin
+            println "<gradle-version: " + gradle.gradleVersion + ">"
+            println "<tasks: " + gradle.startParameter.taskNames + ">"
+        """
 
         when:
         new Main().run("--project-dir", projectDir.absolutePath, "--output-dir", outputDir.absolutePath, "--scenario-file", scenarioFile.absolutePath,
@@ -576,36 +382,37 @@ println "<tasks: " + gradle.startParameter.taskNames + ">"
 
         then:
         logFile.find("<gradle-version: $minimalSupportedGradleVersion>").size() == 7
-        logFile.find("<gradle-version: 3.0>").size() == 7
+        logFile.find("<gradle-version: $latestSupportedGradleVersion>").size() == 7
+        logFile.find("<tasks: [:help]>").size() == 2 // Probe version
         logFile.find("<tasks: [assemble]>").size() == 6
-        logFile.find("<tasks: [help]>").size() == 8
+        logFile.find("<tasks: [help]>").size() == 6
 
         logFile.containsOne("* Running scenario assemble using Gradle $minimalSupportedGradleVersion (scenario 1/4)")
-        logFile.containsOne("* Running scenario assemble using Gradle 3.0 (scenario 2/4)")
+        logFile.containsOne("* Running scenario assemble using Gradle $latestSupportedGradleVersion (scenario 2/4)")
         logFile.containsOne("* Running scenario help using Gradle $minimalSupportedGradleVersion (scenario 3/4)")
-        logFile.containsOne("* Running scenario help using Gradle 3.0 (scenario 4/4)")
+        logFile.containsOne("* Running scenario help using Gradle $latestSupportedGradleVersion (scenario 4/4)")
 
         new File(outputDir, "help/$minimalSupportedGradleVersion/help-${minimalSupportedGradleVersion}.jfr").file
-        new File(outputDir, "help/3.0/help-3.0.jfr").file
+        new File(outputDir, "help/$latestSupportedGradleVersion/help-${latestSupportedGradleVersion}.jfr").file
     }
 
     def "runs cleanup tasks defined in scenario file"() {
         given:
         def scenarioFile = file("benchmark.conf")
         scenarioFile.text = """
-help {
-    versions = "$minimalSupportedGradleVersion"
-    cleanup-tasks = clean
-    tasks = help
-}
-"""
+            help {
+                versions = "$minimalSupportedGradleVersion"
+                cleanup-tasks = clean
+                tasks = help
+            }
+        """
 
         buildFile.text = """
-apply plugin: BasePlugin
-println "<gradle-version: " + gradle.gradleVersion + ">"
-println "<tasks: " + gradle.startParameter.taskNames + ">"
-println "<daemon: " + gradle.services.get(org.gradle.internal.environment.GradleBuildEnvironment).longLivingProcess + ">"
-"""
+            apply plugin: BasePlugin
+            println "<gradle-version: " + gradle.gradleVersion + ">"
+            println "<tasks: " + gradle.startParameter.taskNames + ">"
+            println "<daemon: " + gradle.services.get(org.gradle.internal.environment.GradleBuildEnvironment).longLivingProcess + ">"
+        """
 
         when:
         new Main().run("--project-dir", projectDir.absolutePath, "--output-dir", outputDir.absolutePath, "--scenario-file", scenarioFile.absolutePath,
@@ -614,71 +421,73 @@ println "<daemon: " + gradle.services.get(org.gradle.internal.environment.Gradle
         then:
         // Probe version, 6 warm up, 10 builds
         logFile.find("<gradle-version: $minimalSupportedGradleVersion>").size() == 33
-        logFile.find("<tasks: [help]>").size() == 17
+        logFile.find("<tasks: [:help]>").size() == 1
+        logFile.find("<tasks: [help]>").size() == 16
 
         def lines = resultFile.lines
         lines.size() == totalLinesForExecutions(16)
         lines.get(0) == "scenario,help"
         lines.get(1) == "version,Gradle ${minimalSupportedGradleVersion}"
         lines.get(2) == "tasks,help"
-        lines.get(3) == "value,execution"
-        lines.get(4).matches("warm-up build #1,\\d+")
-        lines.get(9).matches("warm-up build #6,\\d+")
-        lines.get(10).matches("measured build #1,\\d+")
-        lines.get(11).matches("measured build #2,\\d+")
-        lines.get(19).matches("measured build #10,\\d+")
+        lines.get(3) == "value,total execution time"
+        lines.get(4).matches("warm-up build #1,$SAMPLE")
+        lines.get(9).matches("warm-up build #6,$SAMPLE")
+        lines.get(10).matches("measured build #1,$SAMPLE")
+        lines.get(11).matches("measured build #2,$SAMPLE")
+        lines.get(19).matches("measured build #10,$SAMPLE")
     }
 
     def "runs benchmarks using single scenario defined in scenario file"() {
         given:
         def scenarioFile = file("benchmark.conf")
         scenarioFile.text = """
-assemble {
-    versions = ["3.0", "$minimalSupportedGradleVersion"]
-    tasks = assemble
-}
-help {
-    versions = "$minimalSupportedGradleVersion"
-    tasks = [help]
-    run-using = no-daemon
-}
-"""
+            assemble {
+                versions = ["$latestSupportedGradleVersion", "$minimalSupportedGradleVersion"]
+                tasks = assemble
+            }
+            help {
+                versions = "$minimalSupportedGradleVersion"
+                tasks = [help]
+                run-using = no-daemon
+            }
+        """
 
         buildFile.text = """
-apply plugin: BasePlugin
-"""
+            apply plugin: BasePlugin
+        """
 
         when:
         new Main().run("--project-dir", projectDir.absolutePath, "--output-dir", outputDir.absolutePath, "--scenario-file", scenarioFile.absolutePath,
             "--benchmark", "assemble")
 
         then:
-        logFile.containsOne("* Running scenario assemble using Gradle 3.0 (scenario 1/2)")
+        logFile.containsOne("* Running scenario assemble using Gradle $latestSupportedGradleVersion (scenario 1/2)")
         logFile.containsOne("* Running scenario assemble using Gradle $minimalSupportedGradleVersion (scenario 2/2)")
 
         !logFile.find("Tasks: [help]")
     }
 
+    @Requires({ it.instance.isCurrentJvmSupportsMultipleGradleVersions() })
     def "dry run runs test builds to verify configuration"() {
         given:
         def scenarioFile = file("benchmark.conf")
         scenarioFile.text = """
-s1 {
-    versions = ["3.0", "$minimalSupportedGradleVersion"]
-    tasks = assemble
-}
-s2 {
-    versions = "$minimalSupportedGradleVersion"
-    tasks = [clean,assemble]
-}
-"""
+            s1 {
+                versions = ["$latestSupportedGradleVersion", "$minimalSupportedGradleVersion"]
+                tasks = assemble
+            }
+            s2 {
+                versions = "$minimalSupportedGradleVersion"
+                tasks = [clean,assemble]
+            }
+        """
 
         buildFile.text = """
-apply plugin: BasePlugin
-println "<gradle-version: " + gradle.gradleVersion + ">"
-println "<tasks: " + gradle.startParameter.taskNames + ">"
-println "<dry-run: " + gradle.startParameter.dryRun + ">"
-"""
+            apply plugin: BasePlugin
+            println "<gradle-version: " + gradle.gradleVersion + ">"
+            println "<tasks: " + gradle.startParameter.taskNames + ">"
+            println "<dry-run: " + gradle.startParameter.dryRun + ">"
+        """
 
         when:
         new Main().run("--project-dir", projectDir.absolutePath, "--output-dir", outputDir.absolutePath, "--scenario-file", scenarioFile.absolutePath, "--benchmark", "--dry-run")
@@ -686,29 +495,29 @@ println "<dry-run: " + gradle.startParameter.dryRun + ">"
         then:
         // Probe version, 1 warm up, 1 build
         logFile.find("<gradle-version: $minimalSupportedGradleVersion>").size() == 5
-        logFile.find("<gradle-version: 3.0").size() == 3
+        logFile.find("<gradle-version: $latestSupportedGradleVersion").size() == 3
+        logFile.find("<tasks: [:help]>").size() == 2
         logFile.find("<dry-run: false>").size() == 2
         logFile.find("<dry-run: true>").size() == 6
-        logFile.find("<tasks: [help]>").size() == 2
         logFile.find("<tasks: [assemble]>").size() == 4
         logFile.find("<tasks: [clean, assemble]>").size() == 2
 
         def lines = resultFile.lines
         lines.size() == totalLinesForExecutions(2)
         lines.get(0) == "scenario,s1,s1,s2"
-        lines.get(1) == "version,Gradle 3.0,Gradle ${minimalSupportedGradleVersion},Gradle ${minimalSupportedGradleVersion}"
+        lines.get(1) == "version,Gradle ${latestSupportedGradleVersion},Gradle ${minimalSupportedGradleVersion},Gradle ${minimalSupportedGradleVersion}"
         lines.get(2) == "tasks,assemble,assemble,clean assemble"
-        lines.get(3) == "value,execution,execution,execution"
-        lines.get(4).matches("warm-up build #1,\\d+,\\d+,\\d+")
-        lines.get(5).matches("measured build #1,\\d+,\\d+,\\d+")
+        lines.get(3) == "value,total execution time,total execution time,total execution time"
+        lines.get(4).matches("warm-up build #1,$SAMPLE,$SAMPLE,$SAMPLE")
+        lines.get(5).matches("measured build #1,$SAMPLE,$SAMPLE,$SAMPLE")
     }
 
     def "can define system property when benchmarking using tooling API"() {
         given:
         buildFile.text = """
-apply plugin: BasePlugin
-println "<sys-prop: " + System.getProperty("org.gradle.test") + ">"
-"""
+            apply plugin: BasePlugin
+            println "<sys-prop: " + System.getProperty("org.gradle.test") + ">"
+        """
 
         when:
         new Main().run("--project-dir", projectDir.absolutePath, "--output-dir", outputDir.absolutePath, "--gradle-version", minimalSupportedGradleVersion,
@@ -724,12 +533,12 @@ println "<sys-prop: " + System.getProperty("org.gradle.test") + ">"
         given:
         file("gradle.properties").text = "org.gradle.jvmargs=-Dorg.gradle.test=value"
         buildFile.text = """
-apply plugin: BasePlugin
-println "<sys-prop: " + System.getProperty("org.gradle.test") + ">"
-"""
+            apply plugin: BasePlugin
+            println "<sys-prop: " + System.getProperty("org.gradle.test") + ">"
+        """
 
         when:
-        new Main().run("--project-dir", projectDir.absolutePath, "--output-dir", outputDir.absolutePath, "--gradle-version", GradleVersion.current().version, "--benchmark", "assemble")
+        new Main().run("--project-dir", projectDir.absolutePath, "--output-dir", outputDir.absolutePath, "--gradle-version", minimalSupportedGradleVersion, "--benchmark", "assemble")
 
         then:
         // Probe version, 6 warm up, 10 builds
@@ -740,12 +549,12 @@ println "<sys-prop: " + System.getProperty("org.gradle.test") + ">"
         given:
         file("gradle.properties").text = "org.gradle.test=value"
         buildFile.text = """
-apply plugin: BasePlugin
-println "<gradle-prop: " + getProperty("org.gradle.test") + ">"
-"""
+            apply plugin: BasePlugin
+            println "<gradle-prop: " + getProperty("org.gradle.test") + ">"
+        """
 
         when:
-        new Main().run("--project-dir", projectDir.absolutePath, "--output-dir", outputDir.absolutePath, "--gradle-version", GradleVersion.current().version, "--benchmark", "assemble")
+        new Main().run("--project-dir", projectDir.absolutePath, "--output-dir", outputDir.absolutePath, "--gradle-version", minimalSupportedGradleVersion, "--benchmark", "assemble")
 
         then:
         // Probe version, 6 warm up, 10 builds
@@ -755,9 +564,9 @@ println "<gradle-prop: " + getProperty("org.gradle.test") + ">"
     def "can define system property when benchmarking using no-daemon"() {
         given:
         buildFile.text = """
-apply plugin: BasePlugin
-println "<sys-prop: " + System.getProperty("org.gradle.test") + ">"
-"""
+            apply plugin: BasePlugin
+            println "<sys-prop: " + System.getProperty("org.gradle.test") + ">"
+        """
 
         when:
         new Main().run("--project-dir", projectDir.absolutePath, "--output-dir", outputDir.absolutePath, "--gradle-version", minimalSupportedGradleVersion,
@@ -773,25 +582,25 @@ println "<sys-prop: " + System.getProperty("org.gradle.test") + ">"
         given:
         def scenarioFile = file("benchmark.conf")
         scenarioFile.text = """
-a {
-    versions = "$minimalSupportedGradleVersion"
-    tasks = assemble
-    system-properties {
-        "org.gradle.test" = "value-1"
-    }
-}
-b {
-    versions = "$minimalSupportedGradleVersion"
-    tasks = assemble
-    system-properties {
-        "org.gradle.test" = "value-2"
-    }
-}
-"""
+            a {
+                versions = "$minimalSupportedGradleVersion"
+                tasks = assemble
+                system-properties {
+                    "org.gradle.test" = "value-1"
+                }
+            }
+            b {
+                versions = "$minimalSupportedGradleVersion"
+                tasks = assemble
+                system-properties {
+                    "org.gradle.test" = "value-2"
+                }
+            }
+        """
         buildFile.text = """
-apply plugin: BasePlugin
-println "<sys-prop: " + System.getProperty("org.gradle.test") + ">"
-"""
+            apply plugin: BasePlugin
+            println "<sys-prop: " + System.getProperty("org.gradle.test") + ">"
+        """
 
         when:
         new Main().run("--project-dir", projectDir.absolutePath, "--output-dir", outputDir.absolutePath, "--scenario-file", scenarioFile.absolutePath,
@@ -808,14 +617,14 @@ println "<sys-prop: " + System.getProperty("org.gradle.test") + ">"
         given:
         def scenarioFile = file("benchmark.conf")
         scenarioFile.text = """
-a {
-    tasks = assemble
-}
-"""
+            a {
+                tasks = assemble
+            }
+        """
         buildFile.text = """
-apply plugin: BasePlugin
-println "Running \$gradle.gradleVersion"
-"""
+            apply plugin: BasePlugin
+            println "Running \$gradle.gradleVersion"
+        """
         def wrapperProperties = file("gradle/wrapper/gradle-wrapper.properties")
         wrapperProperties.parentFile.mkdirs()
         wrapperProperties.text = "distributionUrl=https\\://services.gradle.org/distributions/gradle-$minimalSupportedGradleVersion-bin.zip"
@@ -833,21 +642,21 @@ println "Running \$gradle.gradleVersion"
         given:
         def scenarioFile = file("benchmark.conf")
         scenarioFile.text = """
-a {
-    versions = "$minimalSupportedGradleVersion"
-    tasks = assemble
-    gradle-args = "-Dorg.gradle.test=value-1"
-}
-b {
-    versions = "$minimalSupportedGradleVersion"
-    tasks = assemble
-    gradle-args = ["-x", "help", "-Dorg.gradle.test=value-2"]
-}
-"""
+            a {
+                versions = "$minimalSupportedGradleVersion"
+                tasks = assemble
+                gradle-args = "-Dorg.gradle.test=value-1"
+            }
+            b {
+                versions = "$minimalSupportedGradleVersion"
+                tasks = assemble
+                gradle-args = ["-x", "help", "-Dorg.gradle.test=value-2"]
+            }
+        """
         buildFile.text = """
-apply plugin: BasePlugin
-println "<sys-prop: " + System.getProperty("org.gradle.test") + ">"
-"""
+            apply plugin: BasePlugin
+            println "<sys-prop: " + System.getProperty("org.gradle.test") + ">"
+        """
 
         when:
         new Main().run("--project-dir", projectDir.absolutePath, "--output-dir", outputDir.absolutePath, "--scenario-file", scenarioFile.absolutePath,
@@ -860,21 +669,20 @@ println "<sys-prop: " + System.getProperty("org.gradle.test") + ">"
         logFile.find("<sys-prop: value-2>").size() == 16
     }
 
-    @Unroll
     def "can use Gradle args to #name parallel mode"() {
         given:
         def scenarioFile = file("benchmark.conf")
         scenarioFile.text = """
-a {
-    versions = "$minimalSupportedGradleVersion"
-    tasks = assemble
-    gradle-args = "$arg"
-}
-"""
+            a {
+                versions = "$minimalSupportedGradleVersion"
+                tasks = assemble
+                gradle-args = "$arg"
+            }
+        """
         buildFile.text = """
-apply plugin: BasePlugin
-println "<parallel: " + gradle.startParameter.parallelProjectExecutionEnabled + ">"
-"""
+            apply plugin: BasePlugin
+            println "<parallel: " + gradle.startParameter.parallelProjectExecutionEnabled + ">"
+        """
 
         when:
         new Main().run("--project-dir", projectDir.absolutePath, "--output-dir", outputDir.absolutePath, "--benchmark", "--scenario-file", scenarioFile.absolutePath)
@@ -895,28 +703,56 @@ println "<parallel: " + gradle.startParameter.parallelProjectExecutionEnabled + 
         true       | "--parallel" | "enable"
     }
 
+    def "applies changes to Groovy build scripts while running benchmark"() {
+        given:
+        buildFile.text = """
+            apply plugin: BasePlugin
+            println "<src-length: \${file('build.gradle').length()}>"
+        """
+        def originalText = buildFile.text
+
+        def scenarioFile = file("scenarios.conf")
+        scenarioFile << """
+            classes {
+                tasks = "help"
+                apply-build-script-change-to = "build.gradle"
+            }
+        """
+
+        when:
+        new Main().run("--project-dir", projectDir.absolutePath, "--output-dir", outputDir.absolutePath, "--gradle-version", minimalSupportedGradleVersion,
+            "--benchmark", "--scenario-file", scenarioFile.absolutePath)
+
+        then:
+        // Probe version, 6 warm up, 10 builds
+        logFile.find("<src-length: ${buildFile.length()}>").size() == 1
+        logFile.find("<src-length: ${buildFile.length() + 77}>").size() == 6 /* WARM_UP #1..6 */ + 9 /* MEASURE #1..9*/
+        logFile.find("<src-length: ${buildFile.length() + 78}>").size() == 1 /* MEASURE #10 */
+        buildFile.text == originalText
+    }
+
     def "applies changes to Java source file while running benchmark"() {
         given:
         buildFile.text = """
-apply plugin: BasePlugin
-println "<src-length: \${file('src/main/java/Library.java').length()}>"
-"""
+            apply plugin: BasePlugin
+            println "<src-length: \${file('src/main/java/Library.java').length()}>"
+        """
         def srcFile = file("src/main/java/Library.java")
         srcFile.parentFile.mkdirs()
         srcFile.text = """
-class Library {
-    void thing() { }
-}
-"""
+            |class Library {
+            |    void thing() { }
+            |}
+        |""".stripMargin()
         def originalText = srcFile.text
 
         def scenarioFile = file("scenarios.conf")
         scenarioFile << """
-classes {
-    tasks = "help"
-    apply-abi-change-to = "src/main/java/Library.java"
-}
-"""
+            classes {
+                tasks = "help"
+                apply-abi-change-to = "src/main/java/Library.java"
+            }
+        """
 
         when:
         new Main().run("--project-dir", projectDir.absolutePath, "--output-dir", outputDir.absolutePath, "--gradle-version", minimalSupportedGradleVersion,
@@ -925,33 +761,33 @@ classes {
         then:
         // Probe version, 6 warm up, 10 builds
         logFile.find("<src-length: ${srcFile.length()}>").size() == 1
-        logFile.find("<src-length: ${srcFile.length() + (OperatingSystem.windows ? 192 : 183)}>").size() == 6 /* WARM_UP #1..6 */ + 9 /* MEASURE #1..9*/
-        logFile.find("<src-length: ${srcFile.length() + (OperatingSystem.windows ? 194 : 185)}>").size() == 1 /* MEASURE #10 */
+        logFile.find("<src-length: ${srcFile.length() + 183}>").size() == 6 /* WARM_UP #1..6 */ + 9 /* MEASURE #1..9*/
+        logFile.find("<src-length: ${srcFile.length() + 185}>").size() == 1 /* MEASURE #10 */
         srcFile.text == originalText
     }
 
     def "applies changes to Android resource file while running benchmark"() {
         given:
         buildFile.text = """
-apply plugin: BasePlugin
-println "<src-length: \${file('src/main/res/values/strings.xml').length()}>"
-"""
+            apply plugin: BasePlugin
+            println "<src-length: \${file('src/main/res/values/strings.xml').length()}>"
+        """
         def srcFile = file("src/main/res/values/strings.xml")
         srcFile.parentFile.mkdirs()
         srcFile.text = """
-<resources>
-    <string name="app_name">Example</string>
-</resources>
-"""
+            <resources>
+                <string name="app_name">Example</string>
+            </resources>
+        """
         def originalText = srcFile.text
 
         def scenarioFile = file("scenarios.conf")
         scenarioFile << """
-classes {
-    tasks = "help"
-    apply-android-resource-change-to = "src/main/res/values/strings.xml"
-}
-"""
+            classes {
+                tasks = "help"
+                apply-android-resource-change-to = "src/main/res/values/strings.xml"
+            }
+        """
 
         when:
         new Main().run("--project-dir", projectDir.absolutePath, "--output-dir", outputDir.absolutePath, "--gradle-version", minimalSupportedGradleVersion,
@@ -960,33 +796,33 @@ classes {
         then:
         // Probe version, 6 warm up, 10 builds
         logFile.find("<src-length: ${srcFile.length()}>").size() == 1
-        logFile.find("<src-length: ${srcFile.length() + 101}>").size() == 6 /* WARM_UP #1..6 */ + 9 /* MEASURE #1..9*/
-        logFile.find("<src-length: ${srcFile.length() + 102}>").size() == 1 /* MEASURE #10 */
+        logFile.find("<src-length: ${srcFile.length() + 165}>").size() == 6 /* WARM_UP #1..6 */ + 9 /* MEASURE #1..9*/
+        logFile.find("<src-length: ${srcFile.length() + 167}>").size() == 1 /* MEASURE #10 */
         srcFile.text == originalText
     }
 
     def "applies change to Android resource value while running benchmark"() {
         given:
         buildFile.text = """
-apply plugin: BasePlugin
-println "<src-length: \${file('src/main/res/values/strings.xml').length()}>"
-"""
+            apply plugin: BasePlugin
+            println "<src-length: \${file('src/main/res/values/strings.xml').length()}>"
+        """
         def srcFile = file("src/main/res/values/strings.xml")
         srcFile.parentFile.mkdirs()
         srcFile.text = """
-<resources>
-    <string name="app_name">Example</string>
-</resources>
-"""
+            <resources>
+                <string name="app_name">Example</string>
+            </resources>
+        """
         def originalText = srcFile.text
 
         def scenarioFile = file("scenarios.conf")
         scenarioFile << """
-classes {
-    tasks = "help"
-    apply-android-resource-value-change-to = "src/main/res/values/strings.xml"
-}
-"""
+            classes {
+                tasks = "help"
+                apply-android-resource-value-change-to = "src/main/res/values/strings.xml"
+            }
+        """
 
         when:
         new Main().run("--project-dir", projectDir.absolutePath, "--output-dir", outputDir.absolutePath, "--gradle-version", minimalSupportedGradleVersion,
@@ -1003,27 +839,27 @@ classes {
     def "reverts changes on benchmark failures"() {
         given:
         buildFile.text = """
-apply plugin: 'java'
-if (file('src/main/java/Library.java').text.contains('_m')) {
-    throw new Exception("Boom")
-}
-"""
+            apply plugin: 'java'
+            if (file('src/main/java/Library.java').text.contains('_m')) {
+                throw new Exception("Boom")
+            }
+        """
         def srcFile = file("src/main/java/Library.java")
         srcFile.parentFile.mkdirs()
         def originalText = """
-class Library {
-    void thing() { }
-}
-"""
+            class Library {
+                void thing() { }
+            }
+        """
         srcFile.text = originalText
 
         def scenarioFile = file("scenarios.conf")
         scenarioFile << """
-classes {
-    tasks = "classes"
-    apply-abi-change-to = "src/main/java/Library.java"
-}
-"""
+            classes {
+                tasks = "classes"
+                apply-abi-change-to = "src/main/java/Library.java"
+            }
+        """
 
         when:
         new Main().run("--project-dir", projectDir.absolutePath, "--output-dir", outputDir.absolutePath, "--gradle-version", minimalSupportedGradleVersion,
@@ -1037,9 +873,9 @@ classes {
     def "uses isolated user home"() {
         given:
         buildFile.text = """
-apply plugin: 'base'
-println "User home: \$gradle.gradleUserHomeDir"
-"""
+            apply plugin: 'base'
+            println "User home: \$gradle.gradleUserHomeDir"
+        """
 
         when:
         new Main().run("--project-dir", projectDir.absolutePath, "--output-dir", outputDir.absolutePath, "--gradle-version", minimalSupportedGradleVersion,
@@ -1052,9 +888,9 @@ println "User home: \$gradle.gradleUserHomeDir"
     def "can specify user home"() {
         given:
         buildFile.text = """
-apply plugin: 'base'
-println "User home: \$gradle.gradleUserHomeDir"
-"""
+            apply plugin: 'base'
+            println "User home: \$gradle.gradleUserHomeDir"
+        """
 
         when:
         new Main().run("--project-dir", projectDir.absolutePath, "--output-dir", outputDir.absolutePath, "--gradle-version", minimalSupportedGradleVersion,
@@ -1070,28 +906,28 @@ println "User home: \$gradle.gradleUserHomeDir"
         writeBuckw()
         def scenarios = file("performance.scenario")
         scenarios.text = """
-buildTarget {
-    tasks = ["some:assemble"]
-    buck {
-        targets = "//some/target"
-    }
-}
-buildType {
-    tasks = ["assemble"]
-    buck {
-        type = "android_binary"
-    }
-}
-buildAll {
-    tasks = ["assemble"]
-    buck {
-        type = "all"
-    }
-}
-help {
-    tasks = ["help"]
-}
-"""
+            buildTarget {
+                tasks = ["some:assemble"]
+                buck {
+                    targets = "//some/target"
+                }
+            }
+            buildType {
+                tasks = ["assemble"]
+                buck {
+                    type = "android_binary"
+                }
+            }
+            buildAll {
+                tasks = ["assemble"]
+                buck {
+                    type = "all"
+                }
+            }
+            help {
+                tasks = ["help"]
+            }
+        """
 
         when:
         new Main().run("--project-dir", projectDir.absolutePath, "--output-dir", outputDir.absolutePath, "--benchmark", "--scenario-file", scenarios.absolutePath, "--buck")
@@ -1109,12 +945,12 @@ help {
         lines.get(0) == "scenario,buildAll,buildTarget,buildType"
         lines.get(1) == "version,buck,buck,buck"
         lines.get(2) == "tasks,,//some/target,"
-        lines.get(3) == "value,execution,execution,execution"
-        lines.get(4).matches("warm-up build #1,\\d+,\\d+,\\d+")
-        lines.get(9).matches("warm-up build #6,\\d+,\\d+,\\d+")
-        lines.get(10).matches("measured build #1,\\d+,\\d+,\\d+")
-        lines.get(11).matches("measured build #2,\\d+,\\d+,\\d+")
-        lines.get(19).matches("measured build #10,\\d+,\\d+,\\d+")
+        lines.get(3) == "value,total execution time,total execution time,total execution time"
+        lines.get(4).matches("warm-up build #1,$SAMPLE,$SAMPLE,$SAMPLE")
+        lines.get(9).matches("warm-up build #6,$SAMPLE,$SAMPLE,$SAMPLE")
+        lines.get(10).matches("measured build #1,$SAMPLE,$SAMPLE,$SAMPLE")
+        lines.get(11).matches("measured build #2,$SAMPLE,$SAMPLE,$SAMPLE")
+        lines.get(19).matches("measured build #10,$SAMPLE,$SAMPLE,$SAMPLE")
     }
 
     def "cannot profile a buck build"() {
@@ -1122,24 +958,24 @@ help {
         writeBuckw()
         def scenarios = file("performance.scenario")
         scenarios.text = """
-buildTarget {
-    buck {
-        targets = "//some/target"
-    }
-}
-help {
-    tasks = ["help"]
-}
-"""
+            buildTarget {
+                buck {
+                    targets = "//some/target"
+                }
+            }
+            help {
+                tasks = ["help"]
+            }
+        """
 
         when:
         new Main().run("--project-dir", projectDir.absolutePath, "--output-dir", outputDir.absolutePath, "--buck", "--profile", "jfr", "--scenario-file", scenarios.absolutePath, "--gradle-version", minimalSupportedGradleVersion, "buildTarget")
 
         then:
-        thrown(IllegalArgumentException)
+        thrown(Exception)
 
         and:
-        output.contains("Can only profile scenario 'buildTarget' when building using Gradle.")
+        output.contains("Profiling is not supported for Buck builds")
     }
 
     def "can profile a scenario that contains buck build instructions when building with Gradle"() {
@@ -1147,13 +983,13 @@ help {
         writeBuckw()
         def scenarios = file("performance.scenario")
         scenarios.text = """
-buildTarget {
-    tasks = ["help"]
-    buck {
-        targets = "//some/target"
-    }
-}
-"""
+            buildTarget {
+                tasks = ["help"]
+                buck {
+                    targets = "//some/target"
+                }
+            }
+        """
 
         when:
         new Main().run("--project-dir", projectDir.absolutePath, "--output-dir", outputDir.absolutePath, "--profile", "jfr", "--scenario-file", scenarios.absolutePath, "--gradle-version", minimalSupportedGradleVersion, "buildTarget")
@@ -1168,13 +1004,13 @@ buildTarget {
         buildFile << "apply plugin: 'base'"
         def scenarios = file("performance.scenario")
         scenarios.text = """
-buildTarget {
-    tasks = ["help"]
-    buck {
-        targets = "//some/target"
-    }
-}
-"""
+            buildTarget {
+                tasks = ["help"]
+                buck {
+                    targets = "//some/target"
+                }
+            }
+        """
 
         when:
         new Main().run("--project-dir", projectDir.absolutePath, "--output-dir", outputDir.absolutePath, "--benchmark", "--scenario-file", scenarios.absolutePath, "--gradle-version", minimalSupportedGradleVersion, "buildTarget")
@@ -1189,13 +1025,13 @@ buildTarget {
         createSimpleBazelWorkspace()
         def scenarios = file("performance.scenario")
         scenarios.text = """
-buildTarget {
-    tasks = ["some:assemble"]
-    bazel {
-        targets = ["build", ":hello"]
-    }
-}
-"""
+            buildTarget {
+                tasks = ["some:assemble"]
+                bazel {
+                    targets = ["build", ":hello"]
+                }
+            }
+        """
 
         when:
         new Main().run("--project-dir", projectDir.absolutePath, "--output-dir", outputDir.absolutePath, "--benchmark", "--scenario-file", scenarios.absolutePath, "--bazel")
@@ -1209,49 +1045,49 @@ buildTarget {
         lines.get(0) == "scenario,buildTarget"
         lines.get(1) == "version,bazel"
         lines.get(2) == "tasks,some:assemble"
-        lines.get(3) == "value,execution"
-        lines.get(4).matches("warm-up build #1,\\d+")
-        lines.get(9).matches("warm-up build #6,\\d+")
-        lines.get(10).matches("measured build #1,\\d+")
-        lines.get(11).matches("measured build #2,\\d+")
-        lines.get(19).matches("measured build #10,\\d+")
+        lines.get(3) == "value,total execution time"
+        lines.get(4).matches("warm-up build #1,$SAMPLE")
+        lines.get(9).matches("warm-up build #6,$SAMPLE")
+        lines.get(10).matches("measured build #1,$SAMPLE")
+        lines.get(11).matches("measured build #2,$SAMPLE")
+        lines.get(19).matches("measured build #10,$SAMPLE")
     }
 
     def "cannot profile a bazel build"() {
         given:
         def scenarios = file("performance.scenario")
         scenarios.text = """
-buildTarget {
-    bazel {
-        targets = "//some/target"
-    }
-}
-help {
-    tasks = ["help"]
-}
-"""
+            buildTarget {
+                bazel {
+                    targets = "//some/target"
+                }
+            }
+            help {
+                tasks = ["help"]
+            }
+        """
 
         when:
         new Main().run("--project-dir", projectDir.absolutePath, "--output-dir", outputDir.absolutePath, "--bazel", "--profile", "jfr", "--scenario-file", scenarios.absolutePath, "--gradle-version", minimalSupportedGradleVersion, "buildTarget")
 
         then:
-        thrown(IllegalArgumentException)
+        thrown(Exception)
 
         and:
-        output.contains("Can only profile scenario 'buildTarget' when building using Gradle.")
+        output.contains("Profiling is not supported for Bazel builds")
     }
 
     def "can profile a scenario that contains bazel build instructions when building with Gradle"() {
         given:
         def scenarios = file("performance.scenario")
         scenarios.text = """
-buildTarget {
-    tasks = ["help"]
-    bazel {
-        targets = ["build", "//some/target"]
-    }
-}
-"""
+            buildTarget {
+                tasks = ["help"]
+                bazel {
+                    targets = ["build", "//some/target"]
+                }
+            }
+        """
 
         when:
         new Main().run("--project-dir", projectDir.absolutePath, "--output-dir", outputDir.absolutePath, "--profile", "jfr", "--scenario-file", scenarios.absolutePath, "--gradle-version", minimalSupportedGradleVersion, "buildTarget")
@@ -1265,13 +1101,13 @@ buildTarget {
         buildFile << "apply plugin: 'base'"
         def scenarios = file("performance.scenario")
         scenarios.text = """
-buildTarget {
-    tasks = ["help"]
-    bazel {
-        targets = ["build", "//some/target"]
-    }
-}
-"""
+            buildTarget {
+                tasks = ["help"]
+                bazel {
+                    targets = ["build", "//some/target"]
+                }
+            }
+        """
 
         when:
         new Main().run("--project-dir", projectDir.absolutePath, "--output-dir", outputDir.absolutePath, "--benchmark", "--scenario-file", scenarios.absolutePath, "--gradle-version", minimalSupportedGradleVersion, "buildTarget")
@@ -1285,12 +1121,12 @@ buildTarget {
         given:
         def scenarios = file("performance.scenario")
         scenarios.text = """
-buildGoal {
-    maven {
-        targets = ["-v"]
-    }
-}
-"""
+            buildGoal {
+                maven {
+                    targets = ["-v"]
+                }
+            }
+        """
 
         when:
         new Main().run("--project-dir", projectDir.absolutePath, "--output-dir", outputDir.absolutePath, "--benchmark", "--scenario-file", scenarios.absolutePath, "--maven")
@@ -1304,12 +1140,12 @@ buildGoal {
         lines.get(0) == "scenario,buildGoal"
         lines.get(1) == "version,maven"
         lines.get(2) == "tasks,-v"
-        lines.get(3) == "value,execution"
-        lines.get(4).matches("warm-up build #1,\\d+")
-        lines.get(9).matches("warm-up build #6,\\d+")
-        lines.get(10).matches("measured build #1,\\d+")
-        lines.get(11).matches("measured build #2,\\d+")
-        lines.get(19).matches("measured build #10,\\d+")
+        lines.get(3) == "value,total execution time"
+        lines.get(4).matches("warm-up build #1,$SAMPLE")
+        lines.get(9).matches("warm-up build #6,$SAMPLE")
+        lines.get(10).matches("measured build #1,$SAMPLE")
+        lines.get(11).matches("measured build #2,$SAMPLE")
+        lines.get(19).matches("measured build #10,$SAMPLE")
     }
 
     def "clears build cache when asked"() {
@@ -1348,24 +1184,34 @@ buildGoal {
 
         def scenarios = file("performance.scenario")
         scenarios.text = """
-buildTarget {
-    versions = ["4.5"]
-    clear-build-cache-before = BUILD
-    gradle-args = ["--build-cache"]
-    tasks = ["checkNoCacheBefore", "clean", "compileJava", "checkHasCacheAfter"]
-}
-"""
+            buildTarget {
+                versions = ["$gradleVersion"]
+                // Warm daemons don't allow cleaning caches
+                daemon = cold
+                clear-build-cache-before = BUILD
+                gradle-args = ["--build-cache"]
+                tasks = ["checkNoCacheBefore", "clean", "compileJava", "checkHasCacheAfter"]
+            }
+        """
 
         when:
         benchmarkScenario(scenarios)
 
         then:
         noExceptionThrown()
+
+        where:
+        gradleVersion << [minimalSupportedGradleVersion]
     }
 
+    // See: https://github.com/gradle/gradle-profiler/issues/603")
+    @Requires({ GradleVersion.version(it.instance.minimalSupportedGradleVersion) <= GradleVersionCompatibility.lastGradleVersionSupportingCleanTransformCaches})
     def "clears transform cache when asked"() {
         given:
+        String gradleVersion = minimalSupportedGradleVersion
         buildFile << """
+            import org.gradle.api.artifacts.transform.TransformParameters
+
             plugins {
                 id 'java-library'
             }
@@ -1381,36 +1227,33 @@ buildTarget {
                     attribute(usage)
                 }
 
-                registerTransform {
+                registerTransform(FileSizer) {
                     from.attribute(artifactType, 'jar')
                     to.attribute(artifactType, 'size')
-                    artifactTransform(FileSizer)
                 }
 
-                compile 'com.google.guava:guava:21.0'
+                implementation 'com.google.guava:guava:21.0'
             }
             configurations {
-                compile {
+                runtimeClasspath {
                     attributes { attribute usage, 'api' }
                 }
             }
 
-            class FileSizer extends ArtifactTransform {
-                FileSizer() {
-                    println "Creating FileSizer"
-                }
+            abstract class FileSizer implements TransformAction<TransformParameters.None> {
+               @InputArtifact
+                abstract Provider<FileSystemLocation> getInputArtifact()
 
-                List<File> transform(File input) {
-                    assert outputDirectory.directory && outputDirectory.list().length == 0
-                    def output = new File(outputDirectory, input.name + ".txt")
+                void transform(TransformOutputs outputs) {
+                    def input = inputArtifact.get().asFile
+                    def output = outputs.file(input.name + ".txt")
                     println "Transforming \${input.name} to \${output.name}"
                     output.text = String.valueOf(input.length())
-                    return [output]
                 }
             }
 
             task resolve(type: Copy) {
-                def artifacts = configurations.compile.incoming.artifactView {
+                def artifacts = configurations.runtimeClasspath.incoming.artifactView {
                     attributes { it.attribute(artifactType, 'size') }
                 }.artifacts
                 from artifacts.artifactFiles
@@ -1420,13 +1263,21 @@ buildTarget {
                 }
             }
 
-            def cacheFiles(File gradleHome) {
-                file("\${gradleHome}/caches/transforms-1/files-1.1").listFiles().findAll { it.name.endsWith(".jar") }
+            boolean transformedFileExists(File gradleHome) {
+                boolean found = false
+                def transformsCache = file("\${gradleHome}/caches/${GradleVersionCompatibility.transformCacheLocation(gradleVersion)}")
+                if (transformsCache.exists()) {
+                    transformsCache.eachFileRecurse {
+                        if (it.name == 'guava-21.0.jar.txt') {
+                            found = true
+                        }
+                    }
+                }
+                return found
             }
 
             def checkNoCacheBefore() {
-                def files = cacheFiles(gradle.gradleUserHomeDir)
-                assert (files == null || files.empty)
+                assert !transformedFileExists(gradle.gradleUserHomeDir)
             }
 
             gradle.taskGraph.whenReady {
@@ -1438,20 +1289,21 @@ buildTarget {
             task checkHasCacheAfter {
                 mustRunAfter resolve
                 doFirst {
-                    def files = cacheFiles(gradle.gradleUserHomeDir)
-                    assert !files.empty
+                    assert transformedFileExists(gradle.gradleUserHomeDir)
                 }
             }
         """
 
         def scenarios = file("performance.scenario")
         scenarios.text = """
-buildTarget {
-    versions = ["4.10"]
-    clear-transform-cache-before = BUILD
-    tasks = ["clean", "resolve", "checkHasCacheAfter"]
-}
-"""
+            buildTarget {
+                versions = ["${gradleVersion}"]
+                // Warm daemons don't allow cleaning caches
+                daemon = cold
+                clear-transform-cache-before = BUILD
+                tasks = ["clean", "resolve", "checkHasCacheAfter"]
+            }
+        """
 
         when:
         benchmarkScenario(scenarios)
@@ -1477,21 +1329,24 @@ buildTarget {
 
         def scenarios = file("performance.scenario")
         scenarios.text = """
-buildTarget {
-    versions = ["4.5"]
-    clear-build-cache-before = SCENARIO
-    show-build-cache-size = true
-    gradle-args = ["--build-cache"]
-    cleanup-tasks = ["clean"]
-    tasks = ["compileJava"]
-}
-"""
+            buildTarget {
+                versions = ["$gradleVersion"]
+                clear-build-cache-before = SCENARIO
+                show-build-cache-size = true
+                gradle-args = ["--build-cache"]
+                cleanup-tasks = ["clean"]
+                tasks = ["compileJava"]
+            }
+        """
 
         when:
         benchmarkScenario(scenarios)
 
         then:
-        output.count("> Build cache size:") == 5
+        output.count("> Build cache size:") == 4
+
+        where:
+        gradleVersion << [minimalSupportedGradleVersion]
     }
 
     def "clean project cache when configured (buildSrc: #buildSrc)"() {
@@ -1515,12 +1370,14 @@ buildTarget {
         }
         def scenarios = file("performance.scenario")
         scenarios.text = """
-buildTarget {
-    versions = ["${latestSupportedGradleVersion}"]
-    clear-project-cache-before = BUILD
-    tasks = ["compileJava"]
-}
-"""
+            buildTarget {
+                versions = ["${latestSupportedGradleVersion}"]
+                // Warm daemons don't allow cleaning caches
+                daemon = cold
+                clear-project-cache-before = BUILD
+                tasks = ["compileJava"]
+            }
+        """
 
         when:
         benchmarkScenario(scenarios)
@@ -1550,19 +1407,19 @@ buildTarget {
         """
         def scenarios = file("performance.scenario")
         scenarios.text = """
-buildTarget {
-    versions = ["${latestSupportedGradleVersion}"]
-    clear-gradle-user-home-before = BUILD
-    daemon = none
-    tasks = ["compileJava"]
-}
-"""
+            buildTarget {
+                versions = ["${latestSupportedGradleVersion}"]
+                clear-gradle-user-home-before = BUILD
+                daemon = none
+                tasks = ["compileJava"]
+            }
+        """
 
         when:
         benchmarkScenario(scenarios)
 
         then:
-        output.count("> Cleaning Gradle user home: ") == 2
+        output.count("> Clearing Gradle User Home directory: ") == 2
     }
 
     def "does Git revert when asked"() {
@@ -1570,6 +1427,7 @@ buildTarget {
         def repoDir = new File(projectDir, "repo")
         def repo = new TestGitRepo(repoDir)
 
+        new File(repoDir, "settings.gradle") << ''
         new File(repoDir, "build.gradle") << """
             task cleanTest {
                 doFirst {
@@ -1585,11 +1443,11 @@ buildTarget {
 
         def scenarios = file("performance.scenario")
         scenarios.text = """
-buildTarget {
-    git-revert = ["${repo.finalCommit}", "${repo.modifiedCommit}"]
-    tasks = ["test"]
-}
-"""
+            buildTarget {
+                git-revert = ["${repo.finalCommit}", "${repo.modifiedCommit}"]
+                tasks = ["test"]
+            }
+        """
 
         when:
         benchmarkScenario(repoDir, scenarios)
@@ -1604,6 +1462,7 @@ buildTarget {
         def repoDir = new File(projectDir, "repo")
         def repo = new TestGitRepo(repoDir)
 
+        new File(repoDir, "settings.gradle") << ''
         new File(repoDir, "build.gradle") << """
             task cleanTest {
                 doFirst {
@@ -1619,15 +1478,15 @@ buildTarget {
 
         def scenarios = file("performance.scenario")
         scenarios.text = """
-buildTarget {
-    git-checkout = {
-        cleanup = ${repo.originalCommit}
-        build = ${repo.modifiedCommit}
-    }
-    cleanup-tasks = ["cleanTest"]
-    tasks = ["test"]
-}
-"""
+            buildTarget {
+                git-checkout = {
+                    cleanup = ${repo.originalCommit}
+                    build = ${repo.modifiedCommit}
+                }
+                cleanup-tasks = ["cleanTest"]
+                tasks = ["test"]
+            }
+        """
 
         when:
         benchmarkScenario(repoDir, scenarios)
@@ -1642,6 +1501,7 @@ buildTarget {
         def repoDir = new File(projectDir, "repo")
         def repo = new TestGitRepo(repoDir)
 
+        new File(repoDir, "settings.gradle") << ''
         new File(repoDir, "build.gradle") << """
             task cleanTest {
                 doFirst {
@@ -1657,14 +1517,14 @@ buildTarget {
 
         def scenarios = file("performance.scenario")
         scenarios.text = """
-buildTarget {
-    git-checkout = {
-        build = ${repo.modifiedCommit}
-    }
-    cleanup-tasks = ["cleanTest"]
-    tasks = ["test"]
-}
-"""
+            buildTarget {
+                git-checkout = {
+                    build = ${repo.modifiedCommit}
+                }
+                cleanup-tasks = ["cleanTest"]
+                tasks = ["test"]
+            }
+        """
 
         when:
         benchmarkScenario(repoDir, scenarios)
@@ -1748,6 +1608,7 @@ buildTarget {
             "--gradle-version", minimalSupportedGradleVersion,
             "--warmups", "1",
             "--iterations", "1",
+            "--gradle-user-home", new File(projectDir, 'gradle-user-home').absolutePath,
             "buildTarget"
         )
     }

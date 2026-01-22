@@ -2,7 +2,7 @@ package org.gradle.profiler;
 
 import java.time.Duration;
 
-class Timer {
+public class Timer {
     final long start;
 
     public Timer() {

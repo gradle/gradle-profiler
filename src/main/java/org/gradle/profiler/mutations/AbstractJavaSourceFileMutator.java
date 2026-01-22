@@ -7,8 +7,8 @@ import org.gradle.profiler.BuildContext;
 import java.io.File;
 
 public abstract class AbstractJavaSourceFileMutator extends AbstractFileChangeMutator {
-    public AbstractJavaSourceFileMutator(File sourceFile) {
-        super(sourceFile);
+    public AbstractJavaSourceFileMutator(File sourceFile, String changeDescription) {
+        super(sourceFile, changeDescription);
         if (!sourceFile.getName().endsWith(".java")) {
             throw new IllegalArgumentException("Can only modify Java source files");
         }
@@ -16,7 +16,7 @@ public abstract class AbstractJavaSourceFileMutator extends AbstractFileChangeMu
 
     @Override
     protected void applyChangeTo(BuildContext context, StringBuilder text) {
-        CompilationUnit compilationUnit = JavaParser.parse(text.toString());
+        CompilationUnit compilationUnit = new JavaParser().parse(text.toString()).getResult().get();
         applyChangeTo(context, compilationUnit);
         text.replace(0, text.length(), compilationUnit.toString());
     }

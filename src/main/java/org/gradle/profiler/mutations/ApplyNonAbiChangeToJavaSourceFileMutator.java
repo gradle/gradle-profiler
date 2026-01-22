@@ -12,15 +12,15 @@ import java.util.List;
 
 public class ApplyNonAbiChangeToJavaSourceFileMutator extends AbstractJavaSourceFileMutator {
     public ApplyNonAbiChangeToJavaSourceFileMutator(File sourceFile) {
-        super(sourceFile);
+        super(sourceFile, "non-ABI change");
     }
 
     @Override
     protected void applyChangeTo(BuildContext context, CompilationUnit compilationUnit) {
         MethodDeclaration existingMethod = getExistingMethod(compilationUnit);
         existingMethod.getBody()
-            .orElseThrow(() -> new RuntimeException("Method body not found"))
-            .addStatement(0, JavaParser.parseStatement("System.out.println(\"" + context.getUniqueBuildId() + "\");"));
+                .orElseThrow(() -> new RuntimeException("Method body not found"))
+                .addStatement(0, new JavaParser().parseStatement("System.out.println(\"" + context.getUniqueBuildId() + "\");").getResult().get());
     }
 
     private MethodDeclaration getExistingMethod(CompilationUnit compilationUnit) {

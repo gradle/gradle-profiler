@@ -25,9 +25,6 @@ public class YourKitJvmArgsCalculator implements JvmArgsCalculator {
 
     @Override
     public void calculateJvmArgs(List<String> jvmArgs) {
-        if (!OperatingSystem.isMacOS() && !OperatingSystem.isLinuxX86()) {
-            throw new IllegalArgumentException("YourKit is currently supported on OS X and Linux x64 only.");
-        }
         File yourKitHome = YourKit.findYourKitHome();
         if (yourKitHome == null) {
             throw new IllegalArgumentException("Could not locate YourKit installation. Try setting the " + ENIVONMENT_VARIABLE + " environment variable");
@@ -36,8 +33,8 @@ public class YourKitJvmArgsCalculator implements JvmArgsCalculator {
         if (!jnilib.isFile()) {
             throw new IllegalArgumentException("Could not locate YourKit library in YourKit home directory " + yourKitHome);
         }
-        String agentOptions = "-agentpath:" + jnilib.getAbsolutePath() + "=dir=" + settings.getScenario().getOutputDir().getAbsolutePath()
-                + ",sessionname=" + settings.getScenario().getProfileName()
+        String agentOptions = "-agentpath:" + jnilib.getAbsolutePath() + "=dir=" + settings.getProfilerOutputBaseDir().getAbsolutePath()
+                + ",sessionname=" + settings.getProfilerOutputBaseName()
                 + ",port=" + PORT;
         if (yourKitConfig.isMemorySnapshot() || yourKitConfig.isUseSampling()) {
             agentOptions += ",disabletracing,probe_disable=*";

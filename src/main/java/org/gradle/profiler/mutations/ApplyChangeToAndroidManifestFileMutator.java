@@ -6,7 +6,7 @@ import java.io.File;
 
 public class ApplyChangeToAndroidManifestFileMutator extends AbstractFileChangeMutator {
     public ApplyChangeToAndroidManifestFileMutator(File sourceFile) {
-        super( sourceFile );
+        super(sourceFile, "Android manifest change");
     }
 
     @Override

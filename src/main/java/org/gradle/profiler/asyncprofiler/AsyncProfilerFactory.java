@@ -9,23 +9,31 @@ import org.gradle.profiler.Profiler;
 import org.gradle.profiler.ProfilerFactory;
 
 import java.io.File;
+import java.util.List;
 import java.util.Locale;
 
 public class AsyncProfilerFactory extends ProfilerFactory {
     static final String ASYNC_PROFILER_HOME = "ASYNC_PROFILER_HOME";
-    public static final AsyncProfilerFactory INSTANCE = new AsyncProfilerFactory();
-
+    static final String ASYNC_PROFILER_HOME_OPTION = "async-profiler-home";
     private ArgumentAcceptingOptionSpec<File> profilerHomeOption;
     private ArgumentAcceptingOptionSpec<String> eventOption;
     private ArgumentAcceptingOptionSpec<AsyncProfilerConfig.Counter> counterOption;
-    private ArgumentAcceptingOptionSpec<Integer> frameBufferOption;
     private ArgumentAcceptingOptionSpec<Integer> intervalOption;
+    private ArgumentAcceptingOptionSpec<Integer> allocIntervalOption;
+    private ArgumentAcceptingOptionSpec<Integer> lockThresholdOption;
+    private ArgumentAcceptingOptionSpec<Integer> wallIntervalOption;
     private ArgumentAcceptingOptionSpec<Integer> stackDepthOption;
     private ArgumentAcceptingOptionSpec<Boolean> systemThreadOption;
 
     @Override
+    public String getName() {
+        return "async-profiler";
+    }
+
+    @Override
     public void addOptions(OptionParser parser) {
-        profilerHomeOption = parser.accepts("async-profiler-home", "Async Profiler home directory")
+        // TODO add all events from 4.1
+        profilerHomeOption = parser.accepts(ASYNC_PROFILER_HOME_OPTION, "Async Profiler home directory")
             .availableIf("profile")
             .withRequiredArg()
             .ofType(File.class);
@@ -38,7 +46,22 @@ public class AsyncProfilerFactory extends ProfilerFactory {
             .withRequiredArg()
             .withValuesConvertedBy(new CounterConverter())
             .defaultsTo(AsyncProfilerConfig.Counter.SAMPLES);
-        intervalOption = parser.accepts("async-profiler-interval", "The sampling interval in nanoseconds.")
+        intervalOption = parser.accepts("async-profiler-interval", "The sampling interval in nanoseconds. Default is 10ms.")
+            .availableIf("profile")
+            .withRequiredArg()
+            .ofType(Integer.class)
+            .defaultsTo(10_000_000);
+        allocIntervalOption = parser.accepts("async-profiler-alloc-interval", "The sampling interval in bytes for allocation profiling. Default is 512 KiB.")
+            .availableIf("profile")
+            .withRequiredArg()
+            .ofType(Integer.class)
+            .defaultsTo(524_287);
+        lockThresholdOption = parser.accepts("async-profiler-lock-threshold", "lock profiling threshold in nanoseconds. Default is 250 us.")
+            .availableIf("profile")
+            .withRequiredArg()
+            .ofType(Integer.class)
+            .defaultsTo(250_000);
+        wallIntervalOption = parser.accepts("async-profiler-wall-interval", "wall clock profiling interval in nanoseconds. Default is 10ms.")
             .availableIf("profile")
             .withRequiredArg()
             .ofType(Integer.class)
@@ -48,11 +71,6 @@ public class AsyncProfilerFactory extends ProfilerFactory {
             .withRequiredArg()
             .ofType(Integer.class)
             .defaultsTo(2048);
-        frameBufferOption = parser.accepts("async-profiler-framebuffer", "The size of the frame buffer in bytes.")
-            .availableIf("profile")
-            .withRequiredArg()
-            .ofType(Integer.class)
-            .defaultsTo(10_000_000);
         systemThreadOption = parser.accepts("async-profiler-system-threads", "Whether to show system threads like GC and JIT compiler.")
             .availableIf("profile")
             .withRequiredArg()
@@ -67,33 +85,48 @@ public class AsyncProfilerFactory extends ProfilerFactory {
     }
 
     AsyncProfilerConfig createConfig(OptionSet parsedOptions) {
-        File profilerHome = getProfilerHome(parsedOptions);
-        String event = eventOption.value(parsedOptions);
+        AsyncProfilerDistribution apDistribution = getAPDistribution(parsedOptions);
+        List<String> events = eventOption.values(parsedOptions);
         AsyncProfilerConfig.Counter counter = counterOption.value(parsedOptions);
         int interval = intervalOption.value(parsedOptions);
+        int allocInterval = allocIntervalOption.value(parsedOptions);
+        int lockThreshold = lockThresholdOption.value(parsedOptions);
+        int wallInterval = wallIntervalOption.value(parsedOptions);
         int stackDepth = stackDepthOption.value(parsedOptions);
-        int frameBuffer = frameBufferOption.value(parsedOptions);
         Boolean showSystemThreads = systemThreadOption.value(parsedOptions);
-        AsyncProfilerConfig config = new AsyncProfilerConfig(profilerHome, event, counter, interval, stackDepth, frameBuffer, showSystemThreads);
-        return config;
+        return new AsyncProfilerConfig(
+            apDistribution,
+            events,
+            counter,
+            interval,
+            allocInterval,
+            lockThreshold,
+            wallInterval,
+            stackDepth,
+            showSystemThreads,
+            AsyncProfilerOutputType.STACKS
+        );
     }
 
-    private File getProfilerHome(OptionSet parsedOptions) {
+    private AsyncProfilerDistribution getAPDistribution(OptionSet parsedOptions) {
         File profilerHome = profilerHomeOption.value(parsedOptions);
+        String source = profilerHome != null ? "--" + ASYNC_PROFILER_HOME_OPTION : null;
         if (profilerHome == null) {
             String homePath = System.getenv(ASYNC_PROFILER_HOME);
             profilerHome = homePath != null ? new File(homePath) : null;
+            source = homePath != null ? ASYNC_PROFILER_HOME : null;
         }
         if (profilerHome != null && !profilerHome.isDirectory()) {
-            throw new IllegalStateException(ASYNC_PROFILER_HOME + " is not a directory.");
+            throw new IllegalStateException(ASYNC_PROFILER_HOME + " or --" + ASYNC_PROFILER_HOME_OPTION + " path is not a directory.");
         }
         if (profilerHome == null) {
             profilerHome = AsyncProfilerDownload.defaultHome();
+            source = "DOWNLOAD";
         }
         if (profilerHome == null) {
             throw new IllegalStateException("Async profiler not supported on " + OperatingSystem.getId());
         }
-        return profilerHome;
+        return new AsyncProfilerDistribution(profilerHome, source);
     }
 
     private static class CounterConverter implements ValueConverter<AsyncProfilerConfig.Counter> {

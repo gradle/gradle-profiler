@@ -1,41 +1,66 @@
 package org.gradle.profiler;
 
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
 import com.typesafe.config.ConfigParseOptions;
-import org.gradle.profiler.mutations.AbstractFileChangeMutator;
+import com.typesafe.config.ConfigRenderOptions;
+
+import java.util.Arrays;
+import org.gradle.profiler.bazel.BazelScenarioDefinition;
+import org.gradle.profiler.buck.BuckScenarioDefinition;
+import org.gradle.profiler.gradle.AdhocGradleScenarioDefinition;
+import org.gradle.profiler.gradle.GradleBuildInvoker;
+import org.gradle.profiler.gradle.GradleScenarioDefinition;
+import org.gradle.profiler.gradle.LoadToolingModelAction;
+import org.gradle.profiler.gradle.RunTasksAction;
+import org.gradle.profiler.gradle.RunToolingAction;
+import org.gradle.profiler.maven.MavenScenarioDefinition;
+import org.gradle.profiler.mutations.AbstractScheduledMutator.Schedule;
 import org.gradle.profiler.mutations.ApplyAbiChangeToSourceFileMutator;
+import org.gradle.profiler.mutations.ApplyBuildScriptChangeFileMutator;
 import org.gradle.profiler.mutations.ApplyChangeToAndroidLayoutFileMutator;
 import org.gradle.profiler.mutations.ApplyChangeToAndroidManifestFileMutator;
 import org.gradle.profiler.mutations.ApplyChangeToAndroidResourceFileMutator;
+import org.gradle.profiler.mutations.ApplyChangeToComposableKotlinFileMutator;
 import org.gradle.profiler.mutations.ApplyChangeToNativeSourceFileMutator;
 import org.gradle.profiler.mutations.ApplyChangeToPropertyResourceFileMutator;
 import org.gradle.profiler.mutations.ApplyNonAbiChangeToSourceFileMutator;
+import org.gradle.profiler.mutations.ApplyProjectDependencyChangeMutator;
 import org.gradle.profiler.mutations.ApplyValueChangeToAndroidResourceFileMutator;
 import org.gradle.profiler.mutations.BuildMutatorConfigurator;
+import org.gradle.profiler.mutations.BuildMutatorConfigurator.BuildMutatorConfiguratorSpec;
 import org.gradle.profiler.mutations.ClearArtifactTransformCacheMutator;
 import org.gradle.profiler.mutations.ClearBuildCacheMutator;
 import org.gradle.profiler.mutations.ClearConfigurationCacheStateMutator;
+import org.gradle.profiler.mutations.ClearDirectoryMutator;
 import org.gradle.profiler.mutations.ClearGradleUserHomeMutator;
 import org.gradle.profiler.mutations.ClearJarsCacheMutator;
 import org.gradle.profiler.mutations.ClearProjectCacheMutator;
+import org.gradle.profiler.mutations.CopyFileMutator;
+import org.gradle.profiler.mutations.DefaultBuildMutatorConfiguratorSpec;
+import org.gradle.profiler.mutations.DeleteFileMutator;
 import org.gradle.profiler.mutations.FileChangeMutatorConfigurator;
 import org.gradle.profiler.mutations.GitCheckoutMutator;
 import org.gradle.profiler.mutations.GitRevertMutator;
 import org.gradle.profiler.mutations.ShowBuildCacheSizeMutator;
+import org.gradle.profiler.studio.AndroidStudioSyncAction;
+import org.gradle.profiler.studio.invoker.StudioGradleScenarioDefinition;
 
+import javax.annotation.Nullable;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.SortedSet;
 import java.util.TreeSet;
-import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
 class ScenarioLoader {
@@ -53,12 +78,18 @@ class ScenarioLoader {
     private static final String TOOL_HOME = "home";
     private static final String WARM_UP_COUNT = "warm-ups";
     private static final String ITERATIONS = "iterations";
+    private static final String BUILD_OPERATIONS_TRACE = "build-ops-trace";
     private static final String MEASURED_BUILD_OPERATIONS = "measured-build-ops";
+    private static final String SCENARIO_GROUPS = "scenario-groups";
+    private static final String DEFAULT_SCENARIOS = "default-scenarios";
+    private static final String APPLY_BUILD_SCRIPT_CHANGE_TO = "apply-build-script-change-to";
+    private static final String APPLY_PROJECT_DEPENDENCY_CHANGE_TO = "apply-project-dependency-change-to";
     private static final String APPLY_ABI_CHANGE_TO = "apply-abi-change-to";
     private static final String APPLY_NON_ABI_CHANGE_TO = "apply-non-abi-change-to";
     private static final String APPLY_ANDROID_RESOURCE_CHANGE_TO = "apply-android-resource-change-to";
     private static final String APPLY_ANDROID_RESOURCE_VALUE_CHANGE_TO = "apply-android-resource-value-change-to";
     private static final String APPLY_ANDROID_LAYOUT_CHANGE_TO = "apply-android-layout-change-to";
+    private static final String APPLY_KOTLIN_COMPOSABLE_CHANGE_TO = "apply-kotlin-composable-change-to";
     private static final String APPLY_PROPERTY_RESOURCE_CHANGE_TO = "apply-property-resource-change-to";
     private static final String APPLY_ANDROID_MANIFEST_CHANGE_TO = "apply-android-manifest-change-to";
     private static final String APPLY_CPP_SOURCE_CHANGE_TO = "apply-cpp-change-to";
@@ -70,54 +101,83 @@ class ScenarioLoader {
     private static final String CLEAR_PROJECT_CACHE_BEFORE = "clear-project-cache-before";
     private static final String CLEAR_TRANSFORM_CACHE_BEFORE = "clear-transform-cache-before";
     private static final String CLEAR_JARS_CACHE_BEFORE = "clear-jars-cache-before";
+    // clear-android-studio-cache-before is not implemented as a mutator, but it's implemented inside the StudioGradleClient
+    private static final String CLEAR_ANDROID_STUDIO_CACHE_BEFORE = "clear-android-studio-cache-before";
     private static final String SHOW_BUILD_CACHE_SIZE = "show-build-cache-size";
     private static final String GIT_CHECKOUT = "git-checkout";
     private static final String GIT_REVERT = "git-revert";
     private static final String TARGETS = "targets";
     private static final String TYPE = "type";
     private static final String MODEL = "model";
+    private static final String ACTION = "action";
+    private static final String TOOLING_API = "tooling-api";
     private static final String ANDROID_STUDIO_SYNC = "android-studio-sync";
+    private static final String ANDROID_STUDIO_JVM_ARGS = "studio-jvm-args";
+    private static final String ANDROID_STUDIO_IDEA_PROPERTIES = "idea-properties";
     private static final String JVM_ARGS = "jvm-args";
+    private static final String CLEAR_DIR = "clear-dir";
+    private static final String DELETE_FILE = "delete-file";
+    private static final String COPY_FILE = "copy-file";
 
-    private static final List<String> ALL_SCENARIO_KEYS = Arrays.asList(
-        TITLE,
-        VERSIONS,
-        TASKS,
-        CLEANUP_TASKS,
-        GRADLE_ARGS,
-        RUN_USING,
-        SYSTEM_PROPERTIES,
-        WARM_UP_COUNT,
-        ITERATIONS,
-        MEASURED_BUILD_OPERATIONS,
-        APPLY_ABI_CHANGE_TO,
-        APPLY_NON_ABI_CHANGE_TO,
-        APPLY_ANDROID_RESOURCE_CHANGE_TO,
-        APPLY_ANDROID_RESOURCE_VALUE_CHANGE_TO,
-        APPLY_ANDROID_MANIFEST_CHANGE_TO,
-        APPLY_ANDROID_LAYOUT_CHANGE_TO,
-        APPLY_PROPERTY_RESOURCE_CHANGE_TO,
-        APPLY_CPP_SOURCE_CHANGE_TO,
-        APPLY_H_SOURCE_CHANGE_TO,
-        CLEAR_BUILD_CACHE_BEFORE,
-        CLEAR_GRADLE_USER_HOME_BEFORE,
-        CLEAR_INSTANT_EXECUTION_STATE_BEFORE,
-        CLEAR_CONFIGURATION_CACHE_STATE_BEFORE,
-        CLEAR_PROJECT_CACHE_BEFORE,
-        CLEAR_TRANSFORM_CACHE_BEFORE,
-        CLEAR_JARS_CACHE_BEFORE,
-        SHOW_BUILD_CACHE_SIZE,
-        GIT_CHECKOUT,
-        GIT_REVERT,
-        BAZEL,
-        BUCK,
-        MAVEN,
-        MODEL,
-        TOOL_HOME,
-        ANDROID_STUDIO_SYNC,
-        DAEMON,
-        JVM_ARGS
+    private static final Map<String, BuildMutatorConfigurator> BUILD_MUTATOR_CONFIGURATORS = ImmutableMap.<String, BuildMutatorConfigurator>builder()
+        .put(APPLY_BUILD_SCRIPT_CHANGE_TO, new FileChangeMutatorConfigurator(ApplyBuildScriptChangeFileMutator.class))
+        .put(APPLY_PROJECT_DEPENDENCY_CHANGE_TO, new ApplyProjectDependencyChangeMutator.Configurator())
+        .put(APPLY_ABI_CHANGE_TO, new FileChangeMutatorConfigurator(ApplyAbiChangeToSourceFileMutator.class))
+        .put(APPLY_NON_ABI_CHANGE_TO, new FileChangeMutatorConfigurator(ApplyNonAbiChangeToSourceFileMutator.class))
+        .put(APPLY_ANDROID_RESOURCE_CHANGE_TO, new FileChangeMutatorConfigurator(ApplyChangeToAndroidResourceFileMutator.class))
+        .put(APPLY_ANDROID_RESOURCE_VALUE_CHANGE_TO, new FileChangeMutatorConfigurator(ApplyValueChangeToAndroidResourceFileMutator.class))
+        .put(APPLY_ANDROID_LAYOUT_CHANGE_TO, new FileChangeMutatorConfigurator(ApplyChangeToAndroidLayoutFileMutator.class))
+        .put(APPLY_ANDROID_MANIFEST_CHANGE_TO, new FileChangeMutatorConfigurator(ApplyChangeToAndroidManifestFileMutator.class))
+        .put(APPLY_KOTLIN_COMPOSABLE_CHANGE_TO, new FileChangeMutatorConfigurator(ApplyChangeToComposableKotlinFileMutator.class))
+        .put(APPLY_PROPERTY_RESOURCE_CHANGE_TO, new FileChangeMutatorConfigurator(ApplyChangeToPropertyResourceFileMutator.class))
+        .put(APPLY_CPP_SOURCE_CHANGE_TO, new FileChangeMutatorConfigurator(ApplyChangeToNativeSourceFileMutator.class))
+        .put(APPLY_H_SOURCE_CHANGE_TO, new FileChangeMutatorConfigurator(ApplyChangeToNativeSourceFileMutator.class))
+        .put(CLEAR_BUILD_CACHE_BEFORE, new ClearBuildCacheMutator.Configurator())
+        .put(CLEAR_GRADLE_USER_HOME_BEFORE, new ClearGradleUserHomeMutator.Configurator())
+        .put(CLEAR_INSTANT_EXECUTION_STATE_BEFORE, new ClearConfigurationCacheStateMutator.Configurator())
+        .put(CLEAR_CONFIGURATION_CACHE_STATE_BEFORE, new ClearConfigurationCacheStateMutator.Configurator())
+        .put(CLEAR_PROJECT_CACHE_BEFORE, new ClearProjectCacheMutator.Configurator())
+        .put(CLEAR_TRANSFORM_CACHE_BEFORE, new ClearArtifactTransformCacheMutator.Configurator())
+        .put(CLEAR_JARS_CACHE_BEFORE, new ClearJarsCacheMutator.Configurator())
+        .put(SHOW_BUILD_CACHE_SIZE, new ShowBuildCacheSizeMutator.Configurator())
+        .put(GIT_CHECKOUT, new GitCheckoutMutator.Configurator())
+        .put(GIT_REVERT, new GitRevertMutator.Configurator())
+        .put(CLEAR_DIR, new ClearDirectoryMutator.Configurator())
+        .put(DELETE_FILE, new DeleteFileMutator.Configurator())
+        .put(COPY_FILE, new CopyFileMutator.Configurator())
+        .build();
+
+    private static final List<String> ALL_SCENARIO_KEYS = ImmutableList.<String>builder()
+        .addAll(BUILD_MUTATOR_CONFIGURATORS.keySet())
+        .addAll(Arrays.asList(
+            TITLE,
+            VERSIONS,
+            TASKS,
+            CLEANUP_TASKS,
+            GRADLE_ARGS,
+            RUN_USING,
+            SYSTEM_PROPERTIES,
+            WARM_UP_COUNT,
+            ITERATIONS,
+            MEASURED_BUILD_OPERATIONS,
+            BAZEL,
+            BUCK,
+            MAVEN,
+            TOOLING_API,
+            TOOL_HOME,
+            ANDROID_STUDIO_SYNC,
+            DAEMON,
+            JVM_ARGS,
+            BUILD_OPERATIONS_TRACE
+        ))
+        .add(CLEAR_ANDROID_STUDIO_CACHE_BEFORE)
+        .build();
+
+    private static final Set<String> RESERVED_TOP_LEVEL_KEYS = ImmutableSet.of(
+        DEFAULT_SCENARIOS,
+        SCENARIO_GROUPS
     );
+
     private static final List<String> BAZEL_KEYS = Arrays.asList(TARGETS, TOOL_HOME);
     private static final List<String> BUCK_KEYS = Arrays.asList(TARGETS, TYPE, TOOL_HOME);
     private static final List<String> MAVEN_KEYS = Arrays.asList(TARGETS, TOOL_HOME);
@@ -171,33 +231,21 @@ class ScenarioLoader {
                 (GradleBuildInvoker) settings.getInvoker(),
                 new RunTasksAction(settings.getTargets()),
                 settings.getSystemProperties(),
-                new BuildMutatorFactory(Collections.emptyList()),
                 getWarmUpCount(settings, settings.getInvoker(), settings.getWarmUpCount()),
                 getBuildCount(settings),
                 outputDir,
-                settings.getMeasuredBuildOperations()
+                settings.getMeasuredBuildOperations(),
+                settings.isBuildOperationsTrace()
             ));
         }
         return scenarios;
     }
 
     static List<ScenarioDefinition> loadScenarios(File scenarioFile, InvocationSettings settings, GradleBuildConfigurationReader inspector) {
+        Config config = parseScenarioFile(scenarioFile);
+        Set<String> selectedScenarios = selectScenarios(config, settings, scenarioFile);
+
         List<ScenarioDefinition> definitions = new ArrayList<>();
-        Config config = ConfigFactory.parseFile(scenarioFile, ConfigParseOptions.defaults().setAllowMissing(false)).resolve();
-        Set<String> roots = config.root().keySet();
-        Set<String> selectedScenarios;
-        if (!settings.getTargets().isEmpty()) {
-            for (String target : settings.getTargets()) {
-                if (!roots.contains(target)) {
-                    throw new IllegalArgumentException("Unknown scenario '" + target + "' requested. Available scenarios are: " + roots.stream().sorted().collect(Collectors.joining(", ")));
-                }
-            }
-            selectedScenarios = new LinkedHashSet<>(settings.getTargets());
-        } else if (roots.contains("default-scenarios")) {
-            selectedScenarios = new LinkedHashSet<>(config.getStringList("default-scenarios"));
-        } else {
-            selectedScenarios = new TreeSet<>(roots);
-        }
         for (String scenarioName : selectedScenarios) {
             Config scenario = config.getConfig(scenarioName);
             for (String key : config.getObject(scenarioName).keySet()) {
@@ -207,31 +255,8 @@ class ScenarioLoader {
             }
             String title = scenario.hasPath(TITLE) ? scenario.getString(TITLE) : null;
 
-            List<Supplier<BuildMutator>> mutators = new ArrayList<>();
-            maybeAddMutator(scenario, scenarioName, settings.getProjectDir(), APPLY_ABI_CHANGE_TO, ApplyAbiChangeToSourceFileMutator.class, mutators);
-            maybeAddMutator(scenario, scenarioName, settings.getProjectDir(), APPLY_NON_ABI_CHANGE_TO, ApplyNonAbiChangeToSourceFileMutator.class, mutators);
-            maybeAddMutator(scenario, scenarioName, settings.getProjectDir(), APPLY_ANDROID_RESOURCE_CHANGE_TO, ApplyChangeToAndroidResourceFileMutator.class, mutators);
-            maybeAddMutator(scenario, scenarioName, settings.getProjectDir(), APPLY_ANDROID_RESOURCE_VALUE_CHANGE_TO, ApplyValueChangeToAndroidResourceFileMutator.class, mutators);
-            maybeAddMutator(scenario, scenarioName, settings.getProjectDir(), APPLY_ANDROID_LAYOUT_CHANGE_TO, ApplyChangeToAndroidLayoutFileMutator.class, mutators);
-            maybeAddMutator(scenario, scenarioName, settings.getProjectDir(), APPLY_ANDROID_MANIFEST_CHANGE_TO, ApplyChangeToAndroidManifestFileMutator.class, mutators);
-            maybeAddMutator(scenario, scenarioName, settings.getProjectDir(), APPLY_PROPERTY_RESOURCE_CHANGE_TO, ApplyChangeToPropertyResourceFileMutator.class, mutators);
-            maybeAddMutator(scenario, scenarioName, settings.getProjectDir(), APPLY_CPP_SOURCE_CHANGE_TO, ApplyChangeToNativeSourceFileMutator.class, mutators);
-            maybeAddMutator(scenario, scenarioName, settings.getProjectDir(), APPLY_H_SOURCE_CHANGE_TO, ApplyChangeToNativeSourceFileMutator.class, mutators);
-            maybeAddMutator(scenario, scenarioName, settings.getProjectDir(), CLEAR_BUILD_CACHE_BEFORE, new ClearBuildCacheMutator.Configurator(settings.getGradleUserHome()), mutators);
-            maybeAddMutator(scenario, scenarioName, settings.getProjectDir(), CLEAR_GRADLE_USER_HOME_BEFORE, new ClearGradleUserHomeMutator.Configurator(settings.getGradleUserHome()), mutators);
-            maybeAddMutator(scenario, scenarioName, settings.getProjectDir(), CLEAR_INSTANT_EXECUTION_STATE_BEFORE, new ClearConfigurationCacheStateMutator.Configurator(), mutators);
-            maybeAddMutator(scenario, scenarioName, settings.getProjectDir(), CLEAR_CONFIGURATION_CACHE_STATE_BEFORE, new ClearConfigurationCacheStateMutator.Configurator(), mutators);
-            maybeAddMutator(scenario, scenarioName, settings.getProjectDir(), CLEAR_PROJECT_CACHE_BEFORE, new ClearProjectCacheMutator.Configurator(), mutators);
-            maybeAddMutator(scenario, scenarioName, settings.getProjectDir(), CLEAR_TRANSFORM_CACHE_BEFORE, new ClearArtifactTransformCacheMutator.Configurator(settings.getGradleUserHome()), mutators);
-            maybeAddMutator(scenario, scenarioName, settings.getProjectDir(), CLEAR_JARS_CACHE_BEFORE, new ClearJarsCacheMutator.Configurator(settings.getGradleUserHome()), mutators);
-            maybeAddMutator(scenario, scenarioName, settings.getProjectDir(), SHOW_BUILD_CACHE_SIZE, new ShowBuildCacheSizeMutator.Configurator(settings.getGradleUserHome()), mutators);
-            maybeAddMutator(scenario, scenarioName, settings.getProjectDir(), GIT_CHECKOUT, new GitCheckoutMutator.Configurator(), mutators);
-            maybeAddMutator(scenario, scenarioName, settings.getProjectDir(), GIT_REVERT, new GitRevertMutator.Configurator(), mutators);
-
-            BuildMutatorFactory buildMutatorFactory = new BuildMutatorFactory(mutators);
-
             int buildCount = getBuildCount(settings, scenario);
-            File scenarioBaseDir = new File(settings.getOutputDir(), GradleScenarioDefinition.safeFileName(scenarioName));
+            File scenarioBaseDir = selectedScenarios.size() == 1 ? settings.getOutputDir() : new File(settings.getOutputDir(), ScenarioDefinition.safeFileName(scenarioName));
 
             if (scenario.hasPath(BAZEL) && settings.isBazel()) {
                 Config executionInstructions = getConfig(scenarioFile, settings, scenarioName, scenario, BAZEL, BAZEL_KEYS);
@@ -240,7 +265,8 @@ class ScenarioLoader {
                 File bazelHome = getToolHome(executionInstructions);
                 File outputDir = new File(scenarioBaseDir, "bazel");
                 int warmUpCount = getWarmUpCount(settings, scenario);
-                definitions.add(new BazelScenarioDefinition(scenarioName, title, targets, buildMutatorFactory, warmUpCount, buildCount, outputDir, bazelHome));
+                List<BuildMutator> mutators = getMutators(scenario, scenarioName, settings, warmUpCount, buildCount);
+                definitions.add(new BazelScenarioDefinition(scenarioName, title, targets, mutators, warmUpCount, buildCount, outputDir, bazelHome));
             } else if (scenario.hasPath(BUCK) && settings.isBuck()) {
                 Config executionInstructions = getConfig(scenarioFile, settings, scenarioName, scenario, BUCK, BUCK_KEYS);
                 List<String> targets = ConfigUtil.strings(executionInstructions, TARGETS);
@@ -248,14 +274,17 @@ class ScenarioLoader {
                 File buckHome = getToolHome(executionInstructions);
                 File outputDir = new File(scenarioBaseDir, "buck");
                 int warmUpCount = getWarmUpCount(settings, scenario);
-                definitions.add(new BuckScenarioDefinition(scenarioName, title, targets, type, buildMutatorFactory, warmUpCount, buildCount, outputDir, buckHome));
+                List<BuildMutator> mutators = getMutators(scenario, scenarioName, settings, warmUpCount, buildCount);
+                definitions.add(new BuckScenarioDefinition(scenarioName, title, targets, type, mutators, warmUpCount, buildCount, outputDir, buckHome));
             } else if (scenario.hasPath(MAVEN) && settings.isMaven()) {
                 Config executionInstructions = getConfig(scenarioFile, settings, scenarioName, scenario, MAVEN, MAVEN_KEYS);
                 List<String> targets = ConfigUtil.strings(executionInstructions, TARGETS);
                 File mavenHome = getToolHome(executionInstructions);
                 File outputDir = new File(scenarioBaseDir, "maven");
                 int warmUpCount = getWarmUpCount(settings, scenario);
-                definitions.add(new MavenScenarioDefinition(scenarioName, title, targets, buildMutatorFactory, warmUpCount, buildCount, outputDir, mavenHome));
+                Map<String, String> systemProperties = ConfigUtil.map(scenario, SYSTEM_PROPERTIES, settings.getSystemProperties());
+                List<BuildMutator> mutators = getMutators(scenario, scenarioName, settings, warmUpCount, buildCount);
+                definitions.add(new MavenScenarioDefinition(scenarioName, title, targets, systemProperties, mutators, warmUpCount, buildCount, outputDir, mavenHome));
             } else if (!settings.isBazel() && !settings.isBuck() && !settings.isMaven()) {
                 List<GradleBuildConfiguration> versions = ConfigUtil.strings(scenario, VERSIONS, settings.getVersions()).stream().map(inspector::readConfiguration).collect(
                     Collectors.toList());
@@ -264,16 +293,18 @@ class ScenarioLoader {
                 }
 
                 List<String> gradleArgs = ConfigUtil.strings(scenario, GRADLE_ARGS);
-                BuildAction buildAction = getBuildAction(scenario, scenarioFile, settings);
+                BuildAction buildAction = getBuildAction(scenario, scenarioName, scenarioFile, settings);
                 GradleBuildInvoker invoker = invoker(scenario, (GradleBuildInvoker) settings.getInvoker(), buildAction);
                 int warmUpCount = getWarmUpCount(settings, invoker, scenario);
                 List<String> measuredBuildOperations = getMeasuredBuildOperations(settings, scenario);
                 BuildAction cleanupAction = getCleanupAction(scenario);
                 Map<String, String> systemProperties = ConfigUtil.map(scenario, SYSTEM_PROPERTIES, settings.getSystemProperties());
                 List<String> jvmArgs = ConfigUtil.strings(scenario, JVM_ARGS);
+                boolean buildOperationsTrace = getBuildOperationsTrace(settings, scenario);
+                List<BuildMutator> mutators = getMutators(scenario, scenarioName, settings, warmUpCount, buildCount);
                 for (GradleBuildConfiguration version : versions) {
                     File outputDir = versions.size() == 1 ? scenarioBaseDir : new File(scenarioBaseDir, version.getGradleVersion().getVersion());
-                    definitions.add(new GradleScenarioDefinition(
+                    GradleScenarioDefinition gradleScenarioDefinition = new GradleScenarioDefinition(
                         scenarioName,
                         title,
                         invoker,
@@ -282,23 +313,50 @@ class ScenarioLoader {
                         cleanupAction,
                         gradleArgs,
                         systemProperties,
-                        buildMutatorFactory,
+                        mutators,
                         warmUpCount,
                         buildCount,
                         outputDir,
                         jvmArgs,
-                        measuredBuildOperations
-                    ));
+                        measuredBuildOperations,
+                        buildOperationsTrace
+                    );
+                    ScenarioDefinition scenarioDefinition = scenario.hasPath(ANDROID_STUDIO_SYNC)
+                        ? newStudioGradleScenarioDefinition(gradleScenarioDefinition, scenario)
+                        : gradleScenarioDefinition;
+                    definitions.add(scenarioDefinition);
                 }
             }
         }
 
+        definitions.forEach(ScenarioDefinition::validate);
+
         return definitions;
     }
 
+    private static Config parseScenarioFile(File scenarioFile) {
+        return ConfigFactory.parseFile(scenarioFile, ConfigParseOptions.defaults().setAllowMissing(false)).resolve();
+    }
+
+    private static StudioGradleScenarioDefinition newStudioGradleScenarioDefinition(GradleScenarioDefinition gradleScenarioDefinition, Config scenario) {
+        Config androidStudioSync = scenario.getConfig(ANDROID_STUDIO_SYNC);
+        List<String> studioJvmArgs = ConfigUtil.strings(androidStudioSync, ANDROID_STUDIO_JVM_ARGS, ImmutableList.of("-Xms256m", "-Xmx4096m"));
+        List<String> ideaProperties = ConfigUtil.strings(androidStudioSync, ANDROID_STUDIO_IDEA_PROPERTIES, Collections.emptyList());
+        return new StudioGradleScenarioDefinition(gradleScenarioDefinition, studioJvmArgs, ideaProperties);
+    }
+
+    private static List<BuildMutator> getMutators(Config scenario, String scenarioName, InvocationSettings settings, int warmUpCount, int buildCount) {
+        BuildMutatorConfiguratorSpec spec = new DefaultBuildMutatorConfiguratorSpec(scenario, scenarioName, settings, warmUpCount, buildCount);
+        return BUILD_MUTATOR_CONFIGURATORS.entrySet().stream()
+            .filter(entry -> scenario.hasPath(entry.getKey()))
+            .map(entry -> entry.getValue().configure(entry.getKey(), spec))
+            .filter(mutator -> mutator != BuildMutator.NOOP)
+            .collect(Collectors.toList());
+    }
+
     private static Config getConfig(File scenarioFile, InvocationSettings settings, String scenarioName, Config scenario, String toolName, List<String> toolKeys) {
-        if (settings.isProfile()) {
-            throw new IllegalArgumentException("Can only profile scenario '" + scenarioName + "' when building using Gradle.");
+        if (settings.getProfiler().requiresGradle()) {
+            throw new IllegalArgumentException("Profiler " + settings.getProfiler() + " is not compatible with " + toolName + " scenarios.");
         }
         Config executionInstructions = scenario.getConfig(toolName);
         for (String key : scenario.getObject(toolName).keySet()) {
@@ -315,6 +373,13 @@ class ScenarioLoader {
             .addAll(ConfigUtil.strings(scenario, MEASURED_BUILD_OPERATIONS))
             .build()
             .asList();
+    }
+
+    private static boolean getBuildOperationsTrace(InvocationSettings settings, Config scenario) {
+        if (settings.isBuildOperationsTrace()) {
+            return true;
+        }
+        return ConfigUtil.bool(scenario, BUILD_OPERATIONS_TRACE, false);
     }
 
     private static int getBuildCount(InvocationSettings settings) {
@@ -376,7 +441,7 @@ class ScenarioLoader {
         GradleBuildInvoker invoker = defaultValue;
         boolean sync = buildAction instanceof AndroidStudioSyncAction;
         if (sync) {
-            invoker = GradleBuildInvoker.AndroidStudio;
+            invoker = getAndroidStudioInvoker(config);
         }
 
         if (config.hasPath(RUN_USING)) {
@@ -409,6 +474,22 @@ class ScenarioLoader {
         return invoker;
     }
 
+    private static GradleBuildInvoker getAndroidStudioInvoker(Config config) {
+        Schedule schedule = ConfigUtil.enumValue(config, CLEAR_ANDROID_STUDIO_CACHE_BEFORE, Schedule.class, null);
+        if (schedule == null) {
+            return GradleBuildInvoker.AndroidStudio;
+        }
+        switch (schedule) {
+            case SCENARIO:
+                return GradleBuildInvoker.AndroidStudioCleanCacheBeforeScenario;
+            case BUILD:
+                return GradleBuildInvoker.AndroidStudioCleanCacheBeforeBuild;
+            case CLEANUP:
+            default:
+                throw new IllegalArgumentException(String.format("Unsupported cleanup schedule for '%s': '%s'", CLEAR_ANDROID_STUDIO_CACHE_BEFORE, schedule));
+        }
+    }
+
     private static BuildAction getCleanupAction(Config scenario) {
         List<String> tasks = ConfigUtil.strings(scenario, CLEANUP_TASKS);
         if (tasks.isEmpty()) {
@@ -417,17 +498,17 @@ class ScenarioLoader {
         return new RunTasksAction(tasks);
     }
 
-    private static BuildAction getBuildAction(Config scenario, File scenarioFile, InvocationSettings invocationSettings) {
-        Class<?> toolingModel = getToolingModelClass(scenario, scenarioFile);
+    private static BuildAction getBuildAction(Config scenario, String scenarioName, File scenarioFile, InvocationSettings invocationSettings) {
+        Config toolingApi = scenario.hasPath(TOOLING_API) ? scenario.getConfig(TOOLING_API) : null;
         boolean sync = scenario.hasPath(ANDROID_STUDIO_SYNC);
         List<String> tasks = ConfigUtil.strings(scenario, TASKS);
 
         if (sync) {
-            if (toolingModel != null) {
-                throw new IllegalArgumentException("Cannot load tooling model and Android studio sync in same scenario.");
+            if (toolingApi != null) {
+                throw new IllegalArgumentException(String.format("Scenario '%s': Cannot load tooling model and Android studio sync in same scenario.", scenarioName));
             }
             if (!tasks.isEmpty()) {
-                throw new IllegalArgumentException("Cannot run tasks and Android studio sync in same scenario.");
+                throw new IllegalArgumentException(String.format("Scenario '%s': Cannot run tasks and Android studio sync in same scenario.", scenarioName));
             }
             if (invocationSettings.getStudioInstallDir() == null) {
                 throw new IllegalArgumentException("Android Studio installation directory should be specified using --studio-install-dir when measuring Android studio sync.");
@@ -435,32 +516,163 @@ class ScenarioLoader {
             return new AndroidStudioSyncAction();
         }
 
-        if (toolingModel != null) {
-            return new LoadToolingModelAction(toolingModel, tasks);
+        if (toolingApi != null) {
+            Class<?> toolingModel = getToolingModelClass(toolingApi, scenarioFile);
+            org.gradle.tooling.BuildAction<?> action = getToolingAction(toolingApi, scenarioFile);
+            if (toolingModel == null && action == null) {
+                throw new IllegalArgumentException(String.format("Scenario '%s': Should define either a '%s' or an '%s'", scenarioName, MODEL, ACTION));
+            }
+            if (toolingModel != null && action != null) {
+                throw new IllegalArgumentException(String.format("Scenario '%s': Cannot define both a '%s' and an '%s'", scenarioName, MODEL, ACTION));
+            }
+            if (toolingModel != null) {
+                return new LoadToolingModelAction(toolingModel, tasks);
+            } else {
+                return new RunToolingAction(action, tasks);
+            }
         } else {
             return new RunTasksAction(tasks);
         }
     }
 
-    private static Class<?> getToolingModelClass(Config scenario, File scenarioFile) {
-        String toolingModelName = ConfigUtil.string(scenario, MODEL, null);
-        if (toolingModelName == null) {
+    private static org.gradle.tooling.BuildAction<?> getToolingAction(Config config, File scenarioFile) {
+        Class<?> actionType = loadType(config, ACTION, "tooling action", scenarioFile);
+        if (actionType == null) {
             return null;
         }
         try {
-            return Class.forName(toolingModelName);
+            return (org.gradle.tooling.BuildAction<?>) actionType.getConstructor().newInstance();
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    @Nullable
+    private static Class<?> getToolingModelClass(Config config, File scenarioFile) {
+        return loadType(config, MODEL, "tooling model", scenarioFile);
+    }
+
+    private static Class<?> loadType(Config config, String key, String description, File scenarioFile) {
+        String typeName = ConfigUtil.string(config, key, null);
+        if (typeName == null) {
+            return null;
+        }
+        try {
+            return Class.forName(typeName);
         } catch (ClassNotFoundException e) {
-            throw new IllegalArgumentException("Unrecognized tooling model '" + toolingModelName + "' defined in scenario file " + scenarioFile);
+            throw new IllegalArgumentException("Unrecognized " + description + " '" + typeName + "' defined in scenario file " + scenarioFile);
         }
     }
 
-    private static void maybeAddMutator(Config scenario, String scenarioName, File projectDir, String key, Class<? extends AbstractFileChangeMutator> mutatorClass, List<Supplier<BuildMutator>> mutators) {
-        maybeAddMutator(scenario, scenarioName, projectDir, key, new FileChangeMutatorConfigurator(mutatorClass), mutators);
+    private static Set<String> selectScenarios(Config config, InvocationSettings settings, File scenarioFile) {
+        SortedSet<String> availableScenarios = config.root().keySet().stream()
+            .filter(key -> !RESERVED_TOP_LEVEL_KEYS.contains(key))
+            .collect(Collectors.toCollection(TreeSet::new));
+
+        boolean groupRequested = settings.getScenarioGroup() != null;
+        boolean targetsRequested = !settings.getTargets().isEmpty();
+        if (groupRequested && targetsRequested) {
+            throw new IllegalArgumentException(
+                "Cannot specify both --group and individual scenario names. Use either only '--group " + settings.getScenarioGroup() + "' OR specify scenario names directly.");
+        }
+
+        if (groupRequested) {
+            return selectScenariosFromGroup(config, settings, availableScenarios, scenarioFile);
+        } else if (targetsRequested) {
+            return selectScenariosFromTargets(settings, availableScenarios);
+        } else if (config.hasPath(DEFAULT_SCENARIOS)) {
+            return selectDefaultScenarios(config.getStringList(DEFAULT_SCENARIOS), availableScenarios);
+        } else {
+            return availableScenarios;
+        }
     }
 
-    private static void maybeAddMutator(Config scenario, String scenarioName, File projectDir, String key, BuildMutatorConfigurator configurator, List<Supplier<BuildMutator>> mutators) {
-        if (scenario.hasPath(key)) {
-            mutators.add(configurator.configure(scenario, scenarioName, projectDir, key));
+    private static LinkedHashSet<String> selectDefaultScenarios(List<String> defaultTargets, Collection<String> availableScenarios) {
+        checkScenariosAvailability(defaultTargets, "in default scenarios", availableScenarios);
+        return new LinkedHashSet<>(defaultTargets);
+    }
+
+    private static Set<String> selectScenariosFromTargets(InvocationSettings settings, Collection<String> availableScenarios) {
+        List<String> targets = settings.getTargets();
+        checkScenariosAvailability(targets, "requested", availableScenarios);
+        return new LinkedHashSet<>(targets);
+    }
+
+    private static Set<String> selectScenariosFromGroup(Config config, InvocationSettings settings, Set<String> availableScenarios, File scenarioFile) {
+        String groupName = settings.getScenarioGroup();
+
+        if (!config.hasPath(SCENARIO_GROUPS)) {
+            throw new IllegalArgumentException(String.format(
+                "Unknown scenario group '%s' requested. No '%s' defined in scenario file %s", groupName, SCENARIO_GROUPS, scenarioFile
+            ));
         }
+
+        Config scenarioGroups = config.getConfig(SCENARIO_GROUPS);
+        Set<String> availableGroups = scenarioGroups.root().keySet();
+
+        if (!availableGroups.contains(groupName)) {
+            throw new IllegalArgumentException(String.format(
+                "Unknown scenario group '%s' requested. Available groups are: %s", groupName, String.join(", ", availableGroups)
+            ));
+        }
+
+        List<String> targets = scenarioGroups.getStringList(groupName);
+        checkScenariosAvailability(targets, "in group '" + groupName + "'", availableScenarios);
+
+        return new LinkedHashSet<>(targets);
+    }
+
+    private static void checkScenariosAvailability(List<String> candidateScenarios, String source, Collection<String> availableScenarios) {
+        for (String target : candidateScenarios) {
+            if (!availableScenarios.contains(target)) {
+                throw new IllegalArgumentException(String.format(
+                    "Unknown scenario '%s' %s. Available scenarios are: %s", target, source, String.join(", ", availableScenarios)
+                ));
+            }
+        }
+    }
+
+    /**
+     * Formats resolved scenario configurations as a string.
+     *
+     * <p>Each scenario output is standalone and can be copied into a new scenario file as-is.
+     */
+    public static String dumpScenarios(File scenarioFile, InvocationSettings settings) {
+        Config config = parseScenarioFile(scenarioFile);
+        Set<String> selectedScenarios = selectScenarios(config, settings, scenarioFile);
+
+        ConfigRenderOptions renderOptions = ConfigRenderOptions.defaults()
+            .setOriginComments(false)
+            .setComments(false)
+            .setJson(false)
+            .setFormatted(true);
+
+        StringBuilder output = new StringBuilder();
+        int scenarioCount = selectedScenarios.size();
+        int scenarioIndex = 0;
+        for (String scenarioName : selectedScenarios) {
+            scenarioIndex++;
+            output.append('\n');
+
+            Config scenario = config.getConfig(scenarioName);
+
+
+            output.append(String.format("# Scenario %d/%d", scenarioIndex, scenarioCount));
+            String title = scenario.hasPath(TITLE) ? scenario.getString(TITLE) : null;
+            if (title != null) {
+                output.append(" '").append(title).append("'");
+            }
+            output.append('\n');
+
+            output.append(scenarioName).append(" {\n");
+
+            String rendered = scenario.root().render(renderOptions);
+            Arrays.stream(rendered.split("\n"))
+                .filter(line -> !line.isEmpty())
+                .forEach(line -> output.append("    ").append(line).append("\n"));
+
+            output.append("}\n");
+        }
+        return output.toString();
     }
 }

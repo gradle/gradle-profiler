@@ -6,23 +6,11 @@ import java.time.Duration;
 
 public class BuildInvocationResult {
     private final BuildContext buildContext;
-    private final Duration executionTime;
+    private final BuildActionResult actionResult;
 
-    public static final Sample<BuildInvocationResult> EXECUTION_TIME = new Sample<BuildInvocationResult>() {
-        @Override
-        public String getName() {
-            return "execution";
-        }
-
-        @Override
-        public Duration extractFrom(BuildInvocationResult result) {
-            return result.getExecutionTime();
-        }
-    };
-
-    public BuildInvocationResult(BuildContext buildContext, Duration executionTime) {
+    public BuildInvocationResult(BuildContext buildContext, BuildActionResult actionResult) {
         this.buildContext = buildContext;
-        this.executionTime = executionTime;
+        this.actionResult = actionResult;
     }
 
     public String getDisplayName() {
@@ -33,7 +21,14 @@ public class BuildInvocationResult {
         return buildContext;
     }
 
-    public Duration getExecutionTime() {
-        return executionTime;
+    public BuildActionResult getActionResult() {
+        return actionResult;
     }
+
+    public Duration getExecutionTime() {
+        return actionResult.getExecutionTime();
+    }
+
+    public static final Sample<BuildInvocationResult> EXECUTION_TIME
+        = SingleInvocationDurationSample.from("total execution time", BuildInvocationResult::getExecutionTime);
 }

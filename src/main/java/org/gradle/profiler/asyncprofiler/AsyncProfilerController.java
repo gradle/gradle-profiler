@@ -1,42 +1,51 @@
 package org.gradle.profiler.asyncprofiler;
 
+import com.google.common.base.Joiner;
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableMap;
 import org.gradle.profiler.CommandExec;
-import org.gradle.profiler.GradleScenarioDefinition;
 import org.gradle.profiler.InstrumentingProfiler;
 import org.gradle.profiler.ScenarioSettings;
+import org.gradle.profiler.flamegraph.DetailLevel;
+import org.gradle.profiler.flamegraph.EventType;
+import org.gradle.profiler.flamegraph.FlameGraphGenerator;
 import org.gradle.profiler.flamegraph.FlameGraphSanitizer;
-import org.gradle.profiler.flamegraph.FlameGraphTool;
+import org.gradle.profiler.flamegraph.Stacks;
+import org.gradle.profiler.flamegraph.JfrToStacksConverter;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Locale;
 
-import static org.gradle.profiler.asyncprofiler.AsyncProfilerConfig.Counter;
-import static org.gradle.profiler.flamegraph.FlameGraphSanitizer.*;
+import static org.gradle.profiler.flamegraph.FlameGraphSanitizer.SanitizeFunction;
 
 public class AsyncProfilerController implements InstrumentingProfiler.SnapshotCapturingProfilerController {
     private final AsyncProfilerConfig profilerConfig;
     private final ScenarioSettings scenarioSettings;
-    private final FlameGraphTool flamegraphGenerator;
-    private final FlameGraphSanitizer flamegraphSanitizer;
-    private final File stacks;
+    private final JfrToStacksConverter stacksConverter;
+    private final FlameGraphGenerator flameGraphGenerator;
+    private final ImmutableMap<DetailLevel, FlameGraphSanitizer> flameGraphSanitizers;
+    private final File outputFile;
+    private final AsyncProfilerOutputType outputType;
 
     public AsyncProfilerController(AsyncProfilerConfig profilerConfig, ScenarioSettings scenarioSettings) {
         this.profilerConfig = profilerConfig;
         this.scenarioSettings = scenarioSettings;
-        ImmutableList.Builder<SanitizeFunction> sanitizers = ImmutableList.<SanitizeFunction>builder();
-        if (!profilerConfig.isIncludeSystemThreads()) {
-            sanitizers.add(new RemoveSystemThreads());
-
-        }
-        sanitizers.add(COLLAPSE_BUILD_SCRIPTS, COLLAPSE_GRADLE_INFRASTRUCTURE, SIMPLE_NAMES);
-        this.flamegraphSanitizer = new FlameGraphSanitizer(sanitizers.build().toArray(new SanitizeFunction[0]));
-        this.flamegraphGenerator = new FlameGraphTool();
-
-        this.stacks = AsyncProfiler.stacksFileFor(scenarioSettings.getScenario());
+        FlameGraphSanitizer rawFlamegraphSanitizer = FlameGraphSanitizer.raw();
+        FlameGraphSanitizer simplifiedFlamegraphSanitizer = profilerConfig.isIncludeSystemThreads()
+            ? FlameGraphSanitizer.simplified()
+            : FlameGraphSanitizer.simplified(new RemoveSystemThreads());
+        this.flameGraphSanitizers = ImmutableMap.of(
+            DetailLevel.RAW, rawFlamegraphSanitizer,
+            DetailLevel.SIMPLIFIED, simplifiedFlamegraphSanitizer
+        );
+        this.stacksConverter = new JfrToStacksConverter(flameGraphSanitizers);
+        this.flameGraphGenerator = new FlameGraphGenerator();
+        this.outputType = AsyncProfilerOutputType.from(profilerConfig, scenarioSettings.getScenario());
+        this.outputFile = outputType.outputFileFor(scenarioSettings);
     }
 
     public String getName() {
@@ -45,25 +54,65 @@ public class AsyncProfilerController implements InstrumentingProfiler.SnapshotCa
 
     @Override
     public void startRecording(String pid) throws IOException, InterruptedException {
-        new CommandExec().run(
-            getProfilerScript().getAbsolutePath(),
-            "start",
-            "-e", profilerConfig.getEvent(),
-            "-i", String.valueOf(profilerConfig.getInterval()),
-            "-j", String.valueOf(profilerConfig.getStackDepth()),
-            "-b", String.valueOf(profilerConfig.getFrameBuffer()),
-            pid
+        // TODO support all events, custom options ?
+        //  e.g. asprof --all -e cycles --alloc 2m --lock 10ms -f profile.jfr
+
+        //  | Version | Events            | Generated Command                                                    |
+        //  |---------|-------------------|----------------------------------------------------------------------|
+        //  | 3.0+    | ["alloc"]         | asprof start --alloc 524287 -f out.jfr <pid>                         |
+        //  | 3.0+    | ["cpu", "alloc"]  | asprof start -e cpu -i 10000000 --alloc 524287 -f out.jfr <pid>      |
+        //  | 3.0+    | ["wall"]          | asprof start --wall 10000000 -f out.jfr <pid>                        |
+        //  | 3.0+    | ["cpu", "wall"]   | asprof start -e cpu -i 10000000 --wall 10000000 -f out.jfr <pid>     |
+        //  | 3.0+    | ["alloc", "lock"] | asprof start --alloc 524287 --lock 250000 -f out.jfr <pid>           |
+
+        List<String> events = new ArrayList<>(profilerConfig.getEvents());
+        // v3.0+: alloc/lock/wall always become auxiliary options
+        boolean useAllocOption = events.size() > 1 && events.remove(AsyncProfilerConfig.EVENT_ALLOC);
+        boolean useLockOption = events.size() > 1 && events.remove(AsyncProfilerConfig.EVENT_LOCK);
+        boolean useWallOption = events.size() > 1 && events.remove(AsyncProfilerConfig.EVENT_WALL);
+
+        ImmutableList.Builder<String> arguments = ImmutableList.builder();
+        arguments.add(
+            profilerConfig.getDistribution().getExecutable().getAbsolutePath(),
+            "start"
         );
+
+        // -e and -i: used for primary events only (like cpu)
+        if (!events.isEmpty()) {
+            arguments.add(
+                "-e", Joiner.on(",").join(events),
+                "-i", String.valueOf(profilerConfig.getInterval())
+            );
+        }
+
+        arguments.add(
+            "-j", String.valueOf(profilerConfig.getStackDepth()),
+            "--" + profilerConfig.getCounter().name().toLowerCase(Locale.ROOT),
+            "--ann", // annotate java methods
+            "-o", outputType.getCommandLineOption(),
+            "-f", outputType.individualOutputFileFor(scenarioSettings).getAbsolutePath()
+        );
+        if (useAllocOption) {
+            arguments.add("--alloc", String.valueOf(profilerConfig.getAllocSampleSize()));
+        }
+        if (useLockOption) {
+            arguments.add("--lock", String.valueOf(profilerConfig.getLockThreshold()));
+        }
+        if (useWallOption) {
+            arguments.add("--wall", String.valueOf(profilerConfig.getWallInterval()));
+        }
+        arguments.add(pid);
+        new CommandExec().run(arguments.build());
     }
 
     @Override
-    public void stopRecording(String pid) throws IOException, InterruptedException {
+    public void stopRecording(String pid) {
         new CommandExec().run(
-            getProfilerScript().getAbsolutePath(),
+            profilerConfig.getDistribution().getExecutable().getAbsolutePath(),
             "stop",
-            "-o", "collapsed=" + profilerConfig.getCounter().name().toLowerCase(Locale.ROOT),
-            "-a",
-            "-f", stacks.getAbsolutePath(),
+            "-o", outputType.getCommandLineOption(),
+            "-f", outputType.individualOutputFileFor(scenarioSettings).getAbsolutePath(),
+            "--ann", // annotate java methods
             pid
         );
     }
@@ -74,36 +123,63 @@ public class AsyncProfilerController implements InstrumentingProfiler.SnapshotCa
 
     @Override
     public void stopSession() {
-        GradleScenarioDefinition scenario = scenarioSettings.getScenario();
-        if (flamegraphGenerator.checkInstallation()) {
-            File simplifiedStacks = new File(scenario.getOutputDir(), scenario.getProfileName() + ".simplified-stacks.txt");
-            flamegraphSanitizer.sanitize(stacks, simplifiedStacks);
+        List<Stacks> stacks = generateStacks(scenarioSettings.getProfilerOutputBaseDir(), scenarioSettings.getProfilerOutputBaseName());
+        flameGraphGenerator.generateGraphs(scenarioSettings.getProfilerOutputBaseDir(), stacks);
+    }
 
-            Counter counter = profilerConfig.getCounter();
-            String unit = counter == Counter.SAMPLES ? "samples" : "units";
-            String titlePrefix = profilerConfig.getEvent().toUpperCase(Locale.ROOT);
-            File flamegraph = new File(scenario.getOutputDir(), scenario.getProfileName() + "-flames.svg");
-            flamegraphGenerator.generateFlameGraph(
-                simplifiedStacks, flamegraph,
-                "--colors", "java",
-                "--minwidth", "1",
-                "--title", titlePrefix + " Flame Graph",
-                "--countname", unit
-            );
-            File iciclegraph = new File(scenario.getOutputDir(), scenario.getProfileName() + "-icicles.svg");
-            flamegraphGenerator.generateFlameGraph(
-                simplifiedStacks, iciclegraph,
-                "--reverse", "--invert",
-                "--colors", "java",
-                "--minwidth", "2",
-                "--title", titlePrefix + " Icicle Graph",
-                "--countname", unit
-            );
+    private List<Stacks> generateStacks(File outputDir, String outputBaseName) {
+        if (outputType == AsyncProfilerOutputType.JFR) {
+            List<Stacks> stacks = stacksConverter.generateStacks(outputFile, outputBaseName);
+            if (stacks.isEmpty()) {
+                failOnEmptyStacks();
+            }
+            return stacks;
+        } else {
+            validateStacks();
+            List<Stacks> collectedStacks = new ArrayList<>();
+            for (String event : profilerConfig.getEvents()) {
+                EventType jfrEventType = convertAsyncEventToJfrEvent(event);
+                for (DetailLevel level : DetailLevel.values()) {
+                    collectedStacks.add(sanitizeStacks(outputDir, outputBaseName, outputFile, jfrEventType, level));
+                }
+            }
+            return collectedStacks;
         }
     }
 
-    private File getProfilerScript() {
-        return new File(profilerConfig.getProfilerHome(), "profiler.sh");
+    private Stacks sanitizeStacks(File outputDir, String outputBaseName, File stacksFileToConvert, EventType jfrEventType, DetailLevel level) {
+        FlameGraphSanitizer flamegraphSanitizer = flameGraphSanitizers.get(level);
+        String eventFileBaseName = outputBaseName + Stacks.postFixFor(jfrEventType, level);
+        File sanitizedStacksFile = new File(outputDir, eventFileBaseName + Stacks.STACKS_FILE_SUFFIX);
+        flamegraphSanitizer.sanitize(stacksFileToConvert, sanitizedStacksFile);
+        return new Stacks(sanitizedStacksFile, jfrEventType, level, eventFileBaseName);
+    }
+
+    private EventType convertAsyncEventToJfrEvent(String event) {
+        switch (event) {
+            case "cpu":
+                return EventType.CPU;
+            case "wall":
+                return EventType.WALL;
+            case "alloc":
+                return EventType.ALLOCATION;
+            case "lock":
+                return EventType.MONITOR_BLOCKED;
+            default:
+                return EventType.CPU;
+        }
+    }
+
+    private void validateStacks() {
+        if (!outputFile.isFile() || outputFile.length() == 0) {
+            failOnEmptyStacks();
+        }
+    }
+
+    private void failOnEmptyStacks() {
+        throw new RuntimeException("No stacks have been captured by Async profiler. If you are on Linux, you may need to set two runtime variables:\n" +
+            "# sysctl kernel.perf_event_paranoid=1\n" +
+            "# sysctl kernel.kptr_restrict=0");
     }
 
     private static final class RemoveSystemThreads implements SanitizeFunction {

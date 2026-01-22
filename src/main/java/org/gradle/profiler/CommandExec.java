@@ -1,28 +1,48 @@
 package org.gradle.profiler;
 
 import javax.annotation.Nullable;
-import java.io.*;
+import java.io.ByteArrayOutputStream;
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.lang.reflect.Field;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 import java.util.Collection;
 import java.util.List;
+import java.util.Map;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 import java.util.function.Supplier;
+import java.util.stream.Stream;
 
 public class CommandExec {
     private final File directory;
+    private final Map<String, String> environmentVariables;
 
     public CommandExec() {
         this.directory = null;
+        this.environmentVariables = null;
     }
 
-    protected CommandExec(File directory) {
+    protected CommandExec(File directory, Map<String, String> environmentVariables) {
         this.directory = directory;
+        this.environmentVariables = environmentVariables;
     }
 
     public CommandExec inDir(File directory) {
-        return new CommandExec(directory);
+        return new CommandExec(directory, environmentVariables);
+    }
+
+    public CommandExec environmentVariables(Map<String, String> environmentVariables) {
+        return new CommandExec(directory, environmentVariables);
     }
 
     public void run(Collection<String> commandLine) {
@@ -92,6 +112,9 @@ public class CommandExec {
     private RunHandle start(ProcessBuilder processBuilder, OutputStream outputStream, Supplier<String> diagnosticOutput, @Nullable InputStream inputStream) {
         if (directory != null) {
             processBuilder.directory(directory);
+        }
+        if (environmentVariables != null) {
+            processBuilder.environment().putAll(environmentVariables);
         }
 
         String command = processBuilder.command().get(0);
@@ -205,6 +228,11 @@ public class CommandExec {
             }
         }
 
+        public void waitForSuccess(long timeout, TimeUnit unit) throws ExecutionException, InterruptedException, TimeoutException {
+            Future<?> future = executor.submit((Runnable) this::waitForSuccess);
+            future.get(timeout, unit);
+        }
+
         public void interrupt() {
             int pid;
             try {
@@ -223,8 +251,39 @@ public class CommandExec {
         }
 
         public void kill() {
+            // On Windows subprocesses are not automatically
+            // killed with parent, so let's do that manually
+            destroyDescendants();
             process.destroy();
             shutdownExecutor();
+        }
+
+        private void destroyDescendants() {
+            if (VersionUtils.getJavaVersion() < 9) {
+                // ProcessHandle API is available only from JDK9
+                return;
+            }
+            try {
+                @SuppressWarnings("unchecked")
+                Stream<Object> descendants = (Stream<Object>) Process.class.getMethod("descendants").invoke(process);
+                long parentPid = (long) Process.class.getMethod("pid").invoke(process);
+                Method pidMethod = Class.forName("java.lang.ProcessHandle").getMethod("pid");
+                Method destroyMethod = Class.forName("java.lang.ProcessHandle").getMethod("destroy");
+                descendants.forEach(descendant -> destroyDescendant(parentPid, descendant, pidMethod, destroyMethod));
+            } catch (NoSuchMethodException | IllegalAccessException | InvocationTargetException | ClassNotFoundException e) {
+                throw new RuntimeException(e);
+            }
+        }
+
+        private void destroyDescendant(long parentPid, Object child, Method pidMethod, Method destroyMethod) {
+            try {
+                long pid = (long) pidMethod.invoke(child);
+                boolean success = (boolean) destroyMethod.invoke(child);
+                String successOrFailure = success ? "Successfully" : "Unsuccessfully";
+                Logging.detailed().printf("%s requested termination of descendant '%d' of parent '%d'. Parent will be terminated after that.%n", successOrFailure, pid, parentPid);
+            } catch (IllegalAccessException | InvocationTargetException e) {
+                throw new RuntimeException(e);
+            }
         }
 
         private void shutdownExecutor() {

@@ -1,29 +1,61 @@
-import jetbrains.buildServer.configs.kotlin.v2019_2.BuildType
-import jetbrains.buildServer.configs.kotlin.v2019_2.CheckoutMode
-import jetbrains.buildServer.configs.kotlin.v2019_2.DslContext
-import jetbrains.buildServer.configs.kotlin.v2019_2.ParametrizedWithType
+import jetbrains.buildServer.configs.kotlin.BuildType
+import jetbrains.buildServer.configs.kotlin.CheckoutMode
+import jetbrains.buildServer.configs.kotlin.DslContext
+import jetbrains.buildServer.configs.kotlin.ParametrizedWithType
 
-fun BuildType.agentRequirement(os: Os) {
+fun BuildType.agentRequirement(os: Os, arch: Arch) {
     requirements {
         contains("teamcity.agent.jvm.os.name", os.requirementName)
+        contains("teamcity.agent.jvm.os.arch", arch.localName(os))
     }
 }
 
-fun buildCacheConfigurations() = listOf("-Dgradle.cache.remote.push=true",
-    "-Dgradle.cache.remote.username=%gradle.cache.remote.username%",
-    "-Dgradle.cache.remote.password=%gradle.cache.remote.password%").joinToString(" ")
+fun javaInstallationsFor(os: Os, arch: Arch) = listOf(
+    JavaVersion.OPENJDK_11,
+    JavaVersion.OPENJDK_17,
+    JavaVersion.OPENJDK_21,
+    JavaVersion.OPENJDK_25,
+).map { it.javaHome(os, arch) }
 
-fun toolchainConfiguration(os: Os) = listOf("-Porg.gradle.java.installations.auto-detect=false",
-    "-Porg.gradle.java.installations.auto-download=false",
-    """"-Porg.gradle.java.installations.paths=%${os.name}.java8.oracle.64bit%,%${os.name}.java11.openjdk.64bit%"""").joinToString(" ")
+fun toolchainConfiguration(os: Os, arch: Arch): String {
+    return listOf(
+        "-Porg.gradle.java.installations.auto-detect=false",
+        "-Porg.gradle.java.installations.auto-download=false",
+        "\"-Porg.gradle.java.installations.paths=${javaInstallationsFor(os, arch).joinToString(",")}\"",
+        "-Dorg.gradle.java.installations.auto-detect=false",
+        "-Dorg.gradle.java.installations.auto-download=false",
+        "\"-Dorg.gradle.java.installations.paths=${javaInstallationsFor(os, arch).joinToString(",")}\"",
+    ).joinToString(" ")
+}
 
-fun ParametrizedWithType.java8Home(os: Os) {
-    param("env.JAVA_HOME", "%${os.name}.java8.oracle.64bit%")
+fun ParametrizedWithType.javaHome(os: Os, arch: Arch, javaVersion: JavaVersion) {
+    param("env.JAVA_HOME", javaVersion.javaHome(os, arch))
+}
+
+fun ParametrizedWithType.androidHome(os: Os) {
+    val androidHome = when (os) {
+        Os.linux, Os.macos -> "/opt/android/sdk"
+        Os.windows -> """C:\Program Files\android\sdk"""
+    }
+    param("env.ANDROID_HOME", androidHome)
+    param("env.ANDROID_SDK_ROOT", androidHome)
+}
+
+enum class JavaVersion(val majorVersion: String, val vendor: String) {
+    OPENJDK_11("11", "openjdk"),
+    OPENJDK_17("17", "openjdk"),
+    OPENJDK_21("21", "openjdk"),
+    OPENJDK_25("25", "openjdk"),
+    ;
+
+    fun javaHome(os: Os, arch: Arch) = "%${os.name}.java${majorVersion}.${vendor}.${arch.jdkName}%"
 }
 
 fun BuildType.gradleProfilerVcs() {
     vcs {
         root(DslContext.settingsRoot)
-        checkoutMode = CheckoutMode.ON_SERVER
+        checkoutMode = CheckoutMode.ON_AGENT
     }
 }
+
+const val buildReceipt = "build-receipt.properties"

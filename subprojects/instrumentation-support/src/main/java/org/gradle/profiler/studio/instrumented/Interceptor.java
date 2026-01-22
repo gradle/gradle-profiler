@@ -1,9 +1,10 @@
 package org.gradle.profiler.studio.instrumented;
 
 import org.gradle.profiler.client.protocol.Client;
-import org.gradle.profiler.client.protocol.ConnectionParameters;
-import org.gradle.profiler.client.protocol.SyncParameters;
-import org.gradle.profiler.client.protocol.SyncStarted;
+import org.gradle.profiler.client.protocol.agent.AgentClientContainer;
+import org.gradle.profiler.client.protocol.messages.GradleInvocationParameters;
+import org.gradle.profiler.client.protocol.messages.GradleInvocationStarted;
+import org.gradle.profiler.client.protocol.messages.StudioAgentConnectionParameters;
 import org.gradle.tooling.ResultHandler;
 import org.gradle.tooling.internal.consumer.AbstractLongRunningOperation;
 import org.gradle.tooling.internal.consumer.DefaultGradleConnector;
@@ -16,8 +17,10 @@ import java.util.concurrent.atomic.AtomicInteger;
  */
 public class Interceptor {
     private static final AtomicInteger COUNTER = new AtomicInteger();
+    private static final Duration RECEIVE_CONNECTION_PARAMS_TIMEOUT = Duration.ofSeconds(60);
+    private static final Duration RECEIVE_SYNC_PARAMS_TIMEOUT = Duration.ofSeconds(60);
 
-    static ConnectionParameters connectionParameters;
+    static StudioAgentConnectionParameters connectionParameters;
 
     /**
      * Called when creating a connection.
@@ -25,7 +28,7 @@ public class Interceptor {
     public static void onConnect(DefaultGradleConnector connector) {
         System.out.println("* Creating project connection");
         if (connectionParameters == null) {
-            connectionParameters = Client.INSTANCE.receiveConnectionParameters(Duration.ofSeconds(60));
+            connectionParameters = AgentClientContainer.INSTANCE.getClient().receiveConnectionParameters(RECEIVE_CONNECTION_PARAMS_TIMEOUT);
         }
         System.out.println("* Using Gradle home: " + connectionParameters.getGradleInstallation());
         connector.useInstallation(connectionParameters.getGradleInstallation());
@@ -38,11 +41,11 @@ public class Interceptor {
         System.out.println("* Starting tooling API operation " + operation);
         int id = COUNTER.incrementAndGet();
 
-        SyncParameters syncParameters;
+        GradleInvocationParameters syncParameters;
         try {
-            Client client = Client.INSTANCE;
-            client.send(new SyncStarted(id));
-            syncParameters = client.receiveSyncParameters(Duration.ofSeconds(60));
+            Client client = AgentClientContainer.INSTANCE.getClient();
+            client.send(new GradleInvocationStarted(id));
+            syncParameters = client.receiveSyncParameters(RECEIVE_SYNC_PARAMS_TIMEOUT);
         } catch (Throwable throwable) {
             throwable.printStackTrace();
             // Continue with original handler

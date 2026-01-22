@@ -5,7 +5,7 @@ import java.io.File;
 public class ApplyNonAbiChangeToSourceFileMutator extends AbstractDelegateFileMutator {
 
     public ApplyNonAbiChangeToSourceFileMutator(File sourceFile) {
-        super(sourceFile);
+        super(sourceFile, "non-ABI change");
     }
 
     @Override

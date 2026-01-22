@@ -7,25 +7,15 @@ import org.gradle.profiler.result.Sample;
 import java.io.BufferedWriter;
 import java.io.File;
 import java.io.IOException;
-import java.time.Duration;
+import java.text.DecimalFormat;
+import java.text.DecimalFormatSymbols;
 import java.util.List;
+import java.util.Locale;
 import java.util.stream.Collectors;
 
 public class CsvGenerator extends AbstractGenerator {
     private final Format format;
-
-    public enum Format {
-        LONG, WIDE;
-
-        public static Format parse(String name) {
-            for (Format format : values()) {
-                if (format.name().toLowerCase().equals(name)) {
-                    return format;
-                }
-            }
-            throw new IllegalArgumentException("Unknown CSV format: " + name);
-        }
-    }
+    private static final DecimalFormat DOUBLE_FORMAT = new DecimalFormat("0.00", new DecimalFormatSymbols(Locale.US));
 
     public CsvGenerator(File outputFile, Format format) {
         super(outputFile);
@@ -110,15 +100,14 @@ public class CsvGenerator extends AbstractGenerator {
         }
         T buildResult = results.get(row);
         writer.write(scenario.getSamples().stream()
-            .map(sample -> sample.extractFrom(buildResult))
-            .map(Duration::toMillis)
-            .map(Object::toString)
+            .map(sample -> sample.extractValue(buildResult))
+            .map(DOUBLE_FORMAT::format)
             .collect(Collectors.joining(","))
         );
     }
 
     private void writeLong(BufferedWriter writer, List<? extends BuildScenarioResult<?>> allScenarios) throws IOException {
-        writer.write("Scenario,Tool,Tasks,Phase,Iteration,Sample,Duration");
+        writer.write("Scenario,Tool,Tasks,Phase,Iteration,Sample,Duration,Count");
         writer.newLine();
         for (BuildScenarioResult<?> scenario : allScenarios) {
             writeLongRow(writer, scenario);
@@ -140,7 +129,9 @@ public class CsvGenerator extends AbstractGenerator {
                 writer.write(",");
                 writer.write(sample.getName());
                 writer.write(",");
-                writer.write(String.valueOf(sample.extractFrom(result).toMillis()));
+                writer.write(DOUBLE_FORMAT.format(sample.extractValue(result)));
+                writer.write(",");
+                writer.write(String.valueOf(sample.extractTotalCountFrom(result)));
                 writer.newLine();
             }
         }

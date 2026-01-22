@@ -1,9 +1,9 @@
 package org.gradle.profiler;
 
-import com.google.common.collect.ImmutableList;
 import org.gradle.profiler.report.BuildScenarioResult;
 import org.gradle.profiler.result.BuildInvocationResult;
 import org.gradle.profiler.result.Sample;
+import org.gradle.profiler.result.SampleProvider;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -12,12 +12,12 @@ import java.util.function.Consumer;
 
 public class BuildScenarioResultImpl<T extends BuildInvocationResult> implements BuildScenarioResult<T>, Consumer<T> {
     private final ScenarioDefinition scenario;
-    private final List<Sample<? super T>> samples;
+    private final SampleProvider<T> sampleProvider;
     private final List<T> results = new ArrayList<>();
 
-    public BuildScenarioResultImpl(ScenarioDefinition scenario, List<Sample<? super T>> samples) {
+    public BuildScenarioResultImpl(ScenarioDefinition scenario, SampleProvider<T> samplesProvider) {
         this.scenario = scenario;
-        this.samples = ImmutableList.copyOf(samples);
+        this.sampleProvider = samplesProvider;
     }
 
     @Override
@@ -32,7 +32,7 @@ public class BuildScenarioResultImpl<T extends BuildInvocationResult> implements
 
     @Override
     public List<Sample<? super T>> getSamples() {
-        return samples;
+        return sampleProvider.get(results);
     }
 
     @Override

@@ -1,9 +1,23 @@
 package org.gradle.profiler.result;
 
-import java.time.Duration;
+public abstract class Sample<T extends BuildInvocationResult> {
+    private final String name;
+    private final String unit;
 
-public interface Sample<T extends BuildInvocationResult> {
-    String getName();
+    public Sample(String name, String unit) {
+        this.name = name;
+        this.unit = unit;
+    }
 
-    Duration extractFrom(T result);
+    public String getName() {
+        return name;
+    }
+
+    public String getUnit() {
+        return unit;
+    }
+
+    public abstract double extractValue(T result);
+
+    public abstract int extractTotalCountFrom(T result);
 }

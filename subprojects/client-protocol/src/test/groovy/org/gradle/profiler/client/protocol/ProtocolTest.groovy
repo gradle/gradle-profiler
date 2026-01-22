@@ -1,5 +1,9 @@
 package org.gradle.profiler.client.protocol
 
+import org.gradle.profiler.client.protocol.messages.StudioAgentConnectionParameters
+import org.gradle.profiler.client.protocol.messages.GradleInvocationCompleted
+import org.gradle.profiler.client.protocol.messages.GradleInvocationParameters
+import org.gradle.profiler.client.protocol.messages.GradleInvocationStarted
 import spock.lang.Specification
 
 import java.time.Duration
@@ -9,21 +13,20 @@ class ProtocolTest extends Specification {
         when:
         def server = new Server("some client")
         def timeout = Duration.ofSeconds(20)
-        def client = Client.INSTANCE
-        client.connect(server.port)
+        def client = new Client(server.port)
         def serverConnection = server.waitForIncoming(timeout)
 
-        serverConnection.send(new ConnectionParameters(new File("gradle-home")))
+        serverConnection.send(new StudioAgentConnectionParameters(new File("gradle-home")))
         def m1 = client.receiveConnectionParameters(timeout)
 
-        client.send(new SyncStarted(1))
-        def m2 = serverConnection.receiveSyncStarted(timeout)
+        client.send(new GradleInvocationStarted(1))
+        def m2 = serverConnection.receiveGradleInvocationStarted(timeout)
 
-        serverConnection.send(new SyncParameters(["gradle-arg"], ["jvm-arg"]))
+        serverConnection.send(new GradleInvocationParameters(["gradle-arg"], ["jvm-arg"]))
         def m3 = client.receiveSyncParameters(timeout)
 
-        client.send(new SyncCompleted(1, 123))
-        def m4 = serverConnection.receiveSyncCompeted(timeout)
+        client.send(new GradleInvocationCompleted(1, 123))
+        def m4 = serverConnection.receiveGradleInvocationCompleted(timeout)
 
         then:
         m1.gradleInstallation.path == "gradle-home"
@@ -34,7 +37,7 @@ class ProtocolTest extends Specification {
         m4.durationMillis == 123
 
         cleanup:
-        client?.disconnect()
+        client?.close()
         server?.close()
     }
 }

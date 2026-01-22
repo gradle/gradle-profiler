@@ -8,10 +8,11 @@ class ApplyAbiChangeToKotlinSourceFileMutatorTest extends AbstractMutatorTest {
         def mutator = new ApplyAbiChangeToKotlinSourceFileMutator(sourceFile)
 
         when:
+        mutator.beforeScenario(scenarioContext)
         mutator.beforeBuild(buildContext)
 
         then:
-        sourceFile.text == "class Thing { fun existingMethod() { }}fun _m_276d92f3_16ac_4064_9a18_5f1dfd67992f_testScenario_3c4925d7_MEASURE_7() {}"
+        sourceFile.text == "class Thing { fun existingMethod() { }}\n\nfun _m_276d92f3_16ac_4064_9a18_5f1dfd67992f_testScenario_3c4925d7_MEASURE_7() {}"
     }
 
     def "reverts changes when nothing has been applied"() {
@@ -20,6 +21,7 @@ class ApplyAbiChangeToKotlinSourceFileMutatorTest extends AbstractMutatorTest {
         def mutator = new ApplyAbiChangeToKotlinSourceFileMutator(sourceFile)
 
         when:
+        mutator.beforeScenario(scenarioContext)
         mutator.afterScenario(scenarioContext)
 
         then:
@@ -38,7 +40,8 @@ class ApplyAbiChangeToKotlinSourceFileMutatorTest extends AbstractMutatorTest {
         def mutator = new ApplyAbiChangeToKotlinSourceFileMutator(sourceFile)
 
         when:
-        mutator.beforeBuild(buildContext)
+        mutator.beforeScenario(scenarioContext)
+        sourceFile.text = "some-change"
         mutator.afterScenario(scenarioContext)
 
         then:

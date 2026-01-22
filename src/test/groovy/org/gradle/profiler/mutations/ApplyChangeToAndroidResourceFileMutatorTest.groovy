@@ -8,10 +8,11 @@ class ApplyChangeToAndroidResourceFileMutatorTest extends AbstractMutatorTest {
         def mutator = new ApplyChangeToAndroidResourceFileMutator(sourceFile)
 
         when:
+        mutator.beforeScenario(scenarioContext)
         mutator.beforeBuild(buildContext)
 
         then:
-        sourceFile.text == '<resources><string name="new_resource">_276d92f3_16ac_4064_9a18_5f1dfd67992f_testScenario_3c4925d7_MEASURE_7</string></resources>'
+        sourceFile.text == '<resources><string name="new_resource_276d92f3_16ac_4064_9a18_5f1dfd67992f_testScenario_3c4925d7_MEASURE_7">_276d92f3_16ac_4064_9a18_5f1dfd67992f_testScenario_3c4925d7_MEASURE_7</string></resources>'
     }
 
     def "reverts changes when nothing has been applied"() {
@@ -20,6 +21,7 @@ class ApplyChangeToAndroidResourceFileMutatorTest extends AbstractMutatorTest {
         def mutator = new ApplyChangeToAndroidResourceFileMutator(sourceFile)
 
         when:
+        mutator.beforeScenario(scenarioContext)
         mutator.afterScenario(scenarioContext)
 
         then:
@@ -32,7 +34,8 @@ class ApplyChangeToAndroidResourceFileMutatorTest extends AbstractMutatorTest {
         def mutator = new ApplyChangeToAndroidResourceFileMutator(sourceFile)
 
         when:
-        mutator.beforeBuild(buildContext)
+        mutator.beforeScenario(scenarioContext)
+        sourceFile.text = "some-change"
         mutator.afterScenario(scenarioContext)
 
         then:

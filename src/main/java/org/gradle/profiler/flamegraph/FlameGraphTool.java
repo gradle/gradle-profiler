@@ -8,7 +8,6 @@ import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.StandardCopyOption;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 
 /**
@@ -55,9 +54,4 @@ public class FlameGraphTool {
         allArgs.addAll(args);
         new CommandExec().runAndCollectOutput(flames, allArgs);
     }
-
-    public void generateFlameGraph(File stacks, File flames, String... args) {
-        generateFlameGraph(stacks, flames, Arrays.asList(args));
-    }
-
 }

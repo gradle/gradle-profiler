@@ -1,14 +1,28 @@
 package org.gradle.profiler
 
-import com.google.common.collect.ImmutableList
-import org.gradle.profiler.report.CsvGenerator
+import org.gradle.profiler.bazel.BazelScenarioDefinition
+import org.gradle.profiler.buck.BuckScenarioDefinition
+import org.gradle.profiler.gradle.GradleBuildInvoker
+import org.gradle.profiler.gradle.GradleClientSpec
+import org.gradle.profiler.gradle.GradleDaemonReuse
+import org.gradle.profiler.gradle.GradleScenarioDefinition
+import org.gradle.profiler.gradle.LoadToolingModelAction
+import org.gradle.profiler.gradle.RunToolingAction
+import org.gradle.profiler.maven.MavenScenarioDefinition
+import org.gradle.profiler.mutations.AbstractScheduledMutator
+import org.gradle.profiler.report.Format
+import org.gradle.profiler.studio.AndroidStudioSyncAction
+import org.gradle.profiler.studio.invoker.StudioGradleScenarioDefinition
+import org.gradle.profiler.toolingapi.FetchProjectPublications
 import org.gradle.tooling.model.idea.IdeaProject
 import org.junit.Rule
 import org.junit.rules.TemporaryFolder
 import spock.lang.Specification
-import spock.lang.Unroll
 
 import static org.gradle.profiler.ScenarioLoader.loadScenarios
+import static org.gradle.profiler.mutations.AbstractScheduledMutator.Schedule.BUILD
+import static org.gradle.profiler.mutations.AbstractScheduledMutator.Schedule.CLEANUP
+import static org.gradle.profiler.mutations.AbstractScheduledMutator.Schedule.SCENARIO
 
 class ScenarioLoaderTest extends Specification {
     @Rule
@@ -25,12 +39,9 @@ class ScenarioLoaderTest extends Specification {
         scenarioFile = tmpDir.newFile()
     }
 
-    private settings(
+    private settingsBuilder(
         BuildInvoker invoker = GradleBuildInvoker.Cli,
-        boolean benchmark = true,
-        Integer warmups = null,
-        Integer iterations = null,
-        List<String> measuredBuildOperations = ImmutableList.of()
+        boolean benchmark = true
     ) {
         new InvocationSettings.InvocationSettingsBuilder()
             .setProjectDir(projectDir)
@@ -45,12 +56,18 @@ class ScenarioLoaderTest extends Specification {
             .setSysProperties([:])
             .setGradleUserHome(gradleUserHomeDir)
             .setStudioInstallDir(tmpDir.newFolder())
-            .setWarmupCount(warmups)
-            .setIterations(iterations)
+            .setMeasureGarbageCollection(false)
             .setMeasureConfigTime(false)
-            .setMeasuredBuildOperations(measuredBuildOperations)
-            .setCsvFormat(CsvGenerator.Format.WIDE
-            ).build()
+            .setMeasuredBuildOperations([])
+            .setCsvFormat(Format.WIDE)
+    }
+
+    private settings(
+        BuildInvoker invoker = GradleBuildInvoker.Cli,
+        boolean benchmark = true
+    ) {
+        settingsBuilder(invoker, benchmark)
+            .build()
     }
 
     def "can load single scenario"() {
@@ -198,8 +215,8 @@ class ScenarioLoaderTest extends Specification {
     }
 
     def "uses warm-up and iteration counts based on command-line options when Gradle invocation defined by scenario"() {
-        def benchmarkSettings = settings(GradleBuildInvoker.ToolingApi, true, 123, 509)
-        def profileSettings = settings(GradleBuildInvoker.ToolingApi, false, 25, 44)
+        def benchmarkSettings = settingsBuilder(GradleBuildInvoker.ToolingApi, true).setWarmupCount(123).setIterations(509).build()
+        def profileSettings = settingsBuilder(GradleBuildInvoker.ToolingApi, false).setWarmupCount(25).setIterations(44).build()
 
         scenarioFile << """
             default {
@@ -287,7 +304,7 @@ class ScenarioLoaderTest extends Specification {
     }
 
     def "can load build operations to benchmark"() {
-        def benchmarkSettings = settings(GradleBuildInvoker.ToolingApi, true, null, null, ["BuildOpCmdLine"])
+        def benchmarkSettings = settingsBuilder(GradleBuildInvoker.ToolingApi).setMeasuredBuildOperations(["BuildOpCmdLine"]).build()
 
         scenarioFile << """
             default {
@@ -302,15 +319,19 @@ class ScenarioLoaderTest extends Specification {
         benchmarkScenario.measuredBuildOperations == ["BuildOpCmdLine", "BuildOp1", "BuildOp2"]
     }
 
-    def "can load tooling model scenarios"() {
+    def "can load scenarios that fetch tooling models"() {
         def settings = settings()
 
         scenarioFile << """
             one {
-                model = "${IdeaProject.class.name}"
+                tooling-api {
+                    model = "${IdeaProject.class.name}"
+                }
             }
             two {
-                model = "${IdeaProject.class.name}"
+                tooling-api {
+                    model = "${IdeaProject.class.name}"
+                }
                 tasks = ["help"]
             }
         """
@@ -327,18 +348,49 @@ class ScenarioLoaderTest extends Specification {
         scenario2.action.tasks == ["help"]
     }
 
+    def "can load scenarios that run tooling actions"() {
+        def settings = settings()
+
+        scenarioFile << """
+            one {
+                tooling-api {
+                    action = "${FetchProjectPublications.class.name}"
+                }
+            }
+            two {
+                tooling-api {
+                    action = "${FetchProjectPublications.class.name}"
+                }
+                tasks = ["help"]
+            }
+        """
+        def scenarios = loadScenarios(scenarioFile, settings, Mock(GradleBuildConfigurationReader))
+        expect:
+        scenarios*.name == ["one", "two"]
+        def scenario1 = scenarios[0] as GradleScenarioDefinition
+        scenario1.action instanceof RunToolingAction
+        scenario1.action.action instanceof FetchProjectPublications
+        scenario1.action.tasks == []
+        def scenario2 = scenarios[1] as GradleScenarioDefinition
+        scenario2.action instanceof RunToolingAction
+        scenario2.action.action instanceof FetchProjectPublications
+        scenario2.action.tasks == ["help"]
+    }
+
     def "can load default Android studio sync scenario"() {
         def settings = settings()
+        def configurationReader = Mock(GradleBuildConfigurationReader)
+        configurationReader.readConfiguration() >> new GradleBuildConfiguration(null, null, null, null, false, false)
 
         scenarioFile << """
             default {
                 android-studio-sync { }
             }
         """
-        def scenarios = loadScenarios(scenarioFile, settings, Mock(GradleBuildConfigurationReader))
+        def scenarios = loadScenarios(scenarioFile, settings, configurationReader)
         expect:
         scenarios*.name == ["default"]
-        def scenarioDefinition = scenarios[0] as GradleScenarioDefinition
+        def scenarioDefinition = scenarios[0] as StudioGradleScenarioDefinition
         scenarioDefinition.action instanceof AndroidStudioSyncAction
     }
 
@@ -365,6 +417,29 @@ class ScenarioLoaderTest extends Specification {
         scenarios*.name == ["alma", "bela"]
         (scenarios[0] as GradleScenarioDefinition).action.tasks == ["alma"]
         (scenarios[1] as GradleScenarioDefinition).action.tasks == ["bela"]
+    }
+
+    def "fails when default scenario does not exist"() {
+        def settings = settings()
+
+        scenarioFile << """
+            default-scenarios = ["alma", "nonexistent"]
+
+            default {
+                tasks = ["help"]
+            }
+
+            alma {
+                tasks = ["alma"]
+            }
+        """
+
+        when:
+        loadScenarios(scenarioFile, settings, Mock(GradleBuildConfigurationReader))
+
+        then:
+        def ex = thrown IllegalArgumentException
+        ex.message == "Unknown scenario 'nonexistent' in default scenarios. Available scenarios are: alma, default"
     }
 
     def "loads included config"() {
@@ -399,7 +474,6 @@ class ScenarioLoaderTest extends Specification {
         }
     }
 
-    @Unroll
     def "can load Bazel scenario"(String home) {
         def settings = settings(BuildInvoker.Bazel)
 
@@ -421,7 +495,6 @@ class ScenarioLoaderTest extends Specification {
         home << [mockToolHome("bazel"), null]
     }
 
-    @Unroll
     def "can load Buck scenario"(String home) {
         def settings = settings(BuildInvoker.Buck)
 
@@ -442,7 +515,6 @@ class ScenarioLoaderTest extends Specification {
         home << [mockToolHome("buck"), null]
     }
 
-    @Unroll
     def "can load Maven scenario"(String home) {
         def settings = settings(BuildInvoker.Maven)
 
@@ -483,5 +555,212 @@ class ScenarioLoaderTest extends Specification {
 
         expect:
         scenarios*.name == ["default"]
+    }
+
+    def "allows cleanup action scheduled for #schedule with cold daemon invoker"() {
+        def settings = settings()
+
+        scenarioFile << """
+            default {
+                tasks = ["help"]
+                daemon = cold
+
+                clear-transform-cache-before = $schedule
+            }
+        """
+
+        when:
+        loadScenarios(scenarioFile, settings, Mock(GradleBuildConfigurationReader))
+
+        then:
+        noExceptionThrown()
+
+        where:
+        schedule << AbstractScheduledMutator.Schedule.values()
+    }
+
+    def "allows cleanup action scheduled for SCENARIO with warm daemon invoker"() {
+        def settings = settings()
+
+        scenarioFile << """
+            default {
+                tasks = ["help"]
+
+                clear-transform-cache-before = ${SCENARIO}
+            }
+        """
+
+        expect:
+        loadScenarios(scenarioFile, settings, Mock(GradleBuildConfigurationReader))
+    }
+
+    def "fails with cleanup action scheduled for #schedule with warm daemon invoker"() {
+        def settings = settings()
+
+        scenarioFile << """
+            default {
+                tasks = ["help"]
+
+                clear-transform-cache-before = $schedule
+            }
+        """
+
+        when:
+        loadScenarios(scenarioFile, settings, Mock(GradleBuildConfigurationReader))
+
+        then:
+        def ex = thrown IllegalStateException
+        ex.message == "Scenario 'default' is invalid: ClearArtifactTransformCacheMutator($schedule) is not allowed to be executed between builds with invoker `gradle` command"
+
+        where:
+        schedule << [BUILD, CLEANUP]
+    }
+
+    def "can load scenario with build operations trace = #trace"() {
+        def settings = settings()
+
+        scenarioFile << """
+            default {
+                tasks = ["help"]
+                build-ops-trace = $trace
+            }
+        """
+        def scenarios = loadScenarios(scenarioFile, settings, Mock(GradleBuildConfigurationReader))
+
+        expect:
+        scenarios*.name == ["default"]
+        def scenario = scenarios[0] as GradleScenarioDefinition
+        scenario.isBuildOperationsTrace() == trace
+        scenario.getBuildOperationsTracePathPrefix().endsWith("default")
+
+        where:
+        trace << [true, false]
+    }
+
+    def "can load scenarios from a group"() {
+        def settings = settingsBuilder().setScenarioGroup("smoke-tests").build()
+
+        scenarioFile << """
+            scenario-groups {
+                smoke-tests = ["scenario1", "scenario2"]
+            }
+
+            scenario1 {
+                tasks = ["help"]
+            }
+            scenario2 {
+                tasks = ["build"]
+            }
+            scenario3 {
+                tasks = ["clean"]
+            }
+        """
+        def scenarios = loadScenarios(scenarioFile, settings, Mock(GradleBuildConfigurationReader))
+
+        expect:
+        scenarios*.name == ["scenario1", "scenario2"]
+    }
+
+    def "throws error when group does not exist"() {
+        def settings = settingsBuilder().setScenarioGroup("nonexistent").build()
+
+        scenarioFile << """
+            scenario-groups {
+                smoke-tests = ["scenario1"]
+            }
+
+            scenario1 {
+                tasks = ["help"]
+            }
+        """
+
+        when:
+        loadScenarios(scenarioFile, settings, Mock(GradleBuildConfigurationReader))
+
+        then:
+        def ex = thrown IllegalArgumentException
+        ex.message == "Unknown scenario group 'nonexistent' requested. Available groups are: smoke-tests"
+    }
+
+    def "throws error when scenario-groups is missing"() {
+        def settings = settingsBuilder().setScenarioGroup("smoke-tests").build()
+
+        scenarioFile << """
+            scenario1 {
+                tasks = ["help"]
+            }
+        """
+
+        when:
+        loadScenarios(scenarioFile, settings, Mock(GradleBuildConfigurationReader))
+
+        then:
+        def ex = thrown IllegalArgumentException
+        ex.message.startsWith("Unknown scenario group 'smoke-tests' requested. No 'scenario-groups' defined in scenario file")
+    }
+
+    def "throws error when mixing group with individual scenario names"() {
+        def settings = settingsBuilder().setScenarioGroup("smoke-tests").setTargets(["scenario1"]).build()
+
+        scenarioFile << """
+            scenario-groups {
+                smoke-tests = ["scenario1"]
+            }
+
+            scenario1 {
+                tasks = ["help"]
+            }
+        """
+
+        when:
+        loadScenarios(scenarioFile, settings, Mock(GradleBuildConfigurationReader))
+
+        then:
+        def ex = thrown IllegalArgumentException
+        ex.message == "Cannot specify both --group and individual scenario names. Use either only '--group smoke-tests' OR specify scenario names directly."
+    }
+
+    def "throws error when scenario in group does not exist"() {
+        def settings = settingsBuilder().setScenarioGroup("smoke-tests").build()
+
+        scenarioFile << """
+            scenario-groups {
+                smoke-tests = ["scenario1", "nonexistent"]
+            }
+
+            scenario1 {
+                tasks = ["help"]
+            }
+            scenario2 {
+                tasks = ["build"]
+            }
+        """
+
+        when:
+        loadScenarios(scenarioFile, settings, Mock(GradleBuildConfigurationReader))
+
+        then:
+        def ex = thrown IllegalArgumentException
+        ex.message == "Unknown scenario 'nonexistent' in group 'smoke-tests'. Available scenarios are: scenario1, scenario2"
+    }
+
+    def "scenario-groups and default-scenarios are not treated as scenarios"() {
+        def settings = settings()
+
+        scenarioFile << """
+            default-scenarios = ["scenario1"]
+
+            scenario-groups {
+                smoke-tests = ["scenario1"]
+            }
+
+            scenario1 {
+                tasks = ["help"]
+            }
+        """
+        def scenarios = loadScenarios(scenarioFile, settings, Mock(GradleBuildConfigurationReader))
+
+        expect:
+        scenarios*.name == ["scenario1"]
     }
 }

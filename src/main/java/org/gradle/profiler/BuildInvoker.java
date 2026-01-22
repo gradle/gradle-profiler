@@ -27,4 +27,17 @@ public class BuildInvoker {
     public int profileWarmUps() {
         return 2;
     }
+
+    public boolean allowsMutationBetweenBuilds() {
+        return true;
+    }
+
+
+    public boolean isDoesNotUseDaemon() {
+        return true;
+    }
+
+    public boolean isReuseDaemon() {
+        return false;
+    }
 }

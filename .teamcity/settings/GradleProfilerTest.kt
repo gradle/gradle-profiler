@@ -1,38 +1,43 @@
-import jetbrains.buildServer.configs.kotlin.v2019_2.BuildType
-import jetbrains.buildServer.configs.kotlin.v2019_2.DslContext
-import jetbrains.buildServer.configs.kotlin.v2019_2.buildFeatures.commitStatusPublisher
-import jetbrains.buildServer.configs.kotlin.v2019_2.buildSteps.gradle
-import jetbrains.buildServer.configs.kotlin.v2019_2.failureConditions.BuildFailureOnText
-import jetbrains.buildServer.configs.kotlin.v2019_2.failureConditions.failOnText
-import jetbrains.buildServer.configs.kotlin.v2019_2.triggers.vcs
-import jetbrains.buildServer.configs.kotlin.v2019_2.ui.add
+import jetbrains.buildServer.configs.kotlin.BuildType
+import jetbrains.buildServer.configs.kotlin.DslContext
+import jetbrains.buildServer.configs.kotlin.buildFeatures.commitStatusPublisher
+import jetbrains.buildServer.configs.kotlin.buildFeatures.parallelTests
+import jetbrains.buildServer.configs.kotlin.buildSteps.gradle
+import jetbrains.buildServer.configs.kotlin.failureConditions.BuildFailureOnText
+import jetbrains.buildServer.configs.kotlin.failureConditions.failOnText
+import jetbrains.buildServer.configs.kotlin.ui.add
 
-open class GradleProfilerTest(os: Os) : BuildType({
+open class GradleProfilerTest(os: Os, javaVersion: JavaVersion, arch: Arch) : BuildType({
     gradleProfilerVcs()
 
     params {
-        java8Home(os)
+        // Always use Java 17 to run the build
+        javaHome(os, arch, JavaVersion.OPENJDK_17)
+        androidHome(os)
     }
 
     steps {
         gradle {
-            tasks = "clean build"
+            tasks = "clean test"
             buildFile = ""
-            gradleParams = "-s ${buildCacheConfigurations()} ${toolchainConfiguration(os)}"
+            gradleParams = "-s" +
+                " --build-cache ${toolchainConfiguration(os, arch)}" +
+                " -PtestJavaVersion=${javaVersion.majorVersion}" +
+                " -PtestJavaVendor=${javaVersion.vendor}" +
+                " -PautoDownloadAndRunInHeadless=true"
             param("org.jfrog.artifactory.selectedDeployableServer.defaultModuleVersionConfiguration", "GLOBAL")
         }
     }
 
-    triggers {
-        vcs {
-            branchFilter = """
-                +:*
-                -:pull/*
-            """.trimIndent()
-        }
-    }
-
     features {
+        parallelTests {
+            numberOfBatches = if (os == Os.windows) {
+                8 // balance so Windows, Linux and macOS run with similar wall clock time
+            } else {
+                4
+            }
+        }
+
         commitStatusPublisher {
             vcsRootExtId = "${DslContext.settingsRoot.id}"
             publisher = github {
@@ -56,21 +61,45 @@ open class GradleProfilerTest(os: Os) : BuildType({
         }
     }
 
-    agentRequirement(os)
+    agentRequirement(os, arch)
 }) {
-    constructor(os: Os, init: GradleProfilerTest.() -> Unit) : this(os) {
+    constructor(os: Os, javaVersion: JavaVersion, arch: Arch, init: GradleProfilerTest.() -> Unit) : this(os, javaVersion, arch) {
         init()
     }
 }
 
-object LinuxJava18 : GradleProfilerTest(Os.linux, {
-    name = "Linux - Java 1.8"
+object LinuxJava17 : GradleProfilerTest(Os.linux, JavaVersion.OPENJDK_17, Arch.AMD64, {
+    name = "Linux - Java 17"
 })
 
-object MacOSJava18 : GradleProfilerTest(Os.macos, {
-    name = "MacOS - Java 1.8"
+object LinuxJava21 : GradleProfilerTest(Os.linux, JavaVersion.OPENJDK_21, Arch.AMD64, {
+    name = "Linux - Java 21"
 })
 
-object WindowsJava18 : GradleProfilerTest(Os.windows, {
-    name = "Windows - Java 1.8"
+object LinuxJava25 : GradleProfilerTest(Os.linux, JavaVersion.OPENJDK_25, Arch.AMD64, {
+    name = "Linux - Java 25"
+})
+
+object MacOSJava17 : GradleProfilerTest(Os.macos, JavaVersion.OPENJDK_17, Arch.AARCH64, {
+    name = "macOS - Java 17"
+})
+
+object MacOSJava21 : GradleProfilerTest(Os.macos, JavaVersion.OPENJDK_21, Arch.AARCH64, {
+    name = "macOS - Java 21"
+})
+
+object MacOSJava25 : GradleProfilerTest(Os.macos, JavaVersion.OPENJDK_25, Arch.AARCH64, {
+    name = "macOS - Java 25"
+})
+
+object WindowsJava17 : GradleProfilerTest(Os.windows, JavaVersion.OPENJDK_17, Arch.AMD64, {
+    name = "Windows - Java 17"
+})
+
+object WindowsJava21 : GradleProfilerTest(Os.windows, JavaVersion.OPENJDK_21, Arch.AMD64, {
+    name = "Windows - Java 21"
+})
+
+object WindowsJava25 : GradleProfilerTest(Os.windows, JavaVersion.OPENJDK_25, Arch.AMD64, {
+    name = "Windows - Java 25"
 })

@@ -1,0 +1,284 @@
+{
+  "title": "Example benchmark",
+  "date": "2020-09-13T12:26:40Z",
+  "environment": {
+    "profilerVersion": "0.15.0-alpha2",
+    "operatingSystem": "mac os x x86_64 10.15.6"
+  },
+  "scenarios": [
+    {
+      "definition": {
+        "name": "no-optimizations",
+        "title": "No optimizations",
+        "displayName": "Baseline using Gradle 6.7-20200903220111+0000",
+        "buildTool": "Gradle 6.7-20200903220111+0000",
+        "tasks": ":santa-tracker:assembleDebug",
+        "version": "6.7-20200903220111+0000",
+        "gradleHome": "/home/lptr/Workspace/santa-tracker-performance/gradle-user-home/wrapper/dists/gradle-6.7-20200903220111+0000-bin/6csfyoy16renvfjrtt5md548g/gradle-6.7-20200903220111+0000",
+        "javaHome": "/opt/files/jdk-linux/OpenJDK8U-jdk_x64_linux_hotspot_8u242b08.tar.gz",
+        "usesScanPlugin": false,
+        "action": "run tasks :santa-tracker:assembleDebug",
+        "cleanup": "do nothing",
+        "invoker": "Tooling API",
+        "mutators": [
+          "ApplyNonAbiChangeToSourceFileMutator(santa-tracker-java/village/src/main/java/com/google/android/apps/santatracker/village/SnowFlake.java)"
+        ],
+        "args": [
+          "-Dorg.gradle.workers.max\u003d8",
+          "--init-script",
+          "../gradle-benchmark-base/scans.init.gradle",
+          "--no-scan",
+          "--no-build-cache",
+          "--no-watch-fs",
+          "--no-configuration-cache"
+        ],
+        "jvmArgs": [
+          "-XX:MaxPermSize\u003d512m",
+          "-Xmx4096m",
+          "-Dfile.encoding\u003dUTF-8",
+          "-Duser.country\u003dUS",
+          "-Duser.language\u003den",
+          "-Duser.variant"
+        ],
+        "systemProperties": {
+          "agpVersion": "4.2.0-alpha10"
+        },
+        "id": "_2268a672_a4bc_42d2_88a9_e5eac94c12e0_no_optimizations_9153a177"
+      },
+      "samples": [
+        {
+          "name": "execution",
+          "unit": "ms",
+          "confidence": 0.0
+        },
+        {
+          "name": "cache-size",
+          "unit": "MiB",
+          "confidence": 0.0
+        }
+      ],
+      "iterations": [
+        {
+          "id": "_2268a672_a4bc_42d2_88a9_e5eac94c12e0_no_optimizations_9153a177_WARM_UP_1",
+          "phase": "WARM_UP",
+          "iteration": 1,
+          "title": "warm-up build #1",
+          "values": {
+            "execution": 22444.354108,
+            "cache-size": 100
+          }
+        },
+        {
+          "id": "_2268a672_a4bc_42d2_88a9_e5eac94c12e0_no_optimizations_9153a177_WARM_UP_2",
+          "phase": "WARM_UP",
+          "iteration": 2,
+          "title": "warm-up build #2",
+          "values": {
+            "execution": 1486.805261,
+            "cache-size": 110
+          }
+        },
+        {
+          "id": "_2268a672_a4bc_42d2_88a9_e5eac94c12e0_no_optimizations_9153a177_MEASURE_1",
+          "phase": "MEASURE",
+          "iteration": 1,
+          "title": "measured build #1",
+          "values": {
+            "execution": 1197.583931,
+            "cache-size": 115
+          }
+        },
+        {
+          "id": "_2268a672_a4bc_42d2_88a9_e5eac94c12e0_no_optimizations_9153a177_MEASURE_2",
+          "phase": "MEASURE",
+          "iteration": 2,
+          "title": "measured build #2",
+          "values": {
+            "execution": 1157.474167,
+            "cache-size": 118
+          }
+        },
+        {
+          "id": "_2268a672_a4bc_42d2_88a9_e5eac94c12e0_no_optimizations_9153a177_MEASURE_3",
+          "phase": "MEASURE",
+          "iteration": 3,
+          "title": "measured build #3",
+          "values": {
+            "execution": 1075.285777,
+            "cache-size": 120
+          }
+        },
+        {
+          "id": "_2268a672_a4bc_42d2_88a9_e5eac94c12e0_no_optimizations_9153a177_MEASURE_4",
+          "phase": "MEASURE",
+          "iteration": 4,
+          "title": "measured build #4",
+          "values": {
+            "execution": 1090.179434,
+            "cache-size": 122
+          }
+        },
+        {
+          "id": "_2268a672_a4bc_42d2_88a9_e5eac94c12e0_no_optimizations_9153a177_MEASURE_5",
+          "phase": "MEASURE",
+          "iteration": 5,
+          "title": "measured build #5",
+          "values": {
+            "execution": 954.529153,
+            "cache-size": 123
+          }
+        },
+        {
+          "id": "_2268a672_a4bc_42d2_88a9_e5eac94c12e0_no_optimizations_9153a177_MEASURE_6",
+          "phase": "MEASURE",
+          "iteration": 6,
+          "title": "measured build #6",
+          "values": {
+            "execution": 946.793746,
+            "cache-size": 123.8
+          }
+        },
+        {
+          "id": "_2268a672_a4bc_42d2_88a9_e5eac94c12e0_no_optimizations_9153a177_MEASURE_7",
+          "phase": "MEASURE",
+          "iteration": 7,
+          "title": "measured build #7",
+          "values": {
+            "execution": 997.436113,
+            "cache-size": 124.2
+          }
+        },
+        {
+          "id": "_2268a672_a4bc_42d2_88a9_e5eac94c12e0_no_optimizations_9153a177_MEASURE_8",
+          "phase": "MEASURE",
+          "iteration": 8,
+          "title": "measured build #8",
+          "values": {
+            "execution": 936.071348,
+            "cache-size": 125.1
+          }
+        },
+        {
+          "id": "_2268a672_a4bc_42d2_88a9_e5eac94c12e0_no_optimizations_9153a177_MEASURE_9",
+          "phase": "MEASURE",
+          "iteration": 9,
+          "title": "measured build #9",
+          "values": {
+            "execution": 980.778962,
+            "cache-size": 125.7
+          }
+        },
+        {
+          "id": "_2268a672_a4bc_42d2_88a9_e5eac94c12e0_no_optimizations_9153a177_MEASURE_10",
+          "phase": "MEASURE",
+          "iteration": 10,
+          "title": "measured build #10",
+          "values": {
+            "execution": 950.883695,
+            "cache-size": 125.75
+          }
+        },
+        {
+          "id": "_2268a672_a4bc_42d2_88a9_e5eac94c12e0_no_optimizations_9153a177_MEASURE_11",
+          "phase": "MEASURE",
+          "iteration": 11,
+          "title": "measured build #11",
+          "values": {
+            "execution": 861.323841,
+            "cache-size": 126.1
+          }
+        },
+        {
+          "id": "_2268a672_a4bc_42d2_88a9_e5eac94c12e0_no_optimizations_9153a177_MEASURE_12",
+          "phase": "MEASURE",
+          "iteration": 12,
+          "title": "measured build #12",
+          "values": {
+            "execution": 895.011393,
+            "cache-size": 126.4
+          }
+        },
+        {
+          "id": "_2268a672_a4bc_42d2_88a9_e5eac94c12e0_no_optimizations_9153a177_MEASURE_13",
+          "phase": "MEASURE",
+          "iteration": 13,
+          "title": "measured build #13",
+          "values": {
+            "execution": 953.422211,
+            "cache-size": 126.68
+          }
+        },
+        {
+          "id": "_2268a672_a4bc_42d2_88a9_e5eac94c12e0_no_optimizations_9153a177_MEASURE_14",
+          "phase": "MEASURE",
+          "iteration": 14,
+          "title": "measured build #14",
+          "values": {
+            "execution": 958.65142,
+            "cache-size": 127.1
+          }
+        },
+        {
+          "id": "_2268a672_a4bc_42d2_88a9_e5eac94c12e0_no_optimizations_9153a177_MEASURE_15",
+          "phase": "MEASURE",
+          "iteration": 15,
+          "title": "measured build #15",
+          "values": {
+            "execution": 860.275572,
+            "cache-size": 127.3
+          }
+        },
+        {
+          "id": "_2268a672_a4bc_42d2_88a9_e5eac94c12e0_no_optimizations_9153a177_MEASURE_16",
+          "phase": "MEASURE",
+          "iteration": 16,
+          "title": "measured build #16",
+          "values": {
+            "execution": 907.592415,
+            "cache-size": 127.44
+          }
+        },
+        {
+          "id": "_2268a672_a4bc_42d2_88a9_e5eac94c12e0_no_optimizations_9153a177_MEASURE_17",
+          "phase": "MEASURE",
+          "iteration": 17,
+          "title": "measured build #17",
+          "values": {
+            "execution": 1683.021924,
+            "cache-size": 127.66
+          }
+        },
+        {
+          "id": "_2268a672_a4bc_42d2_88a9_e5eac94c12e0_no_optimizations_9153a177_MEASURE_18",
+          "phase": "MEASURE",
+          "iteration": 18,
+          "title": "measured build #18",
+          "values": {
+            "execution": 849.908231,
+            "cache-size": 127.84
+          }
+        },
+        {
+          "id": "_2268a672_a4bc_42d2_88a9_e5eac94c12e0_no_optimizations_9153a177_MEASURE_19",
+          "phase": "MEASURE",
+          "iteration": 19,
+          "title": "measured build #19",
+          "values": {
+            "execution": 874.417982,
+            "cache-size": 128.12
+          }
+        },
+        {
+          "id": "_2268a672_a4bc_42d2_88a9_e5eac94c12e0_no_optimizations_9153a177_MEASURE_20",
+          "phase": "MEASURE",
+          "iteration": 20,
+          "title": "measured build #20",
+          "values": {
+            "execution": 858.331896,
+            "cache-size": 128.34
+          }
+        }
+      ]
+    }
+  ]
+}

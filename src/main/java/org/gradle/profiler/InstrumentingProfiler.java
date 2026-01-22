@@ -18,6 +18,12 @@ import java.util.function.Consumer;
  * <p>The profiler may support starting recording multiple times for a given JVM. The implementation should indicate this by overriding {@link #canRestartRecording(ScenarioSettings)}.</p>
  */
 public abstract class InstrumentingProfiler extends Profiler {
+
+    @Override
+    public boolean requiresGradle() {
+        return false;
+    }
+
     /**
      * Calculates the JVM args for all builds, including warm-ups.
      *
@@ -67,7 +73,7 @@ public abstract class InstrumentingProfiler extends Profiler {
      */
     @Override
     public ProfilerController newController(String pid, ScenarioSettings settings) {
-        SnapshotCapturingProfilerController controller = doNewController(settings);
+        SnapshotCapturingProfilerController controller = newSnapshottingController(settings);
         if (settings.getScenario().getInvoker().isDoesNotUseDaemon()) {
             return new SessionOnlyController(pid, controller);
         }
@@ -84,14 +90,14 @@ public abstract class InstrumentingProfiler extends Profiler {
     }
 
     protected void validateMultipleIterationsWithCleanupAction(ScenarioSettings settings, Consumer<String> reporter) {
-        GradleScenarioDefinition scenario = settings.getScenario();
-        if (scenario.getBuildCount() > 1 && !canRestartRecording(settings) && scenario.getCleanupAction().isDoesSomething()) {
+        ScenarioDefinition scenario = settings.getScenario();
+        if (scenario.getBuildCount() > 1 && !canRestartRecording(settings) && scenario.doesCleanup()) {
             reporter.accept("Profiler " + toString() + " does not support profiling multiple iterations with cleanup steps in between.");
         }
     }
 
     protected void validateMultipleDaemons(ScenarioSettings settings, Consumer<String> reporter) {
-        GradleScenarioDefinition scenario = settings.getScenario();
+        ScenarioDefinition scenario = settings.getScenario();
         if (scenario.getBuildCount() > 1 && !scenario.getInvoker().isReuseDaemon()) {
             reporter.accept("Profiler " + toString() + " does not support profiling multiple daemons.");
         }
@@ -109,7 +115,7 @@ public abstract class InstrumentingProfiler extends Profiler {
      */
     protected abstract JvmArgsCalculator jvmArgsWithInstrumentation(ScenarioSettings settings, boolean startRecordingOnProcessStart, boolean captureSnapshotOnProcessExit);
 
-    protected abstract SnapshotCapturingProfilerController doNewController(ScenarioSettings settings);
+    public abstract SnapshotCapturingProfilerController newSnapshottingController(ScenarioSettings settings);
 
     public interface SnapshotCapturingProfilerController {
         void startRecording(String pid) throws IOException, InterruptedException;
