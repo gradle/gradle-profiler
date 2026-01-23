@@ -11,10 +11,6 @@ plugins {
 
 description = "Contains logic for Android Studio plugin that communicates with profiler"
 
-repositories {
-    mavenCentral()
-}
-
 dependencies {
     implementation(project(":client-protocol"))
     testImplementation(libs.bundles.testDependencies)

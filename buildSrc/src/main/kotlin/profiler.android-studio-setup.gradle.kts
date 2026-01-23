@@ -4,25 +4,6 @@ import providers.AndroidStudioInstallation
 import providers.AndroidStudioSystemProperties
 import tasks.ExtractAndroidStudioTask
 
-repositories {
-    listOf(
-        // Urls of Android Studio archive
-        "https://redirector.gvt1.com/edgedl/android/studio/ide-zips",
-        "https://redirector.gvt1.com/edgedl/android/studio/install"
-    ).forEach {
-        ivy {
-            url = uri(it)
-            patternLayout {
-                artifact("[revision]/[artifact]-[revision]-[ext]")
-            }
-            metadataSources { artifact() }
-            content {
-                includeGroup("android-studio")
-            }
-        }
-    }
-}
-
 val os = System.getProperty("os.name").lowercase()
 val architecture = System.getProperty("os.arch").lowercase()
 fun isWindows(): Boolean = os.startsWith("windows")

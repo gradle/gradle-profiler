@@ -76,6 +76,7 @@ application.mainClass.set("org.gradle.profiler.Main")
 
 node {
     download = true
+    distBaseUrl = null // do not declare repository, as they are declared in settings
     version = "24.13.0"
 }
 
