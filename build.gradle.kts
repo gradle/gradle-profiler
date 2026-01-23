@@ -90,6 +90,22 @@ tasks.withType<Jar>().configureEach {
 
 application.mainClass.set("org.gradle.profiler.Main")
 
+// The IntelliJ IDE Starter dependencies bring in artifacts with the same artifact name
+// but different group IDs (e.g., com.jetbrains.intellij.platform:kernel and
+// com.jetbrains.intellij.fleet:kernel both produce kernel-VERSION.jar).
+// We force the fleet artifacts to a different patch version to avoid filename collisions.
+// See libs.versions.toml for more details.
+configurations.all {
+    resolutionStrategy.eachDependency {
+        if (requested.group == "com.jetbrains.intellij.fleet" &&
+            requested.name in listOf("kernel", "rpc") &&
+            requested.version == libs.versions.intellijIdeStarter.get()) {
+            useVersion(libs.versions.intellijIdeStarterFleet.get())
+            because("Avoid JAR filename collision with platform artifacts of the same name")
+        }
+    }
+}
+
 node {
     download = true
     version = "24.13.0"

@@ -2,7 +2,13 @@
 kotlin = "2.1.20"
 groovy = "3.0.15"
 spock = "2.3-groovy-3.0"
+# https://youtrack.jetbrains.com/articles/IDEA-A-2100662523/IntelliJ-IDEA-2025.2.4-252.27397.103-build-Release-Notes
 intellijIdeStarter = "252.27397.103"
+# Alternative version for fleet artifacts (kernel, rpc) to avoid JAR filename collisions.
+# JetBrains publishes both com.jetbrains.intellij.platform:kernel and com.jetbrains.intellij.fleet:kernel
+# which produce JARs with identical names. We use a different patch version for fleet artifacts.
+# When updating intellijIdeStarter, verify this version exists and JARs are identical (compare SHA hashes).
+intellijIdeStarterFleet = "252.27397.100"
 protobuf = "3.21.12"
 # Ladybug Patch 1 (2024.2.1.10)
 testAndroidStudioVersion = "2024.2.1.10"
