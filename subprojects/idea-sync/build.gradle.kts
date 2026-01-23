@@ -21,7 +21,6 @@ dependencies {
 
     implementation(libs.bundles.intellijIdeStarter)
     implementation(libs.bundles.intellijIdeDriver)
-    implementation(libs.bundles.intellijIdeMetrics)
 
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.8.1")
     implementation("net.sf.jopt-simple:jopt-simple:5.0.4")

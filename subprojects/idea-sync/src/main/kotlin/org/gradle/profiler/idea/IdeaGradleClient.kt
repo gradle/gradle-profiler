@@ -109,17 +109,8 @@ class IdeaGradleClient(
             .disableAutoImport()
             .addProfilerAgent(profilerAgentJars, profilerAgentServer.port)
             .applyScenarioDefinition(scenarioDefinition)
-            // TODO Uncomment when start to use FUS events instead manual measuring
-            // This dir keeps sync statistics, we want it to be clean on each run
-//            .wipeEventLogDataDir()
             .applyVMOptionsPatch {
                 addSystemProperty("gradle.compatibility.update.interval", 0)
-
-                // TODO Uncomment when start to use FUS events instead manual measuring
-                // Internal test mode supposes flushing FUS events fired each 10 seconds.
-                // We use FUS report for extracting sync duration data
-//                addSystemProperty("idea.is.internal", "true")
-//                addSystemProperty("fus.internal.test.mode", "true")
             }
             .runIdeWithDriver {
                 addVMOptionsPatch {
