@@ -16,7 +16,18 @@ import com.intellij.ide.starter.path.GlobalPaths
 import com.intellij.ide.starter.project.LocalProjectInfo
 import com.intellij.ide.starter.runner.Starter
 import com.intellij.ide.starter.sdk.JdkDownloaderFacade
-import kotlinx.coroutines.*
+import java.io.File
+import java.nio.file.Path
+import java.time.Duration
+import java.time.Duration.ofMinutes
+import java.time.Instant
+import kotlin.io.path.createDirectories
+import kotlin.io.path.div
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.async
+import kotlinx.coroutines.cancel
+import kotlinx.coroutines.runBlocking
 import org.gradle.profiler.GradleClient
 import org.gradle.profiler.client.protocol.Server
 import org.gradle.profiler.client.protocol.ServerConnection
@@ -27,15 +38,6 @@ import org.gradle.profiler.idea.starter.NoOpCIServer
 import org.gradle.profiler.result.BuildActionResult
 import org.kodein.di.DI
 import org.kodein.di.bindSingleton
-import java.io.File
-import java.io.OutputStream
-import java.nio.file.Path
-import java.time.Duration
-import java.time.Duration.ofMinutes
-import java.time.Instant
-import kotlin.io.path.absolute
-import kotlin.io.path.createDirectories
-import kotlin.io.path.div
 
 class IdeaGradleClient(
     private val scenarioDefinition: IdeaSyncScenarioDefinition,

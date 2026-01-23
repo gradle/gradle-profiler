@@ -1,7 +1,7 @@
 package org.gradle.profiler.idea
 
-import org.gradle.profiler.result.BuildActionResult
 import java.time.Duration
+import org.gradle.profiler.result.BuildActionResult
 
 class IdeaBuildActionResult(
     val gradleExecutionTime: Duration,

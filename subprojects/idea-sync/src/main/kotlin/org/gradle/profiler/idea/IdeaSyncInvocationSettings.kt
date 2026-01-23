@@ -2,10 +2,10 @@ package org.gradle.profiler.idea
 
 import com.intellij.ide.starter.ide.IdeProductProvider
 import com.intellij.ide.starter.models.IdeInfo
+import java.nio.file.Path
 import joptsimple.OptionParser
 import joptsimple.OptionSet
 import joptsimple.util.PathConverter
-import java.nio.file.Path
 
 private const val CLI_IDEA_VERSION = "idea-version"
 private const val CLI_IDEA_HOME = "idea-home"
