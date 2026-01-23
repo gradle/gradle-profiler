@@ -12,7 +12,7 @@ plugins {
     application
     `maven-publish`
     id("profiler.publication")
-    id("com.github.node-gradle.node") version "3.4.0"
+    id("com.github.node-gradle.node") version "7.1.0"
     id("io.sdkman.vendors") version "2.0.0"
     id("io.github.gradle-nexus.publish-plugin") version "2.0.0"
 }
@@ -75,8 +75,8 @@ tasks.withType<Jar>().configureEach {
 application.mainClass.set("org.gradle.profiler.Main")
 
 node {
-    download.set(true)
-    version.set("17.6.0")
+    download = true
+    version = "24.13.0"
 }
 
 val generateHtmlReportJavaScript = tasks.register<NpxTask>("generateHtmlReportJavaScript") {
