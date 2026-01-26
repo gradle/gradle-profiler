@@ -16,6 +16,7 @@ import org.gradle.profiler.maven.MavenScenarioDefinition;
 import org.gradle.profiler.maven.MavenScenarioInvoker;
 import org.gradle.profiler.report.CsvGenerator;
 import org.gradle.profiler.report.HtmlGenerator;
+import org.gradle.profiler.report.JsonGenerator;
 import org.gradle.profiler.result.BuildInvocationResult;
 import org.gradle.profiler.result.SampleProvider;
 import org.gradle.profiler.studio.invoker.StudioGradleScenarioDefinition;
@@ -77,7 +78,8 @@ public class Main {
 
             File cvsFile = new File(settings.getOutputDir(), "benchmark.csv");
             File htmlFile = new File(settings.getOutputDir(), "benchmark.html");
-            BenchmarkResultCollector benchmarkResults = new BenchmarkResultCollector(new CsvGenerator(cvsFile, settings.getCsvFormat()), new HtmlGenerator(htmlFile));
+            File jsonFile = new File(settings.getOutputDir(), "benchmark.json");
+            BenchmarkResultCollector benchmarkResults = new BenchmarkResultCollector(new CsvGenerator(cvsFile, settings.getCsvFormat()), new HtmlGenerator(htmlFile), new JsonGenerator(jsonFile));
             PidInstrumentation pidInstrumentation = new PidInstrumentation();
 
 
