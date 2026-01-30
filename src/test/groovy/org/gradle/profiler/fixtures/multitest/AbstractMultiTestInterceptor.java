@@ -19,7 +19,6 @@ import java.util.List;
 public abstract class AbstractMultiTestInterceptor extends AbstractMethodInterceptor {
     protected final Class<?> target;
     private final List<Execution> executions = new ArrayList<>();
-    private final boolean runAllExecutions;
 
     private boolean executionsInitialized;
 
@@ -27,12 +26,7 @@ public abstract class AbstractMultiTestInterceptor extends AbstractMethodInterce
     private Execution currentExecution;
 
     protected AbstractMultiTestInterceptor(Class<?> target) {
-        this(target, true);
-    }
-
-    protected AbstractMultiTestInterceptor(Class<?> target, boolean runAllExecutions) {
         this.target = target;
-        this.runAllExecutions = runAllExecutions;
     }
 
     public void interceptFeature(FeatureInfo feature) {
@@ -62,10 +56,6 @@ public abstract class AbstractMultiTestInterceptor extends AbstractMethodInterce
                             iterationRunner.runIteration(actualArguments);
                         } catch (Throwable t) {
                             currentExecution = null;
-                        }
-
-                        if (!runAllExecutions) {
-                            break;
                         }
                     }
                 }
