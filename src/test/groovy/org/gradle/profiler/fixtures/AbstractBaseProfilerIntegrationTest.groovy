@@ -3,13 +3,16 @@ package org.gradle.profiler.fixtures
 import org.gradle.api.JavaVersion
 import org.gradle.profiler.Main
 import org.gradle.profiler.fixtures.compatibility.gradle.DefaultGradleDistribution
+import org.gradle.profiler.fixtures.file.CleanupTestDirectory
+import org.gradle.profiler.fixtures.file.TestFile
+import org.gradle.profiler.fixtures.file.TestNameTestDirectoryProvider
 import org.gradle.util.GradleVersion
 import org.junit.Rule
-import org.junit.rules.TemporaryFolder
 
 import javax.annotation.Nullable
 import java.util.regex.Pattern
 
+@CleanupTestDirectory("tmpDir")
 abstract class AbstractBaseProfilerIntegrationTest extends AbstractIntegrationTest {
 
     private static int NUMBER_OF_HEADERS = 4
@@ -17,10 +20,10 @@ abstract class AbstractBaseProfilerIntegrationTest extends AbstractIntegrationTe
     static final SAMPLE = "-?\\d+(?:\\.\\d+)"
 
     @Rule
-    TemporaryFolder tmpDir = new TemporaryFolder()
+    TestNameTestDirectoryProvider tmpDir = new TestNameTestDirectoryProvider(getClass())
 
-    File projectDir
-    File outputDir
+    TestFile projectDir
+    TestFile outputDir
 
     // Can be set to null to use defaults instead
     Integer warmups = 1
@@ -53,16 +56,16 @@ abstract class AbstractBaseProfilerIntegrationTest extends AbstractIntegrationTe
         return new ReportFile(f)
     }
 
-    File getBuildFile() {
-        return new File(projectDir, "build.gradle")
+    TestFile getBuildFile() {
+        return projectDir.file("build.gradle")
     }
 
-    File getSettingsFile() {
-        return new File(projectDir, "settings.gradle")
+    TestFile getSettingsFile() {
+        return projectDir.file("settings.gradle")
     }
 
-    File file(String path) {
-        return new File(projectDir, path)
+    TestFile file(String path) {
+        return projectDir.file(path)
     }
 
     void run(List<String> moreArgs) {
@@ -115,8 +118,8 @@ abstract class AbstractBaseProfilerIntegrationTest extends AbstractIntegrationTe
     }
 
     def setup() {
-        projectDir = tmpDir.newFolder()
-        outputDir = tmpDir.newFolder()
+        projectDir = tmpDir.createDir("project")
+        outputDir = tmpDir.createDir("output")
         settingsFile.text = """
             rootProject.name = "example-project"
         """
