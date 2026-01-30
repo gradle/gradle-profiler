@@ -8,6 +8,7 @@ intellijIdeStarter = "252.27397.103"
 # JetBrains publishes both com.jetbrains.intellij.platform:kernel and com.jetbrains.intellij.fleet:kernel
 # which produce JARs with identical names. We use a different patch version for fleet artifacts.
 # When updating intellijIdeStarter, verify this version exists and JARs are identical (compare SHA hashes).
+# See: https://youtrack.jetbrains.com/issue/IJPL-232419
 intellijIdeStarterFleet = "252.27397.100"
 protobuf = "3.21.12"
 # Ladybug Patch 1 (2024.2.1.10)
