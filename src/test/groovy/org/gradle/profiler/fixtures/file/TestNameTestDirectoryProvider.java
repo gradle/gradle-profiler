@@ -1,5 +1,6 @@
 package org.gradle.profiler.fixtures.file;
 
+import org.gradle.profiler.fixtures.util.RetryUtil;
 import org.junit.rules.TestRule;
 import org.junit.runner.Description;
 import org.junit.runners.model.Statement;
@@ -63,7 +64,8 @@ public class TestNameTestDirectoryProvider implements TestRule, TestDirectoryPro
 
     private void cleanup() {
         if (!suppressCleanup && dir != null && dir.exists()) {
-            dir.forceDeleteDir();
+            // Retry deleting for up to 10s
+            RetryUtil.poll(() -> dir.forceDeleteDir());
         }
     }
 
@@ -79,7 +81,6 @@ public class TestNameTestDirectoryProvider implements TestRule, TestDirectoryPro
             return longName.substring(0, expectedMaxLength - 5) + "." + longName.substring(longName.length() - 4);
         }
     }
-
 
     private TestFile createUniqueTestDirectory() {
         while (true) {
