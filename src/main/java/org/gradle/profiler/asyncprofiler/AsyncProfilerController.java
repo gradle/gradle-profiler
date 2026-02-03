@@ -118,10 +118,6 @@ public class AsyncProfilerController implements InstrumentingProfiler.SnapshotCa
     }
 
     @Override
-    public void captureSnapshot(String pid) {
-    }
-
-    @Override
     public void stopSession() {
         List<Stacks> stacks = generateStacks(scenarioSettings.getProfilerOutputBaseDir(), scenarioSettings.getProfilerOutputBaseName());
         flameGraphGenerator.generateGraphs(scenarioSettings.getProfilerOutputBaseDir(), stacks);
