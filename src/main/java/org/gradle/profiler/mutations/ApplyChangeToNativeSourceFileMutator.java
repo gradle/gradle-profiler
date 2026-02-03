@@ -54,10 +54,13 @@ public class ApplyChangeToNativeSourceFileMutator extends AbstractFileChangeMuta
     }
 
     private void applyChangeAt(BuildContext context, StringBuilder text, int insertPos) {
-        text.insert(insertPos, "\nint " + getFieldName(context) + " () { }");
+        // The code need to be confusing enough so the compiler and linker doesn't decide to simply inline it away.
+        //   The compiler generally doesn't try to optimize away `volatile` variable.
+        //   To make extra-sure, we return a value that can't be statically inferred from code analysis.
+        text.insert(insertPos, "\nint " + getFieldName(context) + "(void) { volatile int dummy = 0; return (int)((unsigned long)&dummy & 0x7FFFFFFFul); }");
     }
 
     private void applyHeaderChangeAt(BuildContext context, StringBuilder text, int insertPos) {
-        text.insert(insertPos, "int " + getFieldName(context) + "();\n");
+        text.insert(insertPos, "int " + getFieldName(context) + "(void);\n");
     }
 }
