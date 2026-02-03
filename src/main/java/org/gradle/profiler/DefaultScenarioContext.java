@@ -35,7 +35,7 @@ public class DefaultScenarioContext implements ScenarioContext {
             name.append(Character.isJavaIdentifierPart(ch) ? ch : '_');
         }
         name.append('_');
-        name.append(Hashing.murmur3_32().hashString(scenarioName, StandardCharsets.UTF_8));
+        name.append(Hashing.murmur3_32_fixed().hashString(scenarioName, StandardCharsets.UTF_8));
         return name.toString();
     }
 }
