@@ -11,7 +11,6 @@ import org.gradle.api.tasks.Optional
 import org.gradle.api.tasks.PathSensitive
 import org.gradle.api.tasks.PathSensitivity
 import org.gradle.process.CommandLineArgumentProvider
-import java.io.File
 
 class AndroidStudioSystemProperties(
     @get:Internal

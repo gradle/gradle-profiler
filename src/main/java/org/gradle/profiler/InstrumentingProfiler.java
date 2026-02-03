@@ -118,16 +118,16 @@ public abstract class InstrumentingProfiler extends Profiler {
     public abstract SnapshotCapturingProfilerController newSnapshottingController(ScenarioSettings settings);
 
     public interface SnapshotCapturingProfilerController {
-        void startRecording(String pid) throws IOException, InterruptedException;
+        default void startRecording(String pid) throws IOException, InterruptedException {}
 
-        void stopRecording(String pid) throws IOException, InterruptedException;
+        default void stopRecording(String pid) throws IOException, InterruptedException {}
 
         /**
          * Capture snapshot, if not already performed on stop.
          */
-        void captureSnapshot(String pid) throws IOException, InterruptedException;
+        default void captureSnapshot(String pid) throws IOException, InterruptedException {}
 
-        void stopSession() throws IOException, InterruptedException;
+        default void stopSession() throws IOException, InterruptedException {}
     }
 
     private static class DelegatingController implements ProfilerController {

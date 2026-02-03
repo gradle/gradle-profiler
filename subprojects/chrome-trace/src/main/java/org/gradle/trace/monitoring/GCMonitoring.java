@@ -38,7 +38,6 @@ public class GCMonitoring {
                 if (notification.getType().equals(GarbageCollectionNotificationInfo.GARBAGE_COLLECTION_NOTIFICATION)) {
                     GarbageCollectionNotificationInfo info = GarbageCollectionNotificationInfo.from((CompositeData) notification.getUserData());
                     //get all the info and pretty print it
-                    long duration = info.getGcInfo().getDuration();
                     String gctype = info.getGcAction();
                     Map<String, String> args = new HashMap<>();
                     args.put("type", gctype);

@@ -78,7 +78,7 @@ public class ConfigUtil {
 			if (value instanceof List) {
 				List<?> list = (List) value;
 				return list.stream().map(Object::toString).collect(Collectors.toList());
-			} else if (value.toString().length() > 0) {
+			} else if (!value.toString().isEmpty()) {
 				return Collections.singletonList(value.toString());
 			}
 		}
