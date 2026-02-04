@@ -263,7 +263,7 @@ class ScenarioLoader {
 
                 List<String> targets = ConfigUtil.strings(executionInstructions, TARGETS);
                 File bazelHome = getToolHome(executionInstructions);
-                File outputDir = new File(scenarioBaseDir, "bazel");
+                File outputDir = new File(scenarioBaseDir, BAZEL);
                 int warmUpCount = getWarmUpCount(settings, scenario);
                 List<BuildMutator> mutators = getMutators(scenario, scenarioName, settings, warmUpCount, buildCount);
                 definitions.add(new BazelScenarioDefinition(scenarioName, title, targets, mutators, warmUpCount, buildCount, outputDir, bazelHome));
@@ -280,7 +280,7 @@ class ScenarioLoader {
                 Config executionInstructions = getConfig(scenarioFile, settings, scenarioName, scenario, MAVEN, MAVEN_KEYS);
                 List<String> targets = ConfigUtil.strings(executionInstructions, TARGETS);
                 File mavenHome = getToolHome(executionInstructions);
-                File outputDir = new File(scenarioBaseDir, "maven");
+                File outputDir = new File(scenarioBaseDir, MAVEN);
                 int warmUpCount = getWarmUpCount(settings, scenario);
                 Map<String, String> systemProperties = ConfigUtil.map(scenario, SYSTEM_PROPERTIES, settings.getSystemProperties());
                 List<BuildMutator> mutators = getMutators(scenario, scenarioName, settings, warmUpCount, buildCount);
@@ -451,7 +451,7 @@ class ScenarioLoader {
             String value = ConfigUtil.string(config, RUN_USING, null);
             if (value.equals("cli")) {
                 invoker = GradleBuildInvoker.Cli;
-            } else if (value.equals("tooling-api")) {
+            } else if (value.equals(TOOLING_API)) {
                 invoker = GradleBuildInvoker.ToolingApi;
             } else {
                 throw new IllegalArgumentException("Unexpected value for '" + RUN_USING + "' provided: " + value);
