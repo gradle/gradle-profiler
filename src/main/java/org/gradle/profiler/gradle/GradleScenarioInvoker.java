@@ -2,13 +2,29 @@ package org.gradle.profiler.gradle;
 
 import com.google.common.collect.ImmutableList;
 import org.apache.commons.io.FileUtils;
-import org.gradle.profiler.*;
+import org.gradle.profiler.BuildContext;
+import org.gradle.profiler.BuildMutator;
+import org.gradle.profiler.BuildStepAction;
+import org.gradle.profiler.CompositeBuildMutator;
+import org.gradle.profiler.GradleArgsCalculator;
+import org.gradle.profiler.GradleBuildConfiguration;
+import org.gradle.profiler.GradleClient;
+import org.gradle.profiler.InvocationSettings;
+import org.gradle.profiler.JvmArgsCalculator;
+import org.gradle.profiler.Logging;
+import org.gradle.profiler.ProfilerController;
+import org.gradle.profiler.RunCleanupStepAction;
+import org.gradle.profiler.ScenarioContext;
+import org.gradle.profiler.ScenarioInvoker;
+import org.gradle.profiler.ScenarioSettings;
 import org.gradle.profiler.buildops.BuildOperationInstrumentation;
 import org.gradle.profiler.instrument.PidInstrumentation;
+import org.gradle.profiler.perfetto.BuildOperationToPerfettoConverter;
 import org.gradle.profiler.result.BuildInvocationResult;
 import org.gradle.profiler.result.Sample;
 import org.gradle.profiler.result.SampleProvider;
 
+import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
@@ -163,6 +179,34 @@ public class GradleScenarioInvoker extends ScenarioInvoker<GradleScenarioDefinit
             mutator.afterScenario(scenarioContext);
             gradleClient.close();
             daemonControl.stop(buildConfiguration);
+        }
+
+        if (scenario.isBuildOperationsTrace()) {
+            convertBuildOperationsToPerfetto(scenario);
+        }
+    }
+
+    private static void convertBuildOperationsToPerfetto(GradleScenarioDefinition scenario) {
+        File buildOperationsLog = scenario.getBuildOperationsLogFile();
+        if (!buildOperationsLog.exists()) {
+            Logging.detailed().println("WARN: Build operations log file not found: " + buildOperationsLog.getAbsolutePath());
+            return;
+        }
+
+        try {
+            System.out.println();
+            System.out.println("* Producing Perfetto trace from build operations of the last iteration");
+            Logging.detailed().println("Processing build operations log: " + buildOperationsLog.getAbsolutePath());
+            File perfettoFile = scenario.getBuildOperationsPerfettoFile();
+            BuildOperationToPerfettoConverter.Result result = BuildOperationToPerfettoConverter.convert(buildOperationsLog, perfettoFile);
+            Logging.detailed().println("Written " + result.getPacketCount() + " packets to " + perfettoFile.getAbsolutePath());
+            if (result.getBuildScanUrl() != null) {
+                Logging.detailed().println("Build scan URL: " + result.getBuildScanUrl());
+            }
+            System.out.println(perfettoFile.getAbsolutePath());
+        } catch (Exception e) {
+            Logging.detailed().println("ERROR: Failed to create Perfetto trace from build operations log: " + buildOperationsLog.getAbsolutePath());
+            e.printStackTrace(Logging.detailed());
         }
     }
 

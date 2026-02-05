@@ -27,6 +27,7 @@ dependencies {
     implementation(project(":build-action"))
     implementation(project(":client-protocol"))
     implementation(project(":scenario-definition"))
+    implementation(project(":perfetto-trace"))
 
     implementation("com.google.code.findbugs:annotations:3.0.1")
     implementation("com.google.guava:guava:32.1.2-jre")
