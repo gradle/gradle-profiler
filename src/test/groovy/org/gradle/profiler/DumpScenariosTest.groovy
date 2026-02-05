@@ -40,7 +40,7 @@ class DumpScenariosTest extends Specification {
             .setStudioInstallDir(tmpDir.newFolder())
             .setMeasureGarbageCollection(false)
             .setMeasureConfigTime(false)
-            .setMeasuredBuildOperations([])
+            .setBuildOperationMeasurements([])
             .setCsvFormat(Format.WIDE)
     }
 

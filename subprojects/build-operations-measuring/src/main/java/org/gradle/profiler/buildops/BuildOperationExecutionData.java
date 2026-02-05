@@ -1,7 +1,8 @@
 package org.gradle.profiler.buildops;
 
 /**
- * Carries total duration and count of one or more invocations of a build operation.
+ * Carries information about the execution of a specific build operation type.
+ * {@code value} is already computed according to the {@link BuildOperationMeasurementKind}.
  */
 public class BuildOperationExecutionData {
 

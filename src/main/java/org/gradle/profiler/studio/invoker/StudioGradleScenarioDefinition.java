@@ -22,7 +22,7 @@ public class StudioGradleScenarioDefinition extends GradleScenarioDefinition {
             gradleScenarioDefinition.getBuildCount(),
             gradleScenarioDefinition.getOutputDir(),
             gradleScenarioDefinition.getJvmArgs(),
-            gradleScenarioDefinition.getMeasuredBuildOperations(),
+            gradleScenarioDefinition.getBuildOperationMeasurements(),
             gradleScenarioDefinition.isBuildOperationsTrace()
         );
     }

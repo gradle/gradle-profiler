@@ -6,10 +6,12 @@ import joptsimple.OptionException;
 import joptsimple.OptionParser;
 import joptsimple.OptionSet;
 import joptsimple.OptionSpecBuilder;
+import joptsimple.ValueConverter;
+import org.gradle.profiler.buildops.BuildOperationMeasurement;
+import org.gradle.profiler.buildops.BuildOperationMeasurementKind;
 import org.gradle.profiler.gradle.GradleBuildInvoker;
 import org.gradle.profiler.report.Format;
 
-import javax.annotation.Nullable;
 import java.io.File;
 import java.io.IOException;
 import java.util.Arrays;
@@ -18,10 +20,34 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+import javax.annotation.Nullable;
 
 class CommandLineParser {
 
     public static class SettingsNotAvailableException extends RuntimeException {
+    }
+
+    private static final class BuildOperationMeasurementValueConverter implements ValueConverter<BuildOperationMeasurement> {
+        @Override
+        public BuildOperationMeasurement convert(String value) {
+            String[] parts = value.split(":", 2);
+            String buildOperationType = parts[0];
+            BuildOperationMeasurementKind measurementKind = BuildOperationMeasurementKind.DURATION_SUM;
+            if (parts.length > 1) {
+                measurementKind = BuildOperationMeasurementKind.fromString(parts[1]);
+            }
+            return new BuildOperationMeasurement(buildOperationType, measurementKind);
+        }
+
+        @Override
+        public Class<BuildOperationMeasurement> valueType() {
+            return BuildOperationMeasurement.class;
+        }
+
+        @Override
+        public String valuePattern() {
+            return "<build operation> or <build operation>:<measurement kind>";
+        }
     }
 
     /**
@@ -58,10 +84,13 @@ class CommandLineParser {
         ProfilerFactory.configureParser(parser);
         OptionSpecBuilder noDifferentialFlamegraphOption = parser.accepts("no-diffs", "Do not generate differential flame graphs");
         OptionSpecBuilder benchmarkOption = parser.accepts("benchmark", "Collect benchmark metrics");
-        ArgumentAcceptingOptionSpec<String> benchmarkBuildOperation = parser.accepts(
+        ArgumentAcceptingOptionSpec<BuildOperationMeasurement> measuredBuildOps = parser.accepts(
             "measure-build-op",
-            "Collect benchmark metrics for build operation"
-        ).withRequiredArg();
+            "Collect specific measurements for a given build operation, defaults to using 'duration_sum'" +
+                " (format: <build operation> or <build operation>:<measurement kind>," +
+                " where <measurement kind> is one of " + BuildOperationMeasurementKind.getValidValues() +
+                ")"
+        ).withRequiredArg().withValuesConvertedBy(new BuildOperationMeasurementValueConverter());
         OptionSpecBuilder noDaemonOption = parser.accepts("no-daemon", "Do not use the Gradle daemon");
         OptionSpecBuilder coldDaemonOption = parser.accepts("cold-daemon", "Use a cold Gradle daemon");
         OptionSpecBuilder cliOption = parser.accepts("cli", "Uses the command-line client to connect to the daemon");
@@ -127,7 +156,8 @@ class CommandLineParser {
         boolean measureLocalBuildCache = parsedOptions.has(measureLocalBuildCacheOption);
         boolean measureConfig = parsedOptions.has(measureConfigTimeOption);
         boolean buildOperationsTrace = parsedOptions.has(buildOpsTraceOption);
-        List<String> benchmarkedBuildOperations = parsedOptions.valuesOf(benchmarkBuildOperation);
+
+        List<BuildOperationMeasurement> buildOperationMeasurements = parsedOptions.valuesOf(measuredBuildOps);
 
         List<String> targetNames = parsedOptions.nonOptionArguments().stream().map(Object::toString).collect(Collectors.toList());
         List<String> gradleVersions = parsedOptions.valuesOf(gradleVersionOption);
@@ -197,7 +227,7 @@ class CommandLineParser {
             .setMeasureGarbageCollection(measureGarbageCollection)
             .setMeasureLocalBuildCache(measureLocalBuildCache)
             .setMeasureConfigTime(measureConfig)
-            .setMeasuredBuildOperations(benchmarkedBuildOperations)
+            .setBuildOperationMeasurements(buildOperationMeasurements)
             .setBuildOperationsTrace(buildOperationsTrace)
             .setCsvFormat(csvFormat)
             .setBenchmarkTitle(benchmarkTitle)

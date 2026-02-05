@@ -2,8 +2,7 @@ package org.gradle.profiler.gradle;
 
 import org.gradle.profiler.BuildAction;
 import org.gradle.profiler.GradleBuildConfiguration;
-import org.gradle.profiler.gradle.GradleBuildInvoker;
-import org.gradle.profiler.gradle.GradleScenarioDefinition;
+import org.gradle.profiler.buildops.BuildOperationMeasurement;
 
 import java.io.File;
 import java.util.Collections;
@@ -19,7 +18,7 @@ public class AdhocGradleScenarioDefinition extends GradleScenarioDefinition {
         int warmUpCount,
         int buildCount,
         File outputDir,
-        List<String> measuredBuildOperations,
+        List<BuildOperationMeasurement> buildOperationMeasurements,
         boolean buildOperationsTrace
     ) {
         super(
@@ -36,7 +35,7 @@ public class AdhocGradleScenarioDefinition extends GradleScenarioDefinition {
             buildCount,
             outputDir,
             Collections.emptyList(),
-            measuredBuildOperations,
+            buildOperationMeasurements,
             buildOperationsTrace
         );
     }

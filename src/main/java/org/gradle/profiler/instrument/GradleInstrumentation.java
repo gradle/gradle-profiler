@@ -11,6 +11,8 @@ import java.io.PrintWriter;
 import java.nio.file.Files;
 import java.nio.file.StandardCopyOption;
 import java.util.List;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 /**
  * Represents some instrumentation that uses Gradle APIs and that is injected by gradle-profiler.
@@ -28,14 +30,18 @@ public abstract class GradleInstrumentation implements GradleArgsCalculator {
 
     private void maybeGenerate() {
         File buildOpJar = unpackPlugin("build-operations");
+        File buildOpMeasurementsJar = unpackPlugin("build-operations-measuring");
         File chromeTraceJar = unpackPlugin("chrome-trace");
         File heapDumpJar = unpackPlugin("heap-dump");
+        String filesExpr = Stream.of(buildOpJar, buildOpMeasurementsJar, chromeTraceJar, heapDumpJar)
+            .map(f -> "'" + f.toURI().toASCIIString() + "'")
+            .collect(Collectors.joining(", ", "files(", ")"));
         initScript = new GeneratedInitScript() {
             @Override
             public void writeContents(final PrintWriter writer) {
                 writer.write("initscript {\n");
                 writer.write("    dependencies {\n");
-                writer.write("        classpath files('" + buildOpJar.toURI() + "', '" + chromeTraceJar.toURI() + "', '" + heapDumpJar.toURI() + "')\n");
+                writer.write("        classpath " + filesExpr + "\n");
                 writer.write("    }\n");
                 writer.write("}\n");
                 writer.write("\n");

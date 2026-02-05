@@ -25,6 +25,7 @@ val profilerPlugins by configurations.creating
 dependencies {
     implementation(libs.toolingApi)
     implementation(project(":build-action"))
+    implementation(project(":build-operations-measuring"))
     implementation(project(":client-protocol"))
     implementation(project(":scenario-definition"))
     implementation(project(":perfetto-trace"))
@@ -51,6 +52,7 @@ dependencies {
     gradleRuntime(libs.toolingApi)
     profilerPlugins(project(":chrome-trace"))
     profilerPlugins(project(":build-operations"))
+    profilerPlugins(project(":build-operations-measuring"))
     profilerPlugins(project(":instrumentation-support"))
     profilerPlugins(project(":studio-agent"))
     profilerPlugins(project(":heap-dump"))

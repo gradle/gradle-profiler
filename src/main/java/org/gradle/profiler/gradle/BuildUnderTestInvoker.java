@@ -3,6 +3,7 @@ package org.gradle.profiler.gradle;
 import org.gradle.profiler.*;
 import org.gradle.profiler.buildops.BuildOperationExecutionData;
 import org.gradle.profiler.buildops.BuildOperationInstrumentation;
+import org.gradle.profiler.buildops.BuildOperationMeasurement;
 import org.gradle.profiler.instrument.PidInstrumentation;
 import org.gradle.profiler.result.BuildActionResult;
 
@@ -82,11 +83,13 @@ public class BuildUnderTestInvoker {
             Optional<Long> localBuildCacheSize = buildOperationInstrumentation.getLocalBuildCacheSize();
             Optional<Duration> timeToTaskExecution = buildOperationInstrumentation.getTimeToTaskExecution();
 
-            Map<String, BuildOperationExecutionData> totalExecutionData = buildOperationInstrumentation.getTotalBuildOperationExecutionData();
-            totalExecutionData.forEach((opName, duration) -> {
+            Map<BuildOperationMeasurement, BuildOperationExecutionData> totalExecutionData = buildOperationInstrumentation.getTotalBuildOperationExecutionData();
+            totalExecutionData.forEach((opMeasurement, duration) -> {
                 Logging.detailed().printf(
-                    "Total build operation time %s ms (%s occurrences) for %s%n",
-                    duration.getValue(), duration.getTotalCount(), opName);
+                    "%s %s is %s ms (%s occurrences)%n",
+                    opMeasurement.getBuildOperationType(), opMeasurement.getMeasurementKind(),
+                    duration.getValue(), duration.getTotalCount()
+                );
             });
             garbageCollectionTime.ifPresent(duration -> Logging.detailed().printf("Total GC time: %d ms%n", duration.toMillis()));
             timeToTaskExecution.ifPresent(duration -> Logging.detailed().printf("Time to task execution %d ms%n", duration.toMillis()));

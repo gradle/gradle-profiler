@@ -4,7 +4,8 @@ import org.gradle.profiler.fixtures.compatibility.gradle.AbstractGradleCrossVers
 import spock.lang.Requires
 
 import static org.hamcrest.CoreMatchers.*
-import static org.junit.Assert.assertThat
+import static org.hamcrest.MatcherAssert.assertThat
+import static org.hamcrest.Matchers.lessThan
 import static org.junit.Assert.assertTrue
 
 @Requires({ it.instance.gradleVersionWithAdvancedBenchmarking() })
@@ -207,7 +208,7 @@ class BuildOperationInstrumentationGradleCrossVersionTest extends AbstractGradle
         lines.get(0) == "scenario,default,default"
         lines.get(1) == "version,Gradle ${gradleVersion},Gradle ${gradleVersion}"
         lines.get(2) == "tasks,assemble,assemble"
-        lines.get(3) == "value,total execution time,SnapshotTaskInputsBuildOperationType"
+        lines.get(3) == "value,total execution time,SnapshotTaskInputsBuildOperationType (Duration Sum)"
 
         def firstWarmup = lines.get(4)
         def snapshottingDuration = firstWarmup =~ /warm-up build #1,$SAMPLE,($SAMPLE)/
@@ -231,9 +232,190 @@ class BuildOperationInstrumentationGradleCrossVersionTest extends AbstractGradle
                     'measured-build-ops = ["org.gradle.api.internal.tasks.SnapshotTaskInputsBuildOperationType"]'
                 ],
                 [
+                    'scenario file using object with implicit kind',
+                    [],
+                    'measured-build-ops = [{type = "org.gradle.api.internal.tasks.SnapshotTaskInputsBuildOperationType"}]'
+                ],
+                [
+                    'scenario file using object with explicit kind',
+                    [],
+                    'measured-build-ops = [{type = "org.gradle.api.internal.tasks.SnapshotTaskInputsBuildOperationType", measurement-kind = duration_sum}]'
+                ],
+                [
                     'command line and scenario file',
                     ["--measure-build-op", "org.gradle.api.internal.tasks.SnapshotTaskInputsBuildOperationType"],
                     'measured-build-ops = ["org.gradle.api.internal.tasks.SnapshotTaskInputsBuildOperationType"]'
+                ]
+            ],
+            [false, true]
+        ].combinations().collect { it[0] + it[1] }
+    }
+
+    @Requires({ it.instance.gradleVersionWithExperimentalConfigurationCache() })
+    def "can benchmark time to end of last configure build op via #via(configuration-cache: #configurationCache)"() {
+        given:
+        instrumentedBuildScript()
+        println(commandLine)
+        println(scenarioConfiguration)
+
+        and:
+        def args = [
+            "--gradle-version", gradleVersion,
+            "--benchmark"
+        ]
+        if (scenarioConfiguration) {
+            def scenarioFile = file("performance.scenarios")
+            scenarioFile.text = """
+            default {
+                tasks = ["assemble"]
+                ${scenarioConfiguration}
+            }
+            """
+            args += ["--scenario-file", scenarioFile.absolutePath]
+        }
+        args += commandLine
+        if (configurationCache) {
+            file("gradle.properties") << """
+                org.gradle.unsafe.configuration-cache=true
+            """
+        }
+        args += scenarioConfiguration ? "default" : "assemble"
+
+        when:
+        run(args)
+
+        then:
+        def lines = resultFile.lines
+        lines.size() == totalLinesForExecutions(16)
+        lines.get(0) == "scenario,default,default"
+        lines.get(1) == "version,Gradle ${gradleVersion},Gradle ${gradleVersion}"
+        lines.get(2) == "tasks,assemble,assemble"
+        lines.get(3) == "value,total execution time,ConfigureBuildBuildOperationType (Time to Last Completed)"
+
+        def firstWarmup = lines.get(4)
+        def configureBuildOp = firstWarmup =~ /warm-up build #1,$SAMPLE,($SAMPLE)/
+        configureBuildOp.matches()
+        Double.valueOf(configureBuildOp[0][1]) > 1
+
+        lines.get(9).matches("warm-up build #6,$SAMPLE,$SAMPLE")
+        lines.get(10).matches("measured build #1,$SAMPLE,$SAMPLE")
+
+        where:
+        [via, commandLine, scenarioConfiguration, configurationCache] << [
+            [
+                [
+                    'command line',
+                    ["--measure-build-op", "org.gradle.initialization.ConfigureBuildBuildOperationType:time_to_last_completed"],
+                    null
+                ],
+                [
+                    'scenario file',
+                    [],
+                    'measured-build-ops = [{type = "org.gradle.initialization.ConfigureBuildBuildOperationType", measurement-kind = time_to_last_completed}]'
+                ],
+                [
+                    'command line and scenario file',
+                    ["--measure-build-op", "org.gradle.initialization.ConfigureBuildBuildOperationType:time_to_last_completed"],
+                    'measured-build-ops = [{type = "org.gradle.initialization.ConfigureBuildBuildOperationType", measurement-kind = time_to_last_completed}]'
+                ]
+            ],
+            [false, true]
+        ].combinations().collect { it[0] + it[1] }
+    }
+
+    @Requires({ it.instance.gradleVersionWithExperimentalConfigurationCache() })
+    def "can benchmark configure build op in two ways via #via(configuration-cache: #configurationCache)"() {
+        given:
+        instrumentedBuildScript()
+        println(commandLine)
+        println(scenarioConfiguration)
+
+        and:
+        def args = [
+            "--gradle-version", gradleVersion,
+            "--benchmark"
+        ]
+        if (scenarioConfiguration) {
+            def scenarioFile = file("performance.scenarios")
+            scenarioFile.text = """
+            default {
+                tasks = ["assemble"]
+                ${scenarioConfiguration}
+            }
+            """
+            args += ["--scenario-file", scenarioFile.absolutePath]
+        }
+        args += commandLine
+        if (configurationCache) {
+            file("gradle.properties") << """
+                org.gradle.unsafe.configuration-cache=true
+            """
+        }
+        args += scenarioConfiguration ? "default" : "assemble"
+
+        when:
+        run(args)
+
+        then:
+        def lines = resultFile.lines
+        lines.size() == totalLinesForExecutions(16)
+        lines.get(0) == "scenario,default,default,default"
+        lines.get(1) == "version,Gradle ${gradleVersion},Gradle ${gradleVersion},Gradle ${gradleVersion}"
+        lines.get(2) == "tasks,assemble,assemble,assemble"
+        lines.get(3) == "value,total execution time,ConfigureBuildBuildOperationType (Duration Sum),ConfigureBuildBuildOperationType (Time to Last Completed)"
+
+        def firstWarmup = lines.get(4)
+        def configureBuildOp = firstWarmup =~ /warm-up build #1,$SAMPLE,($SAMPLE),($SAMPLE)/
+        configureBuildOp.matches()
+        def durationSum = Double.valueOf(configureBuildOp[0][1])
+        durationSum > 1
+        def timeToLastCompleted = Double.valueOf(configureBuildOp[0][2])
+        timeToLastCompleted > 1
+        // With our project that only has one build, the duration sum should always be less than the time to last completed
+        // As there is time before the configure build operation starts that is included in the time to last completed but not in the duration sum
+        // This operates as a sanity check that the two measurements are being recorded in a consistent way
+        assertThat(
+            "duration sum should be less than time to last completed",
+            durationSum,
+            lessThan(timeToLastCompleted)
+        )
+
+        lines.get(9).matches("warm-up build #6,$SAMPLE,$SAMPLE,$SAMPLE")
+        lines.get(10).matches("measured build #1,$SAMPLE,$SAMPLE,$SAMPLE")
+
+        where:
+        [via, commandLine, scenarioConfiguration, configurationCache] << [
+            [
+                [
+                    'command line',
+                    [
+                        "--measure-build-op", "org.gradle.initialization.ConfigureBuildBuildOperationType:duration_sum",
+                        "--measure-build-op", "org.gradle.initialization.ConfigureBuildBuildOperationType:time_to_last_completed"
+                    ],
+                    null
+                ],
+                [
+                    'scenario file',
+                    [],
+                    '''
+                    measured-build-ops = [
+                        {type = "org.gradle.initialization.ConfigureBuildBuildOperationType", measurement-kind = duration_sum},
+                        {type = "org.gradle.initialization.ConfigureBuildBuildOperationType", measurement-kind = time_to_last_completed},
+                    ]
+                    '''
+                ],
+                [
+                    'command line and scenario file',
+                    [
+                        "--measure-build-op", "org.gradle.initialization.ConfigureBuildBuildOperationType:duration_sum",
+                        "--measure-build-op", "org.gradle.initialization.ConfigureBuildBuildOperationType:time_to_last_completed"
+                    ],
+                    '''
+                    measured-build-ops = [
+                        {type = "org.gradle.initialization.ConfigureBuildBuildOperationType", measurement-kind = duration_sum},
+                        {type = "org.gradle.initialization.ConfigureBuildBuildOperationType", measurement-kind = time_to_last_completed},
+                    ]
+                    '''
                 ]
             ],
             [false, true]
@@ -268,7 +450,7 @@ class BuildOperationInstrumentationGradleCrossVersionTest extends AbstractGradle
         lines.get(0) == "scenario,default,default,default"
         lines.get(1) == "version,Gradle ${gradleVersion},Gradle ${gradleVersion},Gradle ${gradleVersion}"
         lines.get(2) == "tasks,assemble,assemble,assemble"
-        lines.get(3) == "value,total execution time,task start,SnapshotTaskInputsBuildOperationType"
+        lines.get(3) == "value,total execution time,task start,SnapshotTaskInputsBuildOperationType (Duration Sum)"
         lines.get(4).matches("warm-up build #1,$SAMPLE,$SAMPLE,$SAMPLE")
         lines.get(9).matches("warm-up build #6,$SAMPLE,$SAMPLE,$SAMPLE")
         lines.get(10).matches("measured build #1,$SAMPLE,$SAMPLE,$SAMPLE")
@@ -311,7 +493,7 @@ class BuildOperationInstrumentationGradleCrossVersionTest extends AbstractGradle
         lines.get(0) == "scenario,default,default,default"
         lines.get(1) == "version,Gradle ${gradleVersion},Gradle ${gradleVersion},Gradle ${gradleVersion}"
         lines.get(2) == "tasks,assemble,assemble,assemble"
-        lines.get(3) == "value,total execution time,NonExistentBuildOperationType,SnapshotTaskInputsBuildOperationType"
+        lines.get(3) == "value,total execution time,NonExistentBuildOperationType (Duration Sum),SnapshotTaskInputsBuildOperationType (Duration Sum)"
         lines.get(4).matches("warm-up build #1,$SAMPLE,$SAMPLE,$SAMPLE")
         lines.get(9).matches("warm-up build #6,$SAMPLE,$SAMPLE,$SAMPLE")
         lines.get(10).matches("measured build #1,$SAMPLE,$SAMPLE,$SAMPLE")

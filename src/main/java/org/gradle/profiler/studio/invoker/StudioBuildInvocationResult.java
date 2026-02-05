@@ -16,7 +16,7 @@ public class StudioBuildInvocationResult extends GradleBuildInvocationResult {
             result.getGarbageCollectionTime(),
             result.getLocalBuildCacheSize(),
             result.getTimeToTaskExecution(),
-            result.getTotalBuildOperationExecutionData(),
+            result.getBuildOperationExecutionData(),
             result.getDaemonPid()
         );
     }

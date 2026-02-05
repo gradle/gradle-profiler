@@ -72,9 +72,14 @@ You can also use the `--measure-config-time` option to measure some additional d
 
 You can use `--measure-build-op` together with the fully qualified class name of the enveloping type of the `Details` interface to benchmark cumulative build operation time.
 For example, for Gradle 5.x there is a [`org.gradle.api.internal.tasks.SnapshotTaskInputsBuildOperationType`](https://github.com/gradle/gradle/blob/c671360a3f1729b406c5b8b5b0d22c7b81296993/subprojects/core/src/main/java/org/gradle/api/internal/tasks/SnapshotTaskInputsBuildOperationType.java) which can be used to capture snapshotting time.
-The time recorded is cumulative time, so the wall clock time spent on executing the measured build operations is probably smaller.
 If the build operation does not exists in a benchmarked version of Gradle, it is gracefully ignored.
 In the resulting reports it will show up with 0 time.
+You can specify different measurements to take by adding `:<measurement kind>` after the build operation name, e.g. `--measure-build-op SomeType:time_to_last_completed`.
+The default measurement kind is `duration_sum`. The available measurement kinds are:
+- `duration_sum`: the cumulative time spent in the build operation, which may be greater than the wall clock time if there are concurrent executions of the build operation type
+- `time_to_first_started`: the time from the start of the build until the minimum start time of any execution of the build operation type
+- `time_to_last_completed`: the time from the start of the build until the maximum end time of any execution of the build operation type
+Multiple different measurement kinds can be specified for the same build operation type by repeating the option, e.g. `--measure-build-op SomeType:duration_sum --measure-build-op SomeType:time_to_last_completed`.
 
 You can use `--build-ops-trace` to produce a full Gradle build operations trace.
 This produces `<scenario-name>-log.txt` textual build operations log and
@@ -219,7 +224,7 @@ The following command line options only apply when measuring Gradle builds:
 - `--build-ops-trace`: Produce a build operations trace:
   raw textual log `<scenario-name>-log.txt` and `<scenario-name>.perfetto.proto` [Perfetto](https://ui.perfetto.dev/) trace.
   Note that the formats and contents are not stable and may change in the future without any notice.
-- `--measure-build-op`: Additionally measure the cumulative time spent in the given build operation. Only supported for Gradle 6.1 and later.
+- `--measure-build-op`: Additionally measure timing information about the given build operation. Only supported for Gradle 6.1 and later.
 - `--measure-config-time`: Measure some additional details about configuration time. Only supported for Gradle 6.1 and later.
 - `--measure-gc`: Measure the garbage collection time. Only supported for Gradle 6.1 and later.
 - `--measure-local-build-cache`: Measure the size of the local build cache.
@@ -296,6 +301,13 @@ Here is an example:
         daemon = warm // value can be "warm", "cold", or "none"
         build-ops-trace = true // produce full Gradle build operations trace
         measured-build-ops = ["org.gradle.api.internal.tasks.SnapshotTaskInputsBuildOperationType"] // see --measure-build-op
+        // To specify the measurement kind, use an object instead of a string:
+        measured-build-ops = [
+            {
+                type = "org.gradle.api.internal.tasks.SnapshotTaskInputsBuildOperationType"
+                measurement-kind = time_to_last_completed
+            }
+        ]
 
         buck {
             targets = ["//thing/res_debug"]
