@@ -20,12 +20,8 @@ class HeapDumpProfilerIntegrationTest extends AbstractProfilerIntegrationTest {
         )
 
         then:
-        // Verify agent was loaded
-        logFile.find("!!! Gradle Lifecycle Agent Started").size() >= 1
-        logFile.find("!!! Active strategies: [build-end]").size() >= 1
-
-        // Verify build-end heap dumps were created
-        logFile.find("Build Finishing - Creating Heap Dump").size() >= 2 // warmup + iteration
+        // Verify heap dumps were created (warmup + iteration)
+        logFile.find("HEAP_DUMP_EXECUTOR: Creating heap dump at").size() >= 2
 
         def heapDumpFiles = outputDir.listFiles().findAll {
             it.name.endsWith(".hprof") && it.name.startsWith("gradle-build-end-")
@@ -50,12 +46,8 @@ class HeapDumpProfilerIntegrationTest extends AbstractProfilerIntegrationTest {
         )
 
         then:
-        // Verify agent was loaded with config-end strategy
-        logFile.find("!!! Gradle Lifecycle Agent Started").size() >= 1
-        logFile.find("!!! Active strategies: [config-end]").size() >= 1
-
-        // Verify config-end heap dumps were created
-        logFile.find("Configuration Stage Ending - Creating Heap Dump").size() >= 2 // warmup + iteration
+        // Verify config-end heap dumps were created (warmup + iteration)
+        logFile.find("HEAP_DUMP_EXECUTOR: Creating heap dump at").size() >= 2
 
         def heapDumpFiles = outputDir.listFiles().findAll {
             it.name.endsWith(".hprof") && it.name.startsWith("gradle-config-end-")
@@ -88,16 +80,8 @@ class HeapDumpProfilerIntegrationTest extends AbstractProfilerIntegrationTest {
         )
 
         then:
-        // Verify agent was loaded with both strategies
-        logFile.find("!!! Gradle Lifecycle Agent Started").size() >= 1
-        def strategies = logFile.find("!!! Active strategies:")
-        assert strategies.size() >= 1
-        assert strategies[0].contains("config-end")
-        assert strategies[0].contains("build-end")
-
-        // Verify both types of heap dumps were created
-        logFile.find("Configuration Stage Ending - Creating Heap Dump").size() >= 2
-        logFile.find("Build Finishing - Creating Heap Dump").size() >= 2
+        // Verify both types of heap dumps were created (4 total: 2 config-end + 2 build-end for warmup + iteration)
+        logFile.find("HEAP_DUMP_EXECUTOR: Creating heap dump at").size() >= 4
 
         def configEndFiles = outputDir.listFiles().findAll {
             it.name.endsWith(".hprof") && it.name.startsWith("gradle-config-end-")
@@ -110,7 +94,7 @@ class HeapDumpProfilerIntegrationTest extends AbstractProfilerIntegrationTest {
         assert buildEndFiles.size() >= 2
     }
 
-    def "agent instruments DefaultBuildLifecycleController correctly"() {
+    def "heap dump profiler creates valid heap dump files"() {
         given:
         instrumentedBuildScript()
 
@@ -127,10 +111,22 @@ class HeapDumpProfilerIntegrationTest extends AbstractProfilerIntegrationTest {
         )
 
         then:
-        logFile.find("!!! Gradle Lifecycle Agent Started").size() >= 1
-        logFile.find("!!! Added agent JAR to bootstrap classloader").size() >= 1
-        logFile.find("!!! Instrumenting DefaultBuildLifecycleController").size() >= 1
-        logFile.find("!!! Instrumenting finalizeWorkGraph for config-end").size() >= 1
+        // Verify heap dumps were created
+        logFile.find("HEAP_DUMP_EXECUTOR: Creating heap dump at").size() >= 2
+
+        def heapDumpFiles = outputDir.listFiles().findAll {
+            it.name.endsWith(".hprof") && it.name.startsWith("gradle-config-end-")
+        }
+        assert heapDumpFiles.size() >= 2
+
+        // Verify all heap dumps are valid HPROF files
+        heapDumpFiles.each { heapDump ->
+            byte[] header = new byte[12]
+            heapDump.withInputStream {
+                it.read(header)
+            }
+            assert new String(header) == "JAVA PROFILE"
+        }
     }
 
     def "heap dumps are created for each build iteration"() {
@@ -151,7 +147,7 @@ class HeapDumpProfilerIntegrationTest extends AbstractProfilerIntegrationTest {
 
         then:
         // Verify heap dumps created for warmup + 2 iterations = 3 total
-        logFile.find("Build Finishing - Creating Heap Dump").size() >= 3
+        logFile.find("HEAP_DUMP_EXECUTOR: Creating heap dump at").size() >= 3
 
         def heapDumpFiles = outputDir.listFiles().findAll {
             it.name.endsWith(".hprof") && it.name.startsWith("gradle-build-end-")
@@ -194,7 +190,7 @@ class HeapDumpProfilerIntegrationTest extends AbstractProfilerIntegrationTest {
 
         then:
         // Even with multiple projects, should only create one heap dump per build
-        def heapDumpCreateMessages = logFile.find("Configuration Stage Ending - Creating Heap Dump")
+        def heapDumpCreateMessages = logFile.find("HEAP_DUMP_EXECUTOR: Creating heap dump at")
         assert heapDumpCreateMessages.size() == 1
 
         def heapDumpFiles = outputDir.listFiles().findAll {
@@ -220,11 +216,9 @@ class HeapDumpProfilerIntegrationTest extends AbstractProfilerIntegrationTest {
         )
 
         then:
-        // Agent should be loaded for each build (warmup + measured)
-        logFile.find("!!! Gradle Lifecycle Agent Started").size() >= 2
-        logFile.find("Configuration Stage Ending - Creating Heap Dump").size() >= 2
+        // Verify heap dumps from both warmup and measured builds
+        logFile.find("HEAP_DUMP_EXECUTOR: Creating heap dump at").size() >= 2
 
-        // Should have heap dumps from both warmup and measured builds
         def heapDumpFiles = outputDir.listFiles().findAll {
             it.name.endsWith(".hprof") && it.name.startsWith("gradle-config-end-")
         }
@@ -250,6 +244,8 @@ class HeapDumpProfilerIntegrationTest extends AbstractProfilerIntegrationTest {
         then:
         def e = thrown(IllegalArgumentException)
         e.message.contains("Invalid --heap-dump-when value: 'invalid-value'")
-        e.message.contains("Allowed values: config-end, build-end")
+        e.message.contains("Allowed values:")
+        e.message.contains("config-end")
+        e.message.contains("build-end")
     }
 }

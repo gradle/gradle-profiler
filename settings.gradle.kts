@@ -9,6 +9,7 @@ rootProject.name = "gradle-profiler"
 include("chrome-trace")
 include("build-operations")
 include("heap-dump-agent")
+include("heap-dump-runtime")
 include("client-protocol")
 include("instrumentation-support")
 include("studio-agent")

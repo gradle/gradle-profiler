@@ -3,6 +3,7 @@ package org.gradle.profiler.heapdump;
 import org.gradle.profiler.InstrumentingProfiler;
 import org.gradle.profiler.JvmArgsCalculator;
 import org.gradle.profiler.ScenarioSettings;
+import org.gradle.profiler.instrument.GradleInstrumentation;
 
 import java.io.File;
 import java.io.IOException;
@@ -61,46 +62,13 @@ public class HeapDumpProfiler extends InstrumentingProfiler {
 
         @Override
         public void calculateJvmArgs(List<String> jvmArgs) {
-            try {
-                File agentJar = findAgentJar();
-                File outputDir = settings.profilerOutputLocationFor("").getParentFile();
+            String agentJar = GradleInstrumentation.unpackPlugin("heap-dump-agent").getAbsolutePath();
+            String runtimeJar = GradleInstrumentation.unpackPlugin("heap-dump-runtime").getAbsolutePath();
+            String outputDir = settings.profilerOutputLocationFor("").getParentFile().getAbsolutePath();
 
-                // Build agent argument: <outputDir>;<strategy1>,<strategy2>
-                String agentArg = outputDir.getAbsolutePath() + ";" + String.join(",", strategies);
-
-                jvmArgs.add("-javaagent:" + agentJar.getAbsolutePath() + "=" + agentArg);
-            } catch (IOException | URISyntaxException e) {
-                throw new RuntimeException("Failed to locate heap-dump-agent JAR", e);
-            }
-        }
-
-        private File findAgentJar() throws IOException, URISyntaxException {
-            // The agent JAR is packaged in META-INF/jars/ within the gradle-profiler JAR
-            File resourcesDir = new File(getClass().getProtectionDomain().getCodeSource().getLocation().toURI());
-            File metaInfJars = new File(resourcesDir, "META-INF/jars");
-
-            // When running from JAR, resources are in the JAR itself
-            // When running from IDE/tests, they're in build/resources/main
-            if (!metaInfJars.exists()) {
-                // Try build/resources/main/META-INF/jars
-                File buildDir = resourcesDir.getParentFile(); // build/classes/java/main -> build/classes/java
-                if (buildDir != null) {
-                    buildDir = buildDir.getParentFile(); // build/classes/java -> build/classes
-                    if (buildDir != null) {
-                        buildDir = buildDir.getParentFile(); // build/classes -> build
-                        if (buildDir != null) {
-                            metaInfJars = new File(buildDir, "resources/main/META-INF/jars");
-                        }
-                    }
-                }
-            }
-
-            File agentJar = new File(metaInfJars, "heap-dump-agent.jar");
-            if (!agentJar.exists()) {
-                throw new IOException("Could not find heap-dump-agent.jar at: " + agentJar.getAbsolutePath());
-            }
-
-            return agentJar;
+            // Build agent argument: <runtimeJar>;<outputDir>;<strategy1>,<strategy2>
+            String agentArg = runtimeJar + ";" + outputDir + ";" + String.join(",", strategies);
+            jvmArgs.add("-javaagent:" + agentJar + "=" + agentArg);
         }
     }
 

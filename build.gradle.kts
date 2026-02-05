@@ -53,6 +53,7 @@ dependencies {
     profilerPlugins(project(":instrumentation-support"))
     profilerPlugins(project(":studio-agent"))
     profilerPlugins(project(":heap-dump-agent"))
+    profilerPlugins(project(":heap-dump-runtime"))
     profilerPlugins(project(":studio-plugin"))
 
     runtimeOnly("org.slf4j:slf4j-simple:1.7.10")
