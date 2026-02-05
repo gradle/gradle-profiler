@@ -23,6 +23,6 @@ public class ConfigEndStrategy implements HeapDumpStrategy {
 
     @Override
     public String getTargetMethodDescriptor() {
-        return "(Lorg/gradle/internal/build/BuildLifecycleController$BuildWorkPlan;)V";
+        return "(Lorg/gradle/execution/plan/BuildWorkPlan;)V";
     }
 }
