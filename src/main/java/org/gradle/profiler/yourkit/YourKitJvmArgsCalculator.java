@@ -1,13 +1,12 @@
 package org.gradle.profiler.yourkit;
 
 import org.gradle.profiler.JvmArgsCalculator;
-import org.gradle.profiler.OperatingSystem;
 import org.gradle.profiler.ScenarioSettings;
 
 import java.io.File;
 import java.util.List;
 
-import static org.gradle.profiler.yourkit.YourKit.ENIVONMENT_VARIABLE;
+import static org.gradle.profiler.yourkit.YourKit.ENVIRONMENT_VARIABLE;
 
 public class YourKitJvmArgsCalculator implements JvmArgsCalculator {
     public static final int PORT = 10021;
@@ -27,7 +26,7 @@ public class YourKitJvmArgsCalculator implements JvmArgsCalculator {
     public void calculateJvmArgs(List<String> jvmArgs) {
         File yourKitHome = YourKit.findYourKitHome();
         if (yourKitHome == null) {
-            throw new IllegalArgumentException("Could not locate YourKit installation. Try setting the " + ENIVONMENT_VARIABLE + " environment variable");
+            throw new IllegalArgumentException("Could not locate YourKit installation. Try setting the " + ENVIRONMENT_VARIABLE + " environment variable");
         }
         File jnilib = YourKit.findJniLib();
         if (!jnilib.isFile()) {

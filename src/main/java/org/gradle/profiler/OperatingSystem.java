@@ -2,6 +2,9 @@ package org.gradle.profiler;
 
 public class OperatingSystem {
 
+    public static final String MAC_OS_APPLICATIONS_PATH = "/Applications";
+    public static final String MAC_OS_RESOURCES_PATH = "Contents/Resources";
+
     private static final String OS_NAME = System.getProperty("os.name").toLowerCase();
     private static final String OS_ARCH = System.getProperty("os.arch").toLowerCase();
     private static final String OS_VERSION = System.getProperty("os.version").toLowerCase();

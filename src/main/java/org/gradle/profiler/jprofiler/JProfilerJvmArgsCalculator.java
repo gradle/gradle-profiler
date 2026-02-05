@@ -16,6 +16,8 @@ import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
 import java.util.List;
 
+import static org.gradle.profiler.OperatingSystem.MAC_OS_RESOURCES_PATH;
+
 public class JProfilerJvmArgsCalculator implements JvmArgsCalculator {
     private final JProfilerConfig jProfilerConfig;
     private final ScenarioSettings settings;
@@ -107,7 +109,7 @@ public class JProfilerJvmArgsCalculator implements JvmArgsCalculator {
     private File getJProfilerDir() {
         String homeDir = jProfilerConfig.getHomeDir();
         if (OperatingSystem.isMacOS() && !new File(homeDir, "bin").exists()) {
-            return new File(homeDir, "Contents/Resources/app");
+            return new File(homeDir, MAC_OS_RESOURCES_PATH + "/app");
         } else {
             return new File(homeDir);
         }
