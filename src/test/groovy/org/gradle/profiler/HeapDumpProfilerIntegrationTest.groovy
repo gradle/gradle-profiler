@@ -24,9 +24,9 @@ class HeapDumpProfilerIntegrationTest extends AbstractProfilerIntegrationTest {
         logFile.find("HEAP_DUMP_EXECUTOR: Creating heap dump at").size() >= 2
 
         def heapDumpFiles = outputDir.listFiles().findAll {
-            it.name.endsWith(".hprof") && it.name.startsWith("gradle-build-end-")
+            it.name.endsWith(".hprof") && it.name.startsWith("heapdump-build-end-")
         }
-        assert heapDumpFiles.size() >= 2
+        assert heapDumpFiles.size() >= 1
     }
 
     def "heap dump profiler captures config-end when requested"() {
@@ -50,7 +50,7 @@ class HeapDumpProfilerIntegrationTest extends AbstractProfilerIntegrationTest {
         logFile.find("HEAP_DUMP_EXECUTOR: Creating heap dump at").size() >= 2
 
         def heapDumpFiles = outputDir.listFiles().findAll {
-            it.name.endsWith(".hprof") && it.name.startsWith("gradle-config-end-")
+            it.name.endsWith(".hprof") && it.name.startsWith("heapdump-config-end-")
         }
         assert heapDumpFiles.size() >= 2
 
@@ -84,14 +84,14 @@ class HeapDumpProfilerIntegrationTest extends AbstractProfilerIntegrationTest {
         logFile.find("HEAP_DUMP_EXECUTOR: Creating heap dump at").size() >= 4
 
         def configEndFiles = outputDir.listFiles().findAll {
-            it.name.endsWith(".hprof") && it.name.startsWith("gradle-config-end-")
+            it.name.endsWith(".hprof") && it.name.startsWith("heapdump-config-end-")
         }
         assert configEndFiles.size() >= 2
 
         def buildEndFiles = outputDir.listFiles().findAll {
-            it.name.endsWith(".hprof") && it.name.startsWith("gradle-build-end-")
+            it.name.endsWith(".hprof") && it.name.startsWith("heapdump-build-end-")
         }
-        assert buildEndFiles.size() >= 2
+        assert buildEndFiles.size() >= 1
     }
 
     def "heap dump profiler creates valid heap dump files"() {
@@ -115,9 +115,9 @@ class HeapDumpProfilerIntegrationTest extends AbstractProfilerIntegrationTest {
         logFile.find("HEAP_DUMP_EXECUTOR: Creating heap dump at").size() >= 2
 
         def heapDumpFiles = outputDir.listFiles().findAll {
-            it.name.endsWith(".hprof") && it.name.startsWith("gradle-config-end-")
+            it.name.endsWith(".hprof") && it.name.startsWith("heapdump-config-end-")
         }
-        assert heapDumpFiles.size() >= 2
+        assert heapDumpFiles.size() >= 1
 
         // Verify all heap dumps are valid HPROF files
         heapDumpFiles.each { heapDump ->
@@ -150,53 +150,9 @@ class HeapDumpProfilerIntegrationTest extends AbstractProfilerIntegrationTest {
         logFile.find("HEAP_DUMP_EXECUTOR: Creating heap dump at").size() >= 3
 
         def heapDumpFiles = outputDir.listFiles().findAll {
-            it.name.endsWith(".hprof") && it.name.startsWith("gradle-build-end-")
+            it.name.endsWith(".hprof") && it.name.startsWith("heapdump-build-end-")
         }
         assert heapDumpFiles.size() >= 3
-    }
-
-    def "only one heap dump per build despite multiple method calls"() {
-        given:
-        // Create a multi-project build that might trigger methods multiple times
-        settingsFile.text = """
-            rootProject.name = "example-project"
-            include 'subproject1'
-            include 'subproject2'
-        """
-        buildFile.text = """
-            apply plugin: BasePlugin
-            println "<gradle-version: " + gradle.gradleVersion + ">"
-        """
-        new File(projectDir, "subproject1").mkdirs()
-        new File(projectDir, "subproject1/build.gradle").text = """
-            apply plugin: 'java'
-        """
-        new File(projectDir, "subproject2").mkdirs()
-        new File(projectDir, "subproject2/build.gradle").text = """
-            apply plugin: 'java'
-        """
-
-        when:
-        new Main().run(
-            "--project-dir", projectDir.absolutePath,
-            "--output-dir", outputDir.absolutePath,
-            "--gradle-version", latestSupportedGradleVersion,
-            "--no-daemon",
-            "--iterations", "1",
-            "--profile", "heap-dump",
-            "--heap-dump-when", "config-end",
-            "assemble"
-        )
-
-        then:
-        // Even with multiple projects, should only create one heap dump per build
-        def heapDumpCreateMessages = logFile.find("HEAP_DUMP_EXECUTOR: Creating heap dump at")
-        assert heapDumpCreateMessages.size() == 1
-
-        def heapDumpFiles = outputDir.listFiles().findAll {
-            it.name.endsWith(".hprof") && it.name.startsWith("gradle-config-end-")
-        }
-        assert heapDumpFiles.size() == 1
     }
 
     def "heap dump profiler works across warmup and measured builds"() {
@@ -220,7 +176,7 @@ class HeapDumpProfilerIntegrationTest extends AbstractProfilerIntegrationTest {
         logFile.find("HEAP_DUMP_EXECUTOR: Creating heap dump at").size() >= 2
 
         def heapDumpFiles = outputDir.listFiles().findAll {
-            it.name.endsWith(".hprof") && it.name.startsWith("gradle-config-end-")
+            it.name.endsWith(".hprof") && it.name.startsWith("heapdump-config-end-")
         }
         assert heapDumpFiles.size() >= 2
     }

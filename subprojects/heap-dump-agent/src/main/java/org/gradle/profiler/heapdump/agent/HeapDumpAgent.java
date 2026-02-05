@@ -8,6 +8,7 @@ import org.objectweb.asm.*;
 import java.io.IOException;
 import java.lang.instrument.ClassFileTransformer;
 import java.lang.instrument.Instrumentation;
+import java.nio.file.Path;
 import java.security.ProtectionDomain;
 import java.util.*;
 import java.util.jar.JarFile;
@@ -125,7 +126,7 @@ public class HeapDumpAgent {
                 @Override
                 public void visitCode() {
                     super.visitCode();
-                    // Inject call at the start of the method to call HeapDumpExecutor#invoke(outputDir, strategyName)
+                    // Inject call at the start of the method to call HeapDumpExecutor#invoke(String directory, String strategy)
                     visitLdcInsn(outputPath);
                     visitLdcInsn(strategy.getName());
                     visitMethodInsn(Opcodes.INVOKESTATIC,
