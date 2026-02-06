@@ -11,7 +11,9 @@ import java.util.regex.Pattern;
 
 
 /**
- * A JUnit rule which provides a unique temporary folder for the test.
+ * A JUnit rule which provides a handy unique temporary folder for the test,
+ * which is kept on disk in case of test failures to allow for easier debugging
+ * of integration tests.
  * <p>
  * "build/tmp/test-files/{shortenTestClass}/qqlj8"
  */
