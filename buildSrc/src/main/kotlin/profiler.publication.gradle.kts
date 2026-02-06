@@ -28,25 +28,9 @@ publishing {
                 }
                 developers {
                     developer {
-                        name.set("Adam Murdoch")
-                        url.set("https://github.com/adammurdoch")
-                        email.set("adam@gradle.com")
-                        organization.set("Gradle")
-                        organizationUrl.set("https://gradle.org")
-                    }
-                    developer {
-                        name.set("Lóránt Pintér")
-                        url.set("https://github.com/lptr")
-                        email.set("lptr@gradle.com")
-                        organization.set("Gradle")
-                        organizationUrl.set("https://gradle.org")
-                    }
-                    developer {
-                        name.set("Stefan Wolf")
-                        url.set("https://github.com/wolfs")
-                        email.set("wolf@gradle.com")
-                        organization.set("Gradle")
-                        organizationUrl.set("https://gradle.org")
+                        name = "The Gradle team"
+                        organization = "Gradle Technologies"
+                        organizationUrl = "https://gradle.org"
                     }
                 }
                 scm {
