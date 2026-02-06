@@ -186,7 +186,7 @@ public class TestFile extends File {
         if (exists()) {
             setWritable(true);
             if (!delete()) {
-                throw new RuntimeException(String.format("Could not delete '%s'", this));
+                throw new FileDeletionException(String.format("Could not delete '%s'", this), this);
             }
         }
     }

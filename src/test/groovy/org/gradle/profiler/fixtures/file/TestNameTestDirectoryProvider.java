@@ -1,5 +1,6 @@
 package org.gradle.profiler.fixtures.file;
 
+import groovy.lang.Closure;
 import org.gradle.profiler.fixtures.util.RetryUtil;
 import org.junit.rules.TestRule;
 import org.junit.runner.Description;
@@ -111,8 +112,45 @@ public class TestNameTestDirectoryProvider implements TestRule, TestDirectoryPro
             try {
                 TestNameTestDirectoryProvider.this.cleanup();
             } catch (Exception e) {
-                throw new IllegalStateException(cleanupErrorMessage(), e);
+                if (e instanceof FileDeletionException && suppressCleanupErrors(((FileDeletionException) e).getFile())) {
+                    System.err.println(cleanupErrorMessage());
+                    e.printStackTrace(System.err);
+                } else {
+                    throw new RuntimeException(cleanupErrorMessage(), e);
+                }
             }
+        }
+
+        private boolean suppressCleanupErrors(File notDeletedFile) {
+            LeaksFileHandles testAnnotation = description.getAnnotation(LeaksFileHandles.class);
+            if (testAnnotation != null) {
+                return evaluateCondition(testAnnotation, notDeletedFile);
+            }
+            LeaksFileHandles classAnnotation = testClass().getAnnotation(LeaksFileHandles.class);
+            if (classAnnotation != null) {
+                return evaluateCondition(classAnnotation, notDeletedFile);
+            }
+            return false;
+        }
+
+        @SuppressWarnings("rawtypes")
+        private boolean evaluateCondition(LeaksFileHandles annotation, File notDeletedFile) {
+            Class<? extends Closure> conditionType = annotation.value();
+            if (conditionType == Closure.class) {
+                return true;
+            }
+            try {
+                Closure condition = conditionType.getConstructor(Object.class, Object.class).newInstance(null, null);
+                condition.setDelegate(notDeletedFile);
+                Object result = condition.call(notDeletedFile);
+                return result instanceof Boolean ? (Boolean) result : result != null;
+            } catch (Exception e) {
+                throw new RuntimeException("Could not evaluate LeaksFileHandles condition: " + conditionType.getName(), e);
+            }
+        }
+
+        private Class<?> testClass() {
+            return description.getTestClass();
         }
 
         @Override
