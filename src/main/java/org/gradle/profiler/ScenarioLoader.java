@@ -7,60 +7,19 @@ import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
 import com.typesafe.config.ConfigParseOptions;
 import com.typesafe.config.ConfigRenderOptions;
-
-import java.util.Arrays;
 import org.gradle.profiler.bazel.BazelScenarioDefinition;
 import org.gradle.profiler.buck.BuckScenarioDefinition;
-import org.gradle.profiler.gradle.AdhocGradleScenarioDefinition;
-import org.gradle.profiler.gradle.GradleBuildInvoker;
-import org.gradle.profiler.gradle.GradleScenarioDefinition;
-import org.gradle.profiler.gradle.LoadToolingModelAction;
-import org.gradle.profiler.gradle.RunTasksAction;
-import org.gradle.profiler.gradle.RunToolingAction;
+import org.gradle.profiler.gradle.*;
 import org.gradle.profiler.maven.MavenScenarioDefinition;
 import org.gradle.profiler.mutations.AbstractScheduledMutator.Schedule;
-import org.gradle.profiler.mutations.ApplyAbiChangeToSourceFileMutator;
-import org.gradle.profiler.mutations.ApplyBuildScriptChangeFileMutator;
-import org.gradle.profiler.mutations.ApplyChangeToAndroidLayoutFileMutator;
-import org.gradle.profiler.mutations.ApplyChangeToAndroidManifestFileMutator;
-import org.gradle.profiler.mutations.ApplyChangeToAndroidResourceFileMutator;
-import org.gradle.profiler.mutations.ApplyChangeToComposableKotlinFileMutator;
-import org.gradle.profiler.mutations.ApplyChangeToNativeSourceFileMutator;
-import org.gradle.profiler.mutations.ApplyChangeToPropertyResourceFileMutator;
-import org.gradle.profiler.mutations.ApplyNonAbiChangeToSourceFileMutator;
-import org.gradle.profiler.mutations.ApplyProjectDependencyChangeMutator;
-import org.gradle.profiler.mutations.ApplyValueChangeToAndroidResourceFileMutator;
-import org.gradle.profiler.mutations.BuildMutatorConfigurator;
+import org.gradle.profiler.mutations.*;
 import org.gradle.profiler.mutations.BuildMutatorConfigurator.BuildMutatorConfiguratorSpec;
-import org.gradle.profiler.mutations.ClearArtifactTransformCacheMutator;
-import org.gradle.profiler.mutations.ClearBuildCacheMutator;
-import org.gradle.profiler.mutations.ClearConfigurationCacheStateMutator;
-import org.gradle.profiler.mutations.ClearDirectoryMutator;
-import org.gradle.profiler.mutations.ClearGradleUserHomeMutator;
-import org.gradle.profiler.mutations.ClearJarsCacheMutator;
-import org.gradle.profiler.mutations.ClearProjectCacheMutator;
-import org.gradle.profiler.mutations.CopyFileMutator;
-import org.gradle.profiler.mutations.DefaultBuildMutatorConfiguratorSpec;
-import org.gradle.profiler.mutations.DeleteFileMutator;
-import org.gradle.profiler.mutations.FileChangeMutatorConfigurator;
-import org.gradle.profiler.mutations.GitCheckoutMutator;
-import org.gradle.profiler.mutations.GitRevertMutator;
-import org.gradle.profiler.mutations.ShowBuildCacheSizeMutator;
 import org.gradle.profiler.studio.AndroidStudioSyncAction;
 import org.gradle.profiler.studio.invoker.StudioGradleScenarioDefinition;
 
 import javax.annotation.Nullable;
 import java.io.File;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.LinkedHashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.SortedSet;
-import java.util.TreeSet;
+import java.util.*;
 import java.util.stream.Collectors;
 
 class ScenarioLoader {
@@ -257,81 +216,145 @@ class ScenarioLoader {
 
             int buildCount = getBuildCount(settings, scenario);
             File scenarioBaseDir = selectedScenarios.size() == 1 ? settings.getOutputDir() : new File(settings.getOutputDir(), ScenarioDefinition.safeFileName(scenarioName));
-
-            if (scenario.hasPath(BAZEL) && settings.isBazel()) {
-                Config executionInstructions = getConfig(scenarioFile, settings, scenarioName, scenario, BAZEL, BAZEL_KEYS);
-
-                List<String> targets = ConfigUtil.strings(executionInstructions, TARGETS);
-                File bazelHome = getToolHome(executionInstructions);
-                File outputDir = new File(scenarioBaseDir, BAZEL);
-                int warmUpCount = getWarmUpCount(settings, scenario);
-                List<BuildMutator> mutators = getMutators(scenario, scenarioName, settings, warmUpCount, buildCount);
-                definitions.add(new BazelScenarioDefinition(scenarioName, title, targets, mutators, warmUpCount, buildCount, outputDir, bazelHome));
-            } else if (scenario.hasPath(BUCK) && settings.isBuck()) {
-                Config executionInstructions = getConfig(scenarioFile, settings, scenarioName, scenario, BUCK, BUCK_KEYS);
-                List<String> targets = ConfigUtil.strings(executionInstructions, TARGETS);
-                String type = ConfigUtil.string(executionInstructions, TYPE, null);
-                File buckHome = getToolHome(executionInstructions);
-                File outputDir = new File(scenarioBaseDir, "buck");
-                int warmUpCount = getWarmUpCount(settings, scenario);
-                List<BuildMutator> mutators = getMutators(scenario, scenarioName, settings, warmUpCount, buildCount);
-                definitions.add(new BuckScenarioDefinition(scenarioName, title, targets, type, mutators, warmUpCount, buildCount, outputDir, buckHome));
-            } else if (scenario.hasPath(MAVEN) && settings.isMaven()) {
-                Config executionInstructions = getConfig(scenarioFile, settings, scenarioName, scenario, MAVEN, MAVEN_KEYS);
-                List<String> targets = ConfigUtil.strings(executionInstructions, TARGETS);
-                File mavenHome = getToolHome(executionInstructions);
-                File outputDir = new File(scenarioBaseDir, MAVEN);
-                int warmUpCount = getWarmUpCount(settings, scenario);
-                Map<String, String> systemProperties = ConfigUtil.map(scenario, SYSTEM_PROPERTIES, settings.getSystemProperties());
-                List<BuildMutator> mutators = getMutators(scenario, scenarioName, settings, warmUpCount, buildCount);
-                definitions.add(new MavenScenarioDefinition(scenarioName, title, targets, systemProperties, mutators, warmUpCount, buildCount, outputDir, mavenHome));
-            } else if (!settings.isBazel() && !settings.isBuck() && !settings.isMaven()) {
-                List<GradleBuildConfiguration> versions = ConfigUtil.strings(scenario, VERSIONS, settings.getVersions()).stream().map(inspector::readConfiguration).collect(
-                    Collectors.toList());
-                if (versions.isEmpty()) {
-                    versions.add(inspector.readConfiguration());
-                }
-
-                List<String> gradleArgs = ConfigUtil.strings(scenario, GRADLE_ARGS);
-                BuildAction buildAction = getBuildAction(scenario, scenarioName, scenarioFile, settings);
-                GradleBuildInvoker invoker = invoker(scenario, (GradleBuildInvoker) settings.getInvoker(), buildAction);
-                int warmUpCount = getWarmUpCount(settings, invoker, scenario);
-                List<String> measuredBuildOperations = getMeasuredBuildOperations(settings, scenario);
-                BuildAction cleanupAction = getCleanupAction(scenario);
-                Map<String, String> systemProperties = ConfigUtil.map(scenario, SYSTEM_PROPERTIES, settings.getSystemProperties());
-                List<String> jvmArgs = ConfigUtil.strings(scenario, JVM_ARGS);
-                boolean buildOperationsTrace = getBuildOperationsTrace(settings, scenario);
-                List<BuildMutator> mutators = getMutators(scenario, scenarioName, settings, warmUpCount, buildCount);
-                for (GradleBuildConfiguration version : versions) {
-                    File outputDir = versions.size() == 1 ? scenarioBaseDir : new File(scenarioBaseDir, version.getGradleVersion().getVersion());
-                    GradleScenarioDefinition gradleScenarioDefinition = new GradleScenarioDefinition(
-                        scenarioName,
-                        title,
-                        invoker,
-                        version,
-                        buildAction,
-                        cleanupAction,
-                        gradleArgs,
-                        systemProperties,
-                        mutators,
-                        warmUpCount,
-                        buildCount,
-                        outputDir,
-                        jvmArgs,
-                        measuredBuildOperations,
-                        buildOperationsTrace
-                    );
-                    ScenarioDefinition scenarioDefinition = scenario.hasPath(ANDROID_STUDIO_SYNC)
-                        ? newStudioGradleScenarioDefinition(gradleScenarioDefinition, scenario)
-                        : gradleScenarioDefinition;
-                    definitions.add(scenarioDefinition);
-                }
-            }
+            definitions.addAll(
+                getScenarioDefinitions(scenarioFile, settings, scenarioName, scenario, title, buildCount, scenarioBaseDir, inspector)
+            );
         }
 
         definitions.forEach(ScenarioDefinition::validate);
 
         return definitions;
+    }
+
+    private static List<ScenarioDefinition> getScenarioDefinitions(
+        File scenarioFile,
+        InvocationSettings settings,
+        String scenarioName, Config scenario, String title,
+        int buildCount,
+        File scenarioBaseDir,
+        GradleBuildConfigurationReader inspector
+    ) {
+        if (scenario.hasPath(BAZEL) && settings.isBazel()) {
+            return getBazelScenarioDefinitions(scenarioFile, settings, scenarioName, scenario, title, buildCount, scenarioBaseDir);
+        } else if (scenario.hasPath(BUCK) && settings.isBuck()) {
+            return getBuckScenarioDefinitions(scenarioFile, settings, scenarioName, scenario, title, buildCount, scenarioBaseDir);
+        } else if (scenario.hasPath(MAVEN) && settings.isMaven()) {
+            return getMavenScenarioDefinitions(scenarioFile, settings, scenarioName, scenario, title, buildCount, scenarioBaseDir);
+        } else if (!settings.isBazel() && !settings.isBuck() && !settings.isMaven()) {
+            return getGradleScenarioDefinitions(scenarioFile, settings, scenarioName, scenario, title, buildCount, scenarioBaseDir, inspector);
+        } else {
+            return Collections.emptyList();
+        }
+    }
+
+    private static List<ScenarioDefinition> getGradleScenarioDefinitions(
+        File scenarioFile,
+        InvocationSettings settings,
+        String scenarioName,
+        Config scenario,
+        String title,
+        int buildCount,
+        File scenarioBaseDir,
+        GradleBuildConfigurationReader inspector
+    ) {
+        List<ScenarioDefinition> scenarioDefinitions = new ArrayList<>();
+        List<GradleBuildConfiguration> versions = ConfigUtil.strings(scenario, VERSIONS, settings.getVersions()).stream().map(inspector::readConfiguration).collect(
+            Collectors.toList());
+        if (versions.isEmpty()) {
+            versions.add(inspector.readConfiguration());
+        }
+
+        List<String> gradleArgs = ConfigUtil.strings(scenario, GRADLE_ARGS);
+        BuildAction buildAction = getBuildAction(scenario, scenarioName, scenarioFile, settings);
+        GradleBuildInvoker invoker = invoker(scenario, (GradleBuildInvoker) settings.getInvoker(), buildAction);
+        int warmUpCount = getWarmUpCount(settings, invoker, scenario);
+        List<String> measuredBuildOperations = getMeasuredBuildOperations(settings, scenario);
+        BuildAction cleanupAction = getCleanupAction(scenario);
+        Map<String, String> systemProperties = ConfigUtil.map(scenario, SYSTEM_PROPERTIES, settings.getSystemProperties());
+        List<String> jvmArgs = ConfigUtil.strings(scenario, JVM_ARGS);
+        boolean buildOperationsTrace = getBuildOperationsTrace(settings, scenario);
+        List<BuildMutator> mutators = getMutators(scenario, scenarioName, settings, warmUpCount, buildCount);
+        for (GradleBuildConfiguration version : versions) {
+            File outputDir = versions.size() == 1 ? scenarioBaseDir : new File(scenarioBaseDir, version.getGradleVersion().getVersion());
+            GradleScenarioDefinition gradleScenarioDefinition = new GradleScenarioDefinition(
+                scenarioName,
+                title,
+                invoker,
+                version,
+                buildAction,
+                cleanupAction,
+                gradleArgs,
+                systemProperties,
+                mutators,
+                warmUpCount,
+                buildCount,
+                outputDir,
+                jvmArgs,
+                measuredBuildOperations,
+                buildOperationsTrace
+            );
+            ScenarioDefinition scenarioDefinition = scenario.hasPath(ANDROID_STUDIO_SYNC)
+                ? newStudioGradleScenarioDefinition(gradleScenarioDefinition, scenario)
+                : gradleScenarioDefinition;
+            scenarioDefinitions.add(scenarioDefinition);
+        }
+        return scenarioDefinitions;
+    }
+
+    private static List<ScenarioDefinition> getBazelScenarioDefinitions(
+        File scenarioFile,
+        InvocationSettings settings,
+        String scenarioName,
+        Config scenario,
+        String title,
+        int buildCount,
+        File scenarioBaseDir
+    ) {
+        Config executionInstructions = getExecutionInstructions(scenarioFile, settings, scenarioName, scenario, BAZEL, BAZEL_KEYS);
+        List<String> targets = ConfigUtil.strings(executionInstructions, TARGETS);
+        File bazelHome = getToolHome(executionInstructions);
+        File outputDir = new File(scenarioBaseDir, BAZEL);
+        int warmUpCount = getWarmUpCount(settings, scenario);
+        List<BuildMutator> mutators = getMutators(scenario, scenarioName, settings, warmUpCount, buildCount);
+        return ImmutableList.of(new BazelScenarioDefinition(scenarioName, title, targets, mutators, warmUpCount, buildCount, outputDir, bazelHome));
+    }
+
+    private static List<ScenarioDefinition> getBuckScenarioDefinitions(
+        File scenarioFile,
+        InvocationSettings settings,
+        String scenarioName,
+        Config scenario,
+        String title,
+        int buildCount,
+        File scenarioBaseDir
+    ) {
+        Config executionInstructions = getExecutionInstructions(scenarioFile, settings, scenarioName, scenario, BUCK, BUCK_KEYS);
+        List<String> targets = ConfigUtil.strings(executionInstructions, TARGETS);
+        String type = ConfigUtil.string(executionInstructions, TYPE, null);
+        File buckHome = getToolHome(executionInstructions);
+        File outputDir = new File(scenarioBaseDir, "buck");
+        int warmUpCount = getWarmUpCount(settings, scenario);
+        List<BuildMutator> mutators = getMutators(scenario, scenarioName, settings, warmUpCount, buildCount);
+        return ImmutableList.of(new BuckScenarioDefinition(scenarioName, title, targets, type, mutators, warmUpCount, buildCount, outputDir, buckHome));
+    }
+
+    private static List<ScenarioDefinition> getMavenScenarioDefinitions(
+        File scenarioFile,
+        InvocationSettings settings,
+        String scenarioName,
+        Config scenario,
+        String title,
+        int buildCount,
+        File scenarioBaseDir
+    ) {
+        Config executionInstructions = getExecutionInstructions(scenarioFile, settings, scenarioName, scenario, MAVEN, MAVEN_KEYS);
+        List<String> targets = ConfigUtil.strings(executionInstructions, TARGETS);
+        File mavenHome = getToolHome(executionInstructions);
+        File outputDir = new File(scenarioBaseDir, MAVEN);
+        int warmUpCount = getWarmUpCount(settings, scenario);
+        Map<String, String> systemProperties = ConfigUtil.map(scenario, SYSTEM_PROPERTIES, settings.getSystemProperties());
+        List<BuildMutator> mutators = getMutators(scenario, scenarioName, settings, warmUpCount, buildCount);
+        return ImmutableList.of(new MavenScenarioDefinition(scenarioName, title, targets, systemProperties, mutators, warmUpCount, buildCount, outputDir, mavenHome));
     }
 
     private static Config parseScenarioFile(File scenarioFile) {
@@ -354,7 +377,7 @@ class ScenarioLoader {
             .collect(Collectors.toList());
     }
 
-    private static Config getConfig(File scenarioFile, InvocationSettings settings, String scenarioName, Config scenario, String toolName, List<String> toolKeys) {
+    private static Config getExecutionInstructions(File scenarioFile, InvocationSettings settings, String scenarioName, Config scenario, String toolName, List<String> toolKeys) {
         if (settings.getProfiler().requiresGradle()) {
             throw new IllegalArgumentException("Profiler " + settings.getProfiler() + " is not compatible with " + toolName + " scenarios.");
         }
