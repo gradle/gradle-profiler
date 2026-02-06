@@ -13,11 +13,3 @@ java {
     sourceCompatibility = JavaVersion.VERSION_1_8
     targetCompatibility = JavaVersion.VERSION_1_8
 }
-
-// These projects are packaged into the Gradle profiler Jar, so let's make them reproducible
-tasks.withType<Jar>().configureEach {
-    isReproducibleFileOrder = true
-    isPreserveFileTimestamps = false
-    dirMode = Integer.parseInt("0755", 8)
-    fileMode = Integer.parseInt("0644", 8)
-}
