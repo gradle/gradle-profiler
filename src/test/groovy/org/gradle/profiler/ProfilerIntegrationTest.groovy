@@ -897,7 +897,11 @@ class ProfilerIntegrationTest extends AbstractProfilerIntegrationTest {
             "--benchmark", "--gradle-user-home", "home with spaces", "help")
 
         then:
-        logFile.find("User home: " + new File("home with spaces").absolutePath)
+        def homeWithSpaces = new File("home with spaces")
+        logFile.find("User home: " + homeWithSpaces.absolutePath)
+
+        cleanup:
+        homeWithSpaces.deleteDir()
     }
 
     @Requires({ !OperatingSystem.windows })
