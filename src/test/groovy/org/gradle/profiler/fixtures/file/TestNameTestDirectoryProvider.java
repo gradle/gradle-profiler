@@ -6,7 +6,7 @@ import org.junit.runner.Description;
 import org.junit.runners.model.Statement;
 
 import java.io.File;
-import java.util.Random;
+import java.util.concurrent.ThreadLocalRandom;
 import java.util.regex.Pattern;
 
 
@@ -19,7 +19,6 @@ public class TestNameTestDirectoryProvider implements TestRule, TestDirectoryPro
     protected final TestFile root;
     private final String shortClassName;
 
-    private static final Random RANDOM = new Random();
     private static final int ALL_DIGITS_AND_LETTERS_RADIX = 36;
     private static final int MAX_RANDOM_PART_VALUE = Integer.parseInt("zzzzz", ALL_DIGITS_AND_LETTERS_RADIX);
     private static final Pattern WINDOWS_RESERVED_NAMES = Pattern.compile("(con)|(prn)|(aux)|(nul)|(com\\d)|(lpt\\d)", Pattern.CASE_INSENSITIVE);
@@ -85,7 +84,7 @@ public class TestNameTestDirectoryProvider implements TestRule, TestDirectoryPro
     private TestFile createUniqueTestDirectory() {
         while (true) {
             // Use a random prefix to avoid reusing test directories
-            String randomPrefix = Integer.toString(RANDOM.nextInt(MAX_RANDOM_PART_VALUE), ALL_DIGITS_AND_LETTERS_RADIX);
+            String randomPrefix = Integer.toString(ThreadLocalRandom.current().nextInt(MAX_RANDOM_PART_VALUE), ALL_DIGITS_AND_LETTERS_RADIX);
             if (WINDOWS_RESERVED_NAMES.matcher(randomPrefix).matches() || Character.isDigit(randomPrefix.charAt(0))) {
                 // a project name starting with a digit may cause troubles
                 continue;
