@@ -2,10 +2,13 @@ package org.gradle.profiler
 
 import org.gradle.profiler.fixtures.AbstractProfilerIntegrationTest
 import org.gradle.profiler.fixtures.compatibility.gradle.GradleVersionCompatibility
+import org.gradle.profiler.fixtures.file.LeaksFileHandles
 import org.gradle.util.GradleVersion
-import spock.lang.Issue
+import spock.lang.IgnoreIf
 import spock.lang.Requires
 
+// https://github.com/gradle/gradle-profiler/issues/714
+@LeaksFileHandles({ OperatingSystem.isWindows() && it.name == "native-platform.dll" })
 class ProfilerIntegrationTest extends AbstractProfilerIntegrationTest {
 
     def "complains when neither profile or benchmark requested"() {
@@ -1209,7 +1212,7 @@ class ProfilerIntegrationTest extends AbstractProfilerIntegrationTest {
     }
 
     // See: https://github.com/gradle/gradle-profiler/issues/603")
-    @Requires({ GradleVersion.version(it.instance.minimalSupportedGradleVersion) <= GradleVersionCompatibility.lastGradleVersionSupportingCleanTransformCaches})
+    @Requires({ GradleVersion.version(it.instance.minimalSupportedGradleVersion) <= GradleVersionCompatibility.lastGradleVersionSupportingCleanTransformCaches })
     def "clears transform cache when asked"() {
         given:
         String gradleVersion = minimalSupportedGradleVersion
@@ -1394,6 +1397,8 @@ class ProfilerIntegrationTest extends AbstractProfilerIntegrationTest {
         buildSrc << [false, true]
     }
 
+    // https://github.com/gradle/gradle-profiler/issues/714
+    @IgnoreIf({ OperatingSystem.isWindows() })
     def "clean Gradle user home cache when configured"() {
         given:
         buildFile << """
