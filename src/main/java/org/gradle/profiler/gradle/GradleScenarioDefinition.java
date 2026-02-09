@@ -125,6 +125,14 @@ public class GradleScenarioDefinition extends ScenarioDefinition {
         return new File(getOutputDir(), safeFileName(getName())).getAbsolutePath();
     }
 
+    public File getBuildOperationsLogFile() {
+        return new File(getOutputDir(), safeFileName(getName()) + "-log.txt");
+    }
+
+    public File getBuildOperationsPerfettoFile() {
+        return new File(getOutputDir(), safeFileName(getName()) + ".perfetto.proto");
+    }
+
     public boolean createsMultipleProcesses() {
         if (getBuildCount() <= 1) {
             return false;
@@ -175,8 +183,6 @@ public class GradleScenarioDefinition extends ScenarioDefinition {
                 .sorted()
                 .collect(Collectors.joining(", ")));
         }
-        if (buildOperationsTrace) {
-            out.println("  Build operations trace: " + getBuildOperationsTracePathPrefix());
-        }
+        out.println("  Build operations trace: " + buildOperationsTrace);
     }
 }

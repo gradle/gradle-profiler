@@ -44,13 +44,13 @@ abstract class AbstractBaseProfilerIntegrationTest extends AbstractIntegrationTe
     }
 
     LogFile getLogFile() {
-        def f = new File(outputDir, "profile.log")
+        def f = outputFile("profile.log")
         assert f.isFile()
         return new LogFile(f)
     }
 
     ReportFile getResultFile() {
-        def f = new File(outputDir, "benchmark.csv")
+        def f = outputFile("benchmark.csv")
         assert f.isFile()
 
         return new ReportFile(f)
@@ -66,6 +66,10 @@ abstract class AbstractBaseProfilerIntegrationTest extends AbstractIntegrationTe
 
     TestFile file(String path) {
         return projectDir.file(path)
+    }
+
+    File outputFile(String path) {
+        return new File(outputDir, path)
     }
 
     void run(List<String> moreArgs) {
