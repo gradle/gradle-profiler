@@ -85,7 +85,7 @@ public class AsyncProfilerFactory extends ProfilerFactory {
     }
 
     AsyncProfilerConfig createConfig(OptionSet parsedOptions) {
-        AsyncProfilerDistribution apDistribution = getAPDistribution(parsedOptions);
+        AsyncProfilerDistribution apDistribution = resolveDistribution(parsedOptions);
         List<String> events = eventOption.values(parsedOptions);
         AsyncProfilerConfig.Counter counter = counterOption.value(parsedOptions);
         int interval = intervalOption.value(parsedOptions);
@@ -108,25 +108,28 @@ public class AsyncProfilerFactory extends ProfilerFactory {
         );
     }
 
-    private AsyncProfilerDistribution getAPDistribution(OptionSet parsedOptions) {
+    private AsyncProfilerDistribution resolveDistribution(OptionSet parsedOptions) {
+        AsyncProfilerPlatform platform = AsyncProfilerPlatform.current();
+        if (platform == null) {
+            throw new IllegalStateException("Async profiler not supported on " + OperatingSystem.getId());
+        }
+
         File profilerHome = profilerHomeOption.value(parsedOptions);
-        String source = profilerHome != null ? "--" + ASYNC_PROFILER_HOME_OPTION : null;
+        String source = profilerHome != null ? ("--" + ASYNC_PROFILER_HOME_OPTION + " option"): null;
         if (profilerHome == null) {
             String homePath = System.getenv(ASYNC_PROFILER_HOME);
             profilerHome = homePath != null ? new File(homePath) : null;
-            source = homePath != null ? ASYNC_PROFILER_HOME : null;
+            source = homePath != null ? ("environment variable " + ASYNC_PROFILER_HOME) : null;
         }
         if (profilerHome != null && !profilerHome.isDirectory()) {
             throw new IllegalStateException(ASYNC_PROFILER_HOME + " or --" + ASYNC_PROFILER_HOME_OPTION + " path is not a directory.");
         }
         if (profilerHome == null) {
-            profilerHome = AsyncProfilerDownload.defaultHome();
-            source = "DOWNLOAD";
+            profilerHome = AsyncProfilerDownload.forPlatform(platform, AsyncProfilerDownload.ASYNC_PROFILER_VERSION);
+            source = "auto-download of v" + AsyncProfilerDownload.ASYNC_PROFILER_VERSION;
         }
-        if (profilerHome == null) {
-            throw new IllegalStateException("Async profiler not supported on " + OperatingSystem.getId());
-        }
-        return new AsyncProfilerDistribution(profilerHome, source);
+
+        return AsyncProfilerDistribution.of(platform, profilerHome, source);
     }
 
     private static class CounterConverter implements ValueConverter<AsyncProfilerConfig.Counter> {
