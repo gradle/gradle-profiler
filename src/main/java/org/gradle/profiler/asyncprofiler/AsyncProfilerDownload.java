@@ -31,7 +31,6 @@ import static java.nio.file.StandardCopyOption.REPLACE_EXISTING;
  * Downloads and unpacks Async Profiler artifacts.
  */
 public class AsyncProfilerDownload {
-    public static final String ASYNC_PROFILER_VERSION = "4.2";
 
     /**
      * Downloads a distribution of Async Profiler and installs into {@code ~/.gradle-profiler-dist}.

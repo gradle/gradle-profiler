@@ -125,8 +125,9 @@ public class AsyncProfilerFactory extends ProfilerFactory {
             throw new IllegalStateException(ASYNC_PROFILER_HOME + " or --" + ASYNC_PROFILER_HOME_OPTION + " path is not a directory.");
         }
         if (profilerHome == null) {
-            profilerHome = AsyncProfilerDownload.forPlatform(platform, AsyncProfilerDownload.ASYNC_PROFILER_VERSION);
-            source = "auto-download of v" + AsyncProfilerDownload.ASYNC_PROFILER_VERSION;
+            AsyncProfilerVersion version = AsyncProfilerCompatibility.AUTO_DOWNLOAD_VERSION;
+            profilerHome = AsyncProfilerDownload.forPlatform(platform, version.getAsString());
+            source = "auto-download of v" + version.getAsString();
         }
 
         return AsyncProfilerDistribution.of(platform, profilerHome, source);
