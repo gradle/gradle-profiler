@@ -16,6 +16,8 @@ include("studio-plugin")
 include("build-action")
 include("scenario-definition")
 include("tooling-action")
+include("perfetto-trace")
+include("gradle-trace-converter-app")
 
 rootProject.children.forEach {
     it.projectDir = rootDir.resolve( "subprojects/${it.name}")

@@ -27,7 +27,7 @@ class AndroidStudioIntegrationTest extends AbstractProfilerIntegrationTest {
     String scenarioName
 
     def setup() {
-        sandboxDir = tmpDir.newFolder('sandbox')
+        sandboxDir = tmpDir.createDir('sandbox')
         studioHome = AndroidStudioFinder.findStudioHome()
         setupLocalProperties(file("local.properties"))
         scenarioName = "scenario"
@@ -130,7 +130,7 @@ class AndroidStudioIntegrationTest extends AbstractProfilerIntegrationTest {
 
     def "detects if two Android Studio processes are running in the same sandbox"() {
         given:
-        File otherStudioProjectDir = tmpDir.newFolder('project')
+        File otherStudioProjectDir = tmpDir.createDir('project2')
         // We have to install plugin so also the first Studio process is run in the headless mode.
         // We install plugin directory to a different "plugins-2" directory for first process otherwise cleaning plugin directory at start of second process fails on Windows.
         StudioSandboxCreator.StudioSandbox sandbox = StudioSandboxCreator.createSandbox(sandboxDir.toPath(), "plugins-2")
@@ -163,10 +163,10 @@ class AndroidStudioIntegrationTest extends AbstractProfilerIntegrationTest {
 
     def "allows two Android Studio processes in different sandboxes"() {
         given:
-        File sandboxDir1 = tmpDir.newFolder('sandbox1')
+        File sandboxDir1 = tmpDir.createDir('sandbox1')
         // We create a different folder for project for the other process,
         // since if Android Studio writes to same project at the same time, it can fail
-        File otherStudioProjectDir = tmpDir.newFolder('project')
+        File otherStudioProjectDir = tmpDir.createDir('project2')
         StudioSandboxCreator.StudioSandbox sandbox = StudioSandboxCreator.createSandbox(sandboxDir1.toPath())
         StudioLauncher studioLauncher = new StudioLauncherProvider(studioHome.toPath(), sandbox, [], []).get()
         // We have to install plugin, since a plugin contains headless starter and it makes it run headless on CI
@@ -293,7 +293,7 @@ class AndroidStudioIntegrationTest extends AbstractProfilerIntegrationTest {
                 implementation("com.fasterxml.jackson.core:jackson-core:2.9.6")
             }
         """
-        def mavenRepository = tmpDir.newFolder("maven/repository")
+        def mavenRepository = tmpDir.createDir("maven/repository")
         new File("${sandboxDir.absolutePath}/config/options").mkdirs()
         new File("${sandboxDir.absolutePath}/config/options/path.macros.xml").text = """
 <application>

@@ -14,7 +14,7 @@ class ChromeTraceGradleCrossVersionTest extends AbstractGradleCrossVersionTest {
     File sandboxDir
 
     def setup() {
-        sandboxDir = tmpDir.newFolder('sandbox')
+        sandboxDir = tmpDir.createDir('sandbox')
     }
 
     def "profiles build to produce chrome trace output using #conditions"() {

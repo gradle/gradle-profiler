@@ -77,9 +77,9 @@ If the build operation does not exists in a benchmarked version of Gradle, it is
 In the resulting reports it will show up with 0 time.
 
 You can use `--build-ops-trace` to produce a full Gradle build operations trace.
-This will generate a `<scenario-name>-log.txt` file in the output directory, containing internal Gradle build operations.
-Note that the format of the file is not stable and may change in the future without any notice.
-You can use the [trace converter](https://github.com/gradle/gradle-trace-converter) tool to convert the file to Chrome Trace, viewable in [Perfetto](https://ui.perfetto.dev/).
+This produces `<scenario-name>-log.txt` textual build operations log and
+a `<scenario-name>.perfetto.proto` that can be viewed via [Perfetto UI](https://ui.perfetto.dev/).
+Note that the formats and contents are not stable and may change in the future without any notice.
 
 ### Regression detection
 
@@ -216,9 +216,9 @@ The following command line options only apply when measuring Gradle builds:
 - `--no-daemon`: Uses the `gradle` command-line client with the `--no-daemon` option to run the builds. The default is to use the Gradle tooling API and Gradle daemon.
 - `--cold-daemon`: Use a cold daemon (one that has just started) rather than a warm daemon (one that has already run some builds). The default is to use a warm daemon.
 - `--cli`: Uses the `gradle` command-line client to run the builds. The default is to use the Gradle tooling API and Gradle daemon.
-- `--build-ops-trace`: Produce a full Gradle build operations trace as `<scenario-name>-log.txt` in the output directory.
-  The file format is not stable and may change in the future without any notice.
-  It can be [converted](https://github.com/gradle/gradle-trace-converter) to Chrome Trace.
+- `--build-ops-trace`: Produce a build operations trace:
+  raw textual log `<scenario-name>-log.txt` and `<scenario-name>.perfetto.proto` [Perfetto](https://ui.perfetto.dev/) trace.
+  Note that the formats and contents are not stable and may change in the future without any notice.
 - `--measure-build-op`: Additionally measure the cumulative time spent in the given build operation. Only supported for Gradle 6.1 and later.
 - `--measure-config-time`: Measure some additional details about configuration time. Only supported for Gradle 6.1 and later.
 - `--measure-gc`: Measure the garbage collection time. Only supported for Gradle 6.1 and later.
@@ -368,9 +368,9 @@ This will run only the scenarios defined in the `smoke-tests` group (`assemble` 
 - `iterations`: Number of builds to actually measure
 - `warm-ups`: Number of warmups to perform before measurement
 - `jvm-args`: Sets or overrides the jvm arguments set by `org.gradle.jvmargs` in gradle.properties.
-- `build-ops-trace`: When set to `true`, produces a full Gradle build operations trace as `<scenario-name>-log.txt` in the output directory.
-  The file format is not stable and may change in the future without any notice.
-  It can be [converted](https://github.com/gradle/gradle-trace-converter) to Chrome Trace.
+- `build-ops-trace`: When set to `true`, produces a build operations trace:
+  raw textual log `<scenario-name>-log.txt` and `<scenario-name>.perfetto.proto` [Perfetto](https://ui.perfetto.dev/) trace.
+  Note that the formats and contents are not stable and may change in the future without any notice.
 
 ### Profiling change handling
 
