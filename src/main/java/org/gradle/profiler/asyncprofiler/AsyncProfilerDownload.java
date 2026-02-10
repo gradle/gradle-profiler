@@ -2,21 +2,24 @@ package org.gradle.profiler.asyncprofiler;
 
 import com.google.common.collect.ImmutableSet;
 import org.apache.commons.compress.archivers.ArchiveEntry;
-import org.apache.commons.compress.archivers.ArchiveInputStream;
 import org.apache.commons.compress.archivers.tar.TarArchiveEntry;
 import org.apache.commons.compress.archivers.tar.TarArchiveInputStream;
 import org.apache.commons.compress.archivers.zip.ZipArchiveEntry;
 import org.apache.commons.compress.archivers.zip.ZipFile;
 import org.apache.commons.compress.compressors.gzip.GzipCompressorInputStream;
 import org.gradle.profiler.Logging;
-import org.gradle.profiler.OperatingSystem;
 
 import java.io.BufferedInputStream;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URL;
-import java.nio.file.*;
+import java.nio.file.FileVisitResult;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.nio.file.SimpleFileVisitor;
+import java.nio.file.StandardCopyOption;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.nio.file.attribute.PosixFilePermission;
 import java.util.Enumeration;
@@ -25,35 +28,24 @@ import java.util.Set;
 import static java.nio.file.StandardCopyOption.REPLACE_EXISTING;
 
 /**
- * Downloads a version of async profiler and installs into ~/.gradle-profiler-dist.
+ * Downloads and unpacks Async Profiler artifacts.
  */
 public class AsyncProfilerDownload {
-    private static final String ASYNC_PROFILER_VERSION = "4.2";
 
     /**
-     * Attempts to locate a default install of async profiler. Uses a previously downloaded installation, or downloads if not available.
+     * Downloads a distribution of Async Profiler and installs into {@code ~/.gradle-profiler-dist}.
+     * <p>
+     * Uses a previously downloaded installation, if available.
      *
-     * @return null if not available.
+     * @return the home directory of the unpacked Async Profiler distribution
      */
-    static File defaultHome() {
-        String platformName;
-        String extension;
-        if (OperatingSystem.isMacOS()) {
-            platformName = "macos";
-            extension = "zip";
-        } else if (OperatingSystem.isLinuxAarch64()) {
-            platformName = "linux-arm64";
-            extension = "tar.gz";
-        } else if (OperatingSystem.isLinuxX86()) {
-            platformName = "linux-x64";
-            extension = "tar.gz";
-        } else {
-            return null;
-        }
+    static File forPlatform(AsyncProfilerPlatform platform, String version) {
+        String platformName = platform.getPlatformName();
+        String extension = platform.getDownloadExtension();
 
-        Path installDist = Paths.get(System.getProperty("user.home"), ".gradle-profiler-dist", ASYNC_PROFILER_VERSION + "-" + platformName);
+        Path installDist = Paths.get(System.getProperty("user.home"), ".gradle-profiler-dist", version + "-" + platformName);
         Path marker = installDist.resolve("ok");
-        Path homeDir = installDist.resolve(String.format("async-profiler-%s-%s", ASYNC_PROFILER_VERSION, platformName));
+        Path homeDir = installDist.resolve(String.format("async-profiler-%s-%s", version, platformName));
 
         if (Files.isReadable(marker)) {
             return homeDir.toFile();
@@ -62,7 +54,7 @@ public class AsyncProfilerDownload {
         try {
             URL download = new URL(String.format(
                 "https://github.com/async-profiler/async-profiler/releases/download/v%1$s/async-profiler-%1$s-%2$s.%3$s",
-                ASYNC_PROFILER_VERSION,
+                version,
                 platformName,
                 extension
             ));
