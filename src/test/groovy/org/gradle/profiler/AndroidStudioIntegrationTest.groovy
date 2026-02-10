@@ -6,7 +6,7 @@ import org.gradle.profiler.spock.extensions.ShowAndroidStudioLogsOnFailure
 import org.gradle.profiler.studio.AndroidStudioTestSupport
 import org.gradle.profiler.studio.launcher.StudioLauncher
 import org.gradle.profiler.studio.launcher.StudioLauncherProvider
-import org.gradle.profiler.studio.tools.StudioFinder
+import org.gradle.profiler.studio.tools.AndroidStudioFinder
 import org.gradle.profiler.studio.tools.StudioPluginInstaller
 import org.gradle.profiler.studio.tools.StudioSandboxCreator
 import spock.lang.Requires
@@ -18,7 +18,7 @@ import static org.gradle.profiler.studio.AndroidStudioTestSupport.setupLocalProp
  * Android sdk installed in <user.home>/Library/Android/sdk (e.g. on Mac /Users/<username>/Library/Android/sdk)
  */
 @ShowAndroidStudioLogsOnFailure
-@Requires({ StudioFinder.findStudioHome() })
+@Requires({ AndroidStudioFinder.findStudioHome() })
 @Requires({ AndroidStudioTestSupport.findAndroidSdkPath() })
 class AndroidStudioIntegrationTest extends AbstractProfilerIntegrationTest {
 
@@ -28,7 +28,7 @@ class AndroidStudioIntegrationTest extends AbstractProfilerIntegrationTest {
 
     def setup() {
         sandboxDir = tmpDir.createDir('sandbox')
-        studioHome = StudioFinder.findStudioHome()
+        studioHome = AndroidStudioFinder.findStudioHome()
         setupLocalProperties(file("local.properties"))
         scenarioName = "scenario"
     }

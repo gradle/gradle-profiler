@@ -4,9 +4,12 @@ import org.gradle.profiler.OperatingSystem;
 
 import java.io.File;
 
+import static org.gradle.profiler.OperatingSystem.MAC_OS_APPLICATIONS_PATH;
+import static org.gradle.profiler.OperatingSystem.MAC_OS_RESOURCES_PATH;
+
 public class YourKit {
-    static final String ENIVONMENT_VARIABLE = "YOURKIT_HOME";
-    private static final String YOURKIT_HOME = System.getenv(ENIVONMENT_VARIABLE);
+    static final String ENVIRONMENT_VARIABLE = "YOURKIT_HOME";
+    private static final String YOURKIT_HOME = System.getenv(ENVIRONMENT_VARIABLE);
 
     /**
      * Locates the user's YourKit installation. Returns null when not found.
@@ -18,7 +21,7 @@ public class YourKit {
                 return ykHome;
             }
         }
-        File applicationsDir = new File("/Applications");
+        File applicationsDir = new File(MAC_OS_APPLICATIONS_PATH);
         if (!applicationsDir.isDirectory()) {
             return null;
         }
@@ -32,7 +35,7 @@ public class YourKit {
 
     public static File findControllerJar() {
         File yourKitHome = findYourKitHome();
-        return tryLocations(yourKitHome, "Contents/Resources/lib/yjp-controller-api-redist.jar", "lib/yjp-controller-api-redist.jar");
+        return tryLocations(yourKitHome, MAC_OS_RESOURCES_PATH + "/lib/yjp-controller-api-redist.jar", "lib/yjp-controller-api-redist.jar");
     }
 
     public static File findJniLib() {
@@ -40,7 +43,7 @@ public class YourKit {
         if (OperatingSystem.isWindows()) {
             return tryLocations(yourKitHome, "bin/win64/yjpagent.dll", "bin/windows-x86-64/yjpagent.dll");
         }
-        String macLibLocationPrefix = "Contents/Resources/bin/mac/libyjpagent.";
+        String macLibLocationPrefix = MAC_OS_RESOURCES_PATH +"/bin/mac/libyjpagent.";
         return tryLocations(yourKitHome, macLibLocationPrefix + "jnilib", macLibLocationPrefix + "dylib", "bin/linux-x86-64/libyjpagent.so");
     }
 

@@ -1,18 +1,16 @@
 package org.gradle.profiler.studio.tools;
 
 import java.io.File;
+import java.util.Optional;
 
-public class StudioFinder {
+import static org.gradle.profiler.OperatingSystem.MAC_OS_APPLICATIONS_PATH;
 
-    private static final String STUDIO_HOME_ENV_VARIABLE = "STUDIO_PROFILER_HOME";
-    private static final String STUDIO_HOME_PROPERTY = "studio.home";
-    private static final String STUDIO_PROFILER_HOME = System.getenv(STUDIO_HOME_ENV_VARIABLE) != null
-        ? System.getenv(STUDIO_HOME_ENV_VARIABLE)
-        : System.getProperty(STUDIO_HOME_PROPERTY);
+public class AndroidStudioFinder {
+    private static final String STUDIO_PROFILER_HOME = Optional.ofNullable(System.getenv("STUDIO_PROFILER_HOME")).orElse(System.getProperty("studio.home"));
 
     /**
      * Locates the user's Android Studio installation. Returns null when not found.
-     *
+     * <p>
      * You can override location with the environment variable STUDIO_PROFILER_HOME.
      */
     public static File findStudioHome() {
@@ -22,7 +20,7 @@ public class StudioFinder {
                 return studioHome;
             }
         }
-        File applicationsDir = new File("/Applications");
+        File applicationsDir = new File(MAC_OS_APPLICATIONS_PATH);
         if (!applicationsDir.isDirectory()) {
             return null;
         }
@@ -33,5 +31,4 @@ public class StudioFinder {
         }
         return null;
     }
-
 }

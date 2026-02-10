@@ -4,7 +4,7 @@ package org.gradle.profiler
 import org.gradle.profiler.fixtures.compatibility.gradle.AbstractGradleCrossVersionTest
 import org.gradle.profiler.spock.extensions.ShowAndroidStudioLogsOnFailure
 import org.gradle.profiler.studio.AndroidStudioTestSupport
-import org.gradle.profiler.studio.tools.StudioFinder
+import org.gradle.profiler.studio.tools.AndroidStudioFinder
 import spock.lang.Requires
 
 import static org.gradle.profiler.studio.AndroidStudioTestSupport.setupLocalProperties
@@ -39,13 +39,13 @@ class ChromeTraceGradleCrossVersionTest extends AbstractGradleCrossVersionTest {
     }
 
     @ShowAndroidStudioLogsOnFailure
-    @Requires({ StudioFinder.findStudioHome() })
+    @Requires({ AndroidStudioFinder.findStudioHome() })
     @Requires({ AndroidStudioTestSupport.findAndroidSdkPath() })
     // We don't control version of AS provided by the environment, so we assume that latest tested Gradle should be fine
     @Requires({ it.instance.latestTestedGradleVersion() })
     def "profiles Android Studio build to produce chrome trace output for builds"() {
         given:
-        def studioHome = StudioFinder.findStudioHome()
+        def studioHome = AndroidStudioFinder.findStudioHome()
         setupLocalProperties(new File(projectDir, "local.properties"))
         new File(projectDir, "buildSrc").mkdirs()
         new File(projectDir, "buildSrc/gradle.build").createNewFile()
