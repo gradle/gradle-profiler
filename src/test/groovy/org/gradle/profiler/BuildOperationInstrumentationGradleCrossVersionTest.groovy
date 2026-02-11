@@ -239,7 +239,7 @@ class BuildOperationInstrumentationGradleCrossVersionTest extends AbstractGradle
                 [
                     'scenario file using object with explicit kind',
                     [],
-                    'measured-build-ops = [{type = "org.gradle.api.internal.tasks.SnapshotTaskInputsBuildOperationType", measurement-kind = duration_sum}]'
+                    'measured-build-ops = [{type = "org.gradle.api.internal.tasks.SnapshotTaskInputsBuildOperationType", measurement-kind = cumulative_time}]'
                 ],
                 [
                     'command line and scenario file',
@@ -305,18 +305,18 @@ class BuildOperationInstrumentationGradleCrossVersionTest extends AbstractGradle
             [
                 [
                     'command line',
-                    ["--measure-build-op", "org.gradle.initialization.ConfigureBuildBuildOperationType:time_to_last_completed"],
+                    ["--measure-build-op", "org.gradle.initialization.ConfigureBuildBuildOperationType:time_to_last_inclusive"],
                     null
                 ],
                 [
                     'scenario file',
                     [],
-                    'measured-build-ops = [{type = "org.gradle.initialization.ConfigureBuildBuildOperationType", measurement-kind = time_to_last_completed}]'
+                    'measured-build-ops = [{type = "org.gradle.initialization.ConfigureBuildBuildOperationType", measurement-kind = time_to_last_inclusive}]'
                 ],
                 [
                     'command line and scenario file',
-                    ["--measure-build-op", "org.gradle.initialization.ConfigureBuildBuildOperationType:time_to_last_completed"],
-                    'measured-build-ops = [{type = "org.gradle.initialization.ConfigureBuildBuildOperationType", measurement-kind = time_to_last_completed}]'
+                    ["--measure-build-op", "org.gradle.initialization.ConfigureBuildBuildOperationType:time_to_last_inclusive"],
+                    'measured-build-ops = [{type = "org.gradle.initialization.ConfigureBuildBuildOperationType", measurement-kind = time_to_last_inclusive}]'
                 ]
             ],
             [false, true]
@@ -389,8 +389,8 @@ class BuildOperationInstrumentationGradleCrossVersionTest extends AbstractGradle
                 [
                     'command line',
                     [
-                        "--measure-build-op", "org.gradle.initialization.ConfigureBuildBuildOperationType:duration_sum",
-                        "--measure-build-op", "org.gradle.initialization.ConfigureBuildBuildOperationType:time_to_last_completed"
+                        "--measure-build-op", "org.gradle.initialization.ConfigureBuildBuildOperationType:cumulative_time",
+                        "--measure-build-op", "org.gradle.initialization.ConfigureBuildBuildOperationType:time_to_last_inclusive"
                     ],
                     null
                 ],
@@ -399,21 +399,21 @@ class BuildOperationInstrumentationGradleCrossVersionTest extends AbstractGradle
                     [],
                     '''
                     measured-build-ops = [
-                        {type = "org.gradle.initialization.ConfigureBuildBuildOperationType", measurement-kind = duration_sum},
-                        {type = "org.gradle.initialization.ConfigureBuildBuildOperationType", measurement-kind = time_to_last_completed},
+                        {type = "org.gradle.initialization.ConfigureBuildBuildOperationType", measurement-kind = cumulative_time},
+                        {type = "org.gradle.initialization.ConfigureBuildBuildOperationType", measurement-kind = time_to_last_inclusive},
                     ]
                     '''
                 ],
                 [
                     'command line and scenario file',
                     [
-                        "--measure-build-op", "org.gradle.initialization.ConfigureBuildBuildOperationType:duration_sum",
-                        "--measure-build-op", "org.gradle.initialization.ConfigureBuildBuildOperationType:time_to_last_completed"
+                        "--measure-build-op", "org.gradle.initialization.ConfigureBuildBuildOperationType:cumulative_time",
+                        "--measure-build-op", "org.gradle.initialization.ConfigureBuildBuildOperationType:time_to_last_inclusive"
                     ],
                     '''
                     measured-build-ops = [
-                        {type = "org.gradle.initialization.ConfigureBuildBuildOperationType", measurement-kind = duration_sum},
-                        {type = "org.gradle.initialization.ConfigureBuildBuildOperationType", measurement-kind = time_to_last_completed},
+                        {type = "org.gradle.initialization.ConfigureBuildBuildOperationType", measurement-kind = cumulative_time},
+                        {type = "org.gradle.initialization.ConfigureBuildBuildOperationType", measurement-kind = time_to_last_inclusive},
                     ]
                     '''
                 ]

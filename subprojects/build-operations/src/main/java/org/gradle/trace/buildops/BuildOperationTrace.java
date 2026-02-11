@@ -94,7 +94,7 @@ public class BuildOperationTrace {
                 new InternalBuildOpMeasurementRequest(
                     outFile.toPath(),
                     RunRootBuildWorkBuildOperationType.class.getName(),
-                    BuildOperationMeasurementKind.TIME_TO_FIRST_STARTED
+                    BuildOperationMeasurementKind.TIME_TO_FIRST_EXCLUSIVE
                 )
             );
             spec.getParameters().getBuildStartTime().set(gradle.getServices().get(BuildRequestMetaData.class).getStartTime());

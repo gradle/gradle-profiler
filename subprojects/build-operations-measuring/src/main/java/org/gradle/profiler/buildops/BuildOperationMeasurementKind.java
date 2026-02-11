@@ -16,17 +16,17 @@ public enum BuildOperationMeasurementKind {
      * Useful for measuring total time spent in a given type of operation.
      * If operations run in parallel, this will count the overlapping part multiple times.
      */
-    DURATION_SUM,
+    CUMULATIVE_TIME,
     /**
      * Measures the time from the start of the build to the start of the first started build operation of the given type.
      * Note that this is based on the start timestamp, not any particular ordering given to the operation listener.
      */
-    TIME_TO_FIRST_STARTED,
+    TIME_TO_FIRST_EXCLUSIVE,
     /**
      * Measures the time from the start of the build to the end of the last completed build operation of the given type.
      * Note that this is based on the end timestamp, not any particular ordering given to the operation listener.
      */
-    TIME_TO_LAST_COMPLETED,
+    TIME_TO_LAST_INCLUSIVE,
     // If adding to this enum, also update the README.md documentation.
     ;
 
@@ -40,12 +40,12 @@ public enum BuildOperationMeasurementKind {
      */
     public static BuildOperationMeasurementKind fromString(String value) {
         switch (value.toLowerCase(Locale.ROOT)) {
-            case "duration_sum":
-                return DURATION_SUM;
-            case "time_to_last_completed":
-                return TIME_TO_LAST_COMPLETED;
-            case "time_to_first_started":
-                return TIME_TO_FIRST_STARTED;
+            case "cumulative_time":
+                return CUMULATIVE_TIME;
+            case "time_to_last_inclusive":
+                return TIME_TO_LAST_INCLUSIVE;
+            case "time_to_first_exclusive":
+                return TIME_TO_FIRST_EXCLUSIVE;
             default:
                 // This error is user-facing, so make sure to include helpful information.
                 throw new IllegalArgumentException("Invalid measurement kind '" + value + "'. Valid values are: " + getValidValues());
@@ -71,11 +71,11 @@ public enum BuildOperationMeasurementKind {
     @Override
     public String toString() {
         switch (this) {
-            case DURATION_SUM:
+            case CUMULATIVE_TIME:
                 return "Duration Sum";
-            case TIME_TO_LAST_COMPLETED:
+            case TIME_TO_LAST_INCLUSIVE:
                 return "Time to Last Completed";
-            case TIME_TO_FIRST_STARTED:
+            case TIME_TO_FIRST_EXCLUSIVE:
                 return "Time to First Started";
             default:
                 throw new IllegalStateException("Unexpected value: " + this);

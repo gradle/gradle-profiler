@@ -406,7 +406,7 @@ class ScenarioLoader {
                     .map(obj -> {
                         if (obj instanceof ConfigObject) {
                             // Parse new format where the value is an object with "type" and "kind" properties.
-                            // If "kind" is not specified, it defaults to DURATION_SUM
+                            // If "kind" is not specified, it defaults to CUMULATIVE_TIME
                             // This is intended to be extended with new properties in the future if needed.
                             Config buildOpConfig = ((ConfigObject) obj).toConfig();
                             String type = buildOpConfig.getString(TYPE);
@@ -415,21 +415,21 @@ class ScenarioLoader {
                                 String kindString = buildOpConfig.getString(MEASUREMENT_KIND);
                                 kind = BuildOperationMeasurementKind.fromString(kindString);
                             } else {
-                                kind = BuildOperationMeasurementKind.DURATION_SUM;
+                                kind = BuildOperationMeasurementKind.CUMULATIVE_TIME;
                             }
                             return new BuildOperationMeasurement(type, kind);
                         } else {
-                            // Preserve old behavior of using stringified value as type and use DURATION_SUM as the kind
+                            // Preserve old behavior of using stringified value as type and use CUMULATIVE_TIME as the kind
                             String type = obj.unwrapped().toString();
-                            return new BuildOperationMeasurement(type, BuildOperationMeasurementKind.DURATION_SUM);
+                            return new BuildOperationMeasurement(type, BuildOperationMeasurementKind.CUMULATIVE_TIME);
                         }
                     })
                     .toList());
             } else {
-                // Preserve old behavior of using stringified value as type and use DURATION_SUM as the kind
+                // Preserve old behavior of using stringified value as type and use CUMULATIVE_TIME as the kind
                 String type = value.unwrapped().toString();
                 if (!type.isEmpty()) {
-                    builder.add(new BuildOperationMeasurement(type, BuildOperationMeasurementKind.DURATION_SUM));
+                    builder.add(new BuildOperationMeasurement(type, BuildOperationMeasurementKind.CUMULATIVE_TIME));
                 }
             }
         }

@@ -74,12 +74,12 @@ You can use `--measure-build-op` together with the fully qualified class name of
 For example, for Gradle 5.x there is a [`org.gradle.api.internal.tasks.SnapshotTaskInputsBuildOperationType`](https://github.com/gradle/gradle/blob/c671360a3f1729b406c5b8b5b0d22c7b81296993/subprojects/core/src/main/java/org/gradle/api/internal/tasks/SnapshotTaskInputsBuildOperationType.java) which can be used to capture snapshotting time.
 If the build operation does not exists in a benchmarked version of Gradle, it is gracefully ignored.
 In the resulting reports it will show up with 0 time.
-You can specify different measurements to take by adding `:<measurement kind>` after the build operation name, e.g. `--measure-build-op SomeType:time_to_last_completed`.
-The default measurement kind is `duration_sum`. The available measurement kinds are:
-- `duration_sum`: the cumulative time spent in the build operation, which may be greater than the wall clock time if there are concurrent executions of the build operation type
-- `time_to_first_started`: the time from the start of the build until the minimum start time of any execution of the build operation type
-- `time_to_last_completed`: the time from the start of the build until the maximum end time of any execution of the build operation type
-Multiple different measurement kinds can be specified for the same build operation type by repeating the option, e.g. `--measure-build-op SomeType:duration_sum --measure-build-op SomeType:time_to_last_completed`.
+You can specify different measurements to take by adding `:<measurement kind>` after the build operation name, e.g. `--measure-build-op SomeType:time_to_last_inclusive`.
+The default measurement kind is `cumulative_time`. The available measurement kinds are:
+- `cumulative_time`: the cumulative time spent in the build operation, which may be greater than the wall clock time if there are concurrent executions of the build operation type
+- `time_to_last_inclusive`: the time from the start of the build until the maximum end time of any execution of the build operation type
+- `time_to_first_exclusive`: the time from the start of the build until the minimum start time of any execution of the build operation type
+Multiple different measurement kinds can be specified for the same build operation type by repeating the option, e.g. `--measure-build-op SomeType:cumulative_time --measure-build-op SomeType:time_to_last_inclusive`.
 
 You can use `--build-ops-trace` to produce a full Gradle build operations trace.
 This produces `<scenario-name>-log.txt` textual build operations log and
@@ -305,7 +305,7 @@ Here is an example:
         measured-build-ops = [
             {
                 type = "org.gradle.api.internal.tasks.SnapshotTaskInputsBuildOperationType"
-                measurement-kind = time_to_last_completed
+                measurement-kind = time_to_last_inclusive
             }
         ]
 

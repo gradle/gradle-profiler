@@ -307,7 +307,7 @@ class ScenarioLoaderTest extends Specification {
 
     def "can load build operations to benchmark"() {
         def benchmarkSettings = settingsBuilder(GradleBuildInvoker.ToolingApi)
-            .setBuildOperationMeasurements([new BuildOperationMeasurement("BuildOpCmdLine", BuildOperationMeasurementKind.DURATION_SUM)])
+            .setBuildOperationMeasurements([new BuildOperationMeasurement("BuildOpCmdLine", BuildOperationMeasurementKind.CUMULATIVE_TIME)])
             .build()
 
         scenarioFile << """
@@ -321,9 +321,9 @@ class ScenarioLoaderTest extends Specification {
         expect:
         def benchmarkScenario = benchmarkScenarios[0] as GradleScenarioDefinition
         benchmarkScenario.buildOperationMeasurements == [
-            new BuildOperationMeasurement("BuildOpCmdLine", BuildOperationMeasurementKind.DURATION_SUM),
-            new BuildOperationMeasurement("BuildOp1", BuildOperationMeasurementKind.DURATION_SUM),
-            new BuildOperationMeasurement("BuildOp2", BuildOperationMeasurementKind.DURATION_SUM)
+                new BuildOperationMeasurement("BuildOpCmdLine", BuildOperationMeasurementKind.CUMULATIVE_TIME),
+                new BuildOperationMeasurement("BuildOp1", BuildOperationMeasurementKind.CUMULATIVE_TIME),
+                new BuildOperationMeasurement("BuildOp2", BuildOperationMeasurementKind.CUMULATIVE_TIME)
         ]
     }
 

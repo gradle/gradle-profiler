@@ -32,7 +32,7 @@ class CommandLineParser {
         public BuildOperationMeasurement convert(String value) {
             String[] parts = value.split(":", 2);
             String buildOperationType = parts[0];
-            BuildOperationMeasurementKind measurementKind = BuildOperationMeasurementKind.DURATION_SUM;
+            BuildOperationMeasurementKind measurementKind = BuildOperationMeasurementKind.CUMULATIVE_TIME;
             if (parts.length > 1) {
                 measurementKind = BuildOperationMeasurementKind.fromString(parts[1]);
             }
@@ -86,7 +86,7 @@ class CommandLineParser {
         OptionSpecBuilder benchmarkOption = parser.accepts("benchmark", "Collect benchmark metrics");
         ArgumentAcceptingOptionSpec<BuildOperationMeasurement> measuredBuildOps = parser.accepts(
             "measure-build-op",
-            "Collect specific measurements for a given build operation, defaults to using 'duration_sum'" +
+            "Collect specific measurements for a given build operation, defaults to using 'cumulative_time'" +
                 " (format: <build operation> or <build operation>:<measurement kind>," +
                 " where <measurement kind> is one of " + BuildOperationMeasurementKind.getValidValues() +
                 ")"

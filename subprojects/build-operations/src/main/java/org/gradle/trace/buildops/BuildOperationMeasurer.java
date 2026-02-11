@@ -12,11 +12,11 @@ import java.time.Duration;
 interface BuildOperationMeasurer {
     static BuildOperationMeasurer createForKind(BuildOperationMeasurementKind kind, long buildStartTime) {
         switch (kind) {
-            case DURATION_SUM:
+            case CUMULATIVE_TIME:
                 return new DurationSumBuildOperationMeasurer();
-            case TIME_TO_LAST_COMPLETED:
+            case TIME_TO_LAST_INCLUSIVE:
                 return new TimeToLastCompletedBuildOperationMeasurer(buildStartTime);
-            case TIME_TO_FIRST_STARTED:
+            case TIME_TO_FIRST_EXCLUSIVE:
                 return new TimeToFirstStartedBuildOperationMeasurer(buildStartTime);
             default:
                 throw new IllegalArgumentException("Unsupported BuildOperationMeasurementKind: " + kind);
