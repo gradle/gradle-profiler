@@ -183,9 +183,19 @@ You will get both the JFR file and flame graph visualizations of the data, which
 In order to profile with JFR, add the `--profile jfr` option. 
 You can change the profiler settings using `--jfr-settings`, specifying either the path to a `.jfc` file or the name of a built-in template like `profile`.
 
-### Heap dump
+### Lifecycle heap dumps
 
 To capture a heap dump at the end of each measured build, add the `--profile heap-dump` option. You can use this with other `--profile` options.
+
+By default, heap dumps are captured at the end of the build (after all tasks complete). You can control when heap dumps are captured using the `--heap-dump-when` option with a comma-separated list:
+
+- `--heap-dump-when build-end`: Capture heap dump at the end of the build (default)
+- `--heap-dump-when config-end`: Capture heap dump when configuration phase ends and execution phase begins
+- `--heap-dump-when config-end,build-end`: Capture heap dumps at both points
+
+Capturing heap dumps at configuration end is useful for analyzing memory usage during the configuration phase, understanding object retention when the task graph is finalized, and comparing memory state between configuration and execution phases.
+
+Configuration-end heap dumps are captured using a Java agent that instruments Gradle's internal build lifecycle. The heap dump files are named `gradle-config-end-<timestamp>.hprof` to distinguish them from build-end dumps.
 
 ### Chrome Trace
 
