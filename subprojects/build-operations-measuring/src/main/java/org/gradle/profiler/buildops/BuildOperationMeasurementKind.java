@@ -68,8 +68,7 @@ public enum BuildOperationMeasurementKind {
             .collect(Collectors.toCollection(LinkedHashSet::new));
     }
 
-    @Override
-    public String toString() {
+    public String toDisplayString() {
         switch (this) {
             case CUMULATIVE_TIME:
                 return "Duration Sum";

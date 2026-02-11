@@ -3,13 +3,15 @@ package org.gradle.profiler.gradle;
 import org.gradle.profiler.BuildContext;
 import org.gradle.profiler.buildops.BuildOperationExecutionData;
 import org.gradle.profiler.buildops.BuildOperationMeasurement;
-import org.gradle.profiler.result.*;
+import org.gradle.profiler.result.BuildActionResult;
+import org.gradle.profiler.result.BuildInvocationResult;
+import org.gradle.profiler.result.DurationSample;
+import org.gradle.profiler.result.Sample;
+import org.gradle.profiler.result.SingleInvocationDurationSample;
 
-import javax.annotation.Nullable;
 import java.time.Duration;
 import java.util.Map;
-
-import static org.gradle.profiler.buildops.BuildOperationUtil.getSimpleBuildOperationName;
+import javax.annotation.Nullable;
 
 public class GradleBuildInvocationResult extends BuildInvocationResult {
     private final Duration garbageCollectionTime;
@@ -56,8 +58,7 @@ public class GradleBuildInvocationResult extends BuildInvocationResult {
     }
 
     public static Sample<GradleBuildInvocationResult> sampleBuildOperation(BuildOperationMeasurement measurement) {
-        String simpleTypeName = getSimpleBuildOperationName(measurement.getBuildOperationType());
-        return new DurationSample<>(simpleTypeName + " (" + measurement.getMeasurementKind() + ")") {
+        return new DurationSample<>(measurement.toDisplayString()) {
             @Override
             protected Duration extractTotalDurationFrom(GradleBuildInvocationResult result) {
                 return Duration.ofMillis(getExecutionData(result).getValue());

@@ -46,7 +46,8 @@ public final class BuildOperationMeasurement  {
     }
 
     public String toDisplayString() {
-        return buildOperationType + " (" + measurementKind + ")";
+        return BuildOperationUtil.getSimpleBuildOperationName(buildOperationType)
+            + " (" + measurementKind.toDisplayString() + ")";
     }
 
     @Override
