@@ -208,7 +208,7 @@ class BuildOperationInstrumentationGradleCrossVersionTest extends AbstractGradle
         lines.get(0) == "scenario,default,default"
         lines.get(1) == "version,Gradle ${gradleVersion},Gradle ${gradleVersion}"
         lines.get(2) == "tasks,assemble,assemble"
-        lines.get(3) == "value,total execution time,SnapshotTaskInputsBuildOperationType (Duration Sum)"
+        lines.get(3) == "value,total execution time,SnapshotTaskInputsBuildOperationType (Cumulative Time)"
 
         def firstWarmup = lines.get(4)
         def snapshottingDuration = firstWarmup =~ /warm-up build #1,$SAMPLE,($SAMPLE)/
@@ -290,7 +290,7 @@ class BuildOperationInstrumentationGradleCrossVersionTest extends AbstractGradle
         lines.get(0) == "scenario,default,default"
         lines.get(1) == "version,Gradle ${gradleVersion},Gradle ${gradleVersion}"
         lines.get(2) == "tasks,assemble,assemble"
-        lines.get(3) == "value,total execution time,ConfigureBuildBuildOperationType (Time to Last Completed)"
+        lines.get(3) == "value,total execution time,ConfigureBuildBuildOperationType (Time to Last Inclusive)"
 
         def firstWarmup = lines.get(4)
         def configureBuildOp = firstWarmup =~ /warm-up build #1,$SAMPLE,($SAMPLE)/
@@ -362,22 +362,22 @@ class BuildOperationInstrumentationGradleCrossVersionTest extends AbstractGradle
         lines.get(0) == "scenario,default,default,default"
         lines.get(1) == "version,Gradle ${gradleVersion},Gradle ${gradleVersion},Gradle ${gradleVersion}"
         lines.get(2) == "tasks,assemble,assemble,assemble"
-        lines.get(3) == "value,total execution time,ConfigureBuildBuildOperationType (Duration Sum),ConfigureBuildBuildOperationType (Time to Last Completed)"
+        lines.get(3) == "value,total execution time,ConfigureBuildBuildOperationType (Cumulative Time),ConfigureBuildBuildOperationType (Time to Last Inclusive)"
 
         def firstWarmup = lines.get(4)
         def configureBuildOp = firstWarmup =~ /warm-up build #1,$SAMPLE,($SAMPLE),($SAMPLE)/
         configureBuildOp.matches()
-        def durationSum = Double.valueOf(configureBuildOp[0][1])
-        durationSum > 1
-        def timeToLastCompleted = Double.valueOf(configureBuildOp[0][2])
-        timeToLastCompleted > 1
-        // With our project that only has one build, the duration sum should always be less than the time to last completed
+        def cumulativeTimeMs = Double.valueOf(configureBuildOp[0][1])
+        cumulativeTimeMs > 1
+        def timeToLastInclusiveMs = Double.valueOf(configureBuildOp[0][2])
+        timeToLastInclusiveMs > 1
+        // With our project that only has one build, the cumulative time should always be less than the time to last completed
         // As there is time before the configure build operation starts that is included in the time to last completed but not in the duration sum
         // This operates as a sanity check that the two measurements are being recorded in a consistent way
         assertThat(
-            "duration sum should be less than time to last completed",
-            durationSum,
-            lessThan(timeToLastCompleted)
+            "'cumulative time' should be less than 'time to last inclusive'",
+            cumulativeTimeMs,
+            lessThan(timeToLastInclusiveMs)
         )
 
         lines.get(9).matches("warm-up build #6,$SAMPLE,$SAMPLE,$SAMPLE")
@@ -450,7 +450,7 @@ class BuildOperationInstrumentationGradleCrossVersionTest extends AbstractGradle
         lines.get(0) == "scenario,default,default,default"
         lines.get(1) == "version,Gradle ${gradleVersion},Gradle ${gradleVersion},Gradle ${gradleVersion}"
         lines.get(2) == "tasks,assemble,assemble,assemble"
-        lines.get(3) == "value,total execution time,task start,SnapshotTaskInputsBuildOperationType (Duration Sum)"
+        lines.get(3) == "value,total execution time,task start,SnapshotTaskInputsBuildOperationType (Cumulative Time)"
         lines.get(4).matches("warm-up build #1,$SAMPLE,$SAMPLE,$SAMPLE")
         lines.get(9).matches("warm-up build #6,$SAMPLE,$SAMPLE,$SAMPLE")
         lines.get(10).matches("measured build #1,$SAMPLE,$SAMPLE,$SAMPLE")
@@ -493,7 +493,7 @@ class BuildOperationInstrumentationGradleCrossVersionTest extends AbstractGradle
         lines.get(0) == "scenario,default,default,default"
         lines.get(1) == "version,Gradle ${gradleVersion},Gradle ${gradleVersion},Gradle ${gradleVersion}"
         lines.get(2) == "tasks,assemble,assemble,assemble"
-        lines.get(3) == "value,total execution time,NonExistentBuildOperationType (Duration Sum),SnapshotTaskInputsBuildOperationType (Duration Sum)"
+        lines.get(3) == "value,total execution time,NonExistentBuildOperationType (Cumulative Time),SnapshotTaskInputsBuildOperationType (Cumulative Time)"
         lines.get(4).matches("warm-up build #1,$SAMPLE,$SAMPLE,$SAMPLE")
         lines.get(9).matches("warm-up build #6,$SAMPLE,$SAMPLE,$SAMPLE")
         lines.get(10).matches("measured build #1,$SAMPLE,$SAMPLE,$SAMPLE")
