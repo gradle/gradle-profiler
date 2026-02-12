@@ -32,7 +32,7 @@ class CommandLineParser {
         public BuildOperationMeasurement convert(String value) {
             String[] parts = value.split(":", 2);
             String buildOperationType = parts[0];
-            BuildOperationMeasurementKind measurementKind = BuildOperationMeasurementKind.CUMULATIVE_TIME;
+            BuildOperationMeasurementKind measurementKind = BuildOperationMeasurementKind.DEFAULT;
             if (parts.length > 1) {
                 measurementKind = BuildOperationMeasurementKind.fromString(parts[1]);
             }
@@ -46,7 +46,7 @@ class CommandLineParser {
 
         @Override
         public String valuePattern() {
-            return "<build operation> or <build operation>:<measurement kind>";
+            return "operation[:metric]";
         }
     }
 
@@ -86,9 +86,9 @@ class CommandLineParser {
         OptionSpecBuilder benchmarkOption = parser.accepts("benchmark", "Collect benchmark metrics");
         ArgumentAcceptingOptionSpec<BuildOperationMeasurement> measuredBuildOps = parser.accepts(
             "measure-build-op",
-            "Collect specific measurements for a given build operation, defaults to using 'cumulative_time'" +
-                " (format: <build operation> or <build operation>:<measurement kind>," +
-                " where <measurement kind> is one of " + BuildOperationMeasurementKind.getValidValues() +
+            "Build operation type to measure by a given metric" +
+                " (default: " + BuildOperationMeasurementKind.DEFAULT.toValueString() + ";" +
+                " options: " + String.join(", ", BuildOperationMeasurementKind.getValidValues()) +
                 ")"
         ).withRequiredArg().withValuesConvertedBy(new BuildOperationMeasurementValueConverter());
         OptionSpecBuilder noDaemonOption = parser.accepts("no-daemon", "Do not use the Gradle daemon");

@@ -36,6 +36,8 @@ public enum BuildOperationMeasurementKind {
     // If adding to this enum, also update the README.md documentation.
     ;
 
+    public static final BuildOperationMeasurementKind DEFAULT = CUMULATIVE_TIME;
+
     /**
      * Convert a string value to the corresponding BuildOperationMeasurementKind.
      * The string values are case-insensitive and must be contained in the set returned by {@link #getValidValues()}.
@@ -71,9 +73,13 @@ public enum BuildOperationMeasurementKind {
      */
     public static Set<String> getValidValues() {
         return Stream.of(values())
-            .map(v -> v.name().toLowerCase(Locale.ROOT))
+            .map(BuildOperationMeasurementKind::toValueString)
             .sorted()
             .collect(Collectors.toCollection(LinkedHashSet::new));
+    }
+
+    public String toValueString() {
+        return name().toLowerCase(Locale.ROOT);
     }
 
     public String toDisplayString() {
