@@ -77,6 +77,7 @@ In the resulting reports it will show up with 0 time.
 You can specify different measurements to take by adding `:<measurement kind>` after the build operation name, e.g. `--measure-build-op SomeType:time_to_last_inclusive`.
 The default measurement kind is `cumulative_time`. The available measurement kinds are:
 - `cumulative_time`: the cumulative time spent in the build operation, which may be greater than the wall clock time if there are concurrent executions of the build operation type
+- `wall_clock_time`: the wall clock time spent in the build operation, which measures time when one or more executions of the build operation type are running, not the sum of the durations of the individual executions
 - `time_to_last_inclusive`: the time from the start of the build until the maximum end time of any execution of the build operation type
 - `time_to_first_exclusive`: the time from the start of the build until the minimum start time of any execution of the build operation type
 Multiple different measurement kinds can be specified for the same build operation type by repeating the option, e.g. `--measure-build-op SomeType:cumulative_time --measure-build-op SomeType:time_to_last_inclusive`.

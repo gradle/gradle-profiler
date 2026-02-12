@@ -14,6 +14,8 @@ interface BuildOperationMeasurer {
         switch (kind) {
             case CUMULATIVE_TIME:
                 return new CumulativeTimeBuildOperationMeasurer();
+            case WALL_CLOCK_TIME:
+                return new WallClockTimeBuildOperationMeasurer();
             case TIME_TO_LAST_INCLUSIVE:
                 return new TimeToLastInclusiveBuildOperationMeasurer(buildStartTime);
             case TIME_TO_FIRST_EXCLUSIVE:
