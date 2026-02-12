@@ -5,10 +5,15 @@ import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
+import com.typesafe.config.ConfigList;
+import com.typesafe.config.ConfigObject;
 import com.typesafe.config.ConfigParseOptions;
 import com.typesafe.config.ConfigRenderOptions;
+import com.typesafe.config.ConfigValue;
 import org.gradle.profiler.bazel.BazelScenarioDefinition;
 import org.gradle.profiler.buck.BuckScenarioDefinition;
+import org.gradle.profiler.buildops.BuildOperationMeasurement;
+import org.gradle.profiler.buildops.BuildOperationMeasurementKind;
 import org.gradle.profiler.gradle.*;
 import org.gradle.profiler.maven.MavenScenarioDefinition;
 import org.gradle.profiler.mutations.AbstractScheduledMutator.Schedule;
@@ -69,6 +74,7 @@ class ScenarioLoader {
     private static final String TYPE = "type";
     private static final String MODEL = "model";
     private static final String ACTION = "action";
+    private static final String MEASUREMENT_KIND = "measurement-kind";
     private static final String TOOLING_API = "tooling-api";
     private static final String ANDROID_STUDIO_SYNC = "android-studio-sync";
     private static final String ANDROID_STUDIO_JVM_ARGS = "studio-jvm-args";
@@ -193,7 +199,7 @@ class ScenarioLoader {
                 getWarmUpCount(settings, settings.getInvoker(), settings.getWarmUpCount()),
                 getBuildCount(settings),
                 outputDir,
-                settings.getMeasuredBuildOperations(),
+                settings.getBuildOperationMeasurements(),
                 settings.isBuildOperationsTrace()
             ));
         }
@@ -268,7 +274,7 @@ class ScenarioLoader {
         BuildAction buildAction = getBuildAction(scenario, scenarioName, scenarioFile, settings);
         GradleBuildInvoker invoker = invoker(scenario, (GradleBuildInvoker) settings.getInvoker(), buildAction);
         int warmUpCount = getWarmUpCount(settings, invoker, scenario);
-        List<String> measuredBuildOperations = getMeasuredBuildOperations(settings, scenario);
+        List<BuildOperationMeasurement> buildOperationMeasurements = getBuildOperationMeasurements(settings, scenario);
         BuildAction cleanupAction = getCleanupAction(scenario);
         Map<String, String> systemProperties = ConfigUtil.map(scenario, SYSTEM_PROPERTIES, settings.getSystemProperties());
         List<String> jvmArgs = ConfigUtil.strings(scenario, JVM_ARGS);
@@ -290,7 +296,7 @@ class ScenarioLoader {
                 buildCount,
                 outputDir,
                 jvmArgs,
-                measuredBuildOperations,
+                buildOperationMeasurements,
                 buildOperationsTrace
             );
             ScenarioDefinition scenarioDefinition = scenario.hasPath(ANDROID_STUDIO_SYNC)
@@ -390,12 +396,44 @@ class ScenarioLoader {
         return executionInstructions;
     }
 
-    private static ImmutableList<String> getMeasuredBuildOperations(InvocationSettings settings, Config scenario) {
-        return ImmutableSet.<String>builder()
-            .addAll(settings.getMeasuredBuildOperations())
-            .addAll(ConfigUtil.strings(scenario, MEASURED_BUILD_OPERATIONS))
-            .build()
-            .asList();
+    private static ImmutableList<BuildOperationMeasurement> getBuildOperationMeasurements(InvocationSettings settings, Config scenario) {
+        ImmutableSet.Builder<BuildOperationMeasurement> builder = ImmutableSet.builder();
+        builder.addAll(settings.getBuildOperationMeasurements());
+        if (scenario.hasPath(MEASURED_BUILD_OPERATIONS)) {
+            ConfigValue value = scenario.getValue(MEASURED_BUILD_OPERATIONS);
+            if (value instanceof ConfigList) {
+                builder.addAll(((ConfigList) value).stream()
+                    .map(obj -> {
+                        if (obj instanceof ConfigObject) {
+                            // Parse new format where the value is an object with "type" and "kind" properties.
+                            // If "kind" is not specified, it defaults to CUMULATIVE_TIME
+                            // This is intended to be extended with new properties in the future if needed.
+                            Config buildOpConfig = ((ConfigObject) obj).toConfig();
+                            String type = buildOpConfig.getString(TYPE);
+                            BuildOperationMeasurementKind kind;
+                            if (buildOpConfig.hasPath(MEASUREMENT_KIND)) {
+                                String kindString = buildOpConfig.getString(MEASUREMENT_KIND);
+                                kind = BuildOperationMeasurementKind.fromString(kindString);
+                            } else {
+                                kind = BuildOperationMeasurementKind.CUMULATIVE_TIME;
+                            }
+                            return new BuildOperationMeasurement(type, kind);
+                        } else {
+                            // Preserve old behavior of using stringified value as type and use CUMULATIVE_TIME as the kind
+                            String type = obj.unwrapped().toString();
+                            return new BuildOperationMeasurement(type, BuildOperationMeasurementKind.CUMULATIVE_TIME);
+                        }
+                    })
+                    .toList());
+            } else {
+                // Preserve old behavior of using stringified value as type and use CUMULATIVE_TIME as the kind
+                String type = value.unwrapped().toString();
+                if (!type.isEmpty()) {
+                    builder.add(new BuildOperationMeasurement(type, BuildOperationMeasurementKind.CUMULATIVE_TIME));
+                }
+            }
+        }
+        return builder.build().asList();
     }
 
     private static boolean getBuildOperationsTrace(InvocationSettings settings, Config scenario) {

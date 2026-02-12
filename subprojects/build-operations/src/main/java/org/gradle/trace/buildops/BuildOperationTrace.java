@@ -5,13 +5,16 @@ import org.gradle.api.file.Directory;
 import org.gradle.api.file.DirectoryProperty;
 import org.gradle.api.file.RegularFileProperty;
 import org.gradle.api.internal.GradleInternal;
-import org.gradle.api.provider.MapProperty;
+import org.gradle.api.model.ObjectFactory;
+import org.gradle.api.provider.ListProperty;
+import org.gradle.api.provider.Property;
 import org.gradle.api.provider.Provider;
 import org.gradle.api.provider.ProviderFactory;
 import org.gradle.api.services.BuildService;
 import org.gradle.api.services.BuildServiceParameters;
 import org.gradle.api.services.BuildServiceRegistry;
 import org.gradle.execution.RunRootBuildWorkBuildOperationType;
+import org.gradle.initialization.BuildRequestMetaData;
 import org.gradle.internal.build.event.BuildEventListenerRegistryInternal;
 import org.gradle.internal.file.PathToFileResolver;
 import org.gradle.internal.operations.BuildOperationDescriptor;
@@ -20,25 +23,30 @@ import org.gradle.internal.operations.OperationFinishEvent;
 import org.gradle.internal.operations.OperationIdentifier;
 import org.gradle.internal.operations.OperationProgressEvent;
 import org.gradle.internal.operations.OperationStartEvent;
+import org.gradle.profiler.buildops.BuildOperationMeasurementKind;
+import org.gradle.profiler.buildops.internal.InternalBuildOpMeasurementRequest;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.annotation.Nullable;
-import javax.inject.Inject;
 import java.io.File;
 import java.io.IOException;
-import java.io.PrintWriter;
 import java.lang.management.GarbageCollectorMXBean;
 import java.lang.management.ManagementFactory;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.time.Duration;
 import java.util.ArrayList;
-import java.util.HashMap;
+import java.util.Collections;
 import java.util.List;
-import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.stream.Stream;
+import javax.annotation.Nullable;
+import javax.inject.Inject;
 
+// Used by org.gradle.profiler.buildops.BuildOperationInstrumentation via an injected initscript.
 @SuppressWarnings("unused")
 @NonNullApi
 public class BuildOperationTrace {
@@ -81,29 +89,33 @@ public class BuildOperationTrace {
     }
 
     public BuildOperationTrace measureConfigurationTime(File outFile) {
-        Provider<TimeToFirstTaskRecordingListener> listenerProvider = sharedServices.registerIfAbsent("time-to-first-task", TimeToFirstTaskRecordingListener.class, spec -> {
-            spec.getParameters().getOutputFile().set(outFile);
+        Provider<BuildOperationDurationRecordingListener> listenerProvider = sharedServices.registerIfAbsent("time-to-first-task", BuildOperationDurationRecordingListener.class, spec -> {
+            spec.getParameters().getCapturedBuildOperations().add(
+                new InternalBuildOpMeasurementRequest(
+                    outFile.toPath(),
+                    RunRootBuildWorkBuildOperationType.class.getName(),
+                    BuildOperationMeasurementKind.TIME_TO_FIRST_EXCLUSIVE
+                )
+            );
+            spec.getParameters().getBuildStartTime().set(gradle.getServices().get(BuildRequestMetaData.class).getStartTime());
         });
         registry.onOperationCompletion(listenerProvider);
         return this;
     }
 
-    public BuildOperationTrace measureBuildOperations(Map<String, File> capturedBuildOperations) {
+    public BuildOperationTrace measureBuildOperations(List<InternalBuildOpMeasurementRequest> capturedBuildOperations) {
         Provider<BuildOperationDurationRecordingListener> listenerProvider = sharedServices.registerIfAbsent("measure-build-operations", BuildOperationDurationRecordingListener.class, spec -> {
-            spec.getParameters().getCapturedBuildOperations().set(new HashMap<>(capturedBuildOperations));
+            spec.getParameters().getCapturedBuildOperations().set(capturedBuildOperations);
+            spec.getParameters().getBuildStartTime().set(gradle.getServices().get(BuildRequestMetaData.class).getStartTime());
         });
         registry.onOperationCompletion(listenerProvider);
         return this;
     }
 
-    private static void writeToFile(File outputFile, long value, int count) throws IOException {
+    private static void writeToFile(Path outputFile, long value, int count) throws IOException {
         // See `org.gradle.profiler.buildops.BuildOperationInstrumentation` for parsing
-        try (PrintWriter writer = new PrintWriter(outputFile)) {
-            writer.print(value);
-            writer.print(",");
-            writer.print(count);
-            writer.println();
-        }
+        String line = value + "," + count;
+        Files.write(outputFile, Collections.singleton(line), StandardCharsets.UTF_8);
     }
 
     public static abstract class GcTimeCollectionService implements BuildService<GcTimeCollectionService.Params>, BuildOperationListener, AutoCloseable {
@@ -131,7 +143,7 @@ public class BuildOperationTrace {
             long totalGcTime = ManagementFactory.getGarbageCollectorMXBeans().stream()
                 .mapToLong(GarbageCollectorMXBean::getCollectionTime)
                 .sum();
-            writeToFile(getParameters().getOutputFile().getAsFile().get(), totalGcTime, 1);
+            writeToFile(getParameters().getOutputFile().getAsFile().get().toPath(), totalGcTime, 1);
         }
     }
 
@@ -183,7 +195,7 @@ public class BuildOperationTrace {
                     cacheFileCount.incrementAndGet();
                     cacheSizeInBytes.addAndGet(file.length());
                 });
-            writeToFile(getParameters().getOutputFile().getAsFile().get(), cacheSizeInBytes.get(), cacheFileCount.get());
+            writeToFile(getParameters().getOutputFile().getAsFile().get().toPath(), cacheSizeInBytes.get(), cacheFileCount.get());
         }
 
         @Nullable
@@ -192,48 +204,20 @@ public class BuildOperationTrace {
         }
     }
 
-    public static abstract class TimeToFirstTaskRecordingListener implements BuildService<TimeToFirstTaskRecordingListener.Params>, BuildOperationListener, AutoCloseable {
-        interface Params extends BuildServiceParameters {
-            RegularFileProperty getOutputFile();
-        }
-
-        private final AtomicLong timeToFirstTask = new AtomicLong(0);
-
-        @Override
-        public void started(BuildOperationDescriptor buildOperationDescriptor, OperationStartEvent operationStartEvent) {
-        }
-
-        @Override
-        public void progress(OperationIdentifier operationIdentifier, OperationProgressEvent operationProgressEvent) {
-        }
-
-        @Override
-        public void finished(BuildOperationDescriptor buildOperationDescriptor, OperationFinishEvent operationFinishEvent) {
-            if (buildOperationDescriptor.getDetails() instanceof RunRootBuildWorkBuildOperationType.Details) {
-                RunRootBuildWorkBuildOperationType.Details details = (RunRootBuildWorkBuildOperationType.Details) buildOperationDescriptor.getDetails();
-                long duration = operationFinishEvent.getStartTime() - details.getBuildStartTime();
-                timeToFirstTask.set(duration);
-            }
-        }
-
-        @Override
-        public void close() throws Exception {
-            writeToFile(getParameters().getOutputFile().getAsFile().get(), timeToFirstTask.longValue(), 1);
-        }
-    }
-
     public static abstract class BuildOperationDurationRecordingListener implements BuildService<BuildOperationDurationRecordingListener.Params>, BuildOperationListener, AutoCloseable {
         interface Params extends BuildServiceParameters {
-            MapProperty<String, File> getCapturedBuildOperations();
+            ListProperty<InternalBuildOpMeasurementRequest> getCapturedBuildOperations();
+
+            Property<Long> getBuildStartTime();
         }
 
         private final List<BuildOperationCollector> collectors;
 
-        public BuildOperationDurationRecordingListener() {
+        @Inject
+        public BuildOperationDurationRecordingListener(ObjectFactory objectFactory) {
             this.collectors = new ArrayList<>();
-            for (Map.Entry<String, File> entry : getParameters().getCapturedBuildOperations().get().entrySet()) {
-                String operationType = entry.getKey();
-                File outputFile = entry.getValue();
+            for (InternalBuildOpMeasurementRequest request : getParameters().getCapturedBuildOperations().get()) {
+                String operationType = request.getBuildOperationType();
                 Class<?> detailsType;
                 try {
                     detailsType = Class.forName(operationType + "$Details");
@@ -242,7 +226,12 @@ public class BuildOperationTrace {
                     continue;
                 }
 
-                collectors.add(new BuildOperationCollector(detailsType, outputFile));
+                BuildOperationMeasurer measurer = BuildOperationMeasurer.createForKind(
+                    request.getMeasurementKind(),
+                    getParameters().getBuildStartTime().get()
+                );
+
+                collectors.add(new BuildOperationCollector(detailsType, request.getOutputFile(), measurer));
             }
         }
 
@@ -275,24 +264,26 @@ public class BuildOperationTrace {
 
     private static class BuildOperationCollector {
         private final Class<?> detailsType;
-        private final File outputFile;
-        private final AtomicLong buildOperationTime = new AtomicLong(0);
+        private final Path outputFile;
+        private final BuildOperationMeasurer measurer;
         private final AtomicInteger buildOperationCount = new AtomicInteger(0);
 
-        public BuildOperationCollector(Class<?> detailsType, File outputFile) {
+        private BuildOperationCollector(Class<?> detailsType, Path outputFile, BuildOperationMeasurer measurer) {
             this.detailsType = detailsType;
             this.outputFile = outputFile;
+            this.measurer = measurer;
         }
 
         public void collect(Object details, OperationFinishEvent operationFinishEvent) {
             if (detailsType.isAssignableFrom(details.getClass())) {
-                buildOperationTime.addAndGet(operationFinishEvent.getEndTime() - operationFinishEvent.getStartTime());
+                measurer.update(operationFinishEvent);
                 buildOperationCount.incrementAndGet();
             }
         }
 
         public void write() throws IOException {
-            writeToFile(outputFile, buildOperationTime.get(), buildOperationCount.get());
+            Duration value = measurer.computeFinalValue();
+            writeToFile(outputFile, value.toMillis(), buildOperationCount.get());
         }
     }
 }

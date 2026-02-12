@@ -2,19 +2,22 @@ package org.gradle.profiler.gradle;
 
 import org.gradle.profiler.BuildContext;
 import org.gradle.profiler.buildops.BuildOperationExecutionData;
-import org.gradle.profiler.result.*;
+import org.gradle.profiler.buildops.BuildOperationMeasurement;
+import org.gradle.profiler.result.BuildActionResult;
+import org.gradle.profiler.result.BuildInvocationResult;
+import org.gradle.profiler.result.DurationSample;
+import org.gradle.profiler.result.Sample;
+import org.gradle.profiler.result.SingleInvocationDurationSample;
 
-import javax.annotation.Nullable;
 import java.time.Duration;
 import java.util.Map;
-
-import static org.gradle.profiler.buildops.BuildOperationUtil.getSimpleBuildOperationName;
+import javax.annotation.Nullable;
 
 public class GradleBuildInvocationResult extends BuildInvocationResult {
     private final Duration garbageCollectionTime;
     private final Long localBuildCacheSize;
     private final Duration timeToTaskExecution;
-    private final Map<String, BuildOperationExecutionData> totalBuildOperationExecutionData;
+    private final Map<BuildOperationMeasurement, BuildOperationExecutionData> buildOperationExecutionData;
     private final String daemonPid;
 
     public GradleBuildInvocationResult(
@@ -23,14 +26,14 @@ public class GradleBuildInvocationResult extends BuildInvocationResult {
         @Nullable Duration garbageCollectionTime,
         @Nullable Long localBuildCacheSize,
         @Nullable Duration timeToTaskExecution,
-        Map<String, BuildOperationExecutionData> totalBuildOperationExecutionData,
+        Map<BuildOperationMeasurement, BuildOperationExecutionData> buildOperationExecutionData,
         String daemonPid
     ) {
         super(buildContext, actionResult);
         this.garbageCollectionTime = garbageCollectionTime;
         this.localBuildCacheSize = localBuildCacheSize;
         this.timeToTaskExecution = timeToTaskExecution;
-        this.totalBuildOperationExecutionData = totalBuildOperationExecutionData;
+        this.buildOperationExecutionData = buildOperationExecutionData;
         this.daemonPid = daemonPid;
     }
 
@@ -50,12 +53,12 @@ public class GradleBuildInvocationResult extends BuildInvocationResult {
         return timeToTaskExecution;
     }
 
-    public Map<String, BuildOperationExecutionData> getTotalBuildOperationExecutionData() {
-        return totalBuildOperationExecutionData;
+    public Map<BuildOperationMeasurement, BuildOperationExecutionData> getBuildOperationExecutionData() {
+        return buildOperationExecutionData;
     }
 
-    public static Sample<GradleBuildInvocationResult> sampleBuildOperation(String buildOperationDetailsClass) {
-        return new DurationSample<GradleBuildInvocationResult>(getSimpleBuildOperationName(buildOperationDetailsClass)) {
+    public static Sample<GradleBuildInvocationResult> sampleBuildOperation(BuildOperationMeasurement measurement) {
+        return new DurationSample<>(measurement.toDisplayString()) {
             @Override
             protected Duration extractTotalDurationFrom(GradleBuildInvocationResult result) {
                 return Duration.ofMillis(getExecutionData(result).getValue());
@@ -67,7 +70,7 @@ public class GradleBuildInvocationResult extends BuildInvocationResult {
             }
 
             private BuildOperationExecutionData getExecutionData(GradleBuildInvocationResult result) {
-                return result.totalBuildOperationExecutionData.getOrDefault(buildOperationDetailsClass, BuildOperationExecutionData.ZERO);
+                return result.buildOperationExecutionData.getOrDefault(measurement, BuildOperationExecutionData.ZERO);
             }
         };
     }

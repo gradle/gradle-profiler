@@ -2,6 +2,8 @@ package org.gradle.profiler
 
 import org.gradle.profiler.bazel.BazelScenarioDefinition
 import org.gradle.profiler.buck.BuckScenarioDefinition
+import org.gradle.profiler.buildops.BuildOperationMeasurement
+import org.gradle.profiler.buildops.BuildOperationMeasurementKind
 import org.gradle.profiler.gradle.GradleBuildInvoker
 import org.gradle.profiler.gradle.GradleClientSpec
 import org.gradle.profiler.gradle.GradleDaemonReuse
@@ -58,7 +60,7 @@ class ScenarioLoaderTest extends Specification {
             .setStudioInstallDir(tmpDir.newFolder())
             .setMeasureGarbageCollection(false)
             .setMeasureConfigTime(false)
-            .setMeasuredBuildOperations([])
+            .setBuildOperationMeasurements([])
             .setCsvFormat(Format.WIDE)
     }
 
@@ -304,7 +306,9 @@ class ScenarioLoaderTest extends Specification {
     }
 
     def "can load build operations to benchmark"() {
-        def benchmarkSettings = settingsBuilder(GradleBuildInvoker.ToolingApi).setMeasuredBuildOperations(["BuildOpCmdLine"]).build()
+        def benchmarkSettings = settingsBuilder(GradleBuildInvoker.ToolingApi)
+            .setBuildOperationMeasurements([new BuildOperationMeasurement("BuildOpCmdLine", BuildOperationMeasurementKind.CUMULATIVE_TIME)])
+            .build()
 
         scenarioFile << """
             default {
@@ -316,7 +320,11 @@ class ScenarioLoaderTest extends Specification {
 
         expect:
         def benchmarkScenario = benchmarkScenarios[0] as GradleScenarioDefinition
-        benchmarkScenario.measuredBuildOperations == ["BuildOpCmdLine", "BuildOp1", "BuildOp2"]
+        benchmarkScenario.buildOperationMeasurements == [
+                new BuildOperationMeasurement("BuildOpCmdLine", BuildOperationMeasurementKind.CUMULATIVE_TIME),
+                new BuildOperationMeasurement("BuildOp1", BuildOperationMeasurementKind.CUMULATIVE_TIME),
+                new BuildOperationMeasurement("BuildOp2", BuildOperationMeasurementKind.CUMULATIVE_TIME)
+        ]
     }
 
     def "can load scenarios that fetch tooling models"() {

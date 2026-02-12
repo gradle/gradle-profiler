@@ -1,5 +1,6 @@
 package org.gradle.profiler.buildops;
 
+import org.gradle.profiler.buildops.internal.InternalBuildOpMeasurementRequest;
 import org.gradle.profiler.instrument.GradleInstrumentation;
 
 import java.io.File;
@@ -8,13 +9,13 @@ import java.io.PrintWriter;
 import java.io.UncheckedIOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.time.Duration;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import java.util.function.Function;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 public class BuildOperationInstrumentation extends GradleInstrumentation {
     private final boolean measureGarbageCollection;
@@ -26,13 +27,13 @@ public class BuildOperationInstrumentation extends GradleInstrumentation {
     private final boolean measureConfigTime;
     private final File configurationTimeDataFile;
 
-    private final Map<String, File> buildOperationDataFiles;
+    private final List<InternalBuildOpMeasurementRequest> buildOpMeasurementRequests;
 
     public BuildOperationInstrumentation(
         boolean measureGarbageCollection,
         boolean measureLocalBuildCache,
         boolean measureConfigTime,
-        List<String> measuredBuildOperations
+        List<BuildOperationMeasurement> buildOperationMeasurements
     ) throws IOException {
         this.measureGarbageCollection = measureGarbageCollection;
         this.totalGarbageCollectionTimeDataFile = File.createTempFile("gradle-profiler", "gc-time");
@@ -41,18 +42,22 @@ public class BuildOperationInstrumentation extends GradleInstrumentation {
         this.measureConfigTime = measureConfigTime;
         this.configurationTimeDataFile = File.createTempFile("gradle-profiler", "build-ops-config-time");
         this.configurationTimeDataFile.deleteOnExit();
-        this.buildOperationDataFiles = measuredBuildOperations.stream()
-            .collect(Collectors.toMap(Function.identity(), BuildOperationInstrumentation::createBuildOperationTempFile));
+        this.buildOpMeasurementRequests = buildOperationMeasurements.stream()
+            .map(e -> {
+                Path outputFile = createBuildOperationTempFile(e.getBuildOperationType());
+                return new InternalBuildOpMeasurementRequest(outputFile, e.getBuildOperationType(), e.getMeasurementKind());
+            })
+            .toList();
     }
 
     public boolean requiresInitScript() {
-        return measureGarbageCollection || measureLocalBuildCache || measureConfigTime || !buildOperationDataFiles.isEmpty();
+        return measureGarbageCollection || measureLocalBuildCache || measureConfigTime || !buildOpMeasurementRequests.isEmpty();
     }
 
-    private static File createBuildOperationTempFile(String op) {
+    private static Path createBuildOperationTempFile(String op) {
         try {
-            File tempFile = Files.createTempFile("gradle-profiler", "build-ops-" + op).toFile();
-            tempFile.deleteOnExit();
+            Path tempFile = Files.createTempFile("gradle-profiler", "build-ops-" + op);
+            tempFile.toFile().deleteOnExit();
             return tempFile;
         } catch (IOException e) {
             throw new UncheckedIOException(e);
@@ -63,25 +68,38 @@ public class BuildOperationInstrumentation extends GradleInstrumentation {
     protected void generateInitScriptBody(PrintWriter writer) {
         writer.print("new org.gradle.trace.buildops.BuildOperationTrace(gradle)");
         if (measureGarbageCollection) {
-            writer.print(".measureGarbageCollection(" + newFile(totalGarbageCollectionTimeDataFile) + ")");
+            writer.print(".measureGarbageCollection(" + fileExpression(totalGarbageCollectionTimeDataFile) + ")");
         }
         if (measureLocalBuildCache) {
-            writer.print(".measureLocalBuildCache(" + newFile(localBuildCacheDataFile) + ")");
+            writer.print(".measureLocalBuildCache(" + fileExpression(localBuildCacheDataFile) + ")");
         }
         if (measureConfigTime) {
-            writer.print(".measureConfigurationTime(" + newFile(configurationTimeDataFile) + ")");
+            writer.print(".measureConfigurationTime(" + fileExpression(configurationTimeDataFile) + ")");
         }
-        if (!buildOperationDataFiles.isEmpty()) {
-            writer.print(".measureBuildOperations(");
-            buildOperationDataFiles.forEach((opName, dataFile) ->
-                writer.print(String.format("'%s': %s,", opName, newFile(dataFile)))
-            );
-            writer.print(")");
+        if (!buildOpMeasurementRequests.isEmpty()) {
+            writer.print(".measureBuildOperations([");
+            buildOpMeasurementRequests.forEach(request -> {
+                String buildOpTypeExpr = "'" + request.getBuildOperationType() + "'";
+                String measurementKindExpr = BuildOperationMeasurementKind.class.getName() + "." +
+                    request.getMeasurementKind().name();
+                writer.print(
+                    "new " + InternalBuildOpMeasurementRequest.class.getName() + "(\n" +
+                        pathExpression(request.getOutputFile()) + ",\n" +
+                        buildOpTypeExpr + ",\n" +
+                        measurementKindExpr + ",\n" +
+                        "),\n"
+                );
+            });
+            writer.print("])");
         }
     }
 
-    private String newFile(File dataFile) {
-        return "new File(new URI('" + dataFile.toURI() + "'))";
+    private static String fileExpression(File dataFile) {
+        return pathExpression(dataFile.toPath()) + ".toFile()";
+    }
+
+    private static String pathExpression(Path file) {
+        return Paths.class.getName() + ".get(new URI('" + file.toUri().toASCIIString() + "'))";
     }
 
     /**
@@ -92,7 +110,7 @@ public class BuildOperationInstrumentation extends GradleInstrumentation {
             return Optional.empty();
         }
 
-        return readExecutionDataFromFile(totalGarbageCollectionTimeDataFile)
+        return readExecutionDataFromFile(totalGarbageCollectionTimeDataFile.toPath())
             .map(BuildOperationExecutionData::getValue)
             .map(Duration::ofMillis);
     }
@@ -102,7 +120,7 @@ public class BuildOperationInstrumentation extends GradleInstrumentation {
             return Optional.empty();
         }
 
-        return readExecutionDataFromFile(localBuildCacheDataFile)
+        return readExecutionDataFromFile(localBuildCacheDataFile.toPath())
             .map(BuildOperationExecutionData::getValue);
     }
 
@@ -112,31 +130,40 @@ public class BuildOperationInstrumentation extends GradleInstrumentation {
             return Optional.empty();
         }
 
-        return readExecutionDataFromFile(configurationTimeDataFile)
+        return readExecutionDataFromFile(configurationTimeDataFile.toPath())
             .map(BuildOperationExecutionData::getValue)
             .map(Duration::ofMillis);
     }
 
-    public Map<String, BuildOperationExecutionData> getTotalBuildOperationExecutionData() {
-        return buildOperationDataFiles.entrySet().stream()
-            .filter(entry -> entry.getValue().length() > 0)
+    public Map<BuildOperationMeasurement, BuildOperationExecutionData> getTotalBuildOperationExecutionData() {
+        return buildOpMeasurementRequests.stream()
+            .filter(request -> {
+                try {
+                    return Files.size(request.getOutputFile()) > 0;
+                } catch (IOException e) {
+                    return false;
+                }
+            })
             .collect(Collectors.toMap(
-                Map.Entry::getKey,
-                entry -> readExecutionDataFromFile(entry.getValue()).orElse(BuildOperationExecutionData.ZERO))
+                InternalBuildOpMeasurementRequest::toPublicBuildOperationMeasurement,
+                request -> readExecutionDataFromFile(request.getOutputFile()).orElse(BuildOperationExecutionData.ZERO))
             );
     }
 
-    private static Optional<BuildOperationExecutionData> readExecutionDataFromFile(File dataFile) {
+    private static Optional<BuildOperationExecutionData> readExecutionDataFromFile(Path dataFile) {
+        List<String> lines;
         try {
-            try (Stream<String> lines = Files.lines(dataFile.toPath(), StandardCharsets.UTF_8)) {
-                // Expecting the file to contain at most one line
-                // See `org.gradle.trace.buildops.BuildOperationTrace`
-                Optional<String> lastLine = lines.reduce((ignored, second) -> second);
-                return lastLine.map(BuildOperationInstrumentation::parseExecutionDataLine);
-            }
+            lines = Files.readAllLines(dataFile, StandardCharsets.UTF_8);
         } catch (IOException e) {
             throw new UncheckedIOException("Could not read result from file.", e);
         }
+        if (lines.isEmpty()) {
+            return Optional.empty();
+        }
+        // Expecting the file to contain at most one line
+        // See `org.gradle.trace.buildops.BuildOperationTrace`
+        String lastLine = lines.get(lines.size() - 1);
+        return Optional.of(parseExecutionDataLine(lastLine));
     }
 
     private static BuildOperationExecutionData parseExecutionDataLine(String line) {

@@ -1,5 +1,6 @@
 package org.gradle.profiler;
 
+import org.gradle.profiler.buildops.BuildOperationMeasurement;
 import org.gradle.profiler.report.Format;
 
 import javax.annotation.Nullable;
@@ -31,7 +32,7 @@ public class InvocationSettings {
     private final boolean measureGarbageCollection;
     private final boolean measureLocalBuildCache;
     private final boolean measureConfigTime;
-    private final List<String> measuredBuildOperations;
+    private final List<BuildOperationMeasurement> buildOperationMeasurements;
     private final boolean buildOperationsTrace;
     private final Format csvFormat;
     private final String benchmarkTitle;
@@ -65,7 +66,7 @@ public class InvocationSettings {
         boolean measureGarbageCollection,
         boolean measureLocalBuildCache,
         boolean measureConfigTime,
-        List<String> measuredBuildOperations,
+        List<BuildOperationMeasurement> buildOperationMeasurements,
         boolean buildOperationsTrace,
         Format csvFormat,
         String benchmarkTitle,
@@ -92,7 +93,7 @@ public class InvocationSettings {
         this.measureGarbageCollection = measureGarbageCollection;
         this.measureLocalBuildCache = measureLocalBuildCache;
         this.measureConfigTime = measureConfigTime;
-        this.measuredBuildOperations = measuredBuildOperations;
+        this.buildOperationMeasurements = buildOperationMeasurements;
         this.buildOperationsTrace = buildOperationsTrace;
         this.csvFormat = csvFormat;
         this.benchmarkTitle = benchmarkTitle;
@@ -201,8 +202,8 @@ public class InvocationSettings {
         return measureConfigTime;
     }
 
-    public List<String> getMeasuredBuildOperations() {
-        return measuredBuildOperations;
+    public List<BuildOperationMeasurement> getBuildOperationMeasurements() {
+        return buildOperationMeasurements;
     }
 
     public boolean isBuildOperationsTrace() {
@@ -255,7 +256,7 @@ public class InvocationSettings {
             .setIterations(iterations)
             .setMeasureGarbageCollection(measureGarbageCollection)
             .setMeasureConfigTime(measureConfigTime)
-            .setMeasuredBuildOperations(measuredBuildOperations)
+            .setBuildOperationMeasurements(buildOperationMeasurements)
             .setBuildOperationsTrace(buildOperationsTrace)
             .setCsvFormat(csvFormat)
             .setBenchmarkTitle(benchmarkTitle)
@@ -315,7 +316,7 @@ public class InvocationSettings {
         private boolean measureGarbageCollection;
         private boolean measureLocalBuildCache;
         private boolean measureConfigTime;
-        private List<String> measuredBuildOperations;
+        private List<BuildOperationMeasurement> buildOperationMeasurements;
         private boolean buildOperationsTrace;
         private Format csvFormat;
         private String benchmarkTitle;
@@ -422,8 +423,8 @@ public class InvocationSettings {
             return this;
         }
 
-        public InvocationSettingsBuilder setMeasuredBuildOperations(List<String> measuredBuildOperations) {
-            this.measuredBuildOperations = measuredBuildOperations;
+        public InvocationSettingsBuilder setBuildOperationMeasurements(List<BuildOperationMeasurement> buildOperationMeasurements) {
+            this.buildOperationMeasurements = buildOperationMeasurements;
             return this;
         }
 
@@ -484,7 +485,7 @@ public class InvocationSettings {
                 measureGarbageCollection,
                 measureLocalBuildCache,
                 measureConfigTime,
-                measuredBuildOperations,
+                buildOperationMeasurements,
                 buildOperationsTrace,
                 csvFormat,
                 benchmarkTitle,

@@ -5,7 +5,7 @@ import org.gradle.profiler.BuildMutator;
 import org.gradle.profiler.GradleBuildConfiguration;
 import org.gradle.profiler.InvocationSettings;
 import org.gradle.profiler.ScenarioDefinition;
-import org.gradle.profiler.buildops.BuildOperationUtil;
+import org.gradle.profiler.buildops.BuildOperationMeasurement;
 import org.gradle.util.GradleVersion;
 
 import java.io.File;
@@ -24,7 +24,7 @@ public class GradleScenarioDefinition extends ScenarioDefinition {
     private final List<String> gradleArgs;
     private final Map<String, String> systemProperties;
     private final List<String> jvmArgs;
-    private final List<String> measuredBuildOperations;
+    private final List<BuildOperationMeasurement> buildOperationMeasurements;
     private final boolean buildOperationsTrace;
 
     public GradleScenarioDefinition(
@@ -41,7 +41,7 @@ public class GradleScenarioDefinition extends ScenarioDefinition {
         int buildCount,
         File outputDir,
         List<String> jvmArgs,
-        List<String> measuredBuildOperations,
+        List<BuildOperationMeasurement> buildOperationMeasurements,
         boolean buildOperationsTrace
     ) {
         super(name, title, buildMutators, warmUpCount, buildCount, outputDir);
@@ -52,7 +52,7 @@ public class GradleScenarioDefinition extends ScenarioDefinition {
         this.gradleArgs = gradleArgs;
         this.systemProperties = systemProperties;
         this.jvmArgs = jvmArgs;
-        this.measuredBuildOperations = measuredBuildOperations;
+        this.buildOperationMeasurements = buildOperationMeasurements;
         this.buildOperationsTrace = buildOperationsTrace;
     }
 
@@ -110,8 +110,8 @@ public class GradleScenarioDefinition extends ScenarioDefinition {
         return jvmArgs;
     }
 
-    public List<String> getMeasuredBuildOperations() {
-        return measuredBuildOperations;
+    public List<BuildOperationMeasurement> getBuildOperationMeasurements() {
+        return buildOperationMeasurements;
     }
 
     public boolean isBuildOperationsTrace() {
@@ -177,9 +177,9 @@ public class GradleScenarioDefinition extends ScenarioDefinition {
         if (!jvmArgs.isEmpty()) {
             out.println("  Jvm args: " + getJvmArgs());
         }
-        if (!measuredBuildOperations.isEmpty()) {
-            out.println("  Measured build operations: " + measuredBuildOperations.stream()
-                .map(BuildOperationUtil::getSimpleBuildOperationName)
+        if (!buildOperationMeasurements.isEmpty()) {
+            out.println("  Build operation measurements: " + buildOperationMeasurements.stream()
+                .map(BuildOperationMeasurement::toDisplayString)
                 .sorted()
                 .collect(Collectors.joining(", ")));
         }
