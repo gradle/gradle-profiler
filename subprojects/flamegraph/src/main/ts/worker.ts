@@ -48,11 +48,6 @@ export interface StackGraph {
      * For each index, the value of the node at that index.
      */
     values: Array<number>
-
-    /**
-     * Map from node name to set of node indices with that name.
-     */
-    nodesByName: Map<string, Set<number>>
 }
 
 export interface WorkerResult {
@@ -92,16 +87,9 @@ const getOrCreateChild = (
     if (self == undefined) {
         self = graph.nodeNames.length
         graph.nodeNames.push(child)
-        if (graph.nodesByName.has(child)) {
-            graph.nodesByName.get(child)!.add(self)
-        } else {
-            graph.nodesByName.set(child, new Set([self]))
-        }
         graph.children.push([])
         graph.values.push(0)
         children.push(self)
-    } else {
-        graph.nodesByName.get(child)!.add(self)
     }
     return self
 }
@@ -111,6 +99,7 @@ const parseLine = (
     parent: number,
     line: string,
     graph: StackGraph,
+    nameCache: Map<string, string>,
 ): number => {
     let current = offset
     while (
@@ -124,17 +113,18 @@ const parseLine = (
     }
 
     let name = line.substring(offset, current)
-    const nodesWithName = graph.nodesByName.get(name)
-    if (nodesWithName != undefined) {
-        // To save memory, use the name instance from the first node with this name
-        const firstNodeWithName = nodesWithName.values().next().value!
-        name = graph.nodeNames[firstNodeWithName]!
+    const cachedName = nameCache.get(name)
+    if (cachedName != undefined) {
+        // To save memory, use the cached name instance
+        name = cachedName
+    } else {
+        nameCache.set(name, name)
     }
 
     let self = getOrCreateChild(parent, name, graph)
 
     if (line[current] == ";") {
-        const value = parseLine(current + 1, self, line, graph)
+        const value = parseLine(current + 1, self, line, graph, nameCache)
         graph.values[self]! += value
         return value
     } else if (line[current] == " ") {
@@ -157,9 +147,9 @@ const processStream = async (
     let graph: StackGraph = {
         children: [[]],
         nodeNames: ["root"],
-        nodesByName: new Map<string, Set<number>>(),
         values: [0],
     }
+    const nameCache = new Map<string, string>()
     let incompleteLine = ""
 
     while (true) {
@@ -167,7 +157,13 @@ const processStream = async (
         if (done) {
             // Process any remaining text in the buffer
             if (incompleteLine) {
-                graph.values[root]! += parseLine(0, root, incompleteLine, graph)
+                graph.values[root]! += parseLine(
+                    0,
+                    root,
+                    incompleteLine,
+                    graph,
+                    nameCache,
+                )
             }
             break
         }
@@ -178,7 +174,13 @@ const processStream = async (
 
         for (const line of lines) {
             if (line) {
-                graph.values[root]! += parseLine(0, root, line, graph)
+                graph.values[root]! += parseLine(
+                    0,
+                    root,
+                    line,
+                    graph,
+                    nameCache,
+                )
             }
         }
     }
@@ -190,15 +192,20 @@ const processStream = async (
 const mergeChildren = async (job: MergeChildrenJob): Promise<WorkerResult> => {
     const graph = job.graph
 
-    const rootNodes = graph.nodesByName.get(job.nodeName)
-    if (!rootNodes || rootNodes.size == 0) {
+    const rootNodesList: number[] = []
+    for (let i = 0; i < graph.nodeNames.length; i++) {
+        if (graph.nodeNames[i] === job.nodeName) {
+            rootNodesList.push(i)
+        }
+    }
+    if (rootNodesList.length == 0) {
         throw new Error(`No nodes with name: ${job.nodeName}`)
     }
+    const rootNodes = new Set(rootNodesList)
 
     const newGraph: StackGraph = {
         children: [[]],
         nodeNames: [job.nodeName],
-        nodesByName: new Map<string, Set<number>>(),
         values: [0],
     }
 
@@ -261,10 +268,8 @@ const icicleGraph = async (job: IcicleGraphJob): Promise<WorkerResult> => {
     const newGraph: StackGraph = {
         children: [[]],
         nodeNames: ["root"],
-        nodesByName: new Map<string, Set<number>>(),
         values: [0],
     }
-    newGraph.nodesByName.set("root", new Set([0]))
 
     const stack = [targetNodeId]
 
