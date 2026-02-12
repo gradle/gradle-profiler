@@ -243,6 +243,61 @@ const mergeChildren = async (job: MergeChildrenJob): Promise<WorkerResult> => {
     return { graph: newGraph }
 }
 
+const icicleGraph = async (job: IcicleGraphJob): Promise<WorkerResult> => {
+    const graph = job.graph
+    const targetNodeId = job.nodeId
+
+    const parents = new Int32Array(graph.nodeNames.length).fill(-1)
+    for (let i = 0; i < graph.children.length; i++) {
+        const children = graph.children[i]!
+        for (const child of children) {
+            parents[child] = i
+        }
+    }
+
+    const newGraph: StackGraph = {
+        children: [[]],
+        nodeNames: ["root"],
+        nodesByName: new Map<string, Set<number>>(),
+        values: [0],
+    }
+    newGraph.nodesByName.set("root", new Set([0]))
+
+    const stack = [targetNodeId]
+
+    while (stack.length > 0) {
+        const nodeId = stack.pop()!
+        const value = graph.values[nodeId]!
+
+        let childrenSum = 0
+        for (const child of graph.children[nodeId]!) {
+            childrenSum += graph.values[child]!
+            stack.push(child)
+        }
+
+        const selfWeight = value - childrenSum
+        if (selfWeight > 0) {
+            let newCurrent = 0
+            newGraph.values[0]! += selfWeight
+
+            let originalCurrent = nodeId
+            while (true) {
+                const name = graph.nodeNames[originalCurrent]!
+                newCurrent = getOrCreateChild(newCurrent, name, newGraph)
+                newGraph.values[newCurrent]! += selfWeight
+
+                originalCurrent = parents[originalCurrent]!
+
+                if (originalCurrent === targetNodeId) {
+                    break
+                }
+            }
+        }
+    }
+
+    return { graph: newGraph }
+}
+
 const process = async (job: Job): Promise<WorkerResult> => {
     if (job.type == "parseStream") {
         return await processStream(job.stream)
