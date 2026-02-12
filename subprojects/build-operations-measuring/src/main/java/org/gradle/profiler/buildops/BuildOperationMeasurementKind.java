@@ -71,11 +71,11 @@ public enum BuildOperationMeasurementKind {
     public String toDisplayString() {
         switch (this) {
             case CUMULATIVE_TIME:
-                return "Duration Sum";
+                return "Cumulative Time";
             case TIME_TO_LAST_INCLUSIVE:
-                return "Time to Last Completed";
+                return "Time to Last Inclusive";
             case TIME_TO_FIRST_EXCLUSIVE:
-                return "Time to First Started";
+                return "Time to First Exclusive";
             default:
                 throw new IllegalStateException("Unexpected value: " + this);
         }
