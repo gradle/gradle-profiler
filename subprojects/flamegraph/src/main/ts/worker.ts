@@ -72,6 +72,16 @@ export interface WorkerFailure {
 
 export type WorkerResponse = WorkerSuccess | WorkerFailure
 
+const sortChildren = (graph: StackGraph) => {
+    graph.children.forEach((children) => {
+        children.sort((a, b) => {
+            const nameA = graph.nodeNames[a]!
+            const nameB = graph.nodeNames[b]!
+            return nameA > nameB ? 1 : -1
+        })
+    })
+}
+
 const getOrCreateChild = (
     parent: number,
     child: string,
@@ -89,16 +99,7 @@ const getOrCreateChild = (
         }
         graph.children.push([])
         graph.values.push(0)
-
-        // Insert in alphabetical order
-        let insertIndex = children.findIndex(
-            (id) => graph.nodeNames[id]! > child,
-        )
-        if (insertIndex == -1) {
-            children.push(self)
-        } else {
-            children.splice(insertIndex, 0, self)
-        }
+        children.push(self)
     } else {
         graph.nodesByName.get(child)!.add(self)
     }
@@ -182,6 +183,7 @@ const processStream = async (
         }
     }
 
+    sortChildren(graph)
     return { graph }
 }
 
@@ -240,6 +242,7 @@ const mergeChildren = async (job: MergeChildrenJob): Promise<WorkerResult> => {
         newGraph.values[0]! += graph.values[rootNode]!
     }
 
+    sortChildren(newGraph)
     return { graph: newGraph }
 }
 
@@ -295,6 +298,7 @@ const icicleGraph = async (job: IcicleGraphJob): Promise<WorkerResult> => {
         }
     }
 
+    sortChildren(newGraph)
     return { graph: newGraph }
 }
 
