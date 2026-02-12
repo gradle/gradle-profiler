@@ -319,6 +319,15 @@ const Flamegraph: React.FC<{
         })
     }
 
+    const showIcicleGraph = (nodeId: number) => {
+        let nodeName = graph.nodeNames[nodeId]!
+        submitJob(`icicle${nodeName}${nodeId}`, {
+            type: "icicleGraph",
+            nodeId,
+            graph,
+        })
+    }
+
     const rootValue = graph.values[rootNode]
     const svgHeight = maxDepth * NODE_HEIGHT
 
@@ -373,6 +382,11 @@ const Flamegraph: React.FC<{
                         disabled={rootNode === 0}
                     >
                         Merge
+                    </button>
+                    <button
+                        onClick={() => showIcicleGraph(rootNode)}
+                    >
+                        Icicle
                     </button>
                 </Stack>
             </Row>

@@ -16,7 +16,17 @@ export interface MergeChildrenJob {
     type: "mergeChildren"
 }
 
-export type Job = ParseStreamJob | ParseEncodedDataJob | MergeChildrenJob
+export interface IcicleGraphJob {
+    nodeId: number
+    graph: StackGraph
+    type: "icicleGraph"
+}
+
+export type Job =
+    | ParseStreamJob
+    | ParseEncodedDataJob
+    | MergeChildrenJob
+    | IcicleGraphJob
 
 export interface WorkerParams {
     job: Job
@@ -132,7 +142,7 @@ const parseLine = (
         return value
     }
 
-    throw new Error("Unexpected end of line")
+    throw new Error("Unexpected end of line: " + line)
 }
 
 const processStream = async (
@@ -238,6 +248,8 @@ const process = async (job: Job): Promise<WorkerResult> => {
         return await processStream(job.stream)
     } else if (job.type == "mergeChildren") {
         return await mergeChildren(job)
+    } else if (job.type == "icicleGraph") {
+        return await icicleGraph(job)
     } else if (job.type == "parseEncodedData") {
         const stream = decodeAndDecompressData(job.encodedData)
         return await processStream(stream)
