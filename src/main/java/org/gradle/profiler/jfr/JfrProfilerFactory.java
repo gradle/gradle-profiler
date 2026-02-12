@@ -15,7 +15,8 @@ import java.nio.file.StandardCopyOption;
 import java.util.Locale;
 
 public class JfrProfilerFactory extends ProfilerFactory {
-    private final File defaultConfig = createDefaultConfig();
+
+    private static final String JFR_SETTINGS_OPTION = "jfr-settings";
 
     private File createDefaultConfig() {
         try {
@@ -47,10 +48,9 @@ public class JfrProfilerFactory extends ProfilerFactory {
 
     @Override
     public void addOptions(final OptionParser parser) {
-        parser.accepts("jfr-settings", "JFR settings - Either a .jfc file or the name of a template known to your JFR installation")
+        parser.accepts(JFR_SETTINGS_OPTION, "JFR settings - Either a .jfc file or the name of a template known to your JFR installation")
             .availableIf("profile")
-            .withOptionalArg()
-            .defaultsTo(defaultConfig.getAbsolutePath());
+            .withRequiredArg();
     }
 
     @Override
@@ -59,8 +59,10 @@ public class JfrProfilerFactory extends ProfilerFactory {
     }
 
     private JFRArgs newConfigObject(OptionSet parsedOptions) {
-        String jfrSettings = (String) parsedOptions.valueOf("jfr-settings");
-        if (jfrSettings.endsWith(".jfc")) {
+        String jfrSettings = (String) parsedOptions.valueOf(JFR_SETTINGS_OPTION);
+        if (jfrSettings == null) {
+            jfrSettings = createDefaultConfig().getAbsolutePath();
+        } else if (jfrSettings.endsWith(".jfc")) {
             jfrSettings = new File(jfrSettings).getAbsolutePath();
         }
         return new JFRArgs(jfrSettings);
