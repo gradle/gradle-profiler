@@ -13,11 +13,11 @@ interface BuildOperationMeasurer {
     static BuildOperationMeasurer createForKind(BuildOperationMeasurementKind kind, long buildStartTime) {
         switch (kind) {
             case CUMULATIVE_TIME:
-                return new DurationSumBuildOperationMeasurer();
+                return new CumulativeTimeBuildOperationMeasurer();
             case TIME_TO_LAST_INCLUSIVE:
-                return new TimeToLastCompletedBuildOperationMeasurer(buildStartTime);
+                return new TimeToLastInclusiveBuildOperationMeasurer(buildStartTime);
             case TIME_TO_FIRST_EXCLUSIVE:
-                return new TimeToFirstStartedBuildOperationMeasurer(buildStartTime);
+                return new TimeToFirstExclusiveBuildOperationMeasurer(buildStartTime);
             default:
                 throw new IllegalArgumentException("Unsupported BuildOperationMeasurementKind: " + kind);
         }

@@ -372,7 +372,7 @@ class BuildOperationInstrumentationGradleCrossVersionTest extends AbstractGradle
         def timeToLastInclusiveMs = Double.valueOf(configureBuildOp[0][2])
         timeToLastInclusiveMs > 1
         // With our project that only has one build, the cumulative time should always be less than the time to last completed
-        // As there is time before the configure build operation starts that is included in the time to last completed but not in the duration sum
+        // As there is time before the configure build operation starts that is included in the time to last completed but not in the cumulative time
         // This operates as a sanity check that the two measurements are being recorded in a consistent way
         assertThat(
             "'cumulative time' should be less than 'time to last inclusive'",

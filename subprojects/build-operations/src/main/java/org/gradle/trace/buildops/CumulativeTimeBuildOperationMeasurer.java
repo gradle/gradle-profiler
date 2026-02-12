@@ -5,10 +5,10 @@ import org.gradle.internal.operations.OperationFinishEvent;
 import java.time.Duration;
 import java.util.concurrent.atomic.AtomicLong;
 
-final class DurationSumBuildOperationMeasurer implements BuildOperationMeasurer {
+final class CumulativeTimeBuildOperationMeasurer implements BuildOperationMeasurer {
     private final AtomicLong buildOperationTime = new AtomicLong(0);
 
-    DurationSumBuildOperationMeasurer() {
+    CumulativeTimeBuildOperationMeasurer() {
     }
 
     @Override
