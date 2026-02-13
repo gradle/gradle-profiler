@@ -4,6 +4,7 @@ import React, {
     useMemo,
     useRef,
     useState,
+    forwardRef,
 } from "react"
 import {
     type Job,
@@ -180,17 +181,9 @@ const nodeDetails = (nodeId: number, graph: StackGraph): string => {
     return `${name} ${value.toLocaleString()} samples`
 }
 
-const NodeDetails: React.FC<{ nodeId: number | null; graph: StackGraph }> = ({
-    nodeId,
-    graph,
-}) => {
-    if (nodeId == null) {
-        return <span>Hover for details, click to zoom</span>
-    }
-
-    const renderedDetails = nodeDetails(nodeId, graph)
-    return <span>{renderedDetails}</span>
-}
+const NodeDetails = forwardRef<HTMLSpanElement, {}>((_, ref) => {
+    return <span ref={ref}>Hover for details, click to zoom</span>
+})
 
 interface ColorContextType {
     colorCenter: number
@@ -233,12 +226,11 @@ const Flamegraph: React.FC<{
     setRootNode: (nodeId: number) => void
     submitJob: (id: string, job: Job) => void
 }> = ({ graph, rootNode, setRootNode, submitJob }) => {
-    const [hoveredNode, setHoveredNode] = useState<number | null>(null)
-
     const svgRef = useRef<SVGSVGElement | null>(null)
     const [svgWidth, setSvgWidth] = useState<number | null>(null)
-
     const scrollRef = useRef<HTMLDivElement | null>(null)
+    const detailsRef = useRef<HTMLSpanElement | null>(null)
+    const hoverStyleRef = useRef<HTMLStyleElement | null>(null)
 
     // Measure the size of the SVG
     useEffect(() => {
@@ -299,29 +291,36 @@ const Flamegraph: React.FC<{
     }, [graph, rootNode, svgWidth])
 
     const handleMouseMove: React.MouseEventHandler<SVGSVGElement> = (event) => {
-        const svg = svgRef.current
-        if (!svg) return
-
-        svg.querySelectorAll("rect.similar-hover").forEach((el) => {
-            el.classList.remove("similar-hover")
-        })
-
         const target = event.target
         if (target instanceof SVGElement && target.tagName === "rect") {
             const name = target.getAttribute("data-name")
             const nodeId = target.getAttribute("data-node-id")
-            setHoveredNode(nodeId ? parseInt(nodeId, 10) : null)
 
-            if (name) {
-                const similarNodes = svg.querySelectorAll(
-                    `rect[data-name="${name}"]`,
+            if (detailsRef.current && nodeId) {
+                detailsRef.current.textContent = nodeDetails(
+                    parseInt(nodeId, 10),
+                    graph,
                 )
-                similarNodes.forEach((node) => {
-                    node.classList.add("similar-hover")
-                })
+            }
+
+            if (name && hoverStyleRef.current) {
+                hoverStyleRef.current.textContent = `
+                    .flamegraph-svg rect[data-name="${CSS.escape(name)}"] {
+                        filter: brightness(0.75);
+                    }
+                `
             }
         } else {
-            setHoveredNode(null)
+            handleMouseLeave()
+        }
+    }
+
+    const handleMouseLeave = () => {
+        if (detailsRef.current) {
+            detailsRef.current.textContent = "Hover for details, click to zoom"
+        }
+        if (hoverStyleRef.current) {
+            hoverStyleRef.current.textContent = ""
         }
     }
 
@@ -359,13 +358,14 @@ const Flamegraph: React.FC<{
     }, [svgHeight])
 
     useEffect(() => {
-        setHoveredNode(null)
+        handleMouseLeave()
     }, [graph])
 
     const [colorCenter, setColorCenter] = useState(80)
 
     return (
         <>
+            <style ref={hoverStyleRef} />
             <Row
                 wide
                 style={{
@@ -428,7 +428,7 @@ const Flamegraph: React.FC<{
                                 height={svgHeight}
                                 viewBox={`0 0 ${rootValue} ${svgHeight}`}
                                 preserveAspectRatio="none"
-                                onMouseLeave={() => setHoveredNode(null)}
+                                onMouseLeave={handleMouseLeave}
                                 onMouseMove={handleMouseMove}
                                 ref={svgRef}
                             >
@@ -443,7 +443,7 @@ const Flamegraph: React.FC<{
                                         totalValue={rootValue}
                                         onClick={(nodeId) => {
                                             setRootNode(nodeId)
-                                            setHoveredNode(null)
+                                            handleMouseLeave()
                                         }}
                                     />
                                 )}
@@ -451,7 +451,7 @@ const Flamegraph: React.FC<{
                         )}
                     </div>
 
-                    <NodeDetails nodeId={hoveredNode} graph={graph} />
+                    <NodeDetails ref={detailsRef} />
                 </Stack>
             </ColorContext.Provider>
         </>

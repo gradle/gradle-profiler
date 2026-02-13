@@ -32,7 +32,3 @@ table {
 table td {
     padding: 0;
 }
-
-.flamegraph-svg rect.similar-hover {
-    filter: brightness(0.75);
-}
