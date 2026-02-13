@@ -32,6 +32,23 @@ export interface WorkerParams {
     job: Job
 }
 
+interface InternalGraph {
+    /**
+     * For each index, the (name to id of) children of the node at that index.
+     */
+    children: Array<Map<string, number>>
+
+    /**
+     * For each index, the name of the node at that index.
+     */
+    nodeNames: Array<string>
+
+    /**
+     * For each index, the value of the node at that index.
+     */
+    values: Array<number>
+}
+
 export interface StackGraph {
     /**
      * For each index, the children of the node at that index.
@@ -67,29 +84,48 @@ export interface WorkerFailure {
 
 export type WorkerResponse = WorkerSuccess | WorkerFailure
 
-const sortChildren = (graph: StackGraph) => {
-    graph.children.forEach((children) => {
-        children.sort((a, b) => {
-            const nameA = graph.nodeNames[a]!
-            const nameB = graph.nodeNames[b]!
-            return nameA > nameB ? 1 : -1
-        })
-    })
+const finalize = (graph: InternalGraph): StackGraph => {
+    const sortedChildren = new Array(graph.children.length)
+    for (let i = 0; i < graph.children.length; i++) {
+        const childMap = graph.children[i]!
+        let result: Array<number>
+        if (childMap.size === 0) {
+            result = []
+        } else if (childMap.size === 1) {
+            const childId = childMap.values().next().value!
+            result = [childId]
+        } else {
+            const ids = Array.from(childMap.values())
+            ids.sort((a, b) => {
+                const nameA = graph.nodeNames[a]!
+                const nameB = graph.nodeNames[b]!
+                return nameA < nameB ? -1 : 1
+            })
+            result = ids
+        }
+        sortedChildren[i] = result
+    }
+
+    return {
+        children: sortedChildren,
+        nodeNames: graph.nodeNames,
+        values: graph.values,
+    }
 }
 
 const getOrCreateChild = (
     parent: number,
-    child: string,
-    graph: StackGraph,
+    name: string,
+    graph: InternalGraph,
 ): number => {
-    let children = graph.children[parent]!
-    let self = children.find((id) => graph.nodeNames[id] == child)
-    if (self == undefined) {
+    const children = graph.children[parent]!
+    let self = children.get(name)
+    if (self === undefined) {
         self = graph.nodeNames.length
-        graph.nodeNames.push(child)
-        graph.children.push([])
+        graph.nodeNames.push(name)
+        graph.children.push(new Map())
         graph.values.push(0)
-        children.push(self)
+        children.set(name, self)
     }
     return self
 }
@@ -98,7 +134,7 @@ const parseLine = (
     offset: number,
     parent: number,
     line: string,
-    graph: StackGraph,
+    graph: InternalGraph,
     nameCache: Map<string, string>,
 ): number => {
     let current = offset
@@ -121,7 +157,7 @@ const parseLine = (
         nameCache.set(name, name)
     }
 
-    let self = getOrCreateChild(parent, name, graph)
+    const self = getOrCreateChild(parent, name, graph)
 
     if (line[current] == ";") {
         const value = parseLine(current + 1, self, line, graph, nameCache)
@@ -140,12 +176,11 @@ const processStream = async (
     stream: ReadableStream<Uint8Array>,
 ): Promise<WorkerResult> => {
     const root = 0
-
     const reader = stream.getReader()
     const decoder = new TextDecoder()
 
-    let graph: StackGraph = {
-        children: [[]],
+    let graph: InternalGraph = {
+        children: [new Map()],
         nodeNames: ["root"],
         values: [0],
     }
@@ -185,13 +220,11 @@ const processStream = async (
         }
     }
 
-    sortChildren(graph)
-    return { graph }
+    return { graph: finalize(graph) }
 }
 
 const mergeChildren = async (job: MergeChildrenJob): Promise<WorkerResult> => {
     const graph = job.graph
-
     const rootNodesList: number[] = []
     for (let i = 0; i < graph.nodeNames.length; i++) {
         if (graph.nodeNames[i] === job.nodeName) {
@@ -202,9 +235,8 @@ const mergeChildren = async (job: MergeChildrenJob): Promise<WorkerResult> => {
         throw new Error(`No nodes with name: ${job.nodeName}`)
     }
     const rootNodes = new Set(rootNodesList)
-
-    const newGraph: StackGraph = {
-        children: [[]],
+    const newGraph: InternalGraph = {
+        children: [new Map()],
         nodeNames: [job.nodeName],
         values: [0],
     }
@@ -217,8 +249,8 @@ const mergeChildren = async (job: MergeChildrenJob): Promise<WorkerResult> => {
         const stack: number[] = []
         const parentStack: number[] = []
 
-        for (const childIndex of graph.children[rootNode]!) {
-            stack.push(childIndex)
+        for (const childId of graph.children[rootNode]!.values()) {
+            stack.push(childId)
             parentStack.push(0)
         }
 
@@ -232,14 +264,14 @@ const mergeChildren = async (job: MergeChildrenJob): Promise<WorkerResult> => {
                 continue
             }
 
-            let currentInNewGraph = getOrCreateChild(
+            const currentInNewGraph = getOrCreateChild(
                 parent,
                 graph.nodeNames[current]!,
                 newGraph,
             )
             newGraph.values[currentInNewGraph]! += graph.values[current]!
-            for (const childIndex of graph.children[current]!) {
-                stack.push(childIndex)
+            for (const childId of graph.children[current]!.values()) {
+                stack.push(childId)
                 parentStack.push(currentInNewGraph)
             }
         }
@@ -249,8 +281,7 @@ const mergeChildren = async (job: MergeChildrenJob): Promise<WorkerResult> => {
         newGraph.values[0]! += graph.values[rootNode]!
     }
 
-    sortChildren(newGraph)
-    return { graph: newGraph }
+    return { graph: finalize(newGraph) }
 }
 
 const icicleGraph = async (job: IcicleGraphJob): Promise<WorkerResult> => {
@@ -259,14 +290,13 @@ const icicleGraph = async (job: IcicleGraphJob): Promise<WorkerResult> => {
 
     const parents = new Int32Array(graph.nodeNames.length).fill(-1)
     for (let i = 0; i < graph.children.length; i++) {
-        const children = graph.children[i]!
-        for (const child of children) {
-            parents[child] = i
+        for (const childId of graph.children[i]!.values()) {
+            parents[childId] = i
         }
     }
 
-    const newGraph: StackGraph = {
-        children: [[]],
+    const newGraph: InternalGraph = {
+        children: [new Map()],
         nodeNames: ["root"],
         values: [0],
     }
@@ -278,9 +308,9 @@ const icicleGraph = async (job: IcicleGraphJob): Promise<WorkerResult> => {
         const value = graph.values[nodeId]!
 
         let childrenSum = 0
-        for (const child of graph.children[nodeId]!) {
-            childrenSum += graph.values[child]!
-            stack.push(child)
+        for (const childId of graph.children[nodeId]!.values()) {
+            childrenSum += graph.values[childId]!
+            stack.push(childId)
         }
 
         const selfWeight = value - childrenSum
@@ -303,8 +333,7 @@ const icicleGraph = async (job: IcicleGraphJob): Promise<WorkerResult> => {
         }
     }
 
-    sortChildren(newGraph)
-    return { graph: newGraph }
+    return { graph: finalize(newGraph) }
 }
 
 const process = async (job: Job): Promise<WorkerResult> => {
@@ -330,10 +359,7 @@ const tryProcess = async (job: Job): Promise<WorkerResponse> => {
         const message = error instanceof Error ? error.message : "Unknown error"
         const stack = error instanceof Error ? error.stack : undefined
         return {
-            error: {
-                message,
-                stack,
-            },
+            error: { message, stack },
         }
     }
 }

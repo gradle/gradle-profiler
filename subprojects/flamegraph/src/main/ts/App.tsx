@@ -91,12 +91,6 @@ const FlamegraphNode = ({
         throw new Error("Malformed graph: missing children map")
     }
 
-    // Do not render nodes that are too small.
-    const widthInPixels = (value / totalValue) * svgWidth
-    if (widthInPixels < CULLING_THRESHOLD_PX) {
-        return null
-    }
-
     // Recursively render children
     let childXOffset = xOffset
     const childElements = children.map((childId) => {
@@ -104,19 +98,28 @@ const FlamegraphNode = ({
         if (childValue == null) {
             throw new Error("Malformed graph: missing child value")
         }
-        const element = (
-            <FlamegraphNode
-                key={childId}
-                nodeId={childId}
-                graph={graph}
-                xOffset={childXOffset}
-                depth={depth + 1}
-                totalValue={totalValue}
-                svgWidth={svgWidth}
-                svgHeight={svgHeight}
-                onClick={onClick}
-            />
-        )
+
+        const childWidth = (childValue / totalValue) * svgWidth
+        let element
+        if (childWidth >= CULLING_THRESHOLD_PX) {
+            element = (
+                <FlamegraphNode
+                    key={childId}
+                    nodeId={childId}
+                    graph={graph}
+                    xOffset={childXOffset}
+                    depth={depth + 1}
+                    totalValue={totalValue}
+                    svgWidth={svgWidth}
+                    svgHeight={svgHeight}
+                    onClick={onClick}
+                />
+            )
+        } else {
+            // Do not render nodes that are too small.
+            element = null
+        }
+
         childXOffset += childValue
         return element
     })
@@ -126,6 +129,7 @@ const FlamegraphNode = ({
     // To counteract the text stretching caused by preserveAspectRatio="none", we apply an inverse
     // horizontal scale transform.
     const horizontalScale = totalValue > 0 ? totalValue / svgWidth : 0
+    const widthInPixels = (value / totalValue) * svgWidth
 
     const colorContext = React.useContext(ColorContext)
 
@@ -256,28 +260,43 @@ const Flamegraph: React.FC<{
     }, [svgRef.current])
 
     const maxDepth = useMemo(() => {
-        if (!graph || graph.values.length === 0) {
+        if (!graph || graph.values.length === 0 || !svgWidth) {
+            return 0
+        }
+
+        const rootValue = graph.values[rootNode]
+        if (!rootValue) {
             return 0
         }
 
         let max = 0
-        const queue: Array<[number, number]> = [[rootNode, 1]]
+        const stack: Array<[number, number]> = [[rootNode, 1]]
+        const minValueThreshold = (CULLING_THRESHOLD_PX * rootValue) / svgWidth
 
-        let element: [number, number] | undefined
-        while ((element = queue.shift()) !== undefined) {
-            const [nodeId, depth] = element
-            max = Math.max(max, depth)
-            const children = graph.children[nodeId]
-            if (!children) {
-                throw new Error("Malformed graph: missing children map")
+        while (stack.length > 0) {
+            const [nodeId, depth] = stack.pop()!
+
+            if (depth > max) {
+                max = depth
             }
-            for (const childId of children) {
-                queue.push([childId, depth + 1])
+
+            const children = graph.children[nodeId]
+            if (children) {
+                for (let i = 0; i < children.length; i++) {
+                    const childId = children[i]!
+                    const childValue = graph.values[childId]
+                    if (
+                        childValue !== undefined &&
+                        childValue >= minValueThreshold
+                    ) {
+                        stack.push([childId, depth + 1])
+                    }
+                }
             }
         }
 
         return max
-    }, [graph, rootNode])
+    }, [graph, rootNode, svgWidth])
 
     const handleMouseMove: React.MouseEventHandler<SVGSVGElement> = (event) => {
         const svg = svgRef.current
@@ -383,9 +402,7 @@ const Flamegraph: React.FC<{
                     >
                         Merge
                     </button>
-                    <button
-                        onClick={() => showIcicleGraph(rootNode)}
-                    >
+                    <button onClick={() => showIcicleGraph(rootNode)}>
                         Icicle
                     </button>
                 </Stack>
@@ -513,6 +530,17 @@ const App = (): React.JSX.Element => {
         }
     }
 
+    const deleteTab = (id: string) => {
+        setAllAllTabData((oldData) => {
+            const updated = new Map(oldData)
+            updated.delete(id)
+            return updated
+        })
+        if (selectedTab === id) {
+            setSelectedTab(null)
+        }
+    }
+
     const submitJob = React.useCallback(
         async (id: string, job: Job, transfer: Transferable[]) => {
             setTabData(id, { progress: "Crunching the numbers..." })
@@ -593,7 +621,15 @@ const App = (): React.JSX.Element => {
         <Stack tall>
             <div>
                 {[...allTabData.keys()].map((id) => (
-                    <button key={id} onClick={() => setSelectedTab(id)}>
+                    <button
+                        key={id}
+                        onMouseDown={(e) => {
+                            if (e.button === 1) {
+                                deleteTab(id)
+                            }
+                        }}
+                        onClick={() => setSelectedTab(id)}
+                    >
                         {id}
                     </button>
                 ))}
