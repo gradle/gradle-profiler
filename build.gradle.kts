@@ -23,9 +23,11 @@ val gradleRuntime by configurations.creating
 val profilerPlugins by configurations.creating
 
 dependencies {
+    // gradle/gradle uses these as part of Gradle Profiler-as-a-library
+    api(project(":build-action"))
+    api(project(":build-operations-measuring"))
+
     implementation(libs.toolingApi)
-    implementation(project(":build-action"))
-    implementation(project(":build-operations-measuring"))
     implementation(project(":client-protocol"))
     implementation(project(":scenario-definition"))
     implementation(project(":perfetto-trace"))
