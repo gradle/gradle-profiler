@@ -5,11 +5,11 @@ import org.gradle.internal.operations.OperationFinishEvent;
 import java.time.Duration;
 import java.util.concurrent.atomic.AtomicLong;
 
-final class TimeToLastCompletedBuildOperationMeasurer implements BuildOperationMeasurer {
+final class TimeToLastInclusiveBuildOperationMeasurer implements BuildOperationMeasurer {
     private final long buildStartTime;
     private final AtomicLong maxEndTime;
 
-    TimeToLastCompletedBuildOperationMeasurer(long buildStartTime) {
+    TimeToLastInclusiveBuildOperationMeasurer(long buildStartTime) {
         this.buildStartTime = buildStartTime;
         // Make sure we're never earlier than the build start time, even if no operations are recorded
         this.maxEndTime = new AtomicLong(buildStartTime);

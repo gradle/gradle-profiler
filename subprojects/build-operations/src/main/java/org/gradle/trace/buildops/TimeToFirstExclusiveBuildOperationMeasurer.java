@@ -5,11 +5,11 @@ import org.gradle.internal.operations.OperationFinishEvent;
 import java.time.Duration;
 import java.util.concurrent.atomic.AtomicLong;
 
-final class TimeToFirstStartedBuildOperationMeasurer implements BuildOperationMeasurer {
+final class TimeToFirstExclusiveBuildOperationMeasurer implements BuildOperationMeasurer {
     private final long buildStartTime;
     private final AtomicLong minStartTime = new AtomicLong(Long.MIN_VALUE);
 
-    TimeToFirstStartedBuildOperationMeasurer(long buildStartTime) {
+    TimeToFirstExclusiveBuildOperationMeasurer(long buildStartTime) {
         this.buildStartTime = buildStartTime;
     }
 
