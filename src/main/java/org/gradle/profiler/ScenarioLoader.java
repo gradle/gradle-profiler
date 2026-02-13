@@ -415,13 +415,13 @@ class ScenarioLoader {
                                 String kindString = buildOpConfig.getString(MEASUREMENT_KIND);
                                 kind = BuildOperationMeasurementKind.fromString(kindString);
                             } else {
-                                kind = BuildOperationMeasurementKind.CUMULATIVE_TIME;
+                                kind = BuildOperationMeasurementKind.DEFAULT;
                             }
                             return new BuildOperationMeasurement(type, kind);
                         } else {
                             // Preserve old behavior of using stringified value as type and use CUMULATIVE_TIME as the kind
                             String type = obj.unwrapped().toString();
-                            return new BuildOperationMeasurement(type, BuildOperationMeasurementKind.CUMULATIVE_TIME);
+                            return new BuildOperationMeasurement(type, BuildOperationMeasurementKind.DEFAULT);
                         }
                     })
                     .toList());
@@ -429,7 +429,7 @@ class ScenarioLoader {
                 // Preserve old behavior of using stringified value as type and use CUMULATIVE_TIME as the kind
                 String type = value.unwrapped().toString();
                 if (!type.isEmpty()) {
-                    builder.add(new BuildOperationMeasurement(type, BuildOperationMeasurementKind.CUMULATIVE_TIME));
+                    builder.add(new BuildOperationMeasurement(type, BuildOperationMeasurementKind.DEFAULT));
                 }
             }
         }

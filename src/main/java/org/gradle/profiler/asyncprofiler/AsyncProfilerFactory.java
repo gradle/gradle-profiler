@@ -9,8 +9,10 @@ import org.gradle.profiler.Profiler;
 import org.gradle.profiler.ProfilerFactory;
 
 import java.io.File;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Locale;
+import java.util.stream.Collectors;
 
 public class AsyncProfilerFactory extends ProfilerFactory {
     static final String ASYNC_PROFILER_HOME = "ASYNC_PROFILER_HOME";
@@ -115,7 +117,7 @@ public class AsyncProfilerFactory extends ProfilerFactory {
         }
 
         File profilerHome = profilerHomeOption.value(parsedOptions);
-        String source = profilerHome != null ? ("--" + ASYNC_PROFILER_HOME_OPTION + " option"): null;
+        String source = profilerHome != null ? ("--" + ASYNC_PROFILER_HOME_OPTION + " option") : null;
         if (profilerHome == null) {
             String homePath = System.getenv(ASYNC_PROFILER_HOME);
             profilerHome = homePath != null ? new File(homePath) : null;
@@ -146,7 +148,9 @@ public class AsyncProfilerFactory extends ProfilerFactory {
 
         @Override
         public String valuePattern() {
-            return null;
+            return Arrays.stream(AsyncProfilerConfig.Counter.values())
+                .map(c -> c.name().toLowerCase(Locale.ROOT))
+                .collect(Collectors.joining("|"));
         }
     }
 }

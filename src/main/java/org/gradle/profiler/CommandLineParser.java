@@ -12,15 +12,16 @@ import org.gradle.profiler.buildops.BuildOperationMeasurementKind;
 import org.gradle.profiler.gradle.GradleBuildInvoker;
 import org.gradle.profiler.report.Format;
 
+import javax.annotation.Nullable;
 import java.io.File;
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.function.Supplier;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
-import javax.annotation.Nullable;
 
 class CommandLineParser {
 
@@ -32,7 +33,7 @@ class CommandLineParser {
         public BuildOperationMeasurement convert(String value) {
             String[] parts = value.split(":", 2);
             String buildOperationType = parts[0];
-            BuildOperationMeasurementKind measurementKind = BuildOperationMeasurementKind.CUMULATIVE_TIME;
+            BuildOperationMeasurementKind measurementKind = BuildOperationMeasurementKind.DEFAULT;
             if (parts.length > 1) {
                 measurementKind = BuildOperationMeasurementKind.fromString(parts[1]);
             }
@@ -46,7 +47,7 @@ class CommandLineParser {
 
         @Override
         public String valuePattern() {
-            return "<build operation> or <build operation>:<measurement kind>";
+            return "operation[:metric]";
         }
     }
 
@@ -60,8 +61,8 @@ class CommandLineParser {
             .forHelp();
         AbstractOptionSpec<Void> versionOption = parser.acceptsAll(Arrays.asList("v", "version"), "Display version information");
         parser.nonOptions("The scenarios or task names to run");
-        ArgumentAcceptingOptionSpec<File> projectOption = parser.accepts("project-dir", "The directory containing the build to run")
-            .withRequiredArg().ofType(File.class).defaultsTo(new File(".").getCanonicalFile());
+        ArgumentAcceptingOptionSpec<File> projectOption = parser.accepts("project-dir", "The directory containing the build to run (default: working directory)")
+            .withRequiredArg().ofType(File.class);
         ArgumentAcceptingOptionSpec<String> gradleVersionOption = parser.accepts("gradle-version", "Gradle version or installation to use to run build")
             .withRequiredArg();
         ArgumentAcceptingOptionSpec<File> gradleUserHomeOption = parser.accepts("gradle-user-home", "The Gradle user home to use")
@@ -73,12 +74,13 @@ class CommandLineParser {
         OptionSpecBuilder disableStudioSandbox = parser.accepts("no-studio-sandbox", "Marks that Android Studio should not use sandbox");
         ArgumentAcceptingOptionSpec<File> scenarioFileOption = parser.accepts("scenario-file", "Scenario definition file to use").withRequiredArg().ofType(File.class);
         ArgumentAcceptingOptionSpec<String> sysPropOption = parser.accepts("D", "Defines a system property").withRequiredArg();
-        ArgumentAcceptingOptionSpec<File> outputDirOption = parser.accepts("output-dir", "Directory to write results to").withRequiredArg()
-            .ofType(File.class).defaultsTo(findOutputDir());
+        ArgumentAcceptingOptionSpec<File> outputDirOption = parser.accepts("output-dir", "Directory to write results to (default: new directory with 'profile-out' prefix)")
+            .withRequiredArg()
+            .ofType(File.class);
         ArgumentAcceptingOptionSpec<Integer> warmupsOption = parser.accepts("warmups", "Number of warm-up build to run for each scenario").withRequiredArg().ofType(Integer.class);
         ArgumentAcceptingOptionSpec<Integer> iterationsOption = parser.accepts("iterations", "Number of builds to run for each scenario").withRequiredArg().ofType(Integer.class);
         ArgumentAcceptingOptionSpec<String> profilerOption = parser.accepts("profile",
-            "Collect profiling information using profiler (" + String.join(", ", ProfilerFactory.getAvailableProfilers()) + ")")
+                "Collect profiling information using profiler (" + String.join(", ", ProfilerFactory.getAvailableProfilers()) + ")")
             .withRequiredArg()
             .defaultsTo("jfr");
         ProfilerFactory.configureParser(parser);
@@ -86,9 +88,9 @@ class CommandLineParser {
         OptionSpecBuilder benchmarkOption = parser.accepts("benchmark", "Collect benchmark metrics");
         ArgumentAcceptingOptionSpec<BuildOperationMeasurement> measuredBuildOps = parser.accepts(
             "measure-build-op",
-            "Collect specific measurements for a given build operation, defaults to using 'cumulative_time'" +
-                " (format: <build operation> or <build operation>:<measurement kind>," +
-                " where <measurement kind> is one of " + BuildOperationMeasurementKind.getValidValues() +
+            "Build operation type to measure by a given metric" +
+                " (default: " + BuildOperationMeasurementKind.DEFAULT.toValueString() + ";" +
+                " options: " + String.join(", ", BuildOperationMeasurementKind.getValidValues()) +
                 ")"
         ).withRequiredArg().withValuesConvertedBy(new BuildOperationMeasurementValueConverter());
         OptionSpecBuilder noDaemonOption = parser.accepts("no-daemon", "Do not use the Gradle daemon");
@@ -104,15 +106,13 @@ class CommandLineParser {
         OptionSpecBuilder buckOption = parser.accepts("buck", "Benchmark scenarios using buck");
         OptionSpecBuilder mavenOption = parser.accepts("maven", "Benchmark scenarios using Maven");
         ArgumentAcceptingOptionSpec<String> csvFormatOption = parser.accepts("csv-format",
-            "The CSV format produced (" + Stream.of(Format.values()).map(Format::toString).collect(Collectors.joining(", ")) + ")")
+                "The CSV format produced (" + Stream.of(Format.values()).map(Format::toString).collect(Collectors.joining(", ")) + ")")
             .withRequiredArg()
             .defaultsTo("wide");
-        ArgumentAcceptingOptionSpec<String> benchmarkTitleOption = parser.accepts("title",
-            "Title to show on benchmark report")
+        ArgumentAcceptingOptionSpec<String> benchmarkTitleOption = parser.accepts("title", "Title to show on benchmark report")
             .withOptionalArg()
             .ofType(String.class);
-        ArgumentAcceptingOptionSpec<String> groupOption = parser.accepts("group",
-            "Run scenarios from a group")
+        ArgumentAcceptingOptionSpec<String> groupOption = parser.accepts("group", "Run scenarios from a group")
             .withRequiredArg()
             .ofType(String.class);
 
@@ -133,7 +133,7 @@ class CommandLineParser {
             return null;
         }
 
-        File projectDir = toAbsoluteFileOrNull(parsedOptions.valueOf(projectOption));
+        File projectDir = toAbsoluteFileOrNull(parsedOptions.valueOf(projectOption), () -> new File("."));
         boolean hasProfiler = parsedOptions.has(profilerOption);
         ProfilerFactory profilerFactory = ProfilerFactory.NONE;
         if (hasProfiler) {
@@ -148,7 +148,7 @@ class CommandLineParser {
             return fail(parser, "Neither --profile or --benchmark specified.");
         }
 
-        File outputDir = toAbsoluteFileOrNull(parsedOptions.valueOf(outputDirOption));
+        File outputDir = toAbsoluteFileOrNull(parsedOptions.valueOf(outputDirOption), this::findOutputDir);
         File gradleUserHome = toAbsoluteFileOrNull(parsedOptions.valueOf(gradleUserHomeOption));
         Integer warmups = parsedOptions.valueOf(warmupsOption);
         Integer iterations = parsedOptions.valueOf(iterationsOption);
@@ -264,6 +264,11 @@ class CommandLineParser {
     }
 
     private File toAbsoluteFileOrNull(@Nullable File file) {
+        return file == null ? null : file.getAbsoluteFile();
+    }
+
+    private File toAbsoluteFileOrNull(@Nullable File file, Supplier<File> orElse) {
+        file = file != null ? file : orElse.get();
         return file == null ? null : file.getAbsoluteFile();
     }
 }
