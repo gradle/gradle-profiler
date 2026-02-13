@@ -18,6 +18,12 @@ public enum BuildOperationMeasurementKind {
      */
     CUMULATIVE_TIME,
     /**
+     * Measures the time taken by all build operations of the given type, but without counting any overlapping time more
+     * than once.
+     * For example, if two operations were running in parallel for 10 seconds, this would count as 10 seconds, not 20.
+     */
+    WALL_CLOCK_TIME,
+    /**
      * Measures the time from the start of the build to the start of the first started build operation of the given type.
      * Note that this is based on the start timestamp, not any particular ordering given to the operation listener.
      */
@@ -42,6 +48,8 @@ public enum BuildOperationMeasurementKind {
         switch (value.toLowerCase(Locale.ROOT)) {
             case "cumulative_time":
                 return CUMULATIVE_TIME;
+            case "wall_clock_time":
+                return WALL_CLOCK_TIME;
             case "time_to_last_inclusive":
                 return TIME_TO_LAST_INCLUSIVE;
             case "time_to_first_exclusive":
@@ -72,6 +80,8 @@ public enum BuildOperationMeasurementKind {
         switch (this) {
             case CUMULATIVE_TIME:
                 return "Cumulative Time";
+            case WALL_CLOCK_TIME:
+                return "Wall Clock Time";
             case TIME_TO_LAST_INCLUSIVE:
                 return "Time to Last Inclusive";
             case TIME_TO_FIRST_EXCLUSIVE:

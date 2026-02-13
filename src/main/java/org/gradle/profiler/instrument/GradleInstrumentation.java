@@ -30,10 +30,12 @@ public abstract class GradleInstrumentation implements GradleArgsCalculator {
 
     private void maybeGenerate() {
         File buildOpJar = unpackPlugin("build-operations");
+        // Dependency of build-operations
+        File guavaJar = unpackPlugin("guava");
         File buildOpMeasurementsJar = unpackPlugin("build-operations-measuring");
         File chromeTraceJar = unpackPlugin("chrome-trace");
         File heapDumpJar = unpackPlugin("heap-dump");
-        String filesExpr = Stream.of(buildOpJar, buildOpMeasurementsJar, chromeTraceJar, heapDumpJar)
+        String filesExpr = Stream.of(buildOpJar, guavaJar, buildOpMeasurementsJar, chromeTraceJar, heapDumpJar)
             .map(f -> "'" + f.toURI().toASCIIString() + "'")
             .collect(Collectors.joining(", ", "files(", ")"));
         initScript = new GeneratedInitScript() {

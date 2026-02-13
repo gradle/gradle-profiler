@@ -44,7 +44,7 @@ public class BuildOperationInstrumentation extends GradleInstrumentation {
         this.configurationTimeDataFile.deleteOnExit();
         this.buildOpMeasurementRequests = buildOperationMeasurements.stream()
             .map(e -> {
-                Path outputFile = createBuildOperationTempFile(e.getBuildOperationType());
+                Path outputFile = createBuildOperationTempFile(e);
                 return new InternalBuildOpMeasurementRequest(outputFile, e.getBuildOperationType(), e.getMeasurementKind());
             })
             .toList();
@@ -54,9 +54,12 @@ public class BuildOperationInstrumentation extends GradleInstrumentation {
         return measureGarbageCollection || measureLocalBuildCache || measureConfigTime || !buildOpMeasurementRequests.isEmpty();
     }
 
-    private static Path createBuildOperationTempFile(String op) {
+    private static Path createBuildOperationTempFile(BuildOperationMeasurement op) {
         try {
-            Path tempFile = Files.createTempFile("gradle-profiler", "build-ops-" + op);
+            Path tempFile = Files.createTempFile(
+                "gradle-profiler",
+                "build-ops-" + op.getBuildOperationType() + "_" + op.getMeasurementKind().name()
+            );
             tempFile.toFile().deleteOnExit();
             return tempFile;
         } catch (IOException e) {

@@ -97,7 +97,7 @@ tasks.processResources {
     into("META-INF/jars") {
         from(profilerPlugins.minus(gradleRuntime)) {
             // Removing the version from the JARs here, since they are referenced by name in production code.
-            rename("""(.*)-\d\.\d.*\.jar""", "${'$'}1.jar")
+            rename("""(.*)-\d+\.\d+.*\.jar""", "$1.jar")
         }
     }
     from(generateHtmlReportJavaScript)

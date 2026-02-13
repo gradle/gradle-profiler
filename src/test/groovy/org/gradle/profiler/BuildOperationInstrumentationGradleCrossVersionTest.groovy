@@ -1,10 +1,12 @@
 package org.gradle.profiler
 
+import org.gradle.profiler.buildops.BuildOperationMeasurementKind
 import org.gradle.profiler.fixtures.compatibility.gradle.AbstractGradleCrossVersionTest
 import spock.lang.Requires
 
 import static org.hamcrest.CoreMatchers.*
 import static org.hamcrest.MatcherAssert.assertThat
+import static org.hamcrest.Matchers.greaterThan
 import static org.hamcrest.Matchers.lessThan
 import static org.junit.Assert.assertTrue
 
@@ -420,6 +422,102 @@ class BuildOperationInstrumentationGradleCrossVersionTest extends AbstractGradle
             ],
             [false, true]
         ].combinations().collect { it[0] + it[1] }
+    }
+
+    def "can benchmark configure build op using all measurers via command-line"() {
+        given:
+        instrumentedBuildScript()
+
+        and:
+        def args = [
+            "--gradle-version", gradleVersion,
+            "--benchmark"
+        ]
+        List<String> kindList = BuildOperationMeasurementKind.validValues.asList()
+        for (String kind : kindList) {
+            args += ["--measure-build-op", "org.gradle.initialization.ConfigureBuildBuildOperationType:${kind}"]
+        }
+        args += "assemble"
+
+        when:
+        run(args)
+
+        then:
+        def lines = resultFile.lines
+        lines.size() == totalLinesForExecutions(16)
+        lines.get(0) == "scenario,default" + (",default" * kindList.size())
+        lines.get(1) == "version,Gradle ${gradleVersion}" + (",Gradle ${gradleVersion}" * kindList.size())
+        lines.get(2) == "tasks,assemble" + (",assemble" * kindList.size())
+        def joinedMeasurementHeader = kindList.collect {
+            "ConfigureBuildBuildOperationType (" + BuildOperationMeasurementKind.fromString(it).toDisplayString() + ")"
+        }.join(",")
+        lines.get(3) == "value,total execution time,$joinedMeasurementHeader"
+
+        def firstWarmup = lines.get(4)
+        def configureBuildOp = firstWarmup =~ ("warm-up build #1,$SAMPLE" + (",($SAMPLE)" * kindList.size()))
+        configureBuildOp.matches()
+        for (int i = 0; i < kindList.size(); i++) {
+            assertThat(
+                "measurement for kind '${kindList[i]}' should be greater than zero",
+                Double.valueOf(configureBuildOp[0][i + 1]),
+                greaterThan(0D)
+            )
+        }
+
+        lines.get(9).matches("warm-up build #6,$SAMPLE" + (",$SAMPLE" * kindList.size()))
+        lines.get(10).matches("measured build #1,$SAMPLE" + (",$SAMPLE" * kindList.size()))
+    }
+
+    def "can benchmark configure build op using all measurers via scenario file"() {
+        given:
+        instrumentedBuildScript()
+
+        and:
+        def args = [
+            "--gradle-version", gradleVersion,
+            "--benchmark",
+            "--scenario-file", file("performance.scenarios").absolutePath,
+            "default"
+        ]
+        List<String> kindList = BuildOperationMeasurementKind.validValues.asList()
+        def measurementConfig = kindList.collect {
+            "{type = \"org.gradle.initialization.ConfigureBuildBuildOperationType\", measurement-kind = ${it}}"
+        }
+        def scenarioFile = file("performance.scenarios")
+        scenarioFile.text = """
+            default {
+                tasks = ["assemble"]
+                measured-build-ops = [${measurementConfig.join(",")}]
+            }
+        """
+
+        when:
+        run(args)
+
+        then:
+        def lines = resultFile.lines
+        lines.size() == totalLinesForExecutions(16)
+        lines.get(0) == "scenario,default" + (",default" * kindList.size())
+        lines.get(1) == "version,Gradle ${gradleVersion}" + (",Gradle ${gradleVersion}" * kindList.size())
+        lines.get(2) == "tasks,assemble" + (",assemble" * kindList.size())
+        def joinedMeasurementHeader = kindList.collect {
+            "ConfigureBuildBuildOperationType (" + BuildOperationMeasurementKind.fromString(it).toDisplayString() + ")"
+        }.join(",")
+        lines.get(3) == "value,total execution time,$joinedMeasurementHeader"
+
+        def firstWarmup = lines.get(4)
+        def configureBuildOp = firstWarmup =~ ("warm-up build #1,$SAMPLE" + (",($SAMPLE)" * kindList.size()))
+        configureBuildOp.matches()
+        for (int i = 0; i < kindList.size(); i++) {
+            assertThat(
+                "measurement for kind '${kindList[i]}' should be greater than zero",
+                Double.valueOf(configureBuildOp[0][i + 1]),
+                greaterThan(0D)
+            )
+        }
+
+        lines.get(9).matches("warm-up build #6,$SAMPLE" + (",$SAMPLE" * kindList.size()))
+        lines.get(10).matches("measured build #1,$SAMPLE" + (",$SAMPLE" * kindList.size()))
     }
 
     @Requires({ it.instance.gradleVersionWithExperimentalConfigurationCache() })
