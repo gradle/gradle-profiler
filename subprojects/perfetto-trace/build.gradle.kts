@@ -5,6 +5,8 @@ plugins {
     alias(libs.plugins.protobuf)
 }
 
+description = "Library for converting Gradle build operation traces into Perfetto traces"
+
 repositories {
     mavenCentral()
 }
