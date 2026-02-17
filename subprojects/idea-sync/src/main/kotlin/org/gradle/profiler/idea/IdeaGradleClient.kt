@@ -100,7 +100,7 @@ class IdeaGradleClient(
             invocationSettings.ideInfo,
             LocalProjectInfo(projectDir)
         )
-        val testContext = Starter.newContext("Profile IDEA Sync", testCase)
+        val testContext = Starter.newContext("gradle-profiler-sync", testCase)
         val profilerAgentServer = Server("agent")
 
         ideaRun = testContext
