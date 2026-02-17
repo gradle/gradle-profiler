@@ -114,7 +114,8 @@ class IdeaGradleClient(
             }
             .runIdeWithDriver {
                 addVMOptionsPatch {
-                    clearSystemProperty("ide.performance.screenshot")
+                    addSystemProperty("ide.performance.screenshot", false)
+                    addSystemProperty("expose.ui.hierarchy.url", false)
                 }
             }
 
