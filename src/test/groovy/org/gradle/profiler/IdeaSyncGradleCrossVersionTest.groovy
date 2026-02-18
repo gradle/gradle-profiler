@@ -1,10 +1,10 @@
 package org.gradle.profiler
 
-import org.gradle.profiler.fixtures.compatibility.gradle.AbstractGradleCrossVersionTest
+import org.gradle.profiler.fixtures.AbstractProfilerIntegrationTest
 import spock.lang.Shared
 import spock.lang.TempDir
 
-class IdeaSyncGradleCrossVersionTest extends AbstractGradleCrossVersionTest {
+class IdeaSyncGradleCrossVersionTest extends AbstractProfilerIntegrationTest {
 
     @Shared
     @TempDir
@@ -42,7 +42,7 @@ class IdeaSyncGradleCrossVersionTest extends AbstractGradleCrossVersionTest {
         run([
             "--benchmark",
             "--scenario-file", scenarioFile.absolutePath,
-            "--gradle-version", gradleVersion,
+            "--gradle-version", latestSupportedGradleVersion,
             "--idea-version", ideaVersion,
             "--idea-home", ideaHome.absolutePath,
             "--idea-sandbox", outputDir.absolutePath,

@@ -103,6 +103,10 @@ class IdeaGradleClient(
         val testContext = Starter.newContext("gradle-profiler-sync", testCase)
         val profilerAgentServer = Server("agent")
 
+        println()
+        println("* Launching IDEA ${invocationSettings.ideaVersion}")
+        println()
+
         ideaRun = testContext
             // Indexing takes time and memory
             .skipIndicesInitialization()
@@ -114,8 +118,9 @@ class IdeaGradleClient(
             }
             .runIdeWithDriver {
                 addVMOptionsPatch {
-                    addSystemProperty("ide.performance.screenshot", false)
+                    clearSystemProperty("ide.performance.screenshot")
                     addSystemProperty("expose.ui.hierarchy.url", false)
+                    addSystemProperty("evaluation.feedback.enabled", false)
                 }
             }
 
