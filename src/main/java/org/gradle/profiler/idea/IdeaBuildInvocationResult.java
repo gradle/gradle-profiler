@@ -15,7 +15,7 @@ public class IdeaBuildInvocationResult extends GradleBuildInvocationResult {
             result.getGarbageCollectionTime(),
             result.getLocalBuildCacheSize(),
             result.getTimeToTaskExecution(),
-            result.getBuildOperationExecutionData(),
+            result.getTotalBuildOperationExecutionData(),
             result.getDaemonPid()
         );
     }
