@@ -20,7 +20,6 @@ object GradleProfilerSanityCheck : BuildType({
             tasks = "clean sanityCheck"
             buildFile = ""
             gradleParams = "-s --build-cache ${toolchainConfiguration(os, arch)}"
-            param("org.jfrog.artifactory.selectedDeployableServer.defaultModuleVersionConfiguration", "GLOBAL")
         }
     }
 
