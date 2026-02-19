@@ -18,7 +18,8 @@ fun Project.configureGradleProfilerProject() {
 
     testBuilds.forEach(this::buildType)
 
-    buildType(GradleProfilerTestTrigger(testBuilds))
+    buildType(GradleProfilerSanityCheck)
+    buildType(GradleProfilerTestTrigger(listOf(GradleProfilerSanityCheck) + testBuilds))
     buildType(GradleProfilerPublishing)
     buildType(GradleProfilerPublishToSdkMan(GradleProfilerPublishing))
 

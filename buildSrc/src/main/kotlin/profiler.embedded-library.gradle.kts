@@ -1,10 +1,9 @@
+// Project packaged into the Gradle profiler Jar for the further injection to Gradle build.
+// Uses Java 8 for compatibility with older Gradle versions.
 plugins {
     id("profiler.java-library")
     id("groovy")
 }
-
-description =
-    "Project packaged into the Gradle profiler Jar for the further injection to Gradle build. Uses Java 8 for compatibility with older Gradle versions."
 
 // Using sourceCompatibility/targetCompatibility instead of options.release because:
 // - :build-operations needs sun.management APIs and Java 9+ ProcessHandle (multi-version code)
