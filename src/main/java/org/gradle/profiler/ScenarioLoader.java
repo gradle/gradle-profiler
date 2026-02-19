@@ -15,6 +15,9 @@ import org.gradle.profiler.buck.BuckScenarioDefinition;
 import org.gradle.profiler.buildops.BuildOperationMeasurement;
 import org.gradle.profiler.buildops.BuildOperationMeasurementKind;
 import org.gradle.profiler.gradle.*;
+import org.gradle.profiler.idea.IdeaGradleScenarioDefinition;
+import org.gradle.profiler.idea.IdeaSyncAction;
+import org.gradle.profiler.idea.IdeaSyncScenarioDefinition;
 import org.gradle.profiler.maven.MavenScenarioDefinition;
 import org.gradle.profiler.mutations.AbstractScheduledMutator.Schedule;
 import org.gradle.profiler.mutations.*;
@@ -66,6 +69,7 @@ class ScenarioLoader {
     private static final String CLEAR_TRANSFORM_CACHE_BEFORE = "clear-transform-cache-before";
     private static final String CLEAR_JARS_CACHE_BEFORE = "clear-jars-cache-before";
     // clear-android-studio-cache-before is not implemented as a mutator, but it's implemented inside the StudioGradleClient
+    // todo idea sync supports it, rename?
     private static final String CLEAR_ANDROID_STUDIO_CACHE_BEFORE = "clear-android-studio-cache-before";
     private static final String SHOW_BUILD_CACHE_SIZE = "show-build-cache-size";
     private static final String GIT_CHECKOUT = "git-checkout";
@@ -135,6 +139,7 @@ class ScenarioLoader {
             JVM_ARGS,
             BUILD_OPERATIONS_TRACE
         ))
+        .addAll(IdeaSyncScenarioDefinition.getAllKeys())
         .add(CLEAR_ANDROID_STUDIO_CACHE_BEFORE)
         .build();
 
@@ -299,9 +304,7 @@ class ScenarioLoader {
                 buildOperationMeasurements,
                 buildOperationsTrace
             );
-            ScenarioDefinition scenarioDefinition = scenario.hasPath(ANDROID_STUDIO_SYNC)
-                ? newStudioGradleScenarioDefinition(gradleScenarioDefinition, scenario)
-                : gradleScenarioDefinition;
+            ScenarioDefinition scenarioDefinition = getScenarioDefinition(scenario, gradleScenarioDefinition);
             scenarioDefinitions.add(scenarioDefinition);
         }
         return scenarioDefinitions;
@@ -363,6 +366,12 @@ class ScenarioLoader {
         return ImmutableList.of(new MavenScenarioDefinition(scenarioName, title, targets, systemProperties, mutators, warmUpCount, buildCount, outputDir, mavenHome));
     }
 
+    private static ScenarioDefinition getScenarioDefinition(Config scenario, GradleScenarioDefinition gradleScenarioDefinition) {
+        return scenario.hasPath(ANDROID_STUDIO_SYNC) ? newStudioGradleScenarioDefinition(gradleScenarioDefinition, scenario)
+            : scenario.hasPath(IdeaSyncScenarioDefinition.IDEA_SYNC_KEY) ? newIdeaGradleScenarioDefinition(gradleScenarioDefinition, scenario)
+            : gradleScenarioDefinition;
+    }
+
     private static Config parseScenarioFile(File scenarioFile) {
         return ConfigFactory.parseFile(scenarioFile, ConfigParseOptions.defaults().setAllowMissing(false)).resolve();
     }
@@ -372,6 +381,11 @@ class ScenarioLoader {
         List<String> studioJvmArgs = ConfigUtil.strings(androidStudioSync, ANDROID_STUDIO_JVM_ARGS, ImmutableList.of("-Xms256m", "-Xmx4096m"));
         List<String> ideaProperties = ConfigUtil.strings(androidStudioSync, ANDROID_STUDIO_IDEA_PROPERTIES, Collections.emptyList());
         return new StudioGradleScenarioDefinition(gradleScenarioDefinition, studioJvmArgs, ideaProperties);
+    }
+
+    private static IdeaGradleScenarioDefinition newIdeaGradleScenarioDefinition(GradleScenarioDefinition gradleScenarioDefinition, Config scenario) {
+        Config ideaSyncConfig = scenario.getConfig(IdeaSyncScenarioDefinition.IDEA_SYNC_KEY);
+        return new IdeaGradleScenarioDefinition(gradleScenarioDefinition, IdeaSyncScenarioDefinition.ofConfig(ideaSyncConfig));
     }
 
     private static List<BuildMutator> getMutators(Config scenario, String scenarioName, InvocationSettings settings, int warmUpCount, int buildCount) {
@@ -500,9 +514,9 @@ class ScenarioLoader {
 
     public static GradleBuildInvoker invoker(Config config, GradleBuildInvoker defaultValue, BuildAction buildAction) {
         GradleBuildInvoker invoker = defaultValue;
-        boolean sync = buildAction instanceof AndroidStudioSyncAction;
+        boolean sync = buildAction instanceof AndroidStudioSyncAction || buildAction instanceof IdeaSyncAction;
         if (sync) {
-            invoker = getAndroidStudioInvoker(config);
+            invoker = getIdeSyncInvoker(config, buildAction instanceof AndroidStudioSyncAction);
         }
 
         if (config.hasPath(RUN_USING)) {
@@ -535,19 +549,29 @@ class ScenarioLoader {
         return invoker;
     }
 
-    private static GradleBuildInvoker getAndroidStudioInvoker(Config config) {
+    private static GradleBuildInvoker getIdeSyncInvoker(Config config, boolean isAndroidStudio) {
         Schedule schedule = ConfigUtil.enumValue(config, CLEAR_ANDROID_STUDIO_CACHE_BEFORE, Schedule.class, null);
-        if (schedule == null) {
-            return GradleBuildInvoker.AndroidStudio;
-        }
-        switch (schedule) {
-            case SCENARIO:
-                return GradleBuildInvoker.AndroidStudioCleanCacheBeforeScenario;
-            case BUILD:
-                return GradleBuildInvoker.AndroidStudioCleanCacheBeforeBuild;
-            case CLEANUP:
-            default:
+        if (isAndroidStudio) {
+            if (schedule == null) {
+                return GradleBuildInvoker.AndroidStudio;
+            }
+            switch (schedule) {
+                case SCENARIO:
+                    return GradleBuildInvoker.AndroidStudioCleanCacheBeforeScenario;
+                case BUILD:
+                    return GradleBuildInvoker.AndroidStudioCleanCacheBeforeBuild;
+                case CLEANUP:
+                default:
+                    throw new IllegalArgumentException(String.format("Unsupported cleanup schedule for '%s': '%s'", CLEAR_ANDROID_STUDIO_CACHE_BEFORE, schedule));
+            }
+        } else {
+            if (schedule == null || schedule == Schedule.SCENARIO) {
+                return GradleBuildInvoker.IdeaCleanCacheBeforeScenario;
+            } else if (schedule == Schedule.BUILD) {
+                return GradleBuildInvoker.IdeaCleanCacheBeforeBuild;
+            } else {
                 throw new IllegalArgumentException(String.format("Unsupported cleanup schedule for '%s': '%s'", CLEAR_ANDROID_STUDIO_CACHE_BEFORE, schedule));
+            }
         }
     }
 
@@ -561,20 +585,29 @@ class ScenarioLoader {
 
     private static BuildAction getBuildAction(Config scenario, String scenarioName, File scenarioFile, InvocationSettings invocationSettings) {
         Config toolingApi = scenario.hasPath(TOOLING_API) ? scenario.getConfig(TOOLING_API) : null;
-        boolean sync = scenario.hasPath(ANDROID_STUDIO_SYNC);
         List<String> tasks = ConfigUtil.strings(scenario, TASKS);
+        boolean isSync = scenario.hasPath(ANDROID_STUDIO_SYNC) || scenario.hasPath(IdeaSyncScenarioDefinition.IDEA_SYNC_KEY);
 
-        if (sync) {
+        if (isSync) {
             if (toolingApi != null) {
                 throw new IllegalArgumentException(String.format("Scenario '%s': Cannot load tooling model and Android studio sync in same scenario.", scenarioName));
             }
             if (!tasks.isEmpty()) {
                 throw new IllegalArgumentException(String.format("Scenario '%s': Cannot run tasks and Android studio sync in same scenario.", scenarioName));
             }
+        }
+        if (scenario.hasPath(ANDROID_STUDIO_SYNC)) {
             if (invocationSettings.getStudioInstallDir() == null) {
                 throw new IllegalArgumentException("Android Studio installation directory should be specified using --studio-install-dir when measuring Android studio sync.");
             }
             return new AndroidStudioSyncAction();
+        }
+
+        if (scenario.hasPath(IdeaSyncScenarioDefinition.IDEA_SYNC_KEY)) {
+            if (invocationSettings.getIdeaSyncInvocationSettings() == null) {
+                throw new IllegalArgumentException("IDEA version by --idea-version and home dir for installers by --idea-home should be specified when measuring IDEA sync.");
+            }
+            return new IdeaSyncAction();
         }
 
         if (toolingApi != null) {

@@ -231,8 +231,11 @@ The following command line options only apply when measuring Gradle builds:
 - `--measure-local-build-cache`: Measure the size of the local build cache.
 - `-D<key>=<value>`: Defines a system property when running the build, overriding the default for the build.
 - `--studio-install-dir`: The Android Studio installation directory. Required when measuring Android Studio sync. On macOS, it is the app directory, e.g. `~/Applications/Android Studio.app`.
-- `--studio-sandbox-dir`: The Android Studio sandbox directory. It's recommended to use it since it isolates the Android Studio process from your other Android Studio processes. By default, this will be set to `<output-dir>/studio-sandbox`. If you want Android Studio to keep old data (e.g. indexes) you should set and reuse your own folder. 
+- `--studio-sandbox-dir`: The Android Studio sandbox directory. It's recommended to use it since it isolates the Android Studio process from your other Android Studio processes. By default, this will be set to `<output-dir>/studio-sandbox`. If you want Android Studio to keep old data (e.g. indexes) you should set and reuse your own folder.
 - `--no-studio-sandbox`: Do not use the Android Studio sandbox but use the default Android Studio folders for the Android Studio data.
+- `--idea-version`: The IntelliJ IDEA version to use for IDEA sync measurements. Format is `version-buildType`, e.g. `2023.3-release` or `2024.1-eap`. Required when measuring IDEA sync.
+- `--idea-home`: The directory to store IDEA installers and executables. Defaults to `~/.gradle-profiler-dist/idea`. Can also be set via `IDEA_PROFILER_HOME` environment variable or `idea.home` system property. IDEA will be auto-provisioned to this location if not already present.
+- `--idea-sandbox`: The directory to store IDE launch artifacts like logs. Optional.
 - `--no-diffs`: Do not generate differential flame graphs.
 
 ## JVM requirements and options
@@ -360,6 +363,14 @@ Here is an example:
             # idea-properties = ["gradle.tooling.models.parallel.fetch=true"]
         }
     }
+    ideaSync {
+        title = "IntelliJ IDEA Sync"
+        # Measure an IntelliJ IDEA Gradle sync
+        idea-sync {
+            # Override default IDEA jvm args
+            # idea-jvm-args = ["-Xms256m", "-Xmx4096m"]
+        }
+    }
 
 Values are optional and default to the values provided on the command-line or defined in the build.
 
@@ -431,7 +442,7 @@ These mutations are applied before each build, and they introduce different kind
 When simulating scenarios like ephemeral builds, it is important to make sure caches are not present.
 These mutators can be scheduled to execute at different points in the build benchmark process, specified by the `schedule` parameter.
 
-- `clear-android-studio-cache-before`: Invalidates the Android Studio caches. Due to Android Studio client specifics scheduling to run before cleanup (`CLEANUP`) is not supported. Note: cleaning the Android Studio caches is run only when Android Studio sync (`android-studio-sync`) is used.
+- `clear-android-studio-cache-before`: Invalidates the IDE caches. Scheduling to run before cleanup (`CLEANUP`) is not supported. Note: cleaning the IDE caches is run only when Android Studio sync (`android-studio-sync`) or IDEA sync (`idea-sync`) is used.
 - `clear-build-cache-before`: Deletes the contents of the build cache at the given schedule.
 - `clear-configuration-cache-state-before`: Deletes the contents of the `.gradle/configuration-cache-state` directory.
 - `clear-gradle-user-home-before`: Deletes the contents of the Gradle user home directory.

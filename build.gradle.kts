@@ -22,6 +22,16 @@ description = "A tool to profile and benchmark Gradle builds"
 val gradleRuntime by configurations.creating
 val profilerPlugins by configurations.creating
 
+repositories {
+    maven {
+        url = uri("https://www.jetbrains.com/intellij-repository/releases")
+    }
+
+    maven {
+        url = uri("https://cache-redirector.jetbrains.com/intellij-dependencies")
+    }
+}
+
 dependencies {
     // gradle/gradle uses these as part of Gradle Profiler-as-a-library
     api(project(":build-action"))
@@ -31,6 +41,7 @@ dependencies {
     implementation(project(":client-protocol"))
     implementation(project(":scenario-definition"))
     implementation(project(":perfetto-trace"))
+    implementation(project(":idea-sync"))
 
     implementation("com.google.code.findbugs:annotations:3.0.1")
     implementation("com.google.guava:guava:32.1.2-jre")
@@ -78,6 +89,22 @@ tasks.withType<Jar>().configureEach {
 }
 
 application.mainClass.set("org.gradle.profiler.Main")
+
+// The IntelliJ IDE Starter dependencies bring in artifacts with the same artifact name
+// but different group IDs (e.g., com.jetbrains.intellij.platform:kernel and
+// com.jetbrains.intellij.fleet:kernel both produce kernel-VERSION.jar).
+// We force the fleet artifacts to a different patch version to avoid filename collisions.
+// See libs.versions.toml for more details.
+configurations.all {
+    resolutionStrategy.eachDependency {
+        if (requested.group == "com.jetbrains.intellij.fleet" &&
+            requested.name in listOf("kernel", "rpc") &&
+            requested.version == libs.versions.intellijIdeStarter.get()) {
+            useVersion(libs.versions.intellijIdeStarterFleet.get())
+            because("Avoid JAR filename collision with platform artifacts of the same name")
+        }
+    }
+}
 
 node {
     download = true

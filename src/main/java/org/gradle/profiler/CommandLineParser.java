@@ -10,6 +10,7 @@ import joptsimple.ValueConverter;
 import org.gradle.profiler.buildops.BuildOperationMeasurement;
 import org.gradle.profiler.buildops.BuildOperationMeasurementKind;
 import org.gradle.profiler.gradle.GradleBuildInvoker;
+import org.gradle.profiler.idea.IdeaSyncInvocationSettings;
 import org.gradle.profiler.report.Format;
 
 import java.io.File;
@@ -115,6 +116,7 @@ class CommandLineParser {
             "Run scenarios from a group")
             .withRequiredArg()
             .ofType(String.class);
+        IdeaSyncInvocationSettings.registerCliOptions(parser);
 
         OptionSet parsedOptions;
         try {
@@ -205,6 +207,7 @@ class CommandLineParser {
         Format csvFormat = Format.parse(parsedOptions.valueOf(csvFormatOption));
         String benchmarkTitle = parsedOptions.valueOf(benchmarkTitleOption);
         String scenarioGroup = parsedOptions.valueOf(groupOption);
+        IdeaSyncInvocationSettings ideaSyncInvocationSettings = IdeaSyncInvocationSettings.ofParsedOptions(parsedOptions);
 
         return new InvocationSettings.InvocationSettingsBuilder()
             .setProjectDir(projectDir)
@@ -232,6 +235,7 @@ class CommandLineParser {
             .setCsvFormat(csvFormat)
             .setBenchmarkTitle(benchmarkTitle)
             .setScenarioGroup(scenarioGroup)
+            .setIdeaSyncInvocationSettings(ideaSyncInvocationSettings)
             .build();
     }
 

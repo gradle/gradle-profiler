@@ -1,6 +1,7 @@
 package org.gradle.profiler;
 
 import org.gradle.profiler.buildops.BuildOperationMeasurement;
+import org.gradle.profiler.idea.IdeaSyncInvocationSettings;
 import org.gradle.profiler.report.Format;
 
 import javax.annotation.Nullable;
@@ -27,6 +28,10 @@ public class InvocationSettings {
     private final File gradleUserHome;
     private final File studioInstallDir;
     private final File studioSandboxDir;
+
+    @Nullable
+    private final IdeaSyncInvocationSettings ideaSyncInvocationSettings;
+
     private final Integer warmupCount;
     private final Integer iterations;
     private final boolean measureGarbageCollection;
@@ -71,7 +76,8 @@ public class InvocationSettings {
         Format csvFormat,
         String benchmarkTitle,
         String scenarioGroup,
-        File buildLog
+        File buildLog,
+        @Nullable IdeaSyncInvocationSettings ideaSyncInvocationSettings
     ) {
         this.benchmark = benchmark;
         this.projectDir = projectDir;
@@ -99,6 +105,7 @@ public class InvocationSettings {
         this.benchmarkTitle = benchmarkTitle;
         this.scenarioGroup = scenarioGroup;
         this.buildLog = buildLog;
+        this.ideaSyncInvocationSettings = ideaSyncInvocationSettings;
     }
 
     @Nullable
@@ -236,6 +243,10 @@ public class InvocationSettings {
         return invocationId;
     }
 
+    public IdeaSyncInvocationSettings getIdeaSyncInvocationSettings() {
+        return ideaSyncInvocationSettings;
+    }
+
     public InvocationSettingsBuilder newBuilder() {
         return new InvocationSettings.InvocationSettingsBuilder()
             .setProjectDir(projectDir)
@@ -261,7 +272,8 @@ public class InvocationSettings {
             .setCsvFormat(csvFormat)
             .setBenchmarkTitle(benchmarkTitle)
             .setScenarioGroup(scenarioGroup)
-            .setBuildLog(buildLog);
+            .setBuildLog(buildLog)
+            .setIdeaSyncInvocationSettings(ideaSyncInvocationSettings);
     }
 
     public void printTo(PrintStream out) {
@@ -322,6 +334,13 @@ public class InvocationSettings {
         private String benchmarkTitle;
         private String scenarioGroup;
         private File buildLog;
+        @Nullable
+        private IdeaSyncInvocationSettings ideaSyncInvocationSettings;
+
+        public InvocationSettingsBuilder setIdeaSyncInvocationSettings(IdeaSyncInvocationSettings ideaSyncInvocationSettings) {
+            this.ideaSyncInvocationSettings = ideaSyncInvocationSettings;
+            return this;
+        }
 
         public InvocationSettingsBuilder setProjectDir(File projectDir) {
             this.projectDir = projectDir;
@@ -490,7 +509,8 @@ public class InvocationSettings {
                 csvFormat,
                 benchmarkTitle,
                 scenarioGroup,
-                buildLog
+                buildLog,
+                ideaSyncInvocationSettings
             );
         }
     }
