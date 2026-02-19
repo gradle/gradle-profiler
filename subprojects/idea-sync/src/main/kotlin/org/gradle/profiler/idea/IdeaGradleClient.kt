@@ -183,7 +183,7 @@ class IdeaGradleClient(
         val start = Instant.now()
 
         val gradleExecutionDuration = coroutineScope.async {
-            profilerAgentConnection.receiveGradleInvocationStarted(Duration.ofSeconds(5))
+            profilerAgentConnection.receiveGradleInvocationStarted(ofMinutes(1))
             profilerAgentConnection.send(GradleInvocationParameters(gradleArgs, jvmArgs))
             Duration.ofMillis(profilerAgentConnection.receiveGradleInvocationCompleted(Duration.ofHours(1)).durationMillis)
         }
