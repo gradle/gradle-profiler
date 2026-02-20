@@ -20,7 +20,7 @@ public class JProfilerProfilerFactory extends ProfilerFactory {
     @Override
     public void addOptions(OptionParser parser) {
         homeDir = parser.accepts("jprofiler-home", "JProfiler installation directory").availableIf("profile")
-            .withOptionalArg().ofType(String.class).defaultsTo(JProfiler.getDefaultHomeDir());
+            .withRequiredArg().ofType(String.class);
         configOption = parser.accepts("jprofiler-config", "JProfiler built-in configuration name (sampling|sampling-all|instrumentation)")
             .availableIf("profile").withOptionalArg().ofType(String.class).defaultsTo("sampling");
         sessionIdOption = parser.accepts("jprofiler-session-id", "Use session with this id from the JProfiler installation instead of using the built-in config")
@@ -48,8 +48,12 @@ public class JProfilerProfilerFactory extends ProfilerFactory {
     }
 
     private JProfilerConfig newConfigObject(OptionSet parsedOptions) {
+        String homeDir = parsedOptions.valueOf(this.homeDir);
+        if (homeDir == null) {
+            homeDir = JProfiler.getDefaultHomeDir();
+        }
         return new JProfilerConfig(
-            parsedOptions.valueOf(homeDir),
+            homeDir,
             parsedOptions.valueOf(configOption),
             parsedOptions.valueOf(sessionIdOption),
             parsedOptions.valueOf(configFileOption),
