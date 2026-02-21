@@ -25,8 +25,8 @@ public class InvocationSettings {
     private final List<String> targets;
     private final Map<String, String> sysProperties;
     private final File gradleUserHome;
-    private final File studioInstallDir;
-    private final File studioSandboxDir;
+    private final File ideInstallDir;
+    private final File ideSandboxDir;
     private final Integer warmupCount;
     private final Integer iterations;
     private final boolean measureGarbageCollection;
@@ -59,8 +59,8 @@ public class InvocationSettings {
         List<String> targets,
         Map<String, String> sysProperties,
         File gradleUserHome,
-        @Nullable File studioInstallDir,
-        File studioSandboxDir,
+        @Nullable File ideInstallDir,
+        File ideSandboxDir,
         Integer warmupCount,
         Integer iterations,
         boolean measureGarbageCollection,
@@ -86,8 +86,8 @@ public class InvocationSettings {
         this.targets = targets;
         this.sysProperties = sysProperties;
         this.gradleUserHome = gradleUserHome;
-        this.studioInstallDir = studioInstallDir;
-        this.studioSandboxDir = studioSandboxDir;
+        this.ideInstallDir = ideInstallDir;
+        this.ideSandboxDir = ideSandboxDir;
         this.warmupCount = warmupCount;
         this.iterations = iterations;
         this.measureGarbageCollection = measureGarbageCollection;
@@ -182,12 +182,12 @@ public class InvocationSettings {
         return gradleUserHome;
     }
 
-    public File getStudioInstallDir() {
-        return studioInstallDir;
+    public File getIdeInstallDir() {
+        return ideInstallDir;
     }
 
-    public Optional<File> getStudioSandboxDir() {
-        return Optional.ofNullable(studioSandboxDir);
+    public Optional<File> getIdeSandboxDir() {
+        return Optional.ofNullable(ideSandboxDir);
     }
 
     public boolean isMeasureGarbageCollection() {
@@ -251,7 +251,8 @@ public class InvocationSettings {
             .setTargets(targets)
             .setSysProperties(sysProperties)
             .setGradleUserHome(gradleUserHome)
-            .setStudioInstallDir(studioInstallDir)
+            .setIdeInstallDir(ideInstallDir)
+            .setIdeSandboxDir(ideSandboxDir)
             .setWarmupCount(warmupCount)
             .setIterations(iterations)
             .setMeasureGarbageCollection(measureGarbageCollection)
@@ -309,8 +310,8 @@ public class InvocationSettings {
         private List<String> targets;
         private Map<String, String> sysProperties;
         private File gradleUserHome;
-        private File studioInstallDir;
-        private File studioSandboxDir;
+        private File ideInstallDir;
+        private File ideSandboxDir;
         private Integer warmupCount;
         private Integer iterations;
         private boolean measureGarbageCollection;
@@ -388,13 +389,13 @@ public class InvocationSettings {
             return this;
         }
 
-        public InvocationSettingsBuilder setStudioInstallDir(File studioInstallDir) {
-            this.studioInstallDir = studioInstallDir;
+        public InvocationSettingsBuilder setIdeInstallDir(File ideInstallDir) {
+            this.ideInstallDir = ideInstallDir;
             return this;
         }
 
-        public InvocationSettingsBuilder setStudioSandboxDir(@Nullable File studioSandboxDir) {
-            this.studioSandboxDir = studioSandboxDir;
+        public InvocationSettingsBuilder setIdeSandboxDir(@Nullable File ideSandboxDir) {
+            this.ideSandboxDir = ideSandboxDir;
             return this;
         }
 
@@ -478,8 +479,8 @@ public class InvocationSettings {
                 targets,
                 sysProperties,
                 gradleUserHome,
-                studioInstallDir,
-                studioSandboxDir,
+                ideInstallDir,
+                ideSandboxDir,
                 warmupCount,
                 iterations,
                 measureGarbageCollection,

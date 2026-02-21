@@ -18,8 +18,8 @@ import org.gradle.profiler.report.CsvGenerator;
 import org.gradle.profiler.report.HtmlGenerator;
 import org.gradle.profiler.result.BuildInvocationResult;
 import org.gradle.profiler.result.SampleProvider;
-import org.gradle.profiler.studio.invoker.StudioGradleScenarioDefinition;
-import org.gradle.profiler.studio.invoker.StudioGradleScenarioInvoker;
+import org.gradle.profiler.ide.invoker.IdeGradleScenarioDefinition;
+import org.gradle.profiler.ide.invoker.IdeGradleScenarioInvoker;
 
 import java.io.File;
 import java.io.IOException;
@@ -82,7 +82,7 @@ public class Main {
 
 
             GradleScenarioInvoker gradleScenarioInvoker = new GradleScenarioInvoker(daemonControl, pidInstrumentation);
-            StudioGradleScenarioInvoker studioGradleScenarioInvoker = new StudioGradleScenarioInvoker(gradleScenarioInvoker);
+            IdeGradleScenarioInvoker ideGradleScenarioInvoker = new IdeGradleScenarioInvoker(gradleScenarioInvoker);
             BazelScenarioInvoker bazelScenarioInvoker = new BazelScenarioInvoker();
             BuckScenarioInvoker buckScenarioInvoker = new BuckScenarioInvoker();
             MavenScenarioInvoker mavenScenarioInvoker = new MavenScenarioInvoker();
@@ -103,8 +103,8 @@ public class Main {
                     invoke(buckScenarioInvoker, (BuckScenarioDefinition) scenario, settings, benchmarkResults, failures);
                 } else if (scenario instanceof MavenScenarioDefinition) {
                     invoke(mavenScenarioInvoker, (MavenScenarioDefinition) scenario, settings, benchmarkResults, failures);
-                } else if (scenario instanceof StudioGradleScenarioDefinition) {
-                    invoke(studioGradleScenarioInvoker, (StudioGradleScenarioDefinition) scenario, settings, benchmarkResults, failures);
+                } else if (scenario instanceof IdeGradleScenarioDefinition) {
+                    invoke(ideGradleScenarioInvoker, (IdeGradleScenarioDefinition) scenario, settings, benchmarkResults, failures);
                 } else if (scenario instanceof GradleScenarioDefinition) {
                     invoke(gradleScenarioInvoker, (GradleScenarioDefinition) scenario, settings, benchmarkResults, failures);
                 } else {

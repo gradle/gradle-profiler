@@ -19,8 +19,8 @@ import org.gradle.profiler.maven.MavenScenarioDefinition;
 import org.gradle.profiler.mutations.AbstractScheduledMutator.Schedule;
 import org.gradle.profiler.mutations.*;
 import org.gradle.profiler.mutations.BuildMutatorConfigurator.BuildMutatorConfiguratorSpec;
-import org.gradle.profiler.studio.AndroidStudioSyncAction;
-import org.gradle.profiler.studio.invoker.StudioGradleScenarioDefinition;
+import org.gradle.profiler.ide.IdeSyncAction;
+import org.gradle.profiler.ide.invoker.IdeGradleScenarioDefinition;
 
 import javax.annotation.Nullable;
 import java.io.File;
@@ -65,8 +65,6 @@ class ScenarioLoader {
     private static final String CLEAR_PROJECT_CACHE_BEFORE = "clear-project-cache-before";
     private static final String CLEAR_TRANSFORM_CACHE_BEFORE = "clear-transform-cache-before";
     private static final String CLEAR_JARS_CACHE_BEFORE = "clear-jars-cache-before";
-    // clear-android-studio-cache-before is not implemented as a mutator, but it's implemented inside the StudioGradleClient
-    private static final String CLEAR_ANDROID_STUDIO_CACHE_BEFORE = "clear-android-studio-cache-before";
     private static final String SHOW_BUILD_CACHE_SIZE = "show-build-cache-size";
     private static final String GIT_CHECKOUT = "git-checkout";
     private static final String GIT_REVERT = "git-revert";
@@ -76,9 +74,24 @@ class ScenarioLoader {
     private static final String ACTION = "action";
     private static final String MEASUREMENT_KIND = "measurement-kind";
     private static final String TOOLING_API = "tooling-api";
+    // Preferred IDE sync keys
+    private static final String IDE_SYNC = "ide-sync";
+    private static final String IDE_JVM_ARGS = "ide-jvm-args";
+    private static final String CLEAR_IDE_CACHE_BEFORE = "clear-ide-cache-before";
+    private static final String IDE_IDEA_PROPERTIES = "idea-properties";
+    // Deprecated aliases — kept for backward compatibility
+    /** @deprecated Use {@link #IDE_SYNC} ({@code "ide-sync"}) instead. */
+    @Deprecated
     private static final String ANDROID_STUDIO_SYNC = "android-studio-sync";
+    /** @deprecated Use {@link #IDE_JVM_ARGS} ({@code "ide-jvm-args"}) instead. */
+    @Deprecated
     private static final String ANDROID_STUDIO_JVM_ARGS = "studio-jvm-args";
-    private static final String ANDROID_STUDIO_IDEA_PROPERTIES = "idea-properties";
+    /**
+     * Not a mutator; handled inside {@code IdeGradleClient}.
+     * @deprecated Use {@link #CLEAR_IDE_CACHE_BEFORE} ({@code "clear-ide-cache-before"}) instead.
+     */
+    @Deprecated
+    private static final String CLEAR_ANDROID_STUDIO_CACHE_BEFORE = "clear-android-studio-cache-before";
     private static final String JVM_ARGS = "jvm-args";
     private static final String CLEAR_DIR = "clear-dir";
     private static final String DELETE_FILE = "delete-file";
@@ -130,11 +143,13 @@ class ScenarioLoader {
             MAVEN,
             TOOLING_API,
             TOOL_HOME,
+            IDE_SYNC,
             ANDROID_STUDIO_SYNC,
             DAEMON,
             JVM_ARGS,
             BUILD_OPERATIONS_TRACE
         ))
+        .add(CLEAR_IDE_CACHE_BEFORE)
         .add(CLEAR_ANDROID_STUDIO_CACHE_BEFORE)
         .build();
 
@@ -299,8 +314,8 @@ class ScenarioLoader {
                 buildOperationMeasurements,
                 buildOperationsTrace
             );
-            ScenarioDefinition scenarioDefinition = scenario.hasPath(ANDROID_STUDIO_SYNC)
-                ? newStudioGradleScenarioDefinition(gradleScenarioDefinition, scenario)
+            ScenarioDefinition scenarioDefinition = hasIdeSyncConfig(scenario)
+                ? newIdeGradleScenarioDefinition(gradleScenarioDefinition, scenario)
                 : gradleScenarioDefinition;
             scenarioDefinitions.add(scenarioDefinition);
         }
@@ -367,11 +382,43 @@ class ScenarioLoader {
         return ConfigFactory.parseFile(scenarioFile, ConfigParseOptions.defaults().setAllowMissing(false)).resolve();
     }
 
-    private static StudioGradleScenarioDefinition newStudioGradleScenarioDefinition(GradleScenarioDefinition gradleScenarioDefinition, Config scenario) {
-        Config androidStudioSync = scenario.getConfig(ANDROID_STUDIO_SYNC);
-        List<String> studioJvmArgs = ConfigUtil.strings(androidStudioSync, ANDROID_STUDIO_JVM_ARGS, ImmutableList.of("-Xms256m", "-Xmx4096m"));
-        List<String> ideaProperties = ConfigUtil.strings(androidStudioSync, ANDROID_STUDIO_IDEA_PROPERTIES, Collections.emptyList());
-        return new StudioGradleScenarioDefinition(gradleScenarioDefinition, studioJvmArgs, ideaProperties);
+    private static IdeGradleScenarioDefinition newIdeGradleScenarioDefinition(GradleScenarioDefinition gradleScenarioDefinition, Config scenario) {
+        Config ideSyncConfig = getIdeSyncConfig(scenario);
+        List<String> jvmArgs = getIdeSyncStringList(ideSyncConfig, IDE_JVM_ARGS, ANDROID_STUDIO_JVM_ARGS, ImmutableList.of("-Xms256m", "-Xmx4096m"));
+        List<String> ideaProperties = ConfigUtil.strings(ideSyncConfig, IDE_IDEA_PROPERTIES, Collections.emptyList());
+        return new IdeGradleScenarioDefinition(gradleScenarioDefinition, jvmArgs, ideaProperties);
+    }
+
+    /** Returns true if the scenario has an IDE sync block (new {@code ide-sync} key or deprecated {@code android-studio-sync}). */
+    private static boolean hasIdeSyncConfig(Config scenario) {
+        return scenario.hasPath(IDE_SYNC) || scenario.hasPath(ANDROID_STUDIO_SYNC);
+    }
+
+    /**
+     * Returns the ide-sync config block, preferring the new {@code ide-sync} key.
+     * Prints a deprecation warning if only the old {@code android-studio-sync} key is present.
+     */
+    private static Config getIdeSyncConfig(Config scenario) {
+        if (scenario.hasPath(IDE_SYNC)) {
+            return scenario.getConfig(IDE_SYNC);
+        }
+        System.out.println("WARNING: 'android-studio-sync' is deprecated. Please use 'ide-sync' instead.");
+        return scenario.getConfig(ANDROID_STUDIO_SYNC);
+    }
+
+    /**
+     * Reads a string list from the sync config block, preferring the new key with a fallback to the
+     * deprecated key and a deprecation warning when only the old key is present.
+     */
+    private static List<String> getIdeSyncStringList(Config config, String newKey, String deprecatedKey, List<String> defaultValue) {
+        if (config.hasPath(newKey)) {
+            return ConfigUtil.strings(config, newKey, defaultValue);
+        }
+        if (config.hasPath(deprecatedKey)) {
+            System.out.println("WARNING: '" + deprecatedKey + "' is deprecated. Please use '" + newKey + "' instead.");
+            return ConfigUtil.strings(config, deprecatedKey, defaultValue);
+        }
+        return defaultValue;
     }
 
     private static List<BuildMutator> getMutators(Config scenario, String scenarioName, InvocationSettings settings, int warmUpCount, int buildCount) {
@@ -500,14 +547,14 @@ class ScenarioLoader {
 
     public static GradleBuildInvoker invoker(Config config, GradleBuildInvoker defaultValue, BuildAction buildAction) {
         GradleBuildInvoker invoker = defaultValue;
-        boolean sync = buildAction instanceof AndroidStudioSyncAction;
+        boolean sync = buildAction instanceof IdeSyncAction;
         if (sync) {
-            invoker = getAndroidStudioInvoker(config);
+            invoker = getIdeInvoker(config);
         }
 
         if (config.hasPath(RUN_USING)) {
             if (sync) {
-                throw new IllegalArgumentException("Cannot specify '" + RUN_USING + "' when performing Android sync.");
+                throw new IllegalArgumentException("Cannot specify '" + RUN_USING + "' when performing IDE sync.");
             }
             String value = ConfigUtil.string(config, RUN_USING, null);
             if (value.equals("cli")) {
@@ -535,19 +582,26 @@ class ScenarioLoader {
         return invoker;
     }
 
-    private static GradleBuildInvoker getAndroidStudioInvoker(Config config) {
-        Schedule schedule = ConfigUtil.enumValue(config, CLEAR_ANDROID_STUDIO_CACHE_BEFORE, Schedule.class, null);
+    private static GradleBuildInvoker getIdeInvoker(Config config) {
+        // Support both new 'clear-ide-cache-before' and deprecated 'clear-android-studio-cache-before'
+        Schedule schedule = ConfigUtil.enumValue(config, CLEAR_IDE_CACHE_BEFORE, Schedule.class, null);
         if (schedule == null) {
-            return GradleBuildInvoker.AndroidStudio;
+            schedule = ConfigUtil.enumValue(config, CLEAR_ANDROID_STUDIO_CACHE_BEFORE, Schedule.class, null);
+            if (schedule != null) {
+                System.out.println("WARNING: 'clear-android-studio-cache-before' is deprecated. Please use 'clear-ide-cache-before' instead.");
+            }
+        }
+        if (schedule == null) {
+            return GradleBuildInvoker.Ide;
         }
         switch (schedule) {
             case SCENARIO:
-                return GradleBuildInvoker.AndroidStudioCleanCacheBeforeScenario;
+                return GradleBuildInvoker.IdeCleanCacheBeforeScenario;
             case BUILD:
-                return GradleBuildInvoker.AndroidStudioCleanCacheBeforeBuild;
+                return GradleBuildInvoker.IdeCleanCacheBeforeBuild;
             case CLEANUP:
             default:
-                throw new IllegalArgumentException(String.format("Unsupported cleanup schedule for '%s': '%s'", CLEAR_ANDROID_STUDIO_CACHE_BEFORE, schedule));
+                throw new IllegalArgumentException(String.format("Unsupported cleanup schedule for 'clear-ide-cache-before': '%s'", schedule));
         }
     }
 
@@ -561,20 +615,20 @@ class ScenarioLoader {
 
     private static BuildAction getBuildAction(Config scenario, String scenarioName, File scenarioFile, InvocationSettings invocationSettings) {
         Config toolingApi = scenario.hasPath(TOOLING_API) ? scenario.getConfig(TOOLING_API) : null;
-        boolean sync = scenario.hasPath(ANDROID_STUDIO_SYNC);
+        boolean sync = hasIdeSyncConfig(scenario);
         List<String> tasks = ConfigUtil.strings(scenario, TASKS);
 
         if (sync) {
             if (toolingApi != null) {
-                throw new IllegalArgumentException(String.format("Scenario '%s': Cannot load tooling model and Android studio sync in same scenario.", scenarioName));
+                throw new IllegalArgumentException(String.format("Scenario '%s': Cannot load tooling model and IDE sync in same scenario.", scenarioName));
             }
             if (!tasks.isEmpty()) {
-                throw new IllegalArgumentException(String.format("Scenario '%s': Cannot run tasks and Android studio sync in same scenario.", scenarioName));
+                throw new IllegalArgumentException(String.format("Scenario '%s': Cannot run tasks and IDE sync in same scenario.", scenarioName));
             }
-            if (invocationSettings.getStudioInstallDir() == null) {
-                throw new IllegalArgumentException("Android Studio installation directory should be specified using --studio-install-dir when measuring Android studio sync.");
+            if (invocationSettings.getIdeInstallDir() == null) {
+                throw new IllegalArgumentException("IDE installation directory should be specified using --ide-install-dir when measuring IDE sync.");
             }
-            return new AndroidStudioSyncAction();
+            return new IdeSyncAction();
         }
 
         if (toolingApi != null) {

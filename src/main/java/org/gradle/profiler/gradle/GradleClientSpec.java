@@ -3,16 +3,14 @@ package org.gradle.profiler.gradle;
 import org.gradle.profiler.GradleBuildConfiguration;
 import org.gradle.profiler.GradleClient;
 import org.gradle.profiler.InvocationSettings;
-import org.gradle.profiler.gradle.CliGradleClient;
-import org.gradle.profiler.gradle.ToolingApiGradleClient;
-import org.gradle.profiler.studio.StudioGradleClient;
-import org.gradle.profiler.studio.invoker.StudioGradleScenarioDefinition.StudioGradleBuildConfiguration;
+import org.gradle.profiler.ide.IdeGradleClient;
+import org.gradle.profiler.ide.invoker.IdeGradleScenarioDefinition.IdeGradleBuildConfiguration;
 import org.gradle.tooling.GradleConnector;
 import org.gradle.tooling.ProjectConnection;
 
-import static org.gradle.profiler.studio.StudioGradleClient.CleanCacheMode.BEFORE_BUILD;
-import static org.gradle.profiler.studio.StudioGradleClient.CleanCacheMode.BEFORE_SCENARIO;
-import static org.gradle.profiler.studio.StudioGradleClient.CleanCacheMode.NEVER;
+import static org.gradle.profiler.ide.IdeGradleClient.CleanCacheMode.BEFORE_BUILD;
+import static org.gradle.profiler.ide.IdeGradleClient.CleanCacheMode.BEFORE_SCENARIO;
+import static org.gradle.profiler.ide.IdeGradleClient.CleanCacheMode.NEVER;
 
 /**
  * Specifies a client to be used to invoke Gradle builds.
@@ -45,22 +43,22 @@ public enum GradleClientSpec {
             return new CliGradleClient(buildConfiguration, buildConfiguration.getJavaHome(), invocationSettings.getProjectDir(), false, invocationSettings.getBuildLog());
         }
     },
-    AndroidStudio("Android Studio") {
+    Ide("IDE sync") {
         @Override
         public GradleClient create(GradleBuildConfiguration buildConfiguration, InvocationSettings invocationSettings) {
-            return new StudioGradleClient((StudioGradleBuildConfiguration) buildConfiguration, invocationSettings, NEVER);
+            return new IdeGradleClient((IdeGradleBuildConfiguration) buildConfiguration, invocationSettings, NEVER);
         }
     },
-    AndroidStudioCleanCacheBeforeBuild("Android Studio with clean cache before build") {
+    IdeCleanCacheBeforeBuild("IDE sync with clean cache before build") {
         @Override
         public GradleClient create(GradleBuildConfiguration buildConfiguration, InvocationSettings invocationSettings) {
-            return new StudioGradleClient((StudioGradleBuildConfiguration) buildConfiguration, invocationSettings, BEFORE_BUILD);
+            return new IdeGradleClient((IdeGradleBuildConfiguration) buildConfiguration, invocationSettings, BEFORE_BUILD);
         }
     },
-    AndroidStudioCleanCacheBeforeScenario("Android Studio with clean cache before scenario") {
+    IdeCleanCacheBeforeScenario("IDE sync with clean cache before scenario") {
         @Override
         public GradleClient create(GradleBuildConfiguration buildConfiguration, InvocationSettings invocationSettings) {
-            return new StudioGradleClient((StudioGradleBuildConfiguration) buildConfiguration, invocationSettings, BEFORE_SCENARIO);
+            return new IdeGradleClient((IdeGradleBuildConfiguration) buildConfiguration, invocationSettings, BEFORE_SCENARIO);
         }
     };
 

@@ -4,7 +4,7 @@ import org.gradle.profiler.client.protocol.Client;
 import org.gradle.profiler.client.protocol.agent.AgentClientContainer;
 import org.gradle.profiler.client.protocol.messages.GradleInvocationParameters;
 import org.gradle.profiler.client.protocol.messages.GradleInvocationStarted;
-import org.gradle.profiler.client.protocol.messages.StudioAgentConnectionParameters;
+import org.gradle.profiler.client.protocol.messages.IdeAgentConnectionParameters;
 import org.gradle.tooling.ResultHandler;
 import org.gradle.tooling.internal.consumer.AbstractLongRunningOperation;
 import org.gradle.tooling.internal.consumer.DefaultGradleConnector;
@@ -20,7 +20,7 @@ public class Interceptor {
     private static final Duration RECEIVE_CONNECTION_PARAMS_TIMEOUT = Duration.ofSeconds(60);
     private static final Duration RECEIVE_SYNC_PARAMS_TIMEOUT = Duration.ofSeconds(60);
 
-    static StudioAgentConnectionParameters connectionParameters;
+    static IdeAgentConnectionParameters connectionParameters;
 
     /**
      * Called when creating a connection.
