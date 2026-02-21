@@ -73,8 +73,7 @@ class CommandLineParser {
         OptionSpecBuilder disableStudioSandbox = parser.accepts("no-studio-sandbox", "Marks that Android Studio should not use sandbox");
         ArgumentAcceptingOptionSpec<File> scenarioFileOption = parser.accepts("scenario-file", "Scenario definition file to use").withRequiredArg().ofType(File.class);
         ArgumentAcceptingOptionSpec<String> sysPropOption = parser.accepts("D", "Defines a system property").withRequiredArg();
-        ArgumentAcceptingOptionSpec<File> outputDirOption = parser.accepts("output-dir", "Directory to write results to").withRequiredArg()
-            .ofType(File.class).defaultsTo(findOutputDir());
+        ArgumentAcceptingOptionSpec<String> outputDirPathOption = parser.accepts("output-dir", "Directory to write results to").withRequiredArg().defaultsTo("profile-out");
         ArgumentAcceptingOptionSpec<Integer> warmupsOption = parser.accepts("warmups", "Number of warm-up build to run for each scenario").withRequiredArg().ofType(Integer.class);
         ArgumentAcceptingOptionSpec<Integer> iterationsOption = parser.accepts("iterations", "Number of builds to run for each scenario").withRequiredArg().ofType(Integer.class);
         ArgumentAcceptingOptionSpec<String> profilerOption = parser.accepts("profile",
@@ -148,7 +147,8 @@ class CommandLineParser {
             return fail(parser, "Neither --profile or --benchmark specified.");
         }
 
-        File outputDir = toAbsoluteFileOrNull(parsedOptions.valueOf(outputDirOption));
+        String outputDirPath = parsedOptions.valueOf(outputDirPathOption);
+        File outputDir = toAbsoluteFileOrNull(findOutputDir(outputDirPath));
         File gradleUserHome = toAbsoluteFileOrNull(parsedOptions.valueOf(gradleUserHomeOption));
         Integer warmups = parsedOptions.valueOf(warmupsOption);
         Integer iterations = parsedOptions.valueOf(iterationsOption);
@@ -235,13 +235,13 @@ class CommandLineParser {
             .build();
     }
 
-    private File findOutputDir() {
-        File outputDir = new File("profile-out");
+    private File findOutputDir(String path) {
+        File outputDir = new File(path);
         if (!outputDir.exists()) {
             return outputDir;
         }
         for (int i = 2; ; i++) {
-            outputDir = new File("profile-out-" + i);
+            outputDir = new File(path + "-" + i);
             if (!outputDir.exists()) {
                 return outputDir;
             }
