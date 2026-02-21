@@ -1,0 +1,28 @@
+<idea-plugin>
+    <id>org.gradle.profiler.intellij.plugin</id>
+    <name>Gradle Profiler IntelliJ Plugin</name>
+    <version>1.0</version>
+    <vendor url="https://gradle.org">Gradle</vendor>
+    <description>Runs IntelliJ-based IDE functionalities with Gradle profiler</description>
+    <change-notes>Runs IntelliJ-based IDE functionalities with Gradle profiler</change-notes>
+
+    <!-- please see http://www.jetbrains.org/intellij/sdk/docs/basics/getting_started/build_number_ranges.html for description -->
+    <idea-version since-build="251.0"/>
+
+    <!-- Plugin dependencies -->
+    <!-- Any dependency here should also be added to build.gradle.kts intellij extension -->
+    <depends>org.jetbrains.plugins.gradle</depends>
+    <depends>com.intellij.modules.java</depends>
+
+    <applicationListeners>
+        <listener class="org.gradle.profiler.intellij.plugin.GradleProfilerAppLifecycleListener"
+                  topic="com.intellij.ide.AppLifecycleListener"/>
+    </applicationListeners>
+
+    <extensions defaultExtensionNs="com.intellij">
+        <appStarter id="headless-starter"
+                    implementation="org.gradle.profiler.intellij.plugin.starter.HeadlessApplicationStarter"/>
+        <postStartupActivity implementation="org.gradle.profiler.intellij.plugin.GradleProfilerStartupActivity"/>
+    </extensions>
+
+</idea-plugin>

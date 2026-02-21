@@ -68,9 +68,13 @@ class CommandLineParser {
             .withRequiredArg()
             .ofType(File.class)
             .defaultsTo(new File("gradle-user-home"));
-        ArgumentAcceptingOptionSpec<File> studioHomeOption = parser.accepts("studio-install-dir", "The Studio installation to use").withRequiredArg().ofType(File.class);
-        ArgumentAcceptingOptionSpec<File> studioSandboxOption = parser.accepts("studio-sandbox-dir", "The Studio sandbox dir to use").withRequiredArg().ofType(File.class);
-        OptionSpecBuilder disableStudioSandbox = parser.accepts("no-studio-sandbox", "Marks that Android Studio should not use sandbox");
+        ArgumentAcceptingOptionSpec<File> ideHomeOption = parser.accepts("ide-install-dir", "The IDE installation to use").withRequiredArg().ofType(File.class);
+        ArgumentAcceptingOptionSpec<File> ideSandboxOption = parser.accepts("ide-sandbox-dir", "The IDE sandbox dir to use").withRequiredArg().ofType(File.class);
+        OptionSpecBuilder disableIdeSandbox = parser.accepts("no-ide-sandbox", "Do not use an IDE sandbox");
+        // Deprecated aliases kept for backward compatibility
+        ArgumentAcceptingOptionSpec<File> deprecatedStudioHomeOption = parser.accepts("studio-install-dir", "The IDE installation to use (deprecated: use --ide-install-dir)").withRequiredArg().ofType(File.class);
+        ArgumentAcceptingOptionSpec<File> deprecatedStudioSandboxOption = parser.accepts("studio-sandbox-dir", "The IDE sandbox dir to use (deprecated: use --ide-sandbox-dir)").withRequiredArg().ofType(File.class);
+        OptionSpecBuilder deprecatedDisableStudioSandbox = parser.accepts("no-studio-sandbox", "Do not use an IDE sandbox (deprecated: use --no-ide-sandbox)");
         ArgumentAcceptingOptionSpec<File> scenarioFileOption = parser.accepts("scenario-file", "Scenario definition file to use").withRequiredArg().ofType(File.class);
         ArgumentAcceptingOptionSpec<String> sysPropOption = parser.accepts("D", "Defines a system property").withRequiredArg();
         ArgumentAcceptingOptionSpec<File> outputDirOption = parser.accepts("output-dir", "Directory to write results to").withRequiredArg()
@@ -162,12 +166,24 @@ class CommandLineParser {
         List<String> targetNames = parsedOptions.nonOptionArguments().stream().map(Object::toString).collect(Collectors.toList());
         List<String> gradleVersions = parsedOptions.valuesOf(gradleVersionOption);
         File scenarioFile = toAbsoluteFileOrNull(parsedOptions.valueOf(scenarioFileOption));
-        File studioInstallDir = toAbsoluteFileOrNull(parsedOptions.valueOf(studioHomeOption));
-        File studioSandboxDir = toAbsoluteFileOrNull(parsedOptions.valueOf(studioSandboxOption));
-        if (parsedOptions.has(disableStudioSandbox)) {
-            studioSandboxDir = null;
-        } else if (studioSandboxDir == null) {
-            studioSandboxDir = new File(outputDir, "studio-sandbox");
+        File ideInstallDir = toAbsoluteFileOrNull(parsedOptions.valueOf(ideHomeOption));
+        if (ideInstallDir == null && parsedOptions.has(deprecatedStudioHomeOption)) {
+            System.out.println("WARNING: '--studio-install-dir' is deprecated. Please use '--ide-install-dir' instead.");
+            ideInstallDir = toAbsoluteFileOrNull(parsedOptions.valueOf(deprecatedStudioHomeOption));
+        }
+        if (!parsedOptions.has(disableIdeSandbox) && parsedOptions.has(deprecatedDisableStudioSandbox)) {
+            System.out.println("WARNING: '--no-studio-sandbox' is deprecated. Please use '--no-ide-sandbox' instead.");
+        }
+        boolean disableSandbox = parsedOptions.has(disableIdeSandbox) || parsedOptions.has(deprecatedDisableStudioSandbox);
+        File ideSandboxDir = toAbsoluteFileOrNull(parsedOptions.valueOf(ideSandboxOption));
+        if (ideSandboxDir == null && parsedOptions.has(deprecatedStudioSandboxOption)) {
+            System.out.println("WARNING: '--studio-sandbox-dir' is deprecated. Please use '--ide-sandbox-dir' instead.");
+            ideSandboxDir = toAbsoluteFileOrNull(parsedOptions.valueOf(deprecatedStudioSandboxOption));
+        }
+        if (disableSandbox) {
+            ideSandboxDir = null;
+        } else if (ideSandboxDir == null) {
+            ideSandboxDir = new File(outputDir, "ide-sandbox");
         }
 
         // TODO - should validate the various combinations of invocation options
@@ -220,8 +236,8 @@ class CommandLineParser {
             .setTargets(targetNames)
             .setSysProperties(sysProperties)
             .setGradleUserHome(gradleUserHome)
-            .setStudioInstallDir(studioInstallDir)
-            .setStudioSandboxDir(studioSandboxDir)
+            .setIdeInstallDir(ideInstallDir)
+            .setIdeSandboxDir(ideSandboxDir)
             .setWarmupCount(warmups)
             .setIterations(iterations)
             .setMeasureGarbageCollection(measureGarbageCollection)

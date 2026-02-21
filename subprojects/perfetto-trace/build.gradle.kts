@@ -18,6 +18,8 @@ protobuf {
 }
 
 dependencies {
+    // kotlin.stdlib.default.dependency=false in root gradle.properties; must be declared explicitly
+    implementation(kotlin("stdlib"))
     api(libs.protobuf.java)
     implementation(libs.gson)
 

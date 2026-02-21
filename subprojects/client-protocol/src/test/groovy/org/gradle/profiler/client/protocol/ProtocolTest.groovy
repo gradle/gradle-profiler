@@ -1,6 +1,6 @@
 package org.gradle.profiler.client.protocol
 
-import org.gradle.profiler.client.protocol.messages.StudioAgentConnectionParameters
+import org.gradle.profiler.client.protocol.messages.IdeAgentConnectionParameters
 import org.gradle.profiler.client.protocol.messages.GradleInvocationCompleted
 import org.gradle.profiler.client.protocol.messages.GradleInvocationParameters
 import org.gradle.profiler.client.protocol.messages.GradleInvocationStarted
@@ -16,7 +16,7 @@ class ProtocolTest extends Specification {
         def client = new Client(server.port)
         def serverConnection = server.waitForIncoming(timeout)
 
-        serverConnection.send(new StudioAgentConnectionParameters(new File("gradle-home")))
+        serverConnection.send(new IdeAgentConnectionParameters(new File("gradle-home")))
         def m1 = client.receiveConnectionParameters(timeout)
 
         client.send(new GradleInvocationStarted(1))
