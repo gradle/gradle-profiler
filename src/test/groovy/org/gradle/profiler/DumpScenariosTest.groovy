@@ -37,7 +37,7 @@ class DumpScenariosTest extends Specification {
             .setTargets([])
             .setSysProperties([:])
             .setGradleUserHome(gradleUserHomeDir)
-            .setStudioInstallDir(tmpDir.newFolder())
+            .setIdeInstallDir(tmpDir.newFolder())
             .setMeasureGarbageCollection(false)
             .setMeasureConfigTime(false)
             .setBuildOperationMeasurements([])

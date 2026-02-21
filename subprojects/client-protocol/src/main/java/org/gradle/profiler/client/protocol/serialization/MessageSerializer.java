@@ -5,12 +5,12 @@ import org.gradle.profiler.client.protocol.messages.GradleInvocationCompleted;
 import org.gradle.profiler.client.protocol.messages.GradleInvocationParameters;
 import org.gradle.profiler.client.protocol.messages.GradleInvocationStarted;
 import org.gradle.profiler.client.protocol.messages.Message;
-import org.gradle.profiler.client.protocol.messages.StudioAgentConnectionParameters;
-import org.gradle.profiler.client.protocol.messages.StudioCacheCleanupCompleted;
-import org.gradle.profiler.client.protocol.messages.StudioRequest;
-import org.gradle.profiler.client.protocol.messages.StudioRequest.StudioRequestType;
-import org.gradle.profiler.client.protocol.messages.StudioSyncRequestCompleted;
-import org.gradle.profiler.client.protocol.messages.StudioSyncRequestCompleted.StudioSyncRequestResult;
+import org.gradle.profiler.client.protocol.messages.IdeAgentConnectionParameters;
+import org.gradle.profiler.client.protocol.messages.IdeCacheCleanupCompleted;
+import org.gradle.profiler.client.protocol.messages.IdeRequest;
+import org.gradle.profiler.client.protocol.messages.IdeRequest.IdeRequestType;
+import org.gradle.profiler.client.protocol.messages.IdeSyncRequestCompleted;
+import org.gradle.profiler.client.protocol.messages.IdeSyncRequestCompleted.IdeSyncRequestResult;
 
 import java.io.File;
 import java.io.IOException;
@@ -68,22 +68,23 @@ public enum MessageSerializer {
             return new GradleInvocationParameters(gradleArgs, jvmArgs);
         }
     },
-    STUDIO_AGENT_CONNECTION_PARAMETERS((byte) 4, StudioAgentConnectionParameters.class) {
+    IDE_AGENT_CONNECTION_PARAMETERS((byte) 4, IdeAgentConnectionParameters.class) {
         @Override
         public void doWriteTo(Connection connection, Message message) throws IOException {
-            StudioAgentConnectionParameters studioAgentConnectionParameters = (StudioAgentConnectionParameters) message;
-            connection.writeString(studioAgentConnectionParameters.getGradleInstallation().getPath());
+            IdeAgentConnectionParameters
+                ideAgentConnectionParameters = (IdeAgentConnectionParameters) message;
+            connection.writeString(ideAgentConnectionParameters.getGradleInstallation().getPath());
         }
         @Override
         public Message doReadFrom(Connection connection, int bodyTimeoutMillis) throws IOException {
             String gradleHome = connection.readString(bodyTimeoutMillis);
-            return new StudioAgentConnectionParameters(new File(gradleHome));
+            return new IdeAgentConnectionParameters(new File(gradleHome));
         }
     },
-    STUDIO_REQUEST((byte) 5, StudioRequest.class) {
+    IDE_REQUEST((byte) 5, IdeRequest.class) {
         @Override
         public void doWriteTo(Connection connection, Message message) throws IOException {
-            StudioRequest request = (StudioRequest) message;
+            IdeRequest request = (IdeRequest) message;
             connection.writeInt(request.getId());
             connection.writeString(request.getType().toString());
         }
@@ -91,14 +92,14 @@ public enum MessageSerializer {
         @Override
         public Message doReadFrom(Connection connection, int bodyTimeoutMillis) throws IOException {
             int syncId = connection.readInt(bodyTimeoutMillis);
-            StudioRequestType requestType = StudioRequestType.valueOf(connection.readString(bodyTimeoutMillis));
-            return new StudioRequest(syncId, requestType);
+            IdeRequestType requestType = IdeRequestType.valueOf(connection.readString(bodyTimeoutMillis));
+            return new IdeRequest(syncId, requestType);
         }
     },
-    STUDIO_SYNC_REQUEST_COMPLETED((byte) 6, StudioSyncRequestCompleted.class) {
+    IDE_SYNC_REQUEST_COMPLETED((byte) 6, IdeSyncRequestCompleted.class) {
         @Override
         public void doWriteTo(Connection connection, Message message) throws IOException {
-            StudioSyncRequestCompleted request = (StudioSyncRequestCompleted) message;
+            IdeSyncRequestCompleted request = (IdeSyncRequestCompleted) message;
             connection.writeInt(request.getId());
             connection.writeLong(request.getDurationMillis());
             connection.writeString(request.getResult().toString());
@@ -109,22 +110,22 @@ public enum MessageSerializer {
         public Message doReadFrom(Connection connection, int bodyTimeoutMillis) throws IOException {
             int syncRequestCompletedId = connection.readInt(bodyTimeoutMillis);
             long syncRequestCompletedDurationMillis = connection.readLong(bodyTimeoutMillis);
-            StudioSyncRequestResult result = StudioSyncRequestResult.valueOf(connection.readString(bodyTimeoutMillis));
+            IdeSyncRequestResult result = IdeSyncRequestResult.valueOf(connection.readString(bodyTimeoutMillis));
             String failureReason = connection.readString(bodyTimeoutMillis);
-            return new StudioSyncRequestCompleted(syncRequestCompletedId, syncRequestCompletedDurationMillis, result, failureReason);
+            return new IdeSyncRequestCompleted(syncRequestCompletedId, syncRequestCompletedDurationMillis, result, failureReason);
         }
     },
-    STUDIO_CACHE_CLEANUP_COMPLETED((byte) 7, StudioCacheCleanupCompleted.class) {
+    IDE_CACHE_CLEANUP_COMPLETED((byte) 7, IdeCacheCleanupCompleted.class) {
         @Override
         public void doWriteTo(Connection connection, Message message) throws IOException {
-            StudioCacheCleanupCompleted request = (StudioCacheCleanupCompleted) message;
+            IdeCacheCleanupCompleted request = (IdeCacheCleanupCompleted) message;
             connection.writeInt(request.getId());
         }
 
         @Override
         public Message doReadFrom(Connection connection, int bodyTimeoutMillis) throws IOException {
             int cacheCompletedId = connection.readInt(bodyTimeoutMillis);
-            return new StudioCacheCleanupCompleted(cacheCompletedId);
+            return new IdeCacheCleanupCompleted(cacheCompletedId);
         }
     }
     ;

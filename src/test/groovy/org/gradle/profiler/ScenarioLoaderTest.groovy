@@ -13,8 +13,8 @@ import org.gradle.profiler.gradle.RunToolingAction
 import org.gradle.profiler.maven.MavenScenarioDefinition
 import org.gradle.profiler.mutations.AbstractScheduledMutator
 import org.gradle.profiler.report.Format
-import org.gradle.profiler.studio.AndroidStudioSyncAction
-import org.gradle.profiler.studio.invoker.StudioGradleScenarioDefinition
+import org.gradle.profiler.ide.IdeSyncAction
+import org.gradle.profiler.ide.invoker.IdeGradleScenarioDefinition
 import org.gradle.profiler.toolingapi.FetchProjectPublications
 import org.gradle.tooling.model.idea.IdeaProject
 import org.junit.Rule
@@ -57,7 +57,7 @@ class ScenarioLoaderTest extends Specification {
             .setTargets([])
             .setSysProperties([:])
             .setGradleUserHome(gradleUserHomeDir)
-            .setStudioInstallDir(tmpDir.newFolder())
+            .setIdeInstallDir(tmpDir.newFolder())
             .setMeasureGarbageCollection(false)
             .setMeasureConfigTime(false)
             .setBuildOperationMeasurements([])
@@ -385,7 +385,24 @@ class ScenarioLoaderTest extends Specification {
         scenario2.action.tasks == ["help"]
     }
 
-    def "can load default Android studio sync scenario"() {
+    def "can load ide-sync scenario using new key"() {
+        def settings = settings()
+        def configurationReader = Mock(GradleBuildConfigurationReader)
+        configurationReader.readConfiguration() >> new GradleBuildConfiguration(null, null, null, null, false, false)
+
+        scenarioFile << """
+            default {
+                ide-sync { }
+            }
+        """
+        def scenarios = loadScenarios(scenarioFile, settings, configurationReader)
+        expect:
+        scenarios*.name == ["default"]
+        def scenarioDefinition = scenarios[0] as IdeGradleScenarioDefinition
+        scenarioDefinition.action instanceof IdeSyncAction
+    }
+
+    def "can load ide-sync scenario using deprecated android-studio-sync key"() {
         def settings = settings()
         def configurationReader = Mock(GradleBuildConfigurationReader)
         configurationReader.readConfiguration() >> new GradleBuildConfiguration(null, null, null, null, false, false)
@@ -398,8 +415,8 @@ class ScenarioLoaderTest extends Specification {
         def scenarios = loadScenarios(scenarioFile, settings, configurationReader)
         expect:
         scenarios*.name == ["default"]
-        def scenarioDefinition = scenarios[0] as StudioGradleScenarioDefinition
-        scenarioDefinition.action instanceof AndroidStudioSyncAction
+        def scenarioDefinition = scenarios[0] as IdeGradleScenarioDefinition
+        scenarioDefinition.action instanceof IdeSyncAction
     }
 
     def "loads default scenarios only"() {

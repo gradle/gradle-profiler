@@ -15,9 +15,10 @@ public class GradleBuildInvoker extends BuildInvoker {
             return "`gradle` command with --no-daemon";
         }
     };
-    public static final GradleBuildInvoker AndroidStudio = new GradleBuildInvoker(GradleClientSpec.AndroidStudio, GradleDaemonReuse.WarmDaemonOnly);
-    public static final GradleBuildInvoker AndroidStudioCleanCacheBeforeScenario = new GradleBuildInvoker(GradleClientSpec.AndroidStudioCleanCacheBeforeScenario, GradleDaemonReuse.WarmDaemonOnly);
-    public static final GradleBuildInvoker AndroidStudioCleanCacheBeforeBuild = new GradleBuildInvoker(GradleClientSpec.AndroidStudioCleanCacheBeforeBuild, GradleDaemonReuse.ColdDaemonOnly);
+    public static final GradleBuildInvoker
+        Ide = new GradleBuildInvoker(GradleClientSpec.Ide, GradleDaemonReuse.WarmDaemonOnly);
+    public static final GradleBuildInvoker IdeCleanCacheBeforeScenario = new GradleBuildInvoker(GradleClientSpec.IdeCleanCacheBeforeScenario, GradleDaemonReuse.WarmDaemonOnly);
+    public static final GradleBuildInvoker IdeCleanCacheBeforeBuild = new GradleBuildInvoker(GradleClientSpec.IdeCleanCacheBeforeBuild, GradleDaemonReuse.ColdDaemonOnly);
 
     private final GradleClientSpec client;
     private final GradleDaemonReuse daemonReuse;

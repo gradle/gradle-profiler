@@ -3,8 +3,8 @@ package org.gradle.profiler.client.protocol;
 import org.gradle.profiler.client.protocol.messages.GradleInvocationCompleted;
 import org.gradle.profiler.client.protocol.messages.GradleInvocationStarted;
 import org.gradle.profiler.client.protocol.messages.Message;
-import org.gradle.profiler.client.protocol.messages.StudioCacheCleanupCompleted;
-import org.gradle.profiler.client.protocol.messages.StudioSyncRequestCompleted;
+import org.gradle.profiler.client.protocol.messages.IdeCacheCleanupCompleted;
+import org.gradle.profiler.client.protocol.messages.IdeSyncRequestCompleted;
 import org.gradle.profiler.client.protocol.serialization.MessageProtocolHandler;
 
 import java.io.Closeable;
@@ -38,12 +38,12 @@ public class ServerConnection implements Closeable {
         return protocolHandler.receive(GradleInvocationCompleted.class, timeout);
     }
 
-    public StudioSyncRequestCompleted receiveSyncRequestCompleted(Duration timeout) {
-        return protocolHandler.receive(StudioSyncRequestCompleted.class, timeout);
+    public IdeSyncRequestCompleted receiveSyncRequestCompleted(Duration timeout) {
+        return protocolHandler.receive(IdeSyncRequestCompleted.class, timeout);
     }
 
-    public StudioCacheCleanupCompleted receiveCacheCleanupCompleted(Duration timeout) {
-        return protocolHandler.receive(StudioCacheCleanupCompleted.class, timeout);
+    public IdeCacheCleanupCompleted receiveCacheCleanupCompleted(Duration timeout) {
+        return protocolHandler.receive(IdeCacheCleanupCompleted.class, timeout);
     }
 
     @Override

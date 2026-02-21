@@ -230,9 +230,9 @@ The following command line options only apply when measuring Gradle builds:
 - `--measure-gc`: Measure the garbage collection time. Only supported for Gradle 6.1 and later.
 - `--measure-local-build-cache`: Measure the size of the local build cache.
 - `-D<key>=<value>`: Defines a system property when running the build, overriding the default for the build.
-- `--studio-install-dir`: The Android Studio installation directory. Required when measuring Android Studio sync. On macOS, it is the app directory, e.g. `~/Applications/Android Studio.app`.
-- `--studio-sandbox-dir`: The Android Studio sandbox directory. It's recommended to use it since it isolates the Android Studio process from your other Android Studio processes. By default, this will be set to `<output-dir>/studio-sandbox`. If you want Android Studio to keep old data (e.g. indexes) you should set and reuse your own folder. 
-- `--no-studio-sandbox`: Do not use the Android Studio sandbox but use the default Android Studio folders for the Android Studio data.
+- `--ide-install-dir`: The IDE installation directory. Required when measuring IDE sync. On macOS, it is the `.app` directory, e.g. `~/Applications/Android Studio.app` or `~/Applications/IntelliJ IDEA.app`.
+- `--ide-sandbox-dir`: The IDE sandbox directory. It's recommended to use it since it isolates the IDE process from your other IDE processes. By default, this will be set to `<output-dir>/ide-sandbox`. If you want the IDE to keep old data (e.g. indexes) you should set and reuse your own folder.
+- `--no-ide-sandbox`: Do not use a sandbox but use the default IDE data folders.
 - `--no-diffs`: Do not generate differential flame graphs.
 
 ## JVM requirements and options
@@ -348,15 +348,14 @@ Here is an example:
         # Can also run tasks
         # tasks = ["assemble"]
     }
-    androidStudioSync {
-        title = "Android Studio Sync"
-        # Measure an Android studio sync
-        # Note: Android Studio Hedgehog (2023.1.1) or newer is required
-        # Note2: you need to have local.properties file in your project with sdk.dir set
-        android-studio-sync {
-            # Override default Android Studio jvm args
-            # studio-jvm-args = ["-Xms256m", "-Xmx4096m"]
-            # Pass an IDEA properties to Android Studio. This can be used to set a registry values as well
+    ideSync {
+        title = "IDE Sync"
+        # Measure an IntelliJ-based IDE (IntelliJ IDEA or Android Studio) Gradle sync
+        # Note: IntelliJ IDEA 2025.1+ or Android Studio Meerkat (2024.3.2)+ is required
+        ide-sync {
+            # Override default IDE jvm args
+            # ide-jvm-args = ["-Xms256m", "-Xmx4096m"]
+            # Pass IDEA properties to the IDE. This can be used to set registry values as well
             # idea-properties = ["gradle.tooling.models.parallel.fetch=true"]
         }
     }
@@ -431,7 +430,7 @@ These mutations are applied before each build, and they introduce different kind
 When simulating scenarios like ephemeral builds, it is important to make sure caches are not present.
 These mutators can be scheduled to execute at different points in the build benchmark process, specified by the `schedule` parameter.
 
-- `clear-android-studio-cache-before`: Invalidates the Android Studio caches. Due to Android Studio client specifics scheduling to run before cleanup (`CLEANUP`) is not supported. Note: cleaning the Android Studio caches is run only when Android Studio sync (`android-studio-sync`) is used.
+- `clear-ide-cache-before`: Invalidates the IDE caches. Scheduling to run before cleanup (`CLEANUP`) is not supported. Note: this is run only when an IDE sync (`ide-sync`) is used.
 - `clear-build-cache-before`: Deletes the contents of the build cache at the given schedule.
 - `clear-configuration-cache-state-before`: Deletes the contents of the `.gradle/configuration-cache-state` directory.
 - `clear-gradle-user-home-before`: Deletes the contents of the Gradle user home directory.

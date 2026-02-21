@@ -9,6 +9,8 @@ repositories {
 }
 
 dependencies {
+    // kotlin.stdlib.default.dependency=false in root gradle.properties; must be declared explicitly
+    implementation(kotlin("stdlib"))
     implementation(project(":perfetto-trace"))
 
     testImplementation(libs.bundles.testDependencies)
