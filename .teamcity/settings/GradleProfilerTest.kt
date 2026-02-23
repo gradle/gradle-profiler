@@ -25,7 +25,6 @@ open class GradleProfilerTest(os: Os, javaVersion: JavaVersion, arch: Arch) : Bu
                 " -PtestJavaVersion=${javaVersion.majorVersion}" +
                 " -PtestJavaVendor=${javaVersion.vendor}" +
                 " -PautoDownloadAndRunInHeadless=true"
-            param("org.jfrog.artifactory.selectedDeployableServer.defaultModuleVersionConfiguration", "GLOBAL")
         }
     }
 

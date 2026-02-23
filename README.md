@@ -237,9 +237,14 @@ The following command line options only apply when measuring Gradle builds:
 
 ## JVM requirements and options
 
-Gradle Profiler requires a Java 17 or later JVM to run.
+Gradle Profiler itself is a JVM application. It requires Java 17 or later to run.
 
-By default, Gradle Profiler starts the daemon for your build using the same JVM that was used to run it.
+Gradle Profiler is itself a relatively lightweight app, as it mostly requires coordinating builds and processing the collected results at the end.
+To benchmark or profile builds, it always starts a separate build process or IDE process.
+
+### Configuring JVM for target Gradle builds
+
+By default, Gradle Profiler starts a Gradle daemon for your build using the same JVM installation that was used to run it.
 In case your build requires an earlier version of the JVM or you require a specific JVM, you can configure it explicitly in your build.
 
 For Gradle 8.13 and later, the recommended approach is to [configure the Daemon JVM](https://docs.gradle.org/current/userguide/gradle_daemon.html#sec:configuring_daemon_jvm).
@@ -255,6 +260,14 @@ org.gradle.java.home=<path to a Java installation>
 ```
 
 It will be respected when starting the daemon for your build, regardless of the JVM Gradle Profiler uses.
+
+### Configuring JVM running Gradle Profiler itself
+
+Gradle Profiler is packaged via the standard [application](https://docs.gradle.org/current/userguide/application_plugin.html) plugin.
+
+In a rare case when you need to change the parameters of the Gradle Profiler JVM, you can use the `GRADLE_PROFILER_OPTS`.
+For instance, you can increase the heap size by setting `GRADLE_PROFILER_OPTS=-Xmx4g`.
+Note that this setting will not affect the target builds, which you are benchmarking or profiling.
 
 ## Gradle version compatibility
 

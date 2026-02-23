@@ -37,7 +37,6 @@ object GradleProfilerPublishing : BuildType({
         gradle {
             tasks = "clean createBuildReceipt publishToSonatype closeAndReleaseSonatypeStagingRepository gitPushTag %additional.gradle.parameters%"
             gradleParams = toolchainConfiguration(os, arch) + " -Dgradle.cache.remote.push=true"
-            param("org.jfrog.artifactory.selectedDeployableServer.defaultModuleVersionConfiguration", "GLOBAL")
             buildFile = ""
         }
     }

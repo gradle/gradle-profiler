@@ -1,4 +1,5 @@
 plugins {
+    id("profiler.allprojects")
     id("java")
     id("maven-publish")
     id("signing")
@@ -8,6 +9,15 @@ java {
     withSourcesJar()
     withJavadocJar()
 }
+
+tasks.register("checkDescription") {
+    val description = provider { project.description }
+    val projectPath = project.path
+    doFirst {
+        check(description.orNull != null) { "You must set the description of published project '$projectPath'" }
+    }
+}
+tasks.named("sanityCheck").configure { dependsOn("checkDescription") }
 
 publishing {
     publications {
