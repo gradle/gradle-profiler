@@ -133,7 +133,7 @@ class CommandLineParser {
             return null;
         }
 
-        File projectDir = toAbsoluteFileOrNull(parsedOptions.valueOf(projectOption), () -> new File("."));
+        File projectDir = toAbsoluteFileOrElse(parsedOptions.valueOf(projectOption), () -> new File("."));
         boolean hasProfiler = parsedOptions.has(profilerOption);
         ProfilerFactory profilerFactory = ProfilerFactory.NONE;
         if (hasProfiler) {
@@ -148,7 +148,7 @@ class CommandLineParser {
             return fail(parser, "Neither --profile or --benchmark specified.");
         }
 
-        File outputDir = toAbsoluteFileOrNull(parsedOptions.valueOf(outputDirOption), this::findOutputDir);
+        File outputDir = toAbsoluteFileOrElse(parsedOptions.valueOf(outputDirOption), this::findOutputDir);
         File gradleUserHome = toAbsoluteFileOrNull(parsedOptions.valueOf(gradleUserHomeOption));
         Integer warmups = parsedOptions.valueOf(warmupsOption);
         Integer iterations = parsedOptions.valueOf(iterationsOption);
@@ -267,7 +267,7 @@ class CommandLineParser {
         return file == null ? null : file.getAbsoluteFile();
     }
 
-    private File toAbsoluteFileOrNull(@Nullable File file, Supplier<File> orElse) {
+    private File toAbsoluteFileOrElse(@Nullable File file, Supplier<File> orElse) {
         file = file != null ? file : orElse.get();
         return file == null ? null : file.getAbsoluteFile();
     }
