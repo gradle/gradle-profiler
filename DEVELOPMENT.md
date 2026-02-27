@@ -56,7 +56,7 @@ You can then run it from there:
 ## Testing
 
 The project uses [Spock](https://spockframework.org/) (Groovy) for its test suite.
-The majority of tests are located in `src/test/groovy`.
+The majority of tests are located in the root project, under `src/test/groovy`.
 
 The suite is a mix of unit tests, integration tests, and Gradle cross-version tests.
 Some tests require external tools like YourKit or JProfiler to be available on the system, and will be skipped otherwise.
