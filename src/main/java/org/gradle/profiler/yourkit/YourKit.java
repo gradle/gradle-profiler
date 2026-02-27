@@ -15,8 +15,11 @@ import static org.gradle.profiler.OperatingSystem.MAC_OS_APPLICATIONS_PATH;
 import static org.gradle.profiler.OperatingSystem.MAC_OS_RESOURCES_PATH;
 
 public class YourKit {
+
     static final String ENVIRONMENT_VARIABLE = "YOURKIT_HOME";
     private static final String YOURKIT_HOME = System.getenv(ENVIRONMENT_VARIABLE);
+
+    static final int PORT = Integer.getInteger("org.gradle.profiler.yourkit.port", 10021);
 
     /**
      * Locates the user's YourKit installation. Returns null when not found.

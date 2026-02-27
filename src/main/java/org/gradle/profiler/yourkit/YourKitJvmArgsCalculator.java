@@ -9,7 +9,7 @@ import java.util.List;
 import static org.gradle.profiler.yourkit.YourKit.ENVIRONMENT_VARIABLE;
 
 public class YourKitJvmArgsCalculator implements JvmArgsCalculator {
-    public static final int PORT = 10021;
+
     private final ScenarioSettings settings;
     private final YourKitConfig yourKitConfig;
     private final boolean startRecordingOnStart;
@@ -33,8 +33,8 @@ public class YourKitJvmArgsCalculator implements JvmArgsCalculator {
             throw new IllegalArgumentException("Could not locate YourKit library in YourKit home directory " + yourKitHome);
         }
         String agentOptions = "-agentpath:" + jnilib.getAbsolutePath() + "=dir=" + settings.getProfilerOutputBaseDir().getAbsolutePath()
-                + ",sessionname=" + settings.getProfilerOutputBaseName()
-                + ",port=" + PORT;
+            + ",sessionname=" + settings.getProfilerOutputBaseName()
+            + ",port=" + YourKit.PORT;
         if (yourKitConfig.isMemorySnapshot() || yourKitConfig.isUseSampling()) {
             agentOptions += ",disabletracing,probe_disable=*";
         } else {

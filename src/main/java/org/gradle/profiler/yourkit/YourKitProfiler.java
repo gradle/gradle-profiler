@@ -34,13 +34,12 @@ public class YourKitProfiler extends InstrumentingProfiler {
 
     @Override
     public SnapshotCapturingProfilerController newSnapshottingController(ScenarioSettings settings) {
-        int port = YourKitJvmArgsCalculator.PORT;
         if (YourKit.isHttpApiSupported()) {
             Logging.detailed().println("Using YourKit HTTP API v2 controller");
-            return new YourKitHttpApiController(yourKitConfig, port);
+            return new YourKitHttpApiController(yourKitConfig, YourKit.PORT);
         } else {
             Logging.detailed().println("Using YourKit legacy CLI controller");
-            return new YourKitLegacyCliController(yourKitConfig, port);
+            return new YourKitLegacyCliController(yourKitConfig, YourKit.PORT);
         }
     }
 
