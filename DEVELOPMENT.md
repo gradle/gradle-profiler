@@ -123,10 +123,13 @@ You can use the built-in navigation in the page, or if you are interested in the
 a dedicated page can be found under `classes`,
 e.g. `build/reports/tests/test/classes/org.gradle.profiler.ProfilerIntegrationTest.html`.
 
-Because stdout is well integrated into the IDE and HTML reports, it's recommended to print temporary information there,
-if it is required during test troubleshooting.
+In case it's easier to analyze the full tests results in one file, it's better to look for an `xml` file in the `build/test-results/test` directory.
+The XML files are also self-contained.
 
 #### Detailed Gradle Profiler output
+
+Because stdout is well integrated into the IDE and HTML reports, it's recommended to print temporary information there,
+if it is required during test troubleshooting.
 
 In more rare cases you might need to look at the detailed output of the Gradle Profiler.
 Most tests will write this to the `output/profile.log` file in the test directory.
