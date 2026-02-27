@@ -160,6 +160,9 @@ tasks.test {
     // Run cross-version tests for all tested versions
     val integTestVersions = providers.gradleProperty("testVersions").orElse("all")
     systemProperty("org.gradle.integtest.versions", integTestVersions.get())
+
+    val keepTestDirs = providers.gradleProperty("keepTestDirs").orElse("false")
+    systemProperty("org.gradle.integtest.keepTestDirs", keepTestDirs.get())
 }
 
 androidStudioTests {

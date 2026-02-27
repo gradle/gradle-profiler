@@ -20,7 +20,7 @@ abstract class AbstractBaseProfilerIntegrationTest extends AbstractIntegrationTe
     static final SAMPLE = "-?\\d+(?:\\.\\d+)"
 
     @Rule
-    TestNameTestDirectoryProvider tmpDir = new TestNameTestDirectoryProvider(getClass())
+    TestNameTestDirectoryProvider tmpDir = new TestNameTestDirectoryProvider(getClass(), Boolean.getBoolean("org.gradle.integtest.keepTestDirs"))
 
     TestFile projectDir
     TestFile outputDir
