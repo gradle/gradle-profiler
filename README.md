@@ -195,7 +195,7 @@ By default, heap dumps are captured at the end of the build (after all tasks com
 
 Capturing heap dumps at configuration end is useful for analyzing memory usage during the configuration phase, understanding object retention when the task graph is finalized, and comparing memory state between configuration and execution phases.
 
-Configuration-end heap dumps are captured using a Java agent that instruments Gradle's internal build lifecycle. The heap dump files are named `gradle-config-end-<timestamp>.hprof` to distinguish them from build-end dumps.
+Configuration-end heap dumps are captured using a Java agent that instruments Gradle's internal build lifecycle. The heap dump files are named `<pid>-<counter>-<strategy>.hprof` to distinguish them from each other and group them by process.
 
 ### Chrome Trace
 

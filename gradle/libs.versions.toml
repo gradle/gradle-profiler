@@ -2,6 +2,7 @@
 kotlin = "2.1.20"
 groovy = "3.0.15"
 spock = "2.3-groovy-3.0"
+bytebuddy = "1.18.4"
 # Ladybug Patch 1 (2024.2.1.10)
 testAndroidStudioVersion = "2024.2.1.10"
 testAndroidSdkVersion = "7.3.0"
@@ -16,6 +17,8 @@ groovy-core = { module = "org.codehaus.groovy:groovy", version.ref = "groovy" }
 groovy-xml = { module = "org.codehaus.groovy:groovy-xml", version.ref = "groovy" }
 
 typesafe-config = { module = "com.typesafe:config", version = "1.3.3" }
+
+bytebuddy = { module = "net.bytebuddy:byte-buddy", version.ref = "bytebuddy" }
 
 [bundles]
 testDependencies = ["spock-core", "spock-junit4", "groovy-core"]

@@ -40,8 +40,7 @@ public class HeapDumpProfiler extends InstrumentingProfiler {
     @Override
     public void summarizeResultFile(File resultFile, Consumer<String> consumer) {
         String fileName = resultFile.getName();
-        if ((fileName.startsWith("gradle-config-end-") || fileName.startsWith("gradle-build-end-"))
-            && fileName.endsWith(".hprof")) {
+        if ((fileName.endsWith("-config-end.hprof") || fileName.endsWith("-build-end.hprof"))) {
             consumer.accept(resultFile.getAbsolutePath());
         }
     }
@@ -65,9 +64,10 @@ public class HeapDumpProfiler extends InstrumentingProfiler {
             String agentJar = GradleInstrumentation.unpackPlugin("heap-dump-agent").getAbsolutePath();
             String runtimeJar = GradleInstrumentation.unpackPlugin("heap-dump-runtime").getAbsolutePath();
             String outputDir = settings.profilerOutputLocationFor("").getParentFile().getAbsolutePath();
+            String scenarioName = settings.getScenario().getName();
 
-            // Build agent argument: <runtimeJar>;<outputDir>;<strategy1>,<strategy2>
-            String agentArg = runtimeJar + ";" + outputDir + ";" + String.join(",", strategies);
+            // Build agent argument: <runtimeJar>;<outputDir>;<scenarioName>;<strategy1>,<strategy2>
+            String agentArg = runtimeJar + ";" + outputDir + ";" + scenarioName + ";" + String.join(",", strategies);
             jvmArgs.add("-javaagent:" + agentJar + "=" + agentArg);
         }
     }

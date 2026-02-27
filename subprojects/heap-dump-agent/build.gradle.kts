@@ -3,7 +3,8 @@ plugins {
 }
 
 dependencies {
-    implementation("org.ow2.asm:asm:9.2")
+    implementation(libs.bytebuddy)
+    compileOnly(project(":heap-dump-runtime"))
 }
 
 tasks.compileJava {

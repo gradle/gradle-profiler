@@ -1,9 +1,9 @@
 package org.gradle.profiler.heapdump.agent;
 
-import com.sun.management.HotSpotDiagnosticMXBean;
+import org.gradle.profiler.heapdump.agent.writers.CsvWriter;
+import org.gradle.profiler.heapdump.agent.writers.HprofWriter;
+import org.gradle.profiler.heapdump.agent.writers.TxtWriter;
 
-import javax.management.MBeanServer;
-import java.lang.management.ManagementFactory;
 import java.nio.file.Files;
 import java.nio.file.Path;
 
@@ -15,51 +15,30 @@ import java.nio.file.Path;
 @SuppressWarnings("unused")
 public class HeapDumpExecutor {
 
-    public static void invoke(String directory, String strategy) {
+    private static int heapDumpCounter = 1;
+
+    public static void invoke(String directory, String strategy, String additionalData) {
         try {
             long pid = ProcessHandle.current().pid();
+
+            Path dirPath = Path.of(directory).toAbsolutePath();
             // Create output directory if it doesn't exist
-            Path dirPath = Path.of(directory);
             Files.createDirectories(dirPath);
 
-            // Generate unique filename with PID and optional sequential number
-            String filename = generateUniqueFilename(dirPath, strategy, pid);
-            Path filePath = dirPath.resolve(filename);
+            // Generate base filename with PID, sequential number and strategy
+            String baseFilename = pid + "-" + heapDumpCounter + "-" + strategy;
 
-            System.out.println("HEAP_DUMP_EXECUTOR: Creating heap dump at " + filePath);
-
-            MBeanServer server = ManagementFactory.getPlatformMBeanServer();
-            HotSpotDiagnosticMXBean mxBean = ManagementFactory.newPlatformMXBeanProxy(
-                server,
-                "com.sun.management:type=HotSpotDiagnostic",
-                HotSpotDiagnosticMXBean.class
-            );
-            mxBean.dumpHeap(filePath.toString(), true);
-            System.out.println("HEAP_DUMP_EXECUTOR: Heap dump created successfully");
+            // Create heap dump
+            HprofWriter.write(dirPath, baseFilename);
+            // Write heap statistics to companion file
+            TxtWriter.write(dirPath, baseFilename, heapDumpCounter, strategy, additionalData, pid);
+            // Append CSV data for analysis
+            CsvWriter.write(dirPath, baseFilename, heapDumpCounter, strategy, additionalData, pid);
         } catch (Exception e) {
             System.err.println("HEAP_DUMP_EXECUTOR: Failed to create heap dump: " + e.getMessage());
             e.printStackTrace();
-        }
-    }
-
-    private static String generateUniqueFilename(Path directory, String strategy, long pid) {
-        // Try base filename first: heapdump-<strategy>-<pid>.hprof
-        String baseFilename = "heapdump-" + strategy + "-" + pid + ".hprof";
-        Path basePath = directory.resolve(baseFilename);
-
-        if (!Files.exists(basePath)) {
-            return baseFilename;
-        }
-
-        // If base filename exists, try with sequential numbers
-        int sequence = 1;
-        while (true) {
-            String filename = "heapdump-" + strategy + "-" + pid + "-" + sequence + ".hprof";
-            Path path = directory.resolve(filename);
-            if (!Files.exists(path)) {
-                return filename;
-            }
-            sequence++;
+        } finally {
+            heapDumpCounter++;
         }
     }
 

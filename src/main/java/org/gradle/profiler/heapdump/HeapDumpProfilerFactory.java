@@ -12,7 +12,7 @@ import java.util.stream.Collectors;
 
 public class HeapDumpProfilerFactory extends ProfilerFactory {
     private static final String HEAP_DUMP_WHEN_OPTION = "heap-dump-when";
-    private static final Set<String> ALLOWED_VALUES = new HashSet<>(Arrays.asList("config-end", "build-end"));
+    private static final Set<String> ALLOWED_VALUES = new HashSet<>(Arrays.asList("config-end", "build-end", "cc"));
     private static final String DEFAULT_VALUE = "build-end";
 
     @Override
