@@ -4,12 +4,30 @@ import org.gradle.profiler.CommandExec;
 import org.gradle.profiler.InstrumentingProfiler;
 
 import java.io.File;
+import java.io.IOException;
 
-public class YourKitProfilerController implements InstrumentingProfiler.SnapshotCapturingProfilerController {
+/**
+ * Controls the YourKit profiler agent via the legacy CLI approach (pre-2024.9).
+ * <p>
+ * Uses {@code java -jar yjp-controller-api-redist.jar} to send commands to the agent.
+ * This JAR was an executable controller in versions before 2024.9, when it was replaced
+ * by the HTTP API v2.
+ *
+ * @see <a href="https://www.yourkit.com/docs/java-profiler/latest/help/profiler-java-api.jsp">YourKit Profiler Java API</a>
+ */
+public class YourKitLegacyCliController implements InstrumentingProfiler.SnapshotCapturingProfilerController {
+
     private final YourKitConfig options;
+    private final int port;
 
-    public YourKitProfilerController(YourKitConfig options) {
+    public YourKitLegacyCliController(YourKitConfig options, int port) {
         this.options = options;
+        this.port = port;
+    }
+
+    @Override
+    public void startSession() throws IOException, InterruptedException {
+        YourKit.waitForPortAvailable(port);
     }
 
     @Override
@@ -47,15 +65,14 @@ public class YourKitProfilerController implements InstrumentingProfiler.Snapshot
             "-jar",
             controllerJar.getAbsolutePath(),
             "--host=localhost",
-            "--port=" + YourKitJvmArgsCalculator.PORT,
+            "--port=" + port,
             command);
     }
 
     private File findControllerJar() {
-        File yourKitHome = YourKit.findYourKitHome();
         File controllerJar = YourKit.findControllerJar();
-        if (!controllerJar.isFile()) {
-            throw new IllegalArgumentException("Could not locate YourKit library in YourKit home directory " + yourKitHome);
+        if (controllerJar == null || !controllerJar.isFile()) {
+            throw new IllegalArgumentException("Could not locate YourKit controller JAR in YourKit home directory " + YourKit.findYourKitHome());
         }
         return controllerJar;
     }

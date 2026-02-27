@@ -2,6 +2,7 @@ package org.gradle.profiler.yourkit;
 
 import org.gradle.profiler.InstrumentingProfiler;
 import org.gradle.profiler.JvmArgsCalculator;
+import org.gradle.profiler.Logging;
 import org.gradle.profiler.ScenarioSettings;
 
 import java.io.File;
@@ -33,7 +34,14 @@ public class YourKitProfiler extends InstrumentingProfiler {
 
     @Override
     public SnapshotCapturingProfilerController newSnapshottingController(ScenarioSettings settings) {
-        return new YourKitProfilerController(yourKitConfig);
+        int port = YourKitJvmArgsCalculator.PORT;
+        if (YourKit.isHttpApiSupported()) {
+            Logging.detailed().println("Using YourKit HTTP API v2 controller");
+            return new YourKitHttpApiController(yourKitConfig, port);
+        } else {
+            Logging.detailed().println("Using YourKit legacy CLI controller");
+            return new YourKitLegacyCliController(yourKitConfig, port);
+        }
     }
 
     @Override
