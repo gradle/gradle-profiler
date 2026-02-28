@@ -2,8 +2,8 @@ package org.gradle.profiler.client.protocol;
 
 import org.gradle.profiler.client.protocol.messages.GradleInvocationParameters;
 import org.gradle.profiler.client.protocol.messages.Message;
-import org.gradle.profiler.client.protocol.messages.StudioAgentConnectionParameters;
-import org.gradle.profiler.client.protocol.messages.StudioRequest;
+import org.gradle.profiler.client.protocol.messages.IdeAgentConnectionParameters;
+import org.gradle.profiler.client.protocol.messages.IdeRequest;
 import org.gradle.profiler.client.protocol.serialization.MessageProtocolHandler;
 
 import java.io.Closeable;
@@ -43,15 +43,15 @@ public class Client implements Closeable {
         }
     }
 
-    public StudioAgentConnectionParameters receiveConnectionParameters(Duration timeout) {
+    public IdeAgentConnectionParameters receiveConnectionParameters(Duration timeout) {
         synchronized (lock) {
-            return protocolHandler.receive(StudioAgentConnectionParameters.class, timeout);
+            return protocolHandler.receive(IdeAgentConnectionParameters.class, timeout);
         }
     }
 
-    public StudioRequest receiveStudioRequest(Duration timeout) {
+    public IdeRequest receiveIdeRequest(Duration timeout) {
         synchronized (lock) {
-            return protocolHandler.receive(StudioRequest.class, timeout);
+            return protocolHandler.receive(IdeRequest.class, timeout);
         }
     }
 
