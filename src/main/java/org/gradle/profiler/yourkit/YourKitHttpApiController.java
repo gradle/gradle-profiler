@@ -48,9 +48,9 @@ public class YourKitHttpApiController implements InstrumentingProfiler.SnapshotC
 
     @Override
     public void startRecording(String pid) throws IOException, InterruptedException {
-        if (options.isMemorySnapshot()) {
+        if (options.memorySnapshot()) {
             postApiCallWaitingForAgent("startAllocationProfiling", "{\"mode\":\"heapSampling\"}");
-        } else if (options.isUseSampling()) {
+        } else if (options.useSampling()) {
             postApiCallWaitingForAgent("startSampling", "{}");
         } else {
             postApiCallWaitingForAgent("startTracing", "{}");
@@ -59,7 +59,7 @@ public class YourKitHttpApiController implements InstrumentingProfiler.SnapshotC
 
     @Override
     public void stopRecording(String pid) throws IOException, InterruptedException {
-        if (options.isMemorySnapshot()) {
+        if (options.memorySnapshot()) {
             postApiCallWaitingForAgent("stopAllocationProfiling", "{}");
         } else {
             postApiCallWaitingForAgent("stopCpuProfiling", "{}");
@@ -68,7 +68,7 @@ public class YourKitHttpApiController implements InstrumentingProfiler.SnapshotC
 
     @Override
     public void captureSnapshot(String pid) throws IOException, InterruptedException {
-        if (options.isMemorySnapshot()) {
+        if (options.memorySnapshot()) {
             postApiCallWaitingForAgent("captureMemorySnapshot", "{}");
         } else {
             postApiCallWaitingForAgent("capturePerformanceSnapshot", "{}");

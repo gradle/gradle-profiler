@@ -32,9 +32,9 @@ public class YourKitLegacyCliController implements InstrumentingProfiler.Snapsho
 
     @Override
     public void startRecording(String pid) {
-        if (options.isMemorySnapshot()) {
+        if (options.memorySnapshot()) {
             runYourKitCommand("start-alloc-recording-adaptive");
-        } else if (options.isUseSampling()) {
+        } else if (options.useSampling()) {
             runYourKitCommand("start-cpu-sampling");
         } else {
             runYourKitCommand("start-cpu-tracing");
@@ -43,7 +43,7 @@ public class YourKitLegacyCliController implements InstrumentingProfiler.Snapsho
 
     @Override
     public void stopRecording(String pid) {
-        if (options.isMemorySnapshot()) {
+        if (options.memorySnapshot()) {
             runYourKitCommand("stop-alloc-recording");
         } else {
             runYourKitCommand("stop-cpu-profiling");
@@ -52,7 +52,7 @@ public class YourKitLegacyCliController implements InstrumentingProfiler.Snapsho
 
     @Override
     public void captureSnapshot(String pid) {
-        if (options.isMemorySnapshot()) {
+        if (options.memorySnapshot()) {
             runYourKitCommand("capture-memory-snapshot");
         } else {
             runYourKitCommand("capture-performance-snapshot");

@@ -35,18 +35,18 @@ public class YourKitJvmArgsCalculator implements JvmArgsCalculator {
         String agentOptions = "-agentpath:" + jnilib.getAbsolutePath() + "=dir=" + settings.getProfilerOutputBaseDir().getAbsolutePath()
             + ",sessionname=" + settings.getProfilerOutputBaseName()
             + ",port=" + YourKit.PORT;
-        if (yourKitConfig.isMemorySnapshot() || yourKitConfig.isUseSampling()) {
+        if (yourKitConfig.memorySnapshot() || yourKitConfig.useSampling()) {
             agentOptions += ",disabletracing,probe_disable=*";
         } else {
             agentOptions += ",disablealloc";
         }
         if (startRecordingOnStart) {
-            if (yourKitConfig.isMemorySnapshot()) {
+            if (yourKitConfig.memorySnapshot()) {
                 agentOptions += ",alloceach=10";
                 if (captureSnapshotOnProcessExit) {
                     agentOptions += ",onexit=memory";
                 }
-            } else if (yourKitConfig.isUseSampling()) {
+            } else if (yourKitConfig.useSampling()) {
                 agentOptions += ",sampling";
                 if (captureSnapshotOnProcessExit) {
                     agentOptions += ",onexit=snapshot";
