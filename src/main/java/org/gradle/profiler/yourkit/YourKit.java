@@ -104,7 +104,8 @@ public class YourKit {
                 return;
             }
         }
-        Logging.detailed().println("Warning: YourKit agent port " + port + " is still in use after waiting " + timeoutMs + "ms");
+        Logging.detailed().println("Error: YourKit agent port " + port + " is still in use after waiting " + timeoutMs + "ms");
+        throw new IllegalStateException("YourKit agent port " + port + " is still in use");
     }
 
     private static boolean isPortAvailable(int port) {
