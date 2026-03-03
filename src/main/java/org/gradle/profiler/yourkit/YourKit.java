@@ -54,7 +54,7 @@ public class YourKit {
         if (OperatingSystem.isWindows()) {
             return tryLocations(yourKitHome, "bin/win64/yjpagent.dll", "bin/windows-x86-64/yjpagent.dll");
         }
-        String macLibLocationPrefix = MAC_OS_RESOURCES_PATH +"/bin/mac/libyjpagent.";
+        String macLibLocationPrefix = MAC_OS_RESOURCES_PATH + "/bin/mac/libyjpagent.";
         return tryLocations(yourKitHome, macLibLocationPrefix + "jnilib", macLibLocationPrefix + "dylib", "bin/linux-x86-64/libyjpagent.so");
     }
 
@@ -66,7 +66,7 @@ public class YourKit {
      * a library-only JAR rather than an executable one.
      *
      * @return true if the installation uses HTTP API v2 (no Main-Class in manifest, or JAR missing),
-     *         false if the installation uses the legacy CLI (Main-Class present)
+     * false if the installation uses the legacy CLI (Main-Class present)
      */
     public static boolean isHttpApiSupported() {
         File controllerJar = findControllerJar();
