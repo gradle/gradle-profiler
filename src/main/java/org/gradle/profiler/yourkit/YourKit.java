@@ -5,6 +5,7 @@ import org.gradle.profiler.OperatingSystem;
 
 import java.io.File;
 import java.io.IOException;
+import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.ServerSocket;
 import java.util.jar.Attributes;
@@ -109,7 +110,7 @@ public class YourKit {
     private static boolean isPortAvailable(int port) {
         try (ServerSocket socket = new ServerSocket()) {
             socket.setReuseAddress(false);
-            socket.bind(new InetSocketAddress("localhost", port));
+            socket.bind(new InetSocketAddress(InetAddress.getLoopbackAddress(), port));
             return true;
         } catch (IOException e) {
             return false;
