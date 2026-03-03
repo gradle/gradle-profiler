@@ -11,7 +11,7 @@ These are the steps to release Gradle profiler.
 * Increment the version in gradle.properties and append "-SNAPSHOT": _echo "profiler.version=0.13.0-SNAPSHOT">gradle.properties_
 * Commit the updated version number: _git commit -S -am "Prepare next development version 0.13.0"_
 * Push the version update
-* Update the [release draft](https://github.com/gradle/gradle-profiler/releases) prepared by [release-drafter](https://probot.github.io/apps/release-drafter/), assign the tag you created and publish the release
+* Update the [release draft](https://github.com/gradle/gradle-profiler/releases) prepared by [release-drafter](https://github.com/marketplace/actions/release-drafter), assign the tag you created and publish the release
 * The [Publish to SDKman](https://builds.gradle.org/buildConfiguration/GradleProfiler_GradleProfilerPublishToSdkMan?branch=%3Cdefault%3E) should trigger automatically after the publishing job finishes. Though it may fail, since the artifacts are not yet on Maven Central. The build will retry the SDKMan publishing after half an hour. If it still doesn't work, you can trigger the build manually. 
 * All done!
 
