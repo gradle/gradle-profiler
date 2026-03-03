@@ -3,15 +3,15 @@ package org.gradle.profiler.yourkit;
 import org.gradle.profiler.InstrumentingProfiler;
 import org.gradle.profiler.Logging;
 
-import javax.net.ssl.HostnameVerifier;
-import javax.net.ssl.HttpsURLConnection;
 import javax.net.ssl.SSLContext;
+import javax.net.ssl.SSLParameters;
 import javax.net.ssl.TrustManager;
 import javax.net.ssl.X509TrustManager;
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
 import java.net.URI;
+import java.net.http.HttpClient;
+import java.net.http.HttpRequest;
+import java.net.http.HttpResponse;
 import java.nio.charset.StandardCharsets;
 import java.security.KeyManagementException;
 import java.security.NoSuchAlgorithmException;
@@ -32,15 +32,13 @@ public class YourKitHttpApiController implements InstrumentingProfiler.SnapshotC
 
     private final YourKitConfig options;
     private final int port;
-    private final SSLContext sslContext;
-    private final HostnameVerifier hostnameVerifier;
+    private final HttpClient httpClient;
     private boolean agentReady;
 
     public YourKitHttpApiController(YourKitConfig options, int port) {
         this.options = options;
         this.port = port;
-        this.sslContext = createTrustAllSslContext();
-        this.hostnameVerifier = (hostname, session) -> true;
+        this.httpClient = createHttpClient();
     }
 
     @Override
@@ -103,40 +101,38 @@ public class YourKitHttpApiController implements InstrumentingProfiler.SnapshotC
         throw new IOException("YourKit HTTP API v2 not available after " + timeoutMs + "ms", lastException);
     }
 
-    private String postApiCall(String endpoint, String jsonBody) throws IOException {
+    private String postApiCall(String endpoint, String jsonBody) throws IOException, InterruptedException {
+        // Must be "localhost" — the YourKit agent's auto-generated self-signed certificate
+        // has no Subject Alternative Names, so hostname verification requires the URL host
+        // to match the certificate's CN. The agent defaults to listen=localhost.
+        // See https://www.yourkit.com/docs/java-profiler/latest/help/agent-startup-options.jsp
         String url = "https://localhost:" + port + API_BASE + endpoint;
+
         Logging.detailed().println("YourKit HTTP API v2: POST " + url);
 
-        HttpsURLConnection connection = (HttpsURLConnection) URI.create(url).toURL().openConnection();
-        try {
-            connection.setSSLSocketFactory(sslContext.getSocketFactory());
-            connection.setHostnameVerifier(hostnameVerifier);
-            connection.setRequestMethod("POST");
-            connection.setRequestProperty("Content-Type", "application/json");
-            connection.setDoOutput(true);
+        HttpRequest request = HttpRequest.newBuilder()
+            .uri(URI.create(url))
+            .header("Content-Type", "application/json")
+            .POST(HttpRequest.BodyPublishers.ofString(jsonBody, StandardCharsets.UTF_8))
+            .build();
 
-            try (OutputStream os = connection.getOutputStream()) {
-                os.write(jsonBody.getBytes(StandardCharsets.UTF_8));
-            }
+        HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
 
-            int statusCode = connection.getResponseCode();
-            String responseBody;
-            try (InputStream is = (statusCode >= 400) ? connection.getErrorStream() : connection.getInputStream()) {
-                responseBody = is != null ? new String(is.readAllBytes(), StandardCharsets.UTF_8) : "";
-            }
-
-            if (statusCode != 200) {
-                throw new IOException("YourKit HTTP API v2 call to " + endpoint + " failed with status " + statusCode + ": " + responseBody);
-            }
-            Logging.detailed().println("YourKit HTTP API v2: " + endpoint + " -> " + statusCode);
-            return responseBody;
-        } finally {
-            connection.disconnect();
+        int statusCode = response.statusCode();
+        if (statusCode != 200) {
+            throw new IOException("YourKit HTTP API v2 call to " + endpoint
+                + " failed with status " + statusCode + ": " + response.body());
         }
+        Logging.detailed().println("YourKit HTTP API v2: " + endpoint + " -> " + statusCode);
+        return response.body();
     }
 
-    private static SSLContext createTrustAllSslContext() {
+    /**
+     * Creates an HttpClient configured to work with the YourKit agent's self-signed certificate.
+     */
+    private static HttpClient createHttpClient() {
         try {
+            // Trust all certificates — the YourKit agent generates a new self-signed cert on every start.
             TrustManager[] trustAllCerts = new TrustManager[]{
                 new X509TrustManager() {
                     @Override
@@ -155,9 +151,18 @@ public class YourKitHttpApiController implements InstrumentingProfiler.SnapshotC
             };
             SSLContext sslContext = SSLContext.getInstance("TLS");
             sslContext.init(null, trustAllCerts, new SecureRandom());
-            return sslContext;
+
+            // Disable JSSE hostname verification.
+            // HttpClient has no per-connection HostnameVerifier like HttpsURLConnection, this is the equivalent.
+            SSLParameters sslParameters = new SSLParameters();
+            sslParameters.setEndpointIdentificationAlgorithm("");
+
+            return HttpClient.newBuilder()
+                .sslContext(sslContext)
+                .sslParameters(sslParameters)
+                .build();
         } catch (NoSuchAlgorithmException | KeyManagementException e) {
-            throw new RuntimeException("Failed to create trust-all SSL context", e);
+            throw new RuntimeException("Failed to create trust-all HTTP client", e);
         }
     }
 }
