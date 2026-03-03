@@ -42,11 +42,6 @@ public class YourKitHttpApiController implements InstrumentingProfiler.SnapshotC
     }
 
     @Override
-    public void startSession() {
-        YourKit.waitForPortAvailable(port);
-    }
-
-    @Override
     public void startRecording(String pid) throws IOException, InterruptedException {
         if (options.memorySnapshot()) {
             postApiCallWaitingForAgent("startAllocationProfiling", "{\"mode\":\"heapSampling\"}");

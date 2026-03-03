@@ -24,6 +24,10 @@ public class YourKitJvmArgsCalculator implements JvmArgsCalculator {
 
     @Override
     public void calculateJvmArgs(List<String> jvmArgs) {
+        // Wait for the port to be free before starting a new daemon with the YourKit agent.
+        // A previous daemon may still be shutting down and holding the port.
+        YourKit.waitForPortAvailable(YourKit.PORT);
+
         File yourKitHome = YourKit.findYourKitHome();
         if (yourKitHome == null) {
             throw new IllegalArgumentException("Could not locate YourKit installation. Try setting the " + ENVIRONMENT_VARIABLE + " environment variable");

@@ -4,7 +4,6 @@ import org.gradle.profiler.CommandExec;
 import org.gradle.profiler.InstrumentingProfiler;
 
 import java.io.File;
-import java.io.IOException;
 
 /**
  * Controls the YourKit profiler agent via the legacy CLI approach (pre-2024.9).
@@ -23,11 +22,6 @@ public class YourKitLegacyCliController implements InstrumentingProfiler.Snapsho
     public YourKitLegacyCliController(YourKitConfig options, int port) {
         this.options = options;
         this.port = port;
-    }
-
-    @Override
-    public void startSession() throws IOException, InterruptedException {
-        YourKit.waitForPortAvailable(port);
     }
 
     @Override
