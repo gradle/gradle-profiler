@@ -63,6 +63,7 @@ dependencies {
     runtimeOnly("org.slf4j:slf4j-simple:1.7.10")
     testImplementation(libs.bundles.testDependencies)
     testImplementation(libs.groovy.xml)
+    testImplementation(testFixtures(project(":studio-plugin")))
     testImplementation(project(":tooling-action"))
     testRuntimeOnly("cglib:cglib:3.2.6")
     testRuntimeOnly("org.objenesis:objenesis:2.6")

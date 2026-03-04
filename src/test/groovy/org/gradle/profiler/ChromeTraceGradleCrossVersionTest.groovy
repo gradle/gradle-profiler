@@ -3,11 +3,11 @@ package org.gradle.profiler
 
 import org.gradle.profiler.fixtures.compatibility.gradle.AbstractGradleCrossVersionTest
 import org.gradle.profiler.spock.extensions.ShowAndroidStudioLogsOnFailure
-import org.gradle.profiler.studio.AndroidStudioTestSupport
+import org.gradle.profiler.studio.plugin.AndroidStudioTestSupport
 import org.gradle.profiler.studio.tools.AndroidStudioFinder
 import spock.lang.Requires
 
-import static org.gradle.profiler.studio.AndroidStudioTestSupport.setupLocalProperties
+import static org.gradle.profiler.studio.plugin.AndroidStudioTestSupport.setupLocalProperties
 
 class ChromeTraceGradleCrossVersionTest extends AbstractGradleCrossVersionTest {
 

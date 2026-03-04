@@ -1,4 +1,5 @@
 import org.jetbrains.intellij.platform.gradle.TestFrameworkType
+import org.jetbrains.kotlin.gradle.utils.extendsFrom
 
 plugins {
     groovy
@@ -14,6 +15,13 @@ repositories {
     intellijPlatform {
         defaultRepositories()
     }
+}
+
+// Add IntelliJ Platform JARs to the testFixtures compile classpath.
+// In 2.x the plugin wires platform JARs to main/test automatically, but not testFixtures.
+configurations {
+    testFixturesCompileOnly.extendsFrom(intellijPlatformClasspath)
+    testFixturesImplementation.extendsFrom(intellijPlatformClasspath)
 }
 
 dependencies {
@@ -32,13 +40,9 @@ dependencies {
     }
 }
 
-// Add IntelliJ Platform JARs to the testFixtures compile classpath.
-// In 2.x the plugin wires platform JARs to main/test automatically, but not testFixtures.
-afterEvaluate {
-    configurations.findByName("intellijPlatform")?.let { platformConfig ->
-        configurations.getByName("testFixturesCompileOnly").extendsFrom(platformConfig)
-        configurations.getByName("testFixturesImplementation").extendsFrom(platformConfig)
-    }
+// Exclude Spock from test sandbox to avoid duplicate on classpath (Gradle provides it at runtime)
+tasks.named<Sync>("prepareTestSandbox") {
+    exclude("**/spock-*.jar")
 }
 
 tasks.test {
@@ -46,6 +50,8 @@ tasks.test {
     // Disable IntelliJ file system access check for tests: having this check enabled can fail
     // CI builds since Gradle user home can be mounted, e.g. it can be located in the /mnt/tcagent1/.gradle
     systemProperty("NO_FS_ROOTS_ACCESS_CHECK", "true")
+    // Set idea.home.path - required by IntelliJ test framework but not set by 2.x plugin
+    systemProperty("idea.home.path", intellijPlatform.platformPath.toString())
 }
 
 intellijPlatform {
