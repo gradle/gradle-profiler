@@ -1,4 +1,5 @@
 import org.jetbrains.intellij.platform.gradle.TestFrameworkType
+import org.jetbrains.intellij.platform.gradle.tasks.PrepareSandboxTask
 import org.jetbrains.kotlin.gradle.utils.extendsFrom
 
 plugins {
@@ -19,9 +20,11 @@ repositories {
 
 // Add IntelliJ Platform JARs to the testFixtures compile classpath.
 // In 2.x the plugin wires platform JARs to main/test automatically, but not testFixtures.
+// Only compileOnly is needed: at runtime the plugin's test sandbox provides platform classes.
+// Avoid using implementation here: consumers of testFixtures resolve its runtime classpath,
+// which would leak platform deps and require them to configure IntelliJ Platform repositories.
 configurations {
     testFixturesCompileOnly.extendsFrom(intellijPlatformClasspath)
-    testFixturesImplementation.extendsFrom(intellijPlatformClasspath)
 }
 
 dependencies {
@@ -41,7 +44,7 @@ dependencies {
 }
 
 // Exclude Spock from test sandbox to avoid duplicate on classpath (Gradle provides it at runtime)
-tasks.named<Sync>("prepareTestSandbox") {
+tasks.withType<PrepareSandboxTask> {
     exclude("**/spock-*.jar")
 }
 
