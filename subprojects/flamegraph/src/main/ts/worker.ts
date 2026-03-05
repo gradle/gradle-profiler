@@ -46,7 +46,7 @@ interface InternalGraph {
     /**
      * For each index, the value of the node at that index.
      */
-    values: Array<number>
+    values: Array<bigint>
 }
 
 export interface StackGraph {
@@ -64,7 +64,7 @@ export interface StackGraph {
     /**
      * For each index, the value of the node at that index.
      */
-    values: Array<number>
+    values: BigInt64Array
 }
 
 export interface WorkerResult {
@@ -109,7 +109,7 @@ const finalize = (graph: InternalGraph): StackGraph => {
     return {
         children: sortedChildren,
         nodeNames: graph.nodeNames,
-        values: graph.values,
+        values: new BigInt64Array(graph.values),
     }
 }
 
@@ -124,7 +124,7 @@ const getOrCreateChild = (
         self = graph.nodeNames.length
         graph.nodeNames.push(name)
         graph.children.push(new Map())
-        graph.values.push(0)
+        graph.values.push(0n)
         children.set(name, self)
     }
     return self
@@ -136,7 +136,7 @@ const parseLine = (
     line: string,
     graph: InternalGraph,
     nameCache: Map<string, string>,
-): number => {
+): bigint => {
     let current = offset
     while (
         current < line.length &&
@@ -164,7 +164,7 @@ const parseLine = (
         graph.values[self]! += value
         return value
     } else if (line[current] == " ") {
-        const value = parseInt(line.substring(current + 1))
+        const value = BigInt(line.substring(current + 1))
         graph.values[self]! += value
         return value
     }
@@ -182,7 +182,7 @@ const processStream = async (
     let graph: InternalGraph = {
         children: [new Map()],
         nodeNames: ["root"],
-        values: [0],
+        values: [0n],
     }
     const nameCache = new Map<string, string>()
     let incompleteLine = ""
@@ -238,7 +238,7 @@ const mergeChildren = async (job: MergeChildrenJob): Promise<WorkerResult> => {
     const newGraph: InternalGraph = {
         children: [new Map()],
         nodeNames: [job.nodeName],
-        values: [0],
+        values: [0n],
     }
 
     // Create an aggregate view of all children of all root nodes
@@ -298,7 +298,7 @@ const icicleGraph = async (job: IcicleGraphJob): Promise<WorkerResult> => {
     const newGraph: InternalGraph = {
         children: [new Map()],
         nodeNames: ["root"],
-        values: [0],
+        values: [0n],
     }
 
     const stack = [targetNodeId]
@@ -307,14 +307,14 @@ const icicleGraph = async (job: IcicleGraphJob): Promise<WorkerResult> => {
         const nodeId = stack.pop()!
         const value = graph.values[nodeId]!
 
-        let childrenSum = 0
+        let childrenSum = 0n
         for (const childId of graph.children[nodeId]!.values()) {
             childrenSum += graph.values[childId]!
             stack.push(childId)
         }
 
         const selfWeight = value - childrenSum
-        if (selfWeight > 0) {
+        if (selfWeight > 0n) {
             let newCurrent = 0
             newGraph.values[0]! += selfWeight
 
@@ -366,5 +366,12 @@ const tryProcess = async (job: Job): Promise<WorkerResponse> => {
 
 self.onmessage = async (event: MessageEvent<WorkerParams>) => {
     const response = await tryProcess(event.data.job)
-    self.postMessage(response)
+    const transfer: Transferable[] = []
+    if (
+        "result" in response &&
+        response.result.graph.values instanceof BigInt64Array
+    ) {
+        transfer.push(response.result.graph.values.buffer)
+    }
+    self.postMessage(response, transfer)
 }

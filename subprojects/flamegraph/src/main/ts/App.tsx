@@ -32,6 +32,11 @@ const NODE_HEIGHT = 22
  */
 const NODE_TEXT_PADDING_LEFT = 5
 
+/**
+ * The horizontal width of the SVG coordinate system.
+ */
+const COORDINATE_WIDTH = 100_000
+
 const generateColorFor = (hue: number): string => {
     const lightness = 50
     return `hsl(${hue}, 100%, ${lightness}%)`
@@ -70,11 +75,11 @@ const FlamegraphNode = ({
 }: {
     nodeId: number
     graph: StackGraph
-    xOffset: number
+    xOffset: bigint
     depth: number
     svgWidth: number
     svgHeight: number
-    totalValue: number
+    totalValue: bigint
     onClick: (nodeId: number) => void
 }) => {
     const value = graph.values[nodeId]
@@ -100,9 +105,10 @@ const FlamegraphNode = ({
             throw new Error("Malformed graph: missing child value")
         }
 
-        const childWidth = (childValue / totalValue) * svgWidth
+        const childWidthPx =
+            (Number(childValue) / Number(totalValue)) * svgWidth
         let element
-        if (childWidth >= CULLING_THRESHOLD_PX) {
+        if (childWidthPx >= CULLING_THRESHOLD_PX) {
             element = (
                 <FlamegraphNode
                     key={childId}
@@ -127,17 +133,19 @@ const FlamegraphNode = ({
 
     const y = svgHeight - (depth + 1) * NODE_HEIGHT
 
+    const rectX = (Number(xOffset) / Number(totalValue)) * COORDINATE_WIDTH
+    const rectWidth = (Number(value) / Number(totalValue)) * COORDINATE_WIDTH
+
     // To counteract the text stretching caused by preserveAspectRatio="none", we apply an inverse
     // horizontal scale transform.
-    const horizontalScale = totalValue > 0 ? totalValue / svgWidth : 0
-    const widthInPixels = (value / totalValue) * svgWidth
+    const horizontalScale = COORDINATE_WIDTH / svgWidth
 
     const colorContext = React.useContext(ColorContext)
 
     return (
         <>
             <g
-                transform={`translate(${xOffset}, ${y})`}
+                transform={`translate(${rectX}, ${y})`}
                 onClick={(e) => {
                     e.stopPropagation() // Prevent click from bubbling to parent nodes
                     onClick(nodeId)
@@ -147,14 +155,15 @@ const FlamegraphNode = ({
                 <rect
                     data-node-id={nodeId}
                     data-name={name}
-                    width={value}
+                    width={rectWidth}
                     height={NODE_HEIGHT}
                     fill={colorFor(name, colorContext)}
                 >
                     <title>{nodeDetails(nodeId, graph)}</title>
                 </rect>
 
-                {widthInPixels > NODE_TEXT_PADDING_LEFT && (
+                {rectWidth * (svgWidth / COORDINATE_WIDTH) >
+                    NODE_TEXT_PADDING_LEFT && (
                     <text
                         x={NODE_TEXT_PADDING_LEFT}
                         y={NODE_HEIGHT / 2}
@@ -178,7 +187,7 @@ const nodeDetails = (nodeId: number, graph: StackGraph): string => {
         return "Malformed graph. Missing node data."
     }
 
-    return `${name} ${value.toLocaleString()} samples`
+    return `${name} ${BigInt.asIntN(64, value).toLocaleString()} samples`
 }
 
 const NodeDetails = forwardRef<HTMLSpanElement, {}>((_, ref) => {
@@ -257,13 +266,13 @@ const Flamegraph: React.FC<{
         }
 
         const rootValue = graph.values[rootNode]
-        if (!rootValue) {
+        if (!rootValue || rootValue === 0n) {
             return 0
         }
 
         let max = 0
         const stack: Array<[number, number]> = [[rootNode, 1]]
-        const minValueThreshold = (CULLING_THRESHOLD_PX * rootValue) / svgWidth
+        const minValueThresholdRatio = CULLING_THRESHOLD_PX / svgWidth
 
         while (stack.length > 0) {
             const [nodeId, depth] = stack.pop()!
@@ -277,11 +286,12 @@ const Flamegraph: React.FC<{
                 for (let i = 0; i < children.length; i++) {
                     const childId = children[i]!
                     const childValue = graph.values[childId]
-                    if (
-                        childValue !== undefined &&
-                        childValue >= minValueThreshold
-                    ) {
-                        stack.push([childId, depth + 1])
+                    if (childValue !== undefined) {
+                        const childValueRatio =
+                            Number(childValue) / Number(rootValue)
+                        if (childValueRatio >= minValueThresholdRatio) {
+                            stack.push([childId, depth + 1])
+                        }
                     }
                 }
             }
@@ -324,7 +334,12 @@ const Flamegraph: React.FC<{
         }
     }
 
-    if (!graph || graph.values.length === 0 || !graph.values[0]) {
+    if (
+        !graph ||
+        graph.values.length === 0 ||
+        graph.values[0] === undefined ||
+        graph.values[0] === 0n
+    ) {
         return <div>No data to display.</div>
     }
 
@@ -418,7 +433,7 @@ const Flamegraph: React.FC<{
                         }}
                         ref={scrollRef}
                     >
-                        {rootValue && (
+                        {rootValue !== undefined && (
                             <svg
                                 className={"flamegraph-svg"}
                                 style={{
@@ -426,7 +441,7 @@ const Flamegraph: React.FC<{
                                     marginTop: "auto",
                                 }}
                                 height={svgHeight}
-                                viewBox={`0 0 ${rootValue} ${svgHeight}`}
+                                viewBox={`0 0 ${COORDINATE_WIDTH} ${svgHeight}`}
                                 preserveAspectRatio="none"
                                 onMouseLeave={handleMouseLeave}
                                 onMouseMove={handleMouseMove}
@@ -436,7 +451,7 @@ const Flamegraph: React.FC<{
                                     <FlamegraphNode
                                         nodeId={rootNode}
                                         graph={graph}
-                                        xOffset={0}
+                                        xOffset={0n}
                                         depth={0}
                                         svgWidth={svgWidth}
                                         svgHeight={svgHeight}
