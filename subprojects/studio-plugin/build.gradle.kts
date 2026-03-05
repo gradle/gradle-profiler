@@ -1,53 +1,73 @@
-import org.jetbrains.intellij.IntelliJPluginConstants.IDEA_CONFIGURATION_NAME
-import org.jetbrains.intellij.IntelliJPluginConstants.IDEA_PLUGINS_CONFIGURATION_NAME
-import org.jetbrains.intellij.IntelliJPluginConstants.INTELLIJ_DEFAULT_DEPENDENCIES_CONFIGURATION_NAME
+import org.jetbrains.intellij.platform.gradle.TestFrameworkType
+import org.jetbrains.intellij.platform.gradle.tasks.PrepareSandboxTask
+import org.jetbrains.kotlin.gradle.utils.extendsFrom
 
 plugins {
     groovy
     `java-test-fixtures`
     id("profiler.kotlin-library")
-    id("org.jetbrains.intellij") version "1.17.4"
+    id("org.jetbrains.intellij.platform") version "2.11.0"
 }
 
 description = "Contains logic for Android Studio plugin that communicates with profiler"
 
 repositories {
     mavenCentral()
+    intellijPlatform {
+        defaultRepositories()
+    }
+}
+
+// Add IntelliJ Platform JARs to the testFixtures compile classpath.
+// In 2.x the plugin wires platform JARs to main/test automatically, but not testFixtures.
+// Only compileOnly is needed: at runtime the plugin's test sandbox provides platform classes.
+// Avoid using implementation here: consumers of testFixtures resolve its runtime classpath,
+// which would leak platform deps and require them to configure IntelliJ Platform repositories.
+configurations {
+    testFixturesCompileOnly.extendsFrom(intellijPlatformClasspath)
 }
 
 dependencies {
     implementation(project(":client-protocol"))
     testImplementation(libs.bundles.testDependencies)
+    // IntelliJ's JUnit5TestSessionListener (from TestFrameworkType.Platform) references junit-jupiter-api,
+    // but Spock only brings junit-platform-engine.
+    testRuntimeOnly("org.junit.jupiter:junit-jupiter-api:5.10.0")
     testFixturesImplementation(project(":client-protocol"))
     testFixturesImplementation(libs.bundles.testDependencies)
+
+    intellijPlatform {
+        // Target Android Studio Hedgehog, equivalent to the previous IntelliJ 2023.1.1 + Android plugin config.
+        androidStudio("2023.1.1.28")
+        bundledPlugin("com.intellij.java")
+        bundledPlugin("org.jetbrains.plugins.gradle")
+        bundledPlugin("org.jetbrains.android")
+        testFramework(TestFrameworkType.Platform)
+    }
 }
 
-// Applied configurations by gradle-intellij-plugin can be found here:
-// https://github.com/JetBrains/gradle-intellij-plugin/blob/master/src/main/kotlin/org/jetbrains/intellij/IntelliJPlugin.kt
-val ideaConfiguration = project.configurations.getByName(IDEA_CONFIGURATION_NAME)
-val ideaPluginsConfiguration = project.configurations.getByName(IDEA_PLUGINS_CONFIGURATION_NAME)
-val intelliJDefaultDependenciesConfiguration = project.configurations.getByName(INTELLIJ_DEFAULT_DEPENDENCIES_CONFIGURATION_NAME)
-
-project.configurations
-    .getByName("testFixturesCompileOnly")
-    .extendsFrom(ideaConfiguration, ideaPluginsConfiguration, intelliJDefaultDependenciesConfiguration)
-project.configurations
-    .getByName("testFixturesImplementation")
-    .extendsFrom(ideaConfiguration, ideaPluginsConfiguration, intelliJDefaultDependenciesConfiguration)
+// Exclude Spock from test sandbox to avoid duplicate on classpath (Gradle provides it at runtime)
+tasks.withType<PrepareSandboxTask> {
+    exclude("**/spock-*.jar")
+}
 
 tasks.test {
     useJUnitPlatform()
     // Disable IntelliJ file system access check for tests: having this check enabled can fail
     // CI builds since Gradle user home can be mounted, e.g. it can be located in the /mnt/tcagent1/.gradle
     systemProperty("NO_FS_ROOTS_ACCESS_CHECK", "true")
+    // Set idea.home.path - required by IntelliJ test framework but not set by 2.x plugin
+    systemProperty("idea.home.path", intellijPlatform.platformPath.toString())
 }
 
-intellij {
-    pluginName.set("gradle-profiler-studio-plugin")
-    version.set("2023.1.1")
-    // Don't override "since-build" and "until-build" properties in plugin.xml,
-    // so we don't need to update plugin to use it also on future IntelliJ versions.
-    updateSinceUntilBuild.set(false)
-    // Any plugin here must be also added to resources/META-INF/plugin.xml
-    plugins.set(listOf("java", "gradle", "org.jetbrains.android"))
+intellijPlatform {
+    pluginConfiguration {
+        name = "gradle-profiler-studio-plugin"
+        ideaVersion {
+            sinceBuild = provider { "231" }
+            untilBuild = provider { null }
+        }
+    }
+    // Disable searchable options indexing since this plugin is not published to the marketplace
+    buildSearchableOptions = false
 }

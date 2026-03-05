@@ -3,7 +3,7 @@ package org.gradle.profiler
 import org.gradle.profiler.fixtures.AbstractProfilerIntegrationTest
 import org.gradle.profiler.instrument.GradleInstrumentation
 import org.gradle.profiler.spock.extensions.ShowAndroidStudioLogsOnFailure
-import org.gradle.profiler.studio.AndroidStudioTestSupport
+import org.gradle.profiler.studio.plugin.AndroidStudioTestSupport
 import org.gradle.profiler.studio.launcher.StudioLauncher
 import org.gradle.profiler.studio.launcher.StudioLauncherProvider
 import org.gradle.profiler.studio.tools.AndroidStudioFinder
@@ -11,7 +11,7 @@ import org.gradle.profiler.studio.tools.StudioPluginInstaller
 import org.gradle.profiler.studio.tools.StudioSandboxCreator
 import spock.lang.Requires
 
-import static org.gradle.profiler.studio.AndroidStudioTestSupport.setupLocalProperties
+import static org.gradle.profiler.studio.plugin.AndroidStudioTestSupport.setupLocalProperties
 
 /**
  * You need ANDROID_HOME or ANDROID_SDK_ROOT set or

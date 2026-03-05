@@ -6,9 +6,6 @@
     <description>Runs IntelliJ/Android Studio functionalities with Gradle profiler</description>
     <change-notes>>Runs IntelliJ/Android Studio functionalities with Gradle profiler</change-notes>
 
-    <!-- please see http://www.jetbrains.org/intellij/sdk/docs/basics/getting_started/build_number_ranges.html for description -->
-    <idea-version since-build="231.0"/>
-
     <!-- Plugin dependencies -->
     <!-- Any dependency here should also be added to build.gradle.kts intellij extension -->
     <depends>org.jetbrains.plugins.gradle</depends>
