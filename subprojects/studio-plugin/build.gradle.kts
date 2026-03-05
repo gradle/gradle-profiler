@@ -30,6 +30,9 @@ configurations {
 dependencies {
     implementation(project(":client-protocol"))
     testImplementation(libs.bundles.testDependencies)
+    // IntelliJ's JUnit5TestSessionListener (from TestFrameworkType.Platform) references junit-jupiter-api,
+    // but Spock only brings junit-platform-engine.
+    testRuntimeOnly("org.junit.jupiter:junit-jupiter-api:5.10.0")
     testFixturesImplementation(project(":client-protocol"))
     testFixturesImplementation(libs.bundles.testDependencies)
 
