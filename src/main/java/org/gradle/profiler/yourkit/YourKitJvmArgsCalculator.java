@@ -9,7 +9,7 @@ import java.util.List;
 import static org.gradle.profiler.yourkit.YourKit.ENVIRONMENT_VARIABLE;
 
 public class YourKitJvmArgsCalculator implements JvmArgsCalculator {
-    public static final int PORT = 10021;
+
     private final ScenarioSettings settings;
     private final YourKitConfig yourKitConfig;
     private final boolean startRecordingOnStart;
@@ -24,6 +24,10 @@ public class YourKitJvmArgsCalculator implements JvmArgsCalculator {
 
     @Override
     public void calculateJvmArgs(List<String> jvmArgs) {
+        // Wait for the port to be free before starting a new daemon with the YourKit agent.
+        // A previous daemon may still be shutting down and holding the port.
+        YourKit.waitForPortAvailable(YourKit.PORT);
+
         File yourKitHome = YourKit.findYourKitHome();
         if (yourKitHome == null) {
             throw new IllegalArgumentException("Could not locate YourKit installation. Try setting the " + ENVIRONMENT_VARIABLE + " environment variable");
@@ -33,20 +37,20 @@ public class YourKitJvmArgsCalculator implements JvmArgsCalculator {
             throw new IllegalArgumentException("Could not locate YourKit library in YourKit home directory " + yourKitHome);
         }
         String agentOptions = "-agentpath:" + jnilib.getAbsolutePath() + "=dir=" + settings.getProfilerOutputBaseDir().getAbsolutePath()
-                + ",sessionname=" + settings.getProfilerOutputBaseName()
-                + ",port=" + PORT;
-        if (yourKitConfig.isMemorySnapshot() || yourKitConfig.isUseSampling()) {
+            + ",sessionname=" + settings.getProfilerOutputBaseName()
+            + ",port=" + YourKit.PORT;
+        if (yourKitConfig.memorySnapshot() || yourKitConfig.useSampling()) {
             agentOptions += ",disabletracing,probe_disable=*";
         } else {
             agentOptions += ",disablealloc";
         }
         if (startRecordingOnStart) {
-            if (yourKitConfig.isMemorySnapshot()) {
+            if (yourKitConfig.memorySnapshot()) {
                 agentOptions += ",alloceach=10";
                 if (captureSnapshotOnProcessExit) {
                     agentOptions += ",onexit=memory";
                 }
-            } else if (yourKitConfig.isUseSampling()) {
+            } else if (yourKitConfig.useSampling()) {
                 agentOptions += ",sampling";
                 if (captureSnapshotOnProcessExit) {
                     agentOptions += ",onexit=snapshot";
