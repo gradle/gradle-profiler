@@ -27,11 +27,13 @@ public class TestNameTestDirectoryProvider implements TestRule, TestDirectoryPro
     private static final Pattern WINDOWS_RESERVED_NAMES = Pattern.compile("(con)|(prn)|(aux)|(nul)|(com\\d)|(lpt\\d)", Pattern.CASE_INSENSITIVE);
 
     private TestFile dir;
-    private boolean suppressCleanup = false;
+    private boolean suppressCleanup;
 
-    public TestNameTestDirectoryProvider(Class<?> klass) {
+    public TestNameTestDirectoryProvider(Class<?> klass, boolean suppressCleanupByDefault) {
         this.root = new TestFile(new File("build/tmp/test-files"));
         this.shortClassName = shortenPath(klass.getSimpleName(), 16);
+
+        this.suppressCleanup = suppressCleanupByDefault;
     }
 
     @Override
