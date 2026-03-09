@@ -6,6 +6,9 @@ on:
 jobs:
   enforce-label:
     runs-on: ubuntu-latest
+    # Adds a 5-minute wait before running, so authors have time to add labels before the check fails.
+    # The delay is configured in repo Settings > Environments > "delayed-check" > Wait timer.
+    environment: delayed-check
     steps:
     - uses: yogevbd/enforce-label-action@2.2.2
       with:
