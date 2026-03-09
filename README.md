@@ -176,6 +176,9 @@ You can switch to CPU tracing using the `--profile yourkit-tracing` option.
 You can switch to memory allocation profiling by using the `--profile yourkit-heap` option. 
 All probes are disabled when using sampling or memory allocation profiling.
 
+By default, YourKit will use the `10021` port to connect to the agent in the build JVM.
+You can override it via `org.gradle.profiler.yourkit.port` system property.
+
 ### Java Flight Recorder
 
 JFR provides low overhead CPU, allocation, IO wait and lock profiling and runs on all major operating systems.
