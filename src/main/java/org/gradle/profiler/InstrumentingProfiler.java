@@ -118,6 +118,9 @@ public abstract class InstrumentingProfiler extends Profiler {
     public abstract SnapshotCapturingProfilerController newSnapshottingController(ScenarioSettings settings);
 
     public interface SnapshotCapturingProfilerController {
+
+        default void startSession() throws IOException, InterruptedException {}
+
         default void startRecording(String pid) throws IOException, InterruptedException {}
 
         default void stopRecording(String pid) throws IOException, InterruptedException {}
@@ -141,6 +144,7 @@ public abstract class InstrumentingProfiler extends Profiler {
 
         @Override
         public void startSession() throws IOException, InterruptedException {
+            controller.startSession();
         }
 
         @Override

@@ -5,18 +5,30 @@ import org.gradle.profiler.InstrumentingProfiler;
 
 import java.io.File;
 
-public class YourKitProfilerController implements InstrumentingProfiler.SnapshotCapturingProfilerController {
-    private final YourKitConfig options;
+/**
+ * Controls the YourKit profiler agent via the legacy CLI approach (pre-2024.9).
+ * <p>
+ * Uses {@code java -jar yjp-controller-api-redist.jar} to send commands to the agent.
+ * This JAR was an executable controller in versions before 2024.9, when it was replaced
+ * by the HTTP API v2.
+ *
+ * @see <a href="https://www.yourkit.com/docs/java-profiler/latest/help/profiler-java-api.jsp">YourKit Profiler Java API</a>
+ */
+public class YourKitLegacyCliController implements InstrumentingProfiler.SnapshotCapturingProfilerController {
 
-    public YourKitProfilerController(YourKitConfig options) {
+    private final YourKitConfig options;
+    private final int port;
+
+    public YourKitLegacyCliController(YourKitConfig options, int port) {
         this.options = options;
+        this.port = port;
     }
 
     @Override
     public void startRecording(String pid) {
-        if (options.isMemorySnapshot()) {
+        if (options.memorySnapshot()) {
             runYourKitCommand("start-alloc-recording-adaptive");
-        } else if (options.isUseSampling()) {
+        } else if (options.useSampling()) {
             runYourKitCommand("start-cpu-sampling");
         } else {
             runYourKitCommand("start-cpu-tracing");
@@ -25,7 +37,7 @@ public class YourKitProfilerController implements InstrumentingProfiler.Snapshot
 
     @Override
     public void stopRecording(String pid) {
-        if (options.isMemorySnapshot()) {
+        if (options.memorySnapshot()) {
             runYourKitCommand("stop-alloc-recording");
         } else {
             runYourKitCommand("stop-cpu-profiling");
@@ -34,7 +46,7 @@ public class YourKitProfilerController implements InstrumentingProfiler.Snapshot
 
     @Override
     public void captureSnapshot(String pid) {
-        if (options.isMemorySnapshot()) {
+        if (options.memorySnapshot()) {
             runYourKitCommand("capture-memory-snapshot");
         } else {
             runYourKitCommand("capture-performance-snapshot");
@@ -47,15 +59,14 @@ public class YourKitProfilerController implements InstrumentingProfiler.Snapshot
             "-jar",
             controllerJar.getAbsolutePath(),
             "--host=localhost",
-            "--port=" + YourKitJvmArgsCalculator.PORT,
+            "--port=" + port,
             command);
     }
 
     private File findControllerJar() {
-        File yourKitHome = YourKit.findYourKitHome();
         File controllerJar = YourKit.findControllerJar();
-        if (!controllerJar.isFile()) {
-            throw new IllegalArgumentException("Could not locate YourKit library in YourKit home directory " + yourKitHome);
+        if (controllerJar == null || !controllerJar.isFile()) {
+            throw new IllegalArgumentException("Could not locate YourKit controller JAR in YourKit home directory " + YourKit.findYourKitHome());
         }
         return controllerJar;
     }

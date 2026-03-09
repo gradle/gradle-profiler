@@ -40,9 +40,8 @@ class CompositeProfiler extends Profiler {
     @Override
     public ProfilerController newController(final String pid, final ScenarioSettings settings) {
         List<ProfilerController> controllers = delegates.stream()
-            .map((Profiler prof) -> prof.newController(pid,
-                settingsFor(prof, settings)))
-            .collect(Collectors.toList());
+            .map((Profiler prof) -> prof.newController(pid, settingsFor(prof, settings)))
+            .toList();
         return new ProfilerController() {
             @Override
             public void startSession() throws IOException, InterruptedException {
