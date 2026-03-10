@@ -7,7 +7,6 @@ import com.intellij.openapi.externalSystem.service.execution.ExternalSystemJdkUt
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ex.ProjectManagerEx
 import com.intellij.openapi.projectRoots.ProjectJdkTable
-import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.testFramework.EdtTestUtil
 import com.intellij.testFramework.HeavyPlatformTestCase
@@ -29,7 +28,6 @@ class IdeSetupHelper extends HeavyPlatformTestCase {
 
     Consumer<File> projectCreator
     TemporaryFolder temporaryFolder
-    List<Sdk> sdks = []
 
     IdeSetupHelper(Description description, TemporaryFolder tempFolder, Consumer<File> projectCreator) {
         super.setName(description.methodName)
@@ -51,10 +49,9 @@ class IdeSetupHelper extends HeavyPlatformTestCase {
             WriteAction.run {
                 def jdk = Jdks.instance.createAndAddJdk(Jvm.current().javaHome.absolutePath)
                 ProjectRootManager.getInstance(project).setProjectSdk(jdk)
-                sdks.add(jdk)
-                // Configure Android SDK to prevent modal dialog during sync
-                def androidSdks = IdeSdks.instance.setAndroidSdkPath(new File(AndroidStudioTestSupport.findAndroidSdkPath()))
-                sdks.addAll(androidSdks)
+                // Configure Android SDK so SdkSync doesn't try to show a modal dialog
+                // when the plugin triggers Gradle sync in headless mode.
+                IdeSdks.instance.setAndroidSdkPath(new File(AndroidStudioTestSupport.findAndroidSdkPath()))
             }
             GradleSettings gradleSettings = GradleSettings.getInstance(project);
             gradleSettings.subscribe(new DefaultGradleSettingsListener() {
@@ -71,7 +68,9 @@ class IdeSetupHelper extends HeavyPlatformTestCase {
         // We must run this on Edt otherwise the exception is thrown since runInDispatchThread is set to false
         EdtTestUtil.runInEdtAndWait {
             WriteAction.run {
-                sdks.each { sdk ->
+                // Remove all SDKs including auto-registered ones (e.g. bundled JBR)
+                // to prevent SDK leak assertions in newer Android Studio versions.
+                ProjectJdkTable.instance.allJdks.each { sdk ->
                     ProjectJdkTable.instance.removeJdk(sdk)
                 }
             }

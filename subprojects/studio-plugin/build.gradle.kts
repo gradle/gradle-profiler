@@ -37,8 +37,7 @@ dependencies {
     testFixturesImplementation(libs.bundles.testDependencies)
 
     intellijPlatform {
-        // Target Android Studio Hedgehog, equivalent to the previous IntelliJ 2023.1.1 + Android plugin config.
-        androidStudio("2023.1.1.28")
+        androidStudio("2024.1.1.11")
         bundledPlugin("com.intellij.java")
         bundledPlugin("org.jetbrains.plugins.gradle")
         bundledPlugin("org.jetbrains.android")
