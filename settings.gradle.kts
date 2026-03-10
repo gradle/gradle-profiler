@@ -13,6 +13,7 @@ include("client-protocol")
 include("instrumentation-support")
 include("studio-agent")
 include("studio-plugin")
+include("idea-sync")
 include("build-action")
 include("scenario-definition")
 include("tooling-action")
@@ -21,5 +22,5 @@ include("gradle-trace-converter-app")
 include("build-operations-measuring")
 
 rootProject.children.forEach {
-    it.projectDir = rootDir.resolve( "subprojects/${it.name}")
+    it.projectDir = rootDir.resolve("subprojects/${it.name}")
 }

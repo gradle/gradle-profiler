@@ -2,6 +2,14 @@
 kotlin = "2.1.20"
 groovy = "3.0.15"
 spock = "2.3-groovy-3.0"
+# https://youtrack.jetbrains.com/articles/IDEA-A-2100662523/IntelliJ-IDEA-2025.2.4-252.27397.103-build-Release-Notes
+intellijIdeStarter = "252.27397.103"
+# Alternative version for fleet artifacts (kernel, rpc) to avoid JAR filename collisions.
+# JetBrains publishes both com.jetbrains.intellij.platform:kernel and com.jetbrains.intellij.fleet:kernel
+# which produce JARs with identical names. We use a different patch version for fleet artifacts.
+# When updating intellijIdeStarter, verify this version exists and JARs are identical (compare SHA hashes).
+# See: https://youtrack.jetbrains.com/issue/IJPL-232419
+intellijIdeStarterFleet = "252.27397.100"
 protobuf = "3.21.12"
 # Ladybug Patch 1 (2024.2.1.10)
 testAndroidStudioVersion = "2024.2.1.10"
@@ -16,6 +24,13 @@ spock-junit4 = { module = "org.spockframework:spock-junit4", version.ref = "spoc
 groovy-core = { module = "org.codehaus.groovy:groovy", version.ref = "groovy" }
 groovy-xml = { module = "org.codehaus.groovy:groovy-xml", version.ref = "groovy" }
 
+intellijIdeStarter-squashed = { module = "com.jetbrains.intellij.tools:ide-starter-squashed", version.ref = "intellijIdeStarter" }
+intellijIdeStarter-driver = { module = "com.jetbrains.intellij.tools:ide-starter-driver", version.ref = "intellijIdeStarter" }
+intellijIdeDriver-sdk = { module = "com.jetbrains.intellij.driver:driver-sdk", version.ref = "intellijIdeStarter" }
+intellijIdeDriver-client = { module = "com.jetbrains.intellij.driver:driver-client", version.ref = "intellijIdeStarter" }
+intellijIdeDriver-model = { module = "com.jetbrains.intellij.driver:driver-model", version.ref = "intellijIdeStarter" }
+kodein = { module = "org.kodein.di:kodein-di-jvm", version = "7.21.1" }
+
 typesafe-config = { module = "com.typesafe:config", version = "1.3.3" }
 protobuf-java = { module = "com.google.protobuf:protobuf-java", version.ref = "protobuf" }
 protobuf-protoc = { module = "com.google.protobuf:protoc", version.ref = "protobuf" }
@@ -24,6 +39,8 @@ guava = "com.google.guava:guava:33.5.0-jre"
 
 [bundles]
 testDependencies = ["spock-core", "spock-junit4", "groovy-core"]
+intellijIdeStarter = ["intellijIdeStarter-squashed", "kodein"]
+intellijIdeDriver = ["intellijIdeStarter-driver", "intellijIdeDriver-sdk", "intellijIdeDriver-client", "intellijIdeDriver-model"]
 
 [plugins]
 protobuf = { id = "com.google.protobuf", version = "0.9.4" }
