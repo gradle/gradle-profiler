@@ -12,6 +12,7 @@ toolingApi = "org.gradle:gradle-tooling-api:8.14.3"
 
 spock-core = { module = "org.spockframework:spock-core", version.ref = "spock" }
 spock-junit4 = { module = "org.spockframework:spock-junit4", version.ref = "spock" }
+junit-platform-launcher = { module = "org.junit.platform:junit-platform-launcher" }
 
 groovy-core = { module = "org.codehaus.groovy:groovy", version.ref = "groovy" }
 groovy-xml = { module = "org.codehaus.groovy:groovy-xml", version.ref = "groovy" }
@@ -23,7 +24,7 @@ gson = { module = "com.google.code.gson:gson", version = "2.10" }
 guava = "com.google.guava:guava:33.5.0-jre"
 
 [bundles]
-testDependencies = ["spock-core", "spock-junit4", "groovy-core"]
+testDependencies = ["spock-core", "spock-junit4", "groovy-core", "junit-platform-launcher"]
 
 [plugins]
 protobuf = { id = "com.google.protobuf", version = "0.9.4" }
