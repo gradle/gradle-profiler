@@ -1,5 +1,6 @@
 package org.gradle.profiler
 
+import groovy.xml.XmlSlurper
 import org.gradle.profiler.jprofiler.JProfilerConfig
 import org.gradle.profiler.jprofiler.JProfilerConfigFileTransformer
 import org.junit.Rule
