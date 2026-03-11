@@ -15,6 +15,7 @@ interface GraphState {
     graph: StackGraph
     rootNodeHistory: number[]
     historyIndex: number
+    mutable?: boolean
 }
 
 interface WorkerState {
@@ -30,7 +31,12 @@ const FlamegraphTab: React.FC<{
     state: WorkerState
     setState: (state: WorkerState) => void
     submitJob: (id: string, job: Job, transfer: Transferable[]) => void
-}> = ({ state, setState, submitJob }) => {
+    runJob: (
+        id: string,
+        params: WorkerParams,
+        transfer?: Transferable[],
+    ) => Promise<WorkerResponse>
+}> = ({ state, setState, submitJob, runJob }) => {
     const graphState = state.graph
     const rootNode = graphState
         ? graphState.rootNodeHistory[graphState.historyIndex]!
@@ -73,6 +79,50 @@ const FlamegraphTab: React.FC<{
         })
     }, [graphState, canGoForward, state, setState])
 
+    const isMutable = graphState?.mutable ?? false
+
+    const onMutate = useCallback(() => {
+        if (!graphState) return
+        setState({ ...state, graph: { ...graphState, mutable: true } })
+    }, [graphState, state, setState])
+
+    const deleteNode = useCallback(
+        async (nodeId: number) => {
+            if (!graphState || !graphState.mutable) return
+
+            const capturedGraphState = graphState
+            const capturedState = state
+
+            // Clone the buffer so we can transfer it without detaching the one currently in use by the UI.
+            // This still involves a copy, but it's done explicitly and the transfer ensures the worker 
+            // doesn't have to clone it again.
+            const valuesBuffer = capturedGraphState.graph.values.buffer.slice(0)
+
+            const result = await runJob(
+                "deleteNode",
+                {
+                    job: {
+                        type: "deleteNode",
+                        nodeId,
+                        graph: capturedGraphState.graph,
+                    },
+                },
+                [valuesBuffer],
+            )
+
+            if ("result" in result) {
+                setState({
+                    ...capturedState,
+                    graph: {
+                        ...capturedGraphState,
+                        graph: result.result.graph,
+                    },
+                })
+            }
+        },
+        [graphState, state, setState, runJob],
+    )
+
     useEffect(() => {
         const handleKeyDown = (e: KeyboardEvent) => {
             if (!e.metaKey) return
@@ -110,6 +160,9 @@ const FlamegraphTab: React.FC<{
                     canGoForward={canGoForward}
                     onBack={goBack}
                     onForward={goForward}
+                    isMutable={isMutable}
+                    onMutate={onMutate}
+                    onDeleteNode={deleteNode}
                     submitJob={(id, job) => submitJob(id, job, [])}
                 />
             ) : null}
@@ -239,6 +292,7 @@ const App = (): React.JSX.Element => {
                         key={id}
                         onMouseDown={(e) => {
                             if (e.button === 1) {
+                                e.preventDefault()
                                 deleteTab(id)
                             }
                         }}
@@ -289,6 +343,7 @@ const App = (): React.JSX.Element => {
                     state={selectedTabData}
                     setState={(newState) => setTabData(selectedTab, newState)}
                     submitJob={submitJob}
+                    runJob={runJob}
                 />
             )}
         </Stack>

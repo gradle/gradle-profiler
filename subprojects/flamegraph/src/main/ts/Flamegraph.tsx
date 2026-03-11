@@ -1,4 +1,5 @@
 import React, {
+    useCallback,
     useEffect,
     useLayoutEffect,
     useMemo,
@@ -14,6 +15,7 @@ import {
     getSameWidthChain,
     nodeDetails,
     NodeDetails,
+    GraphContext,
     COLLAPSE_THRESHOLD,
     COORDINATE_WIDTH,
     CULLING_THRESHOLD_PX,
@@ -47,7 +49,6 @@ const Slider: React.FC<{
     )
 }
 
-
 const useSvgWidth = (
     svgRef: React.RefObject<SVGSVGElement | null>,
 ): number | null => {
@@ -69,7 +70,6 @@ const useSvgWidth = (
 
     return svgWidth
 }
-
 
 /**
  * Keeps the scroll container anchored to the bottom when the graph or zoom
@@ -119,7 +119,6 @@ const useScrollAnchor = (
     }, [svgHeight, graph, rootNode])
 }
 
-
 /** The floating overlay panel with color sliders and action buttons. */
 const ColorControls: React.FC<{
     rootNode: number
@@ -130,6 +129,8 @@ const ColorControls: React.FC<{
     onReset: () => void
     onMerge: () => void
     onIcicle: () => void
+    isMutable: boolean
+    onMutate: () => void
     colorCenter: number
     colorWidth: number
     colorAmount: number
@@ -147,6 +148,8 @@ const ColorControls: React.FC<{
     onReset,
     onMerge,
     onIcicle,
+    isMutable,
+    onMutate,
     colorCenter,
     colorWidth,
     colorAmount,
@@ -226,11 +229,13 @@ const ColorControls: React.FC<{
                     Merge
                 </button>
                 <button onClick={onIcicle}>Icicle</button>
+                <button onClick={onMutate} disabled={isMutable}>
+                    {isMutable ? "Mutable" : "Mutate"}
+                </button>
             </Stack>
         </Row>
     )
 }
-
 
 export const Flamegraph: React.FC<{
     graph: StackGraph
@@ -240,8 +245,23 @@ export const Flamegraph: React.FC<{
     canGoForward: boolean
     onBack: () => void
     onForward: () => void
+    isMutable: boolean
+    onMutate: () => void
+    onDeleteNode: (nodeId: number) => void
     submitJob: (id: string, job: Job) => void
-}> = ({ graph, rootNode, setRootNode, canGoBack, canGoForward, onBack, onForward, submitJob }) => {
+}> = ({
+    graph,
+    rootNode,
+    setRootNode,
+    canGoBack,
+    canGoForward,
+    onBack,
+    onForward,
+    isMutable,
+    onMutate,
+    onDeleteNode,
+    submitJob,
+}) => {
     const svgRef = useRef<SVGSVGElement | null>(null)
     const scrollRef = useRef<HTMLDivElement | null>(null)
     const detailsRef = useRef<HTMLSpanElement | null>(null)
@@ -321,6 +341,24 @@ export const Flamegraph: React.FC<{
         }
     }
 
+    const handleMouseDown: React.MouseEventHandler<SVGSVGElement> = (event) => {
+        if (event.button !== 1) return
+        event.preventDefault()
+        if (!isMutable) return
+
+        const target = event.target
+        if (target instanceof SVGElement) {
+            const nodeId = target.getAttribute("data-node-id")
+            if (nodeId) {
+                const id = parseInt(nodeId, 10)
+                if (id !== rootNode) {
+                    onDeleteNode(id)
+                    handleMouseLeave()
+                }
+            }
+        }
+    }
+
     const handleMouseMove: React.MouseEventHandler<SVGSVGElement> = (event) => {
         const target = event.target
         if (target instanceof SVGElement && target.tagName === "rect") {
@@ -395,6 +433,14 @@ export const Flamegraph: React.FC<{
 
     const rootValue = graph.values[rootNode]
 
+    const handleNodeClick = useCallback(
+        (nodeId: number) => {
+            setRootNode(nodeId)
+            handleMouseLeave()
+        },
+        [setRootNode],
+    )
+
     return (
         <>
             <style ref={hoverStyleRef} />
@@ -407,6 +453,8 @@ export const Flamegraph: React.FC<{
                     onForward={onForward}
                     onReset={() => setRootNode(0)}
                     onMerge={() => showMergedSubgraph(rootNode)}
+                    isMutable={isMutable}
+                    onMutate={onMutate}
                     onIcicle={() => showIcicleGraph(rootNode)}
                     colorCenter={colorCenter}
                     colorWidth={colorWidth}
@@ -425,55 +473,54 @@ export const Flamegraph: React.FC<{
                         distribution: colorDistribution,
                     }}
                 >
-                    <CollapseContext.Provider
-                        value={{ expandedNodes, toggleExpand }}
-                    >
-                        <div
-                            ref={scrollRef}
-                            style={{
-                                flexGrow: 1,
-                                overflowY: "auto",
-                                display: "flex",
-                                paddingBottom: NODE_HEIGHT,
-                                overflowAnchor: "none",
-                            }}
+                    <GraphContext.Provider value={{ graph }}>
+                        <CollapseContext.Provider
+                            value={{ expandedNodes, toggleExpand }}
                         >
-                            {rootValue !== undefined && (
-                                <svg
-                                    className={"flamegraph-svg"}
-                                    style={{
-                                        width: "100%",
-                                        marginTop: "auto",
-                                        flexShrink: 0,
-                                    }}
-                                    height={svgHeight}
-                                    viewBox={`0 0 ${COORDINATE_WIDTH} ${svgHeight}`}
-                                    preserveAspectRatio="none"
-                                    onMouseLeave={handleMouseLeave}
-                                    onMouseMove={handleMouseMove}
-                                    ref={svgRef}
-                                >
-                                    {svgWidth && (
-                                        <FlamegraphNode
-                                            nodeId={rootNode}
-                                            graph={graph}
-                                            xOffset={0n}
-                                            depth={0}
-                                            svgWidth={svgWidth}
-                                            svgHeight={svgHeight}
-                                            totalValue={rootValue}
-                                            onClick={(nodeId) => {
-                                                setRootNode(nodeId)
-                                                handleMouseLeave()
-                                            }}
-                                            parentValue={null}
-                                        />
-                                    )}
-                                </svg>
-                            )}
-                        </div>
-                        <NodeDetails ref={detailsRef} />
-                    </CollapseContext.Provider>
+                            <div
+                                ref={scrollRef}
+                                style={{
+                                    flexGrow: 1,
+                                    overflowY: "auto",
+                                    display: "flex",
+                                    paddingBottom: NODE_HEIGHT,
+                                    overflowAnchor: "none",
+                                }}
+                            >
+                                {rootValue !== undefined && (
+                                    <svg
+                                        className={"flamegraph-svg"}
+                                        style={{
+                                            width: "100%",
+                                            marginTop: "auto",
+                                            flexShrink: 0,
+                                        }}
+                                        height={svgHeight}
+                                        viewBox={`0 0 ${COORDINATE_WIDTH} ${svgHeight}`}
+                                        preserveAspectRatio="none"
+                                        onMouseLeave={handleMouseLeave}
+                                        onMouseMove={handleMouseMove}
+                                        onMouseDown={handleMouseDown}
+                                        ref={svgRef}
+                                    >
+                                        {svgWidth && (
+                                            <FlamegraphNode
+                                                nodeId={rootNode}
+                                                xOffset={0n}
+                                                depth={0}
+                                                svgWidth={svgWidth}
+                                                svgHeight={svgHeight}
+                                                totalValue={rootValue}
+                                                onClick={handleNodeClick}
+                                                parentValue={null}
+                                            />
+                                        )}
+                                    </svg>
+                                )}
+                            </div>
+                            <NodeDetails ref={detailsRef} />
+                        </CollapseContext.Provider>
+                    </GraphContext.Provider>
                 </ColorContext.Provider>
             </Stack>
         </>

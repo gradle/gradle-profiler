@@ -89,9 +89,14 @@ export const NodeDetails = forwardRef<HTMLSpanElement, {}>((_, ref) => {
     )
 })
 
-export const FlamegraphNode = ({
+export interface GraphContextType {
+    graph: StackGraph
+}
+
+export const GraphContext = React.createContext<GraphContextType | null>(null)
+
+export const FlamegraphNode = React.memo(({
     nodeId,
-    graph,
     xOffset,
     depth,
     svgWidth,
@@ -101,7 +106,6 @@ export const FlamegraphNode = ({
     parentValue,
 }: {
     nodeId: number
-    graph: StackGraph
     xOffset: bigint
     depth: number
     svgWidth: number
@@ -110,6 +114,12 @@ export const FlamegraphNode = ({
     onClick: (nodeId: number) => void
     parentValue: bigint | null
 }) => {
+    const context = React.useContext(GraphContext)
+    if (!context) {
+        throw new Error("FlamegraphNode must be used within a GraphContext")
+    }
+    const { graph } = context
+
     const value = graph.values[nodeId]
     if (value == undefined) {
         throw new Error("Malformed graph: missing node value")
@@ -152,7 +162,6 @@ export const FlamegraphNode = ({
                 <FlamegraphNode
                     key={childId}
                     nodeId={childId}
-                    graph={graph}
                     xOffset={childXOffset}
                     depth={depth + 1}
                     totalValue={totalValue}
@@ -266,4 +275,4 @@ export const FlamegraphNode = ({
             {childElements}
         </>
     )
-}
+})

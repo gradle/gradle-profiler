@@ -22,11 +22,18 @@ export interface IcicleGraphJob {
     type: "icicleGraph"
 }
 
+export interface DeleteNodeJob {
+    nodeId: number
+    graph: StackGraph
+    type: "deleteNode"
+}
+
 export type Job =
     | ParseStreamJob
     | ParseEncodedDataJob
     | MergeChildrenJob
     | IcicleGraphJob
+    | DeleteNodeJob
 
 export interface WorkerParams {
     job: Job
@@ -464,6 +471,46 @@ const icicleGraph = async (job: IcicleGraphJob): Promise<WorkerResult> => {
     return { graph: finalize(newGraph) }
 }
 
+const deleteNodeFromGraph = (job: DeleteNodeJob): WorkerResult => {
+    const { graph, nodeId } = job
+    if (nodeId === 0) return { graph }
+
+    // Build a parent map for the entire graph
+    const parents = new Int32Array(graph.nodeNames.length).fill(-1)
+    for (let i = 0; i < graph.children.length; i++) {
+        for (const childId of graph.children[i]!) {
+            parents[childId] = i
+        }
+    }
+
+    const parentId = parents[nodeId]
+    if (parentId === -1) return { graph }
+
+    const deletedValue = graph.values[nodeId]!
+
+    // Copy values and subtract the deleted node's weight from all ancestors
+    const newValues = new BigInt64Array(graph.values)
+    let curr = parentId
+    while (curr !== -1) {
+        newValues[curr] -= deletedValue
+        curr = parents[curr]!
+    }
+
+    // Shallow-copy children array and splice out the deleted node from its parent
+    const newChildren = graph.children.slice()
+    newChildren[parentId] = newChildren[parentId]!.filter(
+        (id) => id !== nodeId,
+    )
+
+    return {
+        graph: {
+            ...graph,
+            values: newValues,
+            children: newChildren,
+        },
+    }
+}
+
 const process = async (job: Job): Promise<WorkerResult> => {
     if (job.type == "parseStream") {
         return await processStream(job.stream)
@@ -474,6 +521,8 @@ const process = async (job: Job): Promise<WorkerResult> => {
     } else if (job.type == "parseEncodedData") {
         const stream = decodeAndDecompressData(job.encodedData)
         return await processStream(stream)
+    } else if (job.type == "deleteNode") {
+        return deleteNodeFromGraph(job)
     }
 
     throw new Error("Unknown job type")
