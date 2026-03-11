@@ -5,7 +5,7 @@ spock = "2.3-groovy-4.0"
 protobuf = "3.21.12"
 # Ladybug Patch 1 (2024.2.1.10)
 testAndroidStudioVersion = "2024.2.1.10"
-testAndroidSdkVersion = "7.3.0"
+testAndroidSdkVersion = "8.7.3"
 
 [libraries]
 toolingApi = "org.gradle:gradle-tooling-api:8.14.3"
