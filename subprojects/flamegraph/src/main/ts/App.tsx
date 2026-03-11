@@ -102,15 +102,6 @@ const colorFor = (str: string, colorContext: ColorContextType): string => {
     return generateColorFor(hue)
 }
 
-const simpleName = (fullName: string): string => {
-    if (fullName.endsWith("_[j]")) {
-        const packageIdx = fullName.lastIndexOf("/")
-        if (packageIdx !== -1) {
-            return fullName.substring(packageIdx + 1, fullName.length - 4)
-        }
-    }
-    return fullName
-}
 
 const getSameWidthChain = (nodeId: number, graph: StackGraph): number[] => {
     const chain = []
@@ -310,7 +301,7 @@ const FlamegraphNode = ({
                         transform={`scale(${horizontalScale}, 1)`}
                         style={{ pointerEvents: "none" }}
                     >
-                        {simpleName(name)}
+                        {graph.displayNames[nodeId] ?? name}
                     </text>
                 )}
             </svg>

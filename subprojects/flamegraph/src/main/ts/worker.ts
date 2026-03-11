@@ -65,6 +65,12 @@ export interface StackGraph {
      * For each index, the value of the node at that index.
      */
     values: BigInt64Array
+
+    /**
+     * For each index, a shortened display name for the node.
+     * Parameters and line numbers are omitted unless needed for disambiguation.
+     */
+    displayNames: Array<string>
 }
 
 export interface WorkerResult {
@@ -83,6 +89,119 @@ export interface WorkerFailure {
 }
 
 export type WorkerResponse = WorkerSuccess | WorkerFailure
+
+interface ParsedName {
+    simpleClass: string
+    method: string
+    rawParams: string
+    lineNumber: string | null
+}
+
+const parseMethodName = (name: string): ParsedName | null => {
+    const parenOpen = name.indexOf("(")
+    if (parenOpen === -1) return null
+
+    const parenClose = name.indexOf(")", parenOpen)
+    if (parenClose === -1) return null
+
+    const beforeParen = name.substring(0, parenOpen)
+    const lastDot = beforeParen.lastIndexOf(".")
+    if (lastDot === -1) return null
+
+    const classPath = beforeParen.substring(0, lastDot)
+    if (!classPath) return null
+
+    const method = beforeParen.substring(lastDot + 1)
+    if (!method) return null
+
+    const lastSep = Math.max(classPath.lastIndexOf("."), classPath.lastIndexOf("/"))
+    const simpleClass =
+        lastSep !== -1 ? classPath.substring(lastSep + 1) : classPath
+    if (!simpleClass) return null
+
+    const rawParams = name.substring(parenOpen + 1, parenClose)
+
+    let lineNumber: string | null = null
+    const rest = name.substring(parenClose + 1)
+    const colonMatch = rest.match(/^:(\d+)/)
+    if (colonMatch) {
+        lineNumber = colonMatch[1]!
+    }
+
+    return { simpleClass, method, rawParams, lineNumber }
+}
+
+const simplifyParam = (param: string): string => {
+    const trimmed = param.trim()
+    if (!trimmed) return trimmed
+
+    // Split base type from array brackets or varargs suffix
+    const bracketIdx = trimmed.indexOf("[")
+    const varargIdx = trimmed.endsWith("...") ? trimmed.length - 3 : -1
+    const suffixStart =
+        bracketIdx !== -1 ? bracketIdx : varargIdx !== -1 ? varargIdx : -1
+
+    const base = suffixStart !== -1 ? trimmed.substring(0, suffixStart) : trimmed
+    const suffix = suffixStart !== -1 ? trimmed.substring(suffixStart) : ""
+
+    const lastSep = Math.max(base.lastIndexOf("."), base.lastIndexOf("/"))
+    const simple = lastSep !== -1 ? base.substring(lastSep + 1) : base
+    return simple + suffix
+}
+
+const simplifyParams = (rawParams: string): string => {
+    if (!rawParams) return ""
+    return rawParams
+        .split(",")
+        .map(simplifyParam)
+        .join(", ")
+}
+
+const computeDisplayNames = (nodeNames: Array<string>): Array<string> => {
+    const parsed = nodeNames.map(parseMethodName)
+
+    // For each method name, collect distinct rawParams values
+    const methodToParams = new Map<string, Set<string>>()
+    for (const p of parsed) {
+        if (!p) continue
+        if (!methodToParams.has(p.method)) {
+            methodToParams.set(p.method, new Set())
+        }
+        methodToParams.get(p.method)!.add(p.rawParams)
+    }
+
+    // For each method+params combo, collect distinct line numbers
+    const methodParamsToLines = new Map<string, Set<string | null>>()
+    for (const p of parsed) {
+        if (!p) continue
+        const key = `${p.method}|${p.rawParams}`
+        if (!methodParamsToLines.has(key)) {
+            methodParamsToLines.set(key, new Set())
+        }
+        methodParamsToLines.get(key)!.add(p.lineNumber)
+    }
+
+    return nodeNames.map((name, i) => {
+        const p = parsed[i]
+        if (!p) return name
+
+        const { simpleClass, method, rawParams, lineNumber } = p
+        const base = `${simpleClass}.${method}`
+
+        const paramsVariants = methodToParams.get(method)!
+        if (paramsVariants.size <= 1) {
+            return base
+        }
+
+        const simplifiedParams = simplifyParams(rawParams)
+        const lineVariants = methodParamsToLines.get(`${method}|${rawParams}`)!
+        if (lineVariants.size <= 1 || !lineNumber) {
+            return `${base}(${simplifiedParams})`
+        }
+
+        return `${base}(${simplifiedParams}):${lineNumber}`
+    })
+}
 
 const finalize = (graph: InternalGraph): StackGraph => {
     const sortedChildren = new Array(graph.children.length)
@@ -110,6 +229,7 @@ const finalize = (graph: InternalGraph): StackGraph => {
         children: sortedChildren,
         nodeNames: graph.nodeNames,
         values: new BigInt64Array(graph.values),
+        displayNames: computeDisplayNames(graph.nodeNames),
     }
 }
 
