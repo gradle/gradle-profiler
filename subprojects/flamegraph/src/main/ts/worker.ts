@@ -178,6 +178,7 @@ const processStream = async (
     const root = 0
     const reader = stream.getReader()
     const decoder = new TextDecoder()
+    const DECODE_CHUNK_SIZE = 1024 * 1024 * 4 // 4MB chunks
 
     let graph: InternalGraph = {
         children: [new Map()],
@@ -203,19 +204,26 @@ const processStream = async (
             break
         }
 
-        const chunk = decoder.decode(value, { stream: true })
-        const lines = (incompleteLine + chunk).split(/\r?\n/)
-        incompleteLine = lines.pop() || ""
+        for (
+            let offset = 0;
+            offset < value.length;
+            offset += DECODE_CHUNK_SIZE
+        ) {
+            const sub = value.subarray(offset, offset + DECODE_CHUNK_SIZE)
+            const chunk = decoder.decode(sub, { stream: true })
+            const lines = (incompleteLine + chunk).split(/\r?\n/)
+            incompleteLine = lines.pop() || ""
 
-        for (const line of lines) {
-            if (line) {
-                graph.values[root]! += parseLine(
-                    0,
-                    root,
-                    line,
-                    graph,
-                    nameCache,
-                )
+            for (const line of lines) {
+                if (line) {
+                    graph.values[root]! += parseLine(
+                        0,
+                        root,
+                        line,
+                        graph,
+                        nameCache,
+                    )
+                }
             }
         }
     }
