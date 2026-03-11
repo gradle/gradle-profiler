@@ -171,6 +171,7 @@ androidStudioTests {
     runAndroidStudioInHeadlessMode.set(autoDownloadAndRunInHeadless)
     autoDownloadAndroidStudio.set(autoDownloadAndRunInHeadless)
     testAndroidStudioVersion.set(libs.versions.testAndroidStudioVersion)
+    testAndroidStudioCodename.set(libs.versions.testAndroidStudioCodename)
     testAndroidSdkVersion.set(libs.versions.testAndroidSdkVersion)
     // For local development it's easier to setup Android SDK with Android Studio, since auto download needs ANDROID_HOME or ANDROID_SDK_ROOT
     // to be set with an accepted license in it. See https://developer.android.com/studio/intro/update.html#download-with-gradle.

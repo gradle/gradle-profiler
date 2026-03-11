@@ -6,6 +6,7 @@ interface AndroidStudioTestExtension {
 
     val autoDownloadAndroidStudio: Property<Boolean>
     val testAndroidStudioVersion: Property<String>
+    val testAndroidStudioCodename: Property<String>
     val runAndroidStudioInHeadlessMode: Property<Boolean>
     val autoDownloadAndroidSdk: Property<Boolean>
     val testAndroidSdkVersion: Property<String>
