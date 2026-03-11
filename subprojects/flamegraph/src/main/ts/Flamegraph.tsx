@@ -123,6 +123,10 @@ const useScrollAnchor = (
 /** The floating overlay panel with color sliders and action buttons. */
 const ColorControls: React.FC<{
     rootNode: number
+    canGoBack: boolean
+    canGoForward: boolean
+    onBack: () => void
+    onForward: () => void
     onReset: () => void
     onMerge: () => void
     onIcicle: () => void
@@ -136,6 +140,10 @@ const ColorControls: React.FC<{
     setColorDistribution: (v: number) => void
 }> = ({
     rootNode,
+    canGoBack,
+    canGoForward,
+    onBack,
+    onForward,
     onReset,
     onMerge,
     onIcicle,
@@ -167,9 +175,17 @@ const ColorControls: React.FC<{
                     pointerEvents: "auto",
                 }}
             >
-                <button onClick={onReset} disabled={rootNode === 0}>
-                    Reset
-                </button>
+                <Row>
+                    <button onClick={onBack} disabled={!canGoBack}>
+                        &larr; Back
+                    </button>
+                    <button onClick={onForward} disabled={!canGoForward}>
+                        Forward &rarr;
+                    </button>
+                    <button onClick={onReset} disabled={rootNode === 0}>
+                        Reset
+                    </button>
+                </Row>
                 <Row>
                     Center ({Math.round(colorCenter)})
                     <Slider
@@ -189,7 +205,7 @@ const ColorControls: React.FC<{
                     />
                 </Row>
                 <Row>
-                    Amount ({colorAmount.toFixed(2)})
+                    Decay ({colorAmount.toFixed(2)})
                     <Slider
                         min={1}
                         max={3}
@@ -198,7 +214,7 @@ const ColorControls: React.FC<{
                     />
                 </Row>
                 <Row>
-                    Distribution ({Math.round(colorDistribution)})
+                    Spread ({Math.round(colorDistribution)})
                     <Slider
                         min={1}
                         max={5000}
@@ -220,8 +236,12 @@ export const Flamegraph: React.FC<{
     graph: StackGraph
     rootNode: number
     setRootNode: (nodeId: number) => void
+    canGoBack: boolean
+    canGoForward: boolean
+    onBack: () => void
+    onForward: () => void
     submitJob: (id: string, job: Job) => void
-}> = ({ graph, rootNode, setRootNode, submitJob }) => {
+}> = ({ graph, rootNode, setRootNode, canGoBack, canGoForward, onBack, onForward, submitJob }) => {
     const svgRef = useRef<SVGSVGElement | null>(null)
     const scrollRef = useRef<HTMLDivElement | null>(null)
     const detailsRef = useRef<HTMLSpanElement | null>(null)
@@ -381,6 +401,10 @@ export const Flamegraph: React.FC<{
             <Stack tall style={{ position: "relative" }}>
                 <ColorControls
                     rootNode={rootNode}
+                    canGoBack={canGoBack}
+                    canGoForward={canGoForward}
+                    onBack={onBack}
+                    onForward={onForward}
                     onReset={() => setRootNode(0)}
                     onMerge={() => showMergedSubgraph(rootNode)}
                     onIcicle={() => showIcicleGraph(rootNode)}

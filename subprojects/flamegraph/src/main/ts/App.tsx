@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from "react"
+import React, { useCallback, useEffect, useRef, useState } from "react"
 import {
     type Job,
     type StackGraph,
@@ -13,7 +13,8 @@ import { Flamegraph } from "./Flamegraph"
 
 interface GraphState {
     graph: StackGraph
-    rootNode: number
+    rootNodeHistory: number[]
+    historyIndex: number
 }
 
 interface WorkerState {
@@ -31,6 +32,62 @@ const FlamegraphTab: React.FC<{
     submitJob: (id: string, job: Job, transfer: Transferable[]) => void
 }> = ({ state, setState, submitJob }) => {
     const graphState = state.graph
+    const rootNode = graphState
+        ? graphState.rootNodeHistory[graphState.historyIndex]!
+        : 0
+    const canGoBack = graphState ? graphState.historyIndex > 0 : false
+    const canGoForward = graphState
+        ? graphState.historyIndex < graphState.rootNodeHistory.length - 1
+        : false
+
+    const setRootNode = (nodeId: number) => {
+        if (!graphState) return
+        const newHistory = graphState.rootNodeHistory.slice(
+            0,
+            graphState.historyIndex + 1,
+        )
+        newHistory.push(nodeId)
+        setState({
+            ...state,
+            graph: {
+                ...graphState,
+                rootNodeHistory: newHistory,
+                historyIndex: newHistory.length - 1,
+            },
+        })
+    }
+
+    const goBack = useCallback(() => {
+        if (!graphState || !canGoBack) return
+        setState({
+            ...state,
+            graph: { ...graphState, historyIndex: graphState.historyIndex - 1 },
+        })
+    }, [graphState, canGoBack, state, setState])
+
+    const goForward = useCallback(() => {
+        if (!graphState || !canGoForward) return
+        setState({
+            ...state,
+            graph: { ...graphState, historyIndex: graphState.historyIndex + 1 },
+        })
+    }, [graphState, canGoForward, state, setState])
+
+    useEffect(() => {
+        const handleKeyDown = (e: KeyboardEvent) => {
+            if (!e.metaKey) return
+            if (e.key === "[") {
+                e.preventDefault()
+                goBack()
+            } else if (e.key === "]") {
+                e.preventDefault()
+                goForward()
+            }
+        }
+        window.addEventListener("keydown", handleKeyDown)
+        return () => window.removeEventListener("keydown", handleKeyDown)
+    }, [goBack, goForward])
+
     return (
         <Grow>
             {state.progress && <div>{state.progress}</div>}
@@ -47,13 +104,12 @@ const FlamegraphTab: React.FC<{
             {graphState ? (
                 <Flamegraph
                     graph={graphState.graph}
-                    rootNode={graphState.rootNode}
-                    setRootNode={(nodeId) => {
-                        setState({
-                            ...state,
-                            graph: { ...graphState, rootNode: nodeId },
-                        })
-                    }}
+                    rootNode={rootNode}
+                    setRootNode={setRootNode}
+                    canGoBack={canGoBack}
+                    canGoForward={canGoForward}
+                    onBack={goBack}
+                    onForward={goForward}
                     submitJob={(id, job) => submitJob(id, job, [])}
                 />
             ) : null}
@@ -107,7 +163,11 @@ const App = (): React.JSX.Element => {
                     return
                 } else if ("result" in result) {
                     setTabData(id, {
-                        graph: { graph: result.result.graph, rootNode: 0 },
+                        graph: {
+                            graph: result.result.graph,
+                            rootNodeHistory: [0],
+                            historyIndex: 0,
+                        },
                     })
                 }
             } catch (err) {
