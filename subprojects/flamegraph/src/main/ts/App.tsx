@@ -178,6 +178,7 @@ const App = (): React.JSX.Element => {
     const fileInputRef = useRef<HTMLInputElement | null>(null)
     const [customStackName, setCustomStackName] = useState("")
 
+    const [showOverlay, setShowOverlay] = useState(false)
     const [selectedTab, setSelectedTab] = useState<string | null>(null)
     const [allTabData, setAllAllTabData] = useState<Map<string, WorkerState>>(
         new Map(),
@@ -285,58 +286,99 @@ const App = (): React.JSX.Element => {
 
     const selectedTabData = selectedTab ? allTabData.get(selectedTab) : null
     return (
-        <Stack tall>
-            <div>
-                {[...allTabData.keys()].map((id) => (
-                    <button
-                        key={id}
-                        onMouseDown={(e) => {
-                            if (e.button === 1) {
-                                e.preventDefault()
-                                deleteTab(id)
-                            }
-                        }}
-                        onClick={() => setSelectedTab(id)}
-                    >
-                        {id}
-                    </button>
-                ))}
-                <input
-                    value={customStackName}
-                    placeholder={"Stack name"}
-                    onChange={(e) => setCustomStackName(e.target.value)}
-                    onKeyDown={(e) => {
-                        if (e.key === "Enter") {
-                            loadStacks(customStackName)
-                        }
-                    }}
-                />
+        <Stack tall style={{ position: "relative" }}>
+            <div
+                style={{
+                    position: "absolute",
+                    top: "20px",
+                    left: "20px",
+                    zIndex: 10,
+                    pointerEvents: "none",
+                }}
+            >
                 <button
-                    onClick={() => loadStacks(customStackName)}
-                    disabled={customStackName === ""}
+                    onClick={() => setShowOverlay(!showOverlay)}
+                    style={{ pointerEvents: "auto" }}
                 >
-                    Load
+                    Graphs
                 </button>
-                <input
-                    type="file"
-                    style={{ display: "none" }}
-                    ref={fileInputRef}
-                    onChange={(e) => {
-                        const file = e.target.files?.[0]
-                        if (file) {
-                            const stream = file.stream()
-                            submitJob(
-                                file.name,
-                                { type: "parseStream", stream },
-                                [stream],
-                            )
-                        }
-                        e.target.value = ""
-                    }}
-                />
-                <button onClick={() => fileInputRef.current?.click()}>
-                    Open file...
-                </button>
+                {showOverlay && (
+                    <Stack
+                        style={{
+                            width: 300,
+                            background: "rgba(0, 0, 0, 0.6)",
+                            marginTop: "10px",
+                            padding: "10px",
+                            pointerEvents: "auto",
+                        }}
+                    >
+                        <Stack style={{ marginBottom: "10px" }}>
+                            {[...allTabData.keys()].map((id) => (
+                                <button
+                                    key={id}
+                                    style={{
+                                        textAlign: "left",
+                                        fontWeight:
+                                            selectedTab === id
+                                                ? "bold"
+                                                : "normal",
+                                    }}
+                                    onMouseDown={(e) => {
+                                        if (e.button === 1) {
+                                            e.preventDefault()
+                                            deleteTab(id)
+                                        }
+                                    }}
+                                    onClick={() => setSelectedTab(id)}
+                                >
+                                    {id}
+                                </button>
+                            ))}
+                        </Stack>
+                        <Stack>
+                            <input
+                                value={customStackName}
+                                placeholder={"Stack name"}
+                                onChange={(e) =>
+                                    setCustomStackName(e.target.value)
+                                }
+                                onKeyDown={(e) => {
+                                    if (e.key === "Enter") {
+                                        loadStacks(customStackName)
+                                    }
+                                }}
+                            />
+                            <button
+                                onClick={() => loadStacks(customStackName)}
+                                disabled={customStackName === ""}
+                            >
+                                Load
+                            </button>
+                            <input
+                                type="file"
+                                style={{ display: "none" }}
+                                ref={fileInputRef}
+                                onChange={(e) => {
+                                    const file = e.target.files?.[0]
+                                    if (file) {
+                                        const stream = file.stream()
+                                        submitJob(
+                                            file.name,
+                                            { type: "parseStream", stream },
+                                            [stream],
+                                        )
+                                    }
+                                    e.target.value = ""
+                                }}
+                            />
+                            <button
+                                onClick={() => fileInputRef.current?.click()}
+                            >
+                                Open file...
+                            </button>
+                        </Stack>
+                    </Stack>
+                )}
             </div>
             {selectedTab && selectedTabData && (
                 <FlamegraphTab
