@@ -609,6 +609,7 @@ const App = (): React.JSX.Element => {
         DataWorker,
     )
 
+    const fileInputRef = useRef<HTMLInputElement | null>(null)
     const [customStackName, setCustomStackName] = useState("")
 
     const [selectedTab, setSelectedTab] = useState<string | null>(null)
@@ -744,6 +745,22 @@ const App = (): React.JSX.Element => {
                     disabled={customStackName === ""}
                 >
                     Load
+                </button>
+                <input
+                    type="file"
+                    style={{ display: "none" }}
+                    ref={fileInputRef}
+                    onChange={(e) => {
+                        const file = e.target.files?.[0]
+                        if (file) {
+                            const stream = file.stream()
+                            submitJob(file.name, { type: "parseStream", stream }, [stream])
+                        }
+                        e.target.value = ""
+                    }}
+                />
+                <button onClick={() => fileInputRef.current?.click()}>
+                    Open file...
                 </button>
             </div>
             {selectedTab && selectedTabData && (
