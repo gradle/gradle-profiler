@@ -3,9 +3,9 @@ kotlin = "2.1.20"
 groovy = "4.0.29"
 spock = "2.3-groovy-4.0"
 protobuf = "3.21.12"
-# Ladybug Patch 1 (2024.2.1.10)
-testAndroidStudioVersion = "2024.2.1.10"
-testAndroidSdkVersion = "8.7.3"
+# Panda 2 (2025.3.2.6)
+testAndroidStudioVersion = "2025.3.2.6"
+testAndroidSdkVersion = "9.1.0"
 
 [libraries]
 toolingApi = "org.gradle:gradle-tooling-api:8.14.3"
