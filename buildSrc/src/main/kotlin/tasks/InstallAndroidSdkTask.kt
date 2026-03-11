@@ -75,7 +75,8 @@ abstract class InstallAndroidSdkTask : DefaultTask() {
                 mavenCentral()
             }
             android {
-                compileSdk 31
+                namespace 'com.example.myapplication'
+                compileSdk 35
             }
             """.trimIndent()
         )
@@ -84,8 +85,7 @@ abstract class InstallAndroidSdkTask : DefaultTask() {
         File(projectDir, "src/main/AndroidManifest.xml").writeText(
             """
             <?xml version="1.0" encoding="utf-8"?>
-            <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-                package="com.example.myapplication">
+            <manifest xmlns:android="http://schemas.android.com/apk/res/android">
             </manifest>
             """.trimIndent()
         )

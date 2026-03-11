@@ -13,6 +13,9 @@ repositories {
         ivy {
             url = uri(it)
             patternLayout {
+                // Newer Android Studio versions use codename-based artifact names (e.g. android-studio-panda2)
+                artifact("[revision]/[artifact]-[ext]")
+                // Older versions use version-based names (e.g. android-studio-2024.2.1.10)
                 artifact("[revision]/[artifact]-[revision]-[ext]")
             }
             metadataSources { artifact() }
@@ -34,6 +37,7 @@ val extension = extensions.create<AndroidStudioTestExtension>("androidStudioTest
     autoDownloadAndroidStudio.convention(false)
     runAndroidStudioInHeadlessMode.convention(false)
     autoDownloadAndroidSdk.convention(false)
+    testAndroidStudioCodename.convention("")
 }
 
 val androidStudioRuntime by configurations.creating
@@ -46,7 +50,10 @@ dependencies {
         isLinux() -> "linux.tar.gz"
         else -> throw IllegalStateException("Unsupported OS: $os")
     }
-    androidStudioRuntime(extension.testAndroidStudioVersion.map { version -> "android-studio:android-studio:$version@$fileExtension" })
+    androidStudioRuntime(extension.testAndroidStudioCodename.zip(extension.testAndroidStudioVersion) { codename, version ->
+        val artifact = if (codename.isEmpty()) "android-studio" else "android-studio-$codename"
+        "android-studio:$artifact:$version@$fileExtension"
+    })
 }
 
 val unpackAndroidStudio = tasks.register<ExtractAndroidStudioTask>("unpackAndroidStudio") {
