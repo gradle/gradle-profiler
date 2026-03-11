@@ -182,8 +182,11 @@ const FlamegraphNode = ({
 
     return (
         <>
-            <g
-                transform={`translate(${rectX}, ${y})`}
+            <svg
+                x={rectX}
+                y={y}
+                width={rectWidth}
+                height={NODE_HEIGHT}
                 onClick={(e) => {
                     e.stopPropagation() // Prevent click from bubbling to parent nodes
                     onClick(nodeId)
@@ -212,7 +215,7 @@ const FlamegraphNode = ({
                         {simpleName(name)}
                     </text>
                 )}
-            </g>
+            </svg>
             {childElements}
         </>
     )
@@ -229,7 +232,30 @@ const nodeDetails = (nodeId: number, graph: StackGraph): string => {
 }
 
 const NodeDetails = forwardRef<HTMLSpanElement, {}>((_, ref) => {
-    return <span ref={ref}>Hover for details, click to zoom</span>
+    return (
+        <span
+            ref={ref}
+            style={{
+                position: "absolute",
+                bottom: 0,
+                left: 0,
+                maxWidth: "calc(100% - 20px)",
+                width: "fit-content",
+                background: "rgba(0, 0, 0, 0.8)",
+                padding: "0 8px",
+                pointerEvents: "none",
+                zIndex: 2,
+                minHeight: NODE_HEIGHT,
+                lineHeight: NODE_HEIGHT + "px",
+                display: "flex",
+                alignItems: "center",
+                wordBreak: "break-all",
+                overflowWrap: "anywhere",
+            }}
+        >
+            Hover for details, click to zoom
+        </span>
+    )
 })
 
 interface ColorContextType {
@@ -433,6 +459,8 @@ const Flamegraph: React.FC<{
                 style={{
                     position: "absolute",
                     justifyContent: "flex-end",
+                    pointerEvents: "none",
+                    zIndex: 1,
                 }}
             >
                 <Stack
@@ -441,6 +469,7 @@ const Flamegraph: React.FC<{
                         background: "rgba(0, 0, 0, 0.6)",
                         marginRight: "40px",
                         marginTop: "20px",
+                        pointerEvents: "auto",
                     }}
                 >
                     <button
@@ -505,12 +534,13 @@ const Flamegraph: React.FC<{
                     distribution: colorDistribution,
                 }}
             >
-                <Stack tall>
+                <Stack tall style={{ position: "relative" }}>
                     <div
                         style={{
                             flexGrow: 1,
                             overflowY: "auto",
                             display: "flex",
+                            paddingBottom: NODE_HEIGHT,
                         }}
                         ref={scrollRef}
                     >
@@ -520,6 +550,7 @@ const Flamegraph: React.FC<{
                                 style={{
                                     width: "100%",
                                     marginTop: "auto",
+                                    flexShrink: 0,
                                 }}
                                 height={svgHeight}
                                 viewBox={`0 0 ${COORDINATE_WIDTH} ${svgHeight}`}
@@ -546,7 +577,6 @@ const Flamegraph: React.FC<{
                             </svg>
                         )}
                     </div>
-
                     <NodeDetails ref={detailsRef} />
                 </Stack>
             </ColorContext.Provider>
@@ -754,7 +784,11 @@ const App = (): React.JSX.Element => {
                         const file = e.target.files?.[0]
                         if (file) {
                             const stream = file.stream()
-                            submitJob(file.name, { type: "parseStream", stream }, [stream])
+                            submitJob(
+                                file.name,
+                                { type: "parseStream", stream },
+                                [stream],
+                            )
                         }
                         e.target.value = ""
                     }}
