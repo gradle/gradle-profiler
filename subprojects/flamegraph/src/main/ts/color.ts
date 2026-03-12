@@ -1,18 +1,9 @@
-import { createContext } from "react"
-
-export interface ColorContextType {
+export interface ColorSettings {
     center: number
     width: number
     amount: number
     distribution: number
 }
-
-export const ColorContext = createContext<ColorContextType>({
-    center: 0,
-    width: 60,
-    amount: 1.5,
-    distribution: 1000,
-})
 
 const generateColorFor = (hue: number): string => {
     const lightness = 50
@@ -49,10 +40,7 @@ const getParts = (name: string): string[] => {
 /**
  * Given a string, deterministically generate a color.
  */
-export const colorFor = (
-    str: string,
-    colorContext: ColorContextType,
-): string => {
+export const colorFor = (str: string, colorContext: ColorSettings): string => {
     const { center, width, amount, distribution } = colorContext
     const parts = getParts(str)
 

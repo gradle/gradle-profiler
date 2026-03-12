@@ -32,3 +32,11 @@ table {
 table td {
     padding: 0;
 }
+
+button {
+    cursor: pointer;
+}
+
+* {
+    overflow-wrap: break-word;
+}

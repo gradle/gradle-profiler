@@ -1,6 +1,6 @@
 import { forwardRef } from "react"
 import type { StackGraph } from "./worker"
-import { colorFor, type ColorContextType } from "./color"
+import { colorFor, type ColorSettings } from "./color"
 
 // --- Constants ---
 
@@ -61,10 +61,8 @@ export const NodeDetails = forwardRef<HTMLSpanElement, {}>((_, ref) => {
         <span
             ref={ref}
             style={{
-                position: "absolute",
-                bottom: 0,
-                left: 0,
-                maxWidth: "calc(100% - 20px)",
+                flexShrink: 0,
+                maxWidth: "100%",
                 width: "fit-content",
                 background: "rgba(0, 0, 0, 0.8)",
                 padding: "0 8px",
@@ -114,7 +112,7 @@ export function drawFlamegraph(
     canvasHeight: number,
     dpr: number,
     expandedNodes: Set<number>,
-    colorSettings: ColorContextType,
+    colorSettings: ColorSettings,
     hoveredName: string | null,
 ): RenderedNode[] {
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0)

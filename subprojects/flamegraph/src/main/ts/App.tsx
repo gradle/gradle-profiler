@@ -7,11 +7,145 @@ import {
 } from "./worker"
 import DataWorker from "./worker?worker&inline"
 import useWorkerPool from "./useWorkerPool.ts"
-import { Grow, Stack } from "./containers.tsx"
+import { Row, Stack } from "./containers.tsx"
 import { ENCODED_DEMO_STACKS } from "./demo.ts"
 import { Flamegraph } from "./Flamegraph"
-
 import { COORDINATE_WIDTH } from "./FlamegraphNode"
+import { RangeSlider } from "./RangeSlider"
+import type { ColorSettings } from "./color"
+
+const Slider: React.FC<{
+    min: number
+    max: number
+    value: number
+    onChange: (newValue: number) => void
+}> = ({ min, max, value, onChange }) => {
+    const resolution = 10000
+    const percent = (value - min) / (max - min)
+    const scaledValue = percent * resolution
+
+    return (
+        <input
+            style={{ flexGrow: 1 }}
+            type="range"
+            min={0}
+            max={resolution}
+            value={scaledValue}
+            onChange={(e) => {
+                const v = parseInt(e.target.value, 10)
+                onChange(min + (v / resolution) * (max - min))
+            }}
+        />
+    )
+}
+
+const ColorControls: React.FC<{
+    rootNode: number
+    canGoBack: boolean
+    canGoForward: boolean
+    onBack: () => void
+    onForward: () => void
+    onReset: () => void
+    onMerge: () => void
+    onIcicle: () => void
+    isMutable: boolean
+    onMutate: () => void
+    onFreeze: () => void
+    colorCenter: number
+    colorWidth: number
+    colorAmount: number
+    colorDistribution: number
+    setColorCenter: (v: number) => void
+    setColorWidth: (v: number) => void
+    setColorAmount: (v: number) => void
+    setColorDistribution: (v: number) => void
+}> = ({
+    rootNode,
+    canGoBack,
+    canGoForward,
+    onBack,
+    onForward,
+    onReset,
+    onMerge,
+    onIcicle,
+    isMutable,
+    onMutate,
+    onFreeze,
+    colorCenter,
+    colorWidth,
+    colorAmount,
+    colorDistribution,
+    setColorCenter,
+    setColorWidth,
+    setColorAmount,
+    setColorDistribution,
+}) => {
+    return (
+        <Stack
+            style={{
+                width: 500,
+                background: "rgba(0, 0, 0, 0.6)",
+                padding: 10,
+                pointerEvents: "auto",
+            }}
+        >
+            <Row>
+                <button onClick={onBack} disabled={!canGoBack}>
+                    &larr; Back
+                </button>
+                <button onClick={onForward} disabled={!canGoForward}>
+                    Forward &rarr;
+                </button>
+                <button onClick={onReset} disabled={rootNode === 0}>
+                    Reset
+                </button>
+            </Row>
+            <Row>
+                Center ({Math.round(colorCenter)})
+                <Slider
+                    min={0}
+                    max={360}
+                    value={colorCenter}
+                    onChange={setColorCenter}
+                />
+            </Row>
+            <Row>
+                Width ({Math.round(colorWidth)})
+                <Slider
+                    min={0}
+                    max={360}
+                    value={colorWidth}
+                    onChange={setColorWidth}
+                />
+            </Row>
+            <Row>
+                Decay ({colorAmount.toFixed(2)})
+                <Slider
+                    min={1}
+                    max={3}
+                    value={colorAmount}
+                    onChange={setColorAmount}
+                />
+            </Row>
+            <Row>
+                Spread ({Math.round(colorDistribution)})
+                <Slider
+                    min={1}
+                    max={5000}
+                    value={colorDistribution}
+                    onChange={setColorDistribution}
+                />
+            </Row>
+            <button onClick={onMerge} disabled={rootNode === 0}>
+                Merge
+            </button>
+            <button onClick={onIcicle}>Icicle</button>
+            <button onClick={isMutable ? onFreeze : onMutate}>
+                {isMutable ? "Freeze" : "Mutate"}
+            </button>
+        </Stack>
+    )
+}
 
 interface HistoryEntry {
     rootNode: number
@@ -35,21 +169,44 @@ interface WorkerState {
     graph?: GraphState
 }
 
-const FlamegraphTab: React.FC<{
-    state: WorkerState
-    setState: (state: WorkerState) => void
-    submitJob: (id: string, job: Job, transfer: Transferable[]) => void
-    runJob: (
-        id: string,
-        params: WorkerParams,
-        transfer?: Transferable[],
-    ) => Promise<WorkerResponse>
-}> = ({ state, setState, submitJob, runJob }) => {
-    const graphState = state.graph
-    const currentHistory = graphState
+const App = (): React.JSX.Element => {
+    const runJob = useWorkerPool<string, WorkerParams, WorkerResponse>(
+        DataWorker,
+    )
+
+    const [selectedTab, setSelectedTab] = useState<string | null>(null)
+    const [allTabData, setAllTabData] = useState<Map<string, WorkerState>>(
+        new Map(),
+    )
+
+    const setTabData = (id: string, newData: WorkerState) => {
+        setAllTabData((oldData) => {
+            const updated = new Map(oldData)
+            updated.set(id, newData)
+            return updated
+        })
+        if (selectedTab == null) {
+            setSelectedTab(id)
+        }
+    }
+
+    const deleteTab = (id: string) => {
+        setAllTabData((oldData) => {
+            const updated = new Map(oldData)
+            updated.delete(id)
+            return updated
+        })
+        if (selectedTab === id) {
+            setSelectedTab(null)
+        }
+    }
+
+    const selectedTabData = selectedTab ? allTabData.get(selectedTab) : null
+    const graphState = selectedTabData?.graph ?? null
+
+    const { rootNode, viewLeft, viewRight } = graphState
         ? graphState.history[graphState.historyIndex]!
         : { rootNode: 0, viewLeft: 0, viewRight: COORDINATE_WIDTH }
-    const { rootNode, viewLeft, viewRight } = currentHistory
 
     const canGoBack = graphState ? graphState.historyIndex > 0 : false
     const canGoForward = graphState
@@ -57,7 +214,7 @@ const FlamegraphTab: React.FC<{
         : false
 
     const setRootNode = (nodeId: number) => {
-        if (!graphState) return
+        if (!graphState || !selectedTab) return
         const newHistory = graphState.history.slice(
             0,
             graphState.historyIndex + 1,
@@ -67,8 +224,8 @@ const FlamegraphTab: React.FC<{
             viewLeft: 0,
             viewRight: COORDINATE_WIDTH,
         })
-        setState({
-            ...state,
+        setTabData(selectedTab, {
+            ...selectedTabData,
             graph: {
                 ...graphState,
                 history: newHistory,
@@ -78,55 +235,79 @@ const FlamegraphTab: React.FC<{
     }
 
     const updateZoom = (left: number, right: number) => {
-        if (!graphState) return
+        if (!graphState || !selectedTab) return
         const newHistory = [...graphState.history]
         newHistory[graphState.historyIndex] = {
             ...newHistory[graphState.historyIndex]!,
             viewLeft: left,
             viewRight: right,
         }
-        setState({
-            ...state,
-            graph: {
-                ...graphState,
-                history: newHistory,
-            },
+        setTabData(selectedTab, {
+            ...selectedTabData,
+            graph: { ...graphState, history: newHistory },
         })
     }
 
     const goBack = useCallback(() => {
-        if (!graphState || !canGoBack) return
-        setState({
-            ...state,
-            graph: { ...graphState, historyIndex: graphState.historyIndex - 1 },
+        if (!graphState || !canGoBack || !selectedTab) return
+        setAllTabData((oldData) => {
+            const updated = new Map(oldData)
+            const tabState = updated.get(selectedTab)!
+            updated.set(selectedTab, {
+                ...tabState,
+                graph: {
+                    ...tabState.graph!,
+                    historyIndex: tabState.graph!.historyIndex - 1,
+                },
+            })
+            return updated
         })
-    }, [graphState, canGoBack, state, setState])
+    }, [graphState, canGoBack, selectedTab])
 
     const goForward = useCallback(() => {
-        if (!graphState || !canGoForward) return
-        setState({
-            ...state,
-            graph: { ...graphState, historyIndex: graphState.historyIndex + 1 },
+        if (!graphState || !canGoForward || !selectedTab) return
+        setAllTabData((oldData) => {
+            const updated = new Map(oldData)
+            const tabState = updated.get(selectedTab)!
+            updated.set(selectedTab, {
+                ...tabState,
+                graph: {
+                    ...tabState.graph!,
+                    historyIndex: tabState.graph!.historyIndex + 1,
+                },
+            })
+            return updated
         })
-    }, [graphState, canGoForward, state, setState])
+    }, [graphState, canGoForward, selectedTab])
 
     const isMutable = graphState?.mutable ?? false
 
     const onMutate = useCallback(() => {
-        if (!graphState) return
-        setState({ ...state, graph: { ...graphState, mutable: true } })
-    }, [graphState, state, setState])
+        if (!graphState || !selectedTab) return
+        setTabData(selectedTab, {
+            ...selectedTabData,
+            graph: { ...graphState, mutable: true },
+        })
+    }, [graphState, selectedTab, selectedTabData])
+
+    const onFreeze = useCallback(() => {
+        if (!graphState || !selectedTab) return
+        setTabData(selectedTab, {
+            ...selectedTabData,
+            graph: { ...graphState, mutable: false },
+        })
+    }, [graphState, selectedTab, selectedTabData])
 
     const deleteNode = useCallback(
         async (nodeId: number) => {
-            if (!graphState || !graphState.mutable) return
+            if (!graphState || !graphState.mutable || !selectedTab) return
 
             const capturedGraphState = graphState
-            const capturedState = state
+            const capturedTabData = selectedTabData
+            const capturedTab = selectedTab
 
-            // Clone the buffer so we can transfer it without detaching the one currently in use by the UI.
-            // This still involves a copy, but it's done explicitly and the transfer ensures the worker 
-            // doesn't have to clone it again.
+            // Clone the buffer so we can transfer it without detaching the one
+            // currently in use by the UI.
             const valuesBuffer = capturedGraphState.graph.values.buffer.slice(0)
 
             const result = await runJob(
@@ -142,8 +323,8 @@ const FlamegraphTab: React.FC<{
             )
 
             if ("result" in result) {
-                setState({
-                    ...capturedState,
+                setTabData(capturedTab, {
+                    ...capturedTabData,
                     graph: {
                         ...capturedGraphState,
                         graph: result.result.graph,
@@ -151,7 +332,7 @@ const FlamegraphTab: React.FC<{
                 })
             }
         },
-        [graphState, state, setState, runJob],
+        [graphState, selectedTabData, selectedTab, runJob],
     )
 
     useEffect(() => {
@@ -169,74 +350,15 @@ const FlamegraphTab: React.FC<{
         return () => window.removeEventListener("keydown", handleKeyDown)
     }, [goBack, goForward])
 
-    return (
-        <Grow>
-            {state.progress && <div>{state.progress}</div>}
-            {state.error && (
-                <>
-                    <div>Error: {state.error.message}</div>
-                    <div>
-                        {state.error.stack?.split("\n").map((line, index) => (
-                            <div key={index}>{line}</div>
-                        ))}
-                    </div>
-                </>
-            )}
-            {graphState ? (
-                <Flamegraph
-                    graph={graphState.graph}
-                    rootNode={rootNode}
-                    setRootNode={setRootNode}
-                    viewLeft={viewLeft}
-                    viewRight={viewRight}
-                    onUpdateZoom={updateZoom}
-                    canGoBack={canGoBack}
-                    canGoForward={canGoForward}
-                    onBack={goBack}
-                    onForward={goForward}
-                    isMutable={isMutable}
-                    onMutate={onMutate}
-                    onDeleteNode={deleteNode}
-                    submitJob={(id, job) => submitJob(id, job, [])}
-                />
-            ) : null}
-        </Grow>
-    )
-}
-
-const App = (): React.JSX.Element => {
-    const runJob = useWorkerPool<string, WorkerParams, WorkerResponse>(
-        DataWorker,
-    )
-
-    const fileInputRef = useRef<HTMLInputElement | null>(null)
-    const [customStackName, setCustomStackName] = useState("")
-
-    const [showOverlay, setShowOverlay] = useState(false)
-    const [selectedTab, setSelectedTab] = useState<string | null>(null)
-    const [allTabData, setAllAllTabData] = useState<Map<string, WorkerState>>(
-        new Map(),
-    )
-    const setTabData = (id: string, newData: WorkerState) => {
-        setAllAllTabData((oldData) => {
-            const updated = new Map(oldData)
-            updated.set(id, newData)
-            return updated
-        })
-        if (selectedTab == null) {
-            setSelectedTab(id)
-        }
-    }
-
-    const deleteTab = (id: string) => {
-        setAllAllTabData((oldData) => {
-            const updated = new Map(oldData)
-            updated.delete(id)
-            return updated
-        })
-        if (selectedTab === id) {
-            setSelectedTab(null)
-        }
+    const [colorCenter, setColorCenter] = useState(98)
+    const [colorWidth, setColorWidth] = useState(100)
+    const [colorAmount, setColorAmount] = useState(1.67)
+    const [colorDistribution, setColorDistribution] = useState(1199)
+    const colorSettings: ColorSettings = {
+        center: colorCenter,
+        width: colorWidth,
+        amount: colorAmount,
+        distribution: colorDistribution,
     }
 
     const submitJob = React.useCallback(
@@ -276,35 +398,30 @@ const App = (): React.JSX.Element => {
         [runJob],
     )
 
-    const loadStacks = React.useCallback(
-        async (stackName: string) => {
-            setCustomStackName("")
-            setTabData(stackName, { progress: "Downloading stack file..." })
+    const showMergedSubgraph = (
+        gs: GraphState,
+        tabId: string,
+        nodeId: number,
+    ) => {
+        const nodeName = gs.graph.nodeNames[nodeId]!
+        submitJob(
+            `${tabId}:merge:${nodeName}`,
+            { type: "mergeChildren", nodeName, graph: gs.graph },
+            [],
+        )
+    }
 
-            const response = await fetch(stackName)
-            if (!response.ok) {
-                throw new Error(
-                    `HTTP error! status: ${response.status} - Could not find stacks file`,
-                )
-            }
-            const stream = response.body
-            if (!stream) {
-                throw new Error("No response body stream found")
-            }
-            await submitJob(
-                stackName,
-                {
-                    type: "parseStream",
-                    stream,
-                },
-                [stream],
-            )
-        },
-        [submitJob],
-    )
+    const showIcicleGraph = (gs: GraphState, tabId: string, nodeId: number) => {
+        const nodeName = gs.graph.nodeNames[nodeId]!
+        submitJob(
+            `${tabId}:icicle:${nodeName}`,
+            { type: "icicleGraph", nodeId, graph: gs.graph },
+            [],
+        )
+    }
 
     useEffect(() => {
-        let stacksObj = window.__ENCODED_EMBEDDED_STACKS__
+        const stacksObj = window.__ENCODED_EMBEDDED_STACKS__
         if (stacksObj) {
             for (const [stackName, encodedStack] of Object.entries(stacksObj)) {
                 submitJob(
@@ -315,7 +432,6 @@ const App = (): React.JSX.Element => {
             }
             delete window.__ENCODED_EMBEDDED_STACKS__
         } else {
-            // No embedded stacks. Load the demo stacks.
             submitJob(
                 "demo",
                 { type: "parseEncodedData", encodedData: ENCODED_DEMO_STACKS },
@@ -324,76 +440,78 @@ const App = (): React.JSX.Element => {
         }
     }, [])
 
-    const selectedTabData = selectedTab ? allTabData.get(selectedTab) : null
+    const [pickerOpen, setPickerOpen] = useState(false)
+    const fileInputRef = useRef<HTMLInputElement | null>(null)
+
     return (
-        <Stack tall style={{ position: "relative" }}>
-            <div
+        <Flamegraph
+            graph={graphState?.graph}
+            rootNode={rootNode}
+            setRootNode={setRootNode}
+            viewLeft={viewLeft}
+            viewRight={viewRight}
+            onUpdateZoom={updateZoom}
+            isMutable={isMutable}
+            onDeleteNode={deleteNode}
+            colorSettings={colorSettings}
+        >
+            <Row
                 style={{
-                    position: "absolute",
-                    top: "40px",
-                    left: "20px",
-                    zIndex: 10,
-                    pointerEvents: "none",
+                    background: "rgba(0, 0, 0, 0.6)",
+                    padding: "10px",
+                    height: "40px",
+                    pointerEvents: "auto",
+                    alignItems: "center",
                 }}
             >
-                <button
-                    onClick={() => setShowOverlay(!showOverlay)}
-                    style={{ pointerEvents: "auto" }}
+                <RangeSlider
+                    min={0}
+                    max={COORDINATE_WIDTH}
+                    valueLeft={viewLeft}
+                    valueRight={viewRight}
+                    onChange={updateZoom}
+                />
+            </Row>
+            <Row style={{ justifyContent: "space-between" }}>
+                <Stack
+                    style={{
+                        pointerEvents: "auto",
+                    }}
                 >
-                    Graphs
-                </button>
-                {showOverlay && (
-                    <Stack
-                        style={{
-                            width: 300,
-                            background: "rgba(0, 0, 0, 0.6)",
-                            marginTop: "10px",
-                            padding: "10px",
-                            pointerEvents: "auto",
-                        }}
-                    >
-                        <Stack style={{ marginBottom: "10px" }}>
-                            {[...allTabData.keys()].map((id) => (
-                                <button
-                                    key={id}
-                                    style={{
-                                        textAlign: "left",
-                                        fontWeight:
-                                            selectedTab === id
-                                                ? "bold"
-                                                : "normal",
-                                    }}
-                                    onMouseDown={(e) => {
-                                        if (e.button === 1) {
-                                            e.preventDefault()
-                                            deleteTab(id)
-                                        }
-                                    }}
-                                    onClick={() => setSelectedTab(id)}
-                                >
-                                    {id}
-                                </button>
-                            ))}
-                        </Stack>
-                        <Stack>
-                            <input
-                                value={customStackName}
-                                placeholder={"Stack name"}
-                                onChange={(e) =>
-                                    setCustomStackName(e.target.value)
-                                }
-                                onKeyDown={(e) => {
-                                    if (e.key === "Enter") {
-                                        loadStacks(customStackName)
-                                    }
-                                }}
-                            />
-                            <button
-                                onClick={() => loadStacks(customStackName)}
-                                disabled={customStackName === ""}
-                            >
-                                Load
-                            </button>
+                    <button onClick={() => setPickerOpen((o) => !o)}>
+                        {pickerOpen ? "−" : "Graphs"}
+                    </button>
+                    {pickerOpen && (
+                        <Stack
+                            style={{
+                                maxWidth: 300,
+                                background: "rgba(0, 0, 0, 0.6)",
+                                padding: "10px",
+                            }}
+                        >
+                            <Stack style={{ marginBottom: "10px" }}>
+                                {[...allTabData.keys()].map((id) => (
+                                    <button
+                                        key={id}
+                                        style={{
+                                            textAlign: "left",
+                                            fontWeight:
+                                                selectedTab === id
+                                                    ? "bold"
+                                                    : "normal",
+                                        }}
+                                        onMouseDown={(e) => {
+                                            if (e.button === 1) {
+                                                e.preventDefault()
+                                                deleteTab(id)
+                                            }
+                                        }}
+                                        onClick={() => setSelectedTab(id)}
+                                    >
+                                        {id}
+                                    </button>
+                                ))}
+                            </Stack>
                             <input
                                 type="file"
                                 style={{ display: "none" }}
@@ -404,9 +522,13 @@ const App = (): React.JSX.Element => {
                                         const stream = file.stream()
                                         submitJob(
                                             file.name,
-                                            { type: "parseStream", stream },
+                                            {
+                                                type: "parseStream",
+                                                stream,
+                                            },
                                             [stream],
                                         )
+                                        setSelectedTab(file.name)
                                     }
                                     e.target.value = ""
                                 }}
@@ -417,18 +539,63 @@ const App = (): React.JSX.Element => {
                                 Open file...
                             </button>
                         </Stack>
-                    </Stack>
-                )}
-            </div>
-            {selectedTab && selectedTabData && (
-                <FlamegraphTab
-                    state={selectedTabData}
-                    setState={(newState) => setTabData(selectedTab, newState)}
-                    submitJob={submitJob}
-                    runJob={runJob}
+                    )}
+                </Stack>
+                <ColorControls
+                    rootNode={rootNode}
+                    canGoBack={canGoBack}
+                    canGoForward={canGoForward}
+                    onBack={goBack}
+                    onForward={goForward}
+                    onReset={() => setRootNode(0)}
+                    onMerge={() =>
+                        graphState &&
+                        selectedTab &&
+                        showMergedSubgraph(graphState, selectedTab, rootNode)
+                    }
+                    onIcicle={() =>
+                        graphState &&
+                        selectedTab &&
+                        showIcicleGraph(graphState, selectedTab, rootNode)
+                    }
+                    isMutable={isMutable}
+                    onMutate={onMutate}
+                    onFreeze={onFreeze}
+                    colorCenter={colorCenter}
+                    colorWidth={colorWidth}
+                    colorAmount={colorAmount}
+                    colorDistribution={colorDistribution}
+                    setColorCenter={setColorCenter}
+                    setColorWidth={setColorWidth}
+                    setColorAmount={setColorAmount}
+                    setColorDistribution={setColorDistribution}
                 />
-            )}
-        </Stack>
+            </Row>
+            <Row
+                wide
+                style={{
+                    justifyContent: "center",
+                    alignItems: "center",
+                    flexGrow: 1,
+                }}
+            >
+                {selectedTabData?.progress && (
+                    <div>{selectedTabData.progress}</div>
+                )}
+                {selectedTabData?.error && (
+                    <>
+                        <div>Error: {selectedTabData.error.message}</div>
+                        <div>
+                            {selectedTabData.error.stack
+                                ?.split("\n")
+                                .map((line, index) => (
+                                    <div key={index}>{line}</div>
+                                ))}
+                        </div>
+                    </>
+                )}
+            </Row>
+        </Flamegraph>
     )
 }
 

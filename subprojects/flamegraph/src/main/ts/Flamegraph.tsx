@@ -6,9 +6,9 @@ import React, {
     useRef,
     useState,
 } from "react"
-import type { Job, StackGraph } from "./worker"
-import { Row, Stack } from "./containers"
-import type { ColorContextType } from "./color"
+import type { StackGraph } from "./worker"
+import { Stack } from "./containers"
+import type { ColorSettings } from "./color"
 import {
     drawFlamegraph,
     getSameWidthChain,
@@ -19,33 +19,23 @@ import {
     COORDINATE_WIDTH,
     NODE_HEIGHT,
 } from "./FlamegraphNode"
-import { RangeSlider } from "./RangeSlider"
 
-const Slider: React.FC<{
-    min: number
-    max: number
-    value: number
-    onChange: (newValue: number) => void
-}> = ({ min, max, value, onChange }) => {
-    const resolution = 10000
-
-    let percent = (value - min) / (max - min)
-    const scaledValue = percent * resolution
-
-    return (
-        <input
-            style={{ flexGrow: 1 }}
-            type="range"
-            min={0}
-            max={resolution}
-            value={scaledValue}
-            onChange={(e) => {
-                const value = parseInt(e.target.value, 10)
-                let percent = value / resolution
-                onChange(min + percent * (max - min))
-            }}
-        />
-    )
+/**
+ * Returns the pixel width of the vertical scrollbar inside the given scroll
+ * container, or 0 when no scrollbar is visible. Updates automatically when
+ * the container is resized or its content height changes.
+ */
+const useScrollbarWidth = (el: HTMLDivElement | null): number => {
+    const [scrollbarWidth, setScrollbarWidth] = useState(0)
+    useEffect(() => {
+        if (!el) return
+        const update = () => setScrollbarWidth(el.offsetWidth - el.clientWidth)
+        const ro = new ResizeObserver(update)
+        ro.observe(el)
+        update()
+        return () => ro.disconnect()
+    }, [el])
+    return scrollbarWidth
 }
 
 /**
@@ -57,9 +47,9 @@ const Slider: React.FC<{
  * triggering a height change (e.g. in toggleExpand).
  */
 const useScrollAnchor = (
-    scrollRef: React.MutableRefObject<HTMLDivElement | null>,
+    scrollRef: React.RefObject<HTMLDivElement | null>,
     canvasHeight: number,
-    graph: StackGraph,
+    graph: StackGraph | null | undefined,
     rootNode: number,
     savedScrollTopRef: React.MutableRefObject<number | null>,
 ) => {
@@ -92,140 +82,22 @@ const useScrollAnchor = (
     }, [canvasHeight, graph, rootNode])
 }
 
-/** The floating overlay panel with color sliders and action buttons. */
-const ColorControls: React.FC<{
-    rootNode: number
-    canGoBack: boolean
-    canGoForward: boolean
-    onBack: () => void
-    onForward: () => void
-    onReset: () => void
-    onMerge: () => void
-    onIcicle: () => void
-    isMutable: boolean
-    onMutate: () => void
-    colorCenter: number
-    colorWidth: number
-    colorAmount: number
-    colorDistribution: number
-    setColorCenter: (v: number) => void
-    setColorWidth: (v: number) => void
-    setColorAmount: (v: number) => void
-    setColorDistribution: (v: number) => void
-}> = ({
-    rootNode,
-    canGoBack,
-    canGoForward,
-    onBack,
-    onForward,
-    onReset,
-    onMerge,
-    onIcicle,
-    isMutable,
-    onMutate,
-    colorCenter,
-    colorWidth,
-    colorAmount,
-    colorDistribution,
-    setColorCenter,
-    setColorWidth,
-    setColorAmount,
-    setColorDistribution,
-}) => {
-    return (
-        <Row
-            wide
-            style={{
-                position: "absolute",
-                top: "40px",
-                justifyContent: "flex-end",
-                pointerEvents: "none",
-                zIndex: 1,
-            }}
-        >
-            <Stack
-                style={{
-                    width: 500,
-                    background: "rgba(0, 0, 0, 0.6)",
-                    marginRight: "40px",
-                    marginTop: "20px",
-                    pointerEvents: "auto",
-                }}
-            >
-                <Row>
-                    <button onClick={onBack} disabled={!canGoBack}>
-                        &larr; Back
-                    </button>
-                    <button onClick={onForward} disabled={!canGoForward}>
-                        Forward &rarr;
-                    </button>
-                    <button onClick={onReset} disabled={rootNode === 0}>
-                        Reset
-                    </button>
-                </Row>
-                <Row>
-                    Center ({Math.round(colorCenter)})
-                    <Slider
-                        min={0}
-                        max={360}
-                        value={colorCenter}
-                        onChange={setColorCenter}
-                    />
-                </Row>
-                <Row>
-                    Width ({Math.round(colorWidth)})
-                    <Slider
-                        min={0}
-                        max={360}
-                        value={colorWidth}
-                        onChange={setColorWidth}
-                    />
-                </Row>
-                <Row>
-                    Decay ({colorAmount.toFixed(2)})
-                    <Slider
-                        min={1}
-                        max={3}
-                        value={colorAmount}
-                        onChange={setColorAmount}
-                    />
-                </Row>
-                <Row>
-                    Spread ({Math.round(colorDistribution)})
-                    <Slider
-                        min={1}
-                        max={5000}
-                        value={colorDistribution}
-                        onChange={setColorDistribution}
-                    />
-                </Row>
-                <button onClick={onMerge} disabled={rootNode === 0}>
-                    Merge
-                </button>
-                <button onClick={onIcicle}>Icicle</button>
-                <button onClick={onMutate} disabled={isMutable}>
-                    {isMutable ? "Mutable" : "Mutate"}
-                </button>
-            </Stack>
-        </Row>
-    )
-}
-
+/**
+ * Pure canvas component: renders the flamegraph and handles mouse/keyboard
+ * interaction. All overlay chrome (range slider, controls, node details)
+ * is owned by the parent.
+ */
 export const Flamegraph: React.FC<{
-    graph: StackGraph
+    graph: StackGraph | null | undefined
     rootNode: number
     setRootNode: (nodeId: number) => void
     viewLeft: number
     viewRight: number
     onUpdateZoom: (left: number, right: number) => void
-    canGoBack: boolean
-    canGoForward: boolean
-    onBack: () => void
-    onForward: () => void
     isMutable: boolean
-    onMutate: () => void
     onDeleteNode: (nodeId: number) => void
-    submitJob: (id: string, job: Job) => void
+    colorSettings: ColorSettings
+    children?: React.ReactNode
 }> = ({
     graph,
     rootNode,
@@ -233,26 +105,19 @@ export const Flamegraph: React.FC<{
     viewLeft,
     viewRight,
     onUpdateZoom,
-    canGoBack,
-    canGoForward,
-    onBack,
-    onForward,
     isMutable,
-    onMutate,
     onDeleteNode,
-    submitJob,
+    colorSettings,
+    children,
 }) => {
+    const scrollContainerRef = useRef<HTMLDivElement | null>(null)
+    const nodeDetailsRef = useRef<HTMLSpanElement | null>(null)
+    const [scrollEl, setScrollEl] = useState<HTMLDivElement | null>(null)
+    const scrollbarWidth = useScrollbarWidth(scrollEl)
     const canvasRef = useRef<HTMLCanvasElement | null>(null)
-    const scrollRef = useRef<HTMLDivElement | null>(null)
-    const detailsRef = useRef<HTMLSpanElement | null>(null)
     const savedScrollTopRef = useRef<number | null>(null)
 
     const [expandedNodes, setExpandedNodes] = useState<Set<number>>(new Set())
-
-    const [colorCenter, setColorCenter] = useState(98)
-    const [colorWidth, setColorWidth] = useState(100)
-    const [colorAmount, setColorAmount] = useState(1.67)
-    const [colorDistribution, setColorDistribution] = useState(1199)
 
     // The maximum depth of the visible tree, used to size the canvas.
     // Zoom level is intentionally excluded from deps — removing the culling
@@ -293,19 +158,25 @@ export const Flamegraph: React.FC<{
 
     const canvasHeight = Math.max(NODE_HEIGHT, maxDepth * NODE_HEIGHT)
 
-    useScrollAnchor(scrollRef, canvasHeight, graph, rootNode, savedScrollTopRef)
+    useScrollAnchor(
+        scrollContainerRef,
+        canvasHeight,
+        graph,
+        rootNode,
+        savedScrollTopRef,
+    )
 
     // --- Ref-based draw state ---
     //
     // These refs hold the latest draw parameters so that zoom and hover can
     // trigger immediate canvas redraws without going through React state.
     const drawParamsRef = useRef<{
-        graph: StackGraph
+        graph: StackGraph | null | undefined
         rootNode: number
         viewLeft: number
         viewRight: number
         expandedNodes: Set<number>
-        colorSettings: ColorContextType
+        colorSettings: ColorSettings
         hoveredName: string | null
     }>({
         graph,
@@ -313,12 +184,7 @@ export const Flamegraph: React.FC<{
         viewLeft,
         viewRight,
         expandedNodes,
-        colorSettings: {
-            center: colorCenter,
-            width: colorWidth,
-            amount: colorAmount,
-            distribution: colorDistribution,
-        },
+        colorSettings,
         hoveredName: null,
     })
 
@@ -331,6 +197,11 @@ export const Flamegraph: React.FC<{
         if (!ctx) return
         const dpr = window.devicePixelRatio || 1
         const p = drawParamsRef.current
+        if (!p.graph) {
+            ctx.clearRect(0, 0, canvas.width, canvas.height)
+            hitListRef.current = []
+            return
+        }
         hitListRef.current = drawFlamegraph(
             ctx,
             p.graph,
@@ -401,12 +272,7 @@ export const Flamegraph: React.FC<{
         drawParamsRef.current.viewLeft = viewRef.current.left
         drawParamsRef.current.viewRight = viewRef.current.right
         drawParamsRef.current.expandedNodes = expandedNodes
-        drawParamsRef.current.colorSettings = {
-            center: colorCenter,
-            width: colorWidth,
-            amount: colorAmount,
-            distribution: colorDistribution,
-        }
+        drawParamsRef.current.colorSettings = colorSettings
         redraw()
     }, [
         graph,
@@ -414,10 +280,7 @@ export const Flamegraph: React.FC<{
         viewLeft,
         viewRight,
         expandedNodes,
-        colorCenter,
-        colorWidth,
-        colorAmount,
-        colorDistribution,
+        colorSettings,
         redraw,
     ])
 
@@ -558,8 +421,9 @@ export const Flamegraph: React.FC<{
             drawParamsRef.current.hoveredName = null
             redraw()
         }
-        if (detailsRef.current) {
-            detailsRef.current.textContent = "Hover for details, click to zoom"
+        if (nodeDetailsRef.current) {
+            nodeDetailsRef.current.textContent =
+                "Hover for details, click to zoom"
         }
     }, [redraw])
 
@@ -569,18 +433,19 @@ export const Flamegraph: React.FC<{
 
     const handleMouseMove: React.MouseEventHandler<HTMLCanvasElement> = (e) => {
         const hit = hitTest(e.clientX, e.clientY)
-        const newName =
-            hit && !hit.isCollapseToggle ? hit.name : null
+        const newName = hit && !hit.isCollapseToggle ? hit.name : null
 
         const canvas = canvasRef.current
         if (canvas) {
             canvas.style.cursor = hit ? "pointer" : "default"
         }
 
-        if (detailsRef.current) {
-            detailsRef.current.textContent =
+        if (nodeDetailsRef.current) {
+            nodeDetailsRef.current.textContent =
                 hit && !hit.isCollapseToggle
-                    ? nodeDetails(hit.nodeId, drawParamsRef.current.graph)
+                    ? drawParamsRef.current.graph
+                        ? nodeDetails(hit.nodeId, drawParamsRef.current.graph)
+                        : ""
                     : "Hover for details, click to zoom"
         }
 
@@ -597,7 +462,8 @@ export const Flamegraph: React.FC<{
         if (!hit) return
 
         if (hit.isCollapseToggle) {
-            savedScrollTopRef.current = scrollRef.current?.scrollTop ?? null
+            savedScrollTopRef.current =
+                scrollContainerRef.current?.scrollTop ?? null
             setExpandedNodes((prev) => {
                 const next = new Set(prev)
                 if (next.has(hit.nodeId)) {
@@ -628,92 +494,18 @@ export const Flamegraph: React.FC<{
         }
     }
 
-    if (
-        !graph ||
-        graph.values.length === 0 ||
-        graph.values[0] === undefined ||
-        graph.values[0] === 0n
-    ) {
-        return <div>No data to display.</div>
-    }
-
-    const showMergedSubgraph = (nodeId: number) => {
-        const nodeName = graph.nodeNames[nodeId]!
-        submitJob(`merge${nodeName}`, { type: "mergeChildren", nodeName, graph })
-    }
-
-    const showIcicleGraph = (nodeId: number) => {
-        const nodeName = graph.nodeNames[nodeId]!
-        submitJob(`icicle${nodeName}${nodeId}`, {
-            type: "icicleGraph",
-            nodeId,
-            graph,
-        })
-    }
-
     return (
-        <Stack tall style={{ position: "relative" }}>
-            <Row
-                wide
-                style={{
-                    position: "absolute",
-                    top: "0px",
-                    left: "0px",
-                    zIndex: 1,
-                    pointerEvents: "none",
-                }}
-            >
-                <div
-                    style={{
-                        flexGrow: 1,
-                        background: "rgba(0, 0, 0, 0.6)",
-                        padding: "10px",
-                        height: "40px",
-                        pointerEvents: "auto",
-                        display: "flex",
-                        alignItems: "center",
-                        gap: "10px",
-                        boxSizing: "border-box",
-                    }}
-                >
-                    <span>Range</span>
-                    <RangeSlider
-                        min={0}
-                        max={COORDINATE_WIDTH}
-                        valueLeft={viewLeft}
-                        valueRight={viewRight}
-                        onChange={onUpdateZoom}
-                    />
-                </div>
-            </Row>
-            <ColorControls
-                rootNode={rootNode}
-                canGoBack={canGoBack}
-                canGoForward={canGoForward}
-                onBack={onBack}
-                onForward={onForward}
-                onReset={() => setRootNode(0)}
-                onMerge={() => showMergedSubgraph(rootNode)}
-                isMutable={isMutable}
-                onMutate={onMutate}
-                onIcicle={() => showIcicleGraph(rootNode)}
-                colorCenter={colorCenter}
-                colorWidth={colorWidth}
-                colorAmount={colorAmount}
-                colorDistribution={colorDistribution}
-                setColorCenter={setColorCenter}
-                setColorWidth={setColorWidth}
-                setColorAmount={setColorAmount}
-                setColorDistribution={setColorDistribution}
-            />
+        <Stack tall wide>
             <div
-                ref={scrollRef}
+                ref={(el) => {
+                    scrollContainerRef.current = el
+                    setScrollEl(el)
+                }}
                 style={{
                     flexGrow: 1,
                     overflowY: "auto",
                     display: "flex",
                     paddingBottom: NODE_HEIGHT,
-                    overflowAnchor: "none",
                 }}
             >
                 <canvas
@@ -731,7 +523,20 @@ export const Flamegraph: React.FC<{
                     onMouseDown={handleMouseDown}
                 />
             </div>
-            <NodeDetails ref={detailsRef} />
+            <Stack
+                tall
+                style={{
+                    justifyContent: "space-between",
+                    position: "absolute",
+                    width: `calc(100% - ${scrollbarWidth}px)`,
+                    pointerEvents: "none",
+                }}
+            >
+                <Stack wide style={{ flexGrow: 1 }}>
+                    {children}
+                </Stack>
+                <NodeDetails ref={nodeDetailsRef} />
+            </Stack>
         </Stack>
     )
 }
