@@ -104,6 +104,7 @@ export const FlamegraphNode = React.memo(({
     totalValue,
     onClick,
     parentValue,
+    zoomWidth = COORDINATE_WIDTH,
 }: {
     nodeId: number
     xOffset: bigint
@@ -113,6 +114,7 @@ export const FlamegraphNode = React.memo(({
     totalValue: bigint
     onClick: (nodeId: number) => void
     parentValue: bigint | null
+    zoomWidth?: number
 }) => {
     const context = React.useContext(GraphContext)
     if (!context) {
@@ -155,7 +157,9 @@ export const FlamegraphNode = React.memo(({
         }
 
         const childWidthPx =
-            (Number(childValue) / Number(totalValue)) * svgWidth
+            (Number(childValue) / Number(totalValue)) *
+            COORDINATE_WIDTH *
+            (svgWidth / zoomWidth)
         let element
         if (childWidthPx >= CULLING_THRESHOLD_PX) {
             element = (
@@ -169,6 +173,7 @@ export const FlamegraphNode = React.memo(({
                     svgHeight={svgHeight}
                     onClick={onClick}
                     parentValue={value}
+                    zoomWidth={zoomWidth}
                 />
             )
         } else {
@@ -187,7 +192,7 @@ export const FlamegraphNode = React.memo(({
 
     // To counteract the text stretching caused by preserveAspectRatio="none", we apply an inverse
     // horizontal scale transform.
-    const horizontalScale = COORDINATE_WIDTH / svgWidth
+    const horizontalScale = zoomWidth / svgWidth
 
     const colorContext = React.useContext(ColorContext)
     const showCollapseButton =
@@ -253,7 +258,7 @@ export const FlamegraphNode = React.memo(({
                     </g>
                 )}
 
-                {rectWidth * (svgWidth / COORDINATE_WIDTH) >
+                {(rectWidth / zoomWidth) * svgWidth >
                     (showCollapseButton
                         ? COLLAPSE_BUTTON_SIZE * 2
                         : NODE_TEXT_PADDING_LEFT) && (

@@ -21,6 +21,7 @@ import {
     CULLING_THRESHOLD_PX,
     NODE_HEIGHT,
 } from "./FlamegraphNode"
+import { RangeSlider } from "./RangeSlider"
 
 const Slider: React.FC<{
     min: number
@@ -164,6 +165,7 @@ const ColorControls: React.FC<{
             wide
             style={{
                 position: "absolute",
+                top: "40px",
                 justifyContent: "flex-end",
                 pointerEvents: "none",
                 zIndex: 1,
@@ -241,6 +243,9 @@ export const Flamegraph: React.FC<{
     graph: StackGraph
     rootNode: number
     setRootNode: (nodeId: number) => void
+    viewLeft: number
+    viewRight: number
+    onUpdateZoom: (left: number, right: number) => void
     canGoBack: boolean
     canGoForward: boolean
     onBack: () => void
@@ -253,6 +258,9 @@ export const Flamegraph: React.FC<{
     graph,
     rootNode,
     setRootNode,
+    viewLeft,
+    viewRight,
+    onUpdateZoom,
     canGoBack,
     canGoForward,
     onBack,
@@ -270,12 +278,8 @@ export const Flamegraph: React.FC<{
 
     const [expandedNodes, setExpandedNodes] = useState<Set<number>>(new Set())
 
-    const [colorCenter, setColorCenter] = useState(98)
-    const [colorWidth, setColorWidth] = useState(100)
-    const [colorAmount, setColorAmount] = useState(1.67)
-    const [colorDistribution, setColorDistribution] = useState(1199)
-
     const svgWidth = useSvgWidth(svgRef)
+    const zoomWidth = viewRight - viewLeft
 
     const maxDepth = useMemo(() => {
         if (!graph || graph.values.length === 0 || !svgWidth) {
@@ -291,7 +295,8 @@ export const Flamegraph: React.FC<{
         const stack: Array<[number, number, bigint | null]> = [
             [rootNode, 1, null],
         ]
-        const minValueThresholdRatio = CULLING_THRESHOLD_PX / svgWidth
+        const minValueThresholdRatio =
+            (CULLING_THRESHOLD_PX / svgWidth) * (zoomWidth / COORDINATE_WIDTH)
 
         while (stack.length > 0) {
             const [nodeId, depth, parentValue] = stack.pop()!
@@ -326,7 +331,12 @@ export const Flamegraph: React.FC<{
         }
 
         return max
-    }, [graph, rootNode, svgWidth, expandedNodes])
+    }, [graph, rootNode, svgWidth, expandedNodes, zoomWidth])
+
+    const [colorCenter, setColorCenter] = useState(98)
+    const [colorWidth, setColorWidth] = useState(100)
+    const [colorAmount, setColorAmount] = useState(1.67)
+    const [colorDistribution, setColorDistribution] = useState(1199)
 
     const svgHeight = maxDepth * NODE_HEIGHT
 
@@ -445,6 +455,39 @@ export const Flamegraph: React.FC<{
         <>
             <style ref={hoverStyleRef} />
             <Stack tall style={{ position: "relative" }}>
+                <Row
+                    wide
+                    style={{
+                        position: "absolute",
+                        top: "0px",
+                        left: "0px",
+                        zIndex: 1,
+                        pointerEvents: "none",
+                    }}
+                >
+                    <div
+                        style={{
+                            flexGrow: 1,
+                            background: "rgba(0, 0, 0, 0.6)",
+                            padding: "10px",
+                            height: "40px",
+                            pointerEvents: "auto",
+                            display: "flex",
+                            alignItems: "center",
+                            gap: "10px",
+                            boxSizing: "border-box",
+                        }}
+                    >
+                        <span>Range</span>
+                        <RangeSlider
+                            min={0}
+                            max={COORDINATE_WIDTH}
+                            valueLeft={viewLeft}
+                            valueRight={viewRight}
+                            onChange={onUpdateZoom}
+                        />
+                    </div>
+                </Row>
                 <ColorControls
                     rootNode={rootNode}
                     canGoBack={canGoBack}
@@ -496,7 +539,7 @@ export const Flamegraph: React.FC<{
                                             flexShrink: 0,
                                         }}
                                         height={svgHeight}
-                                        viewBox={`0 0 ${COORDINATE_WIDTH} ${svgHeight}`}
+                                        viewBox={`${viewLeft} 0 ${zoomWidth} ${svgHeight}`}
                                         preserveAspectRatio="none"
                                         onMouseLeave={handleMouseLeave}
                                         onMouseMove={handleMouseMove}
@@ -513,6 +556,7 @@ export const Flamegraph: React.FC<{
                                                 totalValue={rootValue}
                                                 onClick={handleNodeClick}
                                                 parentValue={null}
+                                                zoomWidth={zoomWidth}
                                             />
                                         )}
                                     </svg>

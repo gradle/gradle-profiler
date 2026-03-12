@@ -11,9 +11,17 @@ import { Grow, Stack } from "./containers.tsx"
 import { ENCODED_DEMO_STACKS } from "./demo.ts"
 import { Flamegraph } from "./Flamegraph"
 
+import { COORDINATE_WIDTH } from "./FlamegraphNode"
+
+interface HistoryEntry {
+    rootNode: number
+    viewLeft: number
+    viewRight: number
+}
+
 interface GraphState {
     graph: StackGraph
-    rootNodeHistory: number[]
+    history: HistoryEntry[]
     historyIndex: number
     mutable?: boolean
 }
@@ -38,27 +46,50 @@ const FlamegraphTab: React.FC<{
     ) => Promise<WorkerResponse>
 }> = ({ state, setState, submitJob, runJob }) => {
     const graphState = state.graph
-    const rootNode = graphState
-        ? graphState.rootNodeHistory[graphState.historyIndex]!
-        : 0
+    const currentHistory = graphState
+        ? graphState.history[graphState.historyIndex]!
+        : { rootNode: 0, viewLeft: 0, viewRight: COORDINATE_WIDTH }
+    const { rootNode, viewLeft, viewRight } = currentHistory
+
     const canGoBack = graphState ? graphState.historyIndex > 0 : false
     const canGoForward = graphState
-        ? graphState.historyIndex < graphState.rootNodeHistory.length - 1
+        ? graphState.historyIndex < graphState.history.length - 1
         : false
 
     const setRootNode = (nodeId: number) => {
         if (!graphState) return
-        const newHistory = graphState.rootNodeHistory.slice(
+        const newHistory = graphState.history.slice(
             0,
             graphState.historyIndex + 1,
         )
-        newHistory.push(nodeId)
+        newHistory.push({
+            rootNode: nodeId,
+            viewLeft: 0,
+            viewRight: COORDINATE_WIDTH,
+        })
         setState({
             ...state,
             graph: {
                 ...graphState,
-                rootNodeHistory: newHistory,
+                history: newHistory,
                 historyIndex: newHistory.length - 1,
+            },
+        })
+    }
+
+    const updateZoom = (left: number, right: number) => {
+        if (!graphState) return
+        const newHistory = [...graphState.history]
+        newHistory[graphState.historyIndex] = {
+            ...newHistory[graphState.historyIndex]!,
+            viewLeft: left,
+            viewRight: right,
+        }
+        setState({
+            ...state,
+            graph: {
+                ...graphState,
+                history: newHistory,
             },
         })
     }
@@ -156,6 +187,9 @@ const FlamegraphTab: React.FC<{
                     graph={graphState.graph}
                     rootNode={rootNode}
                     setRootNode={setRootNode}
+                    viewLeft={viewLeft}
+                    viewRight={viewRight}
+                    onUpdateZoom={updateZoom}
                     canGoBack={canGoBack}
                     canGoForward={canGoForward}
                     onBack={goBack}
@@ -219,7 +253,13 @@ const App = (): React.JSX.Element => {
                     setTabData(id, {
                         graph: {
                             graph: result.result.graph,
-                            rootNodeHistory: [0],
+                            history: [
+                                {
+                                    rootNode: 0,
+                                    viewLeft: 0,
+                                    viewRight: COORDINATE_WIDTH,
+                                },
+                            ],
                             historyIndex: 0,
                         },
                     })
@@ -290,7 +330,7 @@ const App = (): React.JSX.Element => {
             <div
                 style={{
                     position: "absolute",
-                    top: "20px",
+                    top: "40px",
                     left: "20px",
                     zIndex: 10,
                     pointerEvents: "none",
