@@ -35,6 +35,28 @@ table td {
 
 button {
     cursor: pointer;
+    background: rgba(0, 0, 0, 0.45);
+    color: white;
+    border: 2px solid rgba(134, 134, 134, 0.59);
+    padding: 4px 7px;
+}
+
+button:hover:not(:disabled) {
+    background: rgba(50, 50, 50, 0.8);
+}
+
+button:disabled {
+    opacity: 0.35;
+    cursor: not-allowed;
+}
+
+button[aria-pressed="true"] {
+    background: rgba(255, 255, 255, 0.18);
+    border-color: rgba(220, 220, 220, 0.75);
+}
+
+button[aria-pressed="true"]:hover:not(:disabled) {
+    background: rgba(255, 255, 255, 0.28);
 }
 
 * {
