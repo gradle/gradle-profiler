@@ -106,36 +106,65 @@ interface ParsedName {
 
 const parseMethodName = (name: string): ParsedName | null => {
     const parenOpen = name.indexOf("(")
-    if (parenOpen === -1) return null
 
-    const parenClose = name.indexOf(")", parenOpen)
-    if (parenClose === -1) return null
+    if (parenOpen !== -1) {
+        // Format: full.class.name.method(params):line  (macOS async-profiler / JVM)
+        const parenClose = name.indexOf(")", parenOpen)
+        if (parenClose === -1) return null
 
-    const beforeParen = name.substring(0, parenOpen)
-    const lastDot = beforeParen.lastIndexOf(".")
-    if (lastDot === -1) return null
+        const beforeParen = name.substring(0, parenOpen)
+        const lastDot = beforeParen.lastIndexOf(".")
+        if (lastDot === -1) return null
 
-    const classPath = beforeParen.substring(0, lastDot)
-    if (!classPath) return null
+        const classPath = beforeParen.substring(0, lastDot)
+        if (!classPath) return null
 
-    const method = beforeParen.substring(lastDot + 1)
-    if (!method) return null
+        const method = beforeParen.substring(lastDot + 1)
+        if (!method) return null
 
-    const lastSep = Math.max(classPath.lastIndexOf("."), classPath.lastIndexOf("/"))
-    const simpleClass =
-        lastSep !== -1 ? classPath.substring(lastSep + 1) : classPath
-    if (!simpleClass) return null
+        const lastSep = Math.max(classPath.lastIndexOf("."), classPath.lastIndexOf("/"))
+        const simpleClass =
+            lastSep !== -1 ? classPath.substring(lastSep + 1) : classPath
+        if (!simpleClass) return null
 
-    const rawParams = name.substring(parenOpen + 1, parenClose)
+        const rawParams = name.substring(parenOpen + 1, parenClose)
 
-    let lineNumber: string | null = null
-    const rest = name.substring(parenClose + 1)
-    const colonMatch = rest.match(/^:(\d+)/)
-    if (colonMatch) {
-        lineNumber = colonMatch[1]!
+        let lineNumber: string | null = null
+        const rest = name.substring(parenClose + 1)
+        const colonMatch = rest.match(/^:(\d+)/)
+        if (colonMatch) {
+            lineNumber = colonMatch[1]!
+        }
+
+        return { simpleClass, method, rawParams, lineNumber }
     }
 
-    return { simpleClass, method, rawParams, lineNumber }
+    // Format: pkg/path/ClassName.method_[bci]  (Linux async-profiler)
+    // Packages are separated by '/' and the method may have a _[N] BCI suffix.
+    const lastSlash = name.lastIndexOf("/")
+    const lastPart =
+        lastSlash !== -1 ? name.substring(lastSlash + 1) : name
+
+    const dotIdx = lastPart.indexOf(".")
+    if (dotIdx === -1) return null
+
+    const simpleClass = lastPart.substring(0, dotIdx)
+    if (!simpleClass) return null
+
+    let methodPart = lastPart.substring(dotIdx + 1)
+    if (!methodPart) return null
+
+    // Strip _[bci] suffix, e.g. _[0], _[j]
+    let lineNumber: string | null = null
+    const bciMatch = methodPart.match(/_\[(\w+)\]$/)
+    if (bciMatch) {
+        lineNumber = bciMatch[1]!
+        methodPart = methodPart.substring(0, methodPart.length - bciMatch[0].length)
+    }
+
+    if (!methodPart) return null
+
+    return { simpleClass, method: methodPart, rawParams: "", lineNumber }
 }
 
 const simplifyParam = (param: string): string => {
