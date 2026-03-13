@@ -252,6 +252,7 @@ public class InvocationSettings {
             .setSysProperties(sysProperties)
             .setGradleUserHome(gradleUserHome)
             .setStudioInstallDir(studioInstallDir)
+            .setStudioSandboxDir(studioSandboxDir)
             .setWarmupCount(warmupCount)
             .setIterations(iterations)
             .setMeasureGarbageCollection(measureGarbageCollection)

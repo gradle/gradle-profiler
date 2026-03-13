@@ -10,6 +10,7 @@ import org.gradle.profiler.client.protocol.Client;
 import org.gradle.profiler.client.protocol.messages.StudioCacheCleanupCompleted;
 import org.gradle.profiler.client.protocol.messages.StudioRequest;
 import org.gradle.profiler.client.protocol.messages.StudioSyncRequestCompleted;
+import org.gradle.profiler.studio.plugin.system.AndroidStudioSystemHelper;
 import org.gradle.profiler.studio.plugin.system.GradleSyncResult;
 import org.gradle.profiler.studio.plugin.system.GradleSystemListener;
 import org.jetbrains.plugins.gradle.service.project.open.GradleProjectImportUtil;
@@ -20,11 +21,6 @@ import java.util.concurrent.TimeUnit;
 
 import static org.gradle.profiler.client.protocol.messages.StudioRequest.StudioRequestType.EXIT_IDE;
 import static org.gradle.profiler.client.protocol.messages.StudioRequest.StudioRequestType.STOP_RECEIVING_EVENTS;
-import static org.gradle.profiler.studio.plugin.system.AndroidStudioSystemHelper.getStartupSyncResult;
-import static org.gradle.profiler.studio.plugin.system.AndroidStudioSystemHelper.startManualSync;
-import static org.gradle.profiler.studio.plugin.system.AndroidStudioSystemHelper.waitOnBackgroundProcessesFinish;
-import static org.gradle.profiler.studio.plugin.system.AndroidStudioSystemHelper.waitOnPostStartupActivities;
-import static org.gradle.profiler.studio.plugin.system.AndroidStudioSystemHelper.waitOnPreviousGradleSyncFinish;
 
 public class GradleProfilerClient {
 
@@ -41,7 +37,7 @@ public class GradleProfilerClient {
 
     public StudioRequest listenForSyncRequests(Project project, GradleSystemListener gradleSystemListener) {
         StudioRequest request = receiveNextEvent();
-        waitOnPostStartupActivities(project);
+        AndroidStudioSystemHelper.waitOnPostStartupActivities(project);
         maybeImportProject(project);
         while (shouldHandleNextEvent(request)) {
             handleGradleProfilerRequest(request, project, gradleSystemListener);
@@ -91,14 +87,16 @@ public class GradleProfilerClient {
         // Also in some versions sync triggers first and then indexing and in others it's the opposite,
         // so we wait for sync finishing and then for background processes and then for sync again.
         if (isStartup) {
-            waitOnPreviousGradleSyncFinish(project);
-            waitOnBackgroundProcessesFinish(project);
-            waitOnPreviousGradleSyncFinish(project);
+            AndroidStudioSystemHelper.waitOnPreviousGradleSyncFinish(gradleSystemListener);
+            AndroidStudioSystemHelper.waitOnBackgroundProcessesFinish(project);
+            AndroidStudioSystemHelper.waitOnPreviousGradleSyncFinish(gradleSystemListener);
         }
 
         LOG.info(String.format("[SYNC REQUEST %s] Sync has started%n", request.getId()));
         Stopwatch stopwatch = isStartup ? startupStopwatch : Stopwatch.createStarted();
-        GradleSyncResult result = isStartup ? getStartupSyncResult(project, gradleSystemListener) : startManualSync(project, gradleSystemListener);
+        GradleSyncResult result = isStartup
+            ? AndroidStudioSystemHelper.getStartupSyncResult(project, gradleSystemListener)
+            : AndroidStudioSystemHelper.startManualSync(project, gradleSystemListener);
         LOG.info(String.format("[SYNC REQUEST %s] '%s'%n", request.getId(), result.getResult()));
         client.send(new StudioSyncRequestCompleted(request.getId(), stopwatch.elapsed(TimeUnit.MILLISECONDS), result.getResult(), result.getErrorMessage()));
     }
