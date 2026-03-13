@@ -1,13 +1,9 @@
 import com.github.gradle.node.npm.task.NpmTask
 import com.github.gradle.node.npm.task.NpxTask
-import java.io.ByteArrayOutputStream
-import java.io.InputStream
-import java.io.OutputStream
-import java.nio.charset.StandardCharsets
-import java.util.*
-import java.util.zip.GZIPOutputStream
+import org.gradle.process.ExecOperations
 
 plugins {
+    id("java-library")
     id("com.github.node-gradle.node")
 }
 
@@ -66,22 +62,26 @@ val buildVite = tasks.register<NpxTask>("buildVite") {
     args.set(listOf("build"))
 }
 
-tasks.register("build") {
+tasks.build {
     dependsOn(buildVite)
 }
 
-class NonClosingOutputStream(val delegate: OutputStream) : OutputStream() {
-    override fun write(b: ByteArray?) = delegate.write(b)
-    override fun write(b: ByteArray?, off: Int, len: Int) = delegate.write(b, off, len)
-    override fun flush() = delegate.flush()
-    override fun write(p0: Int) = delegate.write(p0)
-    override fun close() = Unit
+// Embed the vite-built index.html into the jar as a classpath resource so that
+// FlamegraphGenerator can load it via Class.getResourceAsStream().
+tasks.named<ProcessResources>("processResources") {
+    dependsOn(buildVite)
+    from(layout.buildDirectory.file("vite/index.html")) {
+        into("org/gradle/profiler/flamegraph")
+    }
 }
 
 abstract class GenerateDemoTask : DefaultTask() {
 
+    @get:Inject
+    abstract val execOperations: ExecOperations
+
     @get:InputFiles
-    abstract val applicationBundle: RegularFileProperty
+    abstract val classpath: ConfigurableFileCollection
 
     @get:OutputFile
     abstract val outputFile: RegularFileProperty
@@ -92,73 +92,16 @@ abstract class GenerateDemoTask : DefaultTask() {
 
     @TaskAction
     fun generate() {
-        val stacksFiles = stacks.get().map { File(it) }
-        stacksFiles.forEach {
-            require(it.isAbsolute) { "Stacks file '$it' must be absolute" }
-            require(it.isFile) { "Stacks file $it does not exist" }
-        }
-        require(stacksFiles.map { it.name }.distinct().size == stacksFiles.size) {
-            "Stacks files must have distinct names"
-        }
-
-        var foundTargetLine = false
-        outputFile.get().asFile.outputStream().buffered().use { output ->
-            applicationBundle.get().asFile.inputStream().buffered().use { input ->
-                while (!foundTargetLine) {
-                    val byteLine = input.readByteLine() ?: break
-                    val line = String(byteLine, 0, byteLine.size, StandardCharsets.UTF_8)
-                    if (line.trim().equals("</body>")) {
-                        foundTargetLine = true
-                        output.writeUtf8("<template id=\"embedded-stacks-names\">\n")
-                        output.writeUtf8(stacksFiles.joinToString(",") { it.name.toBase64() })
-                        output.writeUtf8("\n</template>\n")
-
-                        stacksFiles.forEachIndexed { index, stackFile ->
-                            output.writeUtf8("<template id=\"embedded-stacks-$index\">\n")
-                            stackFile.inputStream().buffered().use { stackStream ->
-                                GZIPOutputStream(Base64.getEncoder().wrap(NonClosingOutputStream(output))).use { gzip ->
-                                    stackStream.copyTo(gzip)
-                                }
-                            }
-                            output.writeUtf8("\n</template>\n")
-                        }
-
-                        output.writeUtf8(line)
-                        output.writeUtf8("\n")
-                    } else {
-                        output.write(byteLine)
-                    }
-                }
-                if (!foundTargetLine) {
-                    throw GradleException("Could not find target line in application bundle to embed stacks")
-                }
-                input.copyTo(output)
-            }
+        execOperations.javaexec {
+            classpath(this@GenerateDemoTask.classpath)
+            mainClass.set("org.gradle.profiler.flamegraph.FlamegraphGenerator")
+            args(stacks.get() + listOf(outputFile.get().asFile.absolutePath))
         }
     }
-
-    fun InputStream.readByteLine(): ByteArray? {
-        val buffer = ByteArrayOutputStream()
-        var byte = this.read()
-        if (byte == -1) return null
-        while (byte != -1) {
-            buffer.write(byte)
-            if (byte == '\n'.code) break
-            byte = this.read()
-        }
-        return buffer.toByteArray()
-    }
-
-    fun OutputStream.writeUtf8(line: String) {
-        this.write(line.toByteArray(StandardCharsets.UTF_8))
-    }
-
-    fun String.toBase64(): String = Base64.getEncoder().encodeToString(toByteArray(StandardCharsets.UTF_8))
 
 }
 
 tasks.register<GenerateDemoTask>("buildDemo") {
-    dependsOn(buildVite)
-    applicationBundle = layout.buildDirectory.file("vite/index.html")
+    classpath.from(sourceSets.main.get().runtimeClasspath)
     outputFile = layout.buildDirectory.file("demo/index.html")
 }
