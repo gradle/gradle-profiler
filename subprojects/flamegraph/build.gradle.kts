@@ -107,23 +107,24 @@ abstract class GenerateDemoTask : DefaultTask() {
                 while (!foundTargetLine) {
                     val byteLine = input.readByteLine() ?: break
                     val line = String(byteLine, 0, byteLine.size, StandardCharsets.UTF_8)
-                    if (line.trim().startsWith("window.__ENCODED_EMBEDDED_STACKS__")) {
+                    if (line.trim().equals("</body>")) {
                         foundTargetLine = true
-                        output.writeUtf8("window.__ENCODED_EMBEDDED_STACKS__ = {\n")
+                        output.writeUtf8("<template id=\"embedded-stacks-names\">\n")
+                        output.writeUtf8(stacksFiles.joinToString(",") { it.name.toBase64() })
+                        output.writeUtf8("\n</template>\n")
+
                         stacksFiles.forEachIndexed { index, stackFile ->
-                            output.writeUtf8("\"${stackFile.name}\":\"")
+                            output.writeUtf8("<template id=\"embedded-stacks-$index\">\n")
                             stackFile.inputStream().buffered().use { stackStream ->
                                 GZIPOutputStream(Base64.getEncoder().wrap(NonClosingOutputStream(output))).use { gzip ->
                                     stackStream.copyTo(gzip)
                                 }
                             }
-                            output.writeUtf8("\"")
-                            if (index < stacksFiles.size - 1) {
-                                output.writeUtf8(",")
-                            }
-                            output.writeUtf8("\n")
+                            output.writeUtf8("\n</template>\n")
                         }
-                        output.writeUtf8("};\n")
+
+                        output.writeUtf8(line)
+                        output.writeUtf8("\n")
                     } else {
                         output.write(byteLine)
                     }
@@ -151,6 +152,8 @@ abstract class GenerateDemoTask : DefaultTask() {
     fun OutputStream.writeUtf8(line: String) {
         this.write(line.toByteArray(StandardCharsets.UTF_8))
     }
+
+    fun String.toBase64(): String = Base64.getEncoder().encodeToString(toByteArray(StandardCharsets.UTF_8))
 
 }
 

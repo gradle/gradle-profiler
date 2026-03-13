@@ -28,16 +28,29 @@ const App = (): React.JSX.Element => {
     } = useGraphTabs()
 
     useEffect(() => {
-        const stacksObj = window.__ENCODED_EMBEDDED_STACKS__
-        if (stacksObj) {
-            for (const [stackName, encodedStack] of Object.entries(stacksObj)) {
-                submitJob(
-                    stackName,
-                    { type: "parseEncodedData", encodedData: encodedStack },
-                    [],
-                )
-            }
-            delete window.__ENCODED_EMBEDDED_STACKS__
+        const namesEl = document.getElementById("embedded-stacks-names")
+
+        if (namesEl) {
+            const stackNames =
+                namesEl.innerHTML.trim().split(",").map(atob) || []
+            stackNames.forEach((name, i) => {
+                const template = document.getElementById(
+                    `embedded-stacks-${i}`,
+                ) as HTMLTemplateElement
+                if (template) {
+                    const raw = template.innerHTML.trim()
+                    submitJob(
+                        name,
+                        {
+                            type: "parseEncodedData",
+                            encodedData: raw,
+                        },
+                        [],
+                    )
+                    template.remove()
+                }
+            })
+            namesEl.remove()
         } else {
             submitJob(
                 "demo",
@@ -45,8 +58,7 @@ const App = (): React.JSX.Element => {
                 [],
             )
         }
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [])
+    }, [submitJob])
 
     const selectedTabData = selectedTab ? allTabData.get(selectedTab) : null
     const graphState = selectedTabData?.graph ?? null
