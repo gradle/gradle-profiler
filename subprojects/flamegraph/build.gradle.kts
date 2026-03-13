@@ -70,6 +70,14 @@ tasks.register("build") {
     dependsOn(buildVite)
 }
 
+class NonClosingOutputStream(val delegate: OutputStream) : OutputStream() {
+    override fun write(b: ByteArray?) = delegate.write(b)
+    override fun write(b: ByteArray?, off: Int, len: Int) = delegate.write(b, off, len)
+    override fun flush() = delegate.flush()
+    override fun write(p0: Int) = delegate.write(p0)
+    override fun close() = Unit
+}
+
 abstract class GenerateDemoTask : DefaultTask() {
 
     @get:InputFiles
@@ -105,9 +113,9 @@ abstract class GenerateDemoTask : DefaultTask() {
                         stacksFiles.forEachIndexed { index, stackFile ->
                             output.writeUtf8("\"${stackFile.name}\":\"")
                             stackFile.inputStream().buffered().use { stackStream ->
-                                val gzip = GZIPOutputStream(Base64.getEncoder().wrap(output))
-                                stackStream.copyTo(gzip)
-                                gzip.finish()
+                                GZIPOutputStream(Base64.getEncoder().wrap(NonClosingOutputStream(output))).use { gzip ->
+                                    stackStream.copyTo(gzip)
+                                }
                             }
                             output.writeUtf8("\"")
                             if (index < stacksFiles.size - 1) {

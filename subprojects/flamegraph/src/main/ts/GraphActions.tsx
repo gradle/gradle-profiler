@@ -8,8 +8,8 @@ export const GraphActions: React.FC<{
     goBack: (tabId: string) => void
     goForward: (tabId: string) => void
     setRootNode: (tabId: string, nodeId: number) => void
-    showMergedSubgraph: (gs: GraphState, tabId: string, nodeId: number) => void
-    showIcicleGraph: (gs: GraphState, tabId: string, nodeId: number) => void
+    showMergedSubgraph: (graphId: string, tabId: string, nodeId: number) => void
+    showIcicleGraph: (graphId: string, tabId: string, nodeId: number) => void
     setMutable: (tabId: string, mutable: boolean) => void
 }> = ({
     tabId,
@@ -53,7 +53,7 @@ export const GraphActions: React.FC<{
                 onClick={() =>
                     tabId &&
                     graphState &&
-                    showMergedSubgraph(graphState, tabId, rootNode)
+                    showMergedSubgraph(graphState.graphId, tabId, rootNode)
                 }
                 disabled={!tabId || !graphState || rootNode === 0}
             >
@@ -63,7 +63,7 @@ export const GraphActions: React.FC<{
                 onClick={() =>
                     tabId &&
                     graphState &&
-                    showIcicleGraph(graphState, tabId, rootNode)
+                    showIcicleGraph(graphState.graphId, tabId, rootNode)
                 }
                 disabled={!tabId || !graphState}
             >

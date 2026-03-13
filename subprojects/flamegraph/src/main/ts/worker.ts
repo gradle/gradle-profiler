@@ -287,101 +287,102 @@ const getOrCreateChild = (
 }
 
 const parseLine = (
-    offset: number,
-    parent: number,
     line: string,
     graph: InternalGraph,
     nameCache: Map<string, string>,
 ): bigint => {
-    let current = offset
-    while (
-        current < line.length &&
-        !(
-            line[current] == ";" ||
-            (line[current] == " " && line.indexOf(" ", current + 1) == -1)
-        )
-    ) {
-        current = current + 1
+    const lastSpace = line.lastIndexOf(" ")
+    if (lastSpace === -1) throw new Error("Unexpected end of line: " + line)
+
+    let value = 0n
+    for (let i = lastSpace + 1; i < line.length; i++) {
+        value = value * 10n + BigInt(line.charCodeAt(i) - 48)
     }
 
-    let name = line.substring(offset, current)
-    const cachedName = nameCache.get(name)
-    if (cachedName != undefined) {
-        // To save memory, use the cached name instance
-        name = cachedName
-    } else {
-        nameCache.set(name, name)
-    }
+    let parent = 0 // root
+    let start = 0
 
-    const self = getOrCreateChild(parent, name, graph)
+    while (start < lastSpace) {
+        const semi = line.indexOf(";", start)
+        const end = semi === -1 || semi > lastSpace ? lastSpace : semi
 
-    if (line[current] == ";") {
-        const value = parseLine(current + 1, self, line, graph, nameCache)
+        let name = line.substring(start, end)
+        const cached = nameCache.get(name)
+        if (cached !== undefined) {
+            name = cached
+        } else {
+            nameCache.set(name, name)
+        }
+
+        const self = getOrCreateChild(parent, name, graph)
         graph.values[self]! += value
-        return value
-    } else if (line[current] == " ") {
-        const value = BigInt(line.substring(current + 1))
-        graph.values[self]! += value
-        return value
+        parent = self
+
+        if (semi === -1 || semi >= lastSpace) break
+        start = semi + 1
     }
 
-    throw new Error("Unexpected end of line: " + line)
+    return value
 }
 
 const processStream = async (
     stream: ReadableStream<Uint8Array>,
 ): Promise<WorkerResult> => {
-    const root = 0
-    const reader = stream.getReader()
-    const decoder = new TextDecoder()
-    const DECODE_CHUNK_SIZE = 1024 * 1024 * 4 // 4MB chunks
-
-    let graph: InternalGraph = {
+    const graph: InternalGraph = {
         children: [new Map()],
         nodeNames: ["root"],
         values: [0n],
     }
     const nameCache = new Map<string, string>()
-    let incompleteLine = ""
+    const decoder = new TextDecoder()
+    const reader = stream.getReader()
+
+    // Leftover bytes from the previous chunk whose line wasn't terminated yet.
+    // Allocated at most once per reader.read() call (only when a line spans a
+    // chunk boundary), so far less frequent than the old per-line allocations.
+    let pending: Uint8Array | null = null
 
     while (true) {
         const { done, value } = await reader.read()
+
+        let data: Uint8Array
+        if (pending !== null) {
+            if (value !== undefined && value.length > 0) {
+                const combined = new Uint8Array(pending.length + value.length)
+                combined.set(pending)
+                combined.set(value, pending.length)
+                data = combined
+            } else {
+                data = pending
+            }
+            pending = null
+        } else {
+            data = value ?? new Uint8Array(0)
+        }
+
+        let lineStart = 0
+        for (let i = 0; i < data.length; i++) {
+            if (data[i] === 0x0a) {
+                // Strip optional \r before \n
+                const lineEnd =
+                    i > lineStart && data[i - 1] === 0x0d ? i - 1 : i
+                if (lineEnd > lineStart) {
+                    const line = decoder.decode(data.subarray(lineStart, lineEnd))
+                    graph.values[0]! += parseLine(line, graph, nameCache)
+                }
+                lineStart = i + 1
+            }
+        }
+
         if (done) {
-            // Process any remaining text in the buffer
-            if (incompleteLine) {
-                graph.values[root]! += parseLine(
-                    0,
-                    root,
-                    incompleteLine,
-                    graph,
-                    nameCache,
-                )
+            if (lineStart < data.length) {
+                const line = decoder.decode(data.subarray(lineStart))
+                graph.values[0]! += parseLine(line, graph, nameCache)
             }
             break
         }
 
-        for (
-            let offset = 0;
-            offset < value.length;
-            offset += DECODE_CHUNK_SIZE
-        ) {
-            const sub = value.subarray(offset, offset + DECODE_CHUNK_SIZE)
-            const chunk = decoder.decode(sub, { stream: true })
-            const lines = (incompleteLine + chunk).split(/\r?\n/)
-            incompleteLine = lines.pop() || ""
-
-            for (const line of lines) {
-                if (line) {
-                    graph.values[root]! += parseLine(
-                        0,
-                        root,
-                        line,
-                        graph,
-                        nameCache,
-                    )
-                }
-            }
-        }
+        pending = lineStart < data.length ? data.slice(lineStart) : null
     }
 
     return { graph: finalize(graph) }
@@ -513,7 +514,7 @@ const deleteNodeFromGraph = (job: DeleteNodeJob): WorkerResult => {
     }
 
     const parentId = parents[nodeId]
-    if (parentId === -1) return { graph }
+    if (parentId == null || parentId === -1) return { graph }
 
     const deletedValue = graph.values[nodeId]!
 
@@ -521,7 +522,7 @@ const deleteNodeFromGraph = (job: DeleteNodeJob): WorkerResult => {
     const newValues = new BigInt64Array(graph.values)
     let curr = parentId
     while (curr !== -1) {
-        newValues[curr] -= deletedValue
+        newValues[curr] = newValues[curr]! - deletedValue
         curr = parents[curr]!
     }
 

@@ -91,7 +91,7 @@ const App = (): React.JSX.Element => {
 
     return (
         <Flamegraph
-            graph={graphState?.graph}
+            graphId={graphState?.graphId}
             rootNode={rootNode}
             setRootNode={(nodeId) =>
                 selectedTab && setRootNode(selectedTab, nodeId)
@@ -105,7 +105,7 @@ const App = (): React.JSX.Element => {
             onDeleteNode={(nodeId) =>
                 selectedTab &&
                 graphState &&
-                deleteNode(selectedTab, graphState, nodeId)
+                deleteNode(selectedTab, graphState.graphId, nodeId)
             }
             colorSettings={colorSettings}
         >

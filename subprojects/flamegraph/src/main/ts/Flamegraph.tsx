@@ -6,6 +6,7 @@ import React, {
     useRef,
     useState,
 } from "react"
+import { getGraph } from "./graphStore"
 import type { StackGraph } from "./worker"
 import { Stack } from "./containers"
 import type { ColorSettings } from "./color"
@@ -49,12 +50,12 @@ const useScrollbarWidth = (el: HTMLDivElement | null): number => {
 const useScrollAnchor = (
     scrollRef: React.RefObject<HTMLDivElement | null>,
     canvasHeight: number,
-    graph: StackGraph | null | undefined,
+    graphId: string | null | undefined,
     rootNode: number,
     savedScrollTopRef: React.MutableRefObject<number | null>,
 ) => {
     const lastScrollHeightRef = useRef(0)
-    const lastGraphRef = useRef(graph)
+    const lastGraphIdRef = useRef(graphId)
     const lastRootNodeRef = useRef(rootNode)
 
     useLayoutEffect(() => {
@@ -64,7 +65,7 @@ const useScrollAnchor = (
         const scrollHeight = container.scrollHeight
         const delta = scrollHeight - lastScrollHeightRef.current
         const graphOrRootChanged =
-            graph !== lastGraphRef.current ||
+            graphId !== lastGraphIdRef.current ||
             rootNode !== lastRootNodeRef.current
 
         if (graphOrRootChanged) {
@@ -77,9 +78,9 @@ const useScrollAnchor = (
         savedScrollTopRef.current = null
 
         lastScrollHeightRef.current = scrollHeight
-        lastGraphRef.current = graph
+        lastGraphIdRef.current = graphId
         lastRootNodeRef.current = rootNode
-    }, [canvasHeight, graph, rootNode])
+    }, [canvasHeight, graphId, rootNode])
 }
 
 /**
@@ -88,7 +89,7 @@ const useScrollAnchor = (
  * is owned by the parent.
  */
 export const Flamegraph: React.FC<{
-    graph: StackGraph | null | undefined
+    graphId: string | null | undefined
     rootNode: number
     setRootNode: (nodeId: number) => void
     viewLeft: number
@@ -99,7 +100,7 @@ export const Flamegraph: React.FC<{
     colorSettings: ColorSettings
     children?: React.ReactNode
 }> = ({
-    graph,
+    graphId,
     rootNode,
     setRootNode,
     viewLeft,
@@ -110,6 +111,7 @@ export const Flamegraph: React.FC<{
     colorSettings,
     children,
 }) => {
+    const graph = graphId != null ? (getGraph(graphId) ?? null) : null
     const scrollContainerRef = useRef<HTMLDivElement | null>(null)
     const nodeDetailsRef = useRef<HTMLSpanElement | null>(null)
     const [scrollEl, setScrollEl] = useState<HTMLDivElement | null>(null)
@@ -161,7 +163,7 @@ export const Flamegraph: React.FC<{
     useScrollAnchor(
         scrollContainerRef,
         canvasHeight,
-        graph,
+        graphId,
         rootNode,
         savedScrollTopRef,
     )
@@ -429,7 +431,7 @@ export const Flamegraph: React.FC<{
 
     useEffect(() => {
         clearHover()
-    }, [graph])
+    }, [graphId])
 
     const handleMouseMove: React.MouseEventHandler<HTMLCanvasElement> = (e) => {
         const hit = hitTest(e.clientX, e.clientY)

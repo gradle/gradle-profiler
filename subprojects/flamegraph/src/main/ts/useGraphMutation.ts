@@ -1,5 +1,6 @@
 import { useCallback } from "react"
 import type { GraphState, RunJob } from "./useGraphTabs"
+import { getGraph, removeGraph, storeGraph } from "./graphStore"
 
 export function useGraphMutation(
     updateGraphState: (
@@ -16,28 +17,32 @@ export function useGraphMutation(
     )
 
     const deleteNode = useCallback(
-        async (tabId: string, graphState: GraphState, nodeId: number) => {
+        async (tabId: string, graphId: string, nodeId: number) => {
+            const graph = getGraph(graphId)
+            if (!graph) return
             // graph.values is a BigInt64Array backed by a shared ArrayBuffer.
             // Transferring an ArrayBuffer to a Worker via postMessage detaches
             // it, making the original inaccessible. We clone the buffer first
             // so the worker gets its own copy to transfer while the UI keeps
             // the live buffer untouched.
-            const valuesBuffer = graphState.graph.values.buffer.slice(0)
+            const valuesBuffer = graph.values.buffer.slice(0)
             const result = await runJob(
                 "deleteNode",
                 {
                     job: {
                         type: "deleteNode",
                         nodeId,
-                        graph: graphState.graph,
+                        graph,
                     },
                 },
                 [valuesBuffer],
             )
             if ("result" in result) {
+                const newGraphId = storeGraph(result.result.graph)
+                removeGraph(graphId)
                 updateGraphState(tabId, (gs) => ({
                     ...gs,
-                    graph: result.result.graph,
+                    graphId: newGraphId,
                 }))
             }
         },

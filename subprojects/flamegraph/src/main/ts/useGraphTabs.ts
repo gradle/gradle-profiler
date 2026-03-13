@@ -1,8 +1,9 @@
 import { useCallback, useState } from "react"
-import type { Job, StackGraph, WorkerParams, WorkerResponse } from "./worker"
+import type { Job, WorkerParams, WorkerResponse } from "./worker"
 import DataWorker from "./worker?worker&inline"
 import useWorkerPool from "./useWorkerPool.ts"
 import { COORDINATE_WIDTH } from "./FlamegraphNode"
+import { getGraph, removeGraph, storeGraph } from "./graphStore"
 
 export interface HistoryEntry {
     rootNode: number
@@ -11,7 +12,7 @@ export interface HistoryEntry {
 }
 
 export interface GraphState {
-    graph: StackGraph
+    graphId: string
     history: HistoryEntry[]
     historyIndex: number
     mutable?: boolean
@@ -68,6 +69,10 @@ export function useGraphTabs() {
 
     const deleteTab = useCallback((id: string) => {
         setAllTabData((oldData) => {
+            const tabState = oldData.get(id)
+            if (tabState?.graph) {
+                removeGraph(tabState.graph.graphId)
+            }
             const updated = new Map(oldData)
             updated.delete(id)
             return updated
@@ -86,7 +91,7 @@ export function useGraphTabs() {
                 } else if ("result" in result) {
                     setTabData(id, {
                         graph: {
-                            graph: result.result.graph,
+                            graphId: storeGraph(result.result.graph),
                             history: [
                                 {
                                     rootNode: 0,
@@ -111,12 +116,14 @@ export function useGraphTabs() {
     )
 
     const showMergedSubgraph = useCallback(
-        (gs: GraphState, tabId: string, nodeId: number) => {
-            const nodeName = gs.graph.nodeNames[nodeId]!
+        (graphId: string, tabId: string, nodeId: number) => {
+            const graph = getGraph(graphId)
+            if (!graph) return
+            const nodeName = graph.nodeNames[nodeId]!
             const newTabId = `${tabId}:merge:${nodeName}`
             submitJob(
                 newTabId,
-                { type: "mergeChildren", nodeName, graph: gs.graph },
+                { type: "mergeChildren", nodeName, graph },
                 [],
             )
             setSelectedTab(newTabId)
@@ -125,12 +132,14 @@ export function useGraphTabs() {
     )
 
     const showIcicleGraph = useCallback(
-        (gs: GraphState, tabId: string, nodeId: number) => {
-            const nodeName = gs.graph.nodeNames[nodeId]!
+        (graphId: string, tabId: string, nodeId: number) => {
+            const graph = getGraph(graphId)
+            if (!graph) return
+            const nodeName = graph.nodeNames[nodeId]!
             const newTabId = `${tabId}:icicle:${nodeName}`
             submitJob(
                 newTabId,
-                { type: "icicleGraph", nodeId, graph: gs.graph },
+                { type: "icicleGraph", nodeId, graph },
                 [],
             )
             setSelectedTab(newTabId)

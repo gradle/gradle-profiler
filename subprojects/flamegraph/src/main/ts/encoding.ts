@@ -1,4 +1,4 @@
-import { Gunzip, gzipSync } from "fflate"
+import { gzipSync } from "fflate"
 
 /**
  * Converts a Uint8Array into a Base64 encoded string.
@@ -14,20 +14,6 @@ const uint8ArrayToBase64 = (bytes: Uint8Array): string => {
 }
 
 /**
- * Decodes a Base64 encoded string into a Uint8Array.
- * This is the reverse of `uint8ArrayToBase64`.
- */
-const base64ToUint8Array = (base64: string): Uint8Array => {
-    const binaryString = atob(base64)
-    const len = binaryString.length
-    const bytes = new Uint8Array(len)
-    for (let i = 0; i < len; i++) {
-        bytes[i] = binaryString.charCodeAt(i)
-    }
-    return bytes
-}
-
-/**
  * GZIP Compresses data, then encodes it into a Base64 string.
  */
 export const compressAndEncodeData = (dataToCompress: Uint8Array): string => {
@@ -37,24 +23,29 @@ export const compressAndEncodeData = (dataToCompress: Uint8Array): string => {
 
 /**
  * Decodes a Base64 encoded string, then GZIP decompresses it.
+ *
+ * Uses the native DecompressionStream API so decompression is truly streaming
+ * — the browser never allocates a buffer for the full decompressed output,
+ * allowing files that expand to multiple GB without hitting ArrayBuffer limits.
  */
 export const decodeAndDecompressData = (
     base64CompressedStr: string,
 ): ReadableStream<Uint8Array> => {
-    const gunzip = new Gunzip()
-    return new ReadableStream({
-        async start(controller) {
-            gunzip.ondata = (chunk, final) => {
-                controller.enqueue(chunk)
-                if (final) {
-                    controller.close()
-                }
-            }
-
-            const compressedData = base64ToUint8Array(base64CompressedStr)
-            gunzip.push(compressedData, true)
+    const binary = atob(base64CompressedStr)
+    const compressedBytes = new Uint8Array(binary.length)
+    for (let i = 0; i < binary.length; i++) {
+        compressedBytes[i] = binary.charCodeAt(i)
+    }
+    return new ReadableStream<Uint8Array>({
+        start(controller) {
+            controller.enqueue(compressedBytes)
+            controller.close()
         },
-    })
+    // The DOM type for DecompressionStream.writable is WritableStream<BufferSource>
+    // (it accepts any ArrayBuffer/ArrayBufferView), but pipeThrough requires a
+    // narrower WritableStream<Uint8Array>. We always feed Uint8Array chunks, so
+    // this cast is safe — it works around a TypeScript lib type imprecision.
+    }).pipeThrough(new DecompressionStream("gzip") as unknown as TransformStream<Uint8Array, Uint8Array>)
 }
 
 /**
