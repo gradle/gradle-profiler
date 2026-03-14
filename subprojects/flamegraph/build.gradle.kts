@@ -10,7 +10,7 @@ plugins {
 
 node {
     download = true
-    version = "24.1.0"
+    version = "24.14.0"
     npmInstallCommand = "ci"
     workDir = layout.buildDirectory.dir("node")
 }
@@ -59,12 +59,17 @@ tasks.register<NpxTask>("serve") {
 }
 
 val buildVite = tasks.register<NpxTask>("buildVite") {
+    dependsOn(tasks.npmInstall)
     command.set("vite")
     args.set(listOf("build"))
 }
 
 tasks.build {
     dependsOn(buildVite)
+}
+
+tasks.clean {
+    delete(layout.projectDirectory.dir("node_modules"))
 }
 
 // Embed the vite-built index.html into the jar as a classpath resource so that

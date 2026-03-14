@@ -9,10 +9,10 @@
   "devDependencies": {
     "@types/react": "^19.2.2",
     "@types/react-dom": "^19.2.1",
-    "@vitejs/plugin-react": "^4.7.0",
+    "@vitejs/plugin-react": "^5.1.4",
     "prettier": "^3.6.2",
     "typescript": "^5.9.3",
-    "vite": "^6.3.6",
+    "vite": "^7.3.1",
     "vite-plugin-singlefile": "^2.3.0"
   },
   "dependencies": {
