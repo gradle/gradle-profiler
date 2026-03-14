@@ -85,6 +85,7 @@ export function drawFlamegraph(
     colorSettings: ColorSettings,
     hoveredName: string | null,
     hoveredCollapseNodeId: number | null,
+    searchQuery: string | undefined,
 ): RenderedNode[] {
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0)
     ctx.clearRect(0, 0, canvasWidth, canvasHeight)
@@ -92,6 +93,7 @@ export function drawFlamegraph(
     const rootValue = graph.values[rootNode]
     if (!rootValue || rootValue === 0n) return []
 
+    const searchQueryLower = searchQuery?.toLowerCase()
     const zoomWidth = viewRight - viewLeft
     const renderedNodes: RenderedNode[] = []
 
@@ -152,12 +154,46 @@ export function drawFlamegraph(
 
         const showCollapseButton = isCollapsible && canvasW >= NODE_HEIGHT * 2
 
+        // The body area excludes the collapse button so overlays never dim it.
+        const bodyX = showCollapseButton ? canvasX + NODE_HEIGHT : canvasX
+        const bodyW = showCollapseButton ? canvasW - NODE_HEIGHT : canvasW
+
+        const nodeMatchesSearch = !searchQueryLower || name.toLowerCase().includes(searchQueryLower)
+        // True when the chain contains a search match — the +/− button stays undimmed
+        // regardless of whether the chain is currently expanded or collapsed.
+        const chainMatchesSearch =
+            !!searchQueryLower &&
+            sameWidthChain != null &&
+            sameWidthChain.some((id) =>
+                graph.nodeNames[id]?.toLowerCase().includes(searchQueryLower),
+            )
+        // Dim the node body if nothing relevant (node or hidden chain) matches.
+        const isDimmed = !!searchQueryLower && !nodeMatchesSearch && !chainMatchesSearch
+        // Dim the button when there are no hidden matches to reveal.
+        const btnDimmed =
+            showCollapseButton &&
+            !!searchQueryLower &&
+            !chainMatchesSearch
+
+        if (isDimmed) {
+            ctx.fillStyle = "rgba(0,0,0,0.5)"
+            if (btnDimmed) {
+                // Entire row dimmed: one rect avoids a sub-pixel gap at the
+                // button/body boundary.
+                ctx.fillRect(canvasX, canvasY, canvasW, NODE_HEIGHT)
+            } else {
+                ctx.fillRect(bodyX, canvasY, bodyW, NODE_HEIGHT)
+            }
+        } else if (btnDimmed) {
+            // Node matches but the button still needs dimming.
+            ctx.fillStyle = "rgba(0,0,0,0.5)"
+            ctx.fillRect(canvasX, canvasY, NODE_HEIGHT, NODE_HEIGHT)
+        }
+
         // Hover overlay for the node body, excluding the button area.
         if (name === hoveredName) {
             ctx.fillStyle = "rgba(0,0,0,0.25)"
-            const hoverX = showCollapseButton ? canvasX + NODE_HEIGHT : canvasX
-            const hoverW = showCollapseButton ? canvasW - NODE_HEIGHT : canvasW
-            ctx.fillRect(hoverX, canvasY, hoverW, NODE_HEIGHT)
+            ctx.fillRect(bodyX, canvasY, bodyW, NODE_HEIGHT)
         }
 
         // 1px border at the bottom of each row.

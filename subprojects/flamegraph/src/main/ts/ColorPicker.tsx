@@ -1,31 +1,7 @@
 import React from "react"
 import type { ColorSettings } from "./color"
 import { Row, Stack } from "./containers"
-
-const Slider: React.FC<{
-    min: number
-    max: number
-    value: number
-    onChange: (newValue: number) => void
-}> = ({ min, max, value, onChange }) => {
-    const resolution = 10000
-    const percent = (value - min) / (max - min)
-    const scaledValue = percent * resolution
-
-    return (
-        <input
-            style={{ flexGrow: 1 }}
-            type="range"
-            min={0}
-            max={resolution}
-            value={scaledValue}
-            onChange={(e) => {
-                const v = parseInt(e.target.value, 10)
-                onChange(min + (v / resolution) * (max - min))
-            }}
-        />
-    )
-}
+import { SingleSlider } from "./Sliders"
 
 export const ColorPicker: React.FC<{
     colorSettings: ColorSettings
@@ -36,10 +12,10 @@ export const ColorPicker: React.FC<{
         onColorChange({ ...colorSettings, ...patch })
 
     return (
-        <Stack style={{ width: 450 }}>
+        <Stack wide>
             <Row>
                 Center ({Math.round(center)})
-                <Slider
+                <SingleSlider
                     min={0}
                     max={360}
                     value={center}
@@ -48,7 +24,7 @@ export const ColorPicker: React.FC<{
             </Row>
             <Row>
                 Width ({Math.round(width)})
-                <Slider
+                <SingleSlider
                     min={0}
                     max={360}
                     value={width}
@@ -57,7 +33,7 @@ export const ColorPicker: React.FC<{
             </Row>
             <Row>
                 Decay ({amount.toFixed(2)})
-                <Slider
+                <SingleSlider
                     min={1}
                     max={3}
                     value={amount}
@@ -66,7 +42,7 @@ export const ColorPicker: React.FC<{
             </Row>
             <Row>
                 Spread ({Math.round(distribution)})
-                <Slider
+                <SingleSlider
                     min={1}
                     max={5000}
                     value={distribution}

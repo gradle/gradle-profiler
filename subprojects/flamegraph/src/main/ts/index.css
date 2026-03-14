@@ -64,3 +64,17 @@ button[aria-pressed="true"]:hover:not(:disabled) {
 * {
     overflow-wrap: break-word;
 }
+
+input[type="text"] {
+    background: rgba(0, 0, 0, 0.45);
+    color: white;
+    border: 2px solid rgba(134, 134, 134, 0.59);
+    padding: 4px 7px;
+    min-width: 0;
+    width: 100%;
+}
+
+input[type="text"]:focus {
+    outline: none;
+    border-color: rgba(220, 220, 220, 0.75);
+}

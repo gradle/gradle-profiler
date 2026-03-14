@@ -30,7 +30,7 @@ export const GraphActions: React.FC<{
     const isMutable = graphState?.mutable ?? false
 
     return (
-        <Row style={{ gap: 5 }}>
+        <Row style={{ gap: 5, justifyContent: "flex-end" }}>
             <button
                 onClick={() => tabId && goBack(tabId)}
                 disabled={!tabId || !canGoBack}

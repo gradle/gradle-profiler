@@ -95,10 +95,10 @@ const useScrollAnchor = (
         const graphChanged = graphId !== lastGraphIdRef.current
         const rootChanged = rootNode !== lastRootNodeRef.current
 
-        if (graphChanged) {
+        if (graphChanged || rootChanged) {
+            // Restore saved position if available (tab switch, history navigation),
+            // otherwise scroll to the bottom to reveal the new root (drill-down).
             container.scrollTop = initialScrollTop ?? container.scrollHeight
-        } else if (rootChanged) {
-            container.scrollTop = container.scrollHeight
         } else if (delta !== 0) {
             const baseScrollTop =
                 savedScrollTopRef.current ?? container.scrollTop
@@ -131,6 +131,8 @@ export const Flamegraph: React.FC<{
     initialScrollTop?: number | null
     /** Called (debounced) when the user scrolls, with the new scrollTop. */
     onScrollChange?: (scrollTop: number) => void
+    /** Highlights nodes whose raw name contains this string. */
+    searchQuery?: string
     children?: React.ReactNode
 }> = ({
     graphId,
@@ -144,6 +146,7 @@ export const Flamegraph: React.FC<{
     colorSettings,
     initialScrollTop,
     onScrollChange,
+    searchQuery,
     children,
 }) => {
     const graph = graphId != null ? (getGraph(graphId) ?? null) : null
@@ -232,6 +235,7 @@ export const Flamegraph: React.FC<{
         colorSettings: ColorSettings
         hoveredName: string | null
         hoveredCollapseNodeId: number | null
+        searchQuery: string | undefined
     }>({
         graph,
         rootNode,
@@ -241,6 +245,7 @@ export const Flamegraph: React.FC<{
         colorSettings,
         hoveredName: null,
         hoveredCollapseNodeId: null,
+        searchQuery,
     })
 
     const hitListRef = useRef<RenderedNode[]>([])
@@ -270,6 +275,7 @@ export const Flamegraph: React.FC<{
             p.colorSettings,
             p.hoveredName,
             p.hoveredCollapseNodeId,
+            p.searchQuery,
         )
     }, [])
 
@@ -329,6 +335,7 @@ export const Flamegraph: React.FC<{
         drawParamsRef.current.viewRight = viewRef.current.right
         drawParamsRef.current.expandedNodes = expandedNodes
         drawParamsRef.current.colorSettings = colorSettings
+        drawParamsRef.current.searchQuery = searchQuery
         redraw()
     }, [
         graph,
@@ -337,6 +344,7 @@ export const Flamegraph: React.FC<{
         viewRight,
         expandedNodes,
         colorSettings,
+        searchQuery,
         redraw,
     ])
 
@@ -592,11 +600,14 @@ export const Flamegraph: React.FC<{
                 style={{
                     justifyContent: "space-between",
                     position: "absolute",
+                    top: 0,
+                    left: 0,
                     width: `calc(100% - ${scrollbarWidth}px)`,
                     pointerEvents: "none",
+                    overflow: "hidden",
                 }}
             >
-                <Stack wide style={{ flexGrow: 1 }}>
+                <Stack wide style={{ flex: 1, minHeight: 0 }}>
                     {children}
                 </Stack>
                 <NodeDetails ref={nodeDetailsRef} />
