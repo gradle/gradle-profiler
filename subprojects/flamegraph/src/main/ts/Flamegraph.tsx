@@ -1,4 +1,5 @@
 import React, {
+    forwardRef,
     useCallback,
     useEffect,
     useLayoutEffect,
@@ -14,12 +15,34 @@ import {
     drawFlamegraph,
     getSameWidthChain,
     nodeDetails,
-    NodeDetails,
     type RenderedNode,
     COLLAPSE_THRESHOLD,
     COORDINATE_WIDTH,
     NODE_HEIGHT,
 } from "./FlamegraphNode"
+
+const NodeDetails = forwardRef<HTMLSpanElement, {}>((_, ref) => (
+    <span
+        ref={ref}
+        style={{
+            flexShrink: 0,
+            maxWidth: "100%",
+            width: "fit-content",
+            background: "rgba(0, 0, 0, 0.8)",
+            padding: "0 8px",
+            pointerEvents: "none",
+            zIndex: 2,
+            minHeight: NODE_HEIGHT,
+            lineHeight: NODE_HEIGHT + "px",
+            display: "flex",
+            alignItems: "center",
+            wordBreak: "break-all",
+            overflowWrap: "anywhere",
+        }}
+    >
+        Hover for details, click to zoom
+    </span>
+))
 
 /**
  * Returns the pixel width of the vertical scrollbar inside the given scroll
@@ -40,9 +63,13 @@ const useScrollbarWidth = (el: HTMLDivElement | null): number => {
 }
 
 /**
- * Keeps the scroll container anchored to the bottom when the graph or root
- * node changes, and adjusts scroll position when content height changes due
- * to expand/collapse.
+ * Manages scroll position for the flamegraph container:
+ * - When the graph changes (tab switch): restores the saved scroll position,
+ *   or goes to the top if none is saved.
+ * - When the root node changes within the same graph (drill-down): scrolls to
+ *   the bottom so the new root is visible at the top of the viewport.
+ * - When content height changes (expand/collapse): adjusts scroll
+ *   proportionally to keep the same visual anchor.
  *
  * savedScrollTopRef should be set to the current scrollTop immediately before
  * triggering a height change (e.g. in toggleExpand).
@@ -53,6 +80,7 @@ const useScrollAnchor = (
     graphId: string | null | undefined,
     rootNode: number,
     savedScrollTopRef: React.MutableRefObject<number | null>,
+    initialScrollTop: number | null | undefined,
 ) => {
     const lastScrollHeightRef = useRef(0)
     const lastGraphIdRef = useRef(graphId)
@@ -64,11 +92,12 @@ const useScrollAnchor = (
 
         const scrollHeight = container.scrollHeight
         const delta = scrollHeight - lastScrollHeightRef.current
-        const graphOrRootChanged =
-            graphId !== lastGraphIdRef.current ||
-            rootNode !== lastRootNodeRef.current
+        const graphChanged = graphId !== lastGraphIdRef.current
+        const rootChanged = rootNode !== lastRootNodeRef.current
 
-        if (graphOrRootChanged) {
+        if (graphChanged) {
+            container.scrollTop = initialScrollTop ?? container.scrollHeight
+        } else if (rootChanged) {
             container.scrollTop = container.scrollHeight
         } else if (delta !== 0) {
             const baseScrollTop =
@@ -98,6 +127,10 @@ export const Flamegraph: React.FC<{
     isMutable: boolean
     onDeleteNode: (nodeId: number) => void
     colorSettings: ColorSettings
+    /** Scroll position to restore when this graph is displayed. */
+    initialScrollTop?: number | null
+    /** Called (debounced) when the user scrolls, with the new scrollTop. */
+    onScrollChange?: (scrollTop: number) => void
     children?: React.ReactNode
 }> = ({
     graphId,
@@ -109,6 +142,8 @@ export const Flamegraph: React.FC<{
     isMutable,
     onDeleteNode,
     colorSettings,
+    initialScrollTop,
+    onScrollChange,
     children,
 }) => {
     const graph = graphId != null ? (getGraph(graphId) ?? null) : null
@@ -166,7 +201,23 @@ export const Flamegraph: React.FC<{
         graphId,
         rootNode,
         savedScrollTopRef,
+        initialScrollTop,
     )
+
+    useEffect(() => {
+        const el = scrollEl
+        if (!el || !onScrollChange) return
+        let timer: number
+        const handleScroll = () => {
+            clearTimeout(timer)
+            timer = window.setTimeout(() => onScrollChange(el.scrollTop), 100)
+        }
+        el.addEventListener("scroll", handleScroll, { passive: true })
+        return () => {
+            el.removeEventListener("scroll", handleScroll)
+            clearTimeout(timer)
+        }
+    }, [scrollEl, onScrollChange])
 
     // --- Ref-based draw state ---
     //
@@ -180,6 +231,7 @@ export const Flamegraph: React.FC<{
         expandedNodes: Set<number>
         colorSettings: ColorSettings
         hoveredName: string | null
+        hoveredCollapseNodeId: number | null
     }>({
         graph,
         rootNode,
@@ -188,6 +240,7 @@ export const Flamegraph: React.FC<{
         expandedNodes,
         colorSettings,
         hoveredName: null,
+        hoveredCollapseNodeId: null,
     })
 
     const hitListRef = useRef<RenderedNode[]>([])
@@ -216,6 +269,7 @@ export const Flamegraph: React.FC<{
             p.expandedNodes,
             p.colorSettings,
             p.hoveredName,
+            p.hoveredCollapseNodeId,
         )
     }, [])
 
@@ -419,10 +473,12 @@ export const Flamegraph: React.FC<{
     )
 
     const clearHover = useCallback(() => {
-        if (drawParamsRef.current.hoveredName !== null) {
-            drawParamsRef.current.hoveredName = null
-            redraw()
-        }
+        const changed =
+            drawParamsRef.current.hoveredName !== null ||
+            drawParamsRef.current.hoveredCollapseNodeId !== null
+        drawParamsRef.current.hoveredName = null
+        drawParamsRef.current.hoveredCollapseNodeId = null
+        if (changed) redraw()
         if (nodeDetailsRef.current) {
             nodeDetailsRef.current.textContent =
                 "Hover for details, click to zoom"
@@ -436,6 +492,8 @@ export const Flamegraph: React.FC<{
     const handleMouseMove: React.MouseEventHandler<HTMLCanvasElement> = (e) => {
         const hit = hitTest(e.clientX, e.clientY)
         const newName = hit && !hit.isCollapseToggle ? hit.name : null
+        const newCollapseNodeId =
+            hit?.isCollapseToggle ? hit.nodeId : null
 
         const canvas = canvasRef.current
         if (canvas) {
@@ -451,8 +509,12 @@ export const Flamegraph: React.FC<{
                     : "Hover for details, click to zoom"
         }
 
-        if (newName !== drawParamsRef.current.hoveredName) {
+        const nameChanged = newName !== drawParamsRef.current.hoveredName
+        const collapseChanged =
+            newCollapseNodeId !== drawParamsRef.current.hoveredCollapseNodeId
+        if (nameChanged || collapseChanged) {
             drawParamsRef.current.hoveredName = newName
+            drawParamsRef.current.hoveredCollapseNodeId = newCollapseNodeId
             redraw()
         }
     }

@@ -1,4 +1,3 @@
-import { forwardRef } from "react"
 import type { StackGraph } from "./worker"
 import { colorFor, type ColorSettings } from "./color"
 
@@ -19,12 +18,8 @@ export const COORDINATE_WIDTH = 100_000
 /** The space between the left edge of a node and its text label, in pixels. */
 const NODE_TEXT_PADDING_LEFT = 5
 
-/** The size of the collapse/expand button, in pixels. */
-const COLLAPSE_BUTTON_SIZE = 12
-
 const FONT_SIZE = 12
 const FONT = `${FONT_SIZE}px sans-serif`
-const COLLAPSE_FONT = `bold ${COLLAPSE_BUTTON_SIZE}px sans-serif`
 
 export const getSameWidthChain = (
     nodeId: number,
@@ -55,31 +50,6 @@ export const nodeDetails = (nodeId: number, graph: StackGraph): string => {
     }
     return `${name} ${BigInt.asIntN(64, value).toLocaleString()} samples`
 }
-
-export const NodeDetails = forwardRef<HTMLSpanElement, {}>((_, ref) => {
-    return (
-        <span
-            ref={ref}
-            style={{
-                flexShrink: 0,
-                maxWidth: "100%",
-                width: "fit-content",
-                background: "rgba(0, 0, 0, 0.8)",
-                padding: "0 8px",
-                pointerEvents: "none",
-                zIndex: 2,
-                minHeight: NODE_HEIGHT,
-                lineHeight: NODE_HEIGHT + "px",
-                display: "flex",
-                alignItems: "center",
-                wordBreak: "break-all",
-                overflowWrap: "anywhere",
-            }}
-        >
-            Hover for details, click to zoom
-        </span>
-    )
-})
 
 /** A rendered node rectangle, used for mouse hit testing. */
 export interface RenderedNode {
@@ -114,6 +84,7 @@ export function drawFlamegraph(
     expandedNodes: Set<number>,
     colorSettings: ColorSettings,
     hoveredName: string | null,
+    hoveredCollapseNodeId: number | null,
 ): RenderedNode[] {
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0)
     ctx.clearRect(0, 0, canvasWidth, canvasHeight)
@@ -167,9 +138,26 @@ export function drawFlamegraph(
         ctx.fillStyle = colorFor(name, colorSettings)
         ctx.fillRect(canvasX, canvasY, canvasW, NODE_HEIGHT)
 
+        // Collapse/expand: only compute the chain when there is a chance the
+        // node is collapsible (value must differ from parent).
+        let sameWidthChain: number[] | undefined
+        let isCollapsible = false
+        let isCollapsed = false
+
+        if (value !== parentValue) {
+            sameWidthChain = getSameWidthChain(nodeId, graph)
+            isCollapsible = sameWidthChain.length >= COLLAPSE_THRESHOLD
+            isCollapsed = isCollapsible && !expandedNodes.has(nodeId)
+        }
+
+        const showCollapseButton = isCollapsible && canvasW >= NODE_HEIGHT * 2
+
+        // Hover overlay for the node body, excluding the button area.
         if (name === hoveredName) {
             ctx.fillStyle = "rgba(0,0,0,0.25)"
-            ctx.fillRect(canvasX, canvasY, canvasW, NODE_HEIGHT)
+            const hoverX = showCollapseButton ? canvasX + NODE_HEIGHT : canvasX
+            const hoverW = showCollapseButton ? canvasW - NODE_HEIGHT : canvasW
+            ctx.fillRect(hoverX, canvasY, hoverW, NODE_HEIGHT)
         }
 
         // 1px border at the bottom of each row.
@@ -186,52 +174,30 @@ export function drawFlamegraph(
             isCollapseToggle: false,
         })
 
-        // Collapse/expand: only compute the chain when there is a chance the
-        // node is collapsible (value must differ from parent).
-        let sameWidthChain: number[] | undefined
-        let isCollapsible = false
-        let isCollapsed = false
-
-        if (value !== parentValue) {
-            sameWidthChain = getSameWidthChain(nodeId, graph)
-            isCollapsible = sameWidthChain.length >= COLLAPSE_THRESHOLD
-            isCollapsed = isCollapsible && !expandedNodes.has(nodeId)
-        }
-
-        const showCollapseButton =
-            isCollapsible && canvasW >= COLLAPSE_BUTTON_SIZE * 2
-
         if (showCollapseButton) {
-            const btnX = canvasX + COLLAPSE_BUTTON_SIZE / 2
-            const btnY = canvasY + (NODE_HEIGHT - COLLAPSE_BUTTON_SIZE) / 2
+            const btnX = canvasX
+            const btnY = canvasY
 
-            ctx.fillStyle = "rgba(255,255,255,0.7)"
-            ctx.fillRect(btnX, btnY, COLLAPSE_BUTTON_SIZE, COLLAPSE_BUTTON_SIZE)
-            ctx.strokeStyle = "rgba(0,0,0,0.6)"
-            ctx.lineWidth = 1
-            ctx.strokeRect(
-                btnX,
-                btnY,
-                COLLAPSE_BUTTON_SIZE,
-                COLLAPSE_BUTTON_SIZE,
-            )
-            ctx.fillStyle = "rgba(0,0,0,0.8)"
-            ctx.font = COLLAPSE_FONT
+            if (hoveredCollapseNodeId === nodeId) {
+                ctx.fillStyle = "rgba(0,0,0,0.25)"
+                ctx.fillRect(btnX, btnY, NODE_HEIGHT, NODE_HEIGHT)
+            }
+
+            ctx.fillStyle = "black"
             ctx.textAlign = "center"
             ctx.fillText(
-                isCollapsed ? "+" : "-",
-                btnX + COLLAPSE_BUTTON_SIZE / 2,
-                btnY + COLLAPSE_BUTTON_SIZE / 2,
+                isCollapsed ? "+" : "\u2212",
+                btnX + NODE_HEIGHT / 2,
+                btnY + NODE_HEIGHT / 2,
             )
-            ctx.font = FONT
             ctx.textAlign = "left"
 
             renderedNodes.push({
                 nodeId,
                 x: btnX,
                 y: btnY,
-                width: COLLAPSE_BUTTON_SIZE,
-                height: COLLAPSE_BUTTON_SIZE,
+                width: NODE_HEIGHT,
+                height: NODE_HEIGHT,
                 name,
                 isCollapseToggle: true,
             })
@@ -240,7 +206,7 @@ export function drawFlamegraph(
         // Text label — only render when the available pixel width can fit at
         // least a couple of characters.
         const textOffsetX = showCollapseButton
-            ? COLLAPSE_BUTTON_SIZE * 2
+            ? NODE_HEIGHT
             : NODE_TEXT_PADDING_LEFT
         const availableTextWidth = canvasW - textOffsetX
 

@@ -70,9 +70,7 @@ export const GraphActions: React.FC<{
                 Icicle
             </button>
             <button
-                onClick={() =>
-                    tabId && setMutable(tabId, !isMutable)
-                }
+                onClick={() => tabId && setMutable(tabId, !isMutable)}
                 disabled={!tabId}
             >
                 {isMutable ? "Freeze" : "Mutate"}

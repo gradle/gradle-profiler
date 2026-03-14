@@ -9,6 +9,7 @@ export interface HistoryEntry {
     rootNode: number
     viewLeft: number
     viewRight: number
+    scrollTop?: number
 }
 
 export interface GraphState {

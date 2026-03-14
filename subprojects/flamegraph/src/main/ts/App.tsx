@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react"
+import React, { useCallback, useEffect, useState } from "react"
 import { Flamegraph } from "./Flamegraph"
 import { COORDINATE_WIDTH } from "./FlamegraphNode"
 import { RangeSlider } from "./RangeSlider"
@@ -10,7 +10,6 @@ import { useGraphMutation } from "./useGraphMutation"
 import { GraphPicker } from "./GraphPicker"
 import { ColorPicker } from "./ColorPicker"
 import { GraphActions } from "./GraphActions"
-import { ENCODED_DEMO_STACKS } from "./demo.ts"
 
 type OpenPanel = "graphs" | "colors" | null
 
@@ -51,12 +50,6 @@ const App = (): React.JSX.Element => {
                 }
             })
             namesEl.remove()
-        } else {
-            submitJob(
-                "demo",
-                { type: "parseEncodedData", encodedData: ENCODED_DEMO_STACKS },
-                [],
-            )
         }
     }, [submitJob])
 
@@ -97,9 +90,25 @@ const App = (): React.JSX.Element => {
         distribution: 1199,
     })
 
-    const [openPanel, setOpenPanel] = useState<OpenPanel>(null)
+    const [openPanel, setOpenPanel] = useState<OpenPanel>("graphs")
     const togglePanel = (panel: Exclude<OpenPanel, null>) =>
         setOpenPanel((current) => (current === panel ? null : panel))
+
+    const handleScrollChange = useCallback(
+        (scrollTop: number) => {
+            if (selectedTab) {
+                updateGraphState(selectedTab, (prev) => {
+                    const newHistory = [...prev.history]
+                    newHistory[prev.historyIndex] = {
+                        ...newHistory[prev.historyIndex]!,
+                        scrollTop,
+                    }
+                    return { ...prev, history: newHistory }
+                })
+            }
+        },
+        [selectedTab, updateGraphState],
+    )
 
     return (
         <Flamegraph
@@ -120,6 +129,8 @@ const App = (): React.JSX.Element => {
                 deleteNode(selectedTab, graphState.graphId, nodeId)
             }
             colorSettings={colorSettings}
+            initialScrollTop={graphState?.history[graphState.historyIndex]?.scrollTop}
+            onScrollChange={handleScrollChange}
         >
             <Row
                 style={{
@@ -144,7 +155,7 @@ const App = (): React.JSX.Element => {
                 <div>
                     <Stack
                         style={{
-                            maxWidth: 500,
+                            maxWidth: "max(500px, 50vw)",
                             background: "rgba(0, 0, 0, 0.6)",
                             padding: 10,
                             paddingTop: 0,
@@ -227,6 +238,11 @@ const App = (): React.JSX.Element => {
                     flexGrow: 1,
                 }}
             >
+                {!selectedTab && (
+                    <div style={{ opacity: 0.5 }}>
+                        Load a -stacks.txt file to begin
+                    </div>
+                )}
                 {selectedTabData?.progress && (
                     <div>{selectedTabData.progress}</div>
                 )}

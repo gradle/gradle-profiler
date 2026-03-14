@@ -16,8 +16,9 @@ export const GraphPicker: React.FC<{
                 {tabIds.map((id) => (
                     <button
                         key={id}
-                        style={{ textAlign: "left" }}
+                        style={{ textAlign: "left", overflow: "hidden", textOverflow: "ellipsis" }}
                         aria-pressed={selectedTab === id}
+                        title={id}
                         onMouseDown={(e) => {
                             if (e.button === 1) {
                                 e.preventDefault()
@@ -37,6 +38,7 @@ export const GraphPicker: React.FC<{
                 type="file"
                 style={{ display: "none" }}
                 ref={fileInputRef}
+                accept=".txt"
                 onChange={(e) => {
                     const file = e.target.files?.[0]
                     if (file) {

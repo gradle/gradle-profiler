@@ -39,6 +39,8 @@ button {
     color: white;
     border: 2px solid rgba(134, 134, 134, 0.59);
     padding: 4px 7px;
+    white-space: nowrap;
+    min-width: 0;
 }
 
 button:hover:not(:disabled) {
