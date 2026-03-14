@@ -5,8 +5,6 @@ import org.gradle.profiler.bazel.BazelScenarioInvoker;
 import org.gradle.profiler.buck.BuckScenarioDefinition;
 import org.gradle.profiler.buck.BuckScenarioInvoker;
 import org.gradle.profiler.flamegraph.DifferentialStacksGenerator;
-import org.gradle.profiler.flamegraph.FlameGraphGenerator;
-import org.gradle.profiler.flamegraph.Stacks;
 import org.gradle.profiler.gradle.DaemonControl;
 import org.gradle.profiler.gradle.DefaultGradleBuildConfigurationReader;
 import org.gradle.profiler.gradle.GradleScenarioDefinition;
@@ -118,8 +116,7 @@ public class Main {
                 benchmarkResults.write(settings);
             }
             if (settings.isGenerateDiffs() && scenarios.size() > 1) {
-                List<Stacks> stacks = new DifferentialStacksGenerator().generateDifferentialStacks(settings.getOutputDir());
-                new FlameGraphGenerator().generateDifferentialGraphs(stacks);
+                new DifferentialStacksGenerator().generateDifferentialStacks(settings.getOutputDir());
             }
 
             System.out.println();

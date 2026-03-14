@@ -2,7 +2,6 @@ package org.gradle.profiler.flamegraph;
 
 import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
-import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -69,6 +68,10 @@ public class FlamegraphGenerator {
             throw new IllegalArgumentException("Stacks files must have distinct names");
         }
 
+        if (destination.getFileName() == null || !destination.getFileName().toString().endsWith(".html")) {
+            throw new IllegalArgumentException("Destination file must be an HTML file");
+        }
+
         InputStream template = FlamegraphGenerator.class.getResourceAsStream(FLAMEGRAPH_HTML_TEMPLATE_PATH);
         if (template == null) {
             throw new IllegalStateException("Could not find application bundle template on classpath");
@@ -87,7 +90,7 @@ public class FlamegraphGenerator {
                     break;
                 }
 
-                if (lineBuffer.matches(TARGET_LINE_BYTES)) {
+                if (lineBuffer.trimmedEquals(TARGET_LINE_BYTES)) {
                     foundTargetLine = true;
 
                     String names = stacksFiles.stream()
@@ -122,60 +125,6 @@ public class FlamegraphGenerator {
 
             input.transferTo(output);
         }
-    }
-
-    /**
-     * A reusable byte buffer for reading lines from an {@link InputStream} one at a time,
-     * without per-line heap allocation. Extends {@link ByteArrayOutputStream} to access the
-     * protected internal array and count directly, avoiding the copy made by {@link #toByteArray()}.
-     */
-    private static class LineBuffer extends ByteArrayOutputStream {
-
-        /**
-         * Resets this buffer and reads the next newline-terminated line from {@code input}.
-         *
-         * @return true if a line was read, false if the stream is exhausted
-         */
-        boolean readFrom(InputStream input) throws IOException {
-            reset();
-            int b = input.read();
-            if (b == -1) {
-                return false;
-            }
-            while (b != -1) {
-                write(b);
-                if (b == '\n') {
-                    break;
-                }
-                b = input.read();
-            }
-            return true;
-        }
-
-        /**
-         * Returns true if this buffer's content, after stripping leading and trailing
-         * ASCII whitespace, is byte-for-byte equal to {@code target}.
-         */
-        boolean matches(byte[] target) {
-            int start = 0;
-            while (start < count && buf[start] <= ' ') {
-                start++;
-            }
-            int end = count;
-            while (end > start && buf[end - 1] <= ' ') {
-                end--;
-            }
-            if (end - start != target.length) {
-                return false;
-            }
-            for (int i = 0; i < target.length; i++) {
-                if (buf[start + i] != target[i]) {
-                    return false;
-                }
-            }
-            return true;
-        }
-
     }
 
     private static void writeUtf8(OutputStream output, String text) throws IOException {

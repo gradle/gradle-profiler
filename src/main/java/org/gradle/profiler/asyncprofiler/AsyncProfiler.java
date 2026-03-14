@@ -30,11 +30,7 @@ public class AsyncProfiler extends InstrumentingProfiler {
 
     @Override
     public void summarizeResultFile(File resultFile, Consumer<String> consumer) {
-        // TODO summarization add JFR ?
-        AsyncProfilerOutputType.allExtensions().stream().anyMatch(ext -> resultFile.getName().endsWith(".svg"));
-
-        if (resultFile.getName().endsWith(".html")
-            || resultFile.getName().endsWith(".svg")) {
+        if (resultFile.getName().endsWith(".html")) {
             consumer.accept(resultFile.getAbsolutePath());
         }
     }

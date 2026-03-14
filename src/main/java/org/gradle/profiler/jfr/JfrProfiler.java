@@ -23,7 +23,7 @@ public class JfrProfiler extends InstrumentingProfiler {
     public void summarizeResultFile(File resultFile, Consumer<String> consumer) {
         if (resultFile.getName().endsWith(".jfr")) {
             consumer.accept("JFR recording: " + resultFile.getAbsolutePath());
-        } else if (resultFile.getName().endsWith(".jfr-flamegraphs")) {
+        } else if (resultFile.getName().endsWith("-flames.html")) {
             consumer.accept("JFR Flame Graphs: " + resultFile.getAbsolutePath());
         }
     }

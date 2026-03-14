@@ -8,25 +8,24 @@ import org.gradle.profiler.InstrumentingProfiler;
 import org.gradle.profiler.ScenarioSettings;
 import org.gradle.profiler.flamegraph.DetailLevel;
 import org.gradle.profiler.flamegraph.EventType;
-import org.gradle.profiler.flamegraph.FlameGraphGenerator;
 import org.gradle.profiler.flamegraph.FlameGraphSanitizer;
-import org.gradle.profiler.flamegraph.Stacks;
+import static org.gradle.profiler.flamegraph.FlameGraphSanitizer.SanitizeFunction;
+import org.gradle.profiler.flamegraph.FlamegraphGenerator;
 import org.gradle.profiler.flamegraph.JfrToStacksConverter;
+import org.gradle.profiler.flamegraph.Stacks;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Locale;
 
-import static org.gradle.profiler.flamegraph.FlameGraphSanitizer.SanitizeFunction;
-
 public class AsyncProfilerController implements InstrumentingProfiler.SnapshotCapturingProfilerController {
     private final AsyncProfilerConfig profilerConfig;
     private final ScenarioSettings scenarioSettings;
     private final JfrToStacksConverter stacksConverter;
-    private final FlameGraphGenerator flameGraphGenerator;
     private final ImmutableMap<DetailLevel, FlameGraphSanitizer> flameGraphSanitizers;
     private final File outputFile;
     private final AsyncProfilerOutputType outputType;
@@ -43,7 +42,6 @@ public class AsyncProfilerController implements InstrumentingProfiler.SnapshotCa
             DetailLevel.SIMPLIFIED, simplifiedFlamegraphSanitizer
         );
         this.stacksConverter = new JfrToStacksConverter(flameGraphSanitizers);
-        this.flameGraphGenerator = new FlameGraphGenerator();
         this.outputType = AsyncProfilerOutputType.from(profilerConfig, scenarioSettings.getScenario());
         this.outputFile = outputType.outputFileFor(scenarioSettings);
     }
@@ -118,9 +116,13 @@ public class AsyncProfilerController implements InstrumentingProfiler.SnapshotCa
     }
 
     @Override
-    public void stopSession() {
-        List<Stacks> stacks = generateStacks(scenarioSettings.getProfilerOutputBaseDir(), scenarioSettings.getProfilerOutputBaseName());
-        flameGraphGenerator.generateGraphs(scenarioSettings.getProfilerOutputBaseDir(), stacks);
+    public void stopSession() throws IOException {
+        List<Path> stacksFiles = generateStacks(scenarioSettings.getProfilerOutputBaseDir(), scenarioSettings.getProfilerOutputBaseName()).stream()
+            .filter(x -> !x.isEmpty())
+            .map(x -> x.getFile().toPath())
+            .toList();
+        Path destination = scenarioSettings.getProfilerOutputBaseDir().toPath().resolve(scenarioSettings.getProfilerOutputBaseName() + "-flames.html");
+        new FlamegraphGenerator().generate(stacksFiles, destination);
     }
 
     private List<Stacks> generateStacks(File outputDir, String outputBaseName) {

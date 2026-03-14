@@ -26,7 +26,7 @@ class AsyncProfilerGradleCrossVersionTest extends AbstractGradleCrossVersionTest
         logFile.containsOne("<invocations: 3>")
 
         and:
-        assertGraphsGeneratedForScenario(gradleVersion)
+        assertGraphsGeneratedForScenario(gradleVersion, ["cpu"])
     }
 
     def "profiles multiple events using async-profiler with tooling API and warm daemon"() {
@@ -124,10 +124,12 @@ class AsyncProfilerGradleCrossVersionTest extends AbstractGradleCrossVersionTest
         logFile.containsOne("<invocations: 4>")
 
         and:
-        assertGraphsGeneratedForScenario(gradleVersion)
+        assertGraphsGeneratedForScenario(gradleVersion, events)
 
         where:
-        profiler << ["async-profiler", "async-profiler-all"]
+        profiler             | events
+        "async-profiler"     | ["cpu"]
+        "async-profiler-all" | ["cpu", "allocation", "monitor-blocked"]
     }
 
     def "profiles build using #profiler with tooling API and cold daemon"() {
@@ -142,10 +144,12 @@ class AsyncProfilerGradleCrossVersionTest extends AbstractGradleCrossVersionTest
         logFile.find("<invocations: 1>").size() == 3
 
         and:
-        assertGraphsGeneratedForScenario(gradleVersion)
+        assertGraphsGeneratedForScenario(gradleVersion, events)
 
         where:
-        profiler << ["async-profiler", "async-profiler-all"]
+        profiler             | events
+        "async-profiler"     | ["cpu"]
+        "async-profiler-all" | ["cpu", "allocation", "monitor-blocked"]
     }
 
     def "profiles build using #profiler with CLI and no daemon"() {
@@ -161,10 +165,12 @@ class AsyncProfilerGradleCrossVersionTest extends AbstractGradleCrossVersionTest
         logFile.find("<invocations: 1>").size() == 3
 
         and:
-        assertGraphsGeneratedForScenario(gradleVersion)
+        assertGraphsGeneratedForScenario(gradleVersion, events, false)
 
         where:
-        profiler << ["async-profiler", "async-profiler-all"]
+        profiler             | events
+        "async-profiler"     | ["cpu"]
+        "async-profiler-all" | ["cpu", "allocation"] // For some reason `monitor-blocked` is not always generated
     }
 
     def "profiles using #profiler with multiple iterations and cold daemon"() {
@@ -179,10 +185,12 @@ class AsyncProfilerGradleCrossVersionTest extends AbstractGradleCrossVersionTest
         logFile.find("<invocations: 1>").size() == 4
 
         and:
-        assertGraphsGeneratedForScenario(gradleVersion)
+        assertGraphsGeneratedForScenario(gradleVersion, events)
 
         where:
-        profiler << ["async-profiler", "async-profiler-all"]
+        profiler             | events
+        "async-profiler"     | ["cpu"]
+        "async-profiler-all" | ["cpu", "allocation", "monitor-blocked"]
     }
 
     def "profiles using #profiler with multiple iterations and no daemon"() {
@@ -198,10 +206,12 @@ class AsyncProfilerGradleCrossVersionTest extends AbstractGradleCrossVersionTest
         logFile.find("<invocations: 1>").size() == 4
 
         and:
-        assertGraphsGeneratedForScenario(gradleVersion)
+        assertGraphsGeneratedForScenario(gradleVersion, events, false)
 
         where:
-        profiler << ["async-profiler", "async-profiler-all"]
+        profiler             | events
+        "async-profiler"     | ["cpu"]
+        "async-profiler-all" | ["cpu", "allocation"] // For some reason `monitor-blocked` is not always generated
     }
 
     def "scenario name when using #profiler can contain reserved characters"() {
@@ -226,9 +236,11 @@ class AsyncProfilerGradleCrossVersionTest extends AbstractGradleCrossVersionTest
         logFile.containsOne("<invocations: 3>")
 
         and:
-        assertGraphsGenerated(['a-b'], [gradleVersion], ['cpu'])
+        assertGraphsGenerated(['a-b'], [gradleVersion], events)
 
         where:
-        profiler << ["async-profiler", "async-profiler-all"]
+        profiler             | events
+        "async-profiler"     | ["cpu"]
+        "async-profiler-all" | ["cpu", "allocation", "monitor-blocked"]
     }
 }

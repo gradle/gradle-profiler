@@ -8,7 +8,7 @@ import spock.lang.Requires
 // See: https://github.com/gradle/gradle-profiler/issues/685
 @Requires({ !OperatingSystem.isMacOS() || JavaVersion.current() < JavaVersion.VERSION_21 })
 @Requires({ it.instance.isCurrentJvmSupportsMultipleGradleVersions() })
-class DifferentialFlameGraphIntegrationTest extends AbstractProfilerIntegrationTest implements FlameGraphFixture {
+class DifferentialFlameGraphIntegrationTest extends AbstractProfilerIntegrationTest implements FlameGraphFixture { //
     def "generates differential flame graphs with #profiler"() {
         given:
         instrumentedBuildScript()
@@ -26,11 +26,13 @@ class DifferentialFlameGraphIntegrationTest extends AbstractProfilerIntegrationT
         logFile.find("<invocations: 3>").size() == 2
 
         and:
-        assertGraphsGeneratedForVersions(latestSupportedGradleVersion, minimalSupportedGradleVersion)
-        assertDifferentialGraphsGenerated([latestSupportedGradleVersion, minimalSupportedGradleVersion])
+        assertGraphsGeneratedForVersions([latestSupportedGradleVersion, minimalSupportedGradleVersion], events)
+        assertDifferentialGraphsGenerated([latestSupportedGradleVersion, minimalSupportedGradleVersion], events)
 
         where:
-        profiler << ["async-profiler", "jfr"]
+        profiler         | events
+        "async-profiler" | ["cpu"]
+        "jfr"            | ["cpu", "allocation", "monitor-blocked"]
     }
 
     def "generates differential flame graphs with #profiler for scenario file"() {
@@ -56,12 +58,14 @@ class DifferentialFlameGraphIntegrationTest extends AbstractProfilerIntegrationT
         logFile.find("<invocations: 3>").size() == 2
 
         and:
-        assertGraphsGenerated(['upToDate'], [latestSupportedGradleVersion, minimalSupportedGradleVersion], ['cpu'])
-        assertDifferentialGraphsGenerated(['upToDate'], [latestSupportedGradleVersion, minimalSupportedGradleVersion])
+        assertGraphsGenerated(['upToDate'], [latestSupportedGradleVersion, minimalSupportedGradleVersion], events)
+        assertDifferentialGraphsGenerated(['upToDate'], [latestSupportedGradleVersion, minimalSupportedGradleVersion], events)
 
 
         where:
-        profiler << ["async-profiler", "jfr"]
+        profiler         | events
+        "async-profiler" | ["cpu"]
+        "jfr"            | ["cpu", "allocation", "monitor-blocked"]
     }
 
     def "generates differential flame graphs with #profiler for cross-build scenarios"() {
@@ -90,12 +94,14 @@ class DifferentialFlameGraphIntegrationTest extends AbstractProfilerIntegrationT
         logFile.find("<invocations: 3>").size() == 2
 
         and:
-        assertGraphsGeneratedForScenarios(latestSupportedGradleVersion, ['upToDate', 'help'])
-        assertDifferentialGraphsGenerated(['upToDate', 'help'], [latestSupportedGradleVersion])
+        assertGraphsGeneratedForScenarios(latestSupportedGradleVersion, ['upToDate', 'help'], events)
+        assertDifferentialGraphsGenerated(['upToDate', 'help'], [latestSupportedGradleVersion], events)
 
 
         where:
-        profiler << ["async-profiler", "jfr"]
+        profiler         | events
+        "async-profiler" | ["cpu"]
+        "jfr"            | ["cpu", "allocation", "monitor-blocked"]
     }
 
     def "can disable generation of differential flame graphs"() {
@@ -116,7 +122,7 @@ class DifferentialFlameGraphIntegrationTest extends AbstractProfilerIntegrationT
         logFile.find("<invocations: 3>").size() == 2
 
         and:
-        assertGraphsGeneratedForVersions(latestSupportedGradleVersion, minimalSupportedGradleVersion)
+        assertGraphsGeneratedForVersions([latestSupportedGradleVersion, minimalSupportedGradleVersion], ["cpu"])
         assertNoDifferentialFlameGraphsGenerated()
     }
 }

@@ -1,6 +1,7 @@
 package org.gradle.profiler
 
 import org.gradle.profiler.fixtures.compatibility.gradle.AbstractGradleCrossVersionTest
+import org.gradle.profiler.flamegraph.FlamegraphGeneratorTestFixture
 
 class JFRProfilerGradleCrossVersionTest extends AbstractGradleCrossVersionTest {
     def setup() {
@@ -161,15 +162,18 @@ class JFRProfilerGradleCrossVersionTest extends AbstractGradleCrossVersionTest {
         logFile.find("<invocations: 1>").size() == 2 + iterationCount
 
         jfrFileDirectory.listFiles().findAll { it.name.endsWith(".jfr") }.size() == iterationCount
-        // No perl installed on Windows
-        if (!OperatingSystem.isWindows()) {
-            // Events: alloc, cpu / Type: raw, simplified
-            // Looks like monitor-locked and io mostly aren't captured
-            int numberOfFlames = 2 * 2
-            assert outputDir.listFiles().findAll { it.name.endsWith("-flames.svg") }.size() >= numberOfFlames
-            assert outputDir.listFiles().findAll { it.name.endsWith("-icicles.svg") }.size() >= numberOfFlames
-            assert outputDir.listFiles().findAll { it.name.endsWith("-stacks.txt") }.size() >= numberOfFlames
-        }
+
+        def stacksFiles = outputDir.listFiles().findAll { it.name.endsWith("-stacks.txt") }
+
+        // Events: alloc, cpu / Type: raw, simplified
+        // Looks like monitor-locked and io mostly aren't captured
+        int numberOfFlames = 2 * 2
+        stacksFiles.size() >= numberOfFlames
+
+        List<File> flamegraphFiles = outputDir.listFiles().findAll { it.name.endsWith("-flames.html") }
+        flamegraphFiles.size() == 1
+        FlamegraphGeneratorTestFixture.assertHasStacksFiles(flamegraphFiles.first().toPath(), stacksFiles.collect { it.toPath() })
+
         where:
         iterationCount << [1, 2]
     }

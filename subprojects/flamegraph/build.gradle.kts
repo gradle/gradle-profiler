@@ -4,6 +4,7 @@ import org.gradle.process.ExecOperations
 
 plugins {
     id("java-library")
+    id("java-test-fixtures")
     id("com.github.node-gradle.node")
 }
 

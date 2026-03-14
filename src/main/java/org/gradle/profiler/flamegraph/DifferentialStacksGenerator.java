@@ -29,35 +29,40 @@ import java.util.stream.Stream;
  */
 public class DifferentialStacksGenerator {
 
-    public List<Stacks> generateDifferentialStacks(File baseOutputDir) throws IOException {
-        List<Stacks> stacks = new ArrayList<>();
+    public void generateDifferentialStacks(File baseOutputDir) throws IOException {
         try (Stream<Path> list = Files.list(baseOutputDir.toPath())) {
             List<Path> experiments = list
                 .filter(Files::isDirectory)
                 .collect(Collectors.toList());
 
-            experiments.forEach(experiment -> experiments.stream()
-                .filter(it -> !experiment.equals(it))
-                .forEach(baseline -> {
+            for (Path experiment : experiments) {
+                for (Path baseline : experiments) {
+                    if (experiment.equals(baseline)) {
+                        continue;
+                    }
+
+                    Path destination = experiment.resolve("diffs");
+                    List<Stacks> stacks = new ArrayList<>();
                     for (EventType type : EventType.values()) {
                         // Only create diffs for simplified stacks, diffs for raw stacks don't make much sense
                         DetailLevel level = DetailLevel.SIMPLIFIED;
-                        Stacks backwardDiff = generateDiff(experiment.toFile(), baseline.toFile(), type, level, false);
+                        Stacks backwardDiff = generateDiff(experiment.toFile(), baseline.toFile(), type, level, false, destination.toFile());
                         if (backwardDiff != null) {
                             stacks.add(backwardDiff);
                         }
 
-                        Stacks forwardDiff = generateDiff(experiment.toFile(), baseline.toFile(), type, level, true);
+                        Stacks forwardDiff = generateDiff(experiment.toFile(), baseline.toFile(), type, level, true, destination.toFile());
                         if (forwardDiff != null) {
                             stacks.add(forwardDiff);
                         }
                     }
-                }));
+                    new FlamegraphGenerator().generate(stacks.stream().map(x -> x.getFile().toPath()).toList(), destination.resolve("diffs-flames.html"));
+                }
+            }
         }
-        return stacks;
     }
 
-    private Stacks generateDiff(File versionUnderTest, File baseline, final EventType type, final DetailLevel level, final boolean negate) {
+    private Stacks generateDiff(File versionUnderTest, File baseline, final EventType type, final DetailLevel level, final boolean negate, File diffDir) {
         File underTestStacks = stacksFileName(versionUnderTest, type, level);
         File baselineStacks = stacksFileName(baseline, type, level);
         if (underTestStacks != null && baselineStacks != null) {
@@ -65,7 +70,7 @@ public class DifferentialStacksGenerator {
             final String baselineTestBasename = stacksBasename(baselineStacks, type, level);
             String differentNamePart = computeDifferenceOfBaselineToCurrentName(underTestBasename, baselineTestBasename);
             final String diffBaseName = underTestBasename + "-vs-" + differentNamePart + Stacks.postFixFor(type, level) + "-" + (negate ? "forward-" : "backward-") + "diff";
-            File diff = new File(underTestStacks.getParentFile(), "diffs/" + diffBaseName + Stacks.STACKS_FILE_SUFFIX);
+            File diff = new File(diffDir, diffBaseName + Stacks.STACKS_FILE_SUFFIX);
             diff.getParentFile().mkdirs();
             if (negate) {
                 generateDiff(underTestStacks, baselineStacks, diff);

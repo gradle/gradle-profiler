@@ -29,6 +29,7 @@ dependencies {
 
     implementation(libs.toolingApi)
     implementation(project(":client-protocol"))
+    implementation(project(":flamegraph"))
     implementation(project(":scenario-definition"))
     implementation(project(":perfetto-trace"))
 
@@ -61,10 +62,13 @@ dependencies {
     profilerPlugins(project(":studio-plugin"))
 
     runtimeOnly("org.slf4j:slf4j-simple:1.7.10")
+
     testImplementation(libs.bundles.testDependencies)
     testImplementation(libs.groovy.xml)
     testImplementation(testFixtures(project(":studio-plugin")))
     testImplementation(project(":tooling-action"))
+    testImplementation(testFixtures(project(":flamegraph")))
+
     testRuntimeOnly("cglib:cglib:3.2.6")
     testRuntimeOnly("org.objenesis:objenesis:2.6")
 }
