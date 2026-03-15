@@ -81,6 +81,7 @@ tasks.named<ProcessResources>("processResources") {
     }
 }
 
+@DisableCachingByDefault(because = "Large output file size")
 abstract class GenerateDemoTask : DefaultTask() {
 
     @get:Inject
