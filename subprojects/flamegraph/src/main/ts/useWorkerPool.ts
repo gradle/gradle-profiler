@@ -59,10 +59,21 @@ export default <I, P, R>(
 
     // Initialize worker pool
     useEffect(() => {
+        const modulePromise = window.WASM_MODULE_PROMISE
         for (let i = 0; i < POOL_SIZE; i++) {
             const worker = new WorkerFactory()
             worker.onmessage = (event) => onWorkerMessage(event, worker)
             worker.onerror = (error) => onWorkerError(error, worker)
+
+            // Load the wasm module, then pass it to the workers
+            modulePromise
+                .then((module) =>
+                    worker.postMessage({ job: { type: "initWasm", module } }),
+                )
+                .catch((error) =>
+                    console.error("Error initializing wasm:", error),
+                )
+
             workerPool.current.push(worker)
             idleWorkers.current.push(worker)
         }

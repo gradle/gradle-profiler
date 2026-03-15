@@ -47,12 +47,12 @@ const App = (): React.JSX.Element => {
                     `embedded-stacks-${i}`,
                 ) as HTMLTemplateElement
                 if (template) {
-                    const raw = template.innerHTML.trim()
+                    const rawBase64 = template.content.textContent
                     submitJob(
                         name,
                         {
                             type: "parseEncodedData",
-                            encodedData: raw,
+                            encodedData: rawBase64,
                         },
                         [],
                     )
@@ -142,7 +142,9 @@ const App = (): React.JSX.Element => {
                 deleteNode(selectedTab, graphState.graphId, nodeId)
             }
             colorSettings={colorSettings}
-            initialScrollTop={graphState?.history[graphState.historyIndex]?.scrollTop}
+            initialScrollTop={
+                graphState?.history[graphState.historyIndex]?.scrollTop
+            }
             onScrollChange={handleScrollChange}
             searchQuery={searchQuery || undefined}
         >
@@ -204,7 +206,10 @@ const App = (): React.JSX.Element => {
                     />
                 </Row>
 
-                <Row wide style={{ flex: 1, minHeight: 0, alignItems: "stretch" }}>
+                <Row
+                    wide
+                    style={{ flex: 1, minHeight: 0, alignItems: "stretch" }}
+                >
                     {/* Left panel: graphs / colors. */}
                     <ResizablePanel
                         edge="right"
@@ -229,7 +234,13 @@ const App = (): React.JSX.Element => {
                             </button>
                         </Row>
                         {openPanel !== null && (
-                            <Stack style={{ flex: 1, minHeight: 0, overflowY: "auto" }}>
+                            <Stack
+                                style={{
+                                    flex: 1,
+                                    minHeight: 0,
+                                    overflowY: "auto",
+                                }}
+                            >
                                 {openPanel === "graphs" && (
                                     <GraphPicker
                                         tabIds={[...allTabData.keys()]}
@@ -299,7 +310,13 @@ const App = (): React.JSX.Element => {
                             }}
                             panelStyle={PANEL_STYLE}
                         >
-                            <Row style={{ gap: 5, justifyContent: "flex-end", flexShrink: 0 }}>
+                            <Row
+                                style={{
+                                    gap: 5,
+                                    justifyContent: "flex-end",
+                                    flexShrink: 0,
+                                }}
+                            >
                                 <button
                                     aria-pressed={searchOpen}
                                     onClick={() => setSearchOpen((s) => !s)}

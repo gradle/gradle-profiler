@@ -1,8 +1,19 @@
 import { decodeAndDecompressData } from "./encoding.ts"
+import init from "@flamegraph-wasm"
+
+let resolveWasmReady: () => void
+const wasmReady = new Promise<void>((resolve) => {
+    resolveWasmReady = resolve
+})
 
 export interface ParseEncodedDataJob {
     encodedData: string
     type: "parseEncodedData"
+}
+
+export interface InitWorkerJob {
+    module: WebAssembly.Module
+    type: "initWasm"
 }
 
 export interface ParseStreamJob {
@@ -29,6 +40,7 @@ export interface DeleteNodeJob {
 }
 
 export type Job =
+    | InitWorkerJob
     | ParseStreamJob
     | ParseEncodedDataJob
     | MergeChildrenJob
@@ -122,7 +134,10 @@ const parseMethodName = (name: string): ParsedName | null => {
         const method = beforeParen.substring(lastDot + 1)
         if (!method) return null
 
-        const lastSep = Math.max(classPath.lastIndexOf("."), classPath.lastIndexOf("/"))
+        const lastSep = Math.max(
+            classPath.lastIndexOf("."),
+            classPath.lastIndexOf("/"),
+        )
         const simpleClass =
             lastSep !== -1 ? classPath.substring(lastSep + 1) : classPath
         if (!simpleClass) return null
@@ -142,8 +157,7 @@ const parseMethodName = (name: string): ParsedName | null => {
     // Format: pkg/path/ClassName.method_[bci]  (Linux async-profiler)
     // Packages are separated by '/' and the method may have a _[N] BCI suffix.
     const lastSlash = name.lastIndexOf("/")
-    const lastPart =
-        lastSlash !== -1 ? name.substring(lastSlash + 1) : name
+    const lastPart = lastSlash !== -1 ? name.substring(lastSlash + 1) : name
 
     const dotIdx = lastPart.indexOf(".")
     if (dotIdx === -1) return null
@@ -159,7 +173,10 @@ const parseMethodName = (name: string): ParsedName | null => {
     const bciMatch = methodPart.match(/_\[(\w+)\]$/)
     if (bciMatch) {
         lineNumber = bciMatch[1]!
-        methodPart = methodPart.substring(0, methodPart.length - bciMatch[0].length)
+        methodPart = methodPart.substring(
+            0,
+            methodPart.length - bciMatch[0].length,
+        )
     }
 
     if (!methodPart) return null
@@ -177,7 +194,8 @@ const simplifyParam = (param: string): string => {
     const suffixStart =
         bracketIdx !== -1 ? bracketIdx : varargIdx !== -1 ? varargIdx : -1
 
-    const base = suffixStart !== -1 ? trimmed.substring(0, suffixStart) : trimmed
+    const base =
+        suffixStart !== -1 ? trimmed.substring(0, suffixStart) : trimmed
     const suffix = suffixStart !== -1 ? trimmed.substring(suffixStart) : ""
 
     const lastSep = Math.max(base.lastIndexOf("."), base.lastIndexOf("/"))
@@ -187,10 +205,7 @@ const simplifyParam = (param: string): string => {
 
 const simplifyParams = (rawParams: string): string => {
     if (!rawParams) return ""
-    return rawParams
-        .split(",")
-        .map(simplifyParam)
-        .join(", ")
+    return rawParams.split(",").map(simplifyParam).join(", ")
 }
 
 const computeDisplayNames = (nodeNames: Array<string>): Array<string> => {
@@ -367,7 +382,9 @@ const processStream = async (
                 const lineEnd =
                     i > lineStart && data[i - 1] === 0x0d ? i - 1 : i
                 if (lineEnd > lineStart) {
-                    const line = decoder.decode(data.subarray(lineStart, lineEnd))
+                    const line = decoder.decode(
+                        data.subarray(lineStart, lineEnd),
+                    )
                     graph.values[0]! += parseLine(line, graph, nameCache)
                 }
                 lineStart = i + 1
@@ -528,9 +545,7 @@ const deleteNodeFromGraph = (job: DeleteNodeJob): WorkerResult => {
 
     // Shallow-copy children array and splice out the deleted node from its parent
     const newChildren = graph.children.slice()
-    newChildren[parentId] = newChildren[parentId]!.filter(
-        (id) => id !== nodeId,
-    )
+    newChildren[parentId] = newChildren[parentId]!.filter((id) => id !== nodeId)
 
     return {
         graph: {
@@ -572,6 +587,18 @@ const tryProcess = async (job: Job): Promise<WorkerResponse> => {
 }
 
 self.onmessage = async (event: MessageEvent<WorkerParams>) => {
+    if (event.data.job.type == "initWasm") {
+        try {
+            await init({ module_or_path: event.data.job.module })
+            resolveWasmReady()
+        } catch (error) {
+            console.error("Failed to initialize worker: " + error)
+        }
+        return
+    }
+
+    await wasmReady
+
     const response = await tryProcess(event.data.job)
     const transfer: Transferable[] = []
     if (
