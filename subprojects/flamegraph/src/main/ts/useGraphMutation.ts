@@ -20,22 +20,16 @@ export function useGraphMutation(
         async (tabId: string, graphId: string, nodeId: number) => {
             const graph = getGraph(graphId)
             if (!graph) return
-            // graph.values is a BigInt64Array backed by a shared ArrayBuffer.
-            // Transferring an ArrayBuffer to a Worker via postMessage detaches
-            // it, making the original inaccessible. We clone the buffer first
-            // so the worker gets its own copy to transfer while the UI keeps
-            // the live buffer untouched.
-            const valuesBuffer = graph.values.buffer.slice(0)
             const result = await runJob(
                 "deleteNode",
                 {
                     job: {
                         type: "deleteNode",
                         nodeId,
-                        graph,
+                        graph: graph.toRaw(),
                     },
                 },
-                [valuesBuffer],
+                [],
             )
             if ("result" in result) {
                 const newGraphId = storeGraph(result.result.graph)

@@ -8,7 +8,7 @@ import React, {
     useState,
 } from "react"
 import { getGraph } from "./graphStore"
-import type { StackGraph } from "./worker"
+import type { Graph } from "./stackGraph"
 import { Stack } from "./containers"
 import type { ColorSettings } from "./color"
 import {
@@ -183,13 +183,11 @@ export const Flamegraph: React.FC<{
                 chain.length >= COLLAPSE_THRESHOLD && value !== parentValue
             const isCollapsed = isCollapsible && !expandedNodes.has(nodeId)
             const children = isCollapsed
-                ? graph.children[chain[chain.length - 1]!]
-                : graph.children[nodeId]
+                ? graph.getChildren(chain[chain.length - 1]!)
+                : graph.getChildren(nodeId)
 
-            if (children) {
-                for (const childId of children) {
-                    stack.push([childId, depth + 1, value])
-                }
+            for (const childId of children) {
+                stack.push([childId, depth + 1, value])
             }
         }
 
@@ -227,7 +225,7 @@ export const Flamegraph: React.FC<{
     // These refs hold the latest draw parameters so that zoom and hover can
     // trigger immediate canvas redraws without going through React state.
     const drawParamsRef = useRef<{
-        graph: StackGraph | null | undefined
+        graph: Graph | null | undefined
         rootNode: number
         viewLeft: number
         viewRight: number
@@ -559,7 +557,7 @@ export const Flamegraph: React.FC<{
         const hit = hitTest(e.clientX, e.clientY)
         if (hit && !hit.isCollapseToggle) {
             const { rootNode: currentRoot } = drawParamsRef.current
-            if (hit.nodeId !== currentRoot) {
+            if (hit.nodeId !== currentRoot && hit.nodeId !== 0) {
                 onDeleteNode(hit.nodeId)
                 clearHover()
             }

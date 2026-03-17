@@ -1,4 +1,4 @@
-import type { StackGraph } from "./worker"
+import type { Graph } from "./stackGraph"
 import { colorFor, type ColorSettings } from "./color"
 
 // --- Constants ---
@@ -21,15 +21,12 @@ const NODE_TEXT_PADDING_LEFT = 5
 const FONT_SIZE = 12
 const FONT = `${FONT_SIZE}px sans-serif`
 
-export const getSameWidthChain = (
-    nodeId: number,
-    graph: StackGraph,
-): number[] => {
+export const getSameWidthChain = (nodeId: number, graph: Graph): number[] => {
     const chain = []
     let currentId = nodeId
     while (true) {
-        const children = graph.children[currentId]
-        if (children && children.length === 1) {
+        const children = graph.getChildren(currentId)
+        if (children.length === 1) {
             const childId = children[0]!
             if (graph.values[childId] === graph.values[nodeId]) {
                 chain.push(childId)
@@ -42,13 +39,12 @@ export const getSameWidthChain = (
     return chain
 }
 
-export const nodeDetails = (nodeId: number, graph: StackGraph): string => {
-    const name = graph.nodeNames[nodeId]
+export const nodeDetails = (nodeId: number, graph: Graph): string => {
     const value = graph.values[nodeId]
-    if (value == undefined || name == undefined) {
+    if (value == undefined) {
         return "Malformed graph. Missing node data."
     }
-    return `${name} ${BigInt.asIntN(64, value).toLocaleString()} samples`
+    return `${graph.getNodeName(nodeId)} ${BigInt.asIntN(64, value).toLocaleString()} samples`
 }
 
 /** A rendered node rectangle, used for mouse hit testing. */
@@ -74,7 +70,7 @@ export interface RenderedNode {
  */
 export function drawFlamegraph(
     ctx: CanvasRenderingContext2D,
-    graph: StackGraph,
+    graph: Graph,
     rootNode: number,
     viewLeft: number,
     viewRight: number,
@@ -116,8 +112,8 @@ export function drawFlamegraph(
         const { nodeId, xOffset, depth, parentValue } = stack.pop()!
 
         const value = graph.values[nodeId]
-        const name = graph.nodeNames[nodeId]
-        if (value == null || name == null) continue
+        if (value == null) continue
+        const name = graph.getNodeName(nodeId)
 
         // Map from coordinate space to canvas pixels.
         const rectXCoord =
@@ -165,7 +161,7 @@ export function drawFlamegraph(
             !!searchQueryLower &&
             sameWidthChain != null &&
             sameWidthChain.some((id) =>
-                graph.nodeNames[id]?.toLowerCase().includes(searchQueryLower),
+                graph.getNodeName(id).toLowerCase().includes(searchQueryLower),
             )
         // Dim the node body if nothing relevant (node or hidden chain) matches.
         const isDimmed = !!searchQueryLower && !nodeMatchesSearch && !chainMatchesSearch
@@ -247,7 +243,7 @@ export function drawFlamegraph(
         const availableTextWidth = canvasW - textOffsetX
 
         if (availableTextWidth > FONT_SIZE) {
-            const displayName = graph.displayNames[nodeId] ?? name
+            const displayName = graph.getDisplayName(nodeId)
             const textWidth = ctx.measureText(displayName).width
             const textX = canvasX + textOffsetX
             ctx.fillStyle = "black"
@@ -265,40 +261,38 @@ export function drawFlamegraph(
 
         // Push children onto the stack.
         const children = isCollapsed
-            ? graph.children[sameWidthChain![sameWidthChain!.length - 1]!]
-            : graph.children[nodeId]
+            ? graph.getChildren(sameWidthChain![sameWidthChain!.length - 1]!)
+            : graph.getChildren(nodeId)
 
-        if (children) {
-            let childXOffset = xOffset
-            for (const childId of children) {
-                const childValue = graph.values[childId]
-                if (childValue != null) {
-                    const childLeftCoord =
-                        (Number(childXOffset) / Number(rootValue)) *
-                        COORDINATE_WIDTH
-                    const childWidthCoord =
-                        (Number(childValue) / Number(rootValue)) *
-                        COORDINATE_WIDTH
+        let childXOffset = xOffset
+        for (const childId of children) {
+            const childValue = graph.values[childId]
+            if (childValue != null) {
+                const childLeftCoord =
+                    (Number(childXOffset) / Number(rootValue)) *
+                    COORDINATE_WIDTH
+                const childWidthCoord =
+                    (Number(childValue) / Number(rootValue)) *
+                    COORDINATE_WIDTH
 
-                    // Children are laid out left-to-right, so once the
-                    // left edge is past the viewport we can stop.
-                    if (childLeftCoord >= viewRight) break
+                // Children are laid out left-to-right, so once the
+                // left edge is past the viewport we can stop.
+                if (childLeftCoord >= viewRight) break
 
-                    // Skip children entirely before the viewport.
-                    if (
-                        childLeftCoord + childWidthCoord > viewLeft &&
-                        (childWidthCoord / zoomWidth) * canvasWidth >=
-                            CULLING_THRESHOLD_PX
-                    ) {
-                        stack.push({
-                            nodeId: childId,
-                            xOffset: childXOffset,
-                            depth: depth + 1,
-                            parentValue: value,
-                        })
-                    }
-                    childXOffset += childValue
+                // Skip children entirely before the viewport.
+                if (
+                    childLeftCoord + childWidthCoord > viewLeft &&
+                    (childWidthCoord / zoomWidth) * canvasWidth >=
+                        CULLING_THRESHOLD_PX
+                ) {
+                    stack.push({
+                        nodeId: childId,
+                        xOffset: childXOffset,
+                        depth: depth + 1,
+                        parentValue: value,
+                    })
                 }
+                childXOffset += childValue
             }
         }
     }

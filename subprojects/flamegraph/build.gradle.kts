@@ -188,25 +188,78 @@ abstract class CompileRustTask : DefaultTask() {
                 "PATH" to "${cargoHome.get().asFile.absolutePath}/bin${File.pathSeparator}${System.getenv("PATH")}",
                 "CARGO_TARGET_DIR" to buildDir.get().asFile.absolutePath,
             ))
+            workingDir(srcDir.get().asFile)
             executable = wasmPackBin.get().asFile.absolutePath
             args(
                 "build",
+                "--locked",
                 "--target", "web",
                 "--out-dir", outputDir.get().asFile.absolutePath,
-                srcDir.get().asFile.absolutePath,
             )
         }
     }
 
 }
 
+val rustSrcDir = layout.projectDirectory.dir("src/main/rust")
+
 val compileRust = tasks.register<CompileRustTask>("compileRust") {
-    srcDir.set(layout.projectDirectory.dir("src/main/rust"))
+    srcDir.set(rustSrcDir)
     wasmPackBin.set(unpackWasmPack.flatMap { it.binFile })
     cargoHome.set(installRust.flatMap { it.cargoHome })
     rustupHome.set(installRust.flatMap { it.rustupHome })
     buildDir.set(layout.buildDirectory.dir("wasm-build"))
     outputDir.set(layout.buildDirectory.dir("wasm"))
+}
+
+abstract class CargoCmdlineTask : DefaultTask() {
+
+    @get:Input
+    @get:Option(option = "cmd", description = "The cargo command to run")
+    abstract val cmd: Property<String>
+
+    @get:InputDirectory
+    abstract val cargoHome: DirectoryProperty
+
+    @get:InputDirectory
+    abstract val rustupHome: DirectoryProperty
+
+    @get:InputDirectory
+    abstract val workingDir: DirectoryProperty
+
+    @get:Inject
+    abstract val execOperations: ExecOperations
+
+    @TaskAction
+    fun run() {
+        execOperations.exec {
+            environment(mapOf(
+                "RUSTUP_HOME" to rustupHome.get().asFile.absolutePath,
+                "CARGO_HOME" to cargoHome.get().asFile.absolutePath,
+                "PATH" to "${cargoHome.get().asFile.absolutePath}/bin${File.pathSeparator}${System.getenv("PATH")}"
+            ))
+            workingDir(this@CargoCmdlineTask.workingDir.get().asFile)
+            executable = "${cargoHome.get().asFile.absolutePath}/bin/cargo${Extensions.executable}"
+            args(cmd.get().split("\\s+".toRegex()))
+        }
+    }
+}
+
+tasks.register<CargoCmdlineTask>("cargo") {
+    cargoHome.set(installRust.flatMap { it.cargoHome })
+    rustupHome.set(installRust.flatMap { it.rustupHome })
+    workingDir.set(rustSrcDir)
+}
+
+val cargoTest = tasks.register<CargoCmdlineTask>("cargoTest") {
+    cargoHome.set(installRust.flatMap { it.cargoHome })
+    rustupHome.set(installRust.flatMap { it.rustupHome })
+    workingDir.set(rustSrcDir)
+    cmd.set("test")
+}
+
+tasks.check {
+    dependsOn(cargoTest)
 }
 
 node {

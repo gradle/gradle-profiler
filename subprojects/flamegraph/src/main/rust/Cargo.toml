@@ -4,12 +4,22 @@ version = "0.1.0"
 edition = "2021"
 
 [lib]
-crate-type = ["cdylib"]
+crate-type = ["cdylib", "rlib"]
 
 [dependencies]
+# Required to expose Rust functions to JavaScript and generate the JS/TS bindings.
 wasm-bindgen = "=0.2.114"
+# Converts Rust panics into readable JS errors instead of a silent abort trap.
 console_error_panic_hook = "0.1.7"
+# Faster hash map/set than the stdlib default (SipHash). SipHash is DoS-resistant but slower.
+# default-features = false disables runtime CPU-feature detection (dead weight in WASM).
+ahash = { version = "0.8.12", default-features = false, features = ["std"] }
+# SIMD-accelerated byte search (scanning for newlines and semicolons during parsing).
+# default-features = false gives a no_std-compatible build with no extra overhead.
+memchr = { version = "2.8.0", default-features = false }
 
 [profile.release]
+# "z" optimizes for binary size over runtime speed. "3" would produce faster code, but
+# the gains are marginal, while the size saving meaningfully reduces initial load time.
 opt-level = "z"
 lto = true

@@ -18,7 +18,6 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.stream.Collectors;
-import java.util.zip.CRC32;
 import java.util.zip.Deflater;
 
 /**
@@ -45,18 +44,6 @@ public class FlamegraphGenerator {
      * Location in jar of the application bundle template to embed stacks files into.
      */
     private static final String FLAMEGRAPH_HTML_TEMPLATE_PATH = "/org/gradle/profiler/flamegraph/index.html";
-
-    /**
-     * Minimal GZIP header (RFC 1952): magic, deflate method, no flags, zero mtime, no extra flags, unknown OS.
-     */
-    private static final byte[] GZIP_HEADER = {
-        (byte) 0x1f, (byte) 0x8b,  // magic number
-        8,                           // compression method: deflate
-        0,                           // flags: none
-        0, 0, 0, 0,                  // mtime: 0
-        0,                           // extra flags: none
-        (byte) 0xff                  // OS: unknown
-    };
 
     /**
      * Command-line entry point. Accepts one or more absolute stacks file paths followed by
@@ -149,14 +136,13 @@ public class FlamegraphGenerator {
     }
 
     /**
-     * Compresses {@code stacksFile} into a single GZIP stream written Base64-encoded to {@code output}.
+     * Compresses {@code stacksFile} using raw deflate and writes it Base64-encoded to {@code output}.
      * <p>
-     * The file is split into {@value #CHUNK_SIZE}-byte chunks. Each chunk is compressed in parallel
-     * using its own {@link Deflater} instance (raw deflate, no wrapper). Non-final chunks are flushed
-     * with {@link Deflater#FULL_FLUSH}, which byte-aligns the output and emits a BFINAL=0 sync block,
-     * making them safe to concatenate. The final chunk is finished normally (BFINAL=1). The combined
-     * raw deflate payload is wrapped in a single GZIP header/footer, producing one valid GZIP stream
-     * that browsers can decompress with {@code DecompressionStream("gzip")}.
+     * The file is split into {@value #CHUNK_SIZE}-byte chunks, each compressed in parallel using its
+     * own {@link Deflater} instance. Non-final chunks use {@link Deflater#FULL_FLUSH} so they can be
+     * concatenated; the final chunk uses {@link Deflater#finish()}. There is no GZIP wrapper or CRC32.
+     * <p>
+     * The browser decompresses with {@code DecompressionStream("deflate-raw")}.
      */
     private static void embedStacksParallel(Path stacksFile, OutputStream output) throws IOException {
         int threadCount = Runtime.getRuntime().availableProcessors();
@@ -166,10 +152,6 @@ public class FlamegraphGenerator {
             // which we still need to write to after this method returns. Closing the Base64 encoder
             // is important as it has finalization work (padding) to perform.
             try (OutputStream base64Out = ENCODER.wrap(new NonClosingOutputStream(output))) {
-                base64Out.write(GZIP_HEADER);
-
-                CRC32 crc32 = new CRC32();
-                long totalSize = 0;
                 ArrayDeque<Future<byte[]>> inFlight = new ArrayDeque<>();
                 byte[] readBuf = new byte[CHUNK_SIZE];
 
@@ -181,9 +163,6 @@ public class FlamegraphGenerator {
                     while (true) {
                         int nextRead = in.readNBytes(readBuf, 0, CHUNK_SIZE);
                         boolean isLast = nextRead == 0;
-
-                        crc32.update(currentChunk);
-                        totalSize += currentChunk.length;
 
                         while (inFlight.size() >= threadCount) {
                             drainNext(inFlight, base64Out);
@@ -201,8 +180,6 @@ public class FlamegraphGenerator {
                 while (!inFlight.isEmpty()) {
                     drainNext(inFlight, base64Out);
                 }
-
-                writeGzipFooter(base64Out, crc32.getValue(), totalSize);
             }
         } finally {
             executor.shutdownNow();
@@ -254,20 +231,6 @@ public class FlamegraphGenerator {
             deflater.end();
         }
         return baos.toByteArray();
-    }
-
-    /** Writes the 8-byte GZIP footer: CRC32 and uncompressed size, both little-endian. */
-    private static void writeGzipFooter(OutputStream out, long crc32Value, long totalSize) throws IOException {
-        byte[] footer = new byte[8];
-        footer[0] = (byte) (crc32Value);
-        footer[1] = (byte) (crc32Value >> 8);
-        footer[2] = (byte) (crc32Value >> 16);
-        footer[3] = (byte) (crc32Value >> 24);
-        footer[4] = (byte) (totalSize);
-        footer[5] = (byte) (totalSize >> 8);
-        footer[6] = (byte) (totalSize >> 16);
-        footer[7] = (byte) (totalSize >> 24);
-        out.write(footer);
     }
 
     private static void writeUtf8(OutputStream output, String text) throws IOException {

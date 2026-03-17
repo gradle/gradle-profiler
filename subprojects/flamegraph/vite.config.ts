@@ -56,6 +56,7 @@ export default ({ command }: { command: string }): UserConfig => {
         build: {
             outDir: "../../../build/vite",
             emptyOutDir: true,
+            sourcemap: "hidden",
             assetsInlineLimit: 100000000, // Ensure wasm is always inlined
         },
         base: "./",
