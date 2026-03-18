@@ -10,6 +10,7 @@ export const GraphActions: React.FC<{
     setRootNode: (tabId: string, nodeId: number) => void
     showMergedSubgraph: (graphId: string, tabId: string, nodeId: number) => void
     showIcicleGraph: (graphId: string, tabId: string, nodeId: number) => void
+    showSimplifiedGraph: (graphId: string, tabId: string, nodeId: number) => void
     setMutable: (tabId: string, mutable: boolean) => void
 }> = ({
     tabId,
@@ -19,6 +20,7 @@ export const GraphActions: React.FC<{
     setRootNode,
     showMergedSubgraph,
     showIcicleGraph,
+    showSimplifiedGraph,
     setMutable,
 }) => {
     const historyEntry = graphState?.history[graphState.historyIndex]
@@ -68,6 +70,16 @@ export const GraphActions: React.FC<{
                 disabled={!tabId || !graphState}
             >
                 Icicle
+            </button>
+            <button
+                onClick={() =>
+                    tabId &&
+                    graphState &&
+                    showSimplifiedGraph(graphState.graphId, tabId, rootNode)
+                }
+                disabled={!tabId || !graphState}
+            >
+                Simplify
             </button>
             <button
                 onClick={() => tabId && setMutable(tabId, !isMutable)}

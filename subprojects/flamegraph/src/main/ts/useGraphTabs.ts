@@ -140,6 +140,18 @@ export function useGraphTabs() {
         [submitJob],
     )
 
+    const showSimplifiedGraph = useCallback(
+        (graphId: string, tabId: string, nodeId: number) => {
+            const graph = getGraph(graphId)
+            if (!graph) return
+            const nodeName = graph.getNodeName(nodeId)
+            const newTabId = `${tabId}:simplified:${nodeName}`
+            submitJob(newTabId, { type: "simplifyGraph", nodeId, graph: graph.toRaw() }, [])
+            setSelectedTab(newTabId)
+        },
+        [submitJob],
+    )
+
     return {
         runJob,
         allTabData,
@@ -150,5 +162,6 @@ export function useGraphTabs() {
         submitJob,
         showMergedSubgraph,
         showIcicleGraph,
+        showSimplifiedGraph,
     }
 }

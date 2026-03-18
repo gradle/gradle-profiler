@@ -4,6 +4,7 @@ import init, {
     wasm_delete_node,
     wasm_icicle_graph,
     wasm_merge_children,
+    wasm_simplify_graph,
     WasmStackGraph,
 } from "@flamegraph-wasm"
 import type { StackGraph } from "./stackGraph"
@@ -47,6 +48,12 @@ export interface DeleteNodeJob {
     type: "deleteNode"
 }
 
+export interface SimplifyGraphJob {
+    nodeId: number
+    graph: StackGraph
+    type: "simplifyGraph"
+}
+
 export type Job =
     | InitWorkerJob
     | ParseStreamJob
@@ -54,6 +61,7 @@ export type Job =
     | MergeChildrenJob
     | IcicleGraphJob
     | DeleteNodeJob
+    | SimplifyGraphJob
 
 export interface WorkerParams {
     job: Job
@@ -178,6 +186,20 @@ const parseEncodedData = async (
     return await processStream(stream)
 }
 
+const simplifyGraph = (job: SimplifyGraphJob): WorkerResult => {
+    const { childrenOffsets, childrenData, namesData, namesOffsets, values } =
+        job.graph
+    const wasmGraph = wasm_simplify_graph(
+        childrenOffsets,
+        childrenData,
+        namesData,
+        namesOffsets,
+        values,
+        job.nodeId,
+    )
+    return { graph: wasmGraphToStackGraph(wasmGraph) }
+}
+
 const deleteNode = (job: DeleteNodeJob): WorkerResult => {
     const {
         childrenOffsets,
@@ -212,6 +234,8 @@ const process = async (job: Job): Promise<WorkerResult> => {
         return await parseEncodedData(job)
     } else if (job.type == "deleteNode") {
         return deleteNode(job)
+    } else if (job.type == "simplifyGraph") {
+        return simplifyGraph(job)
     }
 
     throw new Error("Unknown job type")

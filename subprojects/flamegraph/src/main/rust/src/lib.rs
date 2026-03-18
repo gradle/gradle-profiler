@@ -17,6 +17,9 @@ pub use parser::StacksParser;
 #[cfg(test)]
 pub use parser::parse_stacks_impl;
 
+mod simplify;
+pub use simplify::wasm_simplify_graph;
+
 #[wasm_bindgen(start)]
 pub fn main_js() {
     #[cfg(debug_assertions)]

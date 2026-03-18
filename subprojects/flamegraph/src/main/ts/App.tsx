@@ -34,6 +34,7 @@ const App = (): React.JSX.Element => {
         submitJob,
         showMergedSubgraph,
         showIcicleGraph,
+        showSimplifiedGraph,
     } = useGraphTabs()
 
     useEffect(() => {
@@ -290,6 +291,7 @@ const App = (): React.JSX.Element => {
                                 setRootNode={setRootNode}
                                 showMergedSubgraph={showMergedSubgraph}
                                 showIcicleGraph={showIcicleGraph}
+                                showSimplifiedGraph={showSimplifiedGraph}
                                 setMutable={setMutable}
                             />
                         </Stack>
