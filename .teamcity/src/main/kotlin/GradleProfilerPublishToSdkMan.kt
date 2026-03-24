@@ -29,8 +29,6 @@ class GradleProfilerPublishToSdkMan(publishingBuild: GradleProfilerPublishing) :
     }
 
     params {
-        // Always use Java 17 to run the build
-        javaHome(os, arch, JavaVersion.OPENJDK_17)
         text("additional.gradle.parameters", "")
 
         param("env.ORG_GRADLE_PROJECT_sdkmanKey", "%gradleprofiler.sdkman.key%")

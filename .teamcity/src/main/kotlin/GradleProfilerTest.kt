@@ -11,8 +11,6 @@ open class GradleProfilerTest(os: Os, javaVersion: JavaVersion, arch: Arch) : Bu
     gradleProfilerVcs()
 
     params {
-        // Always use Java 17 to run the build
-        javaHome(os, arch, JavaVersion.OPENJDK_17)
         androidHome(os)
     }
 

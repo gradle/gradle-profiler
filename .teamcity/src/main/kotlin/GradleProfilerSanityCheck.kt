@@ -11,10 +11,6 @@ object GradleProfilerSanityCheck : BuildType({
     val os = Os.linux
     val arch = Arch.AMD64
 
-    params {
-        javaHome(os, arch, JavaVersion.OPENJDK_17)
-    }
-
     steps {
         gradle {
             tasks = "clean sanityCheck"
