@@ -10,6 +10,7 @@
     <!-- Any dependency here should also be added to build.gradle.kts intellij extension -->
     <depends>org.jetbrains.plugins.gradle</depends>
     <depends>com.intellij.modules.java</depends>
+    <depends optional="true" config-file="android-studio-extensions.xml">org.jetbrains.android</depends>
 
     <applicationListeners>
         <listener class="org.gradle.profiler.studio.plugin.GradleProfilerAppLifecycleListener"
@@ -19,7 +20,7 @@
     <extensions defaultExtensionNs="com.intellij">
         <appStarter id="headless-starter"
                     implementation="org.gradle.profiler.studio.plugin.starter.HeadlessApplicationStarter"/>
-        <postStartupActivity implementation="org.gradle.profiler.studio.plugin.GradleProfilerStartupActivity" order="first"/>
+        <postStartupActivity implementation="org.gradle.profiler.studio.plugin.GradleProfilerStartupActivity"/>
     </extensions>
 
 </idea-plugin>
