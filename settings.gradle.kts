@@ -1,7 +1,7 @@
 plugins {
-    id("com.gradle.develocity").version("4.1")
-    id("io.github.gradle.gradle-enterprise-conventions-plugin").version("0.10.3")
-    id("org.gradle.toolchains.foojay-resolver-convention").version("0.10.0")
+    id("com.gradle.develocity").version("4.3.2")
+    id("io.github.gradle.develocity-conventions-plugin").version("0.14.0")
+    id("org.gradle.toolchains.foojay-resolver-convention").version("1.0.0")
 }
 
 rootProject.name = "gradle-profiler"
