@@ -63,7 +63,6 @@ dependencies {
     runtimeOnly(libs.slf4j.simple)
     testImplementation(libs.bundles.testDependencies)
     testImplementation(libs.groovy.xml)
-    testImplementation(testFixtures(project(":studio-plugin")))
     testImplementation(project(":tooling-action"))
     testRuntimeOnly(libs.objenesis)
 }
