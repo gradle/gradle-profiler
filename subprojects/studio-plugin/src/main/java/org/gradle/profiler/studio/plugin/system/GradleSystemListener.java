@@ -19,7 +19,9 @@ public class GradleSystemListener extends ExternalSystemTaskNotificationListener
     public void onStart(@NotNull ExternalSystemTaskId id, String workingDir) {
         if (GradleConstants.SYSTEM_ID.equals(id.getProjectSystemId())) {
             exception.set(null);
-            currentSyncFutureRef.set(new CompletableFuture<>());
+            // Only create a new future if one wasn't already set by awaitNextSyncCompletion().
+            // Using compareAndSet avoids replacing a future that the caller is waiting on.
+            currentSyncFutureRef.compareAndSet(null, new CompletableFuture<>());
         }
     }
 
