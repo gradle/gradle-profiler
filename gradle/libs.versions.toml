@@ -14,7 +14,7 @@ asm = { module = "org.ow2.asm:asm", version = "9.2" }
 commons-compress = { module = "org.apache.commons:commons-compress", version = "1.27.1" }
 commons-io = { module = "commons-io:commons-io", version = "2.16.1" }
 commons-math3 = { module = "org.apache.commons:commons-math3", version = "3.6.1" }
-dd-plist = { module = "com.googlecode.plist:dd-plist", version = "1.23" }
+dd-plist = { module = "com.googlecode.plist:dd-plist", version = "1.29" }
 findbugs-annotations = { module = "com.google.code.findbugs:annotations", version = "3.0.1" }
 groovy-xml = { module = "org.apache.groovy:groovy-xml", version.ref = "groovy" }
 gson = { module = "com.google.code.gson:gson", version = "2.11.0" }
