@@ -31,6 +31,9 @@ abstract class ExtractIdeTask @Inject constructor(
     @get:PathSensitive(PathSensitivity.NONE)
     abstract val ideDistribution: ConfigurableFileCollection
 
+    @get:Input
+    abstract val stripTopLevelDirectory: Property<Boolean>
+
     @get:OutputDirectory
     abstract val outputDir: DirectoryProperty
 
@@ -51,15 +54,17 @@ abstract class ExtractIdeTask @Inject constructor(
             }
 
             from(src) {
-                eachFile {
-                    // Remove top folder when unzipping, that way we get rid of .app folder that can cause issues on Mac
-                    // where MacOS would kill the process right after start, issue: https://github.com/gradle/gradle-profiler/issues/469
-                    val newSegments = relativePath.segments.drop(1).toTypedArray()
-                    if (newSegments.isEmpty()) {
-                        exclude()
-                    } else {
-                        @Suppress("SpreadOperator")
-                        relativePath = RelativePath(true, *newSegments)
+                if (stripTopLevelDirectory.get()) {
+                    eachFile {
+                        // Remove top folder when unzipping, that way we get rid of .app folder that can cause issues on Mac
+                        // where MacOS would kill the process right after start, issue: https://github.com/gradle/gradle-profiler/issues/469
+                        val newSegments = relativePath.segments.drop(1).toTypedArray()
+                        if (newSegments.isEmpty()) {
+                            exclude()
+                        } else {
+                            @Suppress("SpreadOperator")
+                            relativePath = RelativePath(true, *newSegments)
+                        }
                     }
                 }
             }

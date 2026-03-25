@@ -82,6 +82,7 @@ dependencies {
 val unpackAndroidStudio = tasks.register<ExtractIdeTask>("unpackAndroidStudio") {
     volumeName.set("AndroidStudioForGradle")
     dmgAppName.set("Android Studio.app")
+    stripTopLevelDirectory.set(true)
     ideDistribution.from(androidStudioRuntime)
     outputDir.set(layout.buildDirectory.dir("android-studio"))
 }
@@ -89,6 +90,8 @@ val unpackAndroidStudio = tasks.register<ExtractIdeTask>("unpackAndroidStudio") 
 val unpackIntellij = tasks.register<ExtractIdeTask>("unpackIntellij") {
     volumeName.set("IntellijIdeaForGradle")
     dmgAppName.set("IntelliJ IDEA CE.app")
+    // Windows ZIP is flat, Linux tar.gz has a wrapping directory
+    stripTopLevelDirectory.set(!isWindows())
     ideDistribution.from(intellijRuntime)
     outputDir.set(layout.buildDirectory.dir("intellij-idea"))
 }
