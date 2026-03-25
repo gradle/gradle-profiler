@@ -11,7 +11,6 @@ testAndroidSdkVersion = "9.1.0"
 [libraries]
 ant-compress = { module = "org.apache.ant:ant-compress", version = "1.5" }
 asm = { module = "org.ow2.asm:asm", version = "9.2" }
-cglib = { module = "cglib:cglib", version = "3.2.6" }
 commons-compress = { module = "org.apache.commons:commons-compress", version = "1.27.1" }
 commons-io = { module = "commons-io:commons-io", version = "2.16.1" }
 commons-math3 = { module = "org.apache.commons:commons-math3", version = "3.6.1" }
@@ -26,6 +25,7 @@ jopt = { module = "net.sf.jopt-simple:jopt-simple", version = "5.0.4" }
 junit-jupiter-api = { module = "org.junit.jupiter:junit-jupiter-api", version = "5.14.3" }
 junit-platform-launcher = { module = "org.junit.platform:junit-platform-launcher", version = "1.14.3" }
 kotlin-gradle-plugin = { module = "org.jetbrains.kotlin:kotlin-gradle-plugin", version = "2.1.20" }
+mockito-core = { module = "org.mockito:mockito-core", version = "5.23.0" }
 objenesis = { module = "org.objenesis:objenesis", version = "2.6" }
 protobuf-java = { module = "com.google.protobuf:protobuf-java", version.ref = "protobuf" }
 protobuf-protoc = { module = "com.google.protobuf:protoc", version.ref = "protobuf" }
@@ -36,7 +36,7 @@ toolingApi = { module = "org.gradle:gradle-tooling-api", version = "8.14.3" }
 typesafe-config = { module = "com.typesafe:config", version = "1.3.3" }
 
 [bundles]
-testDependencies = ["spock-core", "spock-junit4", "junit-platform-launcher"]
+testDependencies = ["spock-core", "spock-junit4", "junit-platform-launcher", "mockito-core"]
 
 [plugins]
 intellij-platform = { id = "org.jetbrains.intellij.platform", version = "2.11.0" }

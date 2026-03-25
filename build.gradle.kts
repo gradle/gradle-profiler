@@ -65,7 +65,6 @@ dependencies {
     testImplementation(libs.groovy.xml)
     testImplementation(testFixtures(project(":studio-plugin")))
     testImplementation(project(":tooling-action"))
-    testRuntimeOnly(libs.cglib)
     testRuntimeOnly(libs.objenesis)
 }
 

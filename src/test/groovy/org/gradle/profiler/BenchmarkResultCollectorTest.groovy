@@ -7,7 +7,7 @@ import org.gradle.profiler.result.Sample
 import spock.lang.Specification
 
 class BenchmarkResultCollectorTest extends Specification {
-    def generator = Mock(AbstractGenerator)
+    def generator = GroovyMock(AbstractGenerator)
     def collector = new BenchmarkResultCollector(generator)
 
     def "collects results for a single scenario"() {
