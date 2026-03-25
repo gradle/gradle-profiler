@@ -54,10 +54,16 @@ abstract class ExtractIdeTask @Inject constructor(
                 eachFile {
                     // Remove top folder when unzipping, that way we get rid of .app folder that can cause issues on Mac
                     // where MacOS would kill the process right after start, issue: https://github.com/gradle/gradle-profiler/issues/469
-                    @Suppress("SpreadOperator")
-                    relativePath = RelativePath(true, *relativePath.segments.drop(1).toTypedArray())
+                    val newSegments = relativePath.segments.drop(1).toTypedArray()
+                    if (newSegments.isEmpty()) {
+                        exclude()
+                    } else {
+                        @Suppress("SpreadOperator")
+                        relativePath = RelativePath(true, *newSegments)
+                    }
                 }
             }
+            includeEmptyDirs = false
 
             into(outputDir)
         }
