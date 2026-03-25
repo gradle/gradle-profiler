@@ -31,6 +31,8 @@ repositories {
         url = uri("https://download.jetbrains.com/idea/")
         patternLayout {
             artifact("[artifact]-[revision].[ext]")
+            // ARM Mac uses dash separator: ideaIC-2025.2-aarch64.dmg
+            artifact("[artifact]-[revision]-[ext]")
         }
         metadataSources { artifact() }
         content { includeGroup("intellij-idea") }
