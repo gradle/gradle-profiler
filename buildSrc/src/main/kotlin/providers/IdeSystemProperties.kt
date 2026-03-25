@@ -12,21 +12,23 @@ import org.gradle.api.tasks.PathSensitive
 import org.gradle.api.tasks.PathSensitivity
 import org.gradle.process.CommandLineArgumentProvider
 
-class AndroidStudioSystemProperties(
+class IdeSystemProperties(
     @get:Internal
-    val studioInstallation: AndroidStudioInstallation,
+    val ideInstallation: IdeInstallation,
     @get:Internal
-    val autoDownloadAndroidStudio: Provider<Boolean>,
+    val autoDownload: Provider<Boolean>,
     @get:Input
     val runInHeadlessMode: Provider<Boolean>,
+    @get:Input
+    val homePropertyName: String,
     providers: ProviderFactory
 ) : CommandLineArgumentProvider {
 
     @get:Optional
     @get:Nested
-    val studioInstallationProvider = providers.provider {
-        if (autoDownloadAndroidStudio.get()) {
-            studioInstallation
+    val ideInstallationProvider = providers.provider {
+        if (autoDownload.get()) {
+            ideInstallation
         } else {
             null
         }
@@ -34,9 +36,9 @@ class AndroidStudioSystemProperties(
 
     override fun asArguments(): Iterable<String> {
         val systemProperties = mutableListOf<String>()
-        if (autoDownloadAndroidStudio.get()) {
-            val androidStudioPath = studioInstallation.studioInstallLocation.get().asFile.absolutePath
-            systemProperties.add("-Dstudio.home=$androidStudioPath")
+        if (autoDownload.get()) {
+            val idePath = ideInstallation.installLocation.get().asFile.absolutePath
+            systemProperties.add("-D$homePropertyName=$idePath")
         }
         if (runInHeadlessMode.get()) {
             systemProperties.add("-Dstudio.tests.headless=true")
@@ -45,8 +47,8 @@ class AndroidStudioSystemProperties(
     }
 }
 
-abstract class AndroidStudioInstallation {
+abstract class IdeInstallation {
     @get:InputFiles
     @get:PathSensitive(PathSensitivity.RELATIVE)
-    abstract val studioInstallLocation: DirectoryProperty
+    abstract val installLocation: DirectoryProperty
 }

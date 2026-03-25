@@ -7,7 +7,7 @@ import java.util.Locale
 
 plugins {
     id("profiler.java-library")
-    id("profiler.android-studio-setup")
+    id("profiler.ide-setup")
     groovy
     application
     `maven-publish`
@@ -164,8 +164,15 @@ tasks.test {
     systemProperty("org.gradle.integtest.keepTestDirs", keepTestDirs.get())
 }
 
+val autoDownloadAndRunInHeadless = providers.gradleProperty("autoDownloadAndRunInHeadless").orNull == "true"
+
+intellijTests {
+    autoDownloadIntellij.set(autoDownloadAndRunInHeadless)
+    runIntellijInHeadlessMode.set(autoDownloadAndRunInHeadless)
+    testIntellijVersion.set(libs.versions.testIntellijVersion)
+}
+
 androidStudioTests {
-    val autoDownloadAndRunInHeadless = providers.gradleProperty("autoDownloadAndRunInHeadless").orNull == "true"
     runAndroidStudioInHeadlessMode.set(autoDownloadAndRunInHeadless)
     autoDownloadAndroidStudio.set(autoDownloadAndRunInHeadless)
     testAndroidStudioVersion.set(libs.versions.testAndroidStudioVersion)
