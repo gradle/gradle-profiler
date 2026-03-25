@@ -1,8 +1,7 @@
 [versions]
-kotlin = "2.1.20"
 groovy = "4.0.29"
-spock = "2.3-groovy-4.0"
 protobuf = "3.21.12"
+spock = "2.4-groovy-4.0"
 # Panda 2 (2025.3.2.6)
 testAndroidStudioVersion = "2025.3.2.6"
 # Download artifact suffix changed from version to codename starting with Panda
@@ -10,23 +9,38 @@ testAndroidStudioCodename = "panda2"
 testAndroidSdkVersion = "9.1.0"
 
 [libraries]
-toolingApi = "org.gradle:gradle-tooling-api:8.14.3"
-
-spock-core = { module = "org.spockframework:spock-core", version.ref = "spock" }
-spock-junit4 = { module = "org.spockframework:spock-junit4", version.ref = "spock" }
-junit-platform-launcher = { module = "org.junit.platform:junit-platform-launcher" }
-
-groovy-core = { module = "org.apache.groovy:groovy", version.ref = "groovy" }
+ant-compress = { module = "org.apache.ant:ant-compress", version = "1.5" }
+asm = { module = "org.ow2.asm:asm", version = "9.2" }
+commons-compress = { module = "org.apache.commons:commons-compress", version = "1.27.1" }
+commons-io = { module = "commons-io:commons-io", version = "2.16.1" }
+commons-math3 = { module = "org.apache.commons:commons-math3", version = "3.6.1" }
+dd-plist = { module = "com.googlecode.plist:dd-plist", version = "1.23" }
+findbugs-annotations = { module = "com.google.code.findbugs:annotations", version = "3.0.1" }
 groovy-xml = { module = "org.apache.groovy:groovy-xml", version.ref = "groovy" }
-
-typesafe-config = { module = "com.typesafe:config", version = "1.3.3" }
+gson = { module = "com.google.code.gson:gson", version = "2.11.0" }
+guava = { module = "com.google.guava:guava", version = "33.5.0-jre" }
+javaparser = { module = "com.github.javaparser:javaparser-core", version = "3.18.0" }
+jmc-flightrecorder = { module = "org.openjdk.jmc:flightrecorder", version = "8.3.1" }
+jopt = { module = "net.sf.jopt-simple:jopt-simple", version = "5.0.4" }
+junit-jupiter-api = { module = "org.junit.jupiter:junit-jupiter-api", version = "5.14.3" }
+junit-platform-launcher = { module = "org.junit.platform:junit-platform-launcher", version = "1.14.3" }
+kotlin-gradle-plugin = { module = "org.jetbrains.kotlin:kotlin-gradle-plugin", version = "2.1.20" }
+mockito-core = { module = "org.mockito:mockito-core", version = "5.23.0" }
+objenesis = { module = "org.objenesis:objenesis", version = "2.6" }
 protobuf-java = { module = "com.google.protobuf:protobuf-java", version.ref = "protobuf" }
 protobuf-protoc = { module = "com.google.protobuf:protoc", version.ref = "protobuf" }
-gson = { module = "com.google.code.gson:gson", version = "2.10" }
-guava = "com.google.guava:guava:33.5.0-jre"
+slf4j-simple = { module = "org.slf4j:slf4j-simple", version = "1.7.10" }
+spock-core = { module = "org.spockframework:spock-core", version.ref = "spock" }
+spock-junit4 = { module = "org.spockframework:spock-junit4", version.ref = "spock" }
+toolingApi = { module = "org.gradle:gradle-tooling-api", version = "8.14.3" }
+typesafe-config = { module = "com.typesafe:config", version = "1.3.3" }
 
 [bundles]
-testDependencies = ["spock-core", "spock-junit4", "junit-platform-launcher"]
+testDependencies = ["spock-core", "spock-junit4", "junit-platform-launcher", "mockito-core"]
 
 [plugins]
+intellij-platform = { id = "org.jetbrains.intellij.platform", version = "2.11.0" }
+nexus = { id = "io.github.gradle-nexus.publish-plugin", version = "2.0.0" }
+node = { id = "com.github.node-gradle.node", version = "7.1.0" }
 protobuf = { id = "com.google.protobuf", version = "0.9.4" }
+sdkman = { id = "io.sdkman.vendors", version = "2.0.0" }

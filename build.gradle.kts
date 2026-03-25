@@ -12,9 +12,9 @@ plugins {
     application
     `maven-publish`
     id("profiler.publication")
-    id("com.github.node-gradle.node") version "7.1.0"
-    id("io.sdkman.vendors") version "2.0.0"
-    id("io.github.gradle-nexus.publish-plugin") version "2.0.0"
+    alias(libs.plugins.node)
+    alias(libs.plugins.sdkman)
+    alias(libs.plugins.nexus)
 }
 
 description = "A tool to profile and benchmark Gradle builds"
@@ -32,21 +32,21 @@ dependencies {
     implementation(project(":scenario-definition"))
     implementation(project(":perfetto-trace"))
 
-    implementation("com.google.code.findbugs:annotations:3.0.1")
-    implementation("com.google.guava:guava:32.1.2-jre")
-    implementation("org.apache.commons:commons-math3:3.6.1")
-    implementation("com.github.javaparser:javaparser-core:3.18.0")
-    implementation("net.sf.jopt-simple:jopt-simple:5.0.4")
-    implementation("org.apache.ant:ant-compress:1.5")
-    implementation("org.apache.commons:commons-compress:1.27.1") {
+    implementation(libs.findbugs.annotations)
+    implementation(libs.guava)
+    implementation(libs.commons.math3)
+    implementation(libs.javaparser)
+    implementation(libs.jopt)
+    implementation(libs.ant.compress)
+    implementation(libs.commons.compress) {
         because("Avoid old version of commons-compress introduced by ant-compress")
     }
-    implementation("commons-io:commons-io:2.16.1")
-    implementation("org.openjdk.jmc:flightrecorder:8.3.1")
-    implementation("com.googlecode.plist:dd-plist:1.23") {
+    implementation(libs.commons.io)
+    implementation(libs.jmc.flightrecorder)
+    implementation(libs.dd.plist) {
         because("To extract launch details from Android Studio installation")
     }
-    implementation("com.google.code.gson:gson:2.11.0") {
+    implementation(libs.gson) {
         because("To write JSON output")
     }
 
@@ -60,13 +60,12 @@ dependencies {
     profilerPlugins(project(":heap-dump"))
     profilerPlugins(project(":studio-plugin"))
 
-    runtimeOnly("org.slf4j:slf4j-simple:1.7.10")
+    runtimeOnly(libs.slf4j.simple)
     testImplementation(libs.bundles.testDependencies)
     testImplementation(libs.groovy.xml)
     testImplementation(testFixtures(project(":studio-plugin")))
     testImplementation(project(":tooling-action"))
-    testRuntimeOnly("cglib:cglib:3.2.6")
-    testRuntimeOnly("org.objenesis:objenesis:2.6")
+    testRuntimeOnly(libs.objenesis)
 }
 
 tasks.withType<Jar>().configureEach {

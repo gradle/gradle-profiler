@@ -6,7 +6,7 @@ plugins {
     groovy
     `java-test-fixtures`
     id("profiler.kotlin-library")
-    id("org.jetbrains.intellij.platform") version "2.11.0"
+    alias(libs.plugins.intellij.platform)
 }
 
 description = "Contains logic for Android Studio plugin that communicates with profiler"
@@ -32,7 +32,7 @@ dependencies {
     testImplementation(libs.bundles.testDependencies)
     // IntelliJ's JUnit5TestSessionListener (from TestFrameworkType.Platform) references junit-jupiter-api,
     // but Spock only brings junit-platform-engine.
-    testRuntimeOnly("org.junit.jupiter:junit-jupiter-api:5.10.0")
+    testRuntimeOnly(libs.junit.jupiter.api)
     testFixturesImplementation(project(":client-protocol"))
     testFixturesImplementation(libs.bundles.testDependencies)
 

@@ -3,7 +3,7 @@ plugins {
 }
 
 dependencies {
-    implementation("org.ow2.asm:asm:9.2")
+    implementation(libs.asm)
     implementation(project(":client-protocol"))
 }
 

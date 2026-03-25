@@ -6,10 +6,30 @@
 version: 2
 updates:
   - package-ecosystem: "github-actions"
+    cooldown:
+      default-days: 7 # don't immediately create PRs for available updates
     directory: "/"
     schedule:
-      interval: "daily"
+      interval: "weekly"
     labels:
       - "@dev-productivity"
       # Updates to GitHub actions are not relevant to users
       - "no-changelog"
+  - package-ecosystem: "maven"
+    cooldown:
+      default-days: 7 # don't immediately create PRs for available updates
+    directory: "/.teamcity"
+    schedule:
+      interval: "weekly"
+    labels:
+      - "@dev-productivity"
+      # Updates to TeamCity DSL dependencies are not relevant to users
+      - "no-changelog"
+  - package-ecosystem: "gradle"
+    cooldown:
+      default-days: 7 # don't immediately create PRs for available updates
+    directory: "/"
+    schedule:
+      interval: "weekly"
+    labels:
+      - "@dev-productivity"
