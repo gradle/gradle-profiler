@@ -17,6 +17,7 @@ commons-io = { module = "commons-io:commons-io", version = "2.21.0" }
 commons-math3 = { module = "org.apache.commons:commons-math3", version = "3.6.1" }
 dd-plist = { module = "com.googlecode.plist:dd-plist", version = "1.29" }
 findbugs-annotations = { module = "com.google.code.findbugs:annotations", version = "3.0.1" }
+groovy-json = { module = "org.apache.groovy:groovy-json", version.ref = "groovy" }
 groovy-xml = { module = "org.apache.groovy:groovy-xml", version.ref = "groovy" }
 gson = { module = "com.google.code.gson:gson", version = "2.11.0" }
 guava = { module = "com.google.guava:guava", version = "33.5.0-jre" }
