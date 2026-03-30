@@ -166,7 +166,7 @@ tasks.test {
 }
 
 androidStudioTests {
-    val autoDownloadAndRunInHeadless = true
+    val autoDownloadAndRunInHeadless = providers.gradleProperty("autoDownloadAndRunInHeadless").orNull == "true"
     runAndroidStudioInHeadlessMode.set(autoDownloadAndRunInHeadless)
     autoDownloadAndroidStudio.set(autoDownloadAndRunInHeadless)
     testAndroidStudioVersion.set(libs.versions.testAndroidStudioVersion)
