@@ -19,7 +19,7 @@ findbugs-annotations = { module = "com.google.code.findbugs:annotations", versio
 groovy-xml = { module = "org.apache.groovy:groovy-xml", version.ref = "groovy" }
 gson = { module = "com.google.code.gson:gson", version = "2.11.0" }
 guava = { module = "com.google.guava:guava", version = "33.5.0-jre" }
-javaparser = { module = "com.github.javaparser:javaparser-core", version = "3.18.0" }
+javaparser = { module = "com.github.javaparser:javaparser-core", version = "3.28.0" }
 jmc-flightrecorder = { module = "org.openjdk.jmc:flightrecorder", version = "8.3.1" }
 jopt = { module = "net.sf.jopt-simple:jopt-simple", version = "5.0.4" }
 junit-jupiter-api = { module = "org.junit.jupiter:junit-jupiter-api", version = "6.0.3" }
