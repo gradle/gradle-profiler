@@ -54,7 +54,7 @@ class GradleProfilerStartupActivity : ProjectActivity {
     }
 
     private fun logModifiedRegistryEntries() {
-        val studioPropertiesPath = System.getenv("IDEA_PROPERTIES") ?: System.getenv("STUDIO_PROPERTIES")
+        val studioPropertiesPath = System.getenv("STUDIO_PROPERTIES")
         if (studioPropertiesPath == null || !File(studioPropertiesPath).exists()) {
             return
         }
