@@ -2,7 +2,7 @@ import org.jetbrains.intellij.platform.gradle.tasks.PrepareSandboxTask
 
 plugins {
     id("profiler.kotlin-library")
-    id("org.jetbrains.intellij.platform") version "2.11.0"
+    alias(libs.plugins.intellij.platform)
 }
 
 description = "Contains logic for Android Studio plugin that communicates with profiler"

@@ -29,26 +29,20 @@ class GradleProfilerStartupActivity : ProjectActivity {
     override suspend fun execute(project: Project) {
         LOG.info("Project opened")
         logModifiedRegistryEntries()
-        if (System.getProperty(PROFILER_PORT_PROPERTY) != null) {
-            // If we don't disable external annotations, Android Studio will download some artifacts
-            // to .m2 folder if some project has for example com.fasterxml.jackson.core:jackson-core as a dependency
-            disableDownloadOfExternalAnnotations(project)
-            // Register system listener already here, so we can catch any failure for syncs that are automatically started
-            val gradleSystemListener = GradleSystemListener().apply {
-                ExternalSystemProgressNotificationManager.getInstance().addNotificationListener(this)
-            }
-            project.setTrusted(true)
+        if (System.getProperty(PROFILER_PORT_PROPERTY) == null) return
+        // If we don't disable external annotations, Android Studio will download some artifacts
+        // to .m2 folder if some project has for example com.fasterxml.jackson.core:jackson-core as a dependency
+        disableDownloadOfExternalAnnotations(project)
+        // Register system listener already here, so we can catch any failure for syncs that are automatically started
+        val gradleSystemListener = GradleSystemListener()
+        ExternalSystemProgressNotificationManager.getInstance().addNotificationListener(gradleSystemListener, project)
 
-            ApplicationManager.getApplication().executeOnPooledThread {
-                try {
-                    val lastRequest = listenForSyncRequests(project, gradleSystemListener)
-                    if (lastRequest.type == StudioRequestType.EXIT_IDE) {
-                        AndroidStudioSystemHelper.exit(project)
-                    }
-                } finally {
-                    ExternalSystemProgressNotificationManager.getInstance()
-                        .removeNotificationListener(gradleSystemListener)
-                }
+        project.setTrusted(true)
+
+        ApplicationManager.getApplication().executeOnPooledThread {
+            val lastRequest = listenForSyncRequests(project, gradleSystemListener)
+            if (lastRequest.type == StudioRequestType.EXIT_IDE) {
+                AndroidStudioSystemHelper.exit(project)
             }
         }
     }

@@ -26,7 +26,7 @@ public class AndroidStudioSystemHelper {
      * Gets the result of startup sync by checking if there was already any sync done before. Otherwise, it starts a new sync.
      */
     public static GradleSyncResult getStartupSyncResult(Project project, GradleSystemListener gradleSystemListener) {
-        if (!gradleSystemListener.hasSyncCompleted()) {
+        if (!gradleSystemListener.hasAnySyncCompleted()) {
             // Sync was not run before, we need to run it manually
             GradleSyncResult result = startManualSync(project, gradleSystemListener);
             if (result.getResult() == StudioSyncRequestResult.FAILED) {

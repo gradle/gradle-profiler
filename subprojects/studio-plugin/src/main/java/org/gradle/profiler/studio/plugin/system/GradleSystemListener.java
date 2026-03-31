@@ -13,7 +13,7 @@ import java.util.concurrent.atomic.AtomicReference;
 public class GradleSystemListener extends ExternalSystemTaskNotificationListenerAdapter {
     private final AtomicReference<Exception> exception = new AtomicReference<>();
     private final AtomicReference<CompletableFuture<Void>> currentSyncFutureRef = new AtomicReference<>();
-    private final AtomicBoolean syncCompleted = new AtomicBoolean(false);
+    private final AtomicBoolean hasAnySyncCompleted = new AtomicBoolean(false);
 
     @Override
     public void onStart(@NotNull ExternalSystemTaskId id, String workingDir) {
@@ -28,7 +28,7 @@ public class GradleSystemListener extends ExternalSystemTaskNotificationListener
     @Override
     public void onSuccess(@NotNull ExternalSystemTaskId id) {
         if (GradleConstants.SYSTEM_ID.equals(id.getProjectSystemId())) {
-            syncCompleted.set(true);
+            hasAnySyncCompleted.set(true);
             CompletableFuture<Void> future = currentSyncFutureRef.getAndSet(null);
             if (future != null) {
                 future.complete(null);
@@ -40,7 +40,7 @@ public class GradleSystemListener extends ExternalSystemTaskNotificationListener
     public void onFailure(@NotNull ExternalSystemTaskId id, @NotNull Exception e) {
         if (GradleConstants.SYSTEM_ID.equals(id.getProjectSystemId())) {
             exception.set(e);
-            syncCompleted.set(true);
+            hasAnySyncCompleted.set(true);
             CompletableFuture<Void> future = currentSyncFutureRef.getAndSet(null);
             if (future != null) {
                 future.complete(null);
@@ -51,7 +51,7 @@ public class GradleSystemListener extends ExternalSystemTaskNotificationListener
     @Override
     public void onCancel(@NotNull ExternalSystemTaskId id) {
         if (GradleConstants.SYSTEM_ID.equals(id.getProjectSystemId())) {
-            syncCompleted.set(true);
+            hasAnySyncCompleted.set(true);
             CompletableFuture<Void> future = currentSyncFutureRef.getAndSet(null);
             if (future != null) {
                 future.complete(null);
@@ -64,8 +64,8 @@ public class GradleSystemListener extends ExternalSystemTaskNotificationListener
         return exception.get();
     }
 
-    public boolean hasSyncCompleted() {
-        return syncCompleted.get();
+    public boolean hasAnySyncCompleted() {
+        return hasAnySyncCompleted.get();
     }
 
     /**
@@ -74,7 +74,9 @@ public class GradleSystemListener extends ExternalSystemTaskNotificationListener
      */
     public CompletableFuture<Void> awaitNextSyncCompletion() {
         CompletableFuture<Void> future = new CompletableFuture<>();
-        currentSyncFutureRef.set(future);
+        if (!currentSyncFutureRef.compareAndSet(null, future)) {
+            throw new IllegalStateException("A sync is already in progress or being awaited");
+        }
         return future;
     }
 

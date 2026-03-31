@@ -14,6 +14,7 @@ import com.intellij.openapi.startup.ProjectActivity
 class AndroidStudioProfilerStartupActivity : ProjectActivity {
     override suspend fun execute(project: Project) {
         if (System.getProperty(GradleProfilerStartupActivity.PROFILER_PORT_PROPERTY) != null) {
+            // https://github.com/gradle/gradle-profiler/issues/754
             GradleProjectInfo.getInstance(project).isSkipStartupActivity = true
         }
     }
