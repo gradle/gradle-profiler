@@ -107,10 +107,6 @@ public class AsyncProfilerController implements InstrumentingProfiler.SnapshotCa
 
     @Override
     public void stopRecording(String pid) {
-        if (!ProcessHandle.of(Long.parseLong(pid)).isPresent()) {
-            System.out.println("Process " + pid + " has already exited, profiling data was flushed by the JVM shutdown hook.");
-            return;
-        }
         new CommandExec().run(
             profilerConfig.getDistribution().getExecutable().getAbsolutePath(),
             "stop",

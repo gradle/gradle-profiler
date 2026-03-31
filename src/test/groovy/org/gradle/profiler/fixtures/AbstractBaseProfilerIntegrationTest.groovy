@@ -140,6 +140,16 @@ println "<invocations: " + (++Counter.invocations) + ">"
 class Counter {
     static int invocations = 0
 }
+
+// Generate CPU activity so profilers (JFR, async-profiler) reliably capture samples
+tasks.configureEach {
+    doLast {
+        def hash = 0
+        for (int i = 0; i < 500_000; i++) {
+            hash = hash * 31 + i
+        }
+    }
+}
 """
     }
 

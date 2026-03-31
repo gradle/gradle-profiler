@@ -178,8 +178,6 @@ androidStudioTests {
     autoDownloadAndroidSdk.set(autoDownloadAndRunInHeadless)
 }
 
-// dummy change
-
 val testReports = mapOf(
     "testHtmlReport" to "example",
     "testHtmlReportSingle" to "example-single",
