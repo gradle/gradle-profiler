@@ -9,6 +9,25 @@ import spock.lang.Requires
 @Requires({ !OperatingSystem.isMacOS() || JavaVersion.current() < JavaVersion.VERSION_21 })
 @Requires({ it.instance.isCurrentJvmSupportsMultipleGradleVersions() })
 class DifferentialFlameGraphIntegrationTest extends AbstractProfilerIntegrationTest implements FlameGraphFixture {
+
+    @Override
+    def instrumentedBuildScript() {
+        super.instrumentedBuildScript()
+        // Append CPU-intensive work so profilers (JFR, async-profiler) reliably capture samples.
+        // JFR samples at 10ms intervals, so each task needs to burn at least ~50ms of CPU.
+        buildFile << """
+            tasks.configureEach {
+                doLast {
+                    def hash = 0
+                    for (int i = 0; i < 10_000_000; i++) {
+                        hash = hash * 31 + i
+                    }
+                    println(hash)
+                }
+            }
+        """
+    }
+
     def "generates differential flame graphs with #profiler"() {
         given:
         instrumentedBuildScript()

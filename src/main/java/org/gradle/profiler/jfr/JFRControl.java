@@ -46,6 +46,9 @@ public class JFRControl implements InstrumentingProfiler.SnapshotCapturingProfil
         String jfrFileName = jfrFile.getName();
         String outputBaseName = jfrFileName.substring(0, jfrFileName.length() - 4);
         List<Stacks> stackFiles = stacksConverter.generateStacks(jfrFile, outputBaseName);
+        if (stackFiles.isEmpty()) {
+            throw new RuntimeException("No stacks have been captured by JFR. The profiled builds may have been too short to collect any samples.");
+        }
         flameGraphGenerator.generateGraphs(jfrFile.getParentFile(), stackFiles);
         System.out.println("Wrote profiling data to " + jfrFile.getPath());
     }
