@@ -39,7 +39,7 @@ typesafe-config = { module = "com.typesafe:config", version = "1.3.3" }
 testDependencies = ["spock-core", "spock-junit4", "junit-platform-launcher", "mockito-core"]
 
 [plugins]
-intellij-platform = { id = "org.jetbrains.intellij.platform", version = "2.11.0" }
+intellij-platform = { id = "org.jetbrains.intellij.platform", version = "2.13.1" }
 nexus = { id = "io.github.gradle-nexus.publish-plugin", version = "2.0.0" }
 node = { id = "com.github.node-gradle.node", version = "7.1.0" }
 protobuf = { id = "com.google.protobuf", version = "0.9.4" }
