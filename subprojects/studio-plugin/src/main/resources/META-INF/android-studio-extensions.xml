@@ -1,0 +1,7 @@
+<idea-plugin>
+    <extensions defaultExtensionNs="com.intellij">
+        <postStartupActivity
+            implementation="org.gradle.profiler.studio.plugin.AndroidStudioProfilerStartupActivity"
+            order="first"/>
+    </extensions>
+</idea-plugin>

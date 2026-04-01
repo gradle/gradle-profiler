@@ -6,15 +6,33 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.gradle.util.GradleConstants;
 
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 
 public class GradleSystemListener extends ExternalSystemTaskNotificationListenerAdapter {
     private final AtomicReference<Exception> exception = new AtomicReference<>();
+    private final AtomicReference<CompletableFuture<Void>> currentSyncFutureRef = new AtomicReference<>();
+    private final AtomicBoolean hasAnySyncCompleted = new AtomicBoolean(false);
 
     @Override
     public void onStart(@NotNull ExternalSystemTaskId id, String workingDir) {
         if (GradleConstants.SYSTEM_ID.equals(id.getProjectSystemId())) {
             exception.set(null);
+            // Only create a new future if one wasn't already set by awaitNextSyncCompletion().
+            // Using compareAndSet avoids replacing a future that the caller is waiting on.
+            currentSyncFutureRef.compareAndSet(null, new CompletableFuture<>());
+        }
+    }
+
+    @Override
+    public void onSuccess(@NotNull ExternalSystemTaskId id) {
+        if (GradleConstants.SYSTEM_ID.equals(id.getProjectSystemId())) {
+            hasAnySyncCompleted.set(true);
+            CompletableFuture<Void> future = currentSyncFutureRef.getAndSet(null);
+            if (future != null) {
+                future.complete(null);
+            }
         }
     }
 
@@ -22,11 +40,53 @@ public class GradleSystemListener extends ExternalSystemTaskNotificationListener
     public void onFailure(@NotNull ExternalSystemTaskId id, @NotNull Exception e) {
         if (GradleConstants.SYSTEM_ID.equals(id.getProjectSystemId())) {
             exception.set(e);
+            hasAnySyncCompleted.set(true);
+            CompletableFuture<Void> future = currentSyncFutureRef.getAndSet(null);
+            if (future != null) {
+                future.complete(null);
+            }
+        }
+    }
+
+    @Override
+    public void onCancel(@NotNull ExternalSystemTaskId id) {
+        if (GradleConstants.SYSTEM_ID.equals(id.getProjectSystemId())) {
+            hasAnySyncCompleted.set(true);
+            CompletableFuture<Void> future = currentSyncFutureRef.getAndSet(null);
+            if (future != null) {
+                future.complete(null);
+            }
         }
     }
 
     @Nullable
     public Exception getLastException() {
         return exception.get();
+    }
+
+    public boolean hasAnySyncCompleted() {
+        return hasAnySyncCompleted.get();
+    }
+
+    /**
+     * Returns a future that completes when the next sync finishes.
+     * Must be called BEFORE triggering the sync.
+     */
+    public CompletableFuture<Void> awaitNextSyncCompletion() {
+        CompletableFuture<Void> future = new CompletableFuture<>();
+        if (!currentSyncFutureRef.compareAndSet(null, future)) {
+            throw new IllegalStateException("A sync is already in progress or being awaited");
+        }
+        return future;
+    }
+
+    /**
+     * Waits for any currently running sync to finish.
+     */
+    public void waitForCurrentSyncToFinish() {
+        CompletableFuture<Void> future = currentSyncFutureRef.get();
+        if (future != null) {
+            future.join();
+        }
     }
 }

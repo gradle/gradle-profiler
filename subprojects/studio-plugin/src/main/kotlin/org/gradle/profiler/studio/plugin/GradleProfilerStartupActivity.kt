@@ -1,6 +1,5 @@
 package org.gradle.profiler.studio.plugin
 
-import com.android.tools.idea.gradle.project.GradleProjectInfo
 import com.intellij.ide.impl.setTrusted
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.diagnostic.Logger
@@ -30,26 +29,20 @@ class GradleProfilerStartupActivity : ProjectActivity {
     override suspend fun execute(project: Project) {
         LOG.info("Project opened")
         logModifiedRegistryEntries()
-        if (System.getProperty(PROFILER_PORT_PROPERTY) != null) {
-            // This solves the issue where Android Studio would run the Gradle sync automatically on the first import.
-            // Unfortunately it seems we can't always detect it because it happens very late and due to that there might
-            // a case where two simultaneous syncs would be run: one from automatic sync trigger and one from our trigger.
-            // With this line we disable that automatic sync, but we still trigger our sync later in the code.
-            GradleProjectInfo.getInstance(project).isSkipStartupActivity = true
-            // If we don't disable external annotations, Android Studio will download some artifacts
-            // to .m2 folder if some project has for example com.fasterxml.jackson.core:jackson-core as a dependency
-            disableDownloadOfExternalAnnotations(project)
-            // Register system listener already here, so we can catch any failure for syncs that are automatically started
-            val gradleSystemListener = GradleSystemListener().apply {
-                ExternalSystemProgressNotificationManager.getInstance().addNotificationListener(this)
-            }
-            project.setTrusted(true)
+        if (System.getProperty(PROFILER_PORT_PROPERTY) == null) return
+        // If we don't disable external annotations, Android Studio will download some artifacts
+        // to .m2 folder if some project has for example com.fasterxml.jackson.core:jackson-core as a dependency
+        disableDownloadOfExternalAnnotations(project)
+        // Register system listener already here, so we can catch any failure for syncs that are automatically started
+        val gradleSystemListener = GradleSystemListener()
+        ExternalSystemProgressNotificationManager.getInstance().addNotificationListener(gradleSystemListener, project)
 
-            ApplicationManager.getApplication().executeOnPooledThread {
-                val lastRequest = listenForSyncRequests(project, gradleSystemListener)
-                if (lastRequest.type == StudioRequestType.EXIT_IDE) {
-                    AndroidStudioSystemHelper.exit(project)
-                }
+        project.setTrusted(true)
+
+        ApplicationManager.getApplication().executeOnPooledThread {
+            val lastRequest = listenForSyncRequests(project, gradleSystemListener)
+            if (lastRequest.type == StudioRequestType.EXIT_IDE) {
+                AndroidStudioSystemHelper.exit(project)
             }
         }
     }

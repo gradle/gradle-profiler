@@ -20,11 +20,11 @@ import java.util.concurrent.TimeUnit;
 
 import static org.gradle.profiler.client.protocol.messages.StudioRequest.StudioRequestType.EXIT_IDE;
 import static org.gradle.profiler.client.protocol.messages.StudioRequest.StudioRequestType.STOP_RECEIVING_EVENTS;
-import static org.gradle.profiler.studio.plugin.system.AndroidStudioSystemHelper.getStartupSyncResult;
-import static org.gradle.profiler.studio.plugin.system.AndroidStudioSystemHelper.startManualSync;
-import static org.gradle.profiler.studio.plugin.system.AndroidStudioSystemHelper.waitOnBackgroundProcessesFinish;
 import static org.gradle.profiler.studio.plugin.system.AndroidStudioSystemHelper.waitOnPostStartupActivities;
 import static org.gradle.profiler.studio.plugin.system.AndroidStudioSystemHelper.waitOnPreviousGradleSyncFinish;
+import static org.gradle.profiler.studio.plugin.system.AndroidStudioSystemHelper.waitOnBackgroundProcessesFinish;
+import static org.gradle.profiler.studio.plugin.system.AndroidStudioSystemHelper.getStartupSyncResult;
+import static org.gradle.profiler.studio.plugin.system.AndroidStudioSystemHelper.startManualSync;
 
 public class GradleProfilerClient {
 
@@ -91,14 +91,16 @@ public class GradleProfilerClient {
         // Also in some versions sync triggers first and then indexing and in others it's the opposite,
         // so we wait for sync finishing and then for background processes and then for sync again.
         if (isStartup) {
-            waitOnPreviousGradleSyncFinish(project);
+            waitOnPreviousGradleSyncFinish(gradleSystemListener);
             waitOnBackgroundProcessesFinish(project);
-            waitOnPreviousGradleSyncFinish(project);
+            waitOnPreviousGradleSyncFinish(gradleSystemListener);
         }
 
         LOG.info(String.format("[SYNC REQUEST %s] Sync has started%n", request.getId()));
         Stopwatch stopwatch = isStartup ? startupStopwatch : Stopwatch.createStarted();
-        GradleSyncResult result = isStartup ? getStartupSyncResult(project, gradleSystemListener) : startManualSync(project, gradleSystemListener);
+        GradleSyncResult result = isStartup
+            ? getStartupSyncResult(project, gradleSystemListener)
+            : startManualSync(project, gradleSystemListener);
         LOG.info(String.format("[SYNC REQUEST %s] '%s'%n", request.getId(), result.getResult()));
         client.send(new StudioSyncRequestCompleted(request.getId(), stopwatch.elapsed(TimeUnit.MILLISECONDS), result.getResult(), result.getErrorMessage()));
     }
