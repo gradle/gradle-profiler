@@ -16,15 +16,16 @@ class DifferentialFlameGraphIntegrationTest extends AbstractProfilerIntegrationT
         // Append CPU-intensive work so profilers (JFR, async-profiler) reliably capture samples.
         // JFR samples at 10ms intervals, so each task needs to burn at least ~50ms of CPU.
         buildFile << """
-tasks.configureEach {
-    doLast {
-        def hash = 0
-        for (int i = 0; i < 10_000_000; i++) {
-            hash = hash * 31 + i
-        }
-    }
-}
-"""
+            tasks.configureEach {
+                doLast {
+                    def hash = 0
+                    for (int i = 0; i < 10_000_000; i++) {
+                        hash = hash * 31 + i
+                    }
+                    println(hash)
+                }
+            }
+        """
     }
 
     def "generates differential flame graphs with #profiler"() {
