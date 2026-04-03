@@ -22,12 +22,6 @@ public class HeadlessApplicationStarter implements ApplicationStarter {
         return NOT_IN_EDT;
     }
 
-    @Nullable
-    @Override
-    public String getCommandName() {
-        return "headless-starter";
-    }
-
     @Override
     public boolean isHeadless() {
         return true;

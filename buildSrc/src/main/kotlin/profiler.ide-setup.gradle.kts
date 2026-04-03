@@ -75,7 +75,7 @@ dependencies {
         else -> throw IllegalStateException("Unsupported OS: $os")
     }
     intellijRuntime(intellijExtension.version.map { version ->
-        "intellij-idea:ideaIC:$version@$intellijFileExtension"
+        "intellij-idea:ideaIU:$version@$intellijFileExtension"
     })
 }
 
@@ -88,7 +88,7 @@ val unpackAndroidStudio = tasks.register<ExtractIdeTask>("unpackAndroidStudio") 
 }
 
 val unpackIntellij = tasks.register<ExtractIdeTask>("unpackIntellij") {
-    dmgAppName = "IntelliJ IDEA CE.app"
+    dmgAppName = "IntelliJ IDEA.app"
     // Windows ZIP is flat, Linux tar.gz has a wrapping directory
     stripTopLevelDirectory = !isWindows()
     ideDistribution.from(intellijRuntime)

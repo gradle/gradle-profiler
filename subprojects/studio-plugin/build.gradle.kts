@@ -18,11 +18,17 @@ dependencies {
     implementation(project(":client-protocol"))
 
     intellijPlatform {
-        androidStudio("2024.1.1.11")
+        intellijIdea("2025.3")
         bundledPlugin("com.intellij.java")
+        bundledPlugin("com.intellij.gradle")
         bundledPlugin("org.jetbrains.plugins.gradle")
-        bundledPlugin("org.jetbrains.android")
+        plugin("org.jetbrains.android", "253.28294.334")
     }
+}
+
+// IntelliJ 2025.3 is compiled for Java 21
+kotlin {
+    jvmToolchain(21)
 }
 
 // Exclude Spock from test sandbox to avoid duplicate on classpath (Gradle provides it at runtime)
@@ -34,7 +40,7 @@ intellijPlatform {
     pluginConfiguration {
         name = "gradle-profiler-studio-plugin"
         ideaVersion {
-            sinceBuild = provider { "231" }
+            sinceBuild = provider { "253" }
             untilBuild = provider { null }
         }
     }
