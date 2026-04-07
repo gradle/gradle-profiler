@@ -1,0 +1,19 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+if [[ -n "${DEVELOCITY_ACCESS_KEY:-}" ]]; then
+  access_key="${DEVELOCITY_ACCESS_KEY#ge.gradle.org=}"
+  echo "DEVELOCITY_ACCESS_KEY prefix: ${access_key:0:10}"
+else
+  access_key=""
+  echo "DEVELOCITY_ACCESS_KEY is not set"
+fi
+
+if [[ -z "${access_key}" ]]; then
+  echo "DEVELOCITY_ACCESS_KEY is not set" >&2
+  exit 1
+fi
+
+curl \
+  -H "Authorization: Bearer ${access_key}" \
+  "https://ge.gradle.org/api/builds?since=0&maxBuilds=3"
