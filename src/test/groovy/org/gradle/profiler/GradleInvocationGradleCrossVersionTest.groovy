@@ -170,6 +170,32 @@ class GradleInvocationGradleCrossVersionTest extends AbstractGradleCrossVersionT
         resultFile.containsNoDaemonScenario(gradleVersion, "s1", ["assemble"])
     }
 
+    def "can benchmark using tooling API and cold daemon with zero warm-ups"() {
+        given:
+        instrumentedBuildScript()
+
+        when:
+        run(["--gradle-version", gradleVersion, "--benchmark", "--cold-daemon", "--warmups", "0", "assemble"])
+
+        then:
+        logFile.containsOne("Run using: Tooling API with cold daemon")
+        logFile.find("* Running warm-up build").size() == 0
+        logFile.find("* Running measured build").size() == 10
+    }
+
+    def "can benchmark using `gradle` command and no daemon with zero warm-ups"() {
+        given:
+        instrumentedBuildScript()
+
+        when:
+        run(["--gradle-version", gradleVersion, "--benchmark", "--no-daemon", "--warmups", "0", "assemble"])
+
+        then:
+        logFile.containsOne("Run using: `gradle` command with --no-daemon")
+        logFile.find("* Running warm-up build").size() == 0
+        logFile.find("* Running measured build").size() == 10
+    }
+
     def "can pass jvm args with spaces to #invokerString and #daemon daemon"() {
         given:
         instrumentedBuildScript()

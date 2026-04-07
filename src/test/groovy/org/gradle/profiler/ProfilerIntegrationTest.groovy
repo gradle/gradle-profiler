@@ -77,10 +77,10 @@ class ProfilerIntegrationTest extends AbstractProfilerIntegrationTest {
         thrown(IllegalArgumentException)
 
         and:
-        output.contains("Scenario using Gradle ${minimalSupportedGradleVersion}: You can not skip warm-ups when profiling or benchmarking a Gradle build. Use --no-daemon or --cold-daemon if you want to profile or benchmark JVM startup")
+        output.contains("Scenario using Gradle ${minimalSupportedGradleVersion}: You can not skip warm-ups when profiling or benchmarking a Gradle build with a warm daemon. Use --no-daemon or --cold-daemon if you want to profile or benchmark with zero warm-ups.")
     }
 
-    def "complains when benchmarking scenario and skipping warm-up builds"() {
+    def "complains when benchmarking scenario and skipping warm-up builds with warm daemon"() {
         given:
         def scenarioFile = file("benchmark.conf")
         scenarioFile.text = """
@@ -106,7 +106,7 @@ class ProfilerIntegrationTest extends AbstractProfilerIntegrationTest {
         thrown(IllegalArgumentException)
 
         and:
-        output.contains("Scenario help using Gradle ${minimalSupportedGradleVersion}: You can not skip warm-ups when profiling or benchmarking a Gradle build. Use --no-daemon or --cold-daemon if you want to profile or benchmark JVM startup")
+        output.contains("Scenario help using Gradle ${minimalSupportedGradleVersion}: You can not skip warm-ups when profiling or benchmarking a Gradle build with a warm daemon. Use --no-daemon or --cold-daemon if you want to profile or benchmark with zero warm-ups.")
     }
 
     def "reports build failures"() {

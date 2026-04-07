@@ -142,8 +142,8 @@ public class GradleScenarioDefinition extends ScenarioDefinition {
 
     @Override
     public void visitProblems(InvocationSettings settings, Consumer<String> reporter) {
-        if (getWarmUpCount() < 1) {
-            reporter.accept("You can not skip warm-ups when profiling or benchmarking a Gradle build. Use --no-daemon or --cold-daemon if you want to profile or benchmark JVM startup");
+        if (getWarmUpCount() < 1 && getInvoker().isReuseDaemon()) {
+            reporter.accept("You can not skip warm-ups when profiling or benchmarking a Gradle build with a warm daemon. Use --no-daemon or --cold-daemon if you want to profile or benchmark with zero warm-ups.");
         }
         if (settings.isMeasureGarbageCollection() && isBuildServiceUnsupported()) {
             reporter.accept("Measuring garbage collection is only supported for Gradle 6.1-milestone-3 and later");
