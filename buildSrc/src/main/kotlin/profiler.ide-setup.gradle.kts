@@ -40,15 +40,15 @@ repositories {
 }
 
 val androidStudioExtension = extensions.create<AndroidStudioTestExtension>("androidStudioTests").apply {
-    autoDownloadAndroidStudio.convention(false)
-    runAndroidStudioInHeadlessMode.convention(false)
+    autoDownload.convention(false)
+    headlessMode.convention(false)
     autoDownloadAndroidSdk.convention(false)
-    testAndroidStudioCodename.convention("")
+    codename.convention("")
 }
 
 val intellijExtension = extensions.create<IntellijTestExtension>("intellijTests").apply {
-    autoDownloadIntellij.convention(false)
-    runIntellijInHeadlessMode.convention(false)
+    autoDownload.convention(false)
+    headlessMode.convention(false)
 }
 
 val androidStudioRuntime by configurations.creating
@@ -62,7 +62,7 @@ dependencies {
         isLinux() -> "linux.tar.gz"
         else -> throw IllegalStateException("Unsupported OS: $os")
     }
-    androidStudioRuntime(androidStudioExtension.testAndroidStudioCodename.zip(androidStudioExtension.testAndroidStudioVersion) { codename, version ->
+    androidStudioRuntime(androidStudioExtension.codename.zip(androidStudioExtension.version) { codename, version ->
         val artifact = if (codename.isEmpty()) "android-studio" else "android-studio-$codename"
         "android-studio:$artifact:$version@$androidStudioFileExtension"
     })
@@ -74,7 +74,7 @@ dependencies {
         isLinux() -> "tar.gz"
         else -> throw IllegalStateException("Unsupported OS: $os")
     }
-    intellijRuntime(intellijExtension.testIntellijVersion.map { version ->
+    intellijRuntime(intellijExtension.version.map { version ->
         "intellij-idea:ideaIC:$version@$intellijFileExtension"
     })
 }
@@ -96,8 +96,8 @@ val unpackIntellij = tasks.register<ExtractIdeTask>("unpackIntellij") {
 }
 
 val installAndroidSdk = tasks.register<InstallAndroidSdkTask>("installAndroidSdk") {
-    androidSdkVersion.set(androidStudioExtension.testAndroidSdkVersion)
-    androidProjectDir.set(layout.buildDirectory.dir("installAndroidSdk/android-sdk-project"))
+    androidSdkVersion = androidStudioExtension.sdkVersion
+    androidProjectDir = layout.buildDirectory.dir("installAndroidSdk/android-sdk-project")
     val autoDownloadAndroidSdk = androidStudioExtension.autoDownloadAndroidSdk
     onlyIf { autoDownloadAndroidSdk.get() }
 }
@@ -115,16 +115,16 @@ tasks.withType<Test>().configureEach {
     jvmArgumentProviders.add(
         IdeSystemProperties(
             androidStudioInstallation,
-            androidStudioExtension.autoDownloadAndroidStudio,
-            androidStudioExtension.runAndroidStudioInHeadlessMode,
+            androidStudioExtension.autoDownload,
+            androidStudioExtension.headlessMode,
             "studio.home",
         )
     )
     jvmArgumentProviders.add(
         IdeSystemProperties(
             intellijInstallation,
-            intellijExtension.autoDownloadIntellij,
-            intellijExtension.runIntellijInHeadlessMode,
+            intellijExtension.autoDownload,
+            intellijExtension.headlessMode,
             "idea.home",
         )
     )

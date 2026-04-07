@@ -169,17 +169,17 @@ val autoDownloadAndRunInHeadless = providers.gradleProperty("autoDownloadAndRunI
     .orElse(false)
 
 intellijTests {
-    autoDownloadIntellij = autoDownloadAndRunInHeadless
-    runIntellijInHeadlessMode = autoDownloadAndRunInHeadless
-    testIntellijVersion = libs.versions.testIntellijVersion
+    autoDownload = autoDownloadAndRunInHeadless
+    headlessMode = autoDownloadAndRunInHeadless
+    version = libs.versions.testIntellijVersion
 }
 
 androidStudioTests {
-    runAndroidStudioInHeadlessMode = autoDownloadAndRunInHeadless
-    autoDownloadAndroidStudio = autoDownloadAndRunInHeadless
-    testAndroidStudioVersion = libs.versions.testAndroidStudioVersion
-    testAndroidStudioCodename = libs.versions.testAndroidStudioCodename
-    testAndroidSdkVersion = libs.versions.testAndroidSdkVersion
+    headlessMode = autoDownloadAndRunInHeadless
+    autoDownload = autoDownloadAndRunInHeadless
+    version = libs.versions.testAndroidStudioVersion
+    codename = libs.versions.testAndroidStudioCodename
+    sdkVersion = libs.versions.testAndroidSdkVersion
     // For local development it's easier to setup Android SDK with Android Studio, since auto download needs ANDROID_HOME or ANDROID_SDK_ROOT
     // to be set with an accepted license in it. See https://developer.android.com/studio/intro/update.html#download-with-gradle.
     autoDownloadAndroidSdk = autoDownloadAndRunInHeadless

@@ -3,12 +3,10 @@ package extensions
 import org.gradle.api.provider.Property
 
 interface AndroidStudioTestExtension {
-
-    val autoDownloadAndroidStudio: Property<Boolean>
-    val testAndroidStudioVersion: Property<String>
-    val testAndroidStudioCodename: Property<String>
-    val runAndroidStudioInHeadlessMode: Property<Boolean>
+    val autoDownload: Property<Boolean>
+    val version: Property<String>
+    val codename: Property<String>
+    val headlessMode: Property<Boolean>
     val autoDownloadAndroidSdk: Property<Boolean>
-    val testAndroidSdkVersion: Property<String>
-
+    val sdkVersion: Property<String>
 }
