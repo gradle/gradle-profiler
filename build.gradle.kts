@@ -7,7 +7,7 @@ import java.util.Locale
 
 plugins {
     id("profiler.java-library")
-    id("profiler.android-studio-setup")
+    id("profiler.ide-setup")
     groovy
     application
     `maven-publish`
@@ -164,16 +164,25 @@ tasks.test {
     systemProperty("org.gradle.integtest.keepTestDirs", keepTestDirs.get())
 }
 
+val autoDownloadAndRunInHeadless = providers.gradleProperty("autoDownloadAndRunInHeadless")
+    .map { it.toBoolean() }
+    .orElse(false)
+
+intellijTests {
+    autoDownload = autoDownloadAndRunInHeadless
+    headlessMode = autoDownloadAndRunInHeadless
+    version = libs.versions.testIntellijVersion
+}
+
 androidStudioTests {
-    val autoDownloadAndRunInHeadless = providers.gradleProperty("autoDownloadAndRunInHeadless").orNull == "true"
-    runAndroidStudioInHeadlessMode.set(autoDownloadAndRunInHeadless)
-    autoDownloadAndroidStudio.set(autoDownloadAndRunInHeadless)
-    testAndroidStudioVersion.set(libs.versions.testAndroidStudioVersion)
-    testAndroidStudioCodename.set(libs.versions.testAndroidStudioCodename)
-    testAndroidSdkVersion.set(libs.versions.testAndroidSdkVersion)
+    headlessMode = autoDownloadAndRunInHeadless
+    autoDownload = autoDownloadAndRunInHeadless
+    version = libs.versions.testAndroidStudioVersion
+    codename = libs.versions.testAndroidStudioCodename
+    sdkVersion = libs.versions.testAndroidSdkVersion
     // For local development it's easier to setup Android SDK with Android Studio, since auto download needs ANDROID_HOME or ANDROID_SDK_ROOT
     // to be set with an accepted license in it. See https://developer.android.com/studio/intro/update.html#download-with-gradle.
-    autoDownloadAndroidSdk.set(autoDownloadAndRunInHeadless)
+    autoDownloadAndroidSdk = autoDownloadAndRunInHeadless
 }
 
 val testReports = mapOf(
