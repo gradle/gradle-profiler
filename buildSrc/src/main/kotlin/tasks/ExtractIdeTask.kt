@@ -22,9 +22,6 @@ abstract class ExtractIdeTask @Inject constructor(
 ) : DefaultTask() {
 
     @get:Input
-    abstract val volumeName: Property<String>
-
-    @get:Input
     abstract val dmgAppName: Property<String>
 
     @get:InputFiles
@@ -75,8 +72,8 @@ abstract class ExtractIdeTask @Inject constructor(
     }
 
     private fun extractDmg(distributionFile: File) {
-        val volume = volumeName.get()
         val appName = dmgAppName.get()
+        val volume = appName.replace(" ", "")
         val volumeDir = "/Volumes/$volume"
         val srcDir = "/Volumes/$volume/$appName"
         require(!File(srcDir).exists()) {

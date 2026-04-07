@@ -21,18 +21,11 @@ class IdeSystemProperties(
     val runInHeadlessMode: Provider<Boolean>,
     @get:Input
     val homePropertyName: String,
-    providers: ProviderFactory
 ) : CommandLineArgumentProvider {
 
     @get:Optional
     @get:Nested
-    val ideInstallationProvider = providers.provider {
-        if (autoDownload.get()) {
-            ideInstallation
-        } else {
-            null
-        }
-    }
+    val ideInstallationProvider = autoDownload.map { if (it) ideInstallation else null }
 
     override fun asArguments(): Iterable<String> {
         val systemProperties = mutableListOf<String>()

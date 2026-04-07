@@ -79,21 +79,20 @@ dependencies {
     })
 }
 
+val testIdesDir = layout.buildDirectory.dir("test-ides")
 val unpackAndroidStudio = tasks.register<ExtractIdeTask>("unpackAndroidStudio") {
-    volumeName.set("AndroidStudioForGradle")
-    dmgAppName.set("Android Studio.app")
-    stripTopLevelDirectory.set(true)
+    dmgAppName = "Android Studio.app"
+    stripTopLevelDirectory = true
     ideDistribution.from(androidStudioRuntime)
-    outputDir.set(layout.buildDirectory.dir("android-studio"))
+    outputDir = testIdesDir.map { it.dir("android-studio") }
 }
 
 val unpackIntellij = tasks.register<ExtractIdeTask>("unpackIntellij") {
-    volumeName.set("IntellijIdeaForGradle")
-    dmgAppName.set("IntelliJ IDEA CE.app")
+    dmgAppName = "IntelliJ IDEA CE.app"
     // Windows ZIP is flat, Linux tar.gz has a wrapping directory
-    stripTopLevelDirectory.set(!isWindows())
+    stripTopLevelDirectory = !isWindows()
     ideDistribution.from(intellijRuntime)
-    outputDir.set(layout.buildDirectory.dir("intellij-idea"))
+    outputDir = testIdesDir.map { it.dir("intellij") }
 }
 
 val installAndroidSdk = tasks.register<InstallAndroidSdkTask>("installAndroidSdk") {
@@ -119,7 +118,6 @@ tasks.withType<Test>().configureEach {
             androidStudioExtension.autoDownloadAndroidStudio,
             androidStudioExtension.runAndroidStudioInHeadlessMode,
             "studio.home",
-            providers
         )
     )
     jvmArgumentProviders.add(
@@ -128,7 +126,6 @@ tasks.withType<Test>().configureEach {
             intellijExtension.autoDownloadIntellij,
             intellijExtension.runIntellijInHeadlessMode,
             "idea.home",
-            providers
         )
     )
 }
