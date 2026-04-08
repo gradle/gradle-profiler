@@ -36,7 +36,7 @@ abstract class AbstractIdeSyncIntegrationTest extends AbstractProfilerIntegratio
 
         // Explicit way to set JVM version to run Gradle with.
         // See: https://www.jetbrains.com/help/idea/gradle-jvm-selection.html#jdk_existing_project
-        new File(projectDir, "gradle.properties") << "\norg.gradle.java.home=${System.getProperty("java.home")}"
+        new File(projectDir, "gradle.properties") << "\norg.gradle.java.home=${System.getProperty("java.home").replace('\\', '/')}"
 
         setupProject()
         scenarioName = "scenario"
