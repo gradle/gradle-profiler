@@ -211,7 +211,7 @@ Add the `--profile chrome-trace` option and open the result in Google Chrome in 
 - `--profile <profiler>`: Profile the build using the specified profiler. See above for details on each profiler.
 - `--output-dir <dir>`: Directory to write results to. Default value is `profile-out`. If the profile-out directory already exists, it tries to find a `profile-out-<index>` directory that does not exist.
 - `--csv-format <format>`: Format of the CSV output file. Values: `wide` (default) or `long`. The `wide` format produces a matrix with scenarios as columns. The `long` format produces one row per iteration/sample, which is more suitable for concatenating multiple benchmark results together.
-- `--warmups`: Specifies the number of warm-up builds to run for each scenario. Defaults to 2 for profiling, 6 for benchmarking, and 1 when not using a warm daemon.
+- `--warmups`: Specifies the number of warm-up builds to run for each scenario. Defaults to 2 for profiling, 6 for benchmarking, and 1 when not using a warm daemon. Can be set to 0 when using `--cold-daemon` or `--no-daemon`.
 - `--iterations`: Specifies the number of builds to run for each scenario. Defaults to 1 for profiling, 10 for benchmarking.
 - `--group <group-name>`: Run scenarios from the specified scenario group.
 - `--bazel`: Benchmark scenarios using Bazel instead of Gradle. By default, only Gradle scenarios are run. You cannot profile a Bazel build using this tool.
