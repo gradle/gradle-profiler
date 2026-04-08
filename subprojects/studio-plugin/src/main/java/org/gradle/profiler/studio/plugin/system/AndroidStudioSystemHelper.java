@@ -4,7 +4,7 @@ import com.google.common.base.Strings;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.externalSystem.importing.ImportSpecBuilder;
 import com.intellij.openapi.externalSystem.util.ExternalSystemUtil;
-import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.progress.ProgressModel;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.startup.StartupManager;
@@ -72,17 +72,16 @@ public class AndroidStudioSystemHelper {
      * It seems there is no better way to do it atm.
      */
     public static void waitOnBackgroundProcessesFinish(Project project) {
-        // Run a dummy read action just so we wait on all indexing done
-        DumbService.getInstance(project).runReadActionInSmartMode(() -> {});
+        DumbService.getInstance(project).waitForSmartMode();
         IdeFrame frame = WindowManagerEx.getInstanceEx().findFrameFor(project);
         StatusBarEx statusBar = frame == null ? null : (StatusBarEx) frame.getStatusBar();
         if (statusBar != null) {
-            statusBar.getBackgroundProcesses().forEach(it -> waitOnProgressIndicator(it.getSecond()));
+            statusBar.getBackgroundProcessModels().forEach(it -> waitOnProgressModel(it.getSecond()));
         }
     }
 
-    private static void waitOnProgressIndicator(ProgressIndicator progressIndicator) {
-        wait(WAIT_ON_PROCESS_SLEEP_TIME, progressIndicator::isRunning);
+    private static void waitOnProgressModel(ProgressModel progressModel) {
+        wait(WAIT_ON_PROCESS_SLEEP_TIME, progressModel::isRunning);
     }
 
     public static void waitOnPostStartupActivities(Project project) {
