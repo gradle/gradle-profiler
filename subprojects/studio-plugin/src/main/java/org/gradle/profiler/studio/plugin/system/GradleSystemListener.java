@@ -21,7 +21,7 @@ public class GradleSystemListener implements ExternalSystemTaskNotificationListe
             exception.set(null);
             // Only create a new future if one wasn't already set by awaitNextSyncCompletion().
             // Using compareAndSet avoids replacing a future that the caller is waiting on.
-            boolean created = currentSyncFutureRef.compareAndSet(null, new CompletableFuture<>());
+            currentSyncFutureRef.compareAndSet(null, new CompletableFuture<>());
         }
     }
 

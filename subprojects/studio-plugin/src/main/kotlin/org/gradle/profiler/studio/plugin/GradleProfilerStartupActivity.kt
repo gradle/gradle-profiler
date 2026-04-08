@@ -62,24 +62,24 @@ class GradleProfilerStartupActivity : ProjectActivity {
 
     private fun configureGradleSettings(project: Project) {
         val gradleSettings = GradleSettings.getInstance(project)
-        configureLinkedProjects(gradleSettings.linkedProjectsSettings)
+        gradleSettings.linkedProjectsSettings.forEach {
+            configureLinkedProject(it)
+        }
         gradleSettings.subscribe(object : DefaultGradleSettingsListener() {
             override fun onProjectsLinked(linkedProjectsSettings: Collection<GradleProjectSettings>) {
-                configureLinkedProjects(linkedProjectsSettings)
+                linkedProjectsSettings.forEach { configureLinkedProject(it) }
             }
         }, gradleSettings)
     }
 
-    private fun configureLinkedProjects(settings: Collection<GradleProjectSettings>) {
-        settings.forEach {
-            // If we don't disable external annotations, Android Studio will download some artifacts
-            // to .m2 folder if some project has for example com.fasterxml.jackson.core:jackson-core as a dependency
-            it.isResolveExternalAnnotations = false
-            // Set Gradle JVM to JAVA_HOME to avoid JDK resolution dialogs in headless mode
-            if (it.gradleJvm == null || it.gradleJvm == "#USE_PROJECT_JDK") {
-                it.gradleJvm = "#JAVA_HOME"
-                LOG.info("Set Gradle JVM to #JAVA_HOME for ${it.externalProjectPath}")
-            }
+    private fun configureLinkedProject(settings: GradleProjectSettings) {
+        // If we don't disable external annotations, Android Studio will download some artifacts
+        settings.isResolveExternalAnnotations = false
+        // to .m2 folder if some project has for example com.fasterxml.jackson.core:jackson-core as a dependency
+        // Set Gradle JVM to JAVA_HOME to avoid JDK resolution dialogs in headless mode
+        if (settings.gradleJvm == null || settings.gradleJvm == "#USE_PROJECT_JDK") {
+            settings.gradleJvm = "#JAVA_HOME"
+            LOG.info("Set Gradle JVM to #JAVA_HOME for ${settings.externalProjectPath}")
         }
     }
 
