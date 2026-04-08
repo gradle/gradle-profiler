@@ -75,7 +75,7 @@ dependencies {
         else -> throw IllegalStateException("Unsupported OS: $os")
     }
     intellijRuntime(intellijExtension.version.map { version ->
-        "intellij-idea:ideaIU:$version@$intellijFileExtension"
+        "intellij-idea:idea:$version@$intellijFileExtension"
     })
 }
 
