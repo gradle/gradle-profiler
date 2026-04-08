@@ -18,11 +18,12 @@ dependencies {
     implementation(project(":client-protocol"))
 
     intellijPlatform {
-        intellijIdea("2025.3")
+        intellijIdea(libs.versions.intellijPlatformVersion)
         bundledPlugin("com.intellij.java")
         bundledPlugin("com.intellij.gradle")
         bundledPlugin("org.jetbrains.plugins.gradle")
-        plugin("org.jetbrains.android", "253.28294.334")
+        // JB Android plugin version may need to be bumped in case of IntelliJ platform version bump
+        plugin("org.jetbrains.android", libs.versions.jetbrainsAndroidPluginVersion.get())
     }
 }
 

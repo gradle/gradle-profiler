@@ -2,12 +2,15 @@
 groovy = "4.0.29"
 protobuf = "3.21.12"
 spock = "2.4-groovy-4.0"
+
 # Panda 2 (2025.3.2.6)
 testAndroidStudioVersion = "2025.3.2.6"
 # Download artifact suffix changed from version to codename starting with Panda
 testAndroidStudioCodename = "panda2"
 testAndroidSdkVersion = "9.1.0"
 testIntellijVersion = "2025.3.4"
+intellijPlatformVersion = "2025.3"
+jetbrainsAndroidPluginVersion = "253.28294.334"
 
 [libraries]
 ant-compress = { module = "org.apache.ant:ant-compress", version = "1.5" }
