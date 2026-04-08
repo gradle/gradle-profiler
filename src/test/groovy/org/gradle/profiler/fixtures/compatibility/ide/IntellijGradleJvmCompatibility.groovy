@@ -21,8 +21,7 @@ class IntellijGradleJvmCompatibility {
         this.supportedJavaVersions = supportedJavaVersions
     }
 
-    static IntellijGradleJvmCompatibility fromIdeHome() {
-        def ideHome = IntellijFinder.findIdeHome()
+    static IntellijGradleJvmCompatibility fromIdeHome(File ideHome) {
         def gradleJar = findGradlePluginJar(ideHome)
         if (gradleJar == null) {
             return null
@@ -34,8 +33,8 @@ class IntellijGradleJvmCompatibility {
         return parse(json)
     }
 
-    boolean isSupported(JavaVersion javaVersion) {
-        return javaVersion.majorVersion.toInteger() in supportedJavaVersions
+    Set<Integer> getSupportedJavaVersions() {
+        return supportedJavaVersions
     }
 
     private static File findGradlePluginJar(File ideHome) {

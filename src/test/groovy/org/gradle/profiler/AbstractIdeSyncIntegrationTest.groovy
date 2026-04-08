@@ -1,6 +1,8 @@
 package org.gradle.profiler
 
+import org.gradle.api.JavaVersion
 import org.gradle.profiler.fixtures.AbstractProfilerIntegrationTest
+import org.gradle.profiler.fixtures.compatibility.ide.IntellijGradleJvmCompatibility
 import org.gradle.profiler.instrument.GradleInstrumentation
 import org.gradle.profiler.spock.extensions.ShowAndroidStudioLogsOnFailure
 import org.gradle.profiler.studio.launcher.StudioLauncher
@@ -24,6 +26,18 @@ abstract class AbstractIdeSyncIntegrationTest extends AbstractProfilerIntegratio
     def setup() {
         sandboxDir = tmpDir.createDir('sandbox')
         ideHome = findIdeHome()
+
+        // IDE must support Java version we're going to run the test build with.
+        // So far we expect the current version to work always, however some downgrading logic
+        // may need to be applied in future.
+        Set<Integer> supportedJavaVersionsByIde = IntellijGradleJvmCompatibility.fromIdeHome(ideHome).supportedJavaVersions
+        Integer currentJvm = JavaVersion.current().majorVersion as int
+        assert supportedJavaVersionsByIde.contains(currentJvm)
+
+        // Explicit way to set JVM version to run Gradle with.
+        // See: https://www.jetbrains.com/help/idea/gradle-jvm-selection.html#jdk_existing_project
+        new File(projectDir, "gradle.properties") << "\norg.gradle.java.home=${System.getProperty("java.home")}"
+
         setupProject()
         scenarioName = "scenario"
     }
