@@ -383,20 +383,28 @@ class ScenarioLoader {
 
     private static IdeGradleScenarioDefinition newIdeGradleScenarioDefinition(GradleScenarioDefinition gradleScenarioDefinition, Config scenario) {
         Config ideSyncConfig = getIdeSyncConfig(scenario);
-        List<String> ideJvmArgs = ConfigUtil.strings(ideSyncConfig, IDE_JVM_ARGS,
-            ConfigUtil.strings(ideSyncConfig, ANDROID_STUDIO_JVM_ARGS, ImmutableList.of("-Xms256m", "-Xmx4096m")));
+        List<String> ideJvmArgs = getConfigWithDeprecatedFallback(ideSyncConfig, IDE_JVM_ARGS, ANDROID_STUDIO_JVM_ARGS,
+            ImmutableList.of("-Xms256m", "-Xmx4096m"));
         List<String> ideaProperties = ConfigUtil.strings(ideSyncConfig, ANDROID_STUDIO_IDEA_PROPERTIES, Collections.emptyList());
         return new IdeGradleScenarioDefinition(gradleScenarioDefinition, ideJvmArgs, ideaProperties);
     }
 
     private static boolean hasIdeSyncConfig(Config scenario) {
-        return scenario.hasPath(IDE_SYNC) || scenario.hasPath(ANDROID_STUDIO_SYNC);
+        if (scenario.hasPath(IDE_SYNC)) {
+            return true;
+        }
+        if (scenario.hasPath(ANDROID_STUDIO_SYNC)) {
+            warnDeprecatedKey(ANDROID_STUDIO_SYNC, IDE_SYNC);
+            return true;
+        }
+        return false;
     }
 
     private static Config getIdeSyncConfig(Config scenario) {
         if (scenario.hasPath(IDE_SYNC)) {
             return scenario.getConfig(IDE_SYNC);
         }
+        warnDeprecatedKey(ANDROID_STUDIO_SYNC, IDE_SYNC);
         return scenario.getConfig(ANDROID_STUDIO_SYNC);
     }
 
@@ -562,8 +570,15 @@ class ScenarioLoader {
     }
 
     private static GradleBuildInvoker getIdeInvoker(Config config) {
-        // Check new key first, fall back to deprecated key
-        String clearCacheKey = config.hasPath(CLEAR_IDE_CACHE_BEFORE) ? CLEAR_IDE_CACHE_BEFORE : CLEAR_ANDROID_STUDIO_CACHE_BEFORE;
+        String clearCacheKey;
+        if (config.hasPath(CLEAR_IDE_CACHE_BEFORE)) {
+            clearCacheKey = CLEAR_IDE_CACHE_BEFORE;
+        } else if (config.hasPath(CLEAR_ANDROID_STUDIO_CACHE_BEFORE)) {
+            warnDeprecatedKey(CLEAR_ANDROID_STUDIO_CACHE_BEFORE, CLEAR_IDE_CACHE_BEFORE);
+            clearCacheKey = CLEAR_ANDROID_STUDIO_CACHE_BEFORE;
+        } else {
+            return GradleBuildInvoker.Ide;
+        }
         Schedule schedule = ConfigUtil.enumValue(config, clearCacheKey, Schedule.class, null);
         if (schedule == null) {
             return GradleBuildInvoker.AndroidStudio;
@@ -577,6 +592,21 @@ class ScenarioLoader {
             default:
                 throw new IllegalArgumentException(String.format("Unsupported cleanup schedule for '%s': '%s'", clearCacheKey, schedule));
         }
+    }
+
+    private static List<String> getConfigWithDeprecatedFallback(Config config, String newKey, String oldKey, List<String> defaultValue) {
+        if (config.hasPath(newKey)) {
+            return ConfigUtil.strings(config, newKey, defaultValue);
+        }
+        if (config.hasPath(oldKey)) {
+            warnDeprecatedKey(oldKey, newKey);
+            return ConfigUtil.strings(config, oldKey, defaultValue);
+        }
+        return defaultValue;
+    }
+
+    private static void warnDeprecatedKey(String oldKey, String newKey) {
+        System.err.println("WARNING: Scenario key '" + oldKey + "' is deprecated. Use '" + newKey + "' instead.");
     }
 
     private static BuildAction getCleanupAction(Config scenario) {

@@ -162,12 +162,13 @@ class CommandLineParser {
         List<String> targetNames = parsedOptions.nonOptionArguments().stream().map(Object::toString).collect(Collectors.toList());
         List<String> gradleVersions = parsedOptions.valuesOf(gradleVersionOption);
         File scenarioFile = toAbsoluteFileOrNull(parsedOptions.valueOf(scenarioFileOption));
+        warnDeprecatedOptions(args);
         File ideInstallDir = toAbsoluteFileOrNull(parsedOptions.valueOf(ideInstallDirOption));
         File ideSandboxDir = toAbsoluteFileOrNull(parsedOptions.valueOf(ideSandboxDirOption));
         if (parsedOptions.has(disableIdeSandbox)) {
             ideSandboxDir = null;
         } else if (ideSandboxDir == null) {
-            ideSandboxDir = new File(outputDir, "studio-sandbox");
+            ideSandboxDir = new File(outputDir, "ide-sandbox");
         }
 
         // TODO - should validate the various combinations of invocation options
@@ -261,6 +262,20 @@ class CommandLineParser {
 
     private void showVersion() {
         System.out.printf("Gradle Profiler version %s%n", CommandLineParser.class.getPackage().getImplementationVersion());
+    }
+
+    private static void warnDeprecatedOptions(String[] args) {
+        Map<String, String> deprecated = Map.of(
+            "--studio-install-dir", "--ide-install-dir",
+            "--studio-sandbox-dir", "--ide-sandbox-dir",
+            "--no-studio-sandbox", "--no-ide-sandbox"
+        );
+        for (String arg : args) {
+            String replacement = deprecated.get(arg);
+            if (replacement != null) {
+                System.err.println("WARNING: Option '" + arg + "' is deprecated. Use '" + replacement + "' instead.");
+            }
+        }
     }
 
     private File toAbsoluteFileOrNull(@Nullable File file) {
