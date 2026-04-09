@@ -48,5 +48,5 @@ testDependencies = ["spock-core", "spock-junit4", "junit-platform-launcher", "mo
 intellij-platform = { id = "org.jetbrains.intellij.platform", version = "2.13.1" }
 nexus = { id = "io.github.gradle-nexus.publish-plugin", version = "2.0.0" }
 node = { id = "com.github.node-gradle.node", version = "7.1.0" }
-protobuf = { id = "com.google.protobuf", version = "0.9.4" }
+protobuf = { id = "com.google.protobuf", version = "0.9.6" }
 sdkman = { id = "io.sdkman.vendors", version = "3.0.0" }
