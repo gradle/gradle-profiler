@@ -27,6 +27,8 @@ import java.io.File;
 import java.util.*;
 import java.util.stream.Collectors;
 
+import static org.gradle.profiler.DeprecationWarnings.*;
+
 class ScenarioLoader {
     private static final String TITLE = "title";
     private static final String VERSIONS = "versions";
@@ -566,51 +568,14 @@ class ScenarioLoader {
         String clearCacheKey = resolveKeyWithDeprecatedFallback(config, CLEAR_IDE_CACHE_BEFORE, CLEAR_ANDROID_STUDIO_CACHE_BEFORE);
         Schedule schedule = ConfigUtil.enumValue(config, clearCacheKey, Schedule.class, null);
         if (schedule == null) {
-            return GradleBuildInvoker.AndroidStudio;
+            return GradleBuildInvoker.Ide;
         }
-        switch (schedule) {
-            case SCENARIO:
-                return GradleBuildInvoker.AndroidStudioCleanCacheBeforeScenario;
-            case BUILD:
-                return GradleBuildInvoker.AndroidStudioCleanCacheBeforeBuild;
-            case CLEANUP:
-            default:
+        return switch (schedule) {
+            case SCENARIO -> GradleBuildInvoker.IdeCleanCacheBeforeScenario;
+            case BUILD -> GradleBuildInvoker.IdeCleanCacheBeforeBuild;
+            default ->
                 throw new IllegalArgumentException(String.format("Unsupported cleanup schedule for '%s': '%s'", clearCacheKey, schedule));
-        }
-    }
-
-    private static boolean hasKeyWithDeprecatedFallback(Config config, String newKey, String oldKey) {
-        if (config.hasPath(newKey)) {
-            return true;
-        }
-        if (config.hasPath(oldKey)) {
-            warnDeprecatedKey(oldKey, newKey);
-            return true;
-        }
-        return false;
-    }
-
-    private static String resolveKeyWithDeprecatedFallback(Config config, String newKey, String oldKey) {
-        if (config.hasPath(newKey)) {
-            return newKey;
-        }
-        warnDeprecatedKey(oldKey, newKey);
-        return oldKey;
-    }
-
-    private static List<String> getConfigWithDeprecatedFallback(Config config, String newKey, String oldKey, List<String> defaultValue) {
-        if (config.hasPath(newKey)) {
-            return ConfigUtil.strings(config, newKey, defaultValue);
-        }
-        if (config.hasPath(oldKey)) {
-            warnDeprecatedKey(oldKey, newKey);
-            return ConfigUtil.strings(config, oldKey, defaultValue);
-        }
-        return defaultValue;
-    }
-
-    private static void warnDeprecatedKey(String oldKey, String newKey) {
-        System.err.println("WARNING: Scenario key '" + oldKey + "' is deprecated. Use '" + newKey + "' instead.");
+        };
     }
 
     private static BuildAction getCleanupAction(Config scenario) {

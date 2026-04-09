@@ -385,24 +385,7 @@ class ScenarioLoaderTest extends Specification {
         scenario2.action.tasks == ["help"]
     }
 
-    def "can load IDE sync scenario with new key"() {
-        def settings = settings()
-        def configurationReader = Mock(GradleBuildConfigurationReader)
-        configurationReader.readConfiguration() >> new GradleBuildConfiguration(null, null, null, null, false, false)
-
-        scenarioFile << """
-            default {
-                ide-sync { }
-            }
-        """
-        def scenarios = loadScenarios(scenarioFile, settings, configurationReader)
-        expect:
-        scenarios*.name == ["default"]
-        def scenarioDefinition = scenarios[0] as IdeGradleScenarioDefinition
-        scenarioDefinition.action instanceof IdeSyncAction
-    }
-
-    def "can load IDE sync scenario with deprecated android-studio-sync key"() {
+    def "can load IDE sync scenario with '#syncKey' and '#jvmArgsKey' keys"() {
         def settings = settings()
         def configurationReader = Mock(GradleBuildConfigurationReader)
         configurationReader.readConfiguration() >> new GradleBuildConfiguration(null, null, null, null, false, false)
@@ -413,34 +396,8 @@ class ScenarioLoaderTest extends Specification {
 
         scenarioFile << """
             default {
-                android-studio-sync { }
-            }
-        """
-        def scenarios = loadScenarios(scenarioFile, settings, configurationReader)
-
-        expect:
-        scenarios*.name == ["default"]
-        def scenarioDefinition = scenarios[0] as IdeGradleScenarioDefinition
-        scenarioDefinition.action instanceof IdeSyncAction
-        errContent.toString().contains("WARNING: Scenario key 'android-studio-sync' is deprecated. Use 'ide-sync' instead.")
-
-        cleanup:
-        System.err = originalErr
-    }
-
-    def "can load IDE sync scenario with deprecated studio-jvm-args key"() {
-        def settings = settings()
-        def configurationReader = Mock(GradleBuildConfigurationReader)
-        configurationReader.readConfiguration() >> new GradleBuildConfiguration(null, null, null, null, false, false)
-
-        def originalErr = System.err
-        def errContent = new ByteArrayOutputStream()
-        System.err = new PrintStream(errContent)
-
-        scenarioFile << """
-            default {
-                ide-sync {
-                    studio-jvm-args = ["-Xmx8g"]
+                $syncKey {
+                    $jvmArgsKey = ["-Xmx8g"]
                 }
             }
         """
@@ -449,39 +406,22 @@ class ScenarioLoaderTest extends Specification {
         expect:
         scenarios*.name == ["default"]
         def scenarioDefinition = scenarios[0] as IdeGradleScenarioDefinition
+        scenarioDefinition.action instanceof IdeSyncAction
         (scenarioDefinition.buildConfiguration as IdeGradleScenarioDefinition.IdeGradleBuildConfiguration).ideJvmArgs == ["-Xmx8g"]
-        errContent.toString().contains("WARNING: Scenario key 'studio-jvm-args' is deprecated. Use 'ide-jvm-args' instead.")
+        expectedWarnings.every { errContent.toString().contains(it) }
+        if (expectedWarnings.isEmpty()) {
+            !errContent.toString().contains("WARNING")
+        }
 
         cleanup:
         System.err = originalErr
-    }
 
-    def "prefers new ide-jvm-args key over deprecated studio-jvm-args"() {
-        def settings = settings()
-        def configurationReader = Mock(GradleBuildConfigurationReader)
-        configurationReader.readConfiguration() >> new GradleBuildConfiguration(null, null, null, null, false, false)
-
-        def originalErr = System.err
-        def errContent = new ByteArrayOutputStream()
-        System.err = new PrintStream(errContent)
-
-        scenarioFile << """
-            default {
-                ide-sync {
-                    ide-jvm-args = ["-Xmx16g"]
-                }
-            }
-        """
-        def scenarios = loadScenarios(scenarioFile, settings, configurationReader)
-
-        expect:
-        scenarios*.name == ["default"]
-        def scenarioDefinition = scenarios[0] as IdeGradleScenarioDefinition
-        (scenarioDefinition.buildConfiguration as IdeGradleScenarioDefinition.IdeGradleBuildConfiguration).ideJvmArgs == ["-Xmx16g"]
-        !errContent.toString().contains("WARNING")
-
-        cleanup:
-        System.err = originalErr
+        where:
+        syncKey              | jvmArgsKey       | expectedWarnings
+        "ide-sync"           | "ide-jvm-args"   | []
+        "android-studio-sync"| "ide-jvm-args"   | ["WARNING: Scenario key 'android-studio-sync' is deprecated. Use 'ide-sync' instead."]
+        "ide-sync"           | "studio-jvm-args" | ["WARNING: Scenario key 'studio-jvm-args' is deprecated. Use 'ide-jvm-args' instead."]
+        "android-studio-sync"| "studio-jvm-args" | ["WARNING: Scenario key 'android-studio-sync' is deprecated. Use 'ide-sync' instead.", "WARNING: Scenario key 'studio-jvm-args' is deprecated. Use 'ide-jvm-args' instead."]
     }
 
     def "loads default scenarios only"() {
