@@ -19,8 +19,8 @@ import org.gradle.profiler.maven.MavenScenarioDefinition;
 import org.gradle.profiler.mutations.AbstractScheduledMutator.Schedule;
 import org.gradle.profiler.mutations.*;
 import org.gradle.profiler.mutations.BuildMutatorConfigurator.BuildMutatorConfiguratorSpec;
-import org.gradle.profiler.studio.AndroidStudioSyncAction;
-import org.gradle.profiler.studio.invoker.StudioGradleScenarioDefinition;
+import org.gradle.profiler.studio.IdeSyncAction;
+import org.gradle.profiler.studio.invoker.IdeGradleScenarioDefinition;
 
 import javax.annotation.Nullable;
 import java.io.File;
@@ -65,7 +65,7 @@ class ScenarioLoader {
     private static final String CLEAR_PROJECT_CACHE_BEFORE = "clear-project-cache-before";
     private static final String CLEAR_TRANSFORM_CACHE_BEFORE = "clear-transform-cache-before";
     private static final String CLEAR_JARS_CACHE_BEFORE = "clear-jars-cache-before";
-    // clear-android-studio-cache-before is not implemented as a mutator, but it's implemented inside the StudioGradleClient
+    // clear-android-studio-cache-before is not implemented as a mutator, but it's implemented inside the IdeGradleClient
     private static final String CLEAR_ANDROID_STUDIO_CACHE_BEFORE = "clear-android-studio-cache-before";
     private static final String SHOW_BUILD_CACHE_SIZE = "show-build-cache-size";
     private static final String GIT_CHECKOUT = "git-checkout";
@@ -300,7 +300,7 @@ class ScenarioLoader {
                 buildOperationsTrace
             );
             ScenarioDefinition scenarioDefinition = scenario.hasPath(ANDROID_STUDIO_SYNC)
-                ? newStudioGradleScenarioDefinition(gradleScenarioDefinition, scenario)
+                ? newIdeGradleScenarioDefinition(gradleScenarioDefinition, scenario)
                 : gradleScenarioDefinition;
             scenarioDefinitions.add(scenarioDefinition);
         }
@@ -367,11 +367,11 @@ class ScenarioLoader {
         return ConfigFactory.parseFile(scenarioFile, ConfigParseOptions.defaults().setAllowMissing(false)).resolve();
     }
 
-    private static StudioGradleScenarioDefinition newStudioGradleScenarioDefinition(GradleScenarioDefinition gradleScenarioDefinition, Config scenario) {
+    private static IdeGradleScenarioDefinition newIdeGradleScenarioDefinition(GradleScenarioDefinition gradleScenarioDefinition, Config scenario) {
         Config androidStudioSync = scenario.getConfig(ANDROID_STUDIO_SYNC);
         List<String> studioJvmArgs = ConfigUtil.strings(androidStudioSync, ANDROID_STUDIO_JVM_ARGS, ImmutableList.of("-Xms256m", "-Xmx4096m"));
         List<String> ideaProperties = ConfigUtil.strings(androidStudioSync, ANDROID_STUDIO_IDEA_PROPERTIES, Collections.emptyList());
-        return new StudioGradleScenarioDefinition(gradleScenarioDefinition, studioJvmArgs, ideaProperties);
+        return new IdeGradleScenarioDefinition(gradleScenarioDefinition, studioJvmArgs, ideaProperties);
     }
 
     private static List<BuildMutator> getMutators(Config scenario, String scenarioName, InvocationSettings settings, int warmUpCount, int buildCount) {
@@ -500,7 +500,7 @@ class ScenarioLoader {
 
     public static GradleBuildInvoker invoker(Config config, GradleBuildInvoker defaultValue, BuildAction buildAction) {
         GradleBuildInvoker invoker = defaultValue;
-        boolean sync = buildAction instanceof AndroidStudioSyncAction;
+        boolean sync = buildAction instanceof IdeSyncAction;
         if (sync) {
             invoker = getAndroidStudioInvoker(config);
         }
@@ -574,7 +574,7 @@ class ScenarioLoader {
             if (invocationSettings.getStudioInstallDir() == null) {
                 throw new IllegalArgumentException("Android Studio installation directory should be specified using --studio-install-dir when measuring Android studio sync.");
             }
-            return new AndroidStudioSyncAction();
+            return new IdeSyncAction();
         }
 
         if (toolingApi != null) {

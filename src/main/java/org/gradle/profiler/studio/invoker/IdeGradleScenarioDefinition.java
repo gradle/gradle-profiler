@@ -5,14 +5,14 @@ import org.gradle.profiler.gradle.GradleScenarioDefinition;
 
 import java.util.List;
 
-public class StudioGradleScenarioDefinition extends GradleScenarioDefinition {
+public class IdeGradleScenarioDefinition extends GradleScenarioDefinition {
 
-    public StudioGradleScenarioDefinition(GradleScenarioDefinition gradleScenarioDefinition, List<String> studioJvmArgs, List<String> ideaProperties) {
+    public IdeGradleScenarioDefinition(GradleScenarioDefinition gradleScenarioDefinition, List<String> ideJvmArgs, List<String> ideaProperties) {
         super(
             gradleScenarioDefinition.getName(),
             gradleScenarioDefinition.getTitle(),
             gradleScenarioDefinition.getInvoker(),
-            new StudioGradleBuildConfiguration(gradleScenarioDefinition.getBuildConfiguration(), studioJvmArgs, ideaProperties),
+            new IdeGradleBuildConfiguration(gradleScenarioDefinition.getBuildConfiguration(), ideJvmArgs, ideaProperties),
             gradleScenarioDefinition.getAction(),
             gradleScenarioDefinition.getCleanupAction(),
             gradleScenarioDefinition.getGradleArgs(),
@@ -27,12 +27,12 @@ public class StudioGradleScenarioDefinition extends GradleScenarioDefinition {
         );
     }
 
-    public static class StudioGradleBuildConfiguration extends GradleBuildConfiguration {
+    public static class IdeGradleBuildConfiguration extends GradleBuildConfiguration {
 
-        private final List<String> studioJvmArgs;
+        private final List<String> ideJvmArgs;
         private final List<String> ideaProperties;
 
-        StudioGradleBuildConfiguration(GradleBuildConfiguration gradleBuildConfiguration, List<String> studioJvmArguments, List<String> ideaProperties) {
+        IdeGradleBuildConfiguration(GradleBuildConfiguration gradleBuildConfiguration, List<String> ideJvmArguments, List<String> ideaProperties) {
             super(
                 gradleBuildConfiguration.getGradleVersion(),
                 gradleBuildConfiguration.getGradleHome(),
@@ -41,12 +41,12 @@ public class StudioGradleScenarioDefinition extends GradleScenarioDefinition {
                 gradleBuildConfiguration.isUsesScanPlugin(),
                 gradleBuildConfiguration.isUsesDevelocityPlugin()
             );
-            this.studioJvmArgs = studioJvmArguments;
+            this.ideJvmArgs = ideJvmArguments;
             this.ideaProperties = ideaProperties;
         }
 
-        public List<String> getStudioJvmArgs() {
-            return studioJvmArgs;
+        public List<String> getIdeJvmArgs() {
+            return ideJvmArgs;
         }
 
         public List<String> getIdeaProperties() {

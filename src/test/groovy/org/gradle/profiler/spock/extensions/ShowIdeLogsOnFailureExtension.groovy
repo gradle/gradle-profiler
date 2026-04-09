@@ -8,16 +8,16 @@ import org.spockframework.runtime.model.ErrorInfo
 import org.spockframework.runtime.model.FeatureInfo
 import org.spockframework.runtime.model.SpecInfo
 
-class ShowAndroidStudioLogsOnFailureExtension implements IAnnotationDrivenExtension<ShowAndroidStudioLogsOnFailure> {
+class ShowIdeLogsOnFailureExtension implements IAnnotationDrivenExtension<ShowIdeLogsOnFailure> {
     @Override
-    void visitSpecAnnotation(ShowAndroidStudioLogsOnFailure annotation, SpecInfo spec) {
+    void visitSpecAnnotation(ShowIdeLogsOnFailure annotation, SpecInfo spec) {
         spec.features.each { FeatureInfo feature ->
             feature.addIterationInterceptor(new FailureShowLogsInterceptor(annotation.sandboxDirField()))
         }
     }
 
     @Override
-    void visitFeatureAnnotations(List<ShowAndroidStudioLogsOnFailure> annotations, FeatureInfo feature) {
+    void visitFeatureAnnotations(List<ShowIdeLogsOnFailure> annotations, FeatureInfo feature) {
         feature.addIterationInterceptor(new FailureShowLogsInterceptor(annotations[0].sandboxDirField()))
     }
 
@@ -45,7 +45,7 @@ class ShowAndroidStudioLogsOnFailureExtension implements IAnnotationDrivenExtens
                             ? "\n${logFile.text}"
                             : "Log file ${logFile} doesn't exist, nothing to print."
                     }
-                    println("[ANDROID STUDIO LOGS] $message")
+                    println("[IDE LOGS] $message")
                 }
             }
             invocation.spec.bottomSpec.addListener(errorListener)

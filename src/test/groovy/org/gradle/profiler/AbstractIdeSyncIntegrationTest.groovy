@@ -5,10 +5,10 @@ import org.gradle.profiler.fixtures.AbstractProfilerIntegrationTest
 import org.gradle.profiler.fixtures.compatibility.ide.IntellijGradleJvmCompatibility
 import org.gradle.profiler.instrument.GradleInstrumentation
 import org.gradle.profiler.spock.extensions.ShowAndroidStudioLogsOnFailure
-import org.gradle.profiler.studio.launcher.StudioLauncher
-import org.gradle.profiler.studio.launcher.StudioLauncherProvider
-import org.gradle.profiler.studio.tools.StudioPluginInstaller
-import org.gradle.profiler.studio.tools.StudioSandboxCreator
+import org.gradle.profiler.studio.launcher.IdeLauncher
+import org.gradle.profiler.studio.launcher.IdeLauncherProvider
+import org.gradle.profiler.studio.tools.IdePluginInstaller
+import org.gradle.profiler.studio.tools.IdeSandboxCreator
 import spock.lang.Timeout
 
 import java.util.concurrent.TimeUnit
@@ -147,9 +147,9 @@ abstract class AbstractIdeSyncIntegrationTest extends AbstractProfilerIntegratio
         File otherProjectDir = tmpDir.createDir('project2')
         // We have to install plugin so also the first process is run in the headless mode.
         // We install plugin directory to a different "plugins-2" directory for first process otherwise cleaning plugin directory at start of second process fails on Windows.
-        StudioSandboxCreator.StudioSandbox sandbox = StudioSandboxCreator.createSandbox(sandboxDir.toPath(), "plugins-2")
-        StudioLauncher launcher = new StudioLauncherProvider(ideHome.toPath(), sandbox, [], []).get()
-        StudioPluginInstaller pluginInstaller = new StudioPluginInstaller(sandbox.getPluginsDir())
+        IdeSandboxCreator.IdeSandbox sandbox = IdeSandboxCreator.createSandbox(sandboxDir.toPath(), "plugins-2")
+        IdeLauncher launcher = new IdeLauncherProvider(ideHome.toPath(), sandbox, [], []).get()
+        IdePluginInstaller pluginInstaller = new IdePluginInstaller(sandbox.getPluginsDir())
         // We have to install plugin, since a plugin contains headless starter and it makes it run headless on CI
         pluginInstaller.installPlugin(Collections.singletonList(GradleInstrumentation.unpackPlugin("studio-plugin").toPath()))
         def scenarioFile = file("performance.scenarios") << """
@@ -167,9 +167,9 @@ abstract class AbstractIdeSyncIntegrationTest extends AbstractProfilerIntegratio
         def e = thrown(Main.ScenarioFailedException)
         e.getCause().message == "Timeout waiting for incoming connection from start-detector."
         logFile.containsOne("* ERROR")
-        logFile.containsOne("* Could not connect to Android Studio process started by the gradle-profiler.")
-        logFile.containsOne("* This might indicate that you are already running an Android Studio process in the same sandbox.")
-        logFile.containsOne("* Stop Android Studio manually in the used sandbox or use a different sandbox with --studio-sandbox-dir to isolate the process.")
+        logFile.containsOne("* Could not connect to IDE process started by the gradle-profiler.")
+        logFile.containsOne("* This might indicate that you are already running an IDE process in the same sandbox.")
+        logFile.containsOne("* Stop the IDE manually in the used sandbox or use a different sandbox with --ide-sandbox-dir to isolate the process.")
 
         cleanup:
         process.kill()
@@ -181,10 +181,10 @@ abstract class AbstractIdeSyncIntegrationTest extends AbstractProfilerIntegratio
         // We create a different folder for project for the other process,
         // since if the IDE writes to same project at the same time, it can fail
         File otherProjectDir = tmpDir.createDir('project2')
-        StudioSandboxCreator.StudioSandbox sandbox = StudioSandboxCreator.createSandbox(sandboxDir1.toPath())
-        StudioLauncher launcher = new StudioLauncherProvider(ideHome.toPath(), sandbox, [], []).get()
+        IdeSandboxCreator.IdeSandbox sandbox = IdeSandboxCreator.createSandbox(sandboxDir1.toPath())
+        IdeLauncher launcher = new IdeLauncherProvider(ideHome.toPath(), sandbox, [], []).get()
         // We have to install plugin, since a plugin contains headless starter and it makes it run headless on CI
-        StudioPluginInstaller pluginInstaller = new StudioPluginInstaller(sandbox.getPluginsDir())
+        IdePluginInstaller pluginInstaller = new IdePluginInstaller(sandbox.getPluginsDir())
         pluginInstaller.installPlugin(Collections.singletonList(GradleInstrumentation.unpackPlugin("studio-plugin").toPath()))
         def scenarioFile = file("performance.scenarios") << """
             $scenarioName {

@@ -12,26 +12,26 @@ import java.nio.file.OpenOption;
 import java.nio.file.Path;
 import java.util.Optional;
 
-public class StudioSandboxCreator {
+public class IdeSandboxCreator {
 
     /**
-     * Creates sandbox for Android Studio.
+     * Creates sandbox for IDE.
      *
      * If sandboxDir is not specified only plugins and logs sandbox will be created, but config and system folder won't be.
-     * In that case Android Studio will use configs from default folder, additionally it will write to default folder.
+     * In that case IDE will use configs from default folder, additionally it will write to default folder.
      */
-    public static StudioSandbox createSandbox(@Nullable Path sandboxDir) {
+    public static IdeSandbox createSandbox(@Nullable Path sandboxDir) {
         return createSandbox(sandboxDir, "plugins");
     }
 
     @VisibleForTesting
-    public static StudioSandbox createSandbox(@Nullable Path sandboxDir, String pluginsDirName) {
+    public static IdeSandbox createSandbox(@Nullable Path sandboxDir, String pluginsDirName) {
         if (shouldCreatePartialSandbox(sandboxDir)) {
             Path path = newTempDir();
             Path pluginsDir = createDir(new File(path.toFile(), pluginsDirName).toPath());
             Path logsDir = createDir(new File(path.toFile(), "logs").toPath());
             Path scenarioOptionsDir = createDir(new File(path.toFile(), "scenarioOptions").toPath());
-            return StudioSandbox.partialSandbox(pluginsDir, logsDir, scenarioOptionsDir);
+            return IdeSandbox.partialSandbox(pluginsDir, logsDir, scenarioOptionsDir);
         }
         File sandboxDirFile = sandboxDir.toFile();
         Path configDir = createDir(new File(sandboxDirFile, "config").toPath());
@@ -40,7 +40,7 @@ public class StudioSandboxCreator {
         Path logDir = createDir(new File(sandboxDirFile, "logs").toPath());
         Path scenarioOptionsDir = createDir(new File(sandboxDirFile, "scenarioOptions").toPath());
         disableIdeUpdate(configDir);
-        return StudioSandbox.fullSandbox(configDir, systemDir, pluginsDir, logDir, scenarioOptionsDir);
+        return IdeSandbox.fullSandbox(configDir, systemDir, pluginsDir, logDir, scenarioOptionsDir);
     }
 
     private static boolean shouldCreatePartialSandbox(Path sandboxDir) {
@@ -80,13 +80,13 @@ public class StudioSandboxCreator {
 
     private static Path newTempDir() {
         try {
-            return Files.createTempDirectory("android-studio-sandbox");
+            return Files.createTempDirectory("ide-sandbox");
         } catch (IOException e) {
             throw new UncheckedIOException(e);
         }
     }
 
-    public static class StudioSandbox {
+    public static class IdeSandbox {
 
         private final Path configDir;
         private final Path systemDir;
@@ -94,7 +94,7 @@ public class StudioSandboxCreator {
         private final Path logsDir;
         private final Path scenarioOptionsDir;
 
-        private StudioSandbox(@Nullable Path configDir, @Nullable Path systemDir, Path pluginsDir, Path logsDir, Path scenarioOptionsDir) {
+        private IdeSandbox(@Nullable Path configDir, @Nullable Path systemDir, Path pluginsDir, Path logsDir, Path scenarioOptionsDir) {
             this.configDir = configDir;
             this.systemDir = systemDir;
             this.pluginsDir = pluginsDir;
@@ -122,12 +122,12 @@ public class StudioSandboxCreator {
             return pluginsDir;
         }
 
-        public static StudioSandbox fullSandbox(Path configDir, Path systemDir, Path pluginsDir, Path logsDir, Path scenarioOptionsDir) {
-            return new StudioSandbox(configDir, systemDir, pluginsDir, logsDir, scenarioOptionsDir);
+        public static IdeSandbox fullSandbox(Path configDir, Path systemDir, Path pluginsDir, Path logsDir, Path scenarioOptionsDir) {
+            return new IdeSandbox(configDir, systemDir, pluginsDir, logsDir, scenarioOptionsDir);
         }
 
-        public static StudioSandbox partialSandbox(Path pluginsDir, Path logsDir, Path scenarioOptionsDir) {
-            return new StudioSandbox(null, null, pluginsDir, logsDir, scenarioOptionsDir);
+        public static IdeSandbox partialSandbox(Path pluginsDir, Path logsDir, Path scenarioOptionsDir) {
+            return new IdeSandbox(null, null, pluginsDir, logsDir, scenarioOptionsDir);
         }
     }
 }

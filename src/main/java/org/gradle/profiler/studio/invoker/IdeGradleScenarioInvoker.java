@@ -16,34 +16,34 @@ import java.util.stream.IntStream;
 
 import static java.util.stream.Collectors.toList;
 
-public class StudioGradleScenarioInvoker extends ScenarioInvoker<StudioGradleScenarioDefinition, StudioBuildInvocationResult> {
+public class IdeGradleScenarioInvoker extends ScenarioInvoker<IdeGradleScenarioDefinition, IdeBuildInvocationResult> {
 
     private final GradleScenarioInvoker gradleScenarioInvoker;
 
-    public StudioGradleScenarioInvoker(GradleScenarioInvoker gradleScenarioInvoker) {
+    public IdeGradleScenarioInvoker(GradleScenarioInvoker gradleScenarioInvoker) {
         this.gradleScenarioInvoker = gradleScenarioInvoker;
     }
 
     @Override
-    public SampleProvider<StudioBuildInvocationResult> samplesFor(InvocationSettings settings, StudioGradleScenarioDefinition scenario) {
+    public SampleProvider<IdeBuildInvocationResult> samplesFor(InvocationSettings settings, IdeGradleScenarioDefinition scenario) {
         return results -> {
             SampleProvider<GradleBuildInvocationResult> gradleSampleProvider = gradleScenarioInvoker.samplesFor(settings, scenario);
             List<Sample<? super GradleBuildInvocationResult>> gradleScenarioInvokerSamples = gradleSampleProvider.get(toGradleBuildInvocationResults(results));
-            return ImmutableList.<Sample<? super StudioBuildInvocationResult>>builder()
+            return ImmutableList.<Sample<? super IdeBuildInvocationResult>>builder()
                 .addAll(gradleScenarioInvokerSamples)
                 .addAll(getGradleExecutionTimeSamples(results))
-                .add(StudioBuildInvocationResult.GRADLE_TOTAL_EXECUTION_TIME)
-                .add(StudioBuildInvocationResult.IDE_EXECUTION_TIME)
+                .add(IdeBuildInvocationResult.GRADLE_TOTAL_EXECUTION_TIME)
+                .add(IdeBuildInvocationResult.IDE_EXECUTION_TIME)
                 .build();
         };
     }
 
-    private List<GradleBuildInvocationResult> toGradleBuildInvocationResults(List<StudioBuildInvocationResult> results) {
-        // A cheap "cast" from List<StudioBuildInvocationResult> to List<GradleBuildInvocationResult>
+    private List<GradleBuildInvocationResult> toGradleBuildInvocationResults(List<IdeBuildInvocationResult> results) {
+        // A cheap "cast" from List<IdeBuildInvocationResult> to List<GradleBuildInvocationResult>
         return Collections.unmodifiableList(results);
     }
 
-    private List<Sample<StudioBuildInvocationResult>> getGradleExecutionTimeSamples(List<StudioBuildInvocationResult> results) {
+    private List<Sample<IdeBuildInvocationResult>> getGradleExecutionTimeSamples(List<IdeBuildInvocationResult> results) {
         int maxGradleExecutions = results.stream()
             .mapToInt(result -> result.getActionResult().getGradleExecutionTimes().size())
             .max()
@@ -54,12 +54,12 @@ public class StudioGradleScenarioInvoker extends ScenarioInvoker<StudioGradleSce
             return Collections.emptyList();
         }
         return IntStream.range(0, maxGradleExecutions)
-            .mapToObj(StudioBuildInvocationResult::getGradleToolingAgentExecutionTime)
+            .mapToObj(IdeBuildInvocationResult::getGradleToolingAgentExecutionTime)
             .collect(toList());
     }
 
     @Override
-    public void run(StudioGradleScenarioDefinition scenario, InvocationSettings settings, Consumer<StudioBuildInvocationResult> resultConsumer) throws IOException, InterruptedException {
-        gradleScenarioInvoker.run(scenario, settings, (result) -> resultConsumer.accept(new StudioBuildInvocationResult(result)));
+    public void run(IdeGradleScenarioDefinition scenario, InvocationSettings settings, Consumer<IdeBuildInvocationResult> resultConsumer) throws IOException, InterruptedException {
+        gradleScenarioInvoker.run(scenario, settings, (result) -> resultConsumer.accept(new IdeBuildInvocationResult(result)));
     }
 }

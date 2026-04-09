@@ -4,7 +4,7 @@ import com.google.common.base.Joiner;
 import com.google.common.collect.ImmutableList;
 import org.gradle.profiler.OperatingSystem;
 import org.gradle.profiler.instrument.GradleInstrumentation;
-import org.gradle.profiler.studio.tools.StudioSandboxCreator.StudioSandbox;
+import org.gradle.profiler.studio.tools.IdeSandboxCreator.IdeSandbox;
 
 import java.io.File;
 import java.nio.file.Path;
@@ -14,77 +14,77 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-public class StudioLauncherProvider {
+public class IdeLauncherProvider {
 
     private static final boolean SHOULD_RUN_HEADLESS = Boolean.getBoolean("studio.tests.headless");
     private static final List<String> DEFAULT_MACOS_STARTER_PATHS = ImmutableList.of("Contents/MacOS/studio", "Contents/MacOS/idea");
     private static final List<String> DEFAULT_WINDOWS_STARTER_PATHS = ImmutableList.of("bin/studio.bat", "bin/idea.bat");
     private static final List<String> DEFAULT_LINUX_STARTER_PATHS = ImmutableList.of("bin/studio.sh", "bin/idea.sh");
 
-    private final Path studioInstallDir;
-    private final StudioSandbox studioSandbox;
-    private final List<String> studioJvmArgs;
+    private final Path ideInstallDir;
+    private final IdeSandbox ideSandbox;
+    private final List<String> ideJvmArgs;
     private final List<String> ideaProperties;
-    private boolean enableStudioPluginParameters;
-    private int studioPluginPort;
-    private boolean enableStudioAgentParameters;
-    private int studioAgentPort;
-    private int studioStartDetectorPort;
+    private boolean enablePluginParameters;
+    private int pluginPort;
+    private boolean enableAgentParameters;
+    private int agentPort;
+    private int startDetectorPort;
 
-    public StudioLauncherProvider(Path studioInstallDir, StudioSandbox studioSandbox, List<String> studioJvmArgs, List<String> ideaProperties) {
-        this.studioInstallDir = studioInstallDir;
-        this.studioSandbox = studioSandbox;
-        this.studioJvmArgs = studioJvmArgs;
+    public IdeLauncherProvider(Path ideInstallDir, IdeSandbox ideSandbox, List<String> ideJvmArgs, List<String> ideaProperties) {
+        this.ideInstallDir = ideInstallDir;
+        this.ideSandbox = ideSandbox;
+        this.ideJvmArgs = ideJvmArgs;
         this.ideaProperties = ideaProperties;
     }
 
-    public StudioLauncherProvider withStudioPluginParameters(int studioStartDetectorPort, int studioPluginPort) {
-        this.enableStudioPluginParameters = true;
-        this.studioStartDetectorPort = studioStartDetectorPort;
-        this.studioPluginPort = studioPluginPort;
+    public IdeLauncherProvider withStudioPluginParameters(int startDetectorPort, int pluginPort) {
+        this.enablePluginParameters = true;
+        this.startDetectorPort = startDetectorPort;
+        this.pluginPort = pluginPort;
         return this;
     }
 
-    public StudioLauncherProvider withStudioAgentParameters(int studioAgentPort) {
-        this.enableStudioAgentParameters = true;
-        this.studioAgentPort = studioAgentPort;
+    public IdeLauncherProvider withStudioAgentParameters(int agentPort) {
+        this.enableAgentParameters = true;
+        this.agentPort = agentPort;
         return this;
     }
 
-    public StudioLauncher get() {
-        Path startCommand = getStartCommand(studioInstallDir);
+    public IdeLauncher get() {
+        Path startCommand = getStartCommand(ideInstallDir);
         List<String> additionalJvmArgs = getAdditionalJvmArgs();
 
         // Note: In headless mode ANDROID_HOME and ANDROID_SDK_ROOT have to be set otherwise
         // Studio will fail since "missing Android SDK" modal will try to open
         String headlessCommand = SHOULD_RUN_HEADLESS ? "headless-starter" : "";
 
-        return new StudioLauncher(startCommand, headlessCommand, studioInstallDir, additionalJvmArgs, studioSandbox, ideaProperties);
+        return new IdeLauncher(startCommand, headlessCommand, ideInstallDir, additionalJvmArgs, ideSandbox, ideaProperties);
     }
 
     private List<String> getAdditionalJvmArgs() {
         List<String> jvmArgs = new ArrayList<>();
-        if (enableStudioAgentParameters) {
+        if (enableAgentParameters) {
             String agentJar = GradleInstrumentation.unpackPlugin("studio-agent").getAbsolutePath();
             String supportJar = GradleInstrumentation.unpackPlugin("instrumentation-support").getAbsolutePath();
             String asmJar = GradleInstrumentation.unpackPlugin("asm").getAbsolutePath();
             String protocolJar = GradleInstrumentation.unpackPlugin("client-protocol").getAbsolutePath();
             List<String> sharedJars = Arrays.asList(asmJar, protocolJar);
-            jvmArgs.add(String.format("-javaagent:%s=%s,%s", agentJar, studioAgentPort, supportJar));
+            jvmArgs.add(String.format("-javaagent:%s=%s,%s", agentJar, agentPort, supportJar));
             jvmArgs.add("--add-exports=java.base/jdk.internal.misc=ALL-UNNAMED");
             jvmArgs.add("-Xbootclasspath/a:" + Joiner.on(File.pathSeparator).join(sharedJars));
         }
-        jvmArgs.addAll(studioJvmArgs);
+        jvmArgs.addAll(ideJvmArgs);
 
         Map<String, String> systemProperties = new HashMap<>();
-        if (enableStudioPluginParameters) {
-            systemProperties.put("gradle.profiler.startup.port", String.valueOf(studioStartDetectorPort));
-            systemProperties.put("gradle.profiler.port", String.valueOf(studioPluginPort));
+        if (enablePluginParameters) {
+            systemProperties.put("gradle.profiler.startup.port", String.valueOf(startDetectorPort));
+            systemProperties.put("gradle.profiler.port", String.valueOf(pluginPort));
         }
-        studioSandbox.getConfigDir().ifPresent(path -> systemProperties.put("idea.config.path", path.toString()));
-        studioSandbox.getSystemDir().ifPresent(path -> systemProperties.put("idea.system.path", path.toString()));
-        systemProperties.put("idea.plugins.path", studioSandbox.getPluginsDir().toString());
-        systemProperties.put("idea.log.path", studioSandbox.getLogsDir().toString());
+        ideSandbox.getConfigDir().ifPresent(path -> systemProperties.put("idea.config.path", path.toString()));
+        ideSandbox.getSystemDir().ifPresent(path -> systemProperties.put("idea.system.path", path.toString()));
+        systemProperties.put("idea.plugins.path", ideSandbox.getPluginsDir().toString());
+        systemProperties.put("idea.log.path", ideSandbox.getLogsDir().toString());
         // Newer IntelliJ versions require this property to avoid trust project popup
         systemProperties.put("idea.trust.all.projects", "true");
         // Used so wrapper init script is not run by Android Studio.
@@ -98,12 +98,12 @@ public class StudioLauncherProvider {
         return jvmArgs;
     }
 
-    private static Path getStartCommand(Path studioInstallDir) {
+    private static Path getStartCommand(Path ideInstallDir) {
         return getDefaultJavaPathsForOs().stream()
-            .map(studioInstallDir::resolve)
+            .map(ideInstallDir::resolve)
             .filter(path -> path.toFile().exists())
             .findFirst()
-            .orElseThrow(() -> new RuntimeException("Could not find Java executable in " + studioInstallDir));
+            .orElseThrow(() -> new RuntimeException("Could not find Java executable in " + ideInstallDir));
     }
 
     private static List<String> getDefaultJavaPathsForOs() {
