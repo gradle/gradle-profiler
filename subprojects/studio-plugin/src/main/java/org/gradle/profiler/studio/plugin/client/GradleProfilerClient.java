@@ -7,9 +7,9 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.gradle.profiler.client.protocol.Client;
-import org.gradle.profiler.client.protocol.messages.StudioCacheCleanupCompleted;
-import org.gradle.profiler.client.protocol.messages.StudioRequest;
-import org.gradle.profiler.client.protocol.messages.StudioSyncRequestCompleted;
+import org.gradle.profiler.client.protocol.messages.IdeCacheCleanupCompleted;
+import org.gradle.profiler.client.protocol.messages.IdeRequest;
+import org.gradle.profiler.client.protocol.messages.IdeSyncRequestCompleted;
 import org.gradle.profiler.studio.plugin.system.GradleSyncResult;
 import org.gradle.profiler.studio.plugin.system.GradleSystemListener;
 import org.jetbrains.plugins.gradle.service.project.open.GradleProjectImportUtil;
@@ -18,8 +18,8 @@ import org.jetbrains.plugins.gradle.settings.GradleSettings;
 import java.time.Duration;
 import java.util.concurrent.TimeUnit;
 
-import static org.gradle.profiler.client.protocol.messages.StudioRequest.StudioRequestType.EXIT_IDE;
-import static org.gradle.profiler.client.protocol.messages.StudioRequest.StudioRequestType.STOP_RECEIVING_EVENTS;
+import static org.gradle.profiler.client.protocol.messages.IdeRequest.IdeRequestType.EXIT_IDE;
+import static org.gradle.profiler.client.protocol.messages.IdeRequest.IdeRequestType.STOP_RECEIVING_EVENTS;
 import static org.gradle.profiler.studio.plugin.system.AndroidStudioSystemHelper.waitOnPostStartupActivities;
 import static org.gradle.profiler.studio.plugin.system.AndroidStudioSystemHelper.waitOnPreviousGradleSyncFinish;
 import static org.gradle.profiler.studio.plugin.system.AndroidStudioSystemHelper.waitOnBackgroundProcessesFinish;
@@ -39,8 +39,8 @@ public class GradleProfilerClient {
         this.startupStopwatch = Stopwatch.createStarted();
     }
 
-    public StudioRequest listenForSyncRequests(Project project, GradleSystemListener gradleSystemListener) {
-        StudioRequest request = receiveNextEvent();
+    public IdeRequest listenForSyncRequests(Project project, GradleSystemListener gradleSystemListener) {
+        IdeRequest request = receiveNextEvent();
         waitOnPostStartupActivities(project);
         maybeImportProject(project);
         while (shouldHandleNextEvent(request)) {
@@ -69,15 +69,15 @@ public class GradleProfilerClient {
         }
     }
 
-    private StudioRequest receiveNextEvent() {
-        return client.receiveStudioRequest(Duration.ofDays(1));
+    private IdeRequest receiveNextEvent() {
+        return client.receiveIdeRequest(Duration.ofDays(1));
     }
 
-    private boolean shouldHandleNextEvent(StudioRequest request) {
+    private boolean shouldHandleNextEvent(IdeRequest request) {
         return request.getType() != EXIT_IDE && request.getType() != STOP_RECEIVING_EVENTS;
     }
 
-    private void handleGradleProfilerRequest(StudioRequest request, Project project, GradleSystemListener gradleSystemListener) {
+    private void handleGradleProfilerRequest(IdeRequest request, Project project, GradleSystemListener gradleSystemListener) {
         switch (request.getType()) {
             case SYNC:
                 handleSyncRequest(request, project, gradleSystemListener);
@@ -92,7 +92,7 @@ public class GradleProfilerClient {
         }
     }
 
-    private void handleSyncRequest(StudioRequest request, Project project, GradleSystemListener gradleSystemListener) {
+    private void handleSyncRequest(IdeRequest request, Project project, GradleSystemListener gradleSystemListener) {
         LOG.info("Received sync request with id: " + request.getId());
         boolean isStartup = syncCount++ == 0;
 
@@ -112,14 +112,14 @@ public class GradleProfilerClient {
             ? getStartupSyncResult(project, gradleSystemListener)
             : startManualSync(project, gradleSystemListener);
         LOG.info(String.format("[SYNC REQUEST %s] '%s'%n", request.getId(), result.getResult()));
-        client.send(new StudioSyncRequestCompleted(request.getId(), stopwatch.elapsed(TimeUnit.MILLISECONDS), result.getResult(), result.getErrorMessage()));
+        client.send(new IdeSyncRequestCompleted(request.getId(), stopwatch.elapsed(TimeUnit.MILLISECONDS), result.getResult(), result.getErrorMessage()));
     }
 
     /**
      * This code is similar to one in com.intellij.ide.InvalidateCacheService in IntelliJ Community project,
      * it just does not make a dialog to restart IDE.
      */
-    private void cleanupCache(StudioRequest request) {
+    private void cleanupCache(IdeRequest request) {
         CachesInvalidator.EP_NAME.getExtensionList().forEach(it -> {
             try {
                 it.invalidateCaches();
@@ -127,6 +127,6 @@ public class GradleProfilerClient {
                 LOG.warn("Failed to invalidate caches with " + it.getClass().getName() + ". " + t.getMessage(), t);
             }
         });
-        client.send(new StudioCacheCleanupCompleted(request.getId()));
+        client.send(new IdeCacheCleanupCompleted(request.getId()));
     }
 }

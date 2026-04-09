@@ -1,10 +1,10 @@
 package org.gradle.profiler.client.protocol.messages;
 
-public class StudioCacheCleanupCompleted implements Message {
+public class IdeCacheCleanupCompleted implements Message {
 
     private final int id;
 
-    public StudioCacheCleanupCompleted(int id) {
+    public IdeCacheCleanupCompleted(int id) {
         this.id = id;
     }
 

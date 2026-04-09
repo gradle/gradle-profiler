@@ -1,18 +1,18 @@
 package org.gradle.profiler.studio.plugin.system;
 
-import org.gradle.profiler.client.protocol.messages.StudioSyncRequestCompleted.StudioSyncRequestResult;
+import org.gradle.profiler.client.protocol.messages.IdeSyncRequestCompleted.IdeSyncRequestResult;
 
 public class GradleSyncResult {
 
-    private final StudioSyncRequestResult status;
+    private final IdeSyncRequestResult status;
     private final String errorMessage;
 
-    public GradleSyncResult(StudioSyncRequestResult status, String errorMessage) {
+    public GradleSyncResult(IdeSyncRequestResult status, String errorMessage) {
         this.status = status;
         this.errorMessage = errorMessage;
     }
 
-    public StudioSyncRequestResult getResult() {
+    public IdeSyncRequestResult getResult() {
         return status;
     }
 

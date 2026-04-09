@@ -9,8 +9,8 @@ import com.intellij.openapi.startup.ProjectActivity
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.registry.RegistryValue
 import org.gradle.profiler.client.protocol.Client
-import org.gradle.profiler.client.protocol.messages.StudioRequest
-import org.gradle.profiler.client.protocol.messages.StudioRequest.StudioRequestType
+import org.gradle.profiler.client.protocol.messages.IdeRequest
+import org.gradle.profiler.client.protocol.messages.IdeRequest.IdeRequestType
 import org.gradle.profiler.studio.plugin.client.GradleProfilerClient
 import org.gradle.profiler.studio.plugin.system.AndroidStudioSystemHelper
 import org.gradle.profiler.studio.plugin.system.GradleSystemListener
@@ -40,7 +40,7 @@ class GradleProfilerStartupActivity : ProjectActivity {
 
         ApplicationManager.getApplication().executeOnPooledThread {
             val lastRequest = listenForSyncRequests(project, gradleSystemListener)
-            if (lastRequest.type == StudioRequestType.EXIT_IDE) {
+            if (lastRequest.type == IdeRequestType.EXIT_IDE) {
                 AndroidStudioSystemHelper.exit(project)
             }
         }
@@ -83,7 +83,7 @@ class GradleProfilerStartupActivity : ProjectActivity {
         }
     }
 
-    private fun listenForSyncRequests(project: Project, gradleStartupListener: GradleSystemListener): StudioRequest {
+    private fun listenForSyncRequests(project: Project, gradleStartupListener: GradleSystemListener): IdeRequest {
         val port = Integer.getInteger(PROFILER_PORT_PROPERTY)
         Client(port).use {
             return GradleProfilerClient(it).listenForSyncRequests(project, gradleStartupListener)

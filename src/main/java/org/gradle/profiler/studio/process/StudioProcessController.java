@@ -1,7 +1,7 @@
 package org.gradle.profiler.studio.process;
 
 import org.gradle.profiler.InvocationSettings;
-import org.gradle.profiler.client.protocol.messages.StudioAgentConnectionParameters;
+import org.gradle.profiler.client.protocol.messages.IdeAgentConnectionParameters;
 import org.gradle.profiler.studio.invoker.StudioGradleScenarioDefinition.StudioGradleBuildConfiguration;
 import org.gradle.profiler.studio.process.StudioProcess.StudioConnections;
 import org.gradle.profiler.studio.tools.StudioSandboxCreator.StudioSandbox;
@@ -74,7 +74,7 @@ public class StudioProcessController {
     public StudioProcess maybeStartProcess() {
         if (!isProcessRunning()) {
             process = new StudioProcess(studioInstallDir, sandbox, invocationSettings, buildConfiguration.getStudioJvmArgs(), buildConfiguration.getIdeaProperties());
-            process.getConnections().getAgentConnection().send(new StudioAgentConnectionParameters(buildConfiguration.getGradleHome()));
+            process.getConnections().getAgentConnection().send(new IdeAgentConnectionParameters(buildConfiguration.getGradleHome()));
         }
         return process;
     }
