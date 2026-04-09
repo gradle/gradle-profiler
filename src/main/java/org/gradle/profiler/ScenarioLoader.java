@@ -390,22 +390,12 @@ class ScenarioLoader {
     }
 
     private static boolean hasIdeSyncConfig(Config scenario) {
-        if (scenario.hasPath(IDE_SYNC)) {
-            return true;
-        }
-        if (scenario.hasPath(ANDROID_STUDIO_SYNC)) {
-            warnDeprecatedKey(ANDROID_STUDIO_SYNC, IDE_SYNC);
-            return true;
-        }
-        return false;
+        return hasKeyWithDeprecatedFallback(scenario, IDE_SYNC, ANDROID_STUDIO_SYNC);
     }
 
     private static Config getIdeSyncConfig(Config scenario) {
-        if (scenario.hasPath(IDE_SYNC)) {
-            return scenario.getConfig(IDE_SYNC);
-        }
-        warnDeprecatedKey(ANDROID_STUDIO_SYNC, IDE_SYNC);
-        return scenario.getConfig(ANDROID_STUDIO_SYNC);
+        String key = resolveKeyWithDeprecatedFallback(scenario, IDE_SYNC, ANDROID_STUDIO_SYNC);
+        return scenario.getConfig(key);
     }
 
     private static List<BuildMutator> getMutators(Config scenario, String scenarioName, InvocationSettings settings, int warmUpCount, int buildCount) {
@@ -570,15 +560,10 @@ class ScenarioLoader {
     }
 
     private static GradleBuildInvoker getIdeInvoker(Config config) {
-        String clearCacheKey;
-        if (config.hasPath(CLEAR_IDE_CACHE_BEFORE)) {
-            clearCacheKey = CLEAR_IDE_CACHE_BEFORE;
-        } else if (config.hasPath(CLEAR_ANDROID_STUDIO_CACHE_BEFORE)) {
-            warnDeprecatedKey(CLEAR_ANDROID_STUDIO_CACHE_BEFORE, CLEAR_IDE_CACHE_BEFORE);
-            clearCacheKey = CLEAR_ANDROID_STUDIO_CACHE_BEFORE;
-        } else {
+        if (!hasKeyWithDeprecatedFallback(config, CLEAR_IDE_CACHE_BEFORE, CLEAR_ANDROID_STUDIO_CACHE_BEFORE)) {
             return GradleBuildInvoker.Ide;
         }
+        String clearCacheKey = resolveKeyWithDeprecatedFallback(config, CLEAR_IDE_CACHE_BEFORE, CLEAR_ANDROID_STUDIO_CACHE_BEFORE);
         Schedule schedule = ConfigUtil.enumValue(config, clearCacheKey, Schedule.class, null);
         if (schedule == null) {
             return GradleBuildInvoker.AndroidStudio;
@@ -592,6 +577,25 @@ class ScenarioLoader {
             default:
                 throw new IllegalArgumentException(String.format("Unsupported cleanup schedule for '%s': '%s'", clearCacheKey, schedule));
         }
+    }
+
+    private static boolean hasKeyWithDeprecatedFallback(Config config, String newKey, String oldKey) {
+        if (config.hasPath(newKey)) {
+            return true;
+        }
+        if (config.hasPath(oldKey)) {
+            warnDeprecatedKey(oldKey, newKey);
+            return true;
+        }
+        return false;
+    }
+
+    private static String resolveKeyWithDeprecatedFallback(Config config, String newKey, String oldKey) {
+        if (config.hasPath(newKey)) {
+            return newKey;
+        }
+        warnDeprecatedKey(oldKey, newKey);
+        return oldKey;
     }
 
     private static List<String> getConfigWithDeprecatedFallback(Config config, String newKey, String oldKey, List<String> defaultValue) {
