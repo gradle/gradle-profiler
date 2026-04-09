@@ -53,9 +53,19 @@ public class GradleProfilerClient {
     private void maybeImportProject(Project project) {
         GradleSettings gradleSettings = GradleSettings.getInstance(project);
         if (gradleSettings.getLinkedProjectsSettings().isEmpty()) {
-            // We disabled auto import with 'external.system.auto.import.disabled=true', so we need to link and refresh the project manually
+            // We disabled auto import with 'external.system.auto.import.disabled=true', so we need to link and sync the project manually.
+            // linkAndSyncGradleProject is a Kotlin suspend function, so we use runBlocking to call it from Java.
             VirtualFile projectDir = ProjectUtil.guessProjectDir(project);
-            GradleProjectImportUtil.linkAndRefreshGradleProject(projectDir.getPath(), project);
+            LOG.info("Linking and syncing Gradle project at " + projectDir.getPath());
+            try {
+                kotlinx.coroutines.BuildersKt.runBlocking(
+                    kotlin.coroutines.EmptyCoroutineContext.INSTANCE,
+                    (scope, continuation) -> GradleProjectImportUtil.linkAndSyncGradleProject(project, projectDir, continuation)
+                );
+            } catch (InterruptedException e) {
+                throw new RuntimeException(e);
+            }
+            LOG.info("Gradle project link and sync completed");
         }
     }
 

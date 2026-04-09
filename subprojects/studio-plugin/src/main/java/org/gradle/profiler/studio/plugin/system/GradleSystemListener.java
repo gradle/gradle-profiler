@@ -1,7 +1,7 @@
 package org.gradle.profiler.studio.plugin.system;
 
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId;
-import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskNotificationListenerAdapter;
+import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskNotificationListener;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.gradle.util.GradleConstants;
@@ -10,13 +10,13 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 
-public class GradleSystemListener extends ExternalSystemTaskNotificationListenerAdapter {
+public class GradleSystemListener implements ExternalSystemTaskNotificationListener {
     private final AtomicReference<Exception> exception = new AtomicReference<>();
     private final AtomicReference<CompletableFuture<Void>> currentSyncFutureRef = new AtomicReference<>();
     private final AtomicBoolean hasAnySyncCompleted = new AtomicBoolean(false);
 
     @Override
-    public void onStart(@NotNull ExternalSystemTaskId id, String workingDir) {
+    public void onStart(@NotNull String projectPath, @NotNull ExternalSystemTaskId id) {
         if (GradleConstants.SYSTEM_ID.equals(id.getProjectSystemId())) {
             exception.set(null);
             // Only create a new future if one wasn't already set by awaitNextSyncCompletion().
@@ -26,7 +26,7 @@ public class GradleSystemListener extends ExternalSystemTaskNotificationListener
     }
 
     @Override
-    public void onSuccess(@NotNull ExternalSystemTaskId id) {
+    public void onSuccess(@NotNull String projectPath, @NotNull ExternalSystemTaskId id) {
         if (GradleConstants.SYSTEM_ID.equals(id.getProjectSystemId())) {
             hasAnySyncCompleted.set(true);
             CompletableFuture<Void> future = currentSyncFutureRef.getAndSet(null);
@@ -37,7 +37,7 @@ public class GradleSystemListener extends ExternalSystemTaskNotificationListener
     }
 
     @Override
-    public void onFailure(@NotNull ExternalSystemTaskId id, @NotNull Exception e) {
+    public void onFailure(@NotNull String projectPath, @NotNull ExternalSystemTaskId id, @NotNull Exception e) {
         if (GradleConstants.SYSTEM_ID.equals(id.getProjectSystemId())) {
             exception.set(e);
             hasAnySyncCompleted.set(true);
@@ -49,7 +49,7 @@ public class GradleSystemListener extends ExternalSystemTaskNotificationListener
     }
 
     @Override
-    public void onCancel(@NotNull ExternalSystemTaskId id) {
+    public void onCancel(@NotNull String projectPath, @NotNull ExternalSystemTaskId id) {
         if (GradleConstants.SYSTEM_ID.equals(id.getProjectSystemId())) {
             hasAnySyncCompleted.set(true);
             CompletableFuture<Void> future = currentSyncFutureRef.getAndSet(null);

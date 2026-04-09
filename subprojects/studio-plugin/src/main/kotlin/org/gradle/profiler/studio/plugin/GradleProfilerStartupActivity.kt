@@ -30,9 +30,8 @@ class GradleProfilerStartupActivity : ProjectActivity {
         LOG.info("Project opened")
         logModifiedRegistryEntries()
         if (System.getProperty(PROFILER_PORT_PROPERTY) == null) return
-        // If we don't disable external annotations, Android Studio will download some artifacts
-        // to .m2 folder if some project has for example com.fasterxml.jackson.core:jackson-core as a dependency
-        disableDownloadOfExternalAnnotations(project)
+
+        configureGradleSettings(project)
         // Register system listener already here, so we can catch any failure for syncs that are automatically started
         val gradleSystemListener = GradleSystemListener()
         ExternalSystemProgressNotificationManager.getInstance().addNotificationListener(gradleSystemListener, project)
@@ -61,18 +60,27 @@ class GradleProfilerStartupActivity : ProjectActivity {
         LOG.info("Modified registry entries: $modifiedValues")
     }
 
-    private fun disableDownloadOfExternalAnnotations(project: Project) {
+    private fun configureGradleSettings(project: Project) {
         val gradleSettings = GradleSettings.getInstance(project)
         gradleSettings.linkedProjectsSettings.forEach {
-            it.isResolveExternalAnnotations = false
+            configureLinkedProject(it)
         }
         gradleSettings.subscribe(object : DefaultGradleSettingsListener() {
             override fun onProjectsLinked(linkedProjectsSettings: Collection<GradleProjectSettings>) {
-                linkedProjectsSettings.forEach {
-                    it.isResolveExternalAnnotations = false
-                }
+                linkedProjectsSettings.forEach { configureLinkedProject(it) }
             }
         }, gradleSettings)
+    }
+
+    private fun configureLinkedProject(settings: GradleProjectSettings) {
+        // If we don't disable external annotations, Android Studio will download some artifacts
+        settings.isResolveExternalAnnotations = false
+        // to .m2 folder if some project has for example com.fasterxml.jackson.core:jackson-core as a dependency
+        // Set Gradle JVM to JAVA_HOME to avoid JDK resolution dialogs in headless mode
+        if (settings.gradleJvm == null || settings.gradleJvm == "#USE_PROJECT_JDK") {
+            settings.gradleJvm = "#JAVA_HOME"
+            LOG.info("Set Gradle JVM to #JAVA_HOME for ${settings.externalProjectPath}")
+        }
     }
 
     private fun listenForSyncRequests(project: Project, gradleStartupListener: GradleSystemListener): StudioRequest {
