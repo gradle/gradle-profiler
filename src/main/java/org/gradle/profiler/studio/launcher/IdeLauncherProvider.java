@@ -38,14 +38,14 @@ public class IdeLauncherProvider {
         this.ideaProperties = ideaProperties;
     }
 
-    public IdeLauncherProvider withStudioPluginParameters(int startDetectorPort, int pluginPort) {
+    public IdeLauncherProvider withPluginParameters(int startDetectorPort, int pluginPort) {
         this.enablePluginParameters = true;
         this.startDetectorPort = startDetectorPort;
         this.pluginPort = pluginPort;
         return this;
     }
 
-    public IdeLauncherProvider withStudioAgentParameters(int agentPort) {
+    public IdeLauncherProvider withAgentParameters(int agentPort) {
         this.enableAgentParameters = true;
         this.agentPort = agentPort;
         return this;

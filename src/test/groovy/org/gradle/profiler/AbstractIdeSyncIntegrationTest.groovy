@@ -160,7 +160,7 @@ abstract class AbstractIdeSyncIntegrationTest extends AbstractProfilerIntegratio
         """
 
         when:
-        CommandExec.RunHandle process = launcher.launchStudio(otherProjectDir)
+        CommandExec.RunHandle process = launcher.launchIde(otherProjectDir)
         runBenchmark(scenarioFile, 1, 1)
 
         then:
@@ -194,7 +194,7 @@ abstract class AbstractIdeSyncIntegrationTest extends AbstractProfilerIntegratio
         """
 
         when:
-        CommandExec.RunHandle process = launcher.launchStudio(otherProjectDir)
+        CommandExec.RunHandle process = launcher.launchIde(otherProjectDir)
         runBenchmark(scenarioFile, 1, 1)
 
         then:

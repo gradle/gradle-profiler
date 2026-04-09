@@ -30,10 +30,10 @@ public class IdeProcess implements Closeable {
         this.idePluginServer = new Server("plugin");
         this.ideAgentServer = new Server("agent");
         IdeLauncher ideLauncher = new IdeLauncherProvider(ideInstallDir, sandbox, ideJvmArgs, ideaProperties)
-            .withStudioPluginParameters(ideStartDetectorServer.getPort(), idePluginServer.getPort())
-            .withStudioAgentParameters(ideAgentServer.getPort())
+            .withPluginParameters(ideStartDetectorServer.getPort(), idePluginServer.getPort())
+            .withAgentParameters(ideAgentServer.getPort())
             .get();
-        this.process = ideLauncher.launchStudio(invocationSettings.getProjectDir());
+        this.process = ideLauncher.launchIde(invocationSettings.getProjectDir());
         waitOnSuccessfulIdeStart(process, ideStartDetectorServer);
         connections = new IdeConnections(
             idePluginServer.waitForIncoming(PLUGIN_CONNECT_TIMEOUT),

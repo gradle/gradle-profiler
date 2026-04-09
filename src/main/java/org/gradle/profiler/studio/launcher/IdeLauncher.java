@@ -40,7 +40,7 @@ public class IdeLauncher {
         this.ideaProperties = ideaProperties;
     }
 
-    public CommandExec.RunHandle launchStudio(File projectDir) {
+    public CommandExec.RunHandle launchIde(File projectDir) {
         List<String> commandLine = getCommandLine(projectDir);
         logLauncherConfiguration(commandLine);
         Map<String, String> environmentVariables = new HashMap<>();
