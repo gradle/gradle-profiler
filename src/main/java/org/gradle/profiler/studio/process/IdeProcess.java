@@ -48,7 +48,7 @@ public class IdeProcess implements Closeable {
             System.err.println("\n* ERROR\n" +
                 "* Could not connect to IDE process started by the gradle-profiler.\n" +
                 "* This might indicate that you are already running an IDE process in the same sandbox.\n" +
-                "* Stop the IDE manually in the used sandbox or use a different sandbox with --studio-sandbox-dir to isolate the process.\n");
+                "* Stop the IDE manually in the used sandbox or use a different sandbox with --ide-sandbox-dir to isolate the process.\n");
             kill(runHandle);
             throw new IllegalStateException(e.getMessage(), e);
         }

@@ -58,6 +58,10 @@ Option                                   Description
                                            to run build
 --group <String>                         Run scenarios from a group
 -h, --help                               Show this usage information
+--ide-install-dir, --studio-install-     The IDE installation to use
+  dir <File>
+--ide-sandbox-dir, --studio-sandbox-     The IDE sandbox dir to use
+  dir <File>
 --iterations <Integer>                   Number of builds to run for each
                                            scenario
 --jfr-settings <String>                  JFR settings - Either a .jfc file or
@@ -103,8 +107,8 @@ Option                                   Description
 --no-daemon                              Do not use the Gradle daemon
 --no-diffs                               Do not generate differential flame
                                            graphs
---no-studio-sandbox                      Marks that Android Studio should not
-                                           use sandbox
+--no-ide-sandbox, --no-studio-sandbox    Marks that the IDE should not use
+                                           sandbox
 --output-dir <File>                      Directory to write results to
                                            (default: new directory with
                                            'profile-out' prefix)
@@ -118,8 +122,6 @@ Option                                   Description
 --project-dir <File>                     The directory containing the build to
                                            run (default: working directory)
 --scenario-file <File>                   Scenario definition file to use
---studio-install-dir <File>              The Studio installation to use
---studio-sandbox-dir <File>              The Studio sandbox dir to use
 --title [String]                         Title to show on benchmark report
 -v, --version                            Display version information
 --warmups <Integer>                      Number of warm-up build to run for

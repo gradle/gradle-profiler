@@ -4,7 +4,7 @@ import org.gradle.api.JavaVersion
 import org.gradle.profiler.fixtures.AbstractProfilerIntegrationTest
 import org.gradle.profiler.fixtures.compatibility.ide.IntellijGradleJvmCompatibility
 import org.gradle.profiler.instrument.GradleInstrumentation
-import org.gradle.profiler.spock.extensions.ShowAndroidStudioLogsOnFailure
+import org.gradle.profiler.spock.extensions.ShowIdeLogsOnFailure
 import org.gradle.profiler.studio.launcher.IdeLauncher
 import org.gradle.profiler.studio.launcher.IdeLauncherProvider
 import org.gradle.profiler.studio.tools.IdePluginInstaller
@@ -13,7 +13,7 @@ import spock.lang.Timeout
 
 import java.util.concurrent.TimeUnit
 
-@ShowAndroidStudioLogsOnFailure
+@ShowIdeLogsOnFailure
 @Timeout(value = 5, unit = TimeUnit.MINUTES)
 abstract class AbstractIdeSyncIntegrationTest extends AbstractProfilerIntegrationTest {
 
@@ -51,7 +51,7 @@ abstract class AbstractIdeSyncIntegrationTest extends AbstractProfilerIntegratio
         given:
         def scenarioFile = file("performance.scenarios") << """
             $scenarioName {
-                android-studio-sync {
+                ide-sync {
                 }
             }
         """
@@ -77,7 +77,7 @@ abstract class AbstractIdeSyncIntegrationTest extends AbstractProfilerIntegratio
         new File(projectDir, "buildSrc/gradle.build").createNewFile()
         def scenarioFile = file("performance.scenarios") << """
             $scenarioName {
-                android-studio-sync {
+                ide-sync {
                 }
             }
         """
@@ -104,7 +104,7 @@ abstract class AbstractIdeSyncIntegrationTest extends AbstractProfilerIntegratio
         given:
         def scenarioFile = file("performance.scenarios") << """
             $scenarioName {
-                android-studio-sync {}
+                ide-sync {}
                 clear-android-studio-cache-before = BUILD
             }
         """
@@ -125,7 +125,7 @@ abstract class AbstractIdeSyncIntegrationTest extends AbstractProfilerIntegratio
         given:
         def scenarioFile = file("performance.scenarios") << """
             $scenarioName {
-                android-studio-sync {}
+                ide-sync {}
                 clear-android-studio-cache-before = SCENARIO
             }
         """
@@ -154,7 +154,7 @@ abstract class AbstractIdeSyncIntegrationTest extends AbstractProfilerIntegratio
         pluginInstaller.installPlugin(Collections.singletonList(GradleInstrumentation.unpackPlugin("studio-plugin").toPath()))
         def scenarioFile = file("performance.scenarios") << """
             $scenarioName {
-                android-studio-sync {
+                ide-sync {
                 }
             }
         """
@@ -188,7 +188,7 @@ abstract class AbstractIdeSyncIntegrationTest extends AbstractProfilerIntegratio
         pluginInstaller.installPlugin(Collections.singletonList(GradleInstrumentation.unpackPlugin("studio-plugin").toPath()))
         def scenarioFile = file("performance.scenarios") << """
             $scenarioName {
-                android-studio-sync {
+                ide-sync {
                 }
             }
         """
@@ -209,7 +209,7 @@ abstract class AbstractIdeSyncIntegrationTest extends AbstractProfilerIntegratio
         given:
         def scenarioFile = file("performance.scenarios") << """
             $scenarioName {
-                android-studio-sync {
+                ide-sync {
                 }
             }
         """
@@ -234,7 +234,7 @@ abstract class AbstractIdeSyncIntegrationTest extends AbstractProfilerIntegratio
         given:
         def scenarioFile = file("performance.scenarios") << """
             $scenarioName {
-                android-studio-sync {
+                ide-sync {
                 }
             }
         """
@@ -267,8 +267,8 @@ abstract class AbstractIdeSyncIntegrationTest extends AbstractProfilerIntegratio
         given:
         def scenarioFile = file("performance.scenarios") << """
             $scenarioName {
-                android-studio-sync {
-                    studio-jvm-args = ["-Xmx4104m", "-Xms128m"]
+                ide-sync {
+                    ide-jvm-args = ["-Xmx4104m", "-Xms128m"]
                 }
             }
         """
@@ -290,7 +290,7 @@ abstract class AbstractIdeSyncIntegrationTest extends AbstractProfilerIntegratio
         given:
         def scenarioFile = file("performance.scenarios") << """
             $scenarioName {
-                android-studio-sync {
+                ide-sync {
                 }
             }
         """
@@ -327,7 +327,7 @@ abstract class AbstractIdeSyncIntegrationTest extends AbstractProfilerIntegratio
         given:
         def scenarioFile = file("performance.scenarios") << """
             $scenarioName {
-                android-studio-sync {
+                ide-sync {
                     idea-properties = ["foo=true"]
                 }
             }

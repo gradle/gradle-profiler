@@ -2,7 +2,7 @@ package org.gradle.profiler
 
 
 import org.gradle.profiler.fixtures.compatibility.gradle.AbstractGradleCrossVersionTest
-import org.gradle.profiler.spock.extensions.ShowAndroidStudioLogsOnFailure
+import org.gradle.profiler.spock.extensions.ShowIdeLogsOnFailure
 import org.gradle.profiler.studio.AndroidStudioTestSupport
 import org.gradle.profiler.studio.tools.AndroidStudioFinder
 import spock.lang.Requires
@@ -38,7 +38,7 @@ class ChromeTraceGradleCrossVersionTest extends AbstractGradleCrossVersionTest {
         "`gradle` command and no daemon" | ["--no-daemon"] // --no-daemon implies --cli
     }
 
-    @ShowAndroidStudioLogsOnFailure
+    @ShowIdeLogsOnFailure
     @Requires({ AndroidStudioFinder.findStudioHome() })
     @Requires({ AndroidStudioTestSupport.findAndroidSdkPath() })
     // We don't control version of AS provided by the environment, so we assume that latest tested Gradle should be fine
@@ -51,7 +51,7 @@ class ChromeTraceGradleCrossVersionTest extends AbstractGradleCrossVersionTest {
         new File(projectDir, "buildSrc/gradle.build").createNewFile()
         def scenarioFile = file("performance.scenarios") << """
             scenario {
-                android-studio-sync {}
+                ide-sync {}
             }
         """
 
