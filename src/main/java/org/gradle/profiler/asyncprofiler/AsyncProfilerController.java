@@ -19,6 +19,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Locale;
+import java.util.Optional;
 
 import static org.gradle.profiler.flamegraph.FlameGraphSanitizer.SanitizeFunction;
 
@@ -107,14 +108,27 @@ public class AsyncProfilerController implements InstrumentingProfiler.SnapshotCa
 
     @Override
     public void stopRecording(String pid) {
-        new CommandExec().run(
-            profilerConfig.getDistribution().getExecutable().getAbsolutePath(),
-            "stop",
-            "-o", outputType.getCommandLineOption(),
-            "-f", outputType.individualOutputFileFor(scenarioSettings).getAbsolutePath(),
-            "--ann", // annotate java methods
-            pid
-        );
+        Optional<ProcessHandle> process = ProcessHandle.of(Long.parseLong(pid));
+        if (!process.isPresent()) {
+            System.out.println("Process " + pid + " has already exited, profiling data was flushed by the JVM shutdown hook.");
+            return;
+        }
+        try {
+            new CommandExec().run(
+                profilerConfig.getDistribution().getExecutable().getAbsolutePath(),
+                "stop",
+                "-o", outputType.getCommandLineOption(),
+                "-f", outputType.individualOutputFileFor(scenarioSettings).getAbsolutePath(),
+                "--ann", // annotate java methods
+                pid
+            );
+        } catch (RuntimeException e) {
+            if (!process.get().isAlive()) {
+                System.out.println("Process " + pid + " exited during profiler stop, profiling data was flushed by the JVM shutdown hook.");
+            } else {
+                throw e;
+            }
+        }
     }
 
     @Override
