@@ -1,7 +1,7 @@
 import com.github.gradle.node.npm.task.NpxTask
-import io.sdkman.vendors.tasks.SdkAnnounceVersionTask
-import io.sdkman.vendors.tasks.SdkDefaultVersionTask
-import io.sdkman.vendors.tasks.SdkReleaseVersionTask
+import io.sdkman.vendors.tasks.SdkAnnounceVersion
+import io.sdkman.vendors.tasks.SdkDefaultVersion
+import io.sdkman.vendors.tasks.SdkReleaseVersion
 import io.sdkman.vendors.tasks.SdkmanVendorBaseTask
 import java.util.Locale
 
@@ -278,12 +278,12 @@ tasks.withType<SdkmanVendorBaseTask>().configureEach {
     mustRunAfter(gitPushTag)
 }
 
-tasks.withType<SdkDefaultVersionTask>().configureEach {
-    mustRunAfter(tasks.withType<SdkReleaseVersionTask>())
+tasks.withType<SdkDefaultVersion>().configureEach {
+    mustRunAfter(tasks.withType<SdkReleaseVersion>())
 }
 
-tasks.withType<SdkAnnounceVersionTask>().configureEach {
-    mustRunAfter(tasks.withType<SdkReleaseVersionTask>())
+tasks.withType<SdkAnnounceVersion>().configureEach {
+    mustRunAfter(tasks.withType<SdkReleaseVersion>())
 }
 
 tasks.register("releaseToSdkMan") {
@@ -292,7 +292,7 @@ tasks.register("releaseToSdkMan") {
     // We don't publish snapshots and alphas at all to SDKman.
     val isSnapshotOrAlphaRelease = versionString.lowercase(Locale.US).run { contains("snapshot") || contains("alpha") }
     if (!isSnapshotOrAlphaRelease) {
-        dependsOn(tasks.withType<SdkReleaseVersionTask>())
+        dependsOn(tasks.withType<SdkReleaseVersion>())
 
         // We only announce and set the default version for final releases
         // A release is not final if it contains things different to numbers and dots.
@@ -304,8 +304,8 @@ tasks.register("releaseToSdkMan") {
         //   - 1.3-milestone5: not final
         val isFinalRelease = Regex("""[0-9\.]*""").matchEntire(versionString) != null
         if (isFinalRelease) {
-            dependsOn(tasks.withType<SdkDefaultVersionTask>())
-            dependsOn(tasks.withType<SdkAnnounceVersionTask>())
+            dependsOn(tasks.withType<SdkDefaultVersion>())
+            dependsOn(tasks.withType<SdkAnnounceVersion>())
         }
     }
 }
