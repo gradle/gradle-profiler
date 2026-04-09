@@ -528,7 +528,7 @@ class ScenarioLoader {
         GradleBuildInvoker invoker = defaultValue;
         boolean sync = buildAction instanceof IdeSyncAction;
         if (sync) {
-            invoker = getAndroidStudioInvoker(config);
+            invoker = getIdeInvoker(config);
         }
 
         if (config.hasPath(RUN_USING)) {
@@ -563,16 +563,16 @@ class ScenarioLoader {
 
     private static GradleBuildInvoker getIdeInvoker(Config config) {
         if (!hasKeyWithDeprecatedFallback(config, CLEAR_IDE_CACHE_BEFORE, CLEAR_ANDROID_STUDIO_CACHE_BEFORE)) {
-            return GradleBuildInvoker.Ide;
+            return GradleBuildInvoker.AndroidStudio;
         }
         String clearCacheKey = resolveKeyWithDeprecatedFallback(config, CLEAR_IDE_CACHE_BEFORE, CLEAR_ANDROID_STUDIO_CACHE_BEFORE);
         Schedule schedule = ConfigUtil.enumValue(config, clearCacheKey, Schedule.class, null);
         if (schedule == null) {
-            return GradleBuildInvoker.Ide;
+            return GradleBuildInvoker.AndroidStudio;
         }
         return switch (schedule) {
-            case SCENARIO -> GradleBuildInvoker.IdeCleanCacheBeforeScenario;
-            case BUILD -> GradleBuildInvoker.IdeCleanCacheBeforeBuild;
+            case SCENARIO -> GradleBuildInvoker.AndroidStudioCleanCacheBeforeScenario;
+            case BUILD -> GradleBuildInvoker.AndroidStudioCleanCacheBeforeBuild;
             default ->
                 throw new IllegalArgumentException(String.format("Unsupported cleanup schedule for '%s': '%s'", clearCacheKey, schedule));
         };

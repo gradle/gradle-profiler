@@ -63,8 +63,8 @@ abstract class AbstractIdeSyncIntegrationTest extends AbstractProfilerIntegratio
         logFile.find("Gradle invocation 1 has completed in").size() == 5
         logFile.find("Full sync has completed in").size() == 5
         logFile.find("and it SUCCEEDED").size() == 5
-        logFile.find("* Cleaning Android Studio cache, this will require a restart...").size() == 0
-        logFile.find("* Starting Android Studio").size() == 1
+        logFile.find("* Cleaning IDE cache, this will require a restart...").size() == 0
+        logFile.find("* Starting IDE").size() == 1
 
         and:
         resultFile.lines[3] == "value,total execution time,Gradle total execution time,IDE execution time"
@@ -93,8 +93,8 @@ abstract class AbstractIdeSyncIntegrationTest extends AbstractProfilerIntegratio
         logFile.find("Full Gradle execution time: ${duration[0]}ms").size() == 1
         logFile.find("Full sync has completed in").size() == 2
         logFile.find("and it SUCCEEDED").size() == 2
-        logFile.find("* Cleaning Android Studio cache, this will require a restart...").size() == 0
-        logFile.find("* Starting Android Studio").size() == 1
+        logFile.find("* Cleaning IDE cache, this will require a restart...").size() == 0
+        logFile.find("* Starting IDE").size() == 1
 
         and:
         resultFile.lines[3] == "value,total execution time,Gradle total execution time,IDE execution time"
@@ -116,9 +116,9 @@ abstract class AbstractIdeSyncIntegrationTest extends AbstractProfilerIntegratio
         logFile.find("Gradle invocation 1 has completed in").size() == 3
         logFile.find("Full sync has completed in").size() == 3
         logFile.find("and it SUCCEEDED").size() == 3
-        logFile.find("* Cleaning Android Studio cache, this will require a restart...").size() == 3
+        logFile.find("* Cleaning IDE cache, this will require a restart...").size() == 3
         // 4 since on first run we start IDE, clean cache and restart
-        logFile.find("* Starting Android Studio").size() == 4
+        logFile.find("* Starting IDE").size() == 4
     }
 
     def "benchmarks IDE sync by cleaning ide cache before scenario"() {
@@ -137,9 +137,9 @@ abstract class AbstractIdeSyncIntegrationTest extends AbstractProfilerIntegratio
         logFile.find("Gradle invocation 1 has completed in").size() == 3
         logFile.find("Full sync has completed in").size() == 3
         logFile.find("and it SUCCEEDED").size() == 3
-        logFile.find("* Cleaning Android Studio cache, this will require a restart...").size() == 1
+        logFile.find("* Cleaning IDE cache, this will require a restart...").size() == 1
         // 2 since on first run we start IDE, clean cache and restart
-        logFile.find("* Starting Android Studio").size() == 2
+        logFile.find("* Starting IDE").size() == 2
     }
 
     def "detects if two IDE processes are running in the same sandbox"() {
