@@ -17,7 +17,7 @@ import org.jetbrains.plugins.gradle.util.GradleConstants;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Supplier;
 
-public class AndroidStudioSystemHelper {
+public class IdeSystemHelper {
 
     private static final long WAIT_ON_PROCESS_SLEEP_TIME = 10;
     private static final long WAIT_ON_STARTUP_SLEEP_TIME = 100;

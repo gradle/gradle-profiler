@@ -12,7 +12,7 @@ import org.gradle.profiler.client.protocol.Client
 import org.gradle.profiler.client.protocol.messages.IdeRequest
 import org.gradle.profiler.client.protocol.messages.IdeRequest.IdeRequestType
 import org.gradle.profiler.studio.plugin.client.GradleProfilerClient
-import org.gradle.profiler.studio.plugin.system.AndroidStudioSystemHelper
+import org.gradle.profiler.studio.plugin.system.IdeSystemHelper
 import org.gradle.profiler.studio.plugin.system.GradleSystemListener
 import org.jetbrains.plugins.gradle.settings.GradleProjectSettings
 import org.jetbrains.plugins.gradle.settings.GradleSettings
@@ -41,7 +41,7 @@ class GradleProfilerStartupActivity : ProjectActivity {
         ApplicationManager.getApplication().executeOnPooledThread {
             val lastRequest = listenForSyncRequests(project, gradleSystemListener)
             if (lastRequest.type == IdeRequestType.EXIT_IDE) {
-                AndroidStudioSystemHelper.exit(project)
+                IdeSystemHelper.exit(project)
             }
         }
     }
@@ -73,9 +73,9 @@ class GradleProfilerStartupActivity : ProjectActivity {
     }
 
     private fun configureLinkedProject(settings: GradleProjectSettings) {
-        // If we don't disable external annotations, Android Studio will download some artifacts
-        settings.isResolveExternalAnnotations = false
+        // If we don't disable external annotations, the IDE will download some artifacts
         // to .m2 folder if some project has for example com.fasterxml.jackson.core:jackson-core as a dependency
+        settings.isResolveExternalAnnotations = false
         // Set Gradle JVM to JAVA_HOME to avoid JDK resolution dialogs in headless mode
         if (settings.gradleJvm == null || settings.gradleJvm == "#USE_PROJECT_JDK") {
             settings.gradleJvm = "#JAVA_HOME"

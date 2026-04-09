@@ -20,11 +20,11 @@ import java.util.concurrent.TimeUnit;
 
 import static org.gradle.profiler.client.protocol.messages.IdeRequest.IdeRequestType.EXIT_IDE;
 import static org.gradle.profiler.client.protocol.messages.IdeRequest.IdeRequestType.STOP_RECEIVING_EVENTS;
-import static org.gradle.profiler.studio.plugin.system.AndroidStudioSystemHelper.waitOnPostStartupActivities;
-import static org.gradle.profiler.studio.plugin.system.AndroidStudioSystemHelper.waitOnPreviousGradleSyncFinish;
-import static org.gradle.profiler.studio.plugin.system.AndroidStudioSystemHelper.waitOnBackgroundProcessesFinish;
-import static org.gradle.profiler.studio.plugin.system.AndroidStudioSystemHelper.getStartupSyncResult;
-import static org.gradle.profiler.studio.plugin.system.AndroidStudioSystemHelper.startManualSync;
+import static org.gradle.profiler.studio.plugin.system.IdeSystemHelper.waitOnPostStartupActivities;
+import static org.gradle.profiler.studio.plugin.system.IdeSystemHelper.waitOnPreviousGradleSyncFinish;
+import static org.gradle.profiler.studio.plugin.system.IdeSystemHelper.waitOnBackgroundProcessesFinish;
+import static org.gradle.profiler.studio.plugin.system.IdeSystemHelper.getStartupSyncResult;
+import static org.gradle.profiler.studio.plugin.system.IdeSystemHelper.startManualSync;
 
 public class GradleProfilerClient {
 
