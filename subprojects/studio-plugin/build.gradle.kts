@@ -41,7 +41,7 @@ intellijPlatform {
     pluginConfiguration {
         name = "gradle-profiler-studio-plugin"
         ideaVersion {
-            sinceBuild = provider { "253" }
+            sinceBuild = libs.versions.minimalSupportedPlatformCode
             untilBuild = provider { null }
         }
     }

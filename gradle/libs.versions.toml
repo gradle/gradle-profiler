@@ -10,6 +10,7 @@ testAndroidStudioCodename = "panda2"
 testAndroidSdkVersion = "9.1.0"
 testIntellijVersion = "2025.3.4"
 intellijPlatformVersion = "2025.3"
+minimalSupportedPlatformCode = "253"
 jetbrainsAndroidPluginVersion = "253.28294.334"
 
 [libraries]

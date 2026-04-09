@@ -24,11 +24,11 @@ class IntellijGradleJvmCompatibility {
     static IntellijGradleJvmCompatibility fromIdeHome(File ideHome) {
         def gradleJar = findGradlePluginJar(ideHome)
         if (gradleJar == null) {
-            return null
+            throw new IllegalStateException("Can't find gradle.jar in IntelliJ distribution at: $ideHome")
         }
         def json = extractCompatibilityJson(gradleJar)
         if (json == null) {
-            return null
+            throw new IllegalStateException("Can't find compatibility.json in IntelliJ distribution at: $ideHome")
         }
         return parse(json)
     }
