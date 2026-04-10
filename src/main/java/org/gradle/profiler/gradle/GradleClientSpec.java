@@ -3,8 +3,6 @@ package org.gradle.profiler.gradle;
 import org.gradle.profiler.GradleBuildConfiguration;
 import org.gradle.profiler.GradleClient;
 import org.gradle.profiler.InvocationSettings;
-import org.gradle.profiler.gradle.CliGradleClient;
-import org.gradle.profiler.gradle.ToolingApiGradleClient;
 import org.gradle.profiler.studio.IdeGradleClient;
 import org.gradle.profiler.studio.invoker.IdeGradleScenarioDefinition.IdeGradleBuildConfiguration;
 import org.gradle.tooling.GradleConnector;
@@ -45,19 +43,19 @@ public enum GradleClientSpec {
             return new CliGradleClient(buildConfiguration, buildConfiguration.getJavaHome(), invocationSettings.getProjectDir(), false, invocationSettings.getBuildLog());
         }
     },
-    AndroidStudio("Android Studio") {
+    Ide("IDE") {
         @Override
         public GradleClient create(GradleBuildConfiguration buildConfiguration, InvocationSettings invocationSettings) {
             return new IdeGradleClient((IdeGradleBuildConfiguration) buildConfiguration, invocationSettings, NEVER);
         }
     },
-    AndroidStudioCleanCacheBeforeBuild("Android Studio with clean cache before build") {
+    IdeCleanCacheBeforeBuild("IDE with clean cache before build") {
         @Override
         public GradleClient create(GradleBuildConfiguration buildConfiguration, InvocationSettings invocationSettings) {
             return new IdeGradleClient((IdeGradleBuildConfiguration) buildConfiguration, invocationSettings, BEFORE_BUILD);
         }
     },
-    AndroidStudioCleanCacheBeforeScenario("Android Studio with clean cache before scenario") {
+    IdeCleanCacheBeforeScenario("IDE with clean cache before scenario") {
         @Override
         public GradleClient create(GradleBuildConfiguration buildConfiguration, InvocationSettings invocationSettings) {
             return new IdeGradleClient((IdeGradleBuildConfiguration) buildConfiguration, invocationSettings, BEFORE_SCENARIO);

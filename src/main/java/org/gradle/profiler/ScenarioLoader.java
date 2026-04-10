@@ -533,7 +533,7 @@ class ScenarioLoader {
 
         if (config.hasPath(RUN_USING)) {
             if (sync) {
-                throw new IllegalArgumentException("Cannot specify '" + RUN_USING + "' when performing Android sync.");
+                throw new IllegalArgumentException("Cannot specify '" + RUN_USING + "' when performing IDE sync.");
             }
             String value = ConfigUtil.string(config, RUN_USING, null);
             if (value.equals("cli")) {
@@ -548,7 +548,7 @@ class ScenarioLoader {
             String value = ConfigUtil.string(config, DAEMON, null);
             if (value.equals("none")) {
                 if (sync) {
-                    throw new IllegalArgumentException("Cannot use no daemon when performing Android sync.");
+                    throw new IllegalArgumentException("Cannot use no daemon when performing IDE sync.");
                 }
                 invoker = GradleBuildInvoker.CliNoDaemon;
             } else if (value.equals("cold")) {
@@ -563,16 +563,16 @@ class ScenarioLoader {
 
     private static GradleBuildInvoker getIdeInvoker(Config config) {
         if (!hasKeyWithDeprecatedFallback(config, CLEAR_IDE_CACHE_BEFORE, CLEAR_ANDROID_STUDIO_CACHE_BEFORE)) {
-            return GradleBuildInvoker.AndroidStudio;
+            return GradleBuildInvoker.Ide;
         }
         String clearCacheKey = resolveKeyWithDeprecatedFallback(config, CLEAR_IDE_CACHE_BEFORE, CLEAR_ANDROID_STUDIO_CACHE_BEFORE);
         Schedule schedule = ConfigUtil.enumValue(config, clearCacheKey, Schedule.class, null);
         if (schedule == null) {
-            return GradleBuildInvoker.AndroidStudio;
+            return GradleBuildInvoker.Ide;
         }
         return switch (schedule) {
-            case SCENARIO -> GradleBuildInvoker.AndroidStudioCleanCacheBeforeScenario;
-            case BUILD -> GradleBuildInvoker.AndroidStudioCleanCacheBeforeBuild;
+            case SCENARIO -> GradleBuildInvoker.IdeCleanCacheBeforeScenario;
+            case BUILD -> GradleBuildInvoker.IdeCleanCacheBeforeBuild;
             default ->
                 throw new IllegalArgumentException(String.format("Unsupported cleanup schedule for '%s': '%s'", clearCacheKey, schedule));
         };
