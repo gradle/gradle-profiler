@@ -296,16 +296,24 @@ Both IDEs are based on the IntelliJ platform. The profiler installs a lightweigh
 
 ### Command-line options
 
-- `--idea-install-dir`: The IntelliJ IDEA installation directory. Required when measuring an `intellij-idea-sync` scenario. On macOS, it is the app directory, e.g. `~/Applications/IntelliJ IDEA.app`.
-- `--idea-sandbox-dir`: The IntelliJ IDEA sandbox directory. It's recommended to use it since it isolates the IDE process from your other IDE processes. By default, this is set to `<output-dir>/idea-sandbox`. If you want the IDE to keep old data (e.g. indexes), set and reuse your own folder.
+- `--idea-install-dir`: The IntelliJ IDEA installation directory.
+Required when measuring an `idea-sync` scenario.
+On macOS, it is the app directory, e.g. `~/Applications/IntelliJ IDEA.app`.
+- `--idea-sandbox-dir`: The IntelliJ IDEA sandbox directory.
+It's recommended to use it since it isolates the IDE process from your other IDE processes.
+By default, this is set to `<output-dir>/idea-sandbox`.
+If you want the IDE to keep old data (e.g. indexes), set and reuse your own folder.
 - `--no-idea-sandbox`: Do not use the IntelliJ IDEA sandbox; instead use the default IDE folders for the IDE data.
-- `--studio-install-dir`: The Android Studio installation directory. Required when measuring an `android-studio-sync` scenario. On macOS, it is the app directory, e.g. `~/Applications/Android Studio.app`.
-- `--studio-sandbox-dir`: The Android Studio sandbox directory. By default, this is set to `<output-dir>/studio-sandbox`.
+- `--studio-install-dir`: The Android Studio installation directory.
+Required when measuring an `android-studio-sync` scenario.
+On macOS, it is the app directory, e.g. `~/Applications/Android Studio.app`.
+- `--studio-sandbox-dir`: The Android Studio sandbox directory.
+By default, this is set to `<output-dir>/studio-sandbox`.
 - `--no-studio-sandbox`: Do not use the Android Studio sandbox; instead use the default IDE folders for the IDE data.
 
-### Scenario block keys
+### Scenario file blocks
 
-Inside an `intellij-idea-sync` or `android-studio-sync` block:
+Inside an `idea-sync` or `android-studio-sync` block:
 
 - `ide-jvm-args`: JVM arguments for the IDE process. Defaults to `["-Xms256m", "-Xmx4096m"]`.
 - `idea-properties`: Additional entries to write to the IDE's `idea.properties` file. Useful for setting registry values.
@@ -315,7 +323,7 @@ To invalidate IDE caches between runs, use the scenario-level [`clear-ide-cache-
 For Android Studio, swap `--idea-install-dir` for `--studio-install-dir` and use the matching scenario block:
 
     ideaSync {
-        intellij-idea-sync {
+        idea-sync {
             ide-jvm-args = ["-Xms256m", "-Xmx4096m"]
         }
     }
@@ -326,15 +334,16 @@ For Android Studio, swap `--idea-install-dir` for `--studio-install-dir` and use
         }
     }
 
-For Android Studio projects, make sure a `local.properties` file exists with `sdk.dir` pointing to your Android SDK.
+> [!NOTE]
+> For Android Studio projects, make sure a `local.properties` file exists with `sdk.dir` pointing to your Android SDK.
 
 ### Deprecated options
 
 The following options are still accepted but deprecated. A warning will be printed when they are used:
 
-| Deprecated | Replacement |
-|---|---|
-| `studio-jvm-args` | `ide-jvm-args` |
+| Deprecated                          | Replacement              |
+|-------------------------------------|--------------------------|
+| `studio-jvm-args`                   | `ide-jvm-args`           |
 | `clear-android-studio-cache-before` | `clear-ide-cache-before` |
 
 ## Advanced profiling scenarios
@@ -403,8 +412,7 @@ Here is an example:
         # Can also run tasks
         # tasks = ["assemble"]
     }
-    # For IDE-sync scenarios (`intellij-idea-sync` / `android-studio-sync`),
-    # see [IDE sync support](#ide-sync-support).
+    # For IDE-sync scenarios (`idea-sync` / `android-studio-sync`), see IDE sync support section.
 
 Values are optional and default to the values provided on the command-line or defined in the build.
 
