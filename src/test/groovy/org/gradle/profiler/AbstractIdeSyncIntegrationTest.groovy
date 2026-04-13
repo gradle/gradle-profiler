@@ -34,7 +34,7 @@ abstract class AbstractIdeSyncIntegrationTest extends AbstractProfilerIntegratio
         sandboxDir = tmpDir.createDir('sandbox')
         ideHome = findIdeHome()
         ideDisplayName = ideType().displayName
-        scenarioSyncOption = ideType() == IdeType.INTELLIJ_IDEA ? "intellij-idea-sync" : "android-studio-sync"
+        scenarioSyncOption = ideType() == IdeType.INTELLIJ_IDEA ? "idea-sync" : "android-studio-sync"
         installDirOption = ideType() == IdeType.INTELLIJ_IDEA ? "--idea-install-dir" : "--studio-install-dir"
         sandboxDirOption = ideType() == IdeType.INTELLIJ_IDEA ? "--idea-sandbox-dir" : "--studio-sandbox-dir"
 

@@ -84,7 +84,7 @@ class ScenarioLoader {
     private static final String ACTION = "action";
     private static final String MEASUREMENT_KIND = "measurement-kind";
     private static final String TOOLING_API = "tooling-api";
-    private static final String INTELLIJ_IDEA_SYNC = "intellij-idea-sync";
+    private static final String IDEA_SYNC = "idea-sync";
     private static final String ANDROID_STUDIO_SYNC = "android-studio-sync";
     private static final String IDE_JVM_ARGS = "ide-jvm-args";
     /**
@@ -145,7 +145,7 @@ class ScenarioLoader {
             MAVEN,
             TOOLING_API,
             TOOL_HOME,
-            INTELLIJ_IDEA_SYNC,
+            IDEA_SYNC,
             ANDROID_STUDIO_SYNC,
             DAEMON,
             JVM_ARGS,
@@ -401,10 +401,10 @@ class ScenarioLoader {
 
     @Nullable
     private static IdeType getIdeSyncType(Config scenario) {
-        boolean hasIdea = scenario.hasPath(INTELLIJ_IDEA_SYNC);
+        boolean hasIdea = scenario.hasPath(IDEA_SYNC);
         boolean hasStudio = scenario.hasPath(ANDROID_STUDIO_SYNC);
         if (hasIdea && hasStudio) {
-            throw new IllegalArgumentException("Cannot specify both '" + INTELLIJ_IDEA_SYNC + "' and '" + ANDROID_STUDIO_SYNC + "' in the same scenario.");
+            throw new IllegalArgumentException("Cannot specify both '" + IDEA_SYNC + "' and '" + ANDROID_STUDIO_SYNC + "' in the same scenario.");
         }
         if (hasIdea) {
             return IdeType.INTELLIJ_IDEA;
@@ -417,7 +417,7 @@ class ScenarioLoader {
 
     private static String getIdeSyncKey(IdeType ideType) {
         return switch (ideType) {
-            case INTELLIJ_IDEA -> INTELLIJ_IDEA_SYNC;
+            case INTELLIJ_IDEA -> IDEA_SYNC;
             case ANDROID_STUDIO -> ANDROID_STUDIO_SYNC;
         };
     }

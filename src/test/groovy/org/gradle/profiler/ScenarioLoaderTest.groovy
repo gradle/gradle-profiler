@@ -419,11 +419,11 @@ class ScenarioLoaderTest extends Specification {
         System.err = originalErr
 
         where:
-        syncKey                | jvmArgsKey        | expectedWarnings
-        "intellij-idea-sync"   | "ide-jvm-args"    | []
-        "android-studio-sync"  | "ide-jvm-args"    | []
-        "intellij-idea-sync"   | "studio-jvm-args" | ["WARNING: Scenario key 'studio-jvm-args' is deprecated. Use 'ide-jvm-args' instead."]
-        "android-studio-sync"  | "studio-jvm-args" | ["WARNING: Scenario key 'studio-jvm-args' is deprecated. Use 'ide-jvm-args' instead."]
+        syncKey               | jvmArgsKey        | expectedWarnings
+        "idea-sync"           | "ide-jvm-args"    | []
+        "android-studio-sync" | "ide-jvm-args"    | []
+        "idea-sync"           | "studio-jvm-args" | ["WARNING: Scenario key 'studio-jvm-args' is deprecated. Use 'ide-jvm-args' instead."]
+        "android-studio-sync" | "studio-jvm-args" | ["WARNING: Scenario key 'studio-jvm-args' is deprecated. Use 'ide-jvm-args' instead."]
     }
 
     def "loads default scenarios only"() {

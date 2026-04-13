@@ -33,11 +33,11 @@ class AndroidStudioIntegrationTest extends AbstractIdeSyncIntegrationTest {
         setupLocalProperties(file("local.properties"))
     }
 
-    def "fails when intellij-idea-sync points to Android Studio install dir"() {
+    def "fails when idea-sync points to Android Studio install dir"() {
         given:
         def scenarioFile = file("performance.scenarios") << """
             $scenarioName {
-                intellij-idea-sync {}
+                idea-sync {}
             }
         """
 

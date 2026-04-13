@@ -34,7 +34,14 @@ public enum IdeType {
     private final List<String> windowsStarterPaths;
     private final List<String> linuxStarterPaths;
 
-    IdeType(String displayName, String vmOptionsEnvVar, String propertiesEnvVar, List<String> macOsStarterPaths, List<String> windowsStarterPaths, List<String> linuxStarterPaths) {
+    IdeType(
+        String displayName,
+        String vmOptionsEnvVar,
+        String propertiesEnvVar,
+        List<String> macOsStarterPaths,
+        List<String> windowsStarterPaths,
+        List<String> linuxStarterPaths
+    ) {
         this.displayName = displayName;
         this.vmOptionsEnvVar = vmOptionsEnvVar;
         this.propertiesEnvVar = propertiesEnvVar;
