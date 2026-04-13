@@ -45,6 +45,7 @@ public class IdeGradleClient implements GradleClient {
     private static final Duration GRADLE_INVOCATION_COMPLETED_TIMEOUT = Duration.ofMinutes(60);
     private static final Duration SYNC_REQUEST_COMPLETED_TIMEOUT = Duration.ofMinutes(90);
 
+    private final IdeType ideType;
     private final IdeProcessController processController;
     private final IdePluginInstaller idePluginInstaller;
     private final CleanCacheMode cleanCacheMode;
@@ -52,24 +53,30 @@ public class IdeGradleClient implements GradleClient {
     private final IdeSandbox sandbox;
     private boolean isFirstRun;
 
-    public IdeGradleClient(IdeGradleBuildConfiguration buildConfiguration, InvocationSettings invocationSettings, CleanCacheMode cleanCacheMode) {
+    public IdeGradleClient(
+        IdeGradleBuildConfiguration buildConfiguration,
+        InvocationSettings invocationSettings,
+        CleanCacheMode cleanCacheMode
+    ) {
         this.isFirstRun = true;
         this.cleanCacheMode = cleanCacheMode;
-        Path ideInstallDir = invocationSettings.getIdeInstallDir().toPath();
-        Optional<File> ideSandboxDir = invocationSettings.getIdeSandboxDir();
+        this.ideType = buildConfiguration.getIdeType();
+        IdeConfiguration ideConfiguration = invocationSettings.getIdeConfiguration(this.ideType);
+        Path ideInstallDir = ideConfiguration.getInstallDir().toPath();
+        Optional<File> ideSandboxDir = ideConfiguration.getSandboxDir();
         this.sandbox = IdeSandboxCreator.createSandbox(ideSandboxDir.map(File::toPath).orElse(null));
         Path protocolJar = GradleInstrumentation.unpackPlugin("client-protocol").toPath();
         Path studioPlugin = GradleInstrumentation.unpackPlugin("studio-plugin").toPath();
         this.idePluginInstaller = new IdePluginInstaller(sandbox.getPluginsDir());
         idePluginInstaller.installPlugin(Arrays.asList(studioPlugin, protocolJar));
-        this.processController = new IdeProcessController(ideInstallDir, sandbox, invocationSettings, buildConfiguration);
+        this.processController = new IdeProcessController(ideType, ideInstallDir, sandbox, invocationSettings, buildConfiguration);
         this.executor = Executors.newSingleThreadExecutor();
     }
 
     public BuildActionResult sync(List<String> gradleArgs, List<String> jvmArgs) {
         if (shouldCleanCache()) {
             processController.runAndWaitToStop((connections) -> {
-                System.out.println("* Cleaning IDE cache, this will require a restart...");
+                System.out.println("* Cleaning " + ideType.getDisplayName() + " cache, this will require a restart...");
                 connections.getPluginConnection().send(new IdeRequest(CLEANUP_CACHE));
                 connections.getPluginConnection().receiveCacheCleanupCompleted(CACHE_CLEANUP_COMPLETED_TIMEOUT);
                 connections.getPluginConnection().send(new IdeRequest(EXIT_IDE));
@@ -78,14 +85,14 @@ public class IdeGradleClient implements GradleClient {
 
         isFirstRun = false;
         return processController.run((connections) -> {
-            System.out.println("* Running sync in IDE...");
+            System.out.println("* Running sync in " + ideType.getDisplayName() + "...");
             connections.getPluginConnection().send(new IdeRequest(SYNC));
             System.out.println("* Sent sync request");
             Pair<IdeSyncRequestCompleted, IdeBuildActionResult> pair = waitForSyncToFinish(connections, gradleArgs, jvmArgs);
             IdeSyncRequestCompleted syncRequestResult = pair.getLeft();
             IdeBuildActionResult durationResult = pair.getRight();
             System.out.printf("* Full Gradle execution time: %dms%n", durationResult.getGradleTotalExecutionTime().toMillis());
-            System.out.printf("* Full IDE execution time: %dms%n", durationResult.getIdeExecutionTime().toMillis());
+            System.out.printf("* Full %s execution time: %dms%n", ideType.getDisplayName(), durationResult.getIdeExecutionTime().toMillis());
             System.out.printf("* Full sync has completed in: %dms and it %s%n", durationResult.getExecutionTime().toMillis(), syncRequestResult.getResult());
             maybeThrownExceptionOnSyncFailure(syncRequestResult);
             return durationResult;
@@ -94,8 +101,9 @@ public class IdeGradleClient implements GradleClient {
 
     private void maybeThrownExceptionOnSyncFailure(IdeSyncRequestCompleted syncRequestResult) {
         if (syncRequestResult.getResult() == FAILED) {
-            throw new IllegalStateException(String.format("Gradle sync has failed with error message: '%s'. Full IDE logs can be found in: '%s'.",
+            throw new IllegalStateException(String.format("Gradle sync has failed with error message: '%s'. Full %s logs can be found in: '%s'.",
                 syncRequestResult.getErrorMessage(),
+                ideType.getDisplayName(),
                 new File(sandbox.getLogsDir().toFile(), "idea.log").getAbsolutePath())
             );
         }
@@ -148,14 +156,14 @@ public class IdeGradleClient implements GradleClient {
             executor.shutdown();
             if (processController.isProcessRunning()) {
                 processController.runAndWaitToStop((connections) -> {
-                    System.out.println("* Stopping IDE....");
+                    System.out.println("* Stopping " + ideType.getDisplayName() + "....");
                     connections.getPluginConnection().send(new IdeRequest(EXIT_IDE));
-                    System.out.println("* IDE stopped.");
+                    System.out.println("* " + ideType.getDisplayName() + " stopped.");
                 });
             }
         } catch (Exception e) {
             e.printStackTrace();
-            System.out.println("* IDE did not finish successfully, you will have to close it manually.");
+            System.out.println("* " + ideType.getDisplayName() + " did not finish successfully, you will have to close it manually.");
         } finally {
             idePluginInstaller.uninstallPlugin();
         }

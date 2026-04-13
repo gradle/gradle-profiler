@@ -1,9 +1,8 @@
 package org.gradle.profiler.studio.launcher;
 
 import com.google.common.base.Joiner;
-import com.google.common.collect.ImmutableList;
-import org.gradle.profiler.OperatingSystem;
 import org.gradle.profiler.instrument.GradleInstrumentation;
+import org.gradle.profiler.studio.IdeType;
 import org.gradle.profiler.studio.tools.IdeSandboxCreator.IdeSandbox;
 
 import java.io.File;
@@ -17,10 +16,8 @@ import java.util.Map;
 public class IdeLauncherProvider {
 
     private static final boolean SHOULD_RUN_HEADLESS = Boolean.getBoolean("studio.tests.headless");
-    private static final List<String> DEFAULT_MACOS_STARTER_PATHS = ImmutableList.of("Contents/MacOS/studio", "Contents/MacOS/idea");
-    private static final List<String> DEFAULT_WINDOWS_STARTER_PATHS = ImmutableList.of("bin/studio.bat", "bin/idea.bat");
-    private static final List<String> DEFAULT_LINUX_STARTER_PATHS = ImmutableList.of("bin/studio.sh", "bin/idea.sh");
 
+    private final IdeType ideType;
     private final Path ideInstallDir;
     private final IdeSandbox ideSandbox;
     private final List<String> ideJvmArgs;
@@ -31,7 +28,14 @@ public class IdeLauncherProvider {
     private int agentPort;
     private int startDetectorPort;
 
-    public IdeLauncherProvider(Path ideInstallDir, IdeSandbox ideSandbox, List<String> ideJvmArgs, List<String> ideaProperties) {
+    public IdeLauncherProvider(
+        IdeType ideType,
+        Path ideInstallDir,
+        IdeSandbox ideSandbox,
+        List<String> ideJvmArgs,
+        List<String> ideaProperties
+    ) {
+        this.ideType = ideType;
         this.ideInstallDir = ideInstallDir;
         this.ideSandbox = ideSandbox;
         this.ideJvmArgs = ideJvmArgs;
@@ -52,14 +56,12 @@ public class IdeLauncherProvider {
     }
 
     public IdeLauncher get() {
-        Path startCommand = getStartCommand(ideInstallDir);
+        Path startCommand = getStartCommand(ideType, ideInstallDir);
         List<String> additionalJvmArgs = getAdditionalJvmArgs();
 
-        // Note: In headless mode ANDROID_HOME and ANDROID_SDK_ROOT have to be set otherwise
-        // Studio will fail since "missing Android SDK" modal will try to open
         String headlessCommand = SHOULD_RUN_HEADLESS ? "headless-starter" : "";
 
-        return new IdeLauncher(startCommand, headlessCommand, ideInstallDir, additionalJvmArgs, ideSandbox, ideaProperties);
+        return new IdeLauncher(ideType, startCommand, headlessCommand, ideInstallDir, additionalJvmArgs, ideSandbox, ideaProperties);
     }
 
     private List<String> getAdditionalJvmArgs() {
@@ -98,21 +100,14 @@ public class IdeLauncherProvider {
         return jvmArgs;
     }
 
-    private static Path getStartCommand(Path ideInstallDir) {
-        return getDefaultJavaPathsForOs().stream()
+    private static Path getStartCommand(IdeType ideType, Path ideInstallDir) {
+        List<String> candidates = ideType.getStarterPathsForCurrentOs();
+        return candidates.stream()
             .map(ideInstallDir::resolve)
             .filter(path -> path.toFile().exists())
             .findFirst()
-            .orElseThrow(() -> new RuntimeException("Could not find Java executable in " + ideInstallDir));
-    }
-
-    private static List<String> getDefaultJavaPathsForOs() {
-        if (OperatingSystem.isMacOS()) {
-            return DEFAULT_MACOS_STARTER_PATHS;
-        } else if (OperatingSystem.isWindows()) {
-            return DEFAULT_WINDOWS_STARTER_PATHS;
-        } else {
-            return DEFAULT_LINUX_STARTER_PATHS;
-        }
+            .orElseThrow(() -> new RuntimeException(
+                "Expected " + ideType.getDisplayName() + " installation at " + ideInstallDir
+                    + ", but no starter executable found at any of: " + candidates));
     }
 }

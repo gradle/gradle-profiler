@@ -4,6 +4,7 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import org.gradle.profiler.CommandExec;
 import org.gradle.profiler.Logging;
+import org.gradle.profiler.studio.IdeType;
 import org.gradle.profiler.studio.tools.IdeSandboxCreator.IdeSandbox;
 
 import java.io.File;
@@ -17,6 +18,7 @@ import java.util.Map;
 
 public class IdeLauncher {
 
+    private final IdeType ideType;
     private final Path startCommand;
     private final Path ideInstallDir;
     private final String headlessCommand;
@@ -25,6 +27,7 @@ public class IdeLauncher {
     private final IdeSandbox ideSandbox;
 
     public IdeLauncher(
+        IdeType ideType,
         Path startCommand,
         String headlessCommand,
         Path ideInstallDir,
@@ -32,6 +35,7 @@ public class IdeLauncher {
         IdeSandbox ideSandbox,
         List<String> ideaProperties
     ) {
+        this.ideType = ideType;
         this.startCommand = startCommand;
         this.headlessCommand = headlessCommand;
         this.ideInstallDir = ideInstallDir;
@@ -61,7 +65,7 @@ public class IdeLauncher {
 
     private void logLauncherConfiguration(List<String> commandLine) {
         System.out.println();
-        Logging.startOperation("Starting IDE at " + ideInstallDir);
+        Logging.startOperation("Starting " + ideType.getDisplayName() + " at " + ideInstallDir);
         System.out.println("* Start command: " + startCommand);
         System.out.println("* Additional JVM args:");
         additionalJvmArgs.forEach(arg -> System.out.println("  " + arg));
@@ -69,7 +73,7 @@ public class IdeLauncher {
         System.out.println("* IDEA properties:");
         ideaProperties.forEach(property -> System.out.println("  " + property));
         System.out.println("* IDEA properties can be found at: " + ideSandbox.getScenarioOptionsDir().resolve("idea.properties"));
-        System.out.println("* IDE logs can be found at: " + ideSandbox.getLogsDir().resolve("idea.log"));
+        System.out.println("* " + ideType.getDisplayName() + " logs can be found at: " + ideSandbox.getLogsDir().resolve("idea.log"));
         System.out.printf("* Using command line: %s%n%n", String.join(" ", commandLine));
     }
 
@@ -77,11 +81,7 @@ public class IdeLauncher {
         try {
             Path ideaPropertiesFile = ideSandbox.getScenarioOptionsDir().resolve("idea.properties").toAbsolutePath();
             Files.write(ideaPropertiesFile, ideaProperties);
-            return ImmutableMap.<String, String>builder()
-                .put("STUDIO_PROPERTIES", ideaPropertiesFile.toString())
-                .put("IDEA_PROPERTIES", ideaPropertiesFile.toString())
-                .build();
-
+            return ImmutableMap.of(ideType.getPropertiesEnvVar(), ideaPropertiesFile.toString());
         } catch (IOException e) {
             throw new UncheckedIOException(e);
         }
@@ -91,10 +91,7 @@ public class IdeLauncher {
         try {
             Path additionJvmArgsFile = ideSandbox.getScenarioOptionsDir().resolve("idea.vmoptions").toAbsolutePath();
             Files.write(additionJvmArgsFile, additionalJvmArgs);
-            return ImmutableMap.<String, String>builder()
-                .put("STUDIO_VM_OPTIONS", additionJvmArgsFile.toString())
-                .put("IDEA_VM_OPTIONS", additionJvmArgsFile.toString())
-                .build();
+            return ImmutableMap.of(ideType.getVmOptionsEnvVar(), additionJvmArgsFile.toString());
         } catch (IOException e) {
             throw new UncheckedIOException(e);
         }

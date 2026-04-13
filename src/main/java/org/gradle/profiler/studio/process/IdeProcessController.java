@@ -2,6 +2,7 @@ package org.gradle.profiler.studio.process;
 
 import org.gradle.profiler.InvocationSettings;
 import org.gradle.profiler.client.protocol.messages.IdeAgentConnectionParameters;
+import org.gradle.profiler.studio.IdeType;
 import org.gradle.profiler.studio.invoker.IdeGradleScenarioDefinition.IdeGradleBuildConfiguration;
 import org.gradle.profiler.studio.process.IdeProcess.IdeConnections;
 import org.gradle.profiler.studio.tools.IdeSandboxCreator.IdeSandbox;
@@ -17,6 +18,7 @@ import java.util.function.Function;
  */
 public class IdeProcessController {
 
+    private final IdeType ideType;
     private final Path ideInstallDir;
     private final IdeSandbox sandbox;
     private final InvocationSettings invocationSettings;
@@ -25,11 +27,13 @@ public class IdeProcessController {
     private IdeProcess process;
 
     public IdeProcessController(
+        IdeType ideType,
         Path ideInstallDir,
         IdeSandbox sandbox,
         InvocationSettings invocationSettings,
         IdeGradleBuildConfiguration buildConfiguration
     ) {
+        this.ideType = ideType;
         this.ideInstallDir = ideInstallDir;
         this.sandbox = sandbox;
         this.invocationSettings = invocationSettings;
@@ -73,7 +77,7 @@ public class IdeProcessController {
      */
     public IdeProcess maybeStartProcess() {
         if (!isProcessRunning()) {
-            process = new IdeProcess(ideInstallDir, sandbox, invocationSettings, buildConfiguration.getIdeJvmArgs(), buildConfiguration.getIdeaProperties());
+            process = new IdeProcess(ideType, ideInstallDir, sandbox, invocationSettings, buildConfiguration.getIdeJvmArgs(), buildConfiguration.getIdeaProperties());
             process.getConnections().getAgentConnection().send(new IdeAgentConnectionParameters(buildConfiguration.getGradleHome()));
         }
         return process;

@@ -4,6 +4,7 @@ import org.gradle.profiler.CommandExec.RunHandle;
 import org.gradle.profiler.InvocationSettings;
 import org.gradle.profiler.client.protocol.Server;
 import org.gradle.profiler.client.protocol.ServerConnection;
+import org.gradle.profiler.studio.IdeType;
 import org.gradle.profiler.studio.launcher.IdeLauncher;
 import org.gradle.profiler.studio.launcher.IdeLauncherProvider;
 import org.gradle.profiler.studio.tools.IdeSandboxCreator.IdeSandbox;
@@ -25,30 +26,31 @@ public class IdeProcess implements Closeable {
     private final IdeConnections connections;
     private final RunHandle process;
 
-    public IdeProcess(Path ideInstallDir, IdeSandbox sandbox, InvocationSettings invocationSettings, List<String> ideJvmArgs, List<String> ideaProperties) {
+    public IdeProcess(IdeType ideType, Path ideInstallDir, IdeSandbox sandbox, InvocationSettings invocationSettings, List<String> ideJvmArgs, List<String> ideaProperties) {
         Server ideStartDetectorServer = new Server("start-detector");
         this.idePluginServer = new Server("plugin");
         this.ideAgentServer = new Server("agent");
-        IdeLauncher ideLauncher = new IdeLauncherProvider(ideInstallDir, sandbox, ideJvmArgs, ideaProperties)
+        IdeLauncher ideLauncher = new IdeLauncherProvider(ideType, ideInstallDir, sandbox, ideJvmArgs, ideaProperties)
             .withPluginParameters(ideStartDetectorServer.getPort(), idePluginServer.getPort())
             .withAgentParameters(ideAgentServer.getPort())
             .get();
         this.process = ideLauncher.launchIde(invocationSettings.getProjectDir());
-        waitOnSuccessfulIdeStart(process, ideStartDetectorServer);
+        waitOnSuccessfulIdeStart(ideType, process, ideStartDetectorServer);
         connections = new IdeConnections(
             idePluginServer.waitForIncoming(PLUGIN_CONNECT_TIMEOUT),
             ideAgentServer.waitForIncoming(AGENT_CONNECT_TIMEOUT)
         );
     }
 
-    private void waitOnSuccessfulIdeStart(RunHandle runHandle, Server ideStartDetectorServer) {
+    private void waitOnSuccessfulIdeStart(IdeType ideType, RunHandle runHandle, Server ideStartDetectorServer) {
         try (Server server = ideStartDetectorServer) {
             server.waitForIncoming(IDE_START_TIMEOUT);
         } catch (Exception e) {
+            String displayName = ideType.getDisplayName();
             System.err.println("\n* ERROR\n" +
-                "* Could not connect to IDE process started by the gradle-profiler.\n" +
-                "* This might indicate that you are already running an IDE process in the same sandbox.\n" +
-                "* Stop the IDE manually in the used sandbox or use a different sandbox with --ide-sandbox-dir to isolate the process.\n");
+                "* Could not connect to " + displayName + " process started by the gradle-profiler.\n" +
+                "* This might indicate that you are already running a " + displayName + " process in the same sandbox.\n" +
+                "* Stop " + displayName + " manually in the used sandbox or use a different sandbox to isolate the process.\n");
             kill(runHandle);
             throw new IllegalStateException(e.getMessage(), e);
         }
