@@ -5,6 +5,7 @@ import org.gradle.profiler.fixtures.AbstractProfilerIntegrationTest
 import org.gradle.profiler.fixtures.compatibility.ide.IntellijGradleJvmCompatibility
 import org.gradle.profiler.instrument.GradleInstrumentation
 import org.gradle.profiler.spock.extensions.ShowIdeLogsOnFailure
+import org.gradle.profiler.studio.IdeType
 import org.gradle.profiler.studio.launcher.IdeLauncher
 import org.gradle.profiler.studio.launcher.IdeLauncherProvider
 import org.gradle.profiler.studio.tools.IdePluginInstaller
@@ -20,12 +21,22 @@ abstract class AbstractIdeSyncIntegrationTest extends AbstractProfilerIntegratio
     File sandboxDir
     File ideHome
     String scenarioName
+    String ideDisplayName
+    String scenarioSyncOption
+    String installDirOption
+    String sandboxDirOption
 
     abstract File findIdeHome()
+
+    abstract IdeType ideType()
 
     def setup() {
         sandboxDir = tmpDir.createDir('sandbox')
         ideHome = findIdeHome()
+        ideDisplayName = ideType().displayName
+        scenarioSyncOption = ideType() == IdeType.INTELLIJ_IDEA ? "intellij-idea-sync" : "android-studio-sync"
+        installDirOption = ideType() == IdeType.INTELLIJ_IDEA ? "--idea-install-dir" : "--studio-install-dir"
+        sandboxDirOption = ideType() == IdeType.INTELLIJ_IDEA ? "--idea-sandbox-dir" : "--studio-sandbox-dir"
 
         // IDE must support Java version we're going to run the test build with.
         // So far we expect the current version to work always, however some downgrading logic
@@ -51,8 +62,7 @@ abstract class AbstractIdeSyncIntegrationTest extends AbstractProfilerIntegratio
         given:
         def scenarioFile = file("performance.scenarios") << """
             $scenarioName {
-                ide-sync {
-                }
+                $scenarioSyncOption {}
             }
         """
 
@@ -63,8 +73,8 @@ abstract class AbstractIdeSyncIntegrationTest extends AbstractProfilerIntegratio
         logFile.find("Gradle invocation 1 has completed in").size() == 5
         logFile.find("Full sync has completed in").size() == 5
         logFile.find("and it SUCCEEDED").size() == 5
-        logFile.find("* Cleaning IDE cache, this will require a restart...").size() == 0
-        logFile.find("* Starting IDE").size() == 1
+        logFile.find("* Cleaning $ideDisplayName cache, this will require a restart...").size() == 0
+        logFile.find("* Starting $ideDisplayName").size() == 1
 
         and:
         resultFile.lines[3] == "value,total execution time,Gradle total execution time,IDE execution time"
@@ -77,8 +87,7 @@ abstract class AbstractIdeSyncIntegrationTest extends AbstractProfilerIntegratio
         new File(projectDir, "buildSrc/gradle.build").createNewFile()
         def scenarioFile = file("performance.scenarios") << """
             $scenarioName {
-                ide-sync {
-                }
+                $scenarioSyncOption {}
             }
         """
 
@@ -93,8 +102,8 @@ abstract class AbstractIdeSyncIntegrationTest extends AbstractProfilerIntegratio
         logFile.find("Full Gradle execution time: ${duration[0]}ms").size() == 1
         logFile.find("Full sync has completed in").size() == 2
         logFile.find("and it SUCCEEDED").size() == 2
-        logFile.find("* Cleaning IDE cache, this will require a restart...").size() == 0
-        logFile.find("* Starting IDE").size() == 1
+        logFile.find("* Cleaning $ideDisplayName cache, this will require a restart...").size() == 0
+        logFile.find("* Starting $ideDisplayName").size() == 1
 
         and:
         resultFile.lines[3] == "value,total execution time,Gradle total execution time,IDE execution time"
@@ -104,7 +113,7 @@ abstract class AbstractIdeSyncIntegrationTest extends AbstractProfilerIntegratio
         given:
         def scenarioFile = file("performance.scenarios") << """
             $scenarioName {
-                ide-sync {}
+                $scenarioSyncOption {}
                 clear-android-studio-cache-before = BUILD
             }
         """
@@ -116,16 +125,16 @@ abstract class AbstractIdeSyncIntegrationTest extends AbstractProfilerIntegratio
         logFile.find("Gradle invocation 1 has completed in").size() == 3
         logFile.find("Full sync has completed in").size() == 3
         logFile.find("and it SUCCEEDED").size() == 3
-        logFile.find("* Cleaning IDE cache, this will require a restart...").size() == 3
+        logFile.find("* Cleaning $ideDisplayName cache, this will require a restart...").size() == 3
         // 4 since on first run we start IDE, clean cache and restart
-        logFile.find("* Starting IDE").size() == 4
+        logFile.find("* Starting $ideDisplayName").size() == 4
     }
 
     def "benchmarks IDE sync by cleaning ide cache before scenario"() {
         given:
         def scenarioFile = file("performance.scenarios") << """
             $scenarioName {
-                ide-sync {}
+                $scenarioSyncOption {}
                 clear-android-studio-cache-before = SCENARIO
             }
         """
@@ -137,9 +146,9 @@ abstract class AbstractIdeSyncIntegrationTest extends AbstractProfilerIntegratio
         logFile.find("Gradle invocation 1 has completed in").size() == 3
         logFile.find("Full sync has completed in").size() == 3
         logFile.find("and it SUCCEEDED").size() == 3
-        logFile.find("* Cleaning IDE cache, this will require a restart...").size() == 1
+        logFile.find("* Cleaning $ideDisplayName cache, this will require a restart...").size() == 1
         // 2 since on first run we start IDE, clean cache and restart
-        logFile.find("* Starting IDE").size() == 2
+        logFile.find("* Starting $ideDisplayName").size() == 2
     }
 
     def "detects if two IDE processes are running in the same sandbox"() {
@@ -148,14 +157,13 @@ abstract class AbstractIdeSyncIntegrationTest extends AbstractProfilerIntegratio
         // We have to install plugin so also the first process is run in the headless mode.
         // We install plugin directory to a different "plugins-2" directory for first process otherwise cleaning plugin directory at start of second process fails on Windows.
         IdeSandboxCreator.IdeSandbox sandbox = IdeSandboxCreator.createSandbox(sandboxDir.toPath(), "plugins-2")
-        IdeLauncher launcher = new IdeLauncherProvider(ideHome.toPath(), sandbox, [], []).get()
+        IdeLauncher launcher = new IdeLauncherProvider(ideType(), ideHome.toPath(), sandbox, [], []).get()
         IdePluginInstaller pluginInstaller = new IdePluginInstaller(sandbox.getPluginsDir())
         // We have to install plugin, since a plugin contains headless starter and it makes it run headless on CI
         pluginInstaller.installPlugin(Collections.singletonList(GradleInstrumentation.unpackPlugin("studio-plugin").toPath()))
         def scenarioFile = file("performance.scenarios") << """
             $scenarioName {
-                ide-sync {
-                }
+                $scenarioSyncOption {}
             }
         """
 
@@ -167,9 +175,9 @@ abstract class AbstractIdeSyncIntegrationTest extends AbstractProfilerIntegratio
         def e = thrown(Main.ScenarioFailedException)
         e.getCause().message == "Timeout waiting for incoming connection from start-detector."
         logFile.containsOne("* ERROR")
-        logFile.containsOne("* Could not connect to IDE process started by the gradle-profiler.")
-        logFile.containsOne("* This might indicate that you are already running an IDE process in the same sandbox.")
-        logFile.containsOne("* Stop the IDE manually in the used sandbox or use a different sandbox with --ide-sandbox-dir to isolate the process.")
+        logFile.containsOne("* Could not connect to $ideDisplayName process started by the gradle-profiler.")
+        logFile.containsOne("* This might indicate that you are already running a $ideDisplayName process in the same sandbox.")
+        logFile.containsOne("* Stop $ideDisplayName manually in the used sandbox or use a different sandbox to isolate the process.")
 
         cleanup:
         process.kill()
@@ -182,14 +190,13 @@ abstract class AbstractIdeSyncIntegrationTest extends AbstractProfilerIntegratio
         // since if the IDE writes to same project at the same time, it can fail
         File otherProjectDir = tmpDir.createDir('project2')
         IdeSandboxCreator.IdeSandbox sandbox = IdeSandboxCreator.createSandbox(sandboxDir1.toPath())
-        IdeLauncher launcher = new IdeLauncherProvider(ideHome.toPath(), sandbox, [], []).get()
+        IdeLauncher launcher = new IdeLauncherProvider(ideType(), ideHome.toPath(), sandbox, [], []).get()
         // We have to install plugin, since a plugin contains headless starter and it makes it run headless on CI
         IdePluginInstaller pluginInstaller = new IdePluginInstaller(sandbox.getPluginsDir())
         pluginInstaller.installPlugin(Collections.singletonList(GradleInstrumentation.unpackPlugin("studio-plugin").toPath()))
         def scenarioFile = file("performance.scenarios") << """
             $scenarioName {
-                ide-sync {
-                }
+                $scenarioSyncOption {}
             }
         """
 
@@ -209,8 +216,7 @@ abstract class AbstractIdeSyncIntegrationTest extends AbstractProfilerIntegratio
         given:
         def scenarioFile = file("performance.scenarios") << """
             $scenarioName {
-                ide-sync {
-                }
+                $scenarioSyncOption {}
             }
         """
         buildFile << """
@@ -234,8 +240,7 @@ abstract class AbstractIdeSyncIntegrationTest extends AbstractProfilerIntegratio
         given:
         def scenarioFile = file("performance.scenarios") << """
             $scenarioName {
-                ide-sync {
-                }
+                $scenarioSyncOption {}
             }
         """
         buildFile << """
@@ -267,7 +272,7 @@ abstract class AbstractIdeSyncIntegrationTest extends AbstractProfilerIntegratio
         given:
         def scenarioFile = file("performance.scenarios") << """
             $scenarioName {
-                ide-sync {
+                $scenarioSyncOption {
                     ide-jvm-args = ["-Xmx4104m", "-Xms128m"]
                 }
             }
@@ -290,8 +295,7 @@ abstract class AbstractIdeSyncIntegrationTest extends AbstractProfilerIntegratio
         given:
         def scenarioFile = file("performance.scenarios") << """
             $scenarioName {
-                ide-sync {
-                }
+                $scenarioSyncOption {}
             }
         """
         buildFile.text = """
@@ -327,7 +331,7 @@ abstract class AbstractIdeSyncIntegrationTest extends AbstractProfilerIntegratio
         given:
         def scenarioFile = file("performance.scenarios") << """
             $scenarioName {
-                ide-sync {
+                $scenarioSyncOption {
                     idea-properties = ["foo=true"]
                 }
             }
@@ -351,8 +355,8 @@ abstract class AbstractIdeSyncIntegrationTest extends AbstractProfilerIntegratio
             "--gradle-version", latestSupportedGradleVersion,
             "--benchmark",
             "--scenario-file", scenarioFile.getAbsolutePath(),
-            "--studio-install-dir", ideHome.absolutePath,
-            "--studio-sandbox-dir", sandboxDir.absolutePath,
+            installDirOption(), ideHome.absolutePath,
+            sandboxDirOption(), sandboxDir.absolutePath,
             "--warmups", "$warmups",
             "--iterations", "$iterations",
             *additionalArgs,

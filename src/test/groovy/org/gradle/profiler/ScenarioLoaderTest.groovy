@@ -13,6 +13,7 @@ import org.gradle.profiler.gradle.RunToolingAction
 import org.gradle.profiler.maven.MavenScenarioDefinition
 import org.gradle.profiler.mutations.AbstractScheduledMutator
 import org.gradle.profiler.report.Format
+import org.gradle.profiler.studio.IdeConfiguration
 import org.gradle.profiler.studio.IdeSyncAction
 import org.gradle.profiler.studio.invoker.IdeGradleScenarioDefinition
 import org.gradle.profiler.toolingapi.FetchProjectPublications
@@ -57,7 +58,8 @@ class ScenarioLoaderTest extends Specification {
             .setTargets([])
             .setSysProperties([:])
             .setGradleUserHome(gradleUserHomeDir)
-            .setIdeInstallDir(tmpDir.newFolder())
+            .setIdeaConfiguration(new IdeConfiguration(tmpDir.newFolder(), null))
+            .setStudioConfiguration(new IdeConfiguration(tmpDir.newFolder(), null))
             .setMeasureGarbageCollection(false)
             .setMeasureConfigTime(false)
             .setBuildOperationMeasurements([])
@@ -417,11 +419,11 @@ class ScenarioLoaderTest extends Specification {
         System.err = originalErr
 
         where:
-        syncKey               | jvmArgsKey        | expectedWarnings
-        "ide-sync"            | "ide-jvm-args"    | []
-        "android-studio-sync" | "ide-jvm-args"    | ["WARNING: Scenario key 'android-studio-sync' is deprecated. Use 'ide-sync' instead."]
-        "ide-sync"            | "studio-jvm-args" | ["WARNING: Scenario key 'studio-jvm-args' is deprecated. Use 'ide-jvm-args' instead."]
-        "android-studio-sync" | "studio-jvm-args" | ["WARNING: Scenario key 'android-studio-sync' is deprecated. Use 'ide-sync' instead.", "WARNING: Scenario key 'studio-jvm-args' is deprecated. Use 'ide-jvm-args' instead."]
+        syncKey                | jvmArgsKey        | expectedWarnings
+        "intellij-idea-sync"   | "ide-jvm-args"    | []
+        "android-studio-sync"  | "ide-jvm-args"    | []
+        "intellij-idea-sync"   | "studio-jvm-args" | ["WARNING: Scenario key 'studio-jvm-args' is deprecated. Use 'ide-jvm-args' instead."]
+        "android-studio-sync"  | "studio-jvm-args" | ["WARNING: Scenario key 'studio-jvm-args' is deprecated. Use 'ide-jvm-args' instead."]
     }
 
     def "loads default scenarios only"() {

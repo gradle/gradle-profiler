@@ -3,6 +3,7 @@ package org.gradle.profiler
 
 import org.gradle.profiler.spock.extensions.ShowIdeLogsOnFailure
 import org.gradle.profiler.studio.AndroidStudioTestSupport
+import org.gradle.profiler.studio.IdeType
 import org.gradle.profiler.studio.tools.AndroidStudioFinder
 import spock.lang.Requires
 
@@ -20,6 +21,11 @@ class AndroidStudioIntegrationTest extends AbstractIdeSyncIntegrationTest {
     @Override
     File findIdeHome() {
         return AndroidStudioFinder.findStudioHome()
+    }
+
+    @Override
+    IdeType ideType() {
+        return IdeType.ANDROID_STUDIO
     }
 
     @Override
