@@ -32,4 +32,21 @@ class AndroidStudioIntegrationTest extends AbstractIdeSyncIntegrationTest {
     void setupProject() {
         setupLocalProperties(file("local.properties"))
     }
+
+    def "fails when intellij-idea-sync points to Android Studio install dir"() {
+        given:
+        def scenarioFile = file("performance.scenarios") << """
+            $scenarioName {
+                intellij-idea-sync {}
+            }
+        """
+
+        when:
+        runBenchmark(scenarioFile, 1, 1, "--idea-install-dir", ideHome.absolutePath)
+
+        then:
+        def e = thrown(Main.ScenarioFailedException)
+        e.cause.message.startsWith("Expected IntelliJ IDEA installation at ${ideHome.absolutePath}")
+        e.cause.message.contains("but no starter executable found at any of: ")
+    }
 }

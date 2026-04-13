@@ -53,9 +53,6 @@ abstract class AbstractIdeSyncIntegrationTest extends AbstractProfilerIntegratio
         scenarioName = "scenario"
     }
 
-    /**
-     * Hook for subclasses to do additional project setup (e.g. write local.properties for Android SDK).
-     */
     void setupProject() {}
 
     def "benchmarks IDE sync with latest gradle version"() {
@@ -355,8 +352,8 @@ abstract class AbstractIdeSyncIntegrationTest extends AbstractProfilerIntegratio
             "--gradle-version", latestSupportedGradleVersion,
             "--benchmark",
             "--scenario-file", scenarioFile.getAbsolutePath(),
-            installDirOption(), ideHome.absolutePath,
-            sandboxDirOption(), sandboxDir.absolutePath,
+            installDirOption, ideHome.absolutePath,
+            sandboxDirOption, sandboxDir.absolutePath,
             "--warmups", "$warmups",
             "--iterations", "$iterations",
             *additionalArgs,
