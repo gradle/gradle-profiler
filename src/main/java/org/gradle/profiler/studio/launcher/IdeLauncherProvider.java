@@ -90,7 +90,7 @@ public class IdeLauncherProvider {
         // Newer IntelliJ versions require this property to avoid trust project popup
         systemProperties.put("idea.trust.all.projects", "true");
         // Used so wrapper init script is not run by Android Studio.
-        // We anyway override installation in the org.gradle.profiler.studio.instrumented.Interceptor.
+        // We anyway override installation in the org.gradle.profiler.ide.instrumented.Interceptor.
         systemProperties.put("idea.gradle.distributionType", "BUNDLED");
         if (SHOULD_RUN_HEADLESS) {
             systemProperties.put("java.awt.headless", "true");

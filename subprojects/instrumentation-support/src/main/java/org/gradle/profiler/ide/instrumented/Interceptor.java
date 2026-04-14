@@ -1,4 +1,4 @@
-package org.gradle.profiler.studio.instrumented;
+package org.gradle.profiler.ide.instrumented;
 
 import org.gradle.profiler.client.protocol.Client;
 import org.gradle.profiler.client.protocol.agent.AgentClientContainer;
