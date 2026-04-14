@@ -10,16 +10,16 @@ import java.nio.file.Paths;
 import java.util.List;
 
 /**
- * Installs the Android Studio plugin into the plugins directory.
+ * Installs the IDE plugin into the plugins directory.
  */
-public class StudioPluginInstaller {
+public class IdePluginInstaller {
 
     private static final String PLUGIN_INSTALL_FOLDER_NAME = "gradle-profiler-studio-plugin";
 
     private final Path pluginInstallDir;
 
-    public StudioPluginInstaller(Path studioPluginsDir) {
-        this.pluginInstallDir = new File(studioPluginsDir.toFile(), PLUGIN_INSTALL_FOLDER_NAME).toPath();
+    public IdePluginInstaller(Path idePluginsDir) {
+        this.pluginInstallDir = new File(idePluginsDir.toFile(), PLUGIN_INSTALL_FOLDER_NAME).toPath();
     }
 
     public void installPlugin(List<Path> pluginJars) {

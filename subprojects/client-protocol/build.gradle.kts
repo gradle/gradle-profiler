@@ -4,7 +4,7 @@ plugins {
     id("profiler.publication")
 }
 
-description = "A client protocol for Gradle profiler to profile Android Studio sync"
+description = "A client protocol for Gradle profiler to profile IDE sync"
 
 dependencies {
     testImplementation(libs.bundles.testDependencies)

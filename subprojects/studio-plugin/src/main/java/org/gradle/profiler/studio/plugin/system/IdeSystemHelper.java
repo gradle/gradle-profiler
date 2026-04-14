@@ -11,13 +11,13 @@ import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.openapi.wm.ex.StatusBarEx;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
-import org.gradle.profiler.client.protocol.messages.StudioSyncRequestCompleted.StudioSyncRequestResult;
+import org.gradle.profiler.client.protocol.messages.IdeSyncRequestCompleted.IdeSyncRequestResult;
 import org.jetbrains.plugins.gradle.util.GradleConstants;
 
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Supplier;
 
-public class AndroidStudioSystemHelper {
+public class IdeSystemHelper {
 
     private static final long WAIT_ON_PROCESS_SLEEP_TIME = 10;
     private static final long WAIT_ON_STARTUP_SLEEP_TIME = 100;
@@ -29,7 +29,7 @@ public class AndroidStudioSystemHelper {
         if (!gradleSystemListener.hasAnySyncCompleted()) {
             // Sync was not run before, we need to run it manually
             GradleSyncResult result = startManualSync(project, gradleSystemListener);
-            if (result.getResult() == StudioSyncRequestResult.FAILED) {
+            if (result.getResult() == IdeSyncRequestResult.FAILED) {
                 // If it fails, it might fail because another sync just started a millisecond before we could start it
                 waitOnPreviousGradleSyncFinish(gradleSystemListener);
                 waitOnBackgroundProcessesFinish(project);
@@ -54,9 +54,9 @@ public class AndroidStudioSystemHelper {
     private static GradleSyncResult buildSyncResult(GradleSystemListener gradleSystemListener) {
         Exception exception = gradleSystemListener.getLastException();
         if (exception != null) {
-            return new GradleSyncResult(StudioSyncRequestResult.FAILED, Strings.nullToEmpty(exception.getMessage()));
+            return new GradleSyncResult(IdeSyncRequestResult.FAILED, Strings.nullToEmpty(exception.getMessage()));
         }
-        return new GradleSyncResult(StudioSyncRequestResult.SUCCEEDED, "");
+        return new GradleSyncResult(IdeSyncRequestResult.SUCCEEDED, "");
     }
 
     /**

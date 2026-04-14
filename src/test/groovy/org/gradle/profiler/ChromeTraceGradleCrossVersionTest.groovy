@@ -2,9 +2,10 @@ package org.gradle.profiler
 
 
 import org.gradle.profiler.fixtures.compatibility.gradle.AbstractGradleCrossVersionTest
-import org.gradle.profiler.spock.extensions.ShowAndroidStudioLogsOnFailure
+import org.gradle.profiler.spock.extensions.ShowIdeLogsOnFailure
 import org.gradle.profiler.studio.AndroidStudioTestSupport
 import org.gradle.profiler.studio.tools.AndroidStudioFinder
+import org.gradle.profiler.studio.tools.IntellijFinder
 import spock.lang.Requires
 
 import static org.gradle.profiler.studio.AndroidStudioTestSupport.setupLocalProperties
@@ -38,7 +39,7 @@ class ChromeTraceGradleCrossVersionTest extends AbstractGradleCrossVersionTest {
         "`gradle` command and no daemon" | ["--no-daemon"] // --no-daemon implies --cli
     }
 
-    @ShowAndroidStudioLogsOnFailure
+    @ShowIdeLogsOnFailure
     @Requires({ AndroidStudioFinder.findStudioHome() })
     @Requires({ AndroidStudioTestSupport.findAndroidSdkPath() })
     // We don't control version of AS provided by the environment, so we assume that latest tested Gradle should be fine
@@ -61,6 +62,33 @@ class ChromeTraceGradleCrossVersionTest extends AbstractGradleCrossVersionTest {
              "--scenario-file", scenarioFile.absolutePath,
              "--studio-install-dir", studioHome.absolutePath,
              "--studio-sandbox-dir", sandboxDir.absolutePath])
+
+        then:
+        new File(outputDir, "scenario-${gradleVersion}-trace/scenario-${gradleVersion}-warm-up-build-1-invocation-1-trace.json").isFile()
+        new File(outputDir, "scenario-${gradleVersion}-trace/scenario-${gradleVersion}-measured-build-1-invocation-1-trace.json").isFile()
+    }
+
+    @ShowIdeLogsOnFailure
+    @Requires({ IntellijFinder.findIdeHome() })
+    // We don't control version of IDEA provided by the environment, so we assume that latest tested Gradle should be fine
+    @Requires({ it.instance.latestTestedGradleVersion() })
+    def "profiles IntelliJ IDEA build to produce chrome trace output for builds"() {
+        given:
+        def ideaHome = IntellijFinder.findIdeHome()
+        new File(projectDir, "buildSrc").mkdirs()
+        new File(projectDir, "buildSrc/gradle.build").createNewFile()
+        def scenarioFile = file("performance.scenarios") << """
+            scenario {
+                idea-sync {}
+            }
+        """
+
+        when:
+        run(["--gradle-version", gradleVersion,
+             "--profile", "chrome-trace",
+             "--scenario-file", scenarioFile.absolutePath,
+             "--idea-install-dir", ideaHome.absolutePath,
+             "--idea-sandbox-dir", sandboxDir.absolutePath])
 
         then:
         new File(outputDir, "scenario-${gradleVersion}-trace/scenario-${gradleVersion}-warm-up-build-1-invocation-1-trace.json").isFile()

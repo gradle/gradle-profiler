@@ -6,13 +6,13 @@ import org.gradle.profiler.result.BuildActionResult;
 import java.time.Duration;
 import java.util.List;
 
-public class StudioBuildActionResult extends BuildActionResult {
+public class IdeBuildActionResult extends BuildActionResult {
 
     private final Duration gradleTotalExecutionTime;
     private final List<Duration> gradleExecutionTimes;
     private final Duration ideExecutionTime;
 
-    public StudioBuildActionResult(Duration executionTime, Duration gradleTotalExecutionTime, List<Duration> gradleExecutionTimes, Duration ideExecutionTime) {
+    public IdeBuildActionResult(Duration executionTime, Duration gradleTotalExecutionTime, List<Duration> gradleExecutionTimes, Duration ideExecutionTime) {
         super(executionTime);
         this.gradleTotalExecutionTime = gradleTotalExecutionTime;
         this.gradleExecutionTimes = gradleExecutionTimes;

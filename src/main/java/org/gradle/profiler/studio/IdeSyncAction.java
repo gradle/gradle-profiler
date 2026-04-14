@@ -3,26 +3,25 @@ package org.gradle.profiler.studio;
 import org.gradle.profiler.BuildAction;
 import org.gradle.profiler.GradleClient;
 import org.gradle.profiler.result.BuildActionResult;
-import org.gradle.profiler.studio.StudioGradleClient;
 
 import java.util.List;
 
 /**
- * A mock-up of Android studio sync.
+ * A mock-up of IDE sync.
  */
-public class AndroidStudioSyncAction implements BuildAction {
+public class IdeSyncAction implements BuildAction {
 
-    public AndroidStudioSyncAction() {
+    public IdeSyncAction() {
     }
 
     @Override
     public String getShortDisplayName() {
-        return "AS sync";
+        return "IDE sync";
     }
 
     @Override
     public String getDisplayName() {
-        return "Android Studio sync";
+        return "IDE sync";
     }
 
     @Override
@@ -32,7 +31,7 @@ public class AndroidStudioSyncAction implements BuildAction {
 
     @Override
     public BuildActionResult run(GradleClient gradleClient, List<String> gradleArgs, List<String> jvmArgs) {
-        StudioGradleClient studioGradleClient = (StudioGradleClient) gradleClient;
-        return studioGradleClient.sync(gradleArgs, jvmArgs);
+        IdeGradleClient ideGradleClient = (IdeGradleClient) gradleClient;
+        return ideGradleClient.sync(gradleArgs, jvmArgs);
     }
 }

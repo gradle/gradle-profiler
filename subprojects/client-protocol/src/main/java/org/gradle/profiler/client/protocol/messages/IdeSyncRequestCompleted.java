@@ -1,9 +1,9 @@
 package org.gradle.profiler.client.protocol.messages;
 
-public class StudioSyncRequestCompleted implements Message {
+public class IdeSyncRequestCompleted implements Message {
 
 
-    public enum StudioSyncRequestResult {
+    public enum IdeSyncRequestResult {
         SUCCEEDED,
         FAILED,
         SKIPPED
@@ -11,10 +11,10 @@ public class StudioSyncRequestCompleted implements Message {
 
     private final int id;
     private final long durationMillis;
-    private final StudioSyncRequestResult result;
+    private final IdeSyncRequestResult result;
     private final String errorMessage;
 
-    public StudioSyncRequestCompleted(int id, long durationMillis, StudioSyncRequestResult result, String errorMessage) {
+    public IdeSyncRequestCompleted(int id, long durationMillis, IdeSyncRequestResult result, String errorMessage) {
         this.id = id;
         this.durationMillis = durationMillis;
         this.result = result;
@@ -29,7 +29,7 @@ public class StudioSyncRequestCompleted implements Message {
         return durationMillis;
     }
 
-    public StudioSyncRequestResult getResult() {
+    public IdeSyncRequestResult getResult() {
         return result;
     }
 

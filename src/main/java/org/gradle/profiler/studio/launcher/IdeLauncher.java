@@ -4,7 +4,8 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import org.gradle.profiler.CommandExec;
 import org.gradle.profiler.Logging;
-import org.gradle.profiler.studio.tools.StudioSandboxCreator.StudioSandbox;
+import org.gradle.profiler.studio.IdeType;
+import org.gradle.profiler.studio.tools.IdeSandboxCreator.IdeSandbox;
 
 import java.io.File;
 import java.io.IOException;
@@ -15,39 +16,42 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-public class StudioLauncher {
+public class IdeLauncher {
 
+    private final IdeType ideType;
     private final Path startCommand;
-    private final Path studioInstallDir;
+    private final Path ideInstallDir;
     private final String headlessCommand;
     private final List<String> additionalJvmArgs;
     private final List<String> ideaProperties;
-    private final StudioSandbox studioSandbox;
+    private final IdeSandbox ideSandbox;
 
-    public StudioLauncher(
+    public IdeLauncher(
+        IdeType ideType,
         Path startCommand,
         String headlessCommand,
-        Path studioInstallDir,
+        Path ideInstallDir,
         List<String> additionalJvmArgs,
-        StudioSandbox studioSandbox,
+        IdeSandbox ideSandbox,
         List<String> ideaProperties
     ) {
+        this.ideType = ideType;
         this.startCommand = startCommand;
         this.headlessCommand = headlessCommand;
-        this.studioInstallDir = studioInstallDir;
+        this.ideInstallDir = ideInstallDir;
         this.additionalJvmArgs = additionalJvmArgs;
-        this.studioSandbox = studioSandbox;
+        this.ideSandbox = ideSandbox;
         this.ideaProperties = ideaProperties;
     }
 
-    public CommandExec.RunHandle launchStudio(File projectDir) {
+    public CommandExec.RunHandle launchIde(File projectDir) {
         List<String> commandLine = getCommandLine(projectDir);
         logLauncherConfiguration(commandLine);
         Map<String, String> environmentVariables = new HashMap<>();
         environmentVariables.putAll(writeAdditionalJvmArgs());
         environmentVariables.putAll(writeIdeaProperties());
         return new CommandExec()
-            .inDir(studioInstallDir.toFile())
+            .inDir(ideInstallDir.toFile())
             .environmentVariables(environmentVariables)
             .start(commandLine);
     }
@@ -61,27 +65,23 @@ public class StudioLauncher {
 
     private void logLauncherConfiguration(List<String> commandLine) {
         System.out.println();
-        Logging.startOperation("Starting Android Studio at " + studioInstallDir);
+        Logging.startOperation("Starting " + ideType.getDisplayName() + " at " + ideInstallDir);
         System.out.println("* Start command: " + startCommand);
         System.out.println("* Additional JVM args:");
         additionalJvmArgs.forEach(arg -> System.out.println("  " + arg));
-        System.out.println("* Additional JVM args can be found at: " + studioSandbox.getScenarioOptionsDir().resolve("idea.vmoptions"));
+        System.out.println("* Additional JVM args can be found at: " + ideSandbox.getScenarioOptionsDir().resolve("idea.vmoptions"));
         System.out.println("* IDEA properties:");
         ideaProperties.forEach(property -> System.out.println("  " + property));
-        System.out.println("* IDEA properties can be found at: " + studioSandbox.getScenarioOptionsDir().resolve("idea.properties"));
-        System.out.println("* Android Studio logs can be found at: " + studioSandbox.getLogsDir().resolve("idea.log"));
+        System.out.println("* IDEA properties can be found at: " + ideSandbox.getScenarioOptionsDir().resolve("idea.properties"));
+        System.out.println("* " + ideType.getDisplayName() + " logs can be found at: " + ideSandbox.getLogsDir().resolve("idea.log"));
         System.out.printf("* Using command line: %s%n%n", String.join(" ", commandLine));
     }
 
     private Map<String, String> writeIdeaProperties() {
         try {
-            Path ideaPropertiesFile = studioSandbox.getScenarioOptionsDir().resolve("idea.properties").toAbsolutePath();
+            Path ideaPropertiesFile = ideSandbox.getScenarioOptionsDir().resolve("idea.properties").toAbsolutePath();
             Files.write(ideaPropertiesFile, ideaProperties);
-            return ImmutableMap.<String, String>builder()
-                .put("STUDIO_PROPERTIES", ideaPropertiesFile.toString())
-                .put("IDEA_PROPERTIES", ideaPropertiesFile.toString())
-                .build();
-
+            return ImmutableMap.of(ideType.getPropertiesEnvVar(), ideaPropertiesFile.toString());
         } catch (IOException e) {
             throw new UncheckedIOException(e);
         }
@@ -89,12 +89,9 @@ public class StudioLauncher {
 
     private Map<String, String> writeAdditionalJvmArgs() {
         try {
-            Path additionJvmArgsFile = studioSandbox.getScenarioOptionsDir().resolve("idea.vmoptions").toAbsolutePath();
+            Path additionJvmArgsFile = ideSandbox.getScenarioOptionsDir().resolve("idea.vmoptions").toAbsolutePath();
             Files.write(additionJvmArgsFile, additionalJvmArgs);
-            return ImmutableMap.<String, String>builder()
-                .put("STUDIO_VM_OPTIONS", additionJvmArgsFile.toString())
-                .put("IDEA_VM_OPTIONS", additionJvmArgsFile.toString())
-                .build();
+            return ImmutableMap.of(ideType.getVmOptionsEnvVar(), additionJvmArgsFile.toString());
         } catch (IOException e) {
             throw new UncheckedIOException(e);
         }

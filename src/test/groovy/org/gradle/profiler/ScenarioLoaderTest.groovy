@@ -13,8 +13,9 @@ import org.gradle.profiler.gradle.RunToolingAction
 import org.gradle.profiler.maven.MavenScenarioDefinition
 import org.gradle.profiler.mutations.AbstractScheduledMutator
 import org.gradle.profiler.report.Format
-import org.gradle.profiler.studio.AndroidStudioSyncAction
-import org.gradle.profiler.studio.invoker.StudioGradleScenarioDefinition
+import org.gradle.profiler.studio.IdeConfiguration
+import org.gradle.profiler.studio.IdeSyncAction
+import org.gradle.profiler.studio.invoker.IdeGradleScenarioDefinition
 import org.gradle.profiler.toolingapi.FetchProjectPublications
 import org.gradle.tooling.model.idea.IdeaProject
 import org.junit.Rule
@@ -57,7 +58,8 @@ class ScenarioLoaderTest extends Specification {
             .setTargets([])
             .setSysProperties([:])
             .setGradleUserHome(gradleUserHomeDir)
-            .setStudioInstallDir(tmpDir.newFolder())
+            .setIdeaConfiguration(new IdeConfiguration(tmpDir.newFolder(), null))
+            .setStudioConfiguration(new IdeConfiguration(tmpDir.newFolder(), null))
             .setMeasureGarbageCollection(false)
             .setMeasureConfigTime(false)
             .setBuildOperationMeasurements([])
@@ -321,9 +323,9 @@ class ScenarioLoaderTest extends Specification {
         expect:
         def benchmarkScenario = benchmarkScenarios[0] as GradleScenarioDefinition
         benchmarkScenario.buildOperationMeasurements == [
-                new BuildOperationMeasurement("BuildOpCmdLine", BuildOperationMeasurementKind.CUMULATIVE_TIME),
-                new BuildOperationMeasurement("BuildOp1", BuildOperationMeasurementKind.CUMULATIVE_TIME),
-                new BuildOperationMeasurement("BuildOp2", BuildOperationMeasurementKind.CUMULATIVE_TIME)
+            new BuildOperationMeasurement("BuildOpCmdLine", BuildOperationMeasurementKind.CUMULATIVE_TIME),
+            new BuildOperationMeasurement("BuildOp1", BuildOperationMeasurementKind.CUMULATIVE_TIME),
+            new BuildOperationMeasurement("BuildOp2", BuildOperationMeasurementKind.CUMULATIVE_TIME)
         ]
     }
 
@@ -385,21 +387,43 @@ class ScenarioLoaderTest extends Specification {
         scenario2.action.tasks == ["help"]
     }
 
-    def "can load default Android studio sync scenario"() {
+    def "can load IDE sync scenario with '#syncKey' and '#jvmArgsKey' keys"() {
         def settings = settings()
         def configurationReader = Mock(GradleBuildConfigurationReader)
         configurationReader.readConfiguration() >> new GradleBuildConfiguration(null, null, null, null, false, false)
 
+        def originalErr = System.err
+        def errContent = new ByteArrayOutputStream()
+        System.err = new PrintStream(errContent)
+
         scenarioFile << """
             default {
-                android-studio-sync { }
+                $syncKey {
+                    $jvmArgsKey = ["-Xmx8g"]
+                }
             }
         """
         def scenarios = loadScenarios(scenarioFile, settings, configurationReader)
+
         expect:
         scenarios*.name == ["default"]
-        def scenarioDefinition = scenarios[0] as StudioGradleScenarioDefinition
-        scenarioDefinition.action instanceof AndroidStudioSyncAction
+        def scenarioDefinition = scenarios[0] as IdeGradleScenarioDefinition
+        scenarioDefinition.action instanceof IdeSyncAction
+        (scenarioDefinition.buildConfiguration as IdeGradleScenarioDefinition.IdeGradleBuildConfiguration).ideJvmArgs == ["-Xmx8g"]
+        expectedWarnings.every { errContent.toString().contains(it) }
+        if (expectedWarnings.isEmpty()) {
+            !errContent.toString().contains("WARNING")
+        }
+
+        cleanup:
+        System.err = originalErr
+
+        where:
+        syncKey               | jvmArgsKey        | expectedWarnings
+        "idea-sync"           | "ide-jvm-args"    | []
+        "android-studio-sync" | "ide-jvm-args"    | []
+        "idea-sync"           | "studio-jvm-args" | ["WARNING: Scenario key 'studio-jvm-args' is deprecated. Use 'ide-jvm-args' instead."]
+        "android-studio-sync" | "studio-jvm-args" | ["WARNING: Scenario key 'studio-jvm-args' is deprecated. Use 'ide-jvm-args' instead."]
     }
 
     def "loads default scenarios only"() {

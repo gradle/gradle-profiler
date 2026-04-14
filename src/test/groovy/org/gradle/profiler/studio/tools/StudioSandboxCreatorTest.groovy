@@ -4,7 +4,7 @@ import org.junit.Rule
 import org.junit.rules.TemporaryFolder
 import spock.lang.Specification
 
-class StudioSandboxCreatorTest extends Specification {
+class IdeSandboxCreatorTest extends Specification {
 
     private static final String UPDATES_XML_PATH = "config/options/updates.xml";
 
@@ -16,7 +16,7 @@ class StudioSandboxCreatorTest extends Specification {
         def sandbox = tmpDir.newFolder('sandbox')
 
         when:
-        StudioSandboxCreator.createSandbox(sandbox.toPath())
+        IdeSandboxCreator.createSandbox(sandbox.toPath())
 
         then:
         new File(sandbox, UPDATES_XML_PATH).text == """\
@@ -36,7 +36,7 @@ class StudioSandboxCreatorTest extends Specification {
         updatesXml.text = "hello world"
 
         when:
-        StudioSandboxCreator.createSandbox(sandbox.toPath())
+        IdeSandboxCreator.createSandbox(sandbox.toPath())
 
         then:
         updatesXml.text == "hello world"

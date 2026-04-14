@@ -11,6 +11,7 @@ import org.gradle.profiler.buildops.BuildOperationMeasurement;
 import org.gradle.profiler.buildops.BuildOperationMeasurementKind;
 import org.gradle.profiler.gradle.GradleBuildInvoker;
 import org.gradle.profiler.report.Format;
+import org.gradle.profiler.studio.IdeConfiguration;
 
 import javax.annotation.Nullable;
 import java.io.File;
@@ -69,9 +70,12 @@ class CommandLineParser {
             .withRequiredArg()
             .ofType(File.class)
             .defaultsTo(new File("gradle-user-home"));
-        ArgumentAcceptingOptionSpec<File> studioHomeOption = parser.accepts("studio-install-dir", "The Studio installation to use").withRequiredArg().ofType(File.class);
-        ArgumentAcceptingOptionSpec<File> studioSandboxOption = parser.accepts("studio-sandbox-dir", "The Studio sandbox dir to use").withRequiredArg().ofType(File.class);
-        OptionSpecBuilder disableStudioSandbox = parser.accepts("no-studio-sandbox", "Marks that Android Studio should not use sandbox");
+        ArgumentAcceptingOptionSpec<File> ideaInstallDirOption = parser.accepts("idea-install-dir", "The IntelliJ IDEA installation to use").withRequiredArg().ofType(File.class);
+        ArgumentAcceptingOptionSpec<File> ideaSandboxDirOption = parser.accepts("idea-sandbox-dir", "The IntelliJ IDEA sandbox dir to use").withRequiredArg().ofType(File.class);
+        OptionSpecBuilder disableIdeaSandbox = parser.accepts("no-idea-sandbox", "Marks that IntelliJ IDEA should not use a sandbox");
+        ArgumentAcceptingOptionSpec<File> studioInstallDirOption = parser.accepts("studio-install-dir", "The Android Studio installation to use").withRequiredArg().ofType(File.class);
+        ArgumentAcceptingOptionSpec<File> studioSandboxDirOption = parser.accepts("studio-sandbox-dir", "The Android Studio sandbox dir to use").withRequiredArg().ofType(File.class);
+        OptionSpecBuilder disableStudioSandbox = parser.accepts("no-studio-sandbox", "Marks that Android Studio should not use a sandbox");
         ArgumentAcceptingOptionSpec<File> scenarioFileOption = parser.accepts("scenario-file", "Scenario definition file to use").withRequiredArg().ofType(File.class);
         ArgumentAcceptingOptionSpec<String> sysPropOption = parser.accepts("D", "Defines a system property").withRequiredArg();
         ArgumentAcceptingOptionSpec<File> outputDirOption = parser.accepts("output-dir", "Directory to write results to (default: new directory with 'profile-out' prefix)")
@@ -162,13 +166,22 @@ class CommandLineParser {
         List<String> targetNames = parsedOptions.nonOptionArguments().stream().map(Object::toString).collect(Collectors.toList());
         List<String> gradleVersions = parsedOptions.valuesOf(gradleVersionOption);
         File scenarioFile = toAbsoluteFileOrNull(parsedOptions.valueOf(scenarioFileOption));
-        File studioInstallDir = toAbsoluteFileOrNull(parsedOptions.valueOf(studioHomeOption));
-        File studioSandboxDir = toAbsoluteFileOrNull(parsedOptions.valueOf(studioSandboxOption));
-        if (parsedOptions.has(disableStudioSandbox)) {
-            studioSandboxDir = null;
-        } else if (studioSandboxDir == null) {
-            studioSandboxDir = new File(outputDir, "studio-sandbox");
-        }
+        IdeConfiguration ideaConfiguration = parseIdeConfiguration(
+            parsedOptions,
+            ideaInstallDirOption,
+            ideaSandboxDirOption,
+            disableIdeaSandbox,
+            outputDir,
+            "idea-sandbox"
+        );
+        IdeConfiguration studioConfiguration = parseIdeConfiguration(
+            parsedOptions,
+            studioInstallDirOption,
+            studioSandboxDirOption,
+            disableStudioSandbox,
+            outputDir,
+            "studio-sandbox"
+        );
 
         // TODO - should validate the various combinations of invocation options
         GradleBuildInvoker gradleInvoker = GradleBuildInvoker.ToolingApi;
@@ -220,8 +233,8 @@ class CommandLineParser {
             .setTargets(targetNames)
             .setSysProperties(sysProperties)
             .setGradleUserHome(gradleUserHome)
-            .setStudioInstallDir(studioInstallDir)
-            .setStudioSandboxDir(studioSandboxDir)
+            .setIdeaConfiguration(ideaConfiguration)
+            .setStudioConfiguration(studioConfiguration)
             .setWarmupCount(warmups)
             .setIterations(iterations)
             .setMeasureGarbageCollection(measureGarbageCollection)
@@ -261,6 +274,24 @@ class CommandLineParser {
 
     private void showVersion() {
         System.out.printf("Gradle Profiler version %s%n", CommandLineParser.class.getPackage().getImplementationVersion());
+    }
+
+    private IdeConfiguration parseIdeConfiguration(
+        OptionSet parsedOptions,
+        ArgumentAcceptingOptionSpec<File> installDirOption,
+        ArgumentAcceptingOptionSpec<File> sandboxDirOption,
+        OptionSpecBuilder disableSandboxOption,
+        File outputDir,
+        String defaultSandboxDirName
+    ) {
+        File installDir = toAbsoluteFileOrNull(parsedOptions.valueOf(installDirOption));
+        File sandboxDir = toAbsoluteFileOrNull(parsedOptions.valueOf(sandboxDirOption));
+        if (parsedOptions.has(disableSandboxOption)) {
+            sandboxDir = null;
+        } else if (sandboxDir == null && installDir != null) {
+            sandboxDir = new File(outputDir, defaultSandboxDirName);
+        }
+        return new IdeConfiguration(installDir, sandboxDir);
     }
 
     private File toAbsoluteFileOrNull(@Nullable File file) {

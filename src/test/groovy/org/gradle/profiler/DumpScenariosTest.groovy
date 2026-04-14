@@ -2,6 +2,7 @@ package org.gradle.profiler
 
 import org.gradle.profiler.gradle.GradleBuildInvoker
 import org.gradle.profiler.report.Format
+import org.gradle.profiler.studio.IdeConfiguration
 import org.junit.Rule
 import org.junit.rules.TemporaryFolder
 import spock.lang.Specification
@@ -37,7 +38,8 @@ class DumpScenariosTest extends Specification {
             .setTargets([])
             .setSysProperties([:])
             .setGradleUserHome(gradleUserHomeDir)
-            .setStudioInstallDir(tmpDir.newFolder())
+            .setIdeaConfiguration(new IdeConfiguration(tmpDir.newFolder(), null))
+            .setStudioConfiguration(new IdeConfiguration(tmpDir.newFolder(), null))
             .setMeasureGarbageCollection(false)
             .setMeasureConfigTime(false)
             .setBuildOperationMeasurements([])
