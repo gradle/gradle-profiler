@@ -391,7 +391,9 @@ class ScenarioLoader {
     }
 
     private static IdeGradleScenarioDefinition newIdeGradleScenarioDefinition(GradleScenarioDefinition gradleScenarioDefinition, Config scenario, IdeType ideType, File scenarioFile, String scenarioName) {
-        String syncKey = ideType == IdeType.ANDROID_STUDIO ? resolveStudioSyncKey(scenario) : getIdeSyncKey(ideType);
+        String syncKey = ideType == IdeType.ANDROID_STUDIO
+            ? resolveKeyWithDeprecatedFallback(scenario, STUDIO_SYNC, ANDROID_STUDIO_SYNC)
+            : IDEA_SYNC;
         Config ideSyncConfig = scenario.getConfig(syncKey);
         for (String key : scenario.getObject(syncKey).keySet()) {
             if (!IDE_SYNC_SCENARIO_KEYS.contains(key)) {
@@ -418,17 +420,6 @@ class ScenarioLoader {
             return IdeType.ANDROID_STUDIO;
         }
         return null;
-    }
-
-    private static String getIdeSyncKey(IdeType ideType) {
-        return switch (ideType) {
-            case INTELLIJ_IDEA -> IDEA_SYNC;
-            case ANDROID_STUDIO -> STUDIO_SYNC;
-        };
-    }
-
-    private static String resolveStudioSyncKey(Config scenario) {
-        return resolveKeyWithDeprecatedFallback(scenario, STUDIO_SYNC, ANDROID_STUDIO_SYNC);
     }
 
     private static List<BuildMutator> getMutators(Config scenario, String scenarioName, InvocationSettings settings, int warmUpCount, int buildCount) {
