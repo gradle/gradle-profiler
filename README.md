@@ -305,7 +305,7 @@ By default, this is set to `<output-dir>/idea-sandbox`.
 If you want the IDE to keep old data (e.g. indexes), set and reuse your own folder.
 - `--no-idea-sandbox`: Do not use the IntelliJ IDEA sandbox; instead use the default IDE folders for the IDE data.
 - `--studio-install-dir`: The Android Studio installation directory.
-Required when measuring an `android-studio-sync` scenario.
+Required when measuring an `studio-sync` scenario.
 On macOS, it is the app directory, e.g. `~/Applications/Android Studio.app`.
 - `--studio-sandbox-dir`: The Android Studio sandbox directory.
 By default, this is set to `<output-dir>/studio-sandbox`.
@@ -313,7 +313,7 @@ By default, this is set to `<output-dir>/studio-sandbox`.
 
 ### Scenario file blocks
 
-Inside an `idea-sync` or `android-studio-sync` block:
+Inside an `idea-sync` or `studio-sync` block:
 
 - `ide-jvm-args`: JVM arguments for the IDE process. Defaults to `["-Xms256m", "-Xmx4096m"]`.
 - `idea-properties`: Additional entries to write to the IDE's `idea.properties` file. Useful for setting registry values.
@@ -329,7 +329,7 @@ For Android Studio, swap `--idea-install-dir` for `--studio-install-dir` and use
     }
 
     myStudioSync {
-        android-studio-sync {
+        studio-sync {
             ide-jvm-args = ["-Xms256m", "-Xmx4096m"]
         }
     }
@@ -344,6 +344,7 @@ The following options are still accepted but deprecated. A warning will be print
 | Deprecated                          | Replacement              |
 |-------------------------------------|--------------------------|
 | `studio-jvm-args`                   | `ide-jvm-args`           |
+| `android-studio-sync`               | `studio-sync`            |
 | `clear-android-studio-cache-before` | `clear-ide-cache-before` |
 
 ## Advanced profiling scenarios
@@ -412,7 +413,7 @@ Here is an example:
         # Can also run tasks
         # tasks = ["assemble"]
     }
-    # For IDE-sync scenarios (`idea-sync` / `android-studio-sync`), see IDE sync support section.
+    # For IDE-sync scenarios (`idea-sync` / `studio-sync`), see IDE sync support section.
 
 Values are optional and default to the values provided on the command-line or defined in the build.
 
