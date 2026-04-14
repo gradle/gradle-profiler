@@ -1,11 +1,11 @@
-package org.gradle.profiler.studio.launcher;
+package org.gradle.profiler.ide.launcher;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import org.gradle.profiler.CommandExec;
 import org.gradle.profiler.Logging;
-import org.gradle.profiler.studio.IdeType;
-import org.gradle.profiler.studio.tools.IdeSandboxCreator.IdeSandbox;
+import org.gradle.profiler.ide.IdeType;
+import org.gradle.profiler.ide.tools.IdeSandboxCreator.IdeSandbox;
 
 import java.io.File;
 import java.io.IOException;

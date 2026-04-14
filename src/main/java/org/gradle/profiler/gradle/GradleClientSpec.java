@@ -3,14 +3,14 @@ package org.gradle.profiler.gradle;
 import org.gradle.profiler.GradleBuildConfiguration;
 import org.gradle.profiler.GradleClient;
 import org.gradle.profiler.InvocationSettings;
-import org.gradle.profiler.studio.IdeGradleClient;
-import org.gradle.profiler.studio.invoker.IdeGradleScenarioDefinition.IdeGradleBuildConfiguration;
+import org.gradle.profiler.ide.IdeGradleClient;
+import org.gradle.profiler.ide.invoker.IdeGradleScenarioDefinition.IdeGradleBuildConfiguration;
 import org.gradle.tooling.GradleConnector;
 import org.gradle.tooling.ProjectConnection;
 
-import static org.gradle.profiler.studio.IdeGradleClient.CleanCacheMode.BEFORE_BUILD;
-import static org.gradle.profiler.studio.IdeGradleClient.CleanCacheMode.BEFORE_SCENARIO;
-import static org.gradle.profiler.studio.IdeGradleClient.CleanCacheMode.NEVER;
+import static org.gradle.profiler.ide.IdeGradleClient.CleanCacheMode.BEFORE_BUILD;
+import static org.gradle.profiler.ide.IdeGradleClient.CleanCacheMode.BEFORE_SCENARIO;
+import static org.gradle.profiler.ide.IdeGradleClient.CleanCacheMode.NEVER;
 
 /**
  * Specifies a client to be used to invoke Gradle builds.

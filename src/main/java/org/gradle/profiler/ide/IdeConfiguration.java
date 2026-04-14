@@ -1,4 +1,4 @@
-package org.gradle.profiler.studio;
+package org.gradle.profiler.ide;
 
 import javax.annotation.Nullable;
 import java.io.File;

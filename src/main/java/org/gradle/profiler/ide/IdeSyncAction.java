@@ -1,4 +1,4 @@
-package org.gradle.profiler.studio;
+package org.gradle.profiler.ide;
 
 import org.gradle.profiler.BuildAction;
 import org.gradle.profiler.GradleClient;

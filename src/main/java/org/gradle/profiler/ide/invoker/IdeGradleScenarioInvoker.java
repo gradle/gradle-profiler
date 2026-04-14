@@ -1,4 +1,4 @@
-package org.gradle.profiler.studio.invoker;
+package org.gradle.profiler.ide.invoker;
 
 import com.google.common.collect.ImmutableList;
 import org.gradle.profiler.gradle.GradleBuildInvocationResult;

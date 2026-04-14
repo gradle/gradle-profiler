@@ -1,4 +1,4 @@
-package org.gradle.profiler.studio.tools;
+package org.gradle.profiler.ide.tools;
 
 import com.google.common.annotations.VisibleForTesting;
 

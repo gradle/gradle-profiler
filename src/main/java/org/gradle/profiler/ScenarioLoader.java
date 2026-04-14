@@ -19,10 +19,10 @@ import org.gradle.profiler.maven.MavenScenarioDefinition;
 import org.gradle.profiler.mutations.AbstractScheduledMutator.Schedule;
 import org.gradle.profiler.mutations.*;
 import org.gradle.profiler.mutations.BuildMutatorConfigurator.BuildMutatorConfiguratorSpec;
-import org.gradle.profiler.studio.IdeConfiguration;
-import org.gradle.profiler.studio.IdeSyncAction;
-import org.gradle.profiler.studio.IdeType;
-import org.gradle.profiler.studio.invoker.IdeGradleScenarioDefinition;
+import org.gradle.profiler.ide.IdeConfiguration;
+import org.gradle.profiler.ide.IdeSyncAction;
+import org.gradle.profiler.ide.IdeType;
+import org.gradle.profiler.ide.invoker.IdeGradleScenarioDefinition;
 
 import javax.annotation.Nullable;
 import java.io.File;

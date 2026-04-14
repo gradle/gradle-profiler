@@ -1,13 +1,13 @@
-package org.gradle.profiler.studio.process;
+package org.gradle.profiler.ide.process;
 
 import org.gradle.profiler.CommandExec.RunHandle;
 import org.gradle.profiler.InvocationSettings;
 import org.gradle.profiler.client.protocol.Server;
 import org.gradle.profiler.client.protocol.ServerConnection;
-import org.gradle.profiler.studio.IdeType;
-import org.gradle.profiler.studio.launcher.IdeLauncher;
-import org.gradle.profiler.studio.launcher.IdeLauncherProvider;
-import org.gradle.profiler.studio.tools.IdeSandboxCreator.IdeSandbox;
+import org.gradle.profiler.ide.IdeType;
+import org.gradle.profiler.ide.launcher.IdeLauncher;
+import org.gradle.profiler.ide.launcher.IdeLauncherProvider;
+import org.gradle.profiler.ide.tools.IdeSandboxCreator.IdeSandbox;
 
 import java.io.Closeable;
 import java.io.IOException;

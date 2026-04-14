@@ -5,11 +5,11 @@ import org.gradle.profiler.fixtures.AbstractProfilerIntegrationTest
 import org.gradle.profiler.fixtures.compatibility.ide.IntellijGradleJvmCompatibility
 import org.gradle.profiler.instrument.GradleInstrumentation
 import org.gradle.profiler.spock.extensions.ShowIdeLogsOnFailure
-import org.gradle.profiler.studio.IdeType
-import org.gradle.profiler.studio.launcher.IdeLauncher
-import org.gradle.profiler.studio.launcher.IdeLauncherProvider
-import org.gradle.profiler.studio.tools.IdePluginInstaller
-import org.gradle.profiler.studio.tools.IdeSandboxCreator
+import org.gradle.profiler.ide.IdeType
+import org.gradle.profiler.ide.launcher.IdeLauncher
+import org.gradle.profiler.ide.launcher.IdeLauncherProvider
+import org.gradle.profiler.ide.tools.IdePluginInstaller
+import org.gradle.profiler.ide.tools.IdeSandboxCreator
 import spock.lang.Timeout
 
 import java.util.concurrent.TimeUnit

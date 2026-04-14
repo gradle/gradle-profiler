@@ -1,11 +1,11 @@
-package org.gradle.profiler.studio.process;
+package org.gradle.profiler.ide.process;
 
 import org.gradle.profiler.InvocationSettings;
 import org.gradle.profiler.client.protocol.messages.IdeAgentConnectionParameters;
-import org.gradle.profiler.studio.IdeType;
-import org.gradle.profiler.studio.invoker.IdeGradleScenarioDefinition.IdeGradleBuildConfiguration;
-import org.gradle.profiler.studio.process.IdeProcess.IdeConnections;
-import org.gradle.profiler.studio.tools.IdeSandboxCreator.IdeSandbox;
+import org.gradle.profiler.ide.IdeType;
+import org.gradle.profiler.ide.invoker.IdeGradleScenarioDefinition.IdeGradleBuildConfiguration;
+import org.gradle.profiler.ide.process.IdeProcess.IdeConnections;
+import org.gradle.profiler.ide.tools.IdeSandboxCreator.IdeSandbox;
 
 import java.io.IOException;
 import java.io.UncheckedIOException;

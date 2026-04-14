@@ -1,9 +1,9 @@
-package org.gradle.profiler.studio.launcher;
+package org.gradle.profiler.ide.launcher;
 
 import com.google.common.base.Joiner;
 import org.gradle.profiler.instrument.GradleInstrumentation;
-import org.gradle.profiler.studio.IdeType;
-import org.gradle.profiler.studio.tools.IdeSandboxCreator.IdeSandbox;
+import org.gradle.profiler.ide.IdeType;
+import org.gradle.profiler.ide.tools.IdeSandboxCreator.IdeSandbox;
 
 import java.io.File;
 import java.nio.file.Path;
@@ -89,7 +89,7 @@ public class IdeLauncherProvider {
         systemProperties.put("idea.log.path", ideSandbox.getLogsDir().toString());
         // Newer IntelliJ versions require this property to avoid trust project popup
         systemProperties.put("idea.trust.all.projects", "true");
-        // Used so wrapper init script is not run by Android Studio.
+        // Used so wrapper init script is not run by IDE.
         // We anyway override installation in the org.gradle.profiler.ide.instrumented.Interceptor.
         systemProperties.put("idea.gradle.distributionType", "BUNDLED");
         if (SHOULD_RUN_HEADLESS) {

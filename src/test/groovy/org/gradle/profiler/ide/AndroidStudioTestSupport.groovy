@@ -1,4 +1,4 @@
-package org.gradle.profiler.studio
+package org.gradle.profiler.ide
 
 import org.apache.commons.io.FilenameUtils
 

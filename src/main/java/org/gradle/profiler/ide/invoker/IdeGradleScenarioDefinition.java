@@ -1,8 +1,8 @@
-package org.gradle.profiler.studio.invoker;
+package org.gradle.profiler.ide.invoker;
 
 import org.gradle.profiler.GradleBuildConfiguration;
 import org.gradle.profiler.gradle.GradleScenarioDefinition;
-import org.gradle.profiler.studio.IdeType;
+import org.gradle.profiler.ide.IdeType;
 
 import java.util.List;
 

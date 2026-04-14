@@ -1,4 +1,4 @@
-package org.gradle.profiler.studio;
+package org.gradle.profiler.ide;
 
 import com.google.common.collect.ImmutableList;
 import org.gradle.profiler.OperatingSystem;

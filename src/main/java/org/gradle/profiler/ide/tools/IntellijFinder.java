@@ -1,4 +1,4 @@
-package org.gradle.profiler.studio.tools;
+package org.gradle.profiler.ide.tools;
 
 import java.io.File;
 import java.util.Optional;

@@ -1,4 +1,4 @@
-package org.gradle.profiler.studio.invoker;
+package org.gradle.profiler.ide.invoker;
 
 
 import org.gradle.profiler.result.BuildActionResult;

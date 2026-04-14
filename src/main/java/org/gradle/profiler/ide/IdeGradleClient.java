@@ -1,21 +1,19 @@
-package org.gradle.profiler.studio;
+package org.gradle.profiler.ide;
 
 import org.gradle.internal.Pair;
 import org.gradle.profiler.GradleClient;
 import org.gradle.profiler.InvocationSettings;
 import org.gradle.profiler.client.protocol.ServerConnection;
 import org.gradle.profiler.client.protocol.messages.*;
-import org.gradle.profiler.gradle.DaemonControl;
 import org.gradle.profiler.instrument.GradleInstrumentation;
 import org.gradle.profiler.result.BuildActionResult;
-import org.gradle.profiler.studio.invoker.IdeBuildActionResult;
-import org.gradle.profiler.studio.invoker.IdeGradleScenarioDefinition;
-import org.gradle.profiler.studio.invoker.IdeGradleScenarioDefinition.IdeGradleBuildConfiguration;
-import org.gradle.profiler.studio.process.IdeProcess.IdeConnections;
-import org.gradle.profiler.studio.process.IdeProcessController;
-import org.gradle.profiler.studio.tools.IdePluginInstaller;
-import org.gradle.profiler.studio.tools.IdeSandboxCreator;
-import org.gradle.profiler.studio.tools.IdeSandboxCreator.IdeSandbox;
+import org.gradle.profiler.ide.invoker.IdeBuildActionResult;
+import org.gradle.profiler.ide.invoker.IdeGradleScenarioDefinition.IdeGradleBuildConfiguration;
+import org.gradle.profiler.ide.process.IdeProcess.IdeConnections;
+import org.gradle.profiler.ide.process.IdeProcessController;
+import org.gradle.profiler.ide.tools.IdePluginInstaller;
+import org.gradle.profiler.ide.tools.IdeSandboxCreator;
+import org.gradle.profiler.ide.tools.IdeSandboxCreator.IdeSandbox;
 
 import java.io.File;
 import java.nio.file.Path;
