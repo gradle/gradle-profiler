@@ -56,7 +56,7 @@ dependencies {
     profilerPlugins(project(":build-operations"))
     profilerPlugins(project(":build-operations-measuring"))
     profilerPlugins(project(":instrumentation-support"))
-    profilerPlugins(project(":studio-agent"))
+    profilerPlugins(project(":ide-agent"))
     profilerPlugins(project(":heap-dump"))
     profilerPlugins(project(":ide-plugin"))
 

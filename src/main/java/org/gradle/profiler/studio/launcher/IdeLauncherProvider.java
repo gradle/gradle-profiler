@@ -67,7 +67,7 @@ public class IdeLauncherProvider {
     private List<String> getAdditionalJvmArgs() {
         List<String> jvmArgs = new ArrayList<>();
         if (enableAgentParameters) {
-            String agentJar = GradleInstrumentation.unpackPlugin("studio-agent").getAbsolutePath();
+            String agentJar = GradleInstrumentation.unpackPlugin("ide-agent").getAbsolutePath();
             String supportJar = GradleInstrumentation.unpackPlugin("instrumentation-support").getAbsolutePath();
             String asmJar = GradleInstrumentation.unpackPlugin("asm").getAbsolutePath();
             String protocolJar = GradleInstrumentation.unpackPlugin("client-protocol").getAbsolutePath();
