@@ -1,4 +1,4 @@
-package org.gradle.profiler.studio.plugin
+package org.gradle.profiler.ide.plugin
 
 import com.android.tools.idea.gradle.project.GradleProjectInfo
 import com.intellij.openapi.project.Project

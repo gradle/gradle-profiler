@@ -3,6 +3,7 @@ package org.gradle.profiler.studio.plugin;
 import com.intellij.ide.AppLifecycleListener;
 import com.intellij.openapi.diagnostic.Logger;
 import org.gradle.profiler.client.protocol.Client;
+import org.gradle.profiler.ide.plugin.GradleProfilerStartupActivity;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;

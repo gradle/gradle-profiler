@@ -16,7 +16,7 @@ The project is organized into a core application and several subprojects handlin
     * `build-operations`, `build-operations-measuring`: Infrastructure for measuring internal build operations.
     * `chrome-trace`, `perfetto-trace`: Generation of performance traces.
     * `heap-dump`: Capturing memory snapshots.
-    * `studio-agent`, `studio-plugin`: Integrations for Android Studio sync profiling.
+    * `studio-agent`, `ide-plugin`: Integrations for Android Studio sync profiling.
     * `gradle-trace-converter-app`: A standalone utility for converting traces.
 
 ## Sanity Check

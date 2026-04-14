@@ -5,7 +5,7 @@ plugins {
     alias(libs.plugins.intellij.platform)
 }
 
-description = "Contains logic for Android Studio plugin that communicates with profiler"
+description = "Contains logic for IDE plugin that communicates with profiler"
 
 repositories {
     mavenCentral()

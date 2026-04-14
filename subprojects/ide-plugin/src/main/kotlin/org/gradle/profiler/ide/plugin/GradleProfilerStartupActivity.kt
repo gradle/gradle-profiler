@@ -1,4 +1,4 @@
-package org.gradle.profiler.studio.plugin
+package org.gradle.profiler.ide.plugin
 
 import com.intellij.ide.impl.setTrusted
 import com.intellij.openapi.application.ApplicationManager
@@ -11,6 +11,7 @@ import com.intellij.openapi.util.registry.RegistryValue
 import org.gradle.profiler.client.protocol.Client
 import org.gradle.profiler.client.protocol.messages.IdeRequest
 import org.gradle.profiler.client.protocol.messages.IdeRequest.IdeRequestType
+import org.gradle.profiler.studio.plugin.DefaultGradleSettingsListener
 import org.gradle.profiler.studio.plugin.client.GradleProfilerClient
 import org.gradle.profiler.studio.plugin.system.IdeSystemHelper
 import org.gradle.profiler.studio.plugin.system.GradleSystemListener

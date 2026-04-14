@@ -58,7 +58,7 @@ dependencies {
     profilerPlugins(project(":instrumentation-support"))
     profilerPlugins(project(":studio-agent"))
     profilerPlugins(project(":heap-dump"))
-    profilerPlugins(project(":studio-plugin"))
+    profilerPlugins(project(":ide-plugin"))
 
     runtimeOnly(libs.slf4j.simple)
     testImplementation(libs.bundles.testDependencies)

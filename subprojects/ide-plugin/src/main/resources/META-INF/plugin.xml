@@ -20,7 +20,7 @@
     <extensions defaultExtensionNs="com.intellij">
         <appStarter id="headless-starter"
                     implementation="org.gradle.profiler.studio.plugin.starter.HeadlessApplicationStarter"/>
-        <postStartupActivity implementation="org.gradle.profiler.studio.plugin.GradleProfilerStartupActivity"/>
+        <postStartupActivity implementation="org.gradle.profiler.ide.plugin.GradleProfilerStartupActivity"/>
     </extensions>
 
 </idea-plugin>

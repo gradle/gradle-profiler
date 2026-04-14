@@ -66,9 +66,9 @@ public class IdeGradleClient implements GradleClient {
         Optional<File> ideSandboxDir = ideConfiguration.getSandboxDir();
         this.sandbox = IdeSandboxCreator.createSandbox(ideSandboxDir.map(File::toPath).orElse(null));
         Path protocolJar = GradleInstrumentation.unpackPlugin("client-protocol").toPath();
-        Path studioPlugin = GradleInstrumentation.unpackPlugin("studio-plugin").toPath();
+        Path idePlugin = GradleInstrumentation.unpackPlugin("ide-plugin").toPath();
         this.idePluginInstaller = new IdePluginInstaller(sandbox.getPluginsDir());
-        idePluginInstaller.installPlugin(Arrays.asList(studioPlugin, protocolJar));
+        idePluginInstaller.installPlugin(Arrays.asList(idePlugin, protocolJar));
         this.processController = new IdeProcessController(ideType, ideInstallDir, sandbox, invocationSettings, buildConfiguration);
         this.executor = Executors.newSingleThreadExecutor();
     }

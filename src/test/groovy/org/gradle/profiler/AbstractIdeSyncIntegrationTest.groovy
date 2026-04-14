@@ -157,7 +157,7 @@ abstract class AbstractIdeSyncIntegrationTest extends AbstractProfilerIntegratio
         IdeLauncher launcher = new IdeLauncherProvider(ideType(), ideHome.toPath(), sandbox, [], []).get()
         IdePluginInstaller pluginInstaller = new IdePluginInstaller(sandbox.getPluginsDir())
         // We have to install plugin, since a plugin contains headless starter and it makes it run headless on CI
-        pluginInstaller.installPlugin(Collections.singletonList(GradleInstrumentation.unpackPlugin("studio-plugin").toPath()))
+        pluginInstaller.installPlugin(Collections.singletonList(GradleInstrumentation.unpackPlugin("ide-plugin").toPath()))
         def scenarioFile = file("performance.scenarios") << """
             $scenarioName {
                 $scenarioSyncOption {}
@@ -190,7 +190,7 @@ abstract class AbstractIdeSyncIntegrationTest extends AbstractProfilerIntegratio
         IdeLauncher launcher = new IdeLauncherProvider(ideType(), ideHome.toPath(), sandbox, [], []).get()
         // We have to install plugin, since a plugin contains headless starter and it makes it run headless on CI
         IdePluginInstaller pluginInstaller = new IdePluginInstaller(sandbox.getPluginsDir())
-        pluginInstaller.installPlugin(Collections.singletonList(GradleInstrumentation.unpackPlugin("studio-plugin").toPath()))
+        pluginInstaller.installPlugin(Collections.singletonList(GradleInstrumentation.unpackPlugin("ide-plugin").toPath()))
         def scenarioFile = file("performance.scenarios") << """
             $scenarioName {
                 $scenarioSyncOption {}
