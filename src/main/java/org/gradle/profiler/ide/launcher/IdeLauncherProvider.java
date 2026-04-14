@@ -15,7 +15,7 @@ import java.util.Map;
 
 public class IdeLauncherProvider {
 
-    private static final boolean SHOULD_RUN_HEADLESS = Boolean.getBoolean("studio.tests.headless");
+    private static final boolean SHOULD_RUN_HEADLESS = Boolean.getBoolean("ide.tests.headless");
 
     private final IdeType ideType;
     private final Path ideInstallDir;

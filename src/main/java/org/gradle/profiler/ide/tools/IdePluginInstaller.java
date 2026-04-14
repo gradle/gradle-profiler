@@ -14,7 +14,7 @@ import java.util.List;
  */
 public class IdePluginInstaller {
 
-    private static final String PLUGIN_INSTALL_FOLDER_NAME = "gradle-profiler-studio-plugin";
+    private static final String PLUGIN_INSTALL_FOLDER_NAME = "gradle-profiler-ide-plugin";
 
     private final Path pluginInstallDir;
 

@@ -39,7 +39,7 @@ tasks.withType<PrepareSandboxTask> {
 
 intellijPlatform {
     pluginConfiguration {
-        name = "gradle-profiler-studio-plugin"
+        name = "gradle-profiler-ide-plugin"
         ideaVersion {
             sinceBuild = libs.versions.minimalSupportedPlatformCode
             untilBuild = provider { null }
