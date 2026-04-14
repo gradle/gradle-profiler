@@ -47,12 +47,12 @@ class GradleProfilerStartupActivity : ProjectActivity {
     }
 
     private fun logModifiedRegistryEntries() {
-        val studioPropertiesPath = System.getenv("STUDIO_PROPERTIES")
-        if (studioPropertiesPath == null || !File(studioPropertiesPath).exists()) {
+        val propertiesPath = System.getenv("IDEA_PROPERTIES") ?: System.getenv("STUDIO_PROPERTIES")
+        if (propertiesPath == null || !File(propertiesPath).exists()) {
             return
         }
 
-        val properties = Properties().apply { this.load(FileInputStream(studioPropertiesPath)) }
+        val properties = Properties().apply { this.load(FileInputStream(propertiesPath)) }
         val modifiedValues = Registry.getAll()
             .filter { value: RegistryValue -> properties.containsKey(value.key) }
             .map { obj: RegistryValue -> obj.toString() }

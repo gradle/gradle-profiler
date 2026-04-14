@@ -326,10 +326,12 @@ abstract class AbstractIdeSyncIntegrationTest extends AbstractProfilerIntegratio
 
     def "can add idea.properties"() {
         given:
+        // Use a harmless cosmetic key that is registered in IntelliJ's Registry (defined in registry.properties)
+        def registryKey = "ide.balloon.shadowEnabled"
         def scenarioFile = file("performance.scenarios") << """
             $scenarioName {
                 $scenarioSyncOption {
-                    idea-properties = ["foo=true"]
+                    idea-properties = ["${registryKey}=true"]
                 }
             }
         """
@@ -341,8 +343,12 @@ abstract class AbstractIdeSyncIntegrationTest extends AbstractProfilerIntegratio
         logFile.find("Full sync has completed in").size() == 2
         logFile.find("and it SUCCEEDED").size() == 2
         def ideaPropertiesFile = new File(sandboxDir, "scenarioOptions/idea.properties")
-        def ideaProperties = ideaPropertiesFile.readLines()
-        ideaProperties.contains("foo=true")
+        ideaPropertiesFile.readLines().contains(registryKey + "=true")
+
+        and:
+        def ideaLog = new File(sandboxDir, "logs/idea.log")
+        ideaLog.exists()
+        (ideaLog.text =~ /Modified registry entries:.*${registryKey}/).find()
     }
 
     def runBenchmark(File scenarioFile, int warmups, int iterations, String... additionalArgs) {
