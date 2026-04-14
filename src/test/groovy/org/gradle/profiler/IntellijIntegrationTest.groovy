@@ -18,11 +18,11 @@ class IntellijIntegrationTest extends AbstractIdeSyncIntegrationTest {
         return IdeType.INTELLIJ_IDEA
     }
 
-    def "fails when android-studio-sync points to IntelliJ IDEA install dir"() {
+    def "fails when studio-sync points to IntelliJ IDEA install dir"() {
         given:
         def scenarioFile = file("performance.scenarios") << """
             $scenarioName {
-                android-studio-sync {}
+                studio-sync {}
             }
         """
 

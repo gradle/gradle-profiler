@@ -52,7 +52,7 @@ class ChromeTraceGradleCrossVersionTest extends AbstractGradleCrossVersionTest {
         new File(projectDir, "buildSrc/gradle.build").createNewFile()
         def scenarioFile = file("performance.scenarios") << """
             scenario {
-                android-studio-sync {}
+                studio-sync {}
             }
         """
 

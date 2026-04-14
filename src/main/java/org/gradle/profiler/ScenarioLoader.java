@@ -85,6 +85,10 @@ class ScenarioLoader {
     private static final String MEASUREMENT_KIND = "measurement-kind";
     private static final String TOOLING_API = "tooling-api";
     private static final String IDEA_SYNC = "idea-sync";
+    private static final String STUDIO_SYNC = "studio-sync";
+    /**
+     * @deprecated Use {@link #STUDIO_SYNC} instead.
+     */
     private static final String ANDROID_STUDIO_SYNC = "android-studio-sync";
     private static final String IDE_JVM_ARGS = "ide-jvm-args";
     /**
@@ -146,6 +150,7 @@ class ScenarioLoader {
             TOOLING_API,
             TOOL_HOME,
             IDEA_SYNC,
+            STUDIO_SYNC,
             ANDROID_STUDIO_SYNC,
             DAEMON,
             JVM_ARGS,
@@ -386,7 +391,9 @@ class ScenarioLoader {
     }
 
     private static IdeGradleScenarioDefinition newIdeGradleScenarioDefinition(GradleScenarioDefinition gradleScenarioDefinition, Config scenario, IdeType ideType, File scenarioFile, String scenarioName) {
-        String syncKey = getIdeSyncKey(ideType);
+        String syncKey = ideType == IdeType.ANDROID_STUDIO
+            ? resolveKeyWithDeprecatedFallback(scenario, STUDIO_SYNC, ANDROID_STUDIO_SYNC)
+            : IDEA_SYNC;
         Config ideSyncConfig = scenario.getConfig(syncKey);
         for (String key : scenario.getObject(syncKey).keySet()) {
             if (!IDE_SYNC_SCENARIO_KEYS.contains(key)) {
@@ -402,9 +409,9 @@ class ScenarioLoader {
     @Nullable
     private static IdeType getIdeSyncType(Config scenario) {
         boolean hasIdea = scenario.hasPath(IDEA_SYNC);
-        boolean hasStudio = scenario.hasPath(ANDROID_STUDIO_SYNC);
+        boolean hasStudio = hasKeyWithDeprecatedFallback(scenario, STUDIO_SYNC, ANDROID_STUDIO_SYNC);
         if (hasIdea && hasStudio) {
-            throw new IllegalArgumentException("Cannot specify both '" + IDEA_SYNC + "' and '" + ANDROID_STUDIO_SYNC + "' in the same scenario.");
+            throw new IllegalArgumentException("Cannot specify both '" + IDEA_SYNC + "' and '" + STUDIO_SYNC + "' in the same scenario.");
         }
         if (hasIdea) {
             return IdeType.INTELLIJ_IDEA;
@@ -413,13 +420,6 @@ class ScenarioLoader {
             return IdeType.ANDROID_STUDIO;
         }
         return null;
-    }
-
-    private static String getIdeSyncKey(IdeType ideType) {
-        return switch (ideType) {
-            case INTELLIJ_IDEA -> IDEA_SYNC;
-            case ANDROID_STUDIO -> ANDROID_STUDIO_SYNC;
-        };
     }
 
     private static List<BuildMutator> getMutators(Config scenario, String scenarioName, InvocationSettings settings, int warmUpCount, int buildCount) {
