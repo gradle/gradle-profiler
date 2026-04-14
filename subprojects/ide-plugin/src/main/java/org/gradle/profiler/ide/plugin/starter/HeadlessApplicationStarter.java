@@ -1,4 +1,4 @@
-package org.gradle.profiler.studio.plugin.starter;
+package org.gradle.profiler.ide.plugin.starter;
 
 import com.intellij.ide.AppLifecycleListener;
 import com.intellij.openapi.application.ApplicationStarter;

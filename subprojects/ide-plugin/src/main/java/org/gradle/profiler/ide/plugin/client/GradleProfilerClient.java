@@ -1,4 +1,4 @@
-package org.gradle.profiler.studio.plugin.client;
+package org.gradle.profiler.ide.plugin.client;
 
 import com.google.common.base.Stopwatch;
 import com.intellij.ide.caches.CachesInvalidator;
@@ -10,8 +10,8 @@ import org.gradle.profiler.client.protocol.Client;
 import org.gradle.profiler.client.protocol.messages.IdeCacheCleanupCompleted;
 import org.gradle.profiler.client.protocol.messages.IdeRequest;
 import org.gradle.profiler.client.protocol.messages.IdeSyncRequestCompleted;
-import org.gradle.profiler.studio.plugin.system.GradleSyncResult;
-import org.gradle.profiler.studio.plugin.system.GradleSystemListener;
+import org.gradle.profiler.ide.plugin.system.GradleSyncResult;
+import org.gradle.profiler.ide.plugin.system.GradleSystemListener;
 import org.jetbrains.plugins.gradle.service.project.open.GradleProjectImportUtil;
 import org.jetbrains.plugins.gradle.settings.GradleSettings;
 
@@ -20,11 +20,11 @@ import java.util.concurrent.TimeUnit;
 
 import static org.gradle.profiler.client.protocol.messages.IdeRequest.IdeRequestType.EXIT_IDE;
 import static org.gradle.profiler.client.protocol.messages.IdeRequest.IdeRequestType.STOP_RECEIVING_EVENTS;
-import static org.gradle.profiler.studio.plugin.system.IdeSystemHelper.waitOnPostStartupActivities;
-import static org.gradle.profiler.studio.plugin.system.IdeSystemHelper.waitOnPreviousGradleSyncFinish;
-import static org.gradle.profiler.studio.plugin.system.IdeSystemHelper.waitOnBackgroundProcessesFinish;
-import static org.gradle.profiler.studio.plugin.system.IdeSystemHelper.getStartupSyncResult;
-import static org.gradle.profiler.studio.plugin.system.IdeSystemHelper.startManualSync;
+import static org.gradle.profiler.ide.plugin.system.IdeSystemHelper.waitOnPostStartupActivities;
+import static org.gradle.profiler.ide.plugin.system.IdeSystemHelper.waitOnPreviousGradleSyncFinish;
+import static org.gradle.profiler.ide.plugin.system.IdeSystemHelper.waitOnBackgroundProcessesFinish;
+import static org.gradle.profiler.ide.plugin.system.IdeSystemHelper.getStartupSyncResult;
+import static org.gradle.profiler.ide.plugin.system.IdeSystemHelper.startManualSync;
 
 public class GradleProfilerClient {
 

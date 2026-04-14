@@ -13,13 +13,13 @@
     <depends optional="true" config-file="android-studio-extensions.xml">org.jetbrains.android</depends>
 
     <applicationListeners>
-        <listener class="org.gradle.profiler.studio.plugin.GradleProfilerAppLifecycleListener"
+        <listener class="org.gradle.profiler.ide.plugin.GradleProfilerAppLifecycleListener"
                   topic="com.intellij.ide.AppLifecycleListener"/>
     </applicationListeners>
 
     <extensions defaultExtensionNs="com.intellij">
         <appStarter id="headless-starter"
-                    implementation="org.gradle.profiler.studio.plugin.starter.HeadlessApplicationStarter"/>
+                    implementation="org.gradle.profiler.ide.plugin.starter.HeadlessApplicationStarter"/>
         <postStartupActivity implementation="org.gradle.profiler.ide.plugin.GradleProfilerStartupActivity"/>
     </extensions>
 

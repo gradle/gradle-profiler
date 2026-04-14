@@ -11,10 +11,9 @@ import com.intellij.openapi.util.registry.RegistryValue
 import org.gradle.profiler.client.protocol.Client
 import org.gradle.profiler.client.protocol.messages.IdeRequest
 import org.gradle.profiler.client.protocol.messages.IdeRequest.IdeRequestType
-import org.gradle.profiler.studio.plugin.DefaultGradleSettingsListener
-import org.gradle.profiler.studio.plugin.client.GradleProfilerClient
-import org.gradle.profiler.studio.plugin.system.IdeSystemHelper
-import org.gradle.profiler.studio.plugin.system.GradleSystemListener
+import org.gradle.profiler.ide.plugin.client.GradleProfilerClient
+import org.gradle.profiler.ide.plugin.system.IdeSystemHelper
+import org.gradle.profiler.ide.plugin.system.GradleSystemListener
 import org.jetbrains.plugins.gradle.settings.GradleProjectSettings
 import org.jetbrains.plugins.gradle.settings.GradleSettings
 import java.io.File

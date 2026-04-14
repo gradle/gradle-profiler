@@ -1,4 +1,4 @@
-package org.gradle.profiler.studio.plugin;
+package org.gradle.profiler.ide.plugin;
 
 import com.intellij.ide.AppLifecycleListener;
 import com.intellij.openapi.diagnostic.Logger;

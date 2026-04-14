@@ -1,4 +1,4 @@
-package org.gradle.profiler.studio.plugin;
+package org.gradle.profiler.ide.plugin;
 
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;

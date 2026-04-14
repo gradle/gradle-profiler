@@ -1,4 +1,4 @@
-package org.gradle.profiler.studio.plugin.system;
+package org.gradle.profiler.ide.plugin.system;
 
 import com.google.common.base.Strings;
 import com.intellij.openapi.application.ApplicationManager;

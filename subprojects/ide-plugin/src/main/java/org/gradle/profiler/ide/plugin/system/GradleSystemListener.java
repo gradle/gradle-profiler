@@ -1,4 +1,4 @@
-package org.gradle.profiler.studio.plugin.system;
+package org.gradle.profiler.ide.plugin.system;
 
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId;
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskNotificationListener;
