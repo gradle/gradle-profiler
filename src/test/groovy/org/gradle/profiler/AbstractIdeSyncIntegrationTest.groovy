@@ -343,12 +343,13 @@ abstract class AbstractIdeSyncIntegrationTest extends AbstractProfilerIntegratio
         logFile.find("Full sync has completed in").size() == 2
         logFile.find("and it SUCCEEDED").size() == 2
         def ideaPropertiesFile = new File(sandboxDir, "scenarioOptions/idea.properties")
-        ideaPropertiesFile.readLines().contains(registryKey + "=true")
+        def ideaProperties = ideaPropertiesFile.readLines()
+        ideaProperties.contains(registryKey + "=true")
 
         and:
         def ideaLog = new File(sandboxDir, "logs/idea.log")
         ideaLog.exists()
-        (ideaLog.text =~ /Modified registry entries:.*${registryKey}/).find()
+        ideaLog.text.contains("Modified registry entries: [" + registryKey + "=true]")
     }
 
     def runBenchmark(File scenarioFile, int warmups, int iterations, String... additionalArgs) {
