@@ -322,13 +322,13 @@ To invalidate IDE caches between runs, use the scenario-level [`clear-ide-cache-
 
 For Android Studio, swap `--idea-install-dir` for `--studio-install-dir` and use the matching scenario block:
 
-    ideaSync {
+    myIdeaSync {
         idea-sync {
             ide-jvm-args = ["-Xms256m", "-Xmx4096m"]
         }
     }
 
-    studioSync {
+    myStudioSync {
         android-studio-sync {
             ide-jvm-args = ["-Xms256m", "-Xmx4096m"]
         }
