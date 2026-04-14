@@ -21,6 +21,6 @@ tasks.javadoc {
 
 tasks.jar {
     manifest {
-        attributes("Premain-Class" to "org.gradle.profiler.studio.agent.Agent")
+        attributes("Premain-Class" to "org.gradle.profiler.ide.agent.Agent")
     }
 }

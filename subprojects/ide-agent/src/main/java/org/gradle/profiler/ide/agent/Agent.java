@@ -1,4 +1,4 @@
-package org.gradle.profiler.studio.agent;
+package org.gradle.profiler.ide.agent;
 
 import jdk.internal.misc.Unsafe;
 import org.gradle.profiler.client.protocol.Client;
@@ -30,7 +30,7 @@ public class Agent {
     }
 
     private static class InstrumentingTransformer implements ClassFileTransformer {
-        static final Type INTERCEPTOR_TYPE = Type.getObjectType("org/gradle/profiler/studio/instrumented/Interceptor");
+        static final Type INTERCEPTOR_TYPE = Type.getObjectType("org/gradle/profiler/ide/instrumented/Interceptor");
         static final Type DEFAULT_GRADLE_CONNECTOR = Type.getObjectType("org/gradle/tooling/internal/consumer/DefaultGradleConnector");
 
         private boolean supportClassesInjected;
