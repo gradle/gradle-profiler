@@ -21,8 +21,10 @@ val createdBuildReceipt = layout.buildDirectory.file(buildReceiptName)
 tasks.register("createBuildReceipt") {
     outputs.file(createdBuildReceipt).withPropertyName("buildReceipt")
     inputs.property("version", versionInfo.version)
+    val version = versionInfo.version
+    val buildReceipt = createdBuildReceipt
     doLast {
-        createdBuildReceipt.get().asFile.writeText("version=${versionInfo.version.get()}", StandardCharsets.UTF_8)
+        buildReceipt.get().asFile.writeText("version=${version.get()}", StandardCharsets.UTF_8)
     }
 }
 
