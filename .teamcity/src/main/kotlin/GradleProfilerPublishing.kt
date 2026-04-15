@@ -35,7 +35,7 @@ object GradleProfilerPublishing : BuildType({
         gradle {
             // No CC since https://github.com/gradle-nexus/publish-plugin/issues/221, which is
             // waiting for https://github.com/gradle/gradle/issues/22779
-            tasks = "clean createBuildReceipt publishToSonatype closeAndReleaseSonatypeStagingRepository gitPushTag %additional.gradle.parameters% --no-configuration-cache"
+            tasks = "--no-configuration-cache clean createBuildReceipt publishToSonatype closeAndReleaseSonatypeStagingRepository gitPushTag %additional.gradle.parameters%"
             gradleParams = toolchainConfiguration(os, arch) + " -Dgradle.cache.remote.push=true"
             buildFile = ""
         }
