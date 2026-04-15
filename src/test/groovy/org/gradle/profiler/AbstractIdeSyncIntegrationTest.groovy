@@ -5,11 +5,11 @@ import org.gradle.profiler.fixtures.AbstractProfilerIntegrationTest
 import org.gradle.profiler.fixtures.compatibility.ide.IntellijGradleJvmCompatibility
 import org.gradle.profiler.instrument.GradleInstrumentation
 import org.gradle.profiler.spock.extensions.ShowIdeLogsOnFailure
-import org.gradle.profiler.studio.IdeType
-import org.gradle.profiler.studio.launcher.IdeLauncher
-import org.gradle.profiler.studio.launcher.IdeLauncherProvider
-import org.gradle.profiler.studio.tools.IdePluginInstaller
-import org.gradle.profiler.studio.tools.IdeSandboxCreator
+import org.gradle.profiler.ide.IdeType
+import org.gradle.profiler.ide.launcher.IdeLauncher
+import org.gradle.profiler.ide.launcher.IdeLauncherProvider
+import org.gradle.profiler.ide.tools.IdePluginInstaller
+import org.gradle.profiler.ide.tools.IdeSandboxCreator
 import spock.lang.Timeout
 
 import java.util.concurrent.TimeUnit
@@ -157,7 +157,7 @@ abstract class AbstractIdeSyncIntegrationTest extends AbstractProfilerIntegratio
         IdeLauncher launcher = new IdeLauncherProvider(ideType(), ideHome.toPath(), sandbox, [], []).get()
         IdePluginInstaller pluginInstaller = new IdePluginInstaller(sandbox.getPluginsDir())
         // We have to install plugin, since a plugin contains headless starter and it makes it run headless on CI
-        pluginInstaller.installPlugin(Collections.singletonList(GradleInstrumentation.unpackPlugin("studio-plugin").toPath()))
+        pluginInstaller.installPlugin(Collections.singletonList(GradleInstrumentation.unpackPlugin("ide-plugin").toPath()))
         def scenarioFile = file("performance.scenarios") << """
             $scenarioName {
                 $scenarioSyncOption {}
@@ -190,7 +190,7 @@ abstract class AbstractIdeSyncIntegrationTest extends AbstractProfilerIntegratio
         IdeLauncher launcher = new IdeLauncherProvider(ideType(), ideHome.toPath(), sandbox, [], []).get()
         // We have to install plugin, since a plugin contains headless starter and it makes it run headless on CI
         IdePluginInstaller pluginInstaller = new IdePluginInstaller(sandbox.getPluginsDir())
-        pluginInstaller.installPlugin(Collections.singletonList(GradleInstrumentation.unpackPlugin("studio-plugin").toPath()))
+        pluginInstaller.installPlugin(Collections.singletonList(GradleInstrumentation.unpackPlugin("ide-plugin").toPath()))
         def scenarioFile = file("performance.scenarios") << """
             $scenarioName {
                 $scenarioSyncOption {}
@@ -326,10 +326,12 @@ abstract class AbstractIdeSyncIntegrationTest extends AbstractProfilerIntegratio
 
     def "can add idea.properties"() {
         given:
+        // Use a harmless cosmetic key that is registered in IntelliJ's Registry (defined in registry.properties)
+        def registryKey = "ide.balloon.shadowEnabled"
         def scenarioFile = file("performance.scenarios") << """
             $scenarioName {
                 $scenarioSyncOption {
-                    idea-properties = ["foo=true"]
+                    idea-properties = ["${registryKey}=true"]
                 }
             }
         """
@@ -342,7 +344,12 @@ abstract class AbstractIdeSyncIntegrationTest extends AbstractProfilerIntegratio
         logFile.find("and it SUCCEEDED").size() == 2
         def ideaPropertiesFile = new File(sandboxDir, "scenarioOptions/idea.properties")
         def ideaProperties = ideaPropertiesFile.readLines()
-        ideaProperties.contains("foo=true")
+        ideaProperties.contains(registryKey + "=true")
+
+        and:
+        def ideaLog = new File(sandboxDir, "logs/idea.log")
+        ideaLog.exists()
+        ideaLog.text.contains("Modified registry entries: [" + registryKey + "=true]")
     }
 
     def runBenchmark(File scenarioFile, int warmups, int iterations, String... additionalArgs) {

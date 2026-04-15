@@ -1,8 +1,6 @@
 package org.gradle.profiler.fixtures.compatibility.ide
 
 import groovy.json.JsonSlurper
-import org.gradle.api.JavaVersion
-import org.gradle.profiler.studio.tools.IntellijFinder
 
 import java.util.jar.JarFile
 

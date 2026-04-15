@@ -2,12 +2,12 @@ package org.gradle.profiler
 
 
 import org.gradle.profiler.spock.extensions.ShowIdeLogsOnFailure
-import org.gradle.profiler.studio.AndroidStudioTestSupport
-import org.gradle.profiler.studio.IdeType
-import org.gradle.profiler.studio.tools.AndroidStudioFinder
+import org.gradle.profiler.ide.AndroidStudioTestSupport
+import org.gradle.profiler.ide.IdeType
+import org.gradle.profiler.ide.tools.AndroidStudioFinder
 import spock.lang.Requires
 
-import static org.gradle.profiler.studio.AndroidStudioTestSupport.setupLocalProperties
+import static org.gradle.profiler.ide.AndroidStudioTestSupport.setupLocalProperties
 
 /**
  * You need ANDROID_HOME or ANDROID_SDK_ROOT set or

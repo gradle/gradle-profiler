@@ -13,9 +13,9 @@ import org.gradle.profiler.gradle.RunToolingAction
 import org.gradle.profiler.maven.MavenScenarioDefinition
 import org.gradle.profiler.mutations.AbstractScheduledMutator
 import org.gradle.profiler.report.Format
-import org.gradle.profiler.studio.IdeConfiguration
-import org.gradle.profiler.studio.IdeSyncAction
-import org.gradle.profiler.studio.invoker.IdeGradleScenarioDefinition
+import org.gradle.profiler.ide.IdeConfiguration
+import org.gradle.profiler.ide.IdeSyncAction
+import org.gradle.profiler.ide.invoker.IdeGradleScenarioDefinition
 import org.gradle.profiler.toolingapi.FetchProjectPublications
 import org.gradle.tooling.model.idea.IdeaProject
 import org.junit.Rule

@@ -2,7 +2,7 @@ package org.gradle.profiler
 
 import org.gradle.profiler.gradle.GradleBuildInvoker
 import org.gradle.profiler.report.Format
-import org.gradle.profiler.studio.IdeConfiguration
+import org.gradle.profiler.ide.IdeConfiguration
 import org.junit.Rule
 import org.junit.rules.TemporaryFolder
 import spock.lang.Specification

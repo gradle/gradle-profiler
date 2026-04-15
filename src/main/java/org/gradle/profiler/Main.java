@@ -18,8 +18,8 @@ import org.gradle.profiler.report.CsvGenerator;
 import org.gradle.profiler.report.HtmlGenerator;
 import org.gradle.profiler.result.BuildInvocationResult;
 import org.gradle.profiler.result.SampleProvider;
-import org.gradle.profiler.studio.invoker.IdeGradleScenarioDefinition;
-import org.gradle.profiler.studio.invoker.IdeGradleScenarioInvoker;
+import org.gradle.profiler.ide.invoker.IdeGradleScenarioDefinition;
+import org.gradle.profiler.ide.invoker.IdeGradleScenarioInvoker;
 
 import java.io.File;
 import java.io.IOException;

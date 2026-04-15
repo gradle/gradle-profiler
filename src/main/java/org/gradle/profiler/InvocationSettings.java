@@ -2,8 +2,8 @@ package org.gradle.profiler;
 
 import org.gradle.profiler.buildops.BuildOperationMeasurement;
 import org.gradle.profiler.report.Format;
-import org.gradle.profiler.studio.IdeConfiguration;
-import org.gradle.profiler.studio.IdeType;
+import org.gradle.profiler.ide.IdeConfiguration;
+import org.gradle.profiler.ide.IdeType;
 
 import javax.annotation.Nullable;
 import java.io.File;

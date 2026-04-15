@@ -34,7 +34,7 @@ class IdeSystemProperties(
             systemProperties.add("-D$homePropertyName=$idePath")
         }
         if (runInHeadlessMode.get()) {
-            systemProperties.add("-Dstudio.tests.headless=true")
+            systemProperties.add("-Dide.tests.headless=true")
         }
         return systemProperties
     }
