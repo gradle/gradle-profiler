@@ -33,6 +33,7 @@ open class GradleProfilerTest(os: Os, javaVersion: JavaVersion, arch: Arch) : Bu
             } else {
                 4
             }
+            groupArtifactsByBuild = true
         }
 
         commitStatusPublisher {
