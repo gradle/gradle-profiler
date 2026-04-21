@@ -17,6 +17,7 @@ public class InvocationSettings {
     private final Profiler profiler;
     private final boolean generateDiffs;
     private final boolean benchmark;
+    private final boolean singleShot;
     private final boolean dryRun;
     private final boolean dumpScenarios;
     private final File scenarioFile;
@@ -51,6 +52,7 @@ public class InvocationSettings {
         Profiler profiler,
         boolean generateDiffs,
         boolean benchmark,
+        boolean singleShot,
         File outputDir,
         BuildInvoker invoker,
         boolean dryRun,
@@ -75,6 +77,7 @@ public class InvocationSettings {
         File buildLog
     ) {
         this.benchmark = benchmark;
+        this.singleShot = singleShot;
         this.projectDir = projectDir;
         this.profiler = profiler;
         this.generateDiffs = generateDiffs;
@@ -125,6 +128,10 @@ public class InvocationSettings {
 
     public boolean isBenchmark() {
         return benchmark;
+    }
+
+    public boolean isSingleShot() {
+        return singleShot;
     }
 
     public boolean isProfile() {
@@ -242,6 +249,7 @@ public class InvocationSettings {
             .setProfiler(profiler)
             .setGenerateDiffs(generateDiffs)
             .setBenchmark(benchmark)
+            .setSingleShot(singleShot)
             .setDryRun(dryRun)
             .setDumpScenarios(dumpScenarios)
             .setScenarioFile(scenarioFile)
@@ -301,6 +309,7 @@ public class InvocationSettings {
         private Profiler profiler;
         private boolean generateDiffs;
         private boolean benchmark;
+        private boolean singleShot;
         private boolean dryRun;
         private boolean dumpScenarios;
         private File scenarioFile;
@@ -341,6 +350,11 @@ public class InvocationSettings {
 
         public InvocationSettingsBuilder setBenchmark(boolean benchmark) {
             this.benchmark = benchmark;
+            return this;
+        }
+
+        public InvocationSettingsBuilder setSingleShot(boolean singleShot) {
+            this.singleShot = singleShot;
             return this;
         }
 
@@ -470,6 +484,7 @@ public class InvocationSettings {
                 profiler,
                 generateDiffs,
                 benchmark,
+                singleShot,
                 outputDir,
                 invoker,
                 dryRun,

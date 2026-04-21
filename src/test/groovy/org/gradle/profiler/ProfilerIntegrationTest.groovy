@@ -77,10 +77,10 @@ class ProfilerIntegrationTest extends AbstractProfilerIntegrationTest {
         thrown(IllegalArgumentException)
 
         and:
-        output.contains("Scenario using Gradle ${minimalSupportedGradleVersion}: You can not skip warm-ups when profiling or benchmarking a Gradle build with a warm daemon. Use --no-daemon or --cold-daemon if you want to profile or benchmark with zero warm-ups.")
+        output.contains("Scenario using Gradle ${minimalSupportedGradleVersion}: You can not skip warm-ups when profiling or benchmarking a Gradle build. Use --single-shot to run a single measured build with zero warm-ups.")
     }
 
-    def "complains when benchmarking scenario and skipping warm-up builds with warm daemon"() {
+    def "complains when benchmarking scenario and skipping warm-up builds"() {
         given:
         def scenarioFile = file("benchmark.conf")
         scenarioFile.text = """
@@ -99,14 +99,37 @@ class ProfilerIntegrationTest extends AbstractProfilerIntegrationTest {
         """
 
         when:
-        new Main().
-            run("--project-dir", projectDir.absolutePath, "--output-dir", outputDir.absolutePath, "--gradle-version", minimalSupportedGradleVersion, "--benchmark", "--iterations", "2", "--scenario-file", scenarioFile.absolutePath)
+        new Main().run("--project-dir", projectDir.absolutePath, "--output-dir", outputDir.absolutePath, "--gradle-version", minimalSupportedGradleVersion, "--benchmark", "--iterations", "2", "--scenario-file", scenarioFile.absolutePath)
 
         then:
         thrown(IllegalArgumentException)
 
         and:
-        output.contains("Scenario help using Gradle ${minimalSupportedGradleVersion}: You can not skip warm-ups when profiling or benchmarking a Gradle build with a warm daemon. Use --no-daemon or --cold-daemon if you want to profile or benchmark with zero warm-ups.")
+        output.contains("Scenario help using Gradle ${minimalSupportedGradleVersion}: You can not skip warm-ups when profiling or benchmarking a Gradle build. Use --single-shot to run a single measured build with zero warm-ups.")
+    }
+
+    def "complains when using --single-shot with --warmups"() {
+        when:
+        new Main().
+            run("--project-dir", projectDir.absolutePath, "--output-dir", outputDir.absolutePath, "--gradle-version", minimalSupportedGradleVersion, "--benchmark", "--single-shot", "--warmups", "2", "assemble")
+
+        then:
+        thrown(CommandLineParser.SettingsNotAvailableException)
+
+        and:
+        output.contains("Cannot use both --single-shot and --warmups.")
+    }
+
+    def "complains when using --single-shot with --iterations"() {
+        when:
+        new Main().
+            run("--project-dir", projectDir.absolutePath, "--output-dir", outputDir.absolutePath, "--gradle-version", minimalSupportedGradleVersion, "--benchmark", "--single-shot", "--iterations", "5", "assemble")
+
+        then:
+        thrown(CommandLineParser.SettingsNotAvailableException)
+
+        and:
+        output.contains("Cannot use both --single-shot and --iterations.")
     }
 
     def "reports build failures"() {

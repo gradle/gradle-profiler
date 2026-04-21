@@ -122,6 +122,9 @@ Option                                   Description
 --project-dir <File>                     The directory containing the build to
                                            run (default: working directory)
 --scenario-file <File>                   Scenario definition file to use
+--single-shot                            Run a single measured build with zero
+                                           warm-ups (implies --cold-daemon, can
+                                           be combined with --no-daemon)
 --studio-install-dir <File>              The Android Studio installation to use
 --studio-sandbox-dir <File>              The Android Studio sandbox dir to use
 --title [String]                         Title to show on benchmark report
