@@ -7,6 +7,14 @@ public interface BuildMutator {
     default void validate(BuildInvoker invoker) {}
 
     /**
+     * Returns true if this mutator applies source changes to measure incremental build performance.
+     * Such mutators require at least one warm-up build to establish baseline state.
+     */
+    default boolean requiresBaseline() {
+        return false;
+    }
+
+    /**
      * Runs before the first iteration of the scenario.
      */
     default void beforeScenario(ScenarioContext context) {}
