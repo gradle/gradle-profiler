@@ -20,8 +20,12 @@ fun Project.configureGradleProfilerProject() {
 
     buildType(GradleProfilerSanityCheck)
     buildType(GradleProfilerTestTrigger(listOf(GradleProfilerSanityCheck) + testBuilds))
-    buildType(GradleProfilerPublishing)
-    buildType(GradleProfilerPublishToSdkMan(GradleProfilerPublishing))
+
+    subProject {
+        id("GradleProfilerPublish")
+        name = "GradleProfilerPublish"
+        configureGradleProfilerPublishProject()
+    }
 
     params {
         text("JdkProviderEnabled", "true")
