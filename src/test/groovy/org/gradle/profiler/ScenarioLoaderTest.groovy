@@ -44,12 +44,14 @@ class ScenarioLoaderTest extends Specification {
 
     private settingsBuilder(
         BuildInvoker invoker = GradleBuildInvoker.Cli,
-        boolean benchmark = true
+        boolean benchmark = true,
+        boolean singleShot = false
     ) {
         new InvocationSettings.InvocationSettingsBuilder()
             .setProjectDir(projectDir)
             .setProfiler(Profiler.NONE)
             .setBenchmark(benchmark)
+            .setSingleShot(singleShot)
             .setOutputDir(outputDir)
             .setInvoker(invoker)
             .setDryRun(false)
@@ -796,5 +798,73 @@ class ScenarioLoaderTest extends Specification {
 
         expect:
         scenarios*.name == ["scenario1"]
+    }
+
+    def "rejects --single-shot with '#mutatorKey' mutation"() {
+        given:
+        def settings = settingsBuilder(GradleBuildInvoker.Cli, true, true).build()
+        new File(projectDir, targetFile).with {
+            parentFile.mkdirs()
+            text = "dummy"
+        }
+
+        scenarioFile << """
+            default {
+                tasks = ["help"]
+                $mutatorKey = "$targetFile"
+            }
+        """
+        def scenarios = loadScenarios(scenarioFile, settings, Mock(GradleBuildConfigurationReader))
+
+        when:
+        def problems = []
+        scenarios[0].visitProblems(settings, { problems << it })
+
+        then:
+        problems.any { it.contains("Source file mutations cannot be used with --single-shot") }
+
+        where:
+        mutatorKey                               | targetFile
+        "apply-build-script-change-to"           | "build.gradle"
+        "apply-abi-change-to"                    | "Thing.java"
+        "apply-non-abi-change-to"                | "Thing.java"
+        "apply-android-resource-change-to"       | "strings.xml"
+        "apply-android-resource-value-change-to" | "strings.xml"
+        "apply-android-layout-change-to"         | "activity.xml"
+        "apply-android-manifest-change-to"       | "AndroidManifest.xml"
+        "apply-property-resource-change-to"      | "app.properties"
+        "apply-cpp-change-to"                    | "lib.cpp"
+        "apply-h-change-to"                      | "lib.h"
+        "apply-kotlin-composable-change-to"      | "Thing.kt"
+    }
+
+    def "allows --single-shot with '#mutatorKey' mutation"() {
+        given:
+        def settings = settingsBuilder(GradleBuildInvoker.Cli, true, true).build()
+
+        scenarioFile << """
+            default {
+                tasks = ["help"]
+                $mutatorKey = $mutatorConfig
+            }
+        """
+        def scenarios = loadScenarios(scenarioFile, settings, Mock(GradleBuildConfigurationReader))
+
+        when:
+        def problems = []
+        scenarios[0].visitProblems(settings, { problems << it })
+
+        then:
+        problems.every { !it.contains("Source file mutations cannot be used with --single-shot") }
+
+        where:
+        mutatorKey                               | mutatorConfig
+        "clear-build-cache-before"               | "SCENARIO"
+        "clear-gradle-user-home-before"          | "SCENARIO"
+        "clear-configuration-cache-state-before" | "SCENARIO"
+        "clear-project-cache-before"             | "SCENARIO"
+        "clear-transform-cache-before"           | "SCENARIO"
+        "clear-jars-cache-before"                | "SCENARIO"
+        "show-build-cache-size"                  | "true"
     }
 }

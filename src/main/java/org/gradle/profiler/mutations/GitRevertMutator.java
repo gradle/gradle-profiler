@@ -22,6 +22,11 @@ public class GitRevertMutator extends AbstractGitMutator {
 	}
 
 	@Override
+	public boolean requiresBaseline() {
+		return true;
+	}
+
+	@Override
 	public void beforeScenario(ScenarioContext context) {
 		resetGit();
 	}

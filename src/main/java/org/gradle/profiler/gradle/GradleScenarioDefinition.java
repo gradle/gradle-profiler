@@ -142,8 +142,11 @@ public class GradleScenarioDefinition extends ScenarioDefinition {
 
     @Override
     public void visitProblems(InvocationSettings settings, Consumer<String> reporter) {
-        if (getWarmUpCount() < 1) {
-            reporter.accept("You can not skip warm-ups when profiling or benchmarking a Gradle build. Use --no-daemon or --cold-daemon if you want to profile or benchmark JVM startup");
+        if (getWarmUpCount() < 1 && !settings.isSingleShot()) {
+            reporter.accept("You can not skip warm-ups when profiling or benchmarking a Gradle build. Use --single-shot to run a single measured build with zero warm-ups.");
+        }
+        if (settings.isSingleShot() && getBuildMutators().stream().anyMatch(BuildMutator::requiresBaseline)) {
+            reporter.accept("Source file mutations cannot be used with --single-shot, as they require a baseline build to measure incremental performance against.");
         }
         if (settings.isMeasureGarbageCollection() && isBuildServiceUnsupported()) {
             reporter.accept("Measuring garbage collection is only supported for Gradle 6.1-milestone-3 and later");

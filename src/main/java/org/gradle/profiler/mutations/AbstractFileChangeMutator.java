@@ -22,6 +22,11 @@ public abstract class AbstractFileChangeMutator implements BuildMutator {
     }
 
     @Override
+    public boolean requiresBaseline() {
+        return true;
+    }
+
+    @Override
     public void beforeScenario(ScenarioContext context) {
         this.originalText = readText(sourceFile);
     }

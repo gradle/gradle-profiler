@@ -90,6 +90,7 @@ class CommandLineParser {
         ProfilerFactory.configureParser(parser);
         OptionSpecBuilder noDifferentialFlamegraphOption = parser.accepts("no-diffs", "Do not generate differential flame graphs");
         OptionSpecBuilder benchmarkOption = parser.accepts("benchmark", "Collect benchmark metrics");
+        OptionSpecBuilder singleShotOption = parser.accepts("single-shot", "Run a single measured build with zero warm-ups (implies --cold-daemon, can be combined with --no-daemon)");
         ArgumentAcceptingOptionSpec<BuildOperationMeasurement> measuredBuildOps = parser.accepts(
             "measure-build-op",
             "Build operation type to measure by a given metric" +
@@ -146,16 +147,26 @@ class CommandLineParser {
         }
         Profiler profiler = profilerFactory.createFromOptions(parsedOptions);
         boolean generateDiffs = !parsedOptions.has(noDifferentialFlamegraphOption) && hasProfiler && profiler.isCreatesStacksFiles();
+        boolean singleShot = parsedOptions.has(singleShotOption);
         boolean benchmark = parsedOptions.has(benchmarkOption);
         boolean dumpScenarios = parsedOptions.has(dumpScenariosOption);
         if (!benchmark && !hasProfiler && !dumpScenarios) {
             return fail(parser, "Neither --profile or --benchmark specified.");
         }
 
+        if (singleShot) {
+            if (parsedOptions.has(warmupsOption)) {
+                return fail(parser, "Cannot use both --single-shot and --warmups.");
+            }
+            if (parsedOptions.has(iterationsOption)) {
+                return fail(parser, "Cannot use both --single-shot and --iterations.");
+            }
+        }
+
         File outputDir = toAbsoluteFileOrElse(parsedOptions.valueOf(outputDirOption), this::findOutputDir);
         File gradleUserHome = toAbsoluteFileOrNull(parsedOptions.valueOf(gradleUserHomeOption));
-        Integer warmups = parsedOptions.valueOf(warmupsOption);
-        Integer iterations = parsedOptions.valueOf(iterationsOption);
+        Integer warmups = singleShot ? 0 : parsedOptions.valueOf(warmupsOption);
+        Integer iterations = singleShot ? 1 : parsedOptions.valueOf(iterationsOption);
         boolean measureGarbageCollection = parsedOptions.has(measureGarbageCollectionOption);
         boolean measureLocalBuildCache = parsedOptions.has(measureLocalBuildCacheOption);
         boolean measureConfig = parsedOptions.has(measureConfigTimeOption);
@@ -188,7 +199,7 @@ class CommandLineParser {
         if (parsedOptions.has(cliOption)) {
             gradleInvoker = GradleBuildInvoker.Cli;
         }
-        if (parsedOptions.has(coldDaemonOption)) {
+        if (parsedOptions.has(coldDaemonOption) || singleShot) {
             gradleInvoker = gradleInvoker.withColdDaemon();
         }
         if (parsedOptions.has(noDaemonOption)) {
@@ -224,6 +235,7 @@ class CommandLineParser {
             .setProfiler(profiler)
             .setGenerateDiffs(generateDiffs)
             .setBenchmark(benchmark)
+            .setSingleShot(singleShot)
             .setOutputDir(outputDir)
             .setInvoker(invoker)
             .setDryRun(dryRun)
