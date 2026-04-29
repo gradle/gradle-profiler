@@ -16,8 +16,6 @@ object GradleProfilerPublishing : BuildType({
     val arch = Arch.AMD64
 
     params {
-        password("pgpSigningKey", "credentialsJSON:20c56c10-3c97-4753-91c2-685ddf26700e", display = ParameterDisplay.HIDDEN)
-        password("pgpSigningPassphrase", "credentialsJSON:d49291bd-101e-4165-a9a8-912ca457926b", display = ParameterDisplay.HIDDEN)
         text("additional.gradle.parameters", "")
 
         param("env.ORG_GRADLE_PROJECT_githubToken", "%github.bot-teamcity.token%")
