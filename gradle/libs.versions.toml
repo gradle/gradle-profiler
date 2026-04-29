@@ -39,7 +39,7 @@ slf4j-simple = { module = "org.slf4j:slf4j-simple", version = "1.7.10" }
 spock-core = { module = "org.spockframework:spock-core", version.ref = "spock" }
 spock-junit4 = { module = "org.spockframework:spock-junit4", version.ref = "spock" }
 toolingApi = { module = "org.gradle:gradle-tooling-api", version = "8.14.3" }
-typesafe-config = { module = "com.typesafe:config", version = "1.3.3" }
+typesafe-config = { module = "com.typesafe:config", version = "1.4.6" }
 
 [bundles]
 testDependencies = ["spock-core", "spock-junit4", "junit-platform-launcher", "mockito-core"]
