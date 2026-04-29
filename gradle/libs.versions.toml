@@ -23,7 +23,7 @@ dd-plist = { module = "com.googlecode.plist:dd-plist", version = "1.29" }
 findbugs-annotations = { module = "com.google.code.findbugs:annotations", version = "3.0.1" }
 groovy-json = { module = "org.apache.groovy:groovy-json", version.ref = "groovy" }
 groovy-xml = { module = "org.apache.groovy:groovy-xml", version.ref = "groovy" }
-gson = { module = "com.google.code.gson:gson", version = "2.11.0" }
+gson = { module = "com.google.code.gson:gson", version = "2.13.2" }
 guava = { module = "com.google.guava:guava", version = "33.5.0-jre" }
 javaparser = { module = "com.github.javaparser:javaparser-core", version = "3.28.0" }
 jmc-flightrecorder = { module = "org.openjdk.jmc:flightrecorder", version = "8.3.1" }
