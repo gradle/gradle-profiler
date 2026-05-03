@@ -2,7 +2,7 @@ package org.gradle.profiler
 
 import org.gradle.api.JavaVersion
 import org.gradle.profiler.fixtures.AbstractProfilerIntegrationTest
-import org.gradle.profiler.fixtures.compatibility.ide.IntellijGradleJvmCompatibility
+import org.gradle.profiler.fixtures.compatibility.ide.IdeGradleJvmCompatibility
 import org.gradle.profiler.instrument.GradleInstrumentation
 import org.gradle.profiler.spock.extensions.ShowIdeLogsOnFailure
 import org.gradle.profiler.ide.IdeType
@@ -41,7 +41,7 @@ abstract class AbstractIdeSyncIntegrationTest extends AbstractProfilerIntegratio
         // IDE must support Java version we're going to run the test build with.
         // So far we expect the current version to work always, however some downgrading logic
         // may need to be applied in future.
-        Set<Integer> supportedJavaVersionsByIde = IntellijGradleJvmCompatibility.fromIdeHome(ideHome).supportedJavaVersions
+        Set<Integer> supportedJavaVersionsByIde = IdeGradleJvmCompatibility.fromIdeHome(ideType(), ideHome).supportedJavaVersions
         Integer currentJvm = JavaVersion.current().majorVersion as int
         assert supportedJavaVersionsByIde.contains(currentJvm)
 

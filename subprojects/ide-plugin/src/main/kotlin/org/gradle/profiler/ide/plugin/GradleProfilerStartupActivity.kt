@@ -1,6 +1,6 @@
 package org.gradle.profiler.ide.plugin
 
-import com.intellij.ide.impl.setTrusted
+import com.intellij.ide.trustedProjects.TrustedProjects
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.externalSystem.service.notification.ExternalSystemProgressNotificationManager
@@ -36,7 +36,7 @@ class GradleProfilerStartupActivity : ProjectActivity {
         val gradleSystemListener = GradleSystemListener()
         ExternalSystemProgressNotificationManager.getInstance().addNotificationListener(gradleSystemListener, project)
 
-        project.setTrusted(true)
+        TrustedProjects.setProjectTrusted(project, true)
 
         ApplicationManager.getApplication().executeOnPooledThread {
             val lastRequest = listenForSyncRequests(project, gradleSystemListener)

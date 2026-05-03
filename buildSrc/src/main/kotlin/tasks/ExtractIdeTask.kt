@@ -75,9 +75,8 @@ abstract class ExtractIdeTask @Inject constructor(
         val appName = dmgAppName.get()
         val volume = appName.replace(" ", "")
         val volumeDir = "/Volumes/$volume"
-        val srcDir = "/Volumes/$volume/$appName"
-        require(!File(srcDir).exists()) {
-            "The directory $srcDir already exists. Please unmount it via `hdiutil detach $volumeDir`."
+        require(!File(volumeDir).exists()) {
+            "The directory $volumeDir already exists. Please unmount it via `hdiutil detach $volumeDir`."
         }
 
         try {
@@ -85,9 +84,16 @@ abstract class ExtractIdeTask @Inject constructor(
                 commandLine("hdiutil", "attach", distributionFile.absolutePath, "-mountpoint", volumeDir)
             }
 
+            // The .app bundle name may differ across releases (e.g. "Android Studio.app"
+            // for stable, "Android Studio Preview.app" for canary). Find the actual .app bundle.
+            val appBundle = File(volumeDir).listFiles()
+                ?.firstOrNull { it.name.endsWith(".app") && it.isDirectory }
+                ?: error("No .app bundle found in $volumeDir")
+            val contentsDir = "${appBundle.absolutePath}/Contents"
+
             outputDir.get().asFile.mkdirs()
             execOps.exec {
-                commandLine("cp", "-r", "$srcDir/Contents", outputDir.get().asFile.absolutePath)
+                commandLine("cp", "-r", contentsDir, outputDir.get().asFile.absolutePath)
             }
         } finally {
             execOps.exec {
