@@ -1,6 +1,6 @@
 [versions]
 groovy = "4.0.29"
-protobuf = "3.21.12"
+protobuf = "4.34.1"
 spock = "2.4-groovy-4.0"
 
 # Panda 2 (2025.3.2.6)
