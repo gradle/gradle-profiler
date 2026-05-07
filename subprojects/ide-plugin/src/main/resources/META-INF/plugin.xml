@@ -8,7 +8,7 @@
 
     <!-- Plugin dependencies -->
     <!-- Any dependency here should also be added to build.gradle.kts intellij extension -->
-    <depends>org.jetbrains.plugins.gradle</depends>
+    <depends>com.intellij.gradle</depends>
     <depends>com.intellij.modules.java</depends>
     <depends optional="true" config-file="android-studio-extensions.xml">org.jetbrains.android</depends>
 

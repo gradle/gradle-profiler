@@ -17,7 +17,7 @@ import java.util.List;
 
 public class IdeProcess implements Closeable {
 
-    private static final Duration IDE_START_TIMEOUT = Duration.ofSeconds(15);
+    private static final Duration IDE_START_TIMEOUT = Duration.ofSeconds(60);
     private static final Duration PLUGIN_CONNECT_TIMEOUT = Duration.ofMinutes(1);
     private static final Duration AGENT_CONNECT_TIMEOUT = Duration.ofMinutes(1);
 
