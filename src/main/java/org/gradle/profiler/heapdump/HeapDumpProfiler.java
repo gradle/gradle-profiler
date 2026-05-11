@@ -32,4 +32,9 @@ public class HeapDumpProfiler extends Profiler {
             consumer.accept(resultFile.getAbsolutePath());
         }
     }
+
+    @Override
+    public String toString() {
+        return "heap-dump";
+    }
 }
