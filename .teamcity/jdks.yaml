@@ -42,8 +42,8 @@ jdks:
     os: "windows"
     arch: "amd64"
     vendor: "temurin"
-    version: "jdk-17.0.18+8"
-    sha256: "c24e6215fa75f861d2a900ceec67c620cd2eb6dfb81541087d5981293b16f0e5"
+    version: "jdk-17.0.19+10"
+    sha256: "b5b235c48adf6a081874b812c630b9f4b5f637b7a5ed18b9174d08a41ec4c235"
   - params:
       - "env.JDK21"
     os: "windows"
