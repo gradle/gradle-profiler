@@ -48,12 +48,22 @@ import static org.gradle.profiler.Phase.WARM_UP;
  */
 public class CrossVersionGradleScenarioInvoker {
 
-    private final DaemonControl daemonControl;
     private final PidInstrumentation pidInstrumentation;
 
-    public CrossVersionGradleScenarioInvoker(DaemonControl daemonControl, PidInstrumentation pidInstrumentation) {
-        this.daemonControl = daemonControl;
+    public CrossVersionGradleScenarioInvoker(PidInstrumentation pidInstrumentation) {
         this.pidInstrumentation = pidInstrumentation;
+    }
+
+    /**
+     * @deprecated The DaemonControl parameter is ignored. Each side constructs its own
+     * DaemonControl from its own gradle-user-home; sharing one across sides causes
+     * --stop to target the wrong user-home and leaves the other side's daemon alive,
+     * which breaks any scenario that mutates state between iterations (e.g. clearing
+     * the artifact transform cache).
+     */
+    @Deprecated
+    public CrossVersionGradleScenarioInvoker(DaemonControl ignored, PidInstrumentation pidInstrumentation) {
+        this(pidInstrumentation);
     }
 
     public SampleProvider<GradleBuildInvocationResult> samplesFor(InvocationSettings settings, GradleScenarioDefinition scenario) {
@@ -130,6 +140,7 @@ public class CrossVersionGradleScenarioInvoker {
         final InvocationSettings settings;
         final Consumer<GradleBuildInvocationResult> consumer;
         final GradleBuildConfiguration buildConfiguration;
+        final DaemonControl daemonControl;
 
         ScenarioSettings scenarioSettings;
         BuildOperationInstrumentation buildOperationInstrumentation;
@@ -152,6 +163,9 @@ public class CrossVersionGradleScenarioInvoker {
             this.settings = settings;
             this.consumer = consumer;
             this.buildConfiguration = scenario.getBuildConfiguration();
+            // Each side must target its own gradle-user-home for daemon lifecycle commands;
+            // sharing a DaemonControl across sides causes --stop to hit the wrong user-home.
+            this.daemonControl = new DaemonControl(settings.getGradleUserHome());
         }
 
         void setUp() throws IOException {
