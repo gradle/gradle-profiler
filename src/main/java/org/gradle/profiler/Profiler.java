@@ -81,4 +81,9 @@ public abstract class Profiler {
     public boolean isCreatesStacksFiles() {
         return false;
     }
+
+    /**
+     * Human-readable profiler name as specified from the command line.
+     */
+    public abstract String toString();
 }
