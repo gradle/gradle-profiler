@@ -11,7 +11,7 @@ jobs:
         runs-on: ubuntu-latest
         steps:
             - name: 'Dependency Review'
-              uses: actions/dependency-review-action@v4.9.0
+              uses: actions/dependency-review-action@v5.0.0
               with:
                   retry-on-snapshot-warnings: true
                   retry-on-snapshot-warnings-timeout: 600
