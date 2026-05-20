@@ -290,8 +290,8 @@ Gradle Profiler can benchmark Gradle sync performed by IntelliJ-based IDEs. This
 
 ### Supported IDEs
 
-- **IntelliJ IDEA** 2025.3 or newer
-- **Android Studio** Panda (2025.3) or newer
+- **IntelliJ IDEA** 2026.1 or newer
+- **Android Studio** Quail (2026.1) or newer
 
 Both IDEs are based on the IntelliJ platform. The profiler installs a lightweight plugin into the IDE that controls the sync lifecycle and communicates results back to the profiler.
 
