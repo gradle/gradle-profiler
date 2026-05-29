@@ -22,6 +22,7 @@ import org.gradle.profiler.studio.domain.TabSection
 import org.gradle.profiler.studio.domain.TabState
 import org.gradle.profiler.studio.domain.TabStatus
 import org.gradle.profiler.studio.runner.ConsoleBuffer
+import org.gradle.profiler.studio.runner.GradleDaemonControl
 import org.gradle.profiler.studio.runner.HoconWriter
 import org.gradle.profiler.studio.runner.ProfilerProcess
 import java.io.File
@@ -159,6 +160,14 @@ class AppState(
         processes[tabId]?.cancel()
         mutateTab(projectId, tabId) {
             if (it.status == TabStatus.Running) it.copy(status = TabStatus.Cancelled) else it
+        }
+        val project = projects.value.firstOrNull { it.id == projectId } ?: return
+        val tab = _tabsByProject.value[projectId]?.firstOrNull { it.id == tabId } ?: return
+        val console = consoleFor(tabId)
+        scope.launch {
+            GradleDaemonControl.stopDaemons(File(project.path), tab.config.gradleUserHome) {
+                console.append(it)
+            }
         }
     }
 
