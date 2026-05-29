@@ -30,6 +30,8 @@ dependencies {
 
     implementation("com.typesafe:config:1.4.6")
     implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.7.3")
+
+    implementation(project(":mvu"))
 }
 
 val profilerInstallDir = layout.buildDirectory.dir("appResources/gradle-profiler")

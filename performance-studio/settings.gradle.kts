@@ -18,3 +18,5 @@ dependencyResolutionManagement {
 rootProject.name = "performance-studio"
 
 includeBuild("..")
+
+include("mvu")
