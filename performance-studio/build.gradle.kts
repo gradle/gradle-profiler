@@ -27,6 +27,8 @@ dependencies {
     implementation("org.jetbrains.exposed:exposed-java-time:0.56.0")
     implementation("org.xerial:sqlite-jdbc:3.46.1.3")
 
+    implementation("com.typesafe:config:1.4.6")
+
     compileOnly("org.gradle.profiler:gradle-profiler")
 }
 

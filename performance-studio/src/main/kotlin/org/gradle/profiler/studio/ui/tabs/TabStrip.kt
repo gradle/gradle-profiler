@@ -72,7 +72,7 @@ private fun TabChip(
         horizontalArrangement = Arrangement.spacedBy(8.dp),
     ) {
         StatusGlyph(tab.status)
-        Text(tab.name, style = JewelTheme.defaultTextStyle)
+        Text(tab.displayName, style = JewelTheme.defaultTextStyle)
         Text(
             "×",
             style = JewelTheme.defaultTextStyle.copy(fontWeight = FontWeight.Bold, color = Color(0xFF666666)),

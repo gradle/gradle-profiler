@@ -13,7 +13,7 @@ object StudioDatabase {
             driver = "org.sqlite.JDBC",
         )
         transaction(db) {
-            SchemaUtils.create(Projects)
+            SchemaUtils.create(Projects, Runs)
         }
         return db
     }

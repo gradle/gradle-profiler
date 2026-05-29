@@ -17,6 +17,7 @@ import androidx.compose.ui.window.Window
 import androidx.compose.ui.window.application
 import org.gradle.profiler.studio.app.AppState
 import org.gradle.profiler.studio.data.ProjectRepository
+import org.gradle.profiler.studio.data.RunRepository
 import org.gradle.profiler.studio.data.db.StudioDatabase
 import org.gradle.profiler.studio.ui.FolderPicker
 import org.gradle.profiler.studio.ui.sidebar.ProjectList
@@ -39,8 +40,7 @@ fun main() = application {
 
 private fun initAppState(): AppState {
     val db = StudioDatabase.connect()
-    val repo = ProjectRepository(db)
-    return AppState(repo)
+    return AppState(ProjectRepository(db), RunRepository(db))
 }
 
 @Composable

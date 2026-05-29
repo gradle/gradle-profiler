@@ -33,16 +33,21 @@ fun TabHost(appState: AppState, project: Project, modifier: Modifier = Modifier)
             onClose = { appState.closeTab(project.id, it) },
             onNew = { appState.newTab(project.id) },
         )
-        val current = tabs.firstOrNull { it.id == selectedId }
-        if (current != null) {
-            Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState())) {
-                ConfigSection(
-                    config = current.config,
-                    readOnly = current.status != TabStatus.Editing,
-                    onChange = { newConfig ->
-                        appState.updateConfig(project.id, current.id) { newConfig }
-                    },
-                    onRun = { /* milestone 4 */ },
+        val current = tabs.firstOrNull { it.id == selectedId } ?: return
+        Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState())) {
+            ConfigSection(
+                config = current.config,
+                readOnly = current.status != TabStatus.Editing,
+                onChange = { newConfig ->
+                    appState.updateConfig(project.id, current.id) { newConfig }
+                },
+                onRun = { appState.startRun(project, current.id) },
+            )
+            if (current.status == TabStatus.Running) {
+                ConsoleSection(
+                    buffer = appState.consoleFor(current.id),
+                    status = current.status,
+                    onCancel = { appState.cancelRun(project.id, current.id) },
                 )
             }
         }

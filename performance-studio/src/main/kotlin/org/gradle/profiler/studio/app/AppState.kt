@@ -1,18 +1,33 @@
 package org.gradle.profiler.studio.app
 
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.launch
+import org.gradle.profiler.studio.data.AppPaths
 import org.gradle.profiler.studio.data.Project
 import org.gradle.profiler.studio.data.ProjectRepository
 import org.gradle.profiler.studio.data.ProjectStatus
+import org.gradle.profiler.studio.data.RunRepository
+import org.gradle.profiler.studio.data.RunStatus
 import org.gradle.profiler.studio.domain.ConfigDraft
 import org.gradle.profiler.studio.domain.TabState
 import org.gradle.profiler.studio.domain.TabStatus
+import org.gradle.profiler.studio.runner.ConsoleBuffer
+import org.gradle.profiler.studio.runner.HoconWriter
+import org.gradle.profiler.studio.runner.ProfilerProcess
 import java.io.File
 
-class AppState(private val projectRepo: ProjectRepository) {
+class AppState(
+    private val projectRepo: ProjectRepository,
+    private val runRepo: RunRepository,
+) {
+    private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
+
     val projects: StateFlow<List<Project>> = projectRepo.projects
 
     private val _selectedProjectId = MutableStateFlow<Int?>(null)
@@ -24,11 +39,10 @@ class AppState(private val projectRepo: ProjectRepository) {
     private val _selectedTabByProject = MutableStateFlow<Map<Int, Long>>(emptyMap())
     val selectedTabByProject: StateFlow<Map<Int, Long>> = _selectedTabByProject.asStateFlow()
 
-    private val tabCounters = mutableMapOf<Int, Int>()
+    private val consoles = mutableMapOf<Long, ConsoleBuffer>()
+    private val processes = mutableMapOf<Long, ProfilerProcess>()
 
-    fun selectProject(id: Int) {
-        _selectedProjectId.value = id
-    }
+    fun selectProject(id: Int) { _selectedProjectId.value = id }
 
     fun addProject(folder: File) {
         val project = projectRepo.add(folder.name, folder.absolutePath)
@@ -38,17 +52,12 @@ class AppState(private val projectRepo: ProjectRepository) {
     fun statusFor(@Suppress("UNUSED_PARAMETER") project: Project): ProjectStatus = ProjectStatus.Idle
 
     fun newTab(projectId: Int): TabState {
-        val n = (tabCounters[projectId] ?: 0) + 1
-        tabCounters[projectId] = n
         val tab = TabState(
             id = System.nanoTime(),
-            name = "profiler-out-$n",
             status = TabStatus.Editing,
             config = ConfigDraft(),
         )
-        _tabsByProject.update { map ->
-            map + (projectId to ((map[projectId] ?: emptyList()) + tab))
-        }
+        _tabsByProject.update { it + (projectId to ((it[projectId] ?: emptyList()) + tab)) }
         _selectedTabByProject.update { it + (projectId to tab.id) }
         return tab
     }
@@ -69,6 +78,7 @@ class AppState(private val projectRepo: ProjectRepository) {
                 if (remaining.isEmpty()) sel - projectId else sel + (projectId to remaining.last().id)
             }
         }
+        consoles.remove(tabId)
     }
 
     fun updateConfig(projectId: Int, tabId: Long, transform: (ConfigDraft) -> ConfigDraft) {
@@ -76,6 +86,70 @@ class AppState(private val projectRepo: ProjectRepository) {
             val list = (map[projectId] ?: return@update map).map { tab ->
                 if (tab.id == tabId) tab.copy(config = transform(tab.config)) else tab
             }
+            map + (projectId to list)
+        }
+    }
+
+    fun consoleFor(tabId: Long): ConsoleBuffer = consoles.getOrPut(tabId) { ConsoleBuffer() }
+
+    fun startRun(project: Project, tabId: Long) {
+        val tab = _tabsByProject.value[project.id]?.firstOrNull { it.id == tabId } ?: return
+        if (tab.status == TabStatus.Running) return
+
+        val outputName = runRepo.nextOutputName(project.id)
+        val outputDir = AppPaths.runsDir.resolve(project.id.toString()).resolve(outputName).apply { mkdirs() }
+        val scenarioFile = outputDir.resolve("scenario.conf")
+        HoconWriter.write(tab.config, scenarioFile)
+
+        val run = runRepo.create(project.id, outputName, outputDir.absolutePath)
+        val console = consoleFor(tabId)
+        console.clear()
+
+        mutateTab(project.id, tabId) {
+            it.copy(
+                status = TabStatus.Running,
+                runId = run.id,
+                outputName = outputName,
+                outputDir = outputDir,
+            )
+        }
+
+        scope.launch {
+            val process = try {
+                ProfilerProcess.spawn(File(project.path), outputDir, scenarioFile, tab.config)
+            } catch (e: Exception) {
+                console.append("Failed to start profiler: ${e.message}")
+                runRepo.finish(run.id, RunStatus.Failure, null)
+                mutateTab(project.id, tabId) { it.copy(status = TabStatus.Failure) }
+                return@launch
+            }
+            processes[tabId] = process
+
+            launch { process.streamOutput { console.append(it) } }
+            val exit = process.awaitExit()
+            processes.remove(tabId)
+
+            val current = _tabsByProject.value[project.id]?.firstOrNull { it.id == tabId }?.status
+            val (runStatus, tabStatus) = when {
+                current == TabStatus.Cancelled -> RunStatus.Cancelled to TabStatus.Cancelled
+                exit == 0 -> RunStatus.Success to TabStatus.Success
+                else -> RunStatus.Failure to TabStatus.Failure
+            }
+            runRepo.finish(run.id, runStatus, exit)
+            mutateTab(project.id, tabId) { it.copy(status = tabStatus) }
+        }
+    }
+
+    fun cancelRun(projectId: Int, tabId: Long) {
+        processes[tabId]?.cancel()
+        mutateTab(projectId, tabId) {
+            if (it.status == TabStatus.Running) it.copy(status = TabStatus.Cancelled) else it
+        }
+    }
+
+    private fun mutateTab(projectId: Int, tabId: Long, transform: (TabState) -> TabState) {
+        _tabsByProject.update { map ->
+            val list = (map[projectId] ?: return@update map).map { if (it.id == tabId) transform(it) else it }
             map + (projectId to list)
         }
     }
