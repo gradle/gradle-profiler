@@ -5,7 +5,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -48,10 +48,10 @@ fun ConsoleSection(
         if (lines.isNotEmpty()) listState.scrollToItem(lines.size - 1)
     }
 
-    Column(modifier.fillMaxWidth().padding(horizontal = 16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+    Column(modifier.fillMaxSize().padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
         Row(verticalAlignment = Alignment.CenterVertically) {
             Text(
-                "Console",
+                if (lines.isEmpty()) "Console (empty)" else "Console (${lines.size} lines)",
                 style = JewelTheme.defaultTextStyle.copy(fontWeight = FontWeight.SemiBold),
                 modifier = Modifier.weight(1f),
             )
@@ -62,8 +62,7 @@ fun ConsoleSection(
         LazyColumn(
             state = listState,
             modifier = Modifier
-                .fillMaxWidth()
-                .height(360.dp)
+                .fillMaxSize()
                 .background(Color(0xFF1E1E1E))
                 .padding(8.dp),
         ) {

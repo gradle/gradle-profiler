@@ -39,6 +39,7 @@ fun ProjectList(
 ) {
     val projects by appState.projects.collectAsState()
     val selectedId by appState.selectedProjectId.collectAsState()
+    val statuses by appState.projectStatuses.collectAsState()
 
     Column(
         modifier
@@ -65,7 +66,7 @@ fun ProjectList(
             items(projects, key = { it.id }) { project ->
                 ProjectRow(
                     project = project,
-                    status = appState.statusFor(project),
+                    status = statuses[project.id] ?: ProjectStatus.Idle,
                     selected = project.id == selectedId,
                     onClick = { appState.selectProject(project.id) },
                 )

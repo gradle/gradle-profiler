@@ -4,8 +4,11 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import org.gradle.profiler.studio.data.AppPaths
@@ -15,6 +18,7 @@ import org.gradle.profiler.studio.data.ProjectStatus
 import org.gradle.profiler.studio.data.RunRepository
 import org.gradle.profiler.studio.data.RunStatus
 import org.gradle.profiler.studio.domain.ConfigDraft
+import org.gradle.profiler.studio.domain.TabSection
 import org.gradle.profiler.studio.domain.TabState
 import org.gradle.profiler.studio.domain.TabStatus
 import org.gradle.profiler.studio.runner.ConsoleBuffer
@@ -39,6 +43,19 @@ class AppState(
     private val _selectedTabByProject = MutableStateFlow<Map<Int, Long>>(emptyMap())
     val selectedTabByProject: StateFlow<Map<Int, Long>> = _selectedTabByProject.asStateFlow()
 
+    val projectStatuses: StateFlow<Map<Int, ProjectStatus>> =
+        combine(projects, _tabsByProject) { ps, tabs ->
+            ps.associate { p ->
+                val pTabs = tabs[p.id].orEmpty()
+                p.id to when {
+                    pTabs.any { it.status == TabStatus.Running } -> ProjectStatus.Running
+                    pTabs.any { it.status == TabStatus.Failure } -> ProjectStatus.Failure
+                    pTabs.any { it.status == TabStatus.Success } -> ProjectStatus.Success
+                    else -> ProjectStatus.Idle
+                }
+            }
+        }.stateIn(scope, SharingStarted.Eagerly, emptyMap())
+
     private val consoles = mutableMapOf<Long, ConsoleBuffer>()
     private val processes = mutableMapOf<Long, ProfilerProcess>()
 
@@ -48,8 +65,6 @@ class AppState(
         val project = projectRepo.add(folder.name, folder.absolutePath)
         _selectedProjectId.value = project.id
     }
-
-    fun statusFor(@Suppress("UNUSED_PARAMETER") project: Project): ProjectStatus = ProjectStatus.Idle
 
     fun newTab(projectId: Int): TabState {
         val tab = TabState(
@@ -81,13 +96,12 @@ class AppState(
         consoles.remove(tabId)
     }
 
+    fun selectSection(projectId: Int, tabId: Long, section: TabSection) {
+        mutateTab(projectId, tabId) { it.copy(section = section) }
+    }
+
     fun updateConfig(projectId: Int, tabId: Long, transform: (ConfigDraft) -> ConfigDraft) {
-        _tabsByProject.update { map ->
-            val list = (map[projectId] ?: return@update map).map { tab ->
-                if (tab.id == tabId) tab.copy(config = transform(tab.config)) else tab
-            }
-            map + (projectId to list)
-        }
+        mutateTab(projectId, tabId) { it.copy(config = transform(it.config)) }
     }
 
     fun consoleFor(tabId: Long): ConsoleBuffer = consoles.getOrPut(tabId) { ConsoleBuffer() }
@@ -108,6 +122,7 @@ class AppState(
         mutateTab(project.id, tabId) {
             it.copy(
                 status = TabStatus.Running,
+                section = TabSection.Console,
                 runId = run.id,
                 outputName = outputName,
                 outputDir = outputDir,

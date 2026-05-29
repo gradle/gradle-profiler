@@ -1,5 +1,6 @@
 package org.gradle.profiler.studio.ui.tabs
 
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.rememberScrollState
@@ -11,6 +12,8 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import org.gradle.profiler.studio.app.AppState
 import org.gradle.profiler.studio.data.Project
+import org.gradle.profiler.studio.domain.TabSection
+import org.gradle.profiler.studio.domain.TabState
 import org.gradle.profiler.studio.domain.TabStatus
 
 @Composable
@@ -34,22 +37,37 @@ fun TabHost(appState: AppState, project: Project, modifier: Modifier = Modifier)
             onNew = { appState.newTab(project.id) },
         )
         val current = tabs.firstOrNull { it.id == selectedId } ?: return
-        Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState())) {
-            ConfigSection(
-                config = current.config,
-                readOnly = current.status != TabStatus.Editing,
-                onChange = { newConfig ->
-                    appState.updateConfig(project.id, current.id) { newConfig }
-                },
-                onRun = { appState.startRun(project, current.id) },
-            )
-            if (current.status == TabStatus.Running) {
-                ConsoleSection(
-                    buffer = appState.consoleFor(current.id),
-                    status = current.status,
-                    onCancel = { appState.cancelRun(project.id, current.id) },
-                )
-            }
+        SubTabBar(
+            selected = current.section,
+            onSelect = { appState.selectSection(project.id, current.id, it) },
+        )
+        Box(Modifier.fillMaxSize()) {
+            SectionContent(appState, project, current)
         }
+    }
+}
+
+@Composable
+private fun SectionContent(appState: AppState, project: Project, tab: TabState) {
+    when (tab.section) {
+        TabSection.Scenario -> Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState())) {
+            ConfigSection(
+                config = tab.config,
+                readOnly = tab.status == TabStatus.Running,
+                onChange = { newConfig -> appState.updateConfig(project.id, tab.id) { newConfig } },
+                onRun = { appState.startRun(project, tab.id) },
+            )
+        }
+        TabSection.Console -> ConsoleSection(
+            buffer = appState.consoleFor(tab.id),
+            status = tab.status,
+            onCancel = { appState.cancelRun(project.id, tab.id) },
+            modifier = Modifier.fillMaxSize(),
+        )
+        TabSection.Results -> ResultsSection(
+            outputDir = tab.outputDir,
+            status = tab.status,
+            modifier = Modifier.fillMaxSize(),
+        )
     }
 }
