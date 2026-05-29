@@ -5,6 +5,18 @@ import java.awt.Frame
 import java.io.File
 import javax.swing.JFileChooser
 
+object FilePicker {
+    fun pick(parent: Frame? = null, startDir: File? = null, title: String = "Choose file"): File? {
+        val dialog = FileDialog(parent, title, FileDialog.LOAD).apply {
+            startDir?.let { directory = it.absolutePath }
+            isVisible = true
+        }
+        val name = dialog.file ?: return null
+        val dir = dialog.directory ?: return null
+        return File(dir, name)
+    }
+}
+
 object FolderPicker {
     fun pick(parent: Frame? = null, title: String = "Choose project folder"): File? {
         return if (System.getProperty("os.name").lowercase().contains("mac")) {

@@ -15,6 +15,7 @@ import org.gradle.profiler.studio.data.Project
 import org.gradle.profiler.studio.domain.TabSection
 import org.gradle.profiler.studio.domain.TabState
 import org.gradle.profiler.studio.domain.TabStatus
+import java.io.File
 
 @Composable
 fun TabHost(appState: AppState, project: Project, modifier: Modifier = Modifier) {
@@ -57,6 +58,7 @@ private fun SectionContent(appState: AppState, project: Project, tab: TabState) 
             ConfigSection(
                 config = tab.config,
                 readOnly = tab.status == TabStatus.Running,
+                projectDir = File(project.path),
                 onChange = { newConfig -> appState.updateConfig(project.id, tab.id) { newConfig } },
                 onRun = { appState.startRun(project, tab.id) },
             )

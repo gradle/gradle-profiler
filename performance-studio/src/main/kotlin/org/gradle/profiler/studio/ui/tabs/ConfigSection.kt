@@ -21,17 +21,24 @@ import androidx.compose.ui.unit.dp
 import org.gradle.profiler.studio.domain.ConfigDraft
 import org.gradle.profiler.studio.domain.Daemon
 import org.gradle.profiler.studio.domain.Mode
+import org.gradle.profiler.studio.domain.MutatorEntry
 import org.gradle.profiler.studio.domain.RunUsing
+import org.gradle.profiler.studio.introspection.ScenarioOptionRegistry
+import org.gradle.profiler.studio.ui.FilePicker
+import org.gradle.profiler.studio.ui.components.StringDropdown
 import org.jetbrains.jewel.foundation.theme.JewelTheme
 import org.jetbrains.jewel.ui.component.DefaultButton
+import org.jetbrains.jewel.ui.component.OutlinedButton
 import org.jetbrains.jewel.ui.component.RadioButtonRow
 import org.jetbrains.jewel.ui.component.Text
 import org.jetbrains.jewel.ui.component.TextField
+import java.io.File
 
 @Composable
 fun ConfigSection(
     config: ConfigDraft,
     readOnly: Boolean,
+    projectDir: File,
     onChange: (ConfigDraft) -> Unit,
     onRun: () -> Unit,
     modifier: Modifier = Modifier,
@@ -89,10 +96,10 @@ fun ConfigSection(
 
         if (config.mode == Mode.Profile) {
             Field("Profiler") {
-                FormTextField(
-                    value = config.profiler,
-                    onValueChange = { onChange(config.copy(profiler = it)) },
-                    placeholder = "jfr | async-profiler | none",
+                StringDropdown(
+                    options = ScenarioOptionRegistry.profilers,
+                    selected = config.profiler,
+                    onSelected = { onChange(config.copy(profiler = it)) },
                     enabled = !readOnly,
                 )
             }
@@ -118,14 +125,20 @@ fun ConfigSection(
 
         Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
             Field("Daemon", Modifier.weight(1f)) {
-                EnumPicker(Daemon.entries, config.daemon, { it.label }, enabled = !readOnly) {
-                    onChange(config.copy(daemon = it))
-                }
+                StringDropdown(
+                    options = Daemon.entries.map { it.label },
+                    selected = config.daemon.label,
+                    onSelected = { lbl -> onChange(config.copy(daemon = Daemon.entries.first { it.label == lbl })) },
+                    enabled = !readOnly,
+                )
             }
             Field("Run using", Modifier.weight(1f)) {
-                EnumPicker(RunUsing.entries, config.runUsing, { it.label }, enabled = !readOnly) {
-                    onChange(config.copy(runUsing = it))
-                }
+                StringDropdown(
+                    options = RunUsing.entries.map { it.label },
+                    selected = config.runUsing.label,
+                    onSelected = { lbl -> onChange(config.copy(runUsing = RunUsing.entries.first { it.label == lbl })) },
+                    enabled = !readOnly,
+                )
             }
         }
 
@@ -139,11 +152,73 @@ fun ConfigSection(
         }
 
         Field("Build mutators (${config.mutators.size})") {
-            Text(
-                if (config.mutators.isEmpty()) "None — coming in milestone 5" else config.mutators.joinToString(),
-                style = JewelTheme.defaultTextStyle,
+            MutatorList(
+                mutators = config.mutators,
+                projectDir = projectDir,
+                enabled = !readOnly,
+                onChange = { onChange(config.copy(mutators = it)) },
             )
         }
+    }
+}
+
+@Composable
+private fun MutatorList(
+    mutators: List<MutatorEntry>,
+    projectDir: File,
+    enabled: Boolean,
+    onChange: (List<MutatorEntry>) -> Unit,
+) {
+    Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+        mutators.forEachIndexed { index, entry ->
+            Row(
+                Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                StringDropdown(
+                    options = ScenarioOptionRegistry.mutatorTypes,
+                    selected = entry.type,
+                    onSelected = { type ->
+                        onChange(mutators.toMutableList().apply { set(index, entry.copy(type = type)) })
+                    },
+                    enabled = enabled,
+                    modifier = Modifier.width(280.dp),
+                )
+                FormTextField(
+                    value = entry.relativePath,
+                    onValueChange = { path ->
+                        onChange(mutators.toMutableList().apply { set(index, entry.copy(relativePath = path)) })
+                    },
+                    placeholder = "src/main/java/Foo.java",
+                    enabled = enabled,
+                )
+                OutlinedButton(
+                    onClick = {
+                        FilePicker.pick(startDir = projectDir, title = "Choose target file")?.let { picked ->
+                            val rel = runCatching {
+                                projectDir.toPath().relativize(picked.toPath()).toString()
+                            }.getOrDefault(picked.absolutePath)
+                            onChange(mutators.toMutableList().apply { set(index, entry.copy(relativePath = rel)) })
+                        }
+                    },
+                    enabled = enabled,
+                ) { Text("Browse") }
+                OutlinedButton(
+                    onClick = {
+                        onChange(mutators.toMutableList().apply { removeAt(index) })
+                    },
+                    enabled = enabled,
+                ) { Text("✗") }
+            }
+        }
+        OutlinedButton(
+            onClick = {
+                val defaultType = ScenarioOptionRegistry.mutatorTypes.firstOrNull().orEmpty()
+                onChange(mutators + MutatorEntry(defaultType, ""))
+            },
+            enabled = enabled,
+        ) { Text("+ Add mutator") }
     }
 }
 
