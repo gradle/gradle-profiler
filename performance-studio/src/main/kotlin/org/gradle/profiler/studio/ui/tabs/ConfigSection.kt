@@ -22,8 +22,8 @@ import org.gradle.profiler.studio.domain.ConfigDraft
 import org.gradle.profiler.studio.domain.Daemon
 import org.gradle.profiler.studio.domain.Mode
 import org.gradle.profiler.studio.domain.MutatorEntry
+import org.gradle.profiler.studio.domain.ProfilerOptions
 import org.gradle.profiler.studio.domain.RunUsing
-import org.gradle.profiler.studio.introspection.ScenarioOptionRegistry
 import org.gradle.profiler.studio.ui.FilePicker
 import org.gradle.profiler.studio.ui.components.StringDropdown
 import org.jetbrains.jewel.foundation.theme.JewelTheme
@@ -97,7 +97,7 @@ fun ConfigSection(
         if (config.mode == Mode.Profile) {
             Field("Profiler") {
                 StringDropdown(
-                    options = ScenarioOptionRegistry.profilers,
+                    options = ProfilerOptions.profilers,
                     selected = config.profiler,
                     onSelected = { onChange(config.copy(profiler = it)) },
                     enabled = !readOnly,
@@ -177,7 +177,7 @@ private fun MutatorList(
                 verticalAlignment = Alignment.CenterVertically,
             ) {
                 StringDropdown(
-                    options = ScenarioOptionRegistry.mutatorTypes,
+                    options = ProfilerOptions.mutatorTypes,
                     selected = entry.type,
                     onSelected = { type ->
                         onChange(mutators.toMutableList().apply { set(index, entry.copy(type = type)) })
@@ -192,6 +192,7 @@ private fun MutatorList(
                     },
                     placeholder = "src/main/java/Foo.java",
                     enabled = enabled,
+                    modifier = Modifier.weight(1f),
                 )
                 OutlinedButton(
                     onClick = {
@@ -214,7 +215,7 @@ private fun MutatorList(
         }
         OutlinedButton(
             onClick = {
-                val defaultType = ScenarioOptionRegistry.mutatorTypes.firstOrNull().orEmpty()
+                val defaultType = ProfilerOptions.mutatorTypes.firstOrNull().orEmpty()
                 onChange(mutators + MutatorEntry(defaultType, ""))
             },
             enabled = enabled,
@@ -236,6 +237,7 @@ private fun FormTextField(
     onValueChange: (String) -> Unit,
     placeholder: String = "",
     enabled: Boolean = true,
+    modifier: Modifier = Modifier.fillMaxWidth(),
 ) {
     var state by remember { mutableStateOf(TextFieldValue(value, TextRange(value.length))) }
     LaunchedEffect(value) {
@@ -249,7 +251,7 @@ private fun FormTextField(
         },
         placeholder = { if (placeholder.isNotEmpty()) Text(placeholder, style = JewelTheme.defaultTextStyle) },
         enabled = enabled,
-        modifier = Modifier.fillMaxWidth(),
+        modifier = modifier,
     )
 }
 

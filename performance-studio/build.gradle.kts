@@ -28,8 +28,6 @@ dependencies {
     implementation("org.xerial:sqlite-jdbc:3.46.1.3")
 
     implementation("com.typesafe:config:1.4.6")
-
-    compileOnly("org.gradle.profiler:gradle-profiler")
 }
 
 val profilerInstallDir = layout.buildDirectory.dir("appResources/gradle-profiler")
