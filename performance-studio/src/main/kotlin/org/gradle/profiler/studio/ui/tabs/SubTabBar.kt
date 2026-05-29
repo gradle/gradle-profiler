@@ -3,6 +3,7 @@ package org.gradle.profiler.studio.ui.tabs
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -19,47 +20,45 @@ import org.jetbrains.jewel.ui.component.Text
 
 @Composable
 fun SubTabBar(
+    sections: List<TabSection>,
     selected: TabSection,
     onSelect: (TabSection) -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    Box(
+    Row(
         modifier
             .fillMaxWidth()
             .background(Color(0xFFFAFAFA))
             .padding(horizontal = 16.dp),
+        verticalAlignment = Alignment.CenterVertically,
     ) {
-        Row(verticalAlignment = Alignment.Bottom) {
-            TabSection.entries.forEach { section ->
-                SubTab(section, selected == section) { onSelect(section) }
-            }
+        sections.forEach { section ->
+            SubTab(section, selected == section) { onSelect(section) }
         }
     }
 }
 
 @Composable
 private fun SubTab(section: TabSection, selected: Boolean, onClick: () -> Unit) {
-    val labelColor = if (selected) Color(0xFF000000) else Color(0xFF666666)
-    val underlineColor = if (selected) Color(0xFF2196F3) else Color.Transparent
-    Box(
+    Column(
         Modifier
-            .padding(end = 20.dp)
+            .padding(end = 24.dp)
             .clickable(onClick = onClick),
+        horizontalAlignment = Alignment.CenterHorizontally,
     ) {
         Text(
             section.label,
             style = JewelTheme.defaultTextStyle.copy(
-                color = labelColor,
+                color = if (selected) Color(0xFF000000) else Color(0xFF666666),
                 fontWeight = if (selected) FontWeight.SemiBold else FontWeight.Normal,
             ),
             modifier = Modifier.padding(vertical = 10.dp),
         )
         Box(
             Modifier
-                .align(Alignment.BottomCenter)
                 .fillMaxWidth()
                 .height(2.dp)
-                .background(underlineColor),
+                .background(if (selected) Color(0xFF2196F3) else Color.Transparent),
         )
     }
 }

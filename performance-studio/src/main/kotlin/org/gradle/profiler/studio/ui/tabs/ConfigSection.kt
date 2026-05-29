@@ -7,8 +7,14 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.TextRange
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.unit.dp
@@ -156,9 +162,16 @@ private fun FormTextField(
     placeholder: String = "",
     enabled: Boolean = true,
 ) {
+    var state by remember { mutableStateOf(TextFieldValue(value, TextRange(value.length))) }
+    LaunchedEffect(value) {
+        if (state.text != value) state = TextFieldValue(value, TextRange(value.length))
+    }
     TextField(
-        value = TextFieldValue(value),
-        onValueChange = { onValueChange(it.text) },
+        value = state,
+        onValueChange = {
+            state = it
+            if (it.text != value) onValueChange(it.text)
+        },
         placeholder = { if (placeholder.isNotEmpty()) Text(placeholder, style = JewelTheme.defaultTextStyle) },
         enabled = enabled,
         modifier = Modifier.fillMaxWidth(),

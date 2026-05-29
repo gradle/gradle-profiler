@@ -37,12 +37,15 @@ fun TabHost(appState: AppState, project: Project, modifier: Modifier = Modifier)
             onNew = { appState.newTab(project.id) },
         )
         val current = tabs.firstOrNull { it.id == selectedId } ?: return
+        val visibleSections = if (current.outputDir != null) TabSection.entries else listOf(TabSection.Scenario)
+        val effectiveSection = if (current.section in visibleSections) current.section else TabSection.Scenario
         SubTabBar(
-            selected = current.section,
+            sections = visibleSections,
+            selected = effectiveSection,
             onSelect = { appState.selectSection(project.id, current.id, it) },
         )
         Box(Modifier.fillMaxSize()) {
-            SectionContent(appState, project, current)
+            SectionContent(appState, project, current.copy(section = effectiveSection))
         }
     }
 }
