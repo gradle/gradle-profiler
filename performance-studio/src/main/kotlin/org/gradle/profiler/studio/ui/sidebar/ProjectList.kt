@@ -13,7 +13,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
@@ -27,9 +26,15 @@ import androidx.compose.ui.unit.dp
 import org.gradle.profiler.studio.app.AppState
 import org.gradle.profiler.studio.data.Project
 import org.gradle.profiler.studio.data.ProjectStatus
+import org.gradle.profiler.studio.data.Run
+import org.gradle.profiler.studio.data.RunStatus
 import org.jetbrains.jewel.foundation.theme.JewelTheme
 import org.jetbrains.jewel.ui.component.IconButton
 import org.jetbrains.jewel.ui.component.Text
+import java.time.ZoneId
+import java.time.format.DateTimeFormatter
+
+private val timeFmt = DateTimeFormatter.ofPattern("MMM d HH:mm").withZone(ZoneId.systemDefault())
 
 @Composable
 fun ProjectList(
@@ -38,8 +43,10 @@ fun ProjectList(
     modifier: Modifier = Modifier,
 ) {
     val projects by appState.projects.collectAsState()
-    val selectedId by appState.selectedProjectId.collectAsState()
+    val selectedProjectId by appState.selectedProjectId.collectAsState()
     val statuses by appState.projectStatuses.collectAsState()
+    val expanded by appState.expandedProjects.collectAsState()
+    val runsByProject by appState.runsByProject.collectAsState()
 
     Column(
         modifier
@@ -63,13 +70,29 @@ fun ProjectList(
         }
 
         LazyColumn(verticalArrangement = Arrangement.spacedBy(2.dp)) {
-            items(projects, key = { it.id }) { project ->
-                ProjectRow(
-                    project = project,
-                    status = statuses[project.id] ?: ProjectStatus.Idle,
-                    selected = project.id == selectedId,
-                    onClick = { appState.selectProject(project.id) },
-                )
+            projects.forEach { project ->
+                val runs = runsByProject[project.id].orEmpty()
+                val hasRuns = runs.isNotEmpty()
+                val isExpanded = hasRuns && project.id in expanded
+                item(key = "p-${project.id}") {
+                    ProjectRow(
+                        project = project,
+                        status = statuses[project.id] ?: ProjectStatus.Idle,
+                        selected = project.id == selectedProjectId,
+                        expanded = isExpanded,
+                        hasRuns = hasRuns,
+                        onClick = { appState.selectProject(project.id) },
+                        onToggleExpand = { appState.toggleProjectExpanded(project.id) },
+                    )
+                }
+                if (isExpanded) {
+                    items(runs.size, key = { "r-${runs[it].id}" }) { i ->
+                        RunRow(
+                            run = runs[i],
+                            onOpen = { appState.openRunInTab(project.id, runs[i].id) },
+                        )
+                    }
+                }
             }
         }
     }
@@ -80,7 +103,10 @@ private fun ProjectRow(
     project: Project,
     status: ProjectStatus,
     selected: Boolean,
+    expanded: Boolean,
+    hasRuns: Boolean,
     onClick: () -> Unit,
+    onToggleExpand: () -> Unit,
 ) {
     val rowBg = if (selected) Color(0xFFD7E4F2) else Color.Transparent
     Row(
@@ -89,12 +115,47 @@ private fun ProjectRow(
             .clip(androidx.compose.foundation.shape.RoundedCornerShape(4.dp))
             .background(rowBg)
             .clickable(onClick = onClick)
-            .padding(horizontal = 8.dp, vertical = 6.dp),
+            .padding(horizontal = 4.dp, vertical = 6.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
+        if (hasRuns) {
+            Text(
+                if (expanded) "▾" else "▸",
+                style = JewelTheme.defaultTextStyle.copy(color = Color(0xFF666666)),
+                modifier = Modifier
+                    .clip(androidx.compose.foundation.shape.RoundedCornerShape(2.dp))
+                    .clickable(onClick = onToggleExpand)
+                    .padding(horizontal = 4.dp),
+            )
+            Spacer(Modifier.width(4.dp))
+        } else {
+            Spacer(Modifier.width(20.dp))
+        }
         StatusDot(status)
         Spacer(Modifier.width(8.dp))
         Text(project.name, style = JewelTheme.defaultTextStyle)
+    }
+}
+
+@Composable
+private fun RunRow(run: Run, onOpen: () -> Unit) {
+    Row(
+        Modifier
+            .fillMaxWidth()
+            .clip(androidx.compose.foundation.shape.RoundedCornerShape(4.dp))
+            .clickable(onClick = onOpen)
+            .padding(start = 28.dp, top = 4.dp, bottom = 4.dp, end = 4.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        RunGlyph(run.status)
+        Spacer(Modifier.width(6.dp))
+        Column(Modifier.weight(1f)) {
+            Text(run.outputName, style = JewelTheme.defaultTextStyle)
+            Text(
+                timeFmt.format(run.startedAt),
+                style = JewelTheme.defaultTextStyle.copy(color = Color(0xFF999999)),
+            )
+        }
     }
 }
 
@@ -107,4 +168,15 @@ private fun StatusDot(status: ProjectStatus) {
         ProjectStatus.Failure -> Color(0xFFF44336)
     }
     Box(Modifier.size(8.dp).clip(CircleShape).background(color))
+}
+
+@Composable
+private fun RunGlyph(status: RunStatus) {
+    val (text, color) = when (status) {
+        RunStatus.Running -> "●" to Color(0xFF2196F3)
+        RunStatus.Success -> "✓" to Color(0xFF4CAF50)
+        RunStatus.Failure -> "✗" to Color(0xFFF44336)
+        RunStatus.Cancelled -> "◐" to Color(0xFF9E9E9E)
+    }
+    Text(text, style = JewelTheme.defaultTextStyle.copy(color = color))
 }

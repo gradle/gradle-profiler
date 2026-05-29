@@ -19,4 +19,8 @@ class ConsoleBuffer(private val maxLines: Int = 50_000) {
     fun clear() {
         _lines.value = emptyList()
     }
+
+    fun loadAll(values: List<String>) {
+        _lines.value = if (values.size <= maxLines) values else values.takeLast(maxLines)
+    }
 }

@@ -2,6 +2,7 @@ import org.jetbrains.compose.desktop.application.dsl.TargetFormat
 
 plugins {
     kotlin("jvm") version "2.1.0"
+    kotlin("plugin.serialization") version "2.1.0"
     id("org.jetbrains.kotlin.plugin.compose") version "2.1.0"
     id("org.jetbrains.compose") version "1.7.3"
 }
@@ -28,6 +29,7 @@ dependencies {
     implementation("org.xerial:sqlite-jdbc:3.46.1.3")
 
     implementation("com.typesafe:config:1.4.6")
+    implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.7.3")
 }
 
 val profilerInstallDir = layout.buildDirectory.dir("appResources/gradle-profiler")

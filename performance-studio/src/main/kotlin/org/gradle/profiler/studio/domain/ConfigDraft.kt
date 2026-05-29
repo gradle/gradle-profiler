@@ -1,5 +1,8 @@
 package org.gradle.profiler.studio.domain
 
+import kotlinx.serialization.Serializable
+
+@Serializable
 data class ConfigDraft(
     val tasks: String = "",
     val warmups: String = "3",
@@ -18,4 +21,5 @@ enum class Mode(val label: String) { Benchmark("Benchmark"), Profile("Profile") 
 enum class Daemon(val label: String) { Warm("Warm"), Cold("Cold"), None("None") }
 enum class RunUsing(val label: String) { ToolingApi("Tooling API"), Cli("CLI"), NoDaemon("No daemon") }
 
+@Serializable
 data class MutatorEntry(val type: String, val relativePath: String)

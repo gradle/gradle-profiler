@@ -15,6 +15,7 @@ import org.gradle.profiler.studio.data.AppPaths
 import org.gradle.profiler.studio.data.Project
 import org.gradle.profiler.studio.data.ProjectRepository
 import org.gradle.profiler.studio.data.ProjectStatus
+import org.gradle.profiler.studio.data.Run
 import org.gradle.profiler.studio.data.RunRepository
 import org.gradle.profiler.studio.data.RunStatus
 import org.gradle.profiler.studio.domain.ConfigDraft
@@ -26,6 +27,8 @@ import org.gradle.profiler.studio.runner.GradleDaemonControl
 import org.gradle.profiler.studio.runner.HoconWriter
 import org.gradle.profiler.studio.runner.ProfilerProcess
 import java.io.File
+
+private const val STUDIO_LOG = "studio.log"
 
 class AppState(
     private val projectRepo: ProjectRepository,
@@ -44,14 +47,23 @@ class AppState(
     private val _selectedTabByProject = MutableStateFlow<Map<Int, Long>>(emptyMap())
     val selectedTabByProject: StateFlow<Map<Int, Long>> = _selectedTabByProject.asStateFlow()
 
+    private val _expandedProjects = MutableStateFlow<Set<Int>>(emptySet())
+    val expandedProjects: StateFlow<Set<Int>> = _expandedProjects.asStateFlow()
+
+    private val _runsByProject = MutableStateFlow<Map<Int, List<Run>>>(emptyMap())
+    val runsByProject: StateFlow<Map<Int, List<Run>>> = _runsByProject.asStateFlow()
+
     val projectStatuses: StateFlow<Map<Int, ProjectStatus>> =
-        combine(projects, _tabsByProject) { ps, tabs ->
+        combine(projects, _tabsByProject, _runsByProject) { ps, tabs, runs ->
             ps.associate { p ->
                 val pTabs = tabs[p.id].orEmpty()
+                val latestRun = runs[p.id]?.firstOrNull()
                 p.id to when {
                     pTabs.any { it.status == TabStatus.Running } -> ProjectStatus.Running
                     pTabs.any { it.status == TabStatus.Failure } -> ProjectStatus.Failure
                     pTabs.any { it.status == TabStatus.Success } -> ProjectStatus.Success
+                    latestRun?.status == RunStatus.Failure -> ProjectStatus.Failure
+                    latestRun?.status == RunStatus.Success -> ProjectStatus.Success
                     else -> ProjectStatus.Idle
                 }
             }
@@ -60,11 +72,21 @@ class AppState(
     private val consoles = mutableMapOf<Long, ConsoleBuffer>()
     private val processes = mutableMapOf<Long, ProfilerProcess>()
 
+    init {
+        scope.launch {
+            projects.collect { ps -> refreshRunsFor(ps.map { it.id }) }
+        }
+    }
+
     fun selectProject(id: Int) { _selectedProjectId.value = id }
 
     fun addProject(folder: File) {
         val project = projectRepo.add(folder.name, folder.absolutePath)
         _selectedProjectId.value = project.id
+    }
+
+    fun toggleProjectExpanded(projectId: Int) {
+        _expandedProjects.update { if (projectId in it) it - projectId else it + projectId }
     }
 
     fun newTab(projectId: Int): TabState {
@@ -107,6 +129,39 @@ class AppState(
 
     fun consoleFor(tabId: Long): ConsoleBuffer = consoles.getOrPut(tabId) { ConsoleBuffer() }
 
+    fun openRunInTab(projectId: Int, runId: Int) {
+        val existing = _tabsByProject.value[projectId]?.firstOrNull { it.runId == runId }
+        if (existing != null) {
+            _selectedProjectId.value = projectId
+            _selectedTabByProject.update { it + (projectId to existing.id) }
+            return
+        }
+        val run = runRepo.findById(runId) ?: return
+        val tabStatus = when (run.status) {
+            RunStatus.Running -> TabStatus.Editing // stale running record from a previous crash
+            RunStatus.Success -> TabStatus.Success
+            RunStatus.Failure -> TabStatus.Failure
+            RunStatus.Cancelled -> TabStatus.Cancelled
+        }
+        val tab = TabState(
+            id = System.nanoTime(),
+            status = tabStatus,
+            config = run.config ?: ConfigDraft(),
+            section = TabSection.Console,
+            runId = run.id,
+            outputName = run.outputName,
+            outputDir = File(run.outputDir),
+        )
+        _tabsByProject.update { it + (projectId to ((it[projectId] ?: emptyList()) + tab)) }
+        _selectedProjectId.value = projectId
+        _selectedTabByProject.update { it + (projectId to tab.id) }
+        val buffer = consoleFor(tab.id)
+        val logFile = File(run.outputDir).resolve(STUDIO_LOG)
+        if (logFile.exists()) {
+            buffer.loadAll(logFile.readLines())
+        }
+    }
+
     fun startRun(project: Project, tabId: Long) {
         val tab = _tabsByProject.value[project.id]?.firstOrNull { it.id == tabId } ?: return
         if (tab.status == TabStatus.Running) return
@@ -116,7 +171,7 @@ class AppState(
         val scenarioFile = outputDir.resolve("scenario.conf")
         HoconWriter.write(tab.config, scenarioFile)
 
-        val run = runRepo.create(project.id, outputName, outputDir.absolutePath)
+        val run = runRepo.create(project.id, outputName, outputDir.absolutePath, tab.config)
         val console = consoleFor(tabId)
         console.clear()
 
@@ -137,11 +192,20 @@ class AppState(
                 console.append("Failed to start profiler: ${e.message}")
                 runRepo.finish(run.id, RunStatus.Failure, null)
                 mutateTab(project.id, tabId) { it.copy(status = TabStatus.Failure) }
+                refreshRunsFor(listOf(project.id))
                 return@launch
             }
             processes[tabId] = process
 
-            launch { process.streamOutput { console.append(it) } }
+            val logFile = outputDir.resolve(STUDIO_LOG)
+            launch {
+                logFile.bufferedWriter().use { writer ->
+                    process.streamOutput { line ->
+                        console.append(line)
+                        writer.appendLine(line)
+                    }
+                }
+            }
             val exit = process.awaitExit()
             processes.remove(tabId)
 
@@ -153,6 +217,7 @@ class AppState(
             }
             runRepo.finish(run.id, runStatus, exit)
             mutateTab(project.id, tabId) { it.copy(status = tabStatus) }
+            refreshRunsFor(listOf(project.id))
         }
     }
 
@@ -169,6 +234,12 @@ class AppState(
                 console.append(it)
             }
         }
+    }
+
+    private fun refreshRunsFor(projectIds: List<Int>) {
+        if (projectIds.isEmpty()) return
+        val updated = projectIds.associateWith { runRepo.listForProject(it) }
+        _runsByProject.update { it + updated }
     }
 
     private fun mutateTab(projectId: Int, tabId: Long, transform: (TabState) -> TabState) {

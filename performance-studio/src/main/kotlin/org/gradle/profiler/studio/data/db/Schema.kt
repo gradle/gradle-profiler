@@ -17,4 +17,5 @@ object Runs : IntIdTable("run") {
     val startedAt = timestamp("started_at")
     val endedAt = timestamp("ended_at").nullable()
     val exitCode = integer("exit_code").nullable()
+    val configJson = text("config_json").nullable()
 }
