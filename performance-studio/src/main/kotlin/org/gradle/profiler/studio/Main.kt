@@ -1,25 +1,37 @@
 package org.gradle.profiler.studio
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.gestures.Orientation
+import androidx.compose.foundation.gestures.draggable
+import androidx.compose.foundation.gestures.rememberDraggableState
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.input.pointer.PointerIcon
+import androidx.compose.ui.input.pointer.pointerHoverIcon
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Window
 import androidx.compose.ui.window.application
+import java.awt.Cursor
 import org.gradle.profiler.studio.app.AppState
 import org.gradle.profiler.studio.data.ProjectRepository
 import org.gradle.profiler.studio.data.RunRepository
@@ -54,14 +66,32 @@ private fun initAppState(): AppState {
     return AppState(ProjectRepository(db), RunRepository(db))
 }
 
+private val MIN_SIDEBAR_WIDTH = 160.dp
+private val MAX_SIDEBAR_WIDTH = 480.dp
+
 @Composable
 private fun StudioRoot(appState: AppState) {
+    var sidebarWidth by remember { mutableStateOf(220.dp) }
+    val density = LocalDensity.current
     Row(Modifier.fillMaxSize()) {
         ProjectList(
             appState = appState,
-            onAddProject = {
-                FolderPicker.pick()?.let(appState::addProject)
-            },
+            onAddProject = { FolderPicker.pick()?.let(appState::addProject) },
+            modifier = Modifier.width(sidebarWidth),
+        )
+        Box(
+            Modifier
+                .width(4.dp)
+                .fillMaxHeight()
+                .background(StudioColors.divider)
+                .pointerHoverIcon(PointerIcon(Cursor(Cursor.E_RESIZE_CURSOR)))
+                .draggable(
+                    orientation = Orientation.Horizontal,
+                    state = rememberDraggableState { deltaPx ->
+                        val deltaDp: Dp = with(density) { deltaPx.toDp() }
+                        sidebarWidth = (sidebarWidth + deltaDp).coerceIn(MIN_SIDEBAR_WIDTH, MAX_SIDEBAR_WIDTH)
+                    },
+                ),
         )
         MainPane(appState)
     }

@@ -56,7 +56,6 @@ fun ProjectList(
 
     Column(
         modifier
-            .width(220.dp)
             .fillMaxHeight()
             .background(StudioColors.sidebarBg)
             .padding(8.dp),
