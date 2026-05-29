@@ -20,6 +20,7 @@ import org.gradle.profiler.studio.data.ProjectRepository
 import org.gradle.profiler.studio.data.db.StudioDatabase
 import org.gradle.profiler.studio.ui.FolderPicker
 import org.gradle.profiler.studio.ui.sidebar.ProjectList
+import org.gradle.profiler.studio.ui.tabs.TabHost
 import org.jetbrains.jewel.foundation.theme.JewelTheme
 import org.jetbrains.jewel.intui.standalone.theme.IntUiTheme
 import org.jetbrains.jewel.ui.component.Text
@@ -61,17 +62,16 @@ private fun MainPane(appState: AppState) {
     val selectedId by appState.selectedProjectId.collectAsState()
     val selected = projects.firstOrNull { it.id == selectedId }
 
-    Box(Modifier.fillMaxSize().padding(16.dp), contentAlignment = Alignment.Center) {
-        when {
-            projects.isEmpty() -> Column(horizontalAlignment = Alignment.CenterHorizontally) {
+    when {
+        projects.isEmpty() -> Box(Modifier.fillMaxSize().padding(16.dp), contentAlignment = Alignment.Center) {
+            Column(horizontalAlignment = Alignment.CenterHorizontally) {
                 Text("No projects yet", style = JewelTheme.defaultTextStyle)
                 Text("Click + in the sidebar to add one.", style = JewelTheme.defaultTextStyle)
             }
-            selected == null -> Text("Select a project", style = JewelTheme.defaultTextStyle)
-            else -> Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                Text(selected.name, style = JewelTheme.defaultTextStyle)
-                Text(selected.path, style = JewelTheme.defaultTextStyle)
-            }
         }
+        selected == null -> Box(Modifier.fillMaxSize().padding(16.dp), contentAlignment = Alignment.Center) {
+            Text("Select a project", style = JewelTheme.defaultTextStyle)
+        }
+        else -> TabHost(appState, selected)
     }
 }
