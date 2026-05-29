@@ -28,6 +28,7 @@ import org.gradle.profiler.studio.data.Project
 import org.gradle.profiler.studio.data.ProjectStatus
 import org.gradle.profiler.studio.data.Run
 import org.gradle.profiler.studio.data.RunStatus
+import org.gradle.profiler.studio.ui.theme.StudioColors
 import org.jetbrains.jewel.foundation.theme.JewelTheme
 import org.jetbrains.jewel.ui.component.IconButton
 import org.jetbrains.jewel.ui.component.Text
@@ -52,7 +53,7 @@ fun ProjectList(
         modifier
             .width(220.dp)
             .fillMaxHeight()
-            .background(Color(0xFFF2F2F2))
+            .background(StudioColors.sidebarBg)
             .padding(8.dp),
     ) {
         Row(
@@ -108,7 +109,7 @@ private fun ProjectRow(
     onClick: () -> Unit,
     onToggleExpand: () -> Unit,
 ) {
-    val rowBg = if (selected) Color(0xFFD7E4F2) else Color.Transparent
+    val rowBg = if (selected) StudioColors.selectedRowBg else Color.Transparent
     Row(
         Modifier
             .fillMaxWidth()
@@ -121,7 +122,7 @@ private fun ProjectRow(
         if (hasRuns) {
             Text(
                 if (expanded) "▾" else "▸",
-                style = JewelTheme.defaultTextStyle.copy(color = Color(0xFF666666)),
+                style = JewelTheme.defaultTextStyle.copy(color = StudioColors.mutedText),
                 modifier = Modifier
                     .clip(androidx.compose.foundation.shape.RoundedCornerShape(2.dp))
                     .clickable(onClick = onToggleExpand)
@@ -153,7 +154,7 @@ private fun RunRow(run: Run, onOpen: () -> Unit) {
             Text(run.outputName, style = JewelTheme.defaultTextStyle)
             Text(
                 timeFmt.format(run.startedAt),
-                style = JewelTheme.defaultTextStyle.copy(color = Color(0xFF999999)),
+                style = JewelTheme.defaultTextStyle.copy(color = StudioColors.mutedText),
             )
         }
     }

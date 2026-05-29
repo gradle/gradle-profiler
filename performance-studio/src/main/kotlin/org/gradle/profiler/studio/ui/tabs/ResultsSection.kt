@@ -28,6 +28,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.delay
 import org.gradle.profiler.studio.domain.TabStatus
+import org.gradle.profiler.studio.ui.theme.StudioColors
 import org.jetbrains.jewel.foundation.theme.JewelTheme
 import org.jetbrains.jewel.ui.component.Text
 import java.awt.Desktop
@@ -58,12 +59,12 @@ fun ResultsSection(
         Row(verticalAlignment = Alignment.CenterVertically) {
             Text(
                 outputDir.absolutePath,
-                style = JewelTheme.defaultTextStyle.copy(color = Color(0xFF666666)),
+                style = JewelTheme.defaultTextStyle.copy(color = StudioColors.mutedText),
                 modifier = Modifier.weight(1f),
             )
             Text(
                 "Open folder",
-                style = JewelTheme.defaultTextStyle.copy(color = Color(0xFF2196F3)),
+                style = JewelTheme.defaultTextStyle.copy(color = StudioColors.accent),
                 modifier = Modifier.clickable { openSafely(outputDir) },
             )
         }
@@ -87,7 +88,7 @@ private fun ResultsTile(file: File) {
         Modifier
             .fillMaxWidth()
             .clip(androidx.compose.foundation.shape.RoundedCornerShape(4.dp))
-            .background(Color(0xFFF2F2F2))
+            .background(StudioColors.resultsTile)
             .clickable { openSafely(file) }
             .padding(8.dp),
         verticalAlignment = Alignment.CenterVertically,
@@ -104,7 +105,7 @@ private fun ResultsTile(file: File) {
 @Composable
 private fun EmptyState(text: String, modifier: Modifier = Modifier) {
     Box(modifier.fillMaxSize().padding(16.dp), contentAlignment = Alignment.Center) {
-        Text(text, style = JewelTheme.defaultTextStyle.copy(color = Color(0xFF666666)))
+        Text(text, style = JewelTheme.defaultTextStyle.copy(color = StudioColors.mutedText))
     }
 }
 

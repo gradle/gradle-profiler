@@ -28,6 +28,7 @@ import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Popup
 import androidx.compose.ui.window.PopupPositionProvider
+import org.gradle.profiler.studio.ui.theme.StudioColors
 import org.jetbrains.jewel.foundation.theme.JewelTheme
 import org.jetbrains.jewel.ui.component.Text
 
@@ -45,6 +46,7 @@ fun StringDropdown(
     var triggerHeightPx by remember { mutableStateOf(0) }
     val density = LocalDensity.current
 
+    val palette = StudioColors
     Box(modifier) {
         Row(
             Modifier
@@ -53,8 +55,8 @@ fun StringDropdown(
                     triggerHeightPx = it.height
                 }
                 .clip(androidx.compose.foundation.shape.RoundedCornerShape(4.dp))
-                .border(1.dp, Color(0xFFCCCCCC), androidx.compose.foundation.shape.RoundedCornerShape(4.dp))
-                .background(if (enabled) Color.White else Color(0xFFF5F5F5))
+                .border(1.dp, palette.divider, androidx.compose.foundation.shape.RoundedCornerShape(4.dp))
+                .background(if (enabled) palette.windowBg else palette.resultsTile)
                 .clickable(enabled = enabled) { expanded = !expanded }
                 .padding(horizontal = 10.dp, vertical = 8.dp)
                 .fillMaxWidth(),
@@ -64,10 +66,10 @@ fun StringDropdown(
             Text(
                 selected.ifBlank { placeholder },
                 style = JewelTheme.defaultTextStyle.copy(
-                    color = if (selected.isBlank()) Color.Gray else Color.Black,
+                    color = if (selected.isBlank()) palette.mutedText else palette.textPrimary,
                 ),
             )
-            Text("▾", style = JewelTheme.defaultTextStyle.copy(color = Color.Gray))
+            Text("▾", style = JewelTheme.defaultTextStyle.copy(color = palette.mutedText))
         }
         if (expanded) {
             val provider = remember(triggerHeightPx) {
@@ -82,10 +84,10 @@ fun StringDropdown(
                 Column(
                     Modifier
                         .width(widthDp)
-                        .background(Color.White)
+                        .background(palette.windowBg)
                         .border(
                             1.dp,
-                            Color(0xFFCCCCCC),
+                            palette.divider,
                             androidx.compose.foundation.shape.RoundedCornerShape(4.dp),
                         )
                         .padding(vertical = 4.dp),
@@ -94,7 +96,7 @@ fun StringDropdown(
                         Text(
                             opt,
                             style = JewelTheme.defaultTextStyle.copy(
-                                color = if (opt == selected) Color(0xFF2196F3) else Color.Black,
+                                color = if (opt == selected) palette.accent else palette.textPrimary,
                             ),
                             modifier = Modifier
                                 .fillMaxWidth()

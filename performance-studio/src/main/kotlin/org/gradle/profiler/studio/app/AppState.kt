@@ -105,6 +105,8 @@ class AppState(
     }
 
     fun closeTab(projectId: Int, tabId: Long) {
+        val wasRunning = _tabsByProject.value[projectId]?.firstOrNull { it.id == tabId }?.status == TabStatus.Running
+        if (wasRunning) cancelRun(projectId, tabId)
         _tabsByProject.update { map ->
             val list = (map[projectId] ?: return@update map).filterNot { it.id == tabId }
             map + (projectId to list)

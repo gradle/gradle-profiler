@@ -15,6 +15,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import org.gradle.profiler.studio.domain.TabSection
+import org.gradle.profiler.studio.ui.theme.StudioColors
 import org.jetbrains.jewel.foundation.theme.JewelTheme
 import org.jetbrains.jewel.ui.component.Text
 
@@ -28,7 +29,7 @@ fun SubTabBar(
     Row(
         modifier
             .fillMaxWidth()
-            .background(Color(0xFFFAFAFA)),
+            .background(StudioColors.subtabBarBg),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         sections.forEach { section ->
@@ -56,7 +57,7 @@ private fun SubTab(
         Text(
             section.label,
             style = JewelTheme.defaultTextStyle.copy(
-                color = if (selected) Color(0xFF000000) else Color(0xFF666666),
+                color = if (selected) StudioColors.textPrimary else StudioColors.mutedText,
                 fontWeight = if (selected) FontWeight.SemiBold else FontWeight.Normal,
             ),
             modifier = Modifier.padding(vertical = 10.dp),
@@ -65,7 +66,7 @@ private fun SubTab(
             Modifier
                 .fillMaxWidth()
                 .height(2.dp)
-                .background(if (selected) Color(0xFF2196F3) else Color.Transparent),
+                .background(if (selected) StudioColors.accent else Color.Transparent),
         )
     }
 }

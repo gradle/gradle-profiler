@@ -19,6 +19,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import org.gradle.profiler.studio.domain.TabState
 import org.gradle.profiler.studio.domain.TabStatus
+import org.gradle.profiler.studio.ui.theme.StudioColors
 import org.jetbrains.jewel.foundation.theme.JewelTheme
 import org.jetbrains.jewel.ui.component.IconButton
 import org.jetbrains.jewel.ui.component.Text
@@ -35,7 +36,7 @@ fun TabStrip(
     Row(
         modifier
             .fillMaxWidth()
-            .background(Color(0xFFEDEDED))
+            .background(StudioColors.tabStripBg)
             .horizontalScroll(rememberScrollState()),
         verticalAlignment = Alignment.CenterVertically,
     ) {
@@ -61,7 +62,7 @@ private fun TabChip(
     onSelect: () -> Unit,
     onClose: () -> Unit,
 ) {
-    val bg = if (selected) Color.White else Color.Transparent
+    val bg = if (selected) StudioColors.selectedTabBg else Color.Transparent
     Row(
         Modifier
             .clip(androidx.compose.foundation.shape.RoundedCornerShape(topStart = 6.dp, topEnd = 6.dp))
@@ -75,7 +76,7 @@ private fun TabChip(
         Text(tab.displayName, style = JewelTheme.defaultTextStyle)
         Text(
             "×",
-            style = JewelTheme.defaultTextStyle.copy(fontWeight = FontWeight.Bold, color = Color(0xFF666666)),
+            style = JewelTheme.defaultTextStyle.copy(fontWeight = FontWeight.Bold, color = StudioColors.mutedText),
             modifier = Modifier.clickable { onClose() },
         )
     }
