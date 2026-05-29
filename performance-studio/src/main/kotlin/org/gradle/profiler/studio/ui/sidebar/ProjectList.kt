@@ -17,6 +17,9 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -28,6 +31,7 @@ import org.gradle.profiler.studio.data.Project
 import org.gradle.profiler.studio.data.ProjectStatus
 import org.gradle.profiler.studio.data.Run
 import org.gradle.profiler.studio.data.RunStatus
+import org.gradle.profiler.studio.ui.components.ConfirmDialog
 import org.gradle.profiler.studio.ui.theme.StudioColors
 import org.jetbrains.jewel.foundation.theme.JewelTheme
 import org.jetbrains.jewel.ui.component.IconButton
@@ -48,6 +52,7 @@ fun ProjectList(
     val statuses by appState.projectStatuses.collectAsState()
     val expanded by appState.expandedProjects.collectAsState()
     val runsByProject by appState.runsByProject.collectAsState()
+    var pendingRemove by remember { mutableStateOf<Project?>(null) }
 
     Column(
         modifier
@@ -82,8 +87,10 @@ fun ProjectList(
                         selected = project.id == selectedProjectId,
                         expanded = isExpanded,
                         hasRuns = hasRuns,
+                        runCount = runs.size,
                         onClick = { appState.selectProject(project.id) },
                         onToggleExpand = { appState.toggleProjectExpanded(project.id) },
+                        onRemove = { pendingRemove = project },
                     )
                 }
                 if (isExpanded) {
@@ -97,6 +104,24 @@ fun ProjectList(
             }
         }
     }
+
+    pendingRemove?.let { project ->
+        val runCount = runsByProject[project.id]?.size ?: 0
+        ConfirmDialog(
+            title = "Remove project?",
+            message = buildString {
+                append("Remove “${project.name}” from Gradle Performance Studio? ")
+                if (runCount > 0) append("Its $runCount run(s) and run output folder will be deleted from disk.")
+                else append("No saved runs will be affected.")
+                appendLine()
+                appendLine()
+                append("The project folder on disk (${project.path}) is not touched.")
+            },
+            confirmLabel = "Remove",
+            onConfirm = { appState.removeProject(project.id) },
+            onDismiss = { pendingRemove = null },
+        )
+    }
 }
 
 @Composable
@@ -106,8 +131,10 @@ private fun ProjectRow(
     selected: Boolean,
     expanded: Boolean,
     hasRuns: Boolean,
+    runCount: Int,
     onClick: () -> Unit,
     onToggleExpand: () -> Unit,
+    onRemove: () -> Unit,
 ) {
     val rowBg = if (selected) StudioColors.selectedRowBg else Color.Transparent
     Row(
@@ -134,7 +161,18 @@ private fun ProjectRow(
         }
         StatusDot(status)
         Spacer(Modifier.width(8.dp))
-        Text(project.name, style = JewelTheme.defaultTextStyle)
+        Text(project.name, style = JewelTheme.defaultTextStyle, modifier = Modifier.weight(1f))
+        Text(
+            "×",
+            style = JewelTheme.defaultTextStyle.copy(
+                color = StudioColors.mutedText,
+                fontWeight = FontWeight.Bold,
+            ),
+            modifier = Modifier
+                .clip(androidx.compose.foundation.shape.RoundedCornerShape(2.dp))
+                .clickable(onClick = onRemove)
+                .padding(horizontal = 6.dp, vertical = 2.dp),
+        )
     }
 }
 

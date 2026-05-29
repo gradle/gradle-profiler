@@ -85,6 +85,27 @@ class AppState(
         _selectedProjectId.value = project.id
     }
 
+    fun removeProject(projectId: Int) {
+        val runningTabs = _tabsByProject.value[projectId]
+            ?.filter { it.status == TabStatus.Running }
+            ?.map { it.id }
+            .orEmpty()
+        runningTabs.forEach { processes[it]?.cancel() }
+
+        _tabsByProject.value[projectId].orEmpty().forEach { consoles.remove(it.id) }
+        _tabsByProject.update { it - projectId }
+        _selectedTabByProject.update { it - projectId }
+        _expandedProjects.update { it - projectId }
+        _runsByProject.update { it - projectId }
+        if (_selectedProjectId.value == projectId) _selectedProjectId.value = null
+
+        runRepo.deleteForProject(projectId)
+        projectRepo.remove(projectId)
+
+        val projectRunsDir = AppPaths.runsDir.resolve(projectId.toString())
+        if (projectRunsDir.exists()) projectRunsDir.deleteRecursively()
+    }
+
     fun toggleProjectExpanded(projectId: Int) {
         _expandedProjects.update { if (projectId in it) it - projectId else it + projectId }
     }

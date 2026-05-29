@@ -7,6 +7,7 @@ import org.jetbrains.exposed.sql.Database
 import org.jetbrains.exposed.sql.ResultRow
 import org.jetbrains.exposed.sql.SortOrder
 import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
+import org.jetbrains.exposed.sql.deleteWhere
 import org.jetbrains.exposed.sql.insertAndGetId
 import org.jetbrains.exposed.sql.selectAll
 import org.jetbrains.exposed.sql.transactions.transaction
@@ -62,6 +63,12 @@ class RunRepository(private val db: Database) {
 
     fun findById(runId: Int): Run? = transaction(db) {
         Runs.selectAll().where { Runs.id eq runId }.firstOrNull()?.toRun()
+    }
+
+    fun deleteForProject(projectId: Int) {
+        transaction(db) {
+            Runs.deleteWhere { Runs.projectId eq projectId }
+        }
     }
 
     private fun ResultRow.toRun() = Run(
