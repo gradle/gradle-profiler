@@ -7,11 +7,9 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.layout.widthIn
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -21,9 +19,15 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.onSizeChanged
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.IntOffset
+import androidx.compose.ui.unit.IntRect
+import androidx.compose.ui.unit.IntSize
+import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Popup
+import androidx.compose.ui.window.PopupPositionProvider
 import org.jetbrains.jewel.foundation.theme.JewelTheme
 import org.jetbrains.jewel.ui.component.Text
 
@@ -37,10 +41,17 @@ fun StringDropdown(
     placeholder: String = "Select…",
 ) {
     var expanded by remember { mutableStateOf(false) }
+    var triggerWidthPx by remember { mutableStateOf(0) }
+    var triggerHeightPx by remember { mutableStateOf(0) }
+    val density = LocalDensity.current
 
     Box(modifier) {
         Row(
             Modifier
+                .onSizeChanged {
+                    triggerWidthPx = it.width
+                    triggerHeightPx = it.height
+                }
                 .clip(androidx.compose.foundation.shape.RoundedCornerShape(4.dp))
                 .border(1.dp, Color(0xFFCCCCCC), androidx.compose.foundation.shape.RoundedCornerShape(4.dp))
                 .background(if (enabled) Color.White else Color(0xFFF5F5F5))
@@ -56,19 +67,27 @@ fun StringDropdown(
                     color = if (selected.isBlank()) Color.Gray else Color.Black,
                 ),
             )
-            Spacer(Modifier.width(8.dp))
             Text("▾", style = JewelTheme.defaultTextStyle.copy(color = Color.Gray))
         }
         if (expanded) {
+            val provider = remember(triggerHeightPx) {
+                AnchorBelowProvider(triggerHeightPx)
+            }
             Popup(
+                popupPositionProvider = provider,
                 onDismissRequest = { expanded = false },
-                offset = IntOffset(0, 40),
+                focusable = true,
             ) {
+                val widthDp = with(density) { triggerWidthPx.toDp() }
                 Column(
                     Modifier
-                        .widthIn(min = 200.dp)
+                        .width(widthDp)
                         .background(Color.White)
-                        .border(1.dp, Color(0xFFCCCCCC), androidx.compose.foundation.shape.RoundedCornerShape(4.dp))
+                        .border(
+                            1.dp,
+                            Color(0xFFCCCCCC),
+                            androidx.compose.foundation.shape.RoundedCornerShape(4.dp),
+                        )
                         .padding(vertical = 4.dp),
                 ) {
                     options.forEach { opt ->
@@ -89,5 +108,23 @@ fun StringDropdown(
                 }
             }
         }
+    }
+}
+
+private class AnchorBelowProvider(private val anchorHeightPx: Int) : PopupPositionProvider {
+    override fun calculatePosition(
+        anchorBounds: IntRect,
+        windowSize: IntSize,
+        layoutDirection: LayoutDirection,
+        popupContentSize: IntSize,
+    ): IntOffset {
+        val x = anchorBounds.left.coerceAtMost(windowSize.width - popupContentSize.width)
+        val belowY = anchorBounds.top + anchorHeightPx
+        val y = if (belowY + popupContentSize.height <= windowSize.height) {
+            belowY
+        } else {
+            (anchorBounds.top - popupContentSize.height).coerceAtLeast(0)
+        }
+        return IntOffset(x.coerceAtLeast(0), y)
     }
 }
