@@ -28,22 +28,29 @@ fun SubTabBar(
     Row(
         modifier
             .fillMaxWidth()
-            .background(Color(0xFFFAFAFA))
-            .padding(horizontal = 16.dp),
+            .background(Color(0xFFFAFAFA)),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         sections.forEach { section ->
-            SubTab(section, selected == section) { onSelect(section) }
+            SubTab(
+                section = section,
+                selected = selected == section,
+                onClick = { onSelect(section) },
+                modifier = Modifier.weight(1f),
+            )
         }
     }
 }
 
 @Composable
-private fun SubTab(section: TabSection, selected: Boolean, onClick: () -> Unit) {
+private fun SubTab(
+    section: TabSection,
+    selected: Boolean,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
     Column(
-        Modifier
-            .padding(end = 24.dp)
-            .clickable(onClick = onClick),
+        modifier.clickable(onClick = onClick),
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
         Text(
