@@ -22,8 +22,11 @@ dependencies {
     implementation("org.jetbrains.jewel:jewel-int-ui-standalone-243:0.27.0")
     implementation("org.jetbrains.jewel:jewel-int-ui-decorated-window-243:0.27.0")
 
-    // Profiler classes for reflection-based option discovery (milestone 5).
-    // Resolved through the composite build (includeBuild("..")).
+    implementation("org.jetbrains.exposed:exposed-core:0.56.0")
+    implementation("org.jetbrains.exposed:exposed-jdbc:0.56.0")
+    implementation("org.jetbrains.exposed:exposed-java-time:0.56.0")
+    implementation("org.xerial:sqlite-jdbc:3.46.1.3")
+
     compileOnly("org.gradle.profiler:gradle-profiler")
 }
 
