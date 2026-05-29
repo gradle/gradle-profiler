@@ -1,8 +1,5 @@
 package org.gradle.profiler.studio.data
 
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.asStateFlow
 import org.gradle.profiler.studio.data.db.Projects
 import org.jetbrains.exposed.sql.Database
 import org.jetbrains.exposed.sql.ResultRow
@@ -15,11 +12,11 @@ import org.jetbrains.exposed.sql.transactions.transaction
 import java.time.Instant
 
 class ProjectRepository(private val db: Database) {
-    private val _projects = MutableStateFlow<List<Project>>(emptyList())
-    val projects: StateFlow<List<Project>> = _projects.asStateFlow()
 
-    init {
-        refresh()
+    fun list(): List<Project> = transaction(db) {
+        Projects.selectAll()
+            .orderBy(Projects.name to SortOrder.ASC)
+            .map { it.toProject() }
     }
 
     fun add(name: String, path: String): Project {
@@ -31,22 +28,12 @@ class ProjectRepository(private val db: Database) {
                 it[createdAt] = now
             }.value
         }
-        refresh()
         return Project(id, name, path, now)
     }
 
     fun remove(projectId: Int) {
         transaction(db) {
             Projects.deleteWhere { Projects.id eq projectId }
-        }
-        refresh()
-    }
-
-    private fun refresh() {
-        _projects.value = transaction(db) {
-            Projects.selectAll()
-                .orderBy(Projects.name to SortOrder.ASC)
-                .map { it.toProject() }
         }
     }
 

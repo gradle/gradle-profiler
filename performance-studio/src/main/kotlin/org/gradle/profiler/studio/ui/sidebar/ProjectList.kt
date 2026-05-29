@@ -26,7 +26,8 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import org.gradle.profiler.studio.app.AppState
+import org.gradle.profiler.studio.app.AppController
+import org.gradle.profiler.studio.app.AppMessage
 import org.gradle.profiler.studio.data.Project
 import org.gradle.profiler.studio.data.ProjectStatus
 import org.gradle.profiler.studio.data.Run
@@ -43,15 +44,12 @@ private val timeFmt = DateTimeFormatter.ofPattern("MMM d HH:mm").withZone(ZoneId
 
 @Composable
 fun ProjectList(
-    appState: AppState,
+    controller: AppController,
     onAddProject: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    val projects by appState.projects.collectAsState()
-    val selectedProjectId by appState.selectedProjectId.collectAsState()
-    val statuses by appState.projectStatuses.collectAsState()
-    val expanded by appState.expandedProjects.collectAsState()
-    val runsByProject by appState.runsByProject.collectAsState()
+    val state by controller.state.collectAsState()
+    val statuses = remember(state) { state.projectStatuses() }
     var pendingRemove by remember { mutableStateOf<Project?>(null) }
 
     Column(
@@ -75,20 +73,19 @@ fun ProjectList(
         }
 
         LazyColumn(verticalArrangement = Arrangement.spacedBy(2.dp)) {
-            projects.forEach { project ->
-                val runs = runsByProject[project.id].orEmpty()
+            state.projects.forEach { project ->
+                val runs = state.runsByProject[project.id].orEmpty()
                 val hasRuns = runs.isNotEmpty()
-                val isExpanded = hasRuns && project.id in expanded
+                val isExpanded = hasRuns && project.id in state.expandedProjects
                 item(key = "p-${project.id}") {
                     ProjectRow(
                         project = project,
                         status = statuses[project.id] ?: ProjectStatus.Idle,
-                        selected = project.id == selectedProjectId,
+                        selected = project.id == state.selectedProjectId,
                         expanded = isExpanded,
                         hasRuns = hasRuns,
-                        runCount = runs.size,
-                        onClick = { appState.selectProject(project.id) },
-                        onToggleExpand = { appState.toggleProjectExpanded(project.id) },
+                        onClick = { controller.dispatch(AppMessage.SelectProject(project.id)) },
+                        onToggleExpand = { controller.dispatch(AppMessage.ToggleProjectExpanded(project.id)) },
                         onRemove = { pendingRemove = project },
                     )
                 }
@@ -96,7 +93,7 @@ fun ProjectList(
                     items(runs.size, key = { "r-${runs[it].id}" }) { i ->
                         RunRow(
                             run = runs[i],
-                            onOpen = { appState.openRunInTab(project.id, runs[i].id) },
+                            onOpen = { controller.dispatch(AppMessage.OpenRunInTab(project.id, runs[i].id)) },
                         )
                     }
                 }
@@ -105,7 +102,7 @@ fun ProjectList(
     }
 
     pendingRemove?.let { project ->
-        val runCount = runsByProject[project.id]?.size ?: 0
+        val runCount = state.runsByProject[project.id]?.size ?: 0
         ConfirmDialog(
             title = "Remove project?",
             message = buildString {
@@ -117,7 +114,7 @@ fun ProjectList(
                 append("The project folder on disk (${project.path}) is not touched.")
             },
             confirmLabel = "Remove",
-            onConfirm = { appState.removeProject(project.id) },
+            onConfirm = { controller.dispatch(AppMessage.RemoveProject(project.id)) },
             onDismiss = { pendingRemove = null },
         )
     }
@@ -130,7 +127,6 @@ private fun ProjectRow(
     selected: Boolean,
     expanded: Boolean,
     hasRuns: Boolean,
-    runCount: Int,
     onClick: () -> Unit,
     onToggleExpand: () -> Unit,
     onRemove: () -> Unit,

@@ -31,8 +31,11 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Window
 import androidx.compose.ui.window.application
-import java.awt.Cursor
-import org.gradle.profiler.studio.app.AppState
+import org.gradle.profiler.studio.app.AppController
+import org.gradle.profiler.studio.app.AppDeps
+import org.gradle.profiler.studio.app.AppMessage
+import org.gradle.profiler.studio.app.ConsoleRegistry
+import org.gradle.profiler.studio.app.ProcessRegistry
 import org.gradle.profiler.studio.data.ProjectRepository
 import org.gradle.profiler.studio.data.RunRepository
 import org.gradle.profiler.studio.data.db.StudioDatabase
@@ -43,11 +46,15 @@ import org.gradle.profiler.studio.ui.theme.StudioColors
 import org.jetbrains.jewel.foundation.theme.JewelTheme
 import org.jetbrains.jewel.intui.standalone.theme.IntUiTheme
 import org.jetbrains.jewel.ui.component.Text
+import java.awt.Cursor
 
 fun main() = application {
-    val initResult = remember { runCatching(::initAppState) }
+    val initResult = remember { runCatching(::initController) }
     Window(
-        onCloseRequest = ::exitApplication,
+        onCloseRequest = {
+            initResult.getOrNull()?.close()
+            exitApplication()
+        },
         title = "Gradle Performance Studio",
     ) {
         IntUiTheme(isDark = isSystemInDarkTheme()) {
@@ -61,22 +68,28 @@ fun main() = application {
     }
 }
 
-private fun initAppState(): AppState {
+private fun initController(): AppController {
     val db = StudioDatabase.connect()
-    return AppState(ProjectRepository(db), RunRepository(db))
+    val deps = AppDeps(
+        projects = ProjectRepository(db),
+        runs = RunRepository(db),
+        consoles = ConsoleRegistry(),
+        processes = ProcessRegistry(),
+    )
+    return AppController(deps)
 }
 
 private val MIN_SIDEBAR_WIDTH = 160.dp
 private val MAX_SIDEBAR_WIDTH = 480.dp
 
 @Composable
-private fun StudioRoot(appState: AppState) {
+private fun StudioRoot(controller: AppController) {
     var sidebarWidth by remember { mutableStateOf(220.dp) }
     val density = LocalDensity.current
     Row(Modifier.fillMaxSize()) {
         ProjectList(
-            appState = appState,
-            onAddProject = { FolderPicker.pick()?.let(appState::addProject) },
+            controller = controller,
+            onAddProject = { FolderPicker.pick()?.let { controller.dispatch(AppMessage.AddProject(it)) } },
             modifier = Modifier.width(sidebarWidth),
         )
         Box(
@@ -93,18 +106,17 @@ private fun StudioRoot(appState: AppState) {
                     },
                 ),
         )
-        MainPane(appState)
+        MainPane(controller)
     }
 }
 
 @Composable
-private fun MainPane(appState: AppState) {
-    val projects by appState.projects.collectAsState()
-    val selectedId by appState.selectedProjectId.collectAsState()
-    val selected = projects.firstOrNull { it.id == selectedId }
+private fun MainPane(controller: AppController) {
+    val state by controller.state.collectAsState()
+    val selected = state.selectedProjectId?.let { id -> state.projects.firstOrNull { it.id == id } }
 
     when {
-        projects.isEmpty() -> Box(Modifier.fillMaxSize().padding(16.dp), contentAlignment = Alignment.Center) {
+        state.projects.isEmpty() -> Box(Modifier.fillMaxSize().padding(16.dp), contentAlignment = Alignment.Center) {
             Column(horizontalAlignment = Alignment.CenterHorizontally) {
                 Text("No projects yet", style = JewelTheme.defaultTextStyle)
                 Text(
@@ -116,7 +128,7 @@ private fun MainPane(appState: AppState) {
         selected == null -> Box(Modifier.fillMaxSize().padding(16.dp), contentAlignment = Alignment.Center) {
             Text("Select a project", style = JewelTheme.defaultTextStyle.copy(color = StudioColors.mutedText))
         }
-        else -> TabHost(appState, selected)
+        else -> TabHost(controller, selected)
     }
 }
 
