@@ -1,4 +1,4 @@
-package org.gradle.profiler.studio.ui.sidebar
+package org.gradle.profiler.studio.app.components.sidebar
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -26,8 +26,6 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import org.gradle.profiler.studio.app.AppController
-import org.gradle.profiler.studio.app.AppMessage
 import org.gradle.profiler.studio.data.Project
 import org.gradle.profiler.studio.data.ProjectStatus
 import org.gradle.profiler.studio.data.Run
@@ -43,13 +41,13 @@ import java.time.format.DateTimeFormatter
 private val timeFmt = DateTimeFormatter.ofPattern("MMM d HH:mm").withZone(ZoneId.systemDefault())
 
 @Composable
-fun ProjectList(
-    controller: AppController,
+fun SidebarUi(
+    component: SidebarComponent,
+    runningProjects: Set<Int>,
     onAddProject: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    val state by controller.state.collectAsState()
-    val statuses = remember(state) { state.projectStatuses() }
+    val state by component.state.collectAsState()
     var pendingRemove by remember { mutableStateOf<Project?>(null) }
 
     Column(
@@ -77,15 +75,16 @@ fun ProjectList(
                 val runs = state.runsByProject[project.id].orEmpty()
                 val hasRuns = runs.isNotEmpty()
                 val isExpanded = hasRuns && project.id in state.expandedProjects
+                val status = projectStatus(project.id, runningProjects, runs)
                 item(key = "p-${project.id}") {
                     ProjectRow(
                         project = project,
-                        status = statuses[project.id] ?: ProjectStatus.Idle,
+                        status = status,
                         selected = project.id == state.selectedProjectId,
                         expanded = isExpanded,
                         hasRuns = hasRuns,
-                        onClick = { controller.dispatch(AppMessage.SelectProject(project.id)) },
-                        onToggleExpand = { controller.dispatch(AppMessage.ToggleProjectExpanded(project.id)) },
+                        onClick = { component.dispatch(SidebarMessage.SelectProject(project.id)) },
+                        onToggleExpand = { component.dispatch(SidebarMessage.ToggleExpand(project.id)) },
                         onRemove = { pendingRemove = project },
                     )
                 }
@@ -93,7 +92,9 @@ fun ProjectList(
                     items(runs.size, key = { "r-${runs[it].id}" }) { i ->
                         RunRow(
                             run = runs[i],
-                            onOpen = { controller.dispatch(AppMessage.OpenRunInTab(project.id, runs[i].id)) },
+                            onOpen = {
+                                component.dispatch(SidebarMessage.OpenRunRequested(project.id, runs[i].id))
+                            },
                         )
                     }
                 }
@@ -114,10 +115,17 @@ fun ProjectList(
                 append("The project folder on disk (${project.path}) is not touched.")
             },
             confirmLabel = "Remove",
-            onConfirm = { controller.dispatch(AppMessage.RemoveProject(project.id)) },
+            onConfirm = { component.dispatch(SidebarMessage.RemoveProjectRequested(project.id)) },
             onDismiss = { pendingRemove = null },
         )
     }
+}
+
+private fun projectStatus(projectId: Int, running: Set<Int>, runs: List<Run>): ProjectStatus = when {
+    projectId in running -> ProjectStatus.Running
+    runs.firstOrNull()?.status == RunStatus.Failure -> ProjectStatus.Failure
+    runs.firstOrNull()?.status == RunStatus.Success -> ProjectStatus.Success
+    else -> ProjectStatus.Idle
 }
 
 @Composable

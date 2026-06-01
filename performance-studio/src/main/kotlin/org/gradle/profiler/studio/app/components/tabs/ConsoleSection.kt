@@ -1,4 +1,4 @@
-package org.gradle.profiler.studio.ui.tabs
+package org.gradle.profiler.studio.app.components.tabs
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement

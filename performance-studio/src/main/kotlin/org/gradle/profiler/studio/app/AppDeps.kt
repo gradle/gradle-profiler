@@ -16,22 +16,15 @@ class ProcessRegistry {
     private class Entry(val process: ProfilerProcess, @Volatile var cancelled: Boolean = false)
     private val map = ConcurrentHashMap<Long, Entry>()
 
-    fun put(tabId: Long, process: ProfilerProcess) {
-        map[tabId] = Entry(process)
-    }
-
+    fun put(tabId: Long, process: ProfilerProcess) { map[tabId] = Entry(process) }
     fun cancel(tabId: Long) {
         map[tabId]?.let {
             it.cancelled = true
             it.process.cancel()
         }
     }
-
     fun wasCancelled(tabId: Long): Boolean = map[tabId]?.cancelled == true
-
-    fun remove(tabId: Long) {
-        map.remove(tabId)
-    }
+    fun remove(tabId: Long) { map.remove(tabId) }
 }
 
 class AppDeps(
@@ -39,4 +32,5 @@ class AppDeps(
     val runs: RunRepository,
     val consoles: ConsoleRegistry,
     val processes: ProcessRegistry,
+    val events: AppEvents,
 )

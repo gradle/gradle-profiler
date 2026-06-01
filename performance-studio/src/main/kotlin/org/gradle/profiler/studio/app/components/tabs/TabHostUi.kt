@@ -1,4 +1,4 @@
-package org.gradle.profiler.studio.ui.tabs
+package org.gradle.profiler.studio.app.components.tabs
 
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -10,8 +10,6 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
-import org.gradle.profiler.studio.app.AppController
-import org.gradle.profiler.studio.app.AppMessage
 import org.gradle.profiler.studio.data.Project
 import org.gradle.profiler.studio.domain.TabSection
 import org.gradle.profiler.studio.domain.TabState
@@ -19,22 +17,26 @@ import org.gradle.profiler.studio.domain.TabStatus
 import java.io.File
 
 @Composable
-fun TabHost(controller: AppController, project: Project, modifier: Modifier = Modifier) {
-    val state by controller.state.collectAsState()
+fun TabHostUi(
+    component: TabHostComponent,
+    project: Project,
+    modifier: Modifier = Modifier,
+) {
+    val state by component.state.collectAsState()
     val tabs = state.tabsByProject[project.id].orEmpty()
     val selectedId = state.selectedTabByProject[project.id]
 
     LaunchedEffect(project.id, tabs.isEmpty()) {
-        if (tabs.isEmpty()) controller.dispatch(AppMessage.NewTab(project.id))
+        if (tabs.isEmpty()) component.dispatch(TabHostMessage.NewTab(project.id))
     }
 
     Column(modifier.fillMaxSize()) {
         TabStrip(
             tabs = tabs,
             selectedId = selectedId,
-            onSelect = { controller.dispatch(AppMessage.SelectTab(project.id, it)) },
-            onClose = { controller.dispatch(AppMessage.CloseTab(project.id, it)) },
-            onNew = { controller.dispatch(AppMessage.NewTab(project.id)) },
+            onSelect = { component.dispatch(TabHostMessage.SelectTab(project.id, it)) },
+            onClose = { component.dispatch(TabHostMessage.CloseTab(project.id, it)) },
+            onNew = { component.dispatch(TabHostMessage.NewTab(project.id)) },
         )
         val current = tabs.firstOrNull { it.id == selectedId } ?: return
         val visibleSections =
@@ -44,16 +46,16 @@ fun TabHost(controller: AppController, project: Project, modifier: Modifier = Mo
         SubTabBar(
             sections = visibleSections,
             selected = effectiveSection,
-            onSelect = { controller.dispatch(AppMessage.SelectSection(project.id, current.id, it)) },
+            onSelect = { component.dispatch(TabHostMessage.SelectSection(project.id, current.id, it)) },
         )
         Box(Modifier.fillMaxSize()) {
-            SectionContent(controller, project, current.copy(section = effectiveSection))
+            SectionContent(component, project, current.copy(section = effectiveSection))
         }
     }
 }
 
 @Composable
-private fun SectionContent(controller: AppController, project: Project, tab: TabState) {
+private fun SectionContent(component: TabHostComponent, project: Project, tab: TabState) {
     when (tab.section) {
         TabSection.Scenario -> Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState())) {
             ConfigSection(
@@ -61,15 +63,15 @@ private fun SectionContent(controller: AppController, project: Project, tab: Tab
                 readOnly = tab.status == TabStatus.Running,
                 projectDir = File(project.path),
                 onChange = { newConfig ->
-                    controller.dispatch(AppMessage.UpdateConfig(project.id, tab.id, newConfig))
+                    component.dispatch(TabHostMessage.UpdateConfig(project.id, tab.id, newConfig))
                 },
-                onRun = { controller.dispatch(AppMessage.StartRun(project.id, tab.id)) },
+                onRun = { component.dispatch(TabHostMessage.StartRun(project.id, tab.id)) },
             )
         }
         TabSection.Console -> ConsoleSection(
-            buffer = controller.consoleFor(tab.id),
+            buffer = component.consoleFor(tab.id),
             status = tab.status,
-            onCancel = { controller.dispatch(AppMessage.CancelRun(project.id, tab.id)) },
+            onCancel = { component.dispatch(TabHostMessage.CancelRun(project.id, tab.id)) },
             modifier = Modifier.fillMaxSize(),
         )
         TabSection.Results -> ResultsSection(

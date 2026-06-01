@@ -33,15 +33,17 @@ import androidx.compose.ui.window.Window
 import androidx.compose.ui.window.application
 import org.gradle.profiler.studio.app.AppController
 import org.gradle.profiler.studio.app.AppDeps
-import org.gradle.profiler.studio.app.AppMessage
+import org.gradle.profiler.studio.app.AppEvents
 import org.gradle.profiler.studio.app.ConsoleRegistry
 import org.gradle.profiler.studio.app.ProcessRegistry
+import org.gradle.profiler.studio.app.components.sidebar.SidebarMessage
+import org.gradle.profiler.studio.app.components.sidebar.SidebarUi
+import org.gradle.profiler.studio.app.components.tabs.TabHostUi
+import org.gradle.profiler.studio.data.Project
 import org.gradle.profiler.studio.data.ProjectRepository
 import org.gradle.profiler.studio.data.RunRepository
 import org.gradle.profiler.studio.data.db.StudioDatabase
 import org.gradle.profiler.studio.ui.FolderPicker
-import org.gradle.profiler.studio.ui.sidebar.ProjectList
-import org.gradle.profiler.studio.ui.tabs.TabHost
 import org.gradle.profiler.studio.ui.theme.StudioColors
 import org.jetbrains.jewel.foundation.theme.JewelTheme
 import org.jetbrains.jewel.intui.standalone.theme.IntUiTheme
@@ -75,6 +77,7 @@ private fun initController(): AppController {
         runs = RunRepository(db),
         consoles = ConsoleRegistry(),
         processes = ProcessRegistry(),
+        events = AppEvents(),
     )
     return AppController(deps)
 }
@@ -86,10 +89,14 @@ private val MAX_SIDEBAR_WIDTH = 480.dp
 private fun StudioRoot(controller: AppController) {
     var sidebarWidth by remember { mutableStateOf(220.dp) }
     val density = LocalDensity.current
+    val running by controller.runningProjects.collectAsState()
     Row(Modifier.fillMaxSize()) {
-        ProjectList(
-            controller = controller,
-            onAddProject = { FolderPicker.pick()?.let { controller.dispatch(AppMessage.AddProject(it)) } },
+        SidebarUi(
+            component = controller.sidebar,
+            runningProjects = running,
+            onAddProject = {
+                FolderPicker.pick()?.let { controller.sidebar.dispatch(SidebarMessage.AddProjectRequested(it)) }
+            },
             modifier = Modifier.width(sidebarWidth),
         )
         Box(
@@ -112,11 +119,12 @@ private fun StudioRoot(controller: AppController) {
 
 @Composable
 private fun MainPane(controller: AppController) {
-    val state by controller.state.collectAsState()
-    val selected = state.selectedProjectId?.let { id -> state.projects.firstOrNull { it.id == id } }
+    val sidebarState by controller.sidebar.state.collectAsState()
+    val selectedId by controller.selectedProject.collectAsState()
+    val selected: Project? = selectedId?.let { id -> sidebarState.projects.firstOrNull { it.id == id } }
 
     when {
-        state.projects.isEmpty() -> Box(Modifier.fillMaxSize().padding(16.dp), contentAlignment = Alignment.Center) {
+        sidebarState.projects.isEmpty() -> Box(Modifier.fillMaxSize().padding(16.dp), contentAlignment = Alignment.Center) {
             Column(horizontalAlignment = Alignment.CenterHorizontally) {
                 Text("No projects yet", style = JewelTheme.defaultTextStyle)
                 Text(
@@ -128,7 +136,7 @@ private fun MainPane(controller: AppController) {
         selected == null -> Box(Modifier.fillMaxSize().padding(16.dp), contentAlignment = Alignment.Center) {
             Text("Select a project", style = JewelTheme.defaultTextStyle.copy(color = StudioColors.mutedText))
         }
-        else -> TabHost(controller, selected)
+        else -> TabHostUi(controller.tabs, selected)
     }
 }
 
