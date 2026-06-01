@@ -418,6 +418,21 @@ Here is an example:
 
 Values are optional and default to the values provided on the command-line or defined in the build.
 
+Task options must be specified as separate items in the `tasks` array, because each item is passed as a separate command-line argument to Gradle:
+
+    task_params {
+        title = "Task params"
+        tasks = [":app:testDebugUnitTest", "--tests", "com.example.MyTest"]
+    }
+
+Gradle command-line options that are not task-specific should be specified with `gradle-args`:
+
+    continue_build {
+        title = "Continue build"
+        tasks = ["test"]
+        gradle-args = ["--continue"]
+    }
+
 ### Scenario groups
 
 You can organize scenarios into groups to run related scenarios together. Define groups using the `scenario-groups` top-level element:
