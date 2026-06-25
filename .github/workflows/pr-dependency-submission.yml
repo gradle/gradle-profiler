@@ -17,6 +17,6 @@ jobs:
                   java-version: 17
 
             - name: Generate and save dependency graph
-              uses: gradle/actions/dependency-submission@v6.1.1
+              uses: gradle/actions/dependency-submission@v6.2.0
               with:
                   dependency-graph: generate-and-upload
