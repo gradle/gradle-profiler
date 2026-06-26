@@ -29,7 +29,7 @@ javaparser = { module = "com.github.javaparser:javaparser-core", version = "3.28
 jmc-flightrecorder = { module = "org.openjdk.jmc:flightrecorder", version = "8.3.1" }
 jopt = { module = "net.sf.jopt-simple:jopt-simple", version = "5.0.4" }
 junit-jupiter-api = { module = "org.junit.jupiter:junit-jupiter-api", version = "6.0.3" }
-junit-platform-launcher = { module = "org.junit.platform:junit-platform-launcher", version = "1.14.3" }
+junit-platform-launcher = { module = "org.junit.platform:junit-platform-launcher", version = "6.0.3" }
 kotlin-gradle-plugin = { module = "org.jetbrains.kotlin:kotlin-gradle-plugin", version = "2.1.20" }
 mockito-core = { module = "org.mockito:mockito-core", version = "5.23.0" }
 objenesis = { module = "org.objenesis:objenesis", version = "2.6" }
