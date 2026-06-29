@@ -9,7 +9,7 @@ repositories {
 }
 
 dependencies {
-    implementation(project(":perfetto-trace"))
+    implementation(project(":perfetto-converter-buildops"))
 
     testImplementation(libs.bundles.testDependencies)
 }
