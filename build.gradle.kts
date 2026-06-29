@@ -30,7 +30,7 @@ dependencies {
     implementation(libs.toolingApi)
     implementation(project(":client-protocol"))
     implementation(project(":scenario-definition"))
-    implementation(project(":perfetto-trace"))
+    implementation(project(":perfetto-converter-buildops"))
 
     implementation(libs.findbugs.annotations)
     implementation(libs.guava)
