@@ -5,6 +5,7 @@ import org.gradle.profiler.instrument.GradleInstrumentation;
 import org.gradle.profiler.ide.IdeType;
 import org.gradle.profiler.ide.tools.IdeSandboxCreator.IdeSandbox;
 
+import java.awt.GraphicsEnvironment;
 import java.io.File;
 import java.nio.file.Path;
 import java.util.ArrayList;
@@ -15,7 +16,7 @@ import java.util.Map;
 
 public class IdeLauncherProvider {
 
-    private static final boolean SHOULD_RUN_HEADLESS = Boolean.getBoolean("ide.tests.headless");
+    private static final boolean SHOULD_RUN_HEADLESS = Boolean.getBoolean("ide.tests.headless") || GraphicsEnvironment.isHeadless();
 
     private final IdeType ideType;
     private final Path ideInstallDir;
