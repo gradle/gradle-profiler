@@ -14,7 +14,7 @@ import org.jspecify.annotations.Nullable;
  * Collects thread lifetime information and emits Alive slices when the phase finishes.
  */
 public final class JfrThreadLifetimeProcessor implements JfrEventProcessor<Void> {
-    private static final String BUILD_OPERATION_EVENT = "org.gradle.BuildOperation";
+    private static final String BUILD_OPERATION_EVENT = "org.gradle.internal.operations.BuildOperation";
     private static final String EXECUTION_SAMPLE_EVENT = "jdk.ExecutionSample";
     private static final String NATIVE_METHOD_SAMPLE_EVENT = "jdk.NativeMethodSample";
     private static final String THREAD_START_EVENT = "jdk.ThreadStart";

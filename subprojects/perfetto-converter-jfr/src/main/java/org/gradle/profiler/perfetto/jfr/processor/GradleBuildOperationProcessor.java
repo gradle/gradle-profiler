@@ -30,7 +30,7 @@ import org.jspecify.annotations.Nullable;
  *
  * <p>Consumes:
  * <ul>
- *   <li>{@code org.gradle.BuildOperation}</li>
+ *   <li>{@code org.gradle.internal.operations.BuildOperation}</li>
  * </ul>
  */
 public final class GradleBuildOperationProcessor extends AbstractJfrEventProcessor {
@@ -42,7 +42,7 @@ public final class GradleBuildOperationProcessor extends AbstractJfrEventProcess
     private final List<BuildOperationRecord> bufferedEvents = new ArrayList<>();
 
     public GradleBuildOperationProcessor() {
-        super("org.gradle.BuildOperation");
+        super("org.gradle.internal.operations.BuildOperation");
     }
 
     @Override
@@ -60,6 +60,12 @@ public final class GradleBuildOperationProcessor extends AbstractJfrEventProcess
             resolveDisplayName(fields),
             failureDetails(fields)
         ));
+    }
+
+    // Visible for tests: JFR events cannot be synthesized with explicit timestamps, so tests inject
+    // records directly to exercise the layout and emission performed by finish().
+    void buffer(BuildOperationRecord record) {
+        bufferedEvents.add(record);
     }
 
     @Override
@@ -142,11 +148,14 @@ public final class GradleBuildOperationProcessor extends AbstractJfrEventProcess
         return "Build Operation";
     }
 
+    // The event carries no explicit failure flag: an operation failed if either failure field is set.
     @Nullable
     private static FailureDetails failureDetails(JfrRecordFields fields) {
-        return fields.booleanOrFalse("failed")
-            ? new FailureDetails(fields.nullableString("failureType"), fields.nullableString("failureMessage"))
-            : null;
+        String failureType = fields.nullableString("failureType");
+        String failureMessage = fields.nullableString("failureMessage");
+        return failureType == null && failureMessage == null
+            ? null
+            : new FailureDetails(failureType, failureMessage);
     }
 
     record BuildOperationRecord(
@@ -171,8 +180,7 @@ public final class GradleBuildOperationProcessor extends AbstractJfrEventProcess
                 .annotate("operationId", operationId)
                 .annotate("parentId", parentId);
             if (failure != null) {
-                slice.annotate("failed", true)
-                    .annotateIfPresent("failureType", failure.type())
+                slice.annotateIfPresent("failureType", failure.type())
                     .annotateIfPresent("failureMessage", failure.message());
             }
             slice.emitSlice();
