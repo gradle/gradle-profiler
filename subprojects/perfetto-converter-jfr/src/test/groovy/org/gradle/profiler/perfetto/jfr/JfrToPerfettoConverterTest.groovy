@@ -1,24 +1,23 @@
 package org.gradle.profiler.perfetto.jfr
+
+import org.gradle.profiler.perfetto.jfr.fixture.SyntheticRecording
 import perfetto.protos.BuiltinClock
 import perfetto.protos.Trace
 import perfetto.protos.TracePacket
 import perfetto.protos.TrackDescriptor
 import perfetto.protos.TrackEvent
-import spock.lang.Ignore
 import spock.lang.Specification
 import spock.lang.TempDir
 
 class JfrToPerfettoConverterTest extends Specification {
-    private static final String FIXTURE_NAME = "recording-cold-cc-hit.jfr"
-
     @TempDir
     File temporaryDirectory
 
-    @Ignore("Fixture recording-cold-cc-hit.jfr was recorded by a newer JDK; jdk.jfr cannot parse it on JDK 17. Regenerate the fixture (or synthesize one at runtime) to re-enable.")
-    def "converts a real JFR recording into representative Perfetto packets"() {
+    def "converts a synthesized JFR recording into representative Perfetto packets"() {
         given:
-        File jfrFile = copyFixtureToTemporaryDirectory()
-        File perfettoFile = new File(temporaryDirectory, "recording-cold-cc-hit.perfetto")
+        File jfrFile = new File(temporaryDirectory, "recording.jfr")
+        File perfettoFile = new File(temporaryDirectory, "recording.perfetto")
+        SyntheticRecording.writeConvertibleRecording(jfrFile)
 
         when:
         JfrToPerfettoConverter.convert(jfrFile, perfettoFile)
@@ -36,16 +35,13 @@ class JfrToPerfettoConverterTest extends Specification {
         }
 
         and:
-        sliceBeginNames(packets).contains("Check configuration cache fingerprint")
-        sliceBeginNames(packets).contains("Load configuration cache state")
-        sliceBeginNames(packets).contains("Run main tasks")
+        sliceBeginNames(packets).contains(SyntheticRecording.ROOT_BUILD_OPERATION)
+        sliceBeginNames(packets).contains(SyntheticRecording.CHILD_BUILD_OPERATION)
+        sliceBeginNames(packets).contains(SyntheticRecording.GC_SLICE_NAME)
         sliceBeginNames(packets).contains("Alive")
-        sliceBeginNames(packets).any { it.startsWith("GC ") }
 
         and:
         packets.any { it.hasTrackEvent() && it.trackEvent.type == TrackEvent.Type.TYPE_COUNTER }
-        packets.any { it.hasPerfSample() }
-        packets.any { it.hasInternedData() }
         packets.any {
             it.hasClockSnapshot() &&
                 it.clockSnapshot.primaryTraceClock == BuiltinClock.BUILTIN_CLOCK_REALTIME &&
@@ -53,11 +49,11 @@ class JfrToPerfettoConverterTest extends Specification {
         }
     }
 
-    @Ignore("Fixture recording-cold-cc-hit.jfr was recorded by a newer JDK; jdk.jfr cannot parse it on JDK 17. Regenerate the fixture (or synthesize one at runtime) to re-enable.")
-    def "retains expected build operation structure from the fixture recording"() {
+    def "retains the build operation structure of the synthesized recording"() {
         given:
-        File jfrFile = copyFixtureToTemporaryDirectory()
-        File perfettoFile = new File(temporaryDirectory, "recording-cold-cc-hit.perfetto")
+        File jfrFile = new File(temporaryDirectory, "recording.jfr")
+        File perfettoFile = new File(temporaryDirectory, "recording.perfetto")
+        SyntheticRecording.writeConvertibleRecording(jfrFile)
 
         when:
         JfrToPerfettoConverter.convert(jfrFile, perfettoFile)
@@ -66,31 +62,16 @@ class JfrToPerfettoConverterTest extends Specification {
 
         then:
         trackEvents.count {
-            it.type == TrackEvent.Type.TYPE_SLICE_BEGIN && it.name == "Check configuration cache fingerprint"
+            it.type == TrackEvent.Type.TYPE_SLICE_BEGIN && it.name == SyntheticRecording.ROOT_BUILD_OPERATION
         } == 1
         trackEvents.count {
-            it.type == TrackEvent.Type.TYPE_SLICE_BEGIN && it.name == "Task :help"
+            it.type == TrackEvent.Type.TYPE_SLICE_BEGIN && it.name == SyntheticRecording.CHILD_BUILD_OPERATION
         } == 1
         trackEvents.count {
-            it.type == TrackEvent.Type.TYPE_SLICE_BEGIN && it.name == "Execute displayHelp for :help"
+            it.type == TrackEvent.Type.TYPE_SLICE_BEGIN && it.name == SyntheticRecording.GC_SLICE_NAME
         } == 1
-        trackEvents.count { it.type == TrackEvent.Type.TYPE_SLICE_END } >= 21
-    }
-
-    private File copyFixtureToTemporaryDirectory() {
-        File target = new File(temporaryDirectory, FIXTURE_NAME)
-        target.bytes = fixtureBytes()
-        return target
-    }
-
-    private byte[] fixtureBytes() {
-        def resource = getClass().getResourceAsStream(FIXTURE_NAME)
-        assert resource != null: "Missing test fixture ${FIXTURE_NAME}"
-        try {
-            return resource.readAllBytes()
-        } finally {
-            resource.close()
-        }
+        // Two build operations, one GC slice and at least one Alive slice all get a matching end.
+        trackEvents.count { it.type == TrackEvent.Type.TYPE_SLICE_END } >= 4
     }
 
     private static Set<String> trackNames(List<TracePacket> packets) {

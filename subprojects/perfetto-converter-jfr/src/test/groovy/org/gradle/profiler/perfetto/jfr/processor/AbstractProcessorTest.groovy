@@ -1,6 +1,5 @@
 package org.gradle.profiler.perfetto.jfr.processor
 
-import java.time.Duration
 import jdk.jfr.consumer.RecordedEvent
 import jdk.jfr.consumer.RecordingFile
 import org.gradle.profiler.perfetto.jfr.PerfettoIdProvider
@@ -70,14 +69,5 @@ abstract class AbstractProcessorTest extends Specification {
         }
         assert events*.eventType*.name as Set == names
         events
-    }
-
-    protected static void sleepFor(Duration duration) {
-        try {
-            Thread.sleep(duration.toMillis())
-        } catch (InterruptedException ex) {
-            Thread.currentThread().interrupt()
-            throw new RuntimeException(ex)
-        }
     }
 }

@@ -1,11 +1,8 @@
 package org.gradle.profiler.perfetto.jfr.processor
 
-import jdk.jfr.Category
-import jdk.jfr.Event
-import jdk.jfr.Label
-import jdk.jfr.Name
 import jdk.jfr.consumer.RecordedEvent
-import jdk.jfr.Recording
+import org.gradle.profiler.perfetto.jfr.fixture.SyntheticHeapSummaryEvent
+import org.gradle.profiler.perfetto.jfr.fixture.SyntheticRecording
 import perfetto.protos.Trace
 import perfetto.protos.TrackEvent
 
@@ -42,36 +39,12 @@ class JfrHeapSummaryProcessorTest extends AbstractProcessorTest {
     }
 
     private static void writeSyntheticHeapSummaryRecording(File outputFile) {
-        registerSyntheticEventType()
-
-        Recording recording = new Recording()
-        try {
-            recording.enable("jdk.GCHeapSummary").withoutThreshold()
-            recording.start()
-
+        SyntheticRecording.record(outputFile, ["jdk.GCHeapSummary"]) {
             new SyntheticHeapSummaryEvent(
                 when: "After GC",
                 heapUsed: 512L * 1024L * 1024L,
                 heapCommitted: 1024L * 1024L * 1024L
             ).commit()
-
-            recording.stop()
-            recording.dump(outputFile.toPath())
-        } finally {
-            recording.close()
         }
-    }
-
-    private static void registerSyntheticEventType() {
-        jdk.jfr.EventType.getEventType(SyntheticHeapSummaryEvent)
-    }
-
-    @Name("jdk.GCHeapSummary")
-    @Label("Synthetic GC Heap Summary")
-    @Category(["JVM", "GC"])
-    static class SyntheticHeapSummaryEvent extends Event {
-        String when
-        long heapUsed
-        long heapCommitted
     }
 }

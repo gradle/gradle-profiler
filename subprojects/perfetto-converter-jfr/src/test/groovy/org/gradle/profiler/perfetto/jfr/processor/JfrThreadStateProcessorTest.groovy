@@ -1,12 +1,8 @@
 package org.gradle.profiler.perfetto.jfr.processor
 
-import java.time.Duration
-import jdk.jfr.Category
-import jdk.jfr.Event
-import jdk.jfr.Label
-import jdk.jfr.Name
 import jdk.jfr.consumer.RecordedEvent
-import jdk.jfr.Recording
+import org.gradle.profiler.perfetto.jfr.fixture.SyntheticThreadSleepEvent
+import org.gradle.profiler.perfetto.jfr.fixture.SyntheticRecording
 import perfetto.protos.Trace
 import perfetto.protos.TrackEvent
 
@@ -33,32 +29,10 @@ class JfrThreadStateProcessorTest extends AbstractProcessorTest {
     }
 
     private static void writeSyntheticThreadSleepRecording(File outputFile) {
-        registerSyntheticEventType()
-
-        Recording recording = new Recording()
-        try {
-            recording.enable("jdk.ThreadSleep").withoutThreshold()
-            recording.start()
-
+        SyntheticRecording.record(outputFile, ["jdk.ThreadSleep"]) {
             def event = new SyntheticThreadSleepEvent()
             event.begin()
-            sleepFor(Duration.ofMillis(5))
             event.commit()
-
-            recording.stop()
-            recording.dump(outputFile.toPath())
-        } finally {
-            recording.close()
         }
-    }
-
-    private static void registerSyntheticEventType() {
-        jdk.jfr.EventType.getEventType(SyntheticThreadSleepEvent)
-    }
-
-    @Name("jdk.ThreadSleep")
-    @Label("Synthetic Thread Sleep")
-    @Category(["JVM", "Threads"])
-    static class SyntheticThreadSleepEvent extends Event {
     }
 }

@@ -1,12 +1,8 @@
 package org.gradle.profiler.perfetto.jfr.processor
 
-import java.time.Duration
-import jdk.jfr.Category
-import jdk.jfr.Event
-import jdk.jfr.Label
-import jdk.jfr.Name
 import jdk.jfr.consumer.RecordedEvent
-import jdk.jfr.Recording
+import org.gradle.profiler.perfetto.jfr.fixture.SyntheticGarbageCollectionEvent
+import org.gradle.profiler.perfetto.jfr.fixture.SyntheticRecording
 import perfetto.protos.Trace
 import perfetto.protos.TrackEvent
 
@@ -39,37 +35,13 @@ class JfrGcProcessorTest extends AbstractProcessorTest {
     }
 
     private static void writeSyntheticGcRecording(File outputFile) {
-        registerSyntheticEventType()
-
-        Recording recording = new Recording()
-        try {
-            recording.enable("jdk.GarbageCollection").withoutThreshold()
-            recording.start()
-
+        SyntheticRecording.record(outputFile, ["jdk.GarbageCollection"]) {
             def event = new SyntheticGarbageCollectionEvent(
                 name: "Synthetic young collection",
                 cause: "Unit test"
             )
             event.begin()
-            sleepFor(Duration.ofMillis(5))
             event.commit()
-
-            recording.stop()
-            recording.dump(outputFile.toPath())
-        } finally {
-            recording.close()
         }
-    }
-
-    private static void registerSyntheticEventType() {
-        jdk.jfr.EventType.getEventType(SyntheticGarbageCollectionEvent)
-    }
-
-    @Name("jdk.GarbageCollection")
-    @Label("Synthetic Garbage Collection")
-    @Category(["JVM", "GC"])
-    static class SyntheticGarbageCollectionEvent extends Event {
-        String name
-        String cause
     }
 }

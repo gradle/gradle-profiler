@@ -1,20 +1,18 @@
 package org.gradle.profiler.perfetto.jfr
 
-import spock.lang.Ignore
+import org.gradle.profiler.perfetto.jfr.fixture.SyntheticRecording
 import spock.lang.Specification
 import spock.lang.TempDir
 
 class MainTest extends Specification {
-    private static final String FIXTURE_NAME = "recording-cold-cc-hit.jfr"
-
     @TempDir
     File temporaryDirectory
 
-    @Ignore("Fixture recording-cold-cc-hit.jfr was recorded by a newer JDK; jdk.jfr cannot parse it on JDK 17. Regenerate the fixture (or synthesize one at runtime) to re-enable.")
     def "converts to the default perfetto output path when only the JFR input is provided"() {
         given:
-        File inputFile = copyFixtureToTemporaryDirectory()
-        File outputFile = new File(temporaryDirectory, "recording-cold-cc-hit.perfetto")
+        File inputFile = new File(temporaryDirectory, "recording.jfr")
+        File outputFile = new File(temporaryDirectory, "recording.perfetto")
+        SyntheticRecording.writeConvertibleRecording(inputFile)
 
         when:
         int exitCode = Main.run([inputFile.absolutePath] as String[])
@@ -24,11 +22,11 @@ class MainTest extends Specification {
         outputFile.isFile()
     }
 
-    @Ignore("Fixture recording-cold-cc-hit.jfr was recorded by a newer JDK; jdk.jfr cannot parse it on JDK 17. Regenerate the fixture (or synthesize one at runtime) to re-enable.")
     def "converts to an explicit output path when one is provided"() {
         given:
-        File inputFile = copyFixtureToTemporaryDirectory()
+        File inputFile = new File(temporaryDirectory, "recording.jfr")
         File outputFile = new File(temporaryDirectory, "custom-output.perfetto")
+        SyntheticRecording.writeConvertibleRecording(inputFile)
 
         when:
         int exitCode = Main.run([inputFile.absolutePath, outputFile.absolutePath] as String[])
@@ -51,19 +49,19 @@ class MainTest extends Specification {
         !new File(temporaryDirectory, "not-a-recording.perfetto").exists()
     }
 
-    private File copyFixtureToTemporaryDirectory() {
-        File target = new File(temporaryDirectory, FIXTURE_NAME)
-        target.bytes = fixtureBytes()
-        return target
+    def "rejects a missing input file"() {
+        when:
+        int exitCode = Main.run([new File(temporaryDirectory, "missing.jfr").absolutePath] as String[])
+
+        then:
+        exitCode == 1
     }
 
-    private byte[] fixtureBytes() {
-        def resource = getClass().getResourceAsStream(FIXTURE_NAME)
-        assert resource != null: "Missing test fixture ${FIXTURE_NAME}"
-        try {
-            return resource.readAllBytes()
-        } finally {
-            resource.close()
-        }
+    def "rejects invalid argument counts"() {
+        expect:
+        Main.run(arguments as String[]) == 1
+
+        where:
+        arguments << [[], ["a.jfr", "out.perfetto", "extra"]]
     }
 }
