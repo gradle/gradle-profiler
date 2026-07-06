@@ -20,19 +20,25 @@ public final class JfrPidDiscoveryProcessor implements JfrEventProcessor<JfrPidD
     }
 
     @Override
-    public boolean process(RecordedEvent event, @Nullable ConverterSession context) throws IOException {
+    public void process(RecordedEvent event, @Nullable ConverterSession context) throws IOException {
         if (startTimestampNs == null) {
             startTimestampNs = toEpochNanos(event.getStartTime());
         }
         if (!JVM_INFO_EVENT.equals(event.getEventType().getName()) || !event.hasField("pid")) {
-            return false;
+            return;
         }
         long recordedPid = event.getLong("pid");
         if (recordedPid <= 0 || recordedPid > Integer.MAX_VALUE) {
-            return false;
+            return;
         }
         pid = (int) recordedPid;
-        return true;
+    }
+
+    /**
+     * True once the PID has been discovered and no further events need to be read.
+     */
+    public boolean isComplete() {
+        return pid != null;
     }
 
     @Override

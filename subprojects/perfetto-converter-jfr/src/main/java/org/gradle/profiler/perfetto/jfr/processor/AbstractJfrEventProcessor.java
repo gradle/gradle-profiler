@@ -13,15 +13,14 @@ abstract class AbstractJfrEventProcessor implements JfrEventProcessor<Void> {
     }
 
     @Override
-    public final boolean process(RecordedEvent event, @Nullable ConverterSession context) throws IOException {
+    public final void process(RecordedEvent event, @Nullable ConverterSession context) throws IOException {
         if (!eventName.equals(event.getEventType().getName())) {
-            return false;
+            return;
         }
         if (context == null) {
             throw new IllegalArgumentException("ConverterSession is required to process " + eventName);
         }
         processMatchingEvent(event, context);
-        return false;
     }
 
     protected abstract void processMatchingEvent(RecordedEvent event, ConverterSession context) throws IOException;

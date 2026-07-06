@@ -35,15 +35,15 @@ public final class JfrSampleProcessor implements JfrEventProcessor<Void> {
     }
 
     @Override
-    public boolean process(RecordedEvent event, ConverterSession context) throws IOException {
+    public void process(RecordedEvent event, ConverterSession context) throws IOException {
         String eventName = event.getEventType().getName();
         if (!EXECUTION_SAMPLE_EVENT.equals(eventName) && !NATIVE_METHOD_SAMPLE_EVENT.equals(eventName)) {
-            return false;
+            return;
         }
 
         ThreadIdentity thread = resolveSampleThread(event);
         if (thread == null) {
-            return false;
+            return;
         }
 
         PerfettoCallstackInterner.InterningResult interningResult = context.interning().internCallstack(event.getStackTrace());
@@ -51,7 +51,7 @@ public final class JfrSampleProcessor implements JfrEventProcessor<Void> {
             context.emitter().emitInternedData(interningResult.delta());
         }
         if (interningResult.callstackIid() <= 0) {
-            return false;
+            return;
         }
 
         long timestampNs = context.toEpochNanos(event.getStartTime());
@@ -61,7 +61,6 @@ public final class JfrSampleProcessor implements JfrEventProcessor<Void> {
             .setCallstackIid(interningResult.callstackIid())
             .setTimebaseCount(1L)
             .build());
-        return false;
     }
 
     @Nullable

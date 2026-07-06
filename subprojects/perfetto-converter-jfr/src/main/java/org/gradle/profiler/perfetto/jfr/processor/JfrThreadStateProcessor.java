@@ -30,22 +30,21 @@ public final class JfrThreadStateProcessor implements JfrEventProcessor<Void> {
     );
 
     @Override
-    public boolean process(RecordedEvent event, ConverterSession context) throws IOException {
+    public void process(RecordedEvent event, ConverterSession context) throws IOException {
         String label = EVENT_LABELS.get(event.getEventType().getName());
         if (label == null) {
-            return false;
+            return;
         }
 
         ThreadIdentity thread = ThreadIdentity.from(event.getThread());
         Long trackId = context.trackRegistry().ensureThreadTrack(thread);
         if (trackId == null) {
-            return false;
+            return;
         }
 
         context.trackEvent(event)
             .onTrack(trackId)
             .name(label)
             .emitSlice();
-        return false;
     }
 }

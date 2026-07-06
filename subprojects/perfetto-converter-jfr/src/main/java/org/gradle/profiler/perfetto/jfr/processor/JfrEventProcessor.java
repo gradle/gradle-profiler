@@ -27,9 +27,8 @@ public interface JfrEventProcessor<R> {
      *
      * @param event the JFR event to process
      * @param context the conversion session providing access to shared state and the trace emitter
-     * @return true if the processing is complete and the processor can be discarded, or false if it should continue processing more events
      */
-    boolean process(RecordedEvent event, @Nullable ConverterSession context) throws IOException;
+    void process(RecordedEvent event, @Nullable ConverterSession context) throws IOException;
 
     /**
      * Finishes processing and optionally returns a result.

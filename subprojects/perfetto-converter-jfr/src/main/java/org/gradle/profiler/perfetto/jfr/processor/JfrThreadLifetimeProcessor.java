@@ -31,29 +31,28 @@ public final class JfrThreadLifetimeProcessor implements JfrEventProcessor<Void>
     private final Map<Long, ThreadFacts> factsByThread = new LinkedHashMap<>();
 
     @Override
-    public boolean process(RecordedEvent event, @Nullable ConverterSession context) throws IOException {
+    public void process(RecordedEvent event, @Nullable ConverterSession context) throws IOException {
         String eventName = event.getEventType().getName();
         if (BUILD_OPERATION_EVENT.equals(eventName)) {
             observeActivity(ThreadIdentity.from(event.getThread()), toEpochNanos(event, context, true), toEpochNanos(event, context, false));
-            return false;
+            return;
         }
         if (EXECUTION_SAMPLE_EVENT.equals(eventName) || NATIVE_METHOD_SAMPLE_EVENT.equals(eventName)) {
             long timestampNs = toEpochNanos(event, context, true);
             observeActivity(resolveSampleThread(event), timestampNs, timestampNs);
-            return false;
+            return;
         }
         if (THREAD_STATE_EVENTS.containsKey(eventName)) {
             observeActivity(ThreadIdentity.from(event.getThread()), toEpochNanos(event, context, true), toEpochNanos(event, context, false));
-            return false;
+            return;
         }
         if (THREAD_START_EVENT.equals(eventName)) {
             observeThreadStart(ThreadIdentity.from(resolveLifecycleThread(event)), toEpochNanos(event, context, true));
-            return false;
+            return;
         }
         if (THREAD_END_EVENT.equals(eventName)) {
             observeThreadEnd(ThreadIdentity.from(resolveLifecycleThread(event)), toEpochNanos(event, context, true));
         }
-        return false;
     }
 
     @Override

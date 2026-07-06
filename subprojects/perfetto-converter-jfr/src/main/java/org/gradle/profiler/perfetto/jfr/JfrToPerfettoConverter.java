@@ -3,8 +3,6 @@ package org.gradle.profiler.perfetto.jfr;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Path;
-import java.util.ArrayList;
-import java.util.Iterator;
 import java.util.List;
 import jdk.jfr.consumer.RecordedEvent;
 import jdk.jfr.consumer.RecordingFile;
@@ -32,8 +30,7 @@ public final class JfrToPerfettoConverter {
     public static void convert(File jfrInput, File perfettoOutput) {
         // Getting the PID from the JFR.
         // This requires a separate pass, hence the separaton
-        JfrPidDiscoveryProcessor pidProcessor = new JfrPidDiscoveryProcessor(jfrInput.toPath());
-        var plan = runProcessor(jfrInput.toPath(), pidProcessor, "Failed to discover metadata from ");
+        var plan = discoverConversionPlan(jfrInput.toPath());
 
         // Setting up the output infrastructure.
         try (PerfettoTraceWriter writer = new PerfettoTraceWriter(perfettoOutput.toPath())) {
@@ -64,15 +61,10 @@ public final class JfrToPerfettoConverter {
             for (JfrEventProcessor<?> processor : processors) {
                 processor.start(context);
             }
-            // Processors that report completion are dropped from the fan-out; finish() still runs for all.
-            List<JfrEventProcessor<?>> active = new ArrayList<>(processors);
-            while (recordingFile.hasMoreEvents() && !active.isEmpty()) {
+            while (recordingFile.hasMoreEvents()) {
                 RecordedEvent event = recordingFile.readEvent();
-                Iterator<JfrEventProcessor<?>> iterator = active.iterator();
-                while (iterator.hasNext()) {
-                    if (iterator.next().process(event, context)) {
-                        iterator.remove();
-                    }
+                for (JfrEventProcessor<?> processor : processors) {
+                    processor.process(event, context);
                 }
             }
             for (JfrEventProcessor<?> processor : processors) {
@@ -83,18 +75,17 @@ public final class JfrToPerfettoConverter {
         }
     }
 
-    private static <R> R runProcessor(Path input, JfrEventProcessor<R> processor, String failurePrefix) {
+    private static JfrPidDiscoveryProcessor.ConversionPlan discoverConversionPlan(Path input) {
+        JfrPidDiscoveryProcessor processor = new JfrPidDiscoveryProcessor(input);
         try (RecordingFile recordingFile = new RecordingFile(input)) {
             processor.start(null);
-            while (recordingFile.hasMoreEvents()) {
-                if (processor.process(recordingFile.readEvent(), null)) {
-                    break;
-                }
+            while (recordingFile.hasMoreEvents() && !processor.isComplete()) {
+                processor.process(recordingFile.readEvent(), null);
             }
             return processor.finish(null)
-                .orElseThrow(() -> new IllegalStateException("Processor did not produce a result for " + input));
+                .orElseThrow(() -> new IllegalStateException("Recording holds no usable metadata: " + input));
         } catch (IOException ex) {
-            throw new RuntimeException(failurePrefix + input, ex);
+            throw new RuntimeException("Failed to discover metadata from " + input, ex);
         }
     }
 
