@@ -3,12 +3,12 @@ groovy = "4.0.29"
 protobuf = "3.21.12"
 spock = "2.4-groovy-4.0"
 
-# Quail 1 Canary 3 (2026.1.1.3)
-testAndroidStudioVersion = "2026.1.1.3"
+# Quail 1 Patch 2 (2026.1.1.10)
+testAndroidStudioVersion = "2026.1.1.10"
 # Download artifact suffix changed from version to codename starting with Panda
-testAndroidStudioCodename = "quail1-canary3"
+testAndroidStudioCodename = "quail1-patch2"
 testAndroidSdkVersion = "9.1.0"
-testIntellijVersion = "2026.1.1"
+testIntellijVersion = "2026.1.4"
 intellijPlatformVersion = "2026.1"
 minimalSupportedPlatformCode = "261"
 jetbrainsAndroidPluginVersion = "261.23567.138"
