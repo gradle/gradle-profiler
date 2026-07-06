@@ -4,8 +4,11 @@ import java.io.IOException;
 import perfetto.protos.BuiltinClock;
 import perfetto.protos.ClockSnapshot;
 import perfetto.protos.InternedData;
+import perfetto.protos.PerfEvents;
 import perfetto.protos.PerfSample;
+import perfetto.protos.PerfSampleDefaults;
 import perfetto.protos.TracePacket;
+import perfetto.protos.TracePacketDefaults;
 import perfetto.protos.TrackDescriptor;
 import perfetto.protos.TrackEvent;
 
@@ -43,6 +46,18 @@ public final class PerfettoTraceEmitter {
                     .setClockId(BuiltinClock.BUILTIN_CLOCK_REALTIME_VALUE)
                     .setTimestamp(timestampNs))
                 .setPrimaryTraceClock(BuiltinClock.BUILTIN_CLOCK_REALTIME))
+            .build());
+    }
+
+    // Names the perf sample timebase, so the UI's weighted flamegraph mode shows "samples" instead
+    // of assuming a kernel cpu-clock counter. Must be written before any perf sample on the sequence.
+    public void emitPerfSampleDefaults() throws IOException {
+        writer.write(TracePacket.newBuilder()
+            .setTrustedPacketSequenceId(PerfettoTraceWriter.PACKET_SEQUENCE_ID)
+            .setTracePacketDefaults(TracePacketDefaults.newBuilder()
+                .setPerfSampleDefaults(PerfSampleDefaults.newBuilder()
+                    .setTimebase(PerfEvents.Timebase.newBuilder()
+                        .setName("samples"))))
             .build());
     }
 

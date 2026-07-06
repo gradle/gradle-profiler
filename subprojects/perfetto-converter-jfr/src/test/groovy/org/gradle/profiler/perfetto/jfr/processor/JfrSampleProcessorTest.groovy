@@ -27,9 +27,30 @@ class JfrSampleProcessorTest extends AbstractProcessorTest {
         perfSamples[0].pid == PID
         perfSamples[0].tid == (int) sampledThread.getOSThreadId()
         perfSamples[0].callstackIid > 0
+        // JFR samples are point-in-time observations, so each one counts as exactly one sample.
+        perfSamples[0].timebaseCount == 1L
 
         and:
         trace.packetList.count { it.hasInternedData() } == 1
+    }
+
+    def "names the sample timebase once, before the first perf sample"() {
+        given:
+        File jfrFile = temporaryFile("execution-samples.jfr")
+        writeExecutionSampleRecording(jfrFile)
+        List<RecordedEvent> sampleEvents = readEvents(jfrFile, "jdk.ExecutionSample")
+
+        when:
+        Trace trace = processEvents(new JfrSampleProcessor(), sampleEvents, "execution-samples.perfetto")
+        def packets = trace.packetList
+        def defaultsIndexes = packets.findIndexValues { it.hasTracePacketDefaults() }
+        def firstSampleIndex = packets.findIndexOf { it.hasPerfSample() }
+
+        then:
+        packets.count { it.hasPerfSample() } > 1
+        defaultsIndexes.size() == 1
+        defaultsIndexes[0] < firstSampleIndex
+        packets[(int) defaultsIndexes[0]].tracePacketDefaults.perfSampleDefaults.timebase.name == "samples"
     }
 
     private static void writeExecutionSampleRecording(File outputFile) {

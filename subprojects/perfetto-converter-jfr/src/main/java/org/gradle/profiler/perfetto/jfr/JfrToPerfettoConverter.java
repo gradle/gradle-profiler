@@ -3,6 +3,10 @@ package org.gradle.profiler.perfetto.jfr;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Path;
+import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.List;
+import jdk.jfr.consumer.RecordedEvent;
 import jdk.jfr.consumer.RecordingFile;
 import org.gradle.profiler.perfetto.jfr.processor.GradleBuildOperationProcessor;
 import org.gradle.profiler.perfetto.jfr.processor.JfrEventProcessor;
@@ -17,7 +21,8 @@ import org.gradle.profiler.perfetto.jfr.processor.JfrThreadStateProcessor;
 /**
  * Coordinates the end-to-end translation of a JFR recording into a Perfetto trace.
  *
- * <p>It discovers recording metadata, then runs the event processors that emit the converted trace.
+ * <p>It discovers recording metadata in a first pass, then streams the recording once through all
+ * event processors that emit the converted trace.
  */
 @SuppressWarnings("RedundantExplicitVariableType")
 public final class JfrToPerfettoConverter {
@@ -26,6 +31,7 @@ public final class JfrToPerfettoConverter {
 
     public static void convert(File jfrInput, File perfettoOutput) {
         // Getting the PID from the JFR.
+        // This requires a separate pass, hence the separaton
         JfrPidDiscoveryProcessor pidProcessor = new JfrPidDiscoveryProcessor(jfrInput.toPath());
         var plan = runProcessor(jfrInput.toPath(), pidProcessor, "Failed to discover metadata from ");
 
@@ -37,40 +43,49 @@ public final class JfrToPerfettoConverter {
             emitter.emitPrimaryRealtimeClockSnapshot(plan.startTimestampNs());
             ConverterSession context = new ConverterSession(plan.pid(), idProvider, emitter);
 
-            // Collecting and emitting thread information.
-            JfrThreadLifetimeProcessor threadProcessor = new JfrThreadLifetimeProcessor();
-            runProcessor(plan.input(), context, threadProcessor, "Failed to emit thread lifetime data from ");
-
-            // Emitting build operation output.
-            GradleBuildOperationProcessor buildOperationProcessor = new GradleBuildOperationProcessor();
-            runProcessor(plan.input(), context, buildOperationProcessor, "Failed to emit build operations from ");
-
-            // Emitting CPU counters.
-            JfrCpuUsageProcessor cpuProcessor = new JfrCpuUsageProcessor();
-            runProcessor(plan.input(), context, cpuProcessor, "Failed to emit CPU usage from ");
-
-            // Emitting GC slices.
-            JfrGcProcessor gcProcessor = new JfrGcProcessor();
-            runProcessor(plan.input(), context, gcProcessor, "Failed to emit GC data from ");
-
-            // Emitting heap counters.
-            JfrHeapSummaryProcessor heapProcessor = new JfrHeapSummaryProcessor();
-            runProcessor(plan.input(), context, heapProcessor, "Failed to emit heap summary data from ");
-
-            // Emitting sampled stack traces.
-            JfrSampleProcessor sampleProcessor = new JfrSampleProcessor();
-            runProcessor(plan.input(), context, sampleProcessor, "Failed to emit samples from ");
-
-            // Emitting thread state slices.
-            JfrThreadStateProcessor threadStateProcessor = new JfrThreadStateProcessor();
-            runProcessor(plan.input(), context, threadStateProcessor, "Failed to emit thread state data from ");
+            // Streaming the recording once through all processors.
+            List<JfrEventProcessor<?>> processors = List.of(
+                new JfrThreadLifetimeProcessor(),
+                new GradleBuildOperationProcessor(),
+                new JfrCpuUsageProcessor(),
+                new JfrGcProcessor(),
+                new JfrHeapSummaryProcessor(),
+                new JfrSampleProcessor(),
+                new JfrThreadStateProcessor()
+            );
+            runProcessors(plan.input(), context, processors);
         } catch (IOException ex) {
             throw new RuntimeException("Failed to convert JFR recording " + jfrInput.getAbsolutePath(), ex);
         }
     }
 
+    private static void runProcessors(Path input, ConverterSession context, List<JfrEventProcessor<?>> processors) {
+        try (RecordingFile recordingFile = new RecordingFile(input)) {
+            for (JfrEventProcessor<?> processor : processors) {
+                processor.start(context);
+            }
+            // Processors that report completion are dropped from the fan-out; finish() still runs for all.
+            List<JfrEventProcessor<?>> active = new ArrayList<>(processors);
+            while (recordingFile.hasMoreEvents() && !active.isEmpty()) {
+                RecordedEvent event = recordingFile.readEvent();
+                Iterator<JfrEventProcessor<?>> iterator = active.iterator();
+                while (iterator.hasNext()) {
+                    if (iterator.next().process(event, context)) {
+                        iterator.remove();
+                    }
+                }
+            }
+            for (JfrEventProcessor<?> processor : processors) {
+                processor.finish(context);
+            }
+        } catch (IOException ex) {
+            throw new RuntimeException("Failed to emit trace data from " + input, ex);
+        }
+    }
+
     private static <R> R runProcessor(Path input, JfrEventProcessor<R> processor, String failurePrefix) {
         try (RecordingFile recordingFile = new RecordingFile(input)) {
+            processor.start(null);
             while (recordingFile.hasMoreEvents()) {
                 if (processor.process(recordingFile.readEvent(), null)) {
                     break;
@@ -83,16 +98,4 @@ public final class JfrToPerfettoConverter {
         }
     }
 
-    private static void runProcessor(Path input, ConverterSession context, JfrEventProcessor<?> processor, String failurePrefix) {
-        try (RecordingFile recordingFile = new RecordingFile(input)) {
-            while (recordingFile.hasMoreEvents()) {
-                if (processor.process(recordingFile.readEvent(), context)) {
-                    break;
-                }
-            }
-            processor.finish(context);
-        } catch (IOException ex) {
-            throw new RuntimeException(failurePrefix + input, ex);
-        }
-    }
 }

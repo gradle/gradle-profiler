@@ -30,6 +30,7 @@ abstract class AbstractProcessorTest extends Specification {
         try {
             def emitter = new PerfettoTraceEmitter(writer)
             def context = new ConverterSession(PID, new PerfettoIdProvider(), emitter)
+            processor.start(context)
             events.each { processor.process(it, context) }
             processor.finish(context)
         } finally {
@@ -38,12 +39,12 @@ abstract class AbstractProcessorTest extends Specification {
         Trace.parseFrom(traceFile.bytes)
     }
 
-    protected static RecordedEvent readSingleEvent(File recordingFile, String eventName) {
+    protected static RecordedEvent readSingleEvent(File recordingFile, String eventName, Closure<Boolean> predicate = { true }) {
         RecordingFile recording = new RecordingFile(recordingFile.toPath())
         try {
             while (recording.hasMoreEvents()) {
                 RecordedEvent event = recording.readEvent()
-                if (event.eventType.name == eventName) {
+                if (event.eventType.name == eventName && predicate(event)) {
                     return event
                 }
             }

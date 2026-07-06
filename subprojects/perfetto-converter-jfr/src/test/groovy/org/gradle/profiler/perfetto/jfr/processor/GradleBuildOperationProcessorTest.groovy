@@ -106,7 +106,13 @@ class GradleBuildOperationProcessorTest extends AbstractProcessorTest {
         ]
 
         expect:
-        lanesByOperation(operations) == [1L: 1, 2L: 1, 3L: 2, 4L: 1, 5L: 2]
+        lanesByOperation(operations) == [
+            1L: 1,
+            2L: 1,
+            3L: 2,
+            4L: 1,
+            5L: 2
+        ]
     }
 
     def "reuses a lane once the operation occupying it has ended"() {

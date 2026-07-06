@@ -6,10 +6,16 @@ import jdk.jfr.consumer.RecordedThread;
 import org.gradle.profiler.perfetto.jfr.ConverterSession;
 import org.gradle.profiler.perfetto.jfr.PerfettoCallstackInterner;
 import org.gradle.profiler.perfetto.jfr.ThreadIdentity;
+import org.jspecify.annotations.Nullable;
 import perfetto.protos.PerfSample;
 
 /**
  * Converts sampled stack traces into Perfetto perf samples with interned callstacks.
+ *
+ * <p>Each sample carries a timebase count of 1, so Perfetto's weighted flamegraph mode aggregates
+ * plain sample counts. JFR samples are point-in-time observations without a recorded sampling
+ * period, so there is no duration to attribute to them; the sequence's perf sample defaults name
+ * the timebase "samples" to make the unit explicit in the UI.
  *
  * <p>Consumes:
  * <ul>
@@ -20,6 +26,13 @@ import perfetto.protos.PerfSample;
 public final class JfrSampleProcessor implements JfrEventProcessor<Void> {
     private static final String EXECUTION_SAMPLE_EVENT = "jdk.ExecutionSample";
     private static final String NATIVE_METHOD_SAMPLE_EVENT = "jdk.NativeMethodSample";
+
+    @Override
+    public void start(@Nullable ConverterSession context) throws IOException {
+        if (context != null) {
+            context.emitter().emitPerfSampleDefaults();
+        }
+    }
 
     @Override
     public boolean process(RecordedEvent event, ConverterSession context) throws IOException {
@@ -46,10 +59,12 @@ public final class JfrSampleProcessor implements JfrEventProcessor<Void> {
             .setPid(context.pid())
             .setTid(thread.tid())
             .setCallstackIid(interningResult.callstackIid())
+            .setTimebaseCount(1L)
             .build());
         return false;
     }
 
+    @Nullable
     private static ThreadIdentity resolveSampleThread(RecordedEvent event) {
         if (event.hasField("sampledThread")) {
             try {

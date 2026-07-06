@@ -14,6 +14,15 @@ import org.jspecify.annotations.Nullable;
 public interface JfrEventProcessor<R> {
 
     /**
+     * Starts processing, before any events are seen.
+     * This allows the processor to emit trace data that must precede its event output, such as sequence-scoped defaults.
+     *
+     * @param context the conversion session providing access to shared state and the trace emitter
+     */
+    default void start(@Nullable ConverterSession context) throws IOException {
+    }
+
+    /**
      * Processes a single JFR event, potentially emitting a Perfetto trace event using the provided context.
      *
      * @param event the JFR event to process
