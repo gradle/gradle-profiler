@@ -26,7 +26,6 @@ dependencies {
     }
 }
 
-// IntelliJ 2026.1 is compiled for Java 21
 kotlin {
     jvmToolchain(21)
 }
