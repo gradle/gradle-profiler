@@ -8,6 +8,7 @@ import org.gradle.api.tasks.Input
 import org.gradle.api.tasks.OutputDirectory
 import org.gradle.api.tasks.TaskAction
 import org.gradle.work.DisableCachingByDefault
+import java.net.HttpURLConnection
 import java.net.URI
 import java.security.MessageDigest
 
@@ -40,7 +41,15 @@ abstract class FetchPerfettoProtoTask : DefaultTask() {
         val url =
             "https://raw.githubusercontent.com/google/perfetto/$version/protos/perfetto/trace/perfetto_trace.proto"
 
-        val bytes = URI.create(url).toURL().openStream().use { it.readBytes() }
+        val connection = URI.create(url).toURL().openConnection() as HttpURLConnection
+        val bytes = try {
+            if (connection.responseCode != HttpURLConnection.HTTP_OK) {
+                throw GradleException("Failed to download $url: HTTP ${connection.responseCode}")
+            }
+            connection.inputStream.use { it.readBytes() }
+        } finally {
+            connection.disconnect()
+        }
         val actualSha = MessageDigest.getInstance("SHA-256").digest(bytes)
             .joinToString("") { "%02x".format(it) }
         if (actualSha != expectedSha) {
@@ -53,6 +62,12 @@ abstract class FetchPerfettoProtoTask : DefaultTask() {
         // generated classes (e.g. perfetto.protos.TracePacket), so we inject it after verification.
         val patched = String(bytes, Charsets.UTF_8)
             .replaceFirst("package perfetto.protos;", "package perfetto.protos;\noption java_multiple_files = true;")
+        if (!patched.contains("option java_multiple_files = true;")) {
+            throw GradleException(
+                "Could not inject 'java_multiple_files' into $url; the 'package perfetto.protos;' " +
+                    "declaration may have changed upstream. Update FetchPerfettoProtoTask accordingly."
+            )
+        }
 
         val target = outputDir.get().file("perfetto/trace/perfetto_trace.proto").asFile
         target.parentFile.mkdirs()
