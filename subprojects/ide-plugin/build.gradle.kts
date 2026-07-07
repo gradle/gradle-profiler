@@ -21,13 +21,11 @@ dependencies {
         intellijIdea(libs.versions.intellijPlatformVersion)
         bundledPlugin("com.intellij.java")
         bundledPlugin("com.intellij.gradle")
-        bundledPlugin("org.jetbrains.plugins.gradle")
         // JB Android plugin version may need to be bumped in case of IntelliJ platform version bump
         plugin("org.jetbrains.android", libs.versions.jetbrainsAndroidPluginVersion.get())
     }
 }
 
-// IntelliJ 2025.3 is compiled for Java 21
 kotlin {
     jvmToolchain(21)
 }
