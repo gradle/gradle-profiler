@@ -1,6 +1,7 @@
 package org.gradle.profiler.report;
 
 import org.gradle.profiler.InvocationSettings;
+import org.gradle.profiler.Phase;
 import org.gradle.profiler.result.BuildInvocationResult;
 import org.gradle.profiler.result.Sample;
 
@@ -9,9 +10,11 @@ import java.io.File;
 import java.io.IOException;
 import java.text.DecimalFormat;
 import java.text.DecimalFormatSymbols;
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
-import java.util.stream.Collectors;
+import java.util.Map;
 
 public class CsvGenerator extends AbstractGenerator {
     private final Format format;
@@ -74,36 +77,34 @@ public class CsvGenerator extends AbstractGenerator {
         }
         writer.newLine();
 
-        int maxRows = allScenarios.stream().mapToInt(v -> v.getResults().size()).max().orElse(0);
-        for (int row = 0; row < maxRows; row++) {
-            for (BuildScenarioResult<?> scenario : allScenarios) {
-                List<? extends BuildInvocationResult> results = scenario.getResults();
-                if (row >= results.size()) {
-                    continue;
-                }
-                BuildInvocationResult buildResult = results.get(row);
-                writer.write(buildResult.getBuildContext().getDisplayName());
-                break;
-            }
-            for (BuildScenarioResult<?> scenario : allScenarios) {
-                writeWideRow(writer, row, scenario);
+        List<WideScenarioResults<?>> resultsByScenario = new ArrayList<>();
+        for (BuildScenarioResult<?> scenario : allScenarios) {
+            resultsByScenario.add(new WideScenarioResults<>(scenario));
+        }
+        int maxWarmUps = resultsByScenario.stream().mapToInt(WideScenarioResults::getWarmUpCount).max().orElse(0);
+        int maxMeasured = resultsByScenario.stream().mapToInt(WideScenarioResults::getMeasureCount).max().orElse(0);
+        writeWideRows(writer, resultsByScenario, Phase.WARM_UP, maxWarmUps);
+        writeWideRows(writer, resultsByScenario, Phase.MEASURE, maxMeasured);
+    }
+
+    private void writeWideRows(BufferedWriter writer, List<WideScenarioResults<?>> resultsByScenario, Phase phase, int maxRows) throws IOException {
+        for (int iteration = 1; iteration <= maxRows; iteration++) {
+            writer.write(phase.displayBuildNumber(iteration));
+            for (WideScenarioResults<?> scenarioResults : resultsByScenario) {
+                writeWideRow(writer, phase, iteration, scenarioResults);
             }
             writer.newLine();
         }
     }
 
-    private <T extends BuildInvocationResult> void writeWideRow(BufferedWriter writer, int row, BuildScenarioResult<T> scenario) throws IOException {
-        List<T> results = scenario.getResults();
-        writer.write(",");
-        if (row >= results.size()) {
-            return;
+    private <T extends BuildInvocationResult> void writeWideRow(BufferedWriter writer, Phase phase, int iteration, WideScenarioResults<T> scenarioResults) throws IOException {
+        T buildResult = scenarioResults.getResult(phase, iteration);
+        for (Sample<? super T> sample : scenarioResults.getSamples()) {
+            writer.write(",");
+            if (buildResult != null) {
+                writer.write(DOUBLE_FORMAT.format(sample.extractValue(buildResult)));
+            }
         }
-        T buildResult = results.get(row);
-        writer.write(scenario.getSamples().stream()
-            .map(sample -> sample.extractValue(buildResult))
-            .map(DOUBLE_FORMAT::format)
-            .collect(Collectors.joining(","))
-        );
     }
 
     private void writeLong(BufferedWriter writer, List<? extends BuildScenarioResult<?>> allScenarios) throws IOException {
@@ -134,6 +135,70 @@ public class CsvGenerator extends AbstractGenerator {
                 writer.write(String.valueOf(sample.extractTotalCountFrom(result)));
                 writer.newLine();
             }
+        }
+    }
+
+    private static class WideScenarioResults<T extends BuildInvocationResult> {
+        private final List<Sample<? super T>> samples;
+        private final Map<BuildKey, T> results = new HashMap<>();
+        private int warmUpCount;
+        private int measureCount;
+
+        WideScenarioResults(BuildScenarioResult<T> scenario) {
+            this.samples = scenario.getSamples();
+            for (T result : scenario.getResults()) {
+                Phase phase = result.getBuildContext().getPhase();
+                int iteration = result.getBuildContext().getIteration();
+                results.put(new BuildKey(phase, iteration), result);
+                if (phase == Phase.WARM_UP) {
+                    warmUpCount = Math.max(warmUpCount, iteration);
+                } else if (phase == Phase.MEASURE) {
+                    measureCount = Math.max(measureCount, iteration);
+                }
+            }
+        }
+
+        List<Sample<? super T>> getSamples() {
+            return samples;
+        }
+
+        T getResult(Phase phase, int iteration) {
+            return results.get(new BuildKey(phase, iteration));
+        }
+
+        int getWarmUpCount() {
+            return warmUpCount;
+        }
+
+        int getMeasureCount() {
+            return measureCount;
+        }
+    }
+
+    private static class BuildKey {
+        private final Phase phase;
+        private final int iteration;
+
+        BuildKey(Phase phase, int iteration) {
+            this.phase = phase;
+            this.iteration = iteration;
+        }
+
+        @Override
+        public boolean equals(Object obj) {
+            if (this == obj) {
+                return true;
+            }
+            if (!(obj instanceof BuildKey)) {
+                return false;
+            }
+            BuildKey other = (BuildKey) obj;
+            return phase == other.phase && iteration == other.iteration;
+        }
+
+        @Override
+        public int hashCode() {
+            return 31 * phase.hashCode() + iteration;
         }
     }
 }
