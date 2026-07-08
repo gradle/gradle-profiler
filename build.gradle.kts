@@ -4,6 +4,7 @@ import io.sdkman.vendors.tasks.SdkDefaultVersion
 import io.sdkman.vendors.tasks.SdkReleaseVersion
 import io.sdkman.vendors.tasks.SdkmanVendorBaseTask
 import java.util.Locale
+import tasks.AwaitUrlTask
 
 plugins {
     id("profiler.java-library")
@@ -264,18 +265,36 @@ val gitPushTag = tasks.register<Exec>("gitPushTag") {
 
 fun Project.isSnapshot() = version.toString().endsWith("-SNAPSHOT")
 
+val sdkmanDownloadUrl = "https://repo1.maven.org/maven2/org/gradle/profiler/gradle-profiler/$version/gradle-profiler-$version.zip"
+
 sdkman {
     api = "https://vendors.sdkman.io"
     candidate = "gradleprofiler"
     hashtag = "#gradleprofiler"
     version = project.version.toString()
-    url = "https://repo1.maven.org/maven2/org/gradle/profiler/gradle-profiler/$version/gradle-profiler-$version.zip"
+    url = sdkmanDownloadUrl
     consumerKey = project.findProperty("sdkmanKey") as String?
     consumerToken = project.findProperty("sdkmanToken") as String?
 }
 
+// SDKMAN's release API downloads the artifact URL itself and rejects the release with an opaque
+// `HTTP 400 Bad Request` if it cannot resolve it (the plugin then hides the real "URL cannot be
+// resolved" message). Right after a Maven Central publish the artifact often hasn't propagated yet,
+// so we wait for the URL to become available first and fail with a clear message if it never does.
+val awaitSdkmanArtifact = tasks.register<AwaitUrlTask>("awaitSdkmanArtifact") {
+    description = "Waits until the SDKMAN download URL is resolvable before releasing to SDKMAN."
+    mustRunAfter(gitPushTag)
+    url = sdkmanDownloadUrl
+    timeoutMinutes = 10L
+    pollIntervalSeconds = 15L
+}
+
 tasks.withType<SdkmanVendorBaseTask>().configureEach {
     mustRunAfter(gitPushTag)
+}
+
+tasks.withType<SdkReleaseVersion>().configureEach {
+    dependsOn(awaitSdkmanArtifact)
 }
 
 tasks.withType<SdkDefaultVersion>().configureEach {
