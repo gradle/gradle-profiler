@@ -1,7 +1,6 @@
 import jetbrains.buildServer.configs.kotlin.BuildType
 import jetbrains.buildServer.configs.kotlin.buildSteps.gradle
 import jetbrains.buildServer.configs.kotlin.triggers.finishBuildTrigger
-import jetbrains.buildServer.configs.kotlin.triggers.retryBuild
 
 class GradleProfilerPublishToSdkMan(publishingBuild: GradleProfilerPublishing) : BuildType({
     name = "Gradle profiler Publish to SDKman"
@@ -20,11 +19,6 @@ class GradleProfilerPublishToSdkMan(publishingBuild: GradleProfilerPublishing) :
             buildType = publishingBuild.id.toString()
             successfulOnly = true
             branchFilter = "+:master"
-        }
-        retryBuild {
-            delaySeconds = 30 * 60 // Wait for half an hour for the artifact to appear on Maven Central
-            attempts = 1
-            retryWithTheSameRevisions = true
         }
     }
 
