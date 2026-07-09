@@ -33,7 +33,7 @@ class GradleProfilerPublishToSdkMan(publishingBuild: GradleProfilerPublishing) :
 
     steps {
         gradle {
-            tasks = "releaseToSdkMan %additional.gradle.parameters%"
+            tasks = "debugSdkmanRelease %additional.gradle.parameters%"
             gradleParams = toolchainConfiguration(os, arch) + " -Dgradle.cache.remote.push=true"
             buildFile = ""
         }
