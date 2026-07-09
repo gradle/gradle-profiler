@@ -18,7 +18,7 @@ class GradleProfilerPublishToSdkMan(publishingBuild: GradleProfilerPublishing) :
         finishBuildTrigger {
             buildType = publishingBuild.id.toString()
             successfulOnly = true
-            branchFilter = "+:master"
+            branchFilter = "+:*"
         }
     }
 
