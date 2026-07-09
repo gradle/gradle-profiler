@@ -33,7 +33,12 @@ object GradleProfilerPublishing : BuildType({
         gradle {
             // No CC since https://github.com/gradle-nexus/publish-plugin/issues/221, which is
             // waiting for https://github.com/gradle/gradle/issues/22779
-            tasks = "--no-configuration-cache clean createBuildReceipt publishToSonatype closeAndReleaseSonatypeStagingRepository gitPushTag publishToGithubReleases %additional.gradle.parameters%"
+            //
+            // TEMPORARY: Maven Central publishing (publishToSonatype
+            // closeAndReleaseSonatypeStagingRepository) is disabled while we are over the Maven
+            // Central quota. Re-add those two tasks once the quota recovers so library consumers
+            // (gradle/gradle) get new versions of the profiler-as-a-library again.
+            tasks = "--no-configuration-cache clean createBuildReceipt gitPushTag publishToGithubReleases %additional.gradle.parameters%"
             gradleParams = toolchainConfiguration(os, arch) + " -Dgradle.cache.remote.push=true"
             buildFile = ""
         }
