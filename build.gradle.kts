@@ -1,9 +1,4 @@
 import com.github.gradle.node.npm.task.NpxTask
-import groovy.json.JsonSlurper
-import java.net.URI
-import java.net.http.HttpClient
-import java.net.http.HttpRequest
-import java.net.http.HttpResponse
 import io.sdkman.vendors.tasks.SdkAnnounceVersion
 import io.sdkman.vendors.tasks.SdkDefaultVersion
 import io.sdkman.vendors.tasks.SdkReleaseVersion
@@ -253,81 +248,20 @@ val gitPushTag = tasks.register<Exec>("gitPushTag") {
 
 fun Project.isSnapshot() = version.toString().endsWith("-SNAPSHOT")
 
-tasks.register("publishToGithubReleases") {
+tasks.register<tasks.PublishToGithubReleasesTask>("publishToGithubReleases") {
     dependsOn(tasks.distZip)
     mustRunAfter(gitPushTag)
 
     val versionString = project.version.toString()
+    repository.set("gradle/gradle-profiler")
+    releaseVersion.set(versionString)
+    distributionZip.set(tasks.distZip.flatMap { it.archiveFile })
+    project.findProperty("githubToken")?.toString()?.let { githubToken.set(it) }
+
     // Mirror the alpha/snapshot check in releaseToSdkMan: alphas/snapshots have no drafter
     // draft and SDKMAN skips them, so they get no GitHub release ZIP.
     onlyIf {
         !versionString.lowercase(Locale.US).run { contains("snapshot") || contains("alpha") }
-    }
-
-    val zipFile = tasks.distZip.flatMap { it.archiveFile }
-    val token = project.findProperty("githubToken")?.toString()
-
-    doLast {
-        checkNotNull(token) { "githubToken property is required to publish to GitHub Releases" }
-        val tag = "v$versionString"
-        val assetName = "gradle-profiler-$versionString.zip"
-        val apiBase = "https://api.github.com/repos/gradle/gradle-profiler"
-        val client = HttpClient.newHttpClient()
-
-        fun authorizedRequest(uri: String) = HttpRequest.newBuilder(URI.create(uri))
-            .header("Authorization", "Bearer $token")
-            .header("Accept", "application/vnd.github+json")
-
-        fun send(request: HttpRequest, description: String): HttpResponse<String> {
-            val response = client.send(request, HttpResponse.BodyHandlers.ofString())
-            if (response.statusCode() !in 200..299) {
-                throw GradleException("$description failed: HTTP ${response.statusCode()}\n${response.body()}")
-            }
-            return response
-        }
-
-        // (a) Find the drafted release for this tag.
-        val listResponse = send(
-            authorizedRequest("$apiBase/releases?per_page=100").GET().build(),
-            "Listing releases"
-        )
-        @Suppress("UNCHECKED_CAST")
-        val releases = JsonSlurper().parseText(listResponse.body()) as List<Map<String, Any?>>
-        val release = releases.firstOrNull { it["tag_name"] == tag && it["draft"] == true }
-            ?: throw GradleException("No draft release found with tag '$tag'. release-drafter should have created one before publishing.")
-        val releaseId = (release["id"] as Number).toLong()
-
-        // (b) Delete any pre-existing asset with the same name so re-runs are idempotent.
-        @Suppress("UNCHECKED_CAST")
-        val assets = release["assets"] as? List<Map<String, Any?>> ?: emptyList()
-        assets.filter { it["name"] == assetName }.forEach { asset ->
-            val assetId = (asset["id"] as Number).toLong()
-            send(
-                authorizedRequest("$apiBase/releases/assets/$assetId").DELETE().build(),
-                "Deleting existing asset $assetId"
-            )
-        }
-
-        // (c) Upload the distribution ZIP.
-        val zipPath = zipFile.get().asFile.toPath()
-        send(
-            authorizedRequest("https://uploads.github.com/repos/gradle/gradle-profiler/releases/$releaseId/assets?name=$assetName")
-                .header("Content-Type", "application/zip")
-                .POST(HttpRequest.BodyPublishers.ofFile(zipPath))
-                .build(),
-            "Uploading asset $assetName"
-        )
-
-        // (d) Publish the release (flip draft -> published, mark as latest).
-        send(
-            authorizedRequest("$apiBase/releases/$releaseId")
-                .header("Content-Type", "application/json")
-                .method("PATCH", HttpRequest.BodyPublishers.ofString("""{"draft": false, "make_latest": "true"}"""))
-                .build(),
-            "Publishing release $releaseId"
-        )
-
-        logger.lifecycle("Published GitHub release $tag with asset $assetName")
     }
 }
 
