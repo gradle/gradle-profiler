@@ -1,8 +1,4 @@
 import com.github.gradle.node.npm.task.NpxTask
-import java.net.URI
-import java.net.http.HttpClient
-import java.net.http.HttpRequest
-import java.net.http.HttpResponse
 import io.sdkman.vendors.tasks.SdkAnnounceVersion
 import io.sdkman.vendors.tasks.SdkDefaultVersion
 import io.sdkman.vendors.tasks.SdkReleaseVersion
@@ -289,30 +285,6 @@ tasks.withType<SdkDefaultVersion>().configureEach {
 
 tasks.withType<SdkAnnounceVersion>().configureEach {
     mustRunAfter(tasks.withType<SdkReleaseVersion>())
-}
-
-// TEMP DEBUG: reproduce the SDKMAN /release POST and print the full response body.
-// Remove before merging.
-tasks.register("debugSdkmanRelease") {
-    val key = project.findProperty("sdkmanKey")?.toString()
-    val token = project.findProperty("sdkmanToken")?.toString()
-    val ver = project.version.toString()
-    doLast {
-        val url = "https://github.com/gradle/gradle-profiler/releases/download/v$ver/gradle-profiler-$ver.zip"
-        val body = """{"candidate":"gradleprofiler","version":"$ver","platform":"UNIVERSAL","url":"$url"}"""
-        val request = HttpRequest.newBuilder(URI.create("https://vendors.sdkman.io/release"))
-            .header("Consumer-Key", key ?: "")
-            .header("Consumer-Token", token ?: "")
-            .header("Content-Type", "application/json")
-            .header("Accept", "application/json")
-            .POST(HttpRequest.BodyPublishers.ofString(body))
-            .build()
-        val response = HttpClient.newHttpClient().send(request, HttpResponse.BodyHandlers.ofString())
-        println("=== SDKMAN /release request body: $body")
-        println("=== SDKMAN /release status: ${response.statusCode()}")
-        println("=== SDKMAN /release response body: ${response.body()}")
-        println("=== SDKMAN /release response headers: ${response.headers().map()}")
-    }
 }
 
 tasks.register("releaseToSdkMan") {

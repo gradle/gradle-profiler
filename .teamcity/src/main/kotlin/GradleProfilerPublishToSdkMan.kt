@@ -18,7 +18,7 @@ class GradleProfilerPublishToSdkMan(publishingBuild: GradleProfilerPublishing) :
         finishBuildTrigger {
             buildType = publishingBuild.id.toString()
             successfulOnly = true
-            branchFilter = "+:*"
+            branchFilter = "+:master"
         }
     }
 
@@ -33,7 +33,7 @@ class GradleProfilerPublishToSdkMan(publishingBuild: GradleProfilerPublishing) :
 
     steps {
         gradle {
-            tasks = "debugSdkmanRelease %additional.gradle.parameters%"
+            tasks = "releaseToSdkMan %additional.gradle.parameters%"
             gradleParams = toolchainConfiguration(os, arch) + " -Dgradle.cache.remote.push=true"
             buildFile = ""
         }
