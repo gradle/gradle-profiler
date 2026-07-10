@@ -4,6 +4,9 @@ import io.sdkman.vendors.tasks.SdkDefaultVersion
 import io.sdkman.vendors.tasks.SdkReleaseVersion
 import io.sdkman.vendors.tasks.SdkmanVendorBaseTask
 import java.util.Locale
+import java.net.HttpURLConnection
+import java.net.URL
+import groovy.json.JsonOutput
 import services.GithubReleaseService
 
 plugins {
@@ -290,6 +293,39 @@ tasks.withType<SdkDefaultVersion>().configureEach {
 
 tasks.withType<SdkAnnounceVersion>().configureEach {
     mustRunAfter(tasks.withType<SdkReleaseVersion>())
+}
+
+// TEMP PROBE: reproduce the sdkman-vendors plugin's exact /release request (HttpURLConnection,
+// same headers incl. the "Accepts" typo, JsonOutput body) and print the response body, which the
+// plugin discards. Remove after diagnosis.
+tasks.register("probeSdkManRelease") {
+    val key = project.findProperty("sdkmanKey")?.toString()
+    val token = project.findProperty("sdkmanToken")?.toString()
+    val ver = project.version.toString()
+    doLast {
+        val downloadUrl = "https://github.com/gradle/gradle-profiler/releases/download/v$ver/gradle-profiler-$ver.zip"
+        val body = JsonOutput.toJson(linkedMapOf(
+            "candidate" to "gradleprofiler",
+            "version" to ver,
+            "platform" to "UNIVERSAL",
+            "url" to downloadUrl
+        ))
+        val conn = URL("https://vendors.sdkman.io/release").openConnection() as HttpURLConnection
+        conn.setRequestProperty("Consumer-Key", key ?: "")
+        conn.setRequestProperty("Consumer-Token", token ?: "")
+        conn.setRequestProperty("Content-Type", "application/json")
+        conn.setRequestProperty("Accepts", "application/json")
+        conn.doOutput = true
+        conn.requestMethod = "POST"
+        conn.outputStream.bufferedWriter().use { it.write(body) }
+        val code = conn.responseCode
+        val message = conn.responseMessage
+        val stream = if (code in 200..299) conn.inputStream else conn.errorStream
+        val respBody = stream?.bufferedReader()?.use { it.readText() } ?: "<no body>"
+        logger.lifecycle("PROBE request body : $body")
+        logger.lifecycle("PROBE response     : $code $message")
+        logger.lifecycle("PROBE response body: $respBody")
+    }
 }
 
 tasks.register("releaseToSdkMan") {
