@@ -4,6 +4,7 @@ import io.sdkman.vendors.tasks.SdkDefaultVersion
 import io.sdkman.vendors.tasks.SdkReleaseVersion
 import io.sdkman.vendors.tasks.SdkmanVendorBaseTask
 import java.util.Locale
+import services.GithubReleaseService
 
 plugins {
     id("profiler.java-library")
@@ -248,15 +249,20 @@ val gitPushTag = tasks.register<Exec>("gitPushTag") {
 
 fun Project.isSnapshot() = version.toString().endsWith("-SNAPSHOT")
 
+val githubRelease = gradle.sharedServices.registerIfAbsent("githubRelease", GithubReleaseService::class) {
+    parameters.githubToken = providers.gradleProperty("githubToken")
+}
+
 tasks.register<tasks.PublishToGithubReleasesTask>("publishToGithubReleases") {
-    dependsOn(tasks.distZip)
     mustRunAfter(gitPushTag)
 
     val versionString = project.version.toString()
-    repository.set("gradle/gradle-profiler")
-    releaseVersion.set(versionString)
-    distributionZip.set(tasks.distZip.flatMap { it.archiveFile })
-    project.findProperty("githubToken")?.toString()?.let { githubToken.set(it) }
+    repository = "gradle/gradle-profiler"
+    releaseVersion = versionString
+    // Wiring the ZIP file provider also carries the task dependency on distZip.
+    distributionZip = tasks.distZip.flatMap { it.archiveFile }
+    githubReleaseService = githubRelease
+    usesService(githubRelease)
 
     // Mirror the alpha/snapshot check in releaseToSdkMan: alphas/snapshots have no drafter
     // draft and SDKMAN skips them, so they get no GitHub release ZIP.
