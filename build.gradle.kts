@@ -4,6 +4,7 @@ import io.sdkman.vendors.tasks.SdkDefaultVersion
 import io.sdkman.vendors.tasks.SdkReleaseVersion
 import io.sdkman.vendors.tasks.SdkmanVendorBaseTask
 import java.util.Locale
+import services.GithubReleaseService
 
 plugins {
     id("profiler.java-library")
@@ -217,22 +218,6 @@ tasks.register("testHtmlReports") {
     dependsOn(testReports.keys)
 }
 
-val profilerDistribution = artifacts.add("archives", tasks.distZip.flatMap { it.archiveFile }) {
-    type = "zip"
-}
-
-publishing {
-    publications {
-        named<MavenPublication>("mavenJava") {
-            artifact(profilerDistribution)
-            pom {
-                // For some reason adding the zip artifact changes the packaging to "pom"
-                packaging = "jar"
-            }
-        }
-    }
-}
-
 nexusPublishing {
     packageGroup.set(project.group.toString())
     repositories {
@@ -264,12 +249,37 @@ val gitPushTag = tasks.register<Exec>("gitPushTag") {
 
 fun Project.isSnapshot() = version.toString().endsWith("-SNAPSHOT")
 
+gradle.sharedServices.registerIfAbsent("githubRelease", GithubReleaseService::class) {
+    parameters.githubToken = providers.gradleProperty("githubToken")
+}
+
+tasks.register<tasks.PublishToGithubReleasesTask>("publishToGithubReleases") {
+    mustRunAfter(gitPushTag)
+
+    val versionString = project.version.toString()
+    repository = "gradle/gradle-profiler"
+    releaseVersion = versionString
+    // Wiring the ZIP file provider also carries the task dependency on distZip.
+    // The GithubReleaseService is auto-wired via @ServiceReference on the task.
+    distributionZip = tasks.distZip.flatMap { it.archiveFile }
+
+    // Mirror the alpha/snapshot check in releaseToSdkMan: alphas/snapshots have no drafter
+    // draft and SDKMAN skips them, so they get no GitHub release ZIP.
+    onlyIf {
+        !versionString.lowercase(Locale.US).run { contains("snapshot") || contains("alpha") }
+    }
+}
+
 sdkman {
+    // Use a local val for the version: inside this block `version` refers to the extension's
+    // Property<String>, so interpolating "$version" in the URL would embed the property's
+    // toString() ("extension 'sdkman' property 'version'") instead of the value.
+    val profilerVersion = project.version.toString()
     api = "https://vendors.sdkman.io"
     candidate = "gradleprofiler"
     hashtag = "#gradleprofiler"
-    version = project.version.toString()
-    url = "https://repo1.maven.org/maven2/org/gradle/profiler/gradle-profiler/$version/gradle-profiler-$version.zip"
+    version = profilerVersion
+    url = "https://github.com/gradle/gradle-profiler/releases/download/v$profilerVersion/gradle-profiler-$profilerVersion.zip"
     consumerKey = project.findProperty("sdkmanKey") as String?
     consumerToken = project.findProperty("sdkmanToken") as String?
 }
