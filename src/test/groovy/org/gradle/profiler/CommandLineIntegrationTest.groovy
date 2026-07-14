@@ -54,8 +54,8 @@ Option                                   Description
                                            without running
 --gradle-user-home <File>                The Gradle user home to use (default:
                                            gradle-user-home)
---gradle-version <String>                Gradle version or installation to use
-                                           to run build
+--gradle-version <String>                Gradle version, distribution or
+                                           installation to use to run build
 --group <String>                         Run scenarios from a group
 -h, --help                               Show this usage information
 --idea-install-dir <File>                The IntelliJ IDEA installation to use
