@@ -459,6 +459,70 @@ To run scenarios from a specific group:
 
 This will run only the scenarios defined in the `smoke-tests` group (`assemble` and `clean_build`).
 
+### Scenario matrices
+
+When you want to benchmark the cartesian product of several variable dimensions (e.g. *build task × daemon mode × configuration cache on/off*), declare each dimension and let `scenario-matrices` expand it into one runnable scenario per tuple:
+
+    # Ordinary scenarios — referenced from the matrix below, still runnable on their own.
+    assemble { tasks = ["assemble"] }
+    check    { tasks = ["check"] }
+
+    coldDaemon { daemon = cold }
+    warmDaemon { daemon = warm }
+
+    ccOn  { system-properties { "org.gradle.configuration-cache" = "true"  } }
+    ccOff { system-properties { "org.gradle.configuration-cache" = "false" } }
+
+    scenario-matrices {
+        matrix {
+            dimensions = [
+                { name = task,   scenarios = [assemble, check] }
+                { name = daemon, scenarios = [coldDaemon, warmDaemon] }
+                { name = cc,     scenarios = [ccOn, ccOff] }
+            ]
+        }
+    }
+
+This synthesizes 2 × 2 × 2 = 8 scenarios named `matrix_assemble_coldDaemon_ccOn`, `matrix_assemble_coldDaemon_ccOff`, …, each equivalent to merging the picked scenarios' HOCON blocks in order.
+
+Picked scenarios stay valid top-level scenarios — they remain selectable by name, runnable on their own, and usable in `default-scenarios` or hand-written `scenario-groups`. References inside `dimensions` must point to top-level scenarios in the same file; references to other matrices, reserved keys, or unknown names are rejected. Synthesized names must not collide with existing top-level scenarios or groups. Malformed configuration produces an error message naming the offending key and the scenario file.
+
+#### Merge semantics
+
+The scenarios picked from each dimension are merged using HOCON merge:
+
+- **Maps merge recursively.** `system-properties`, `idea-sync { … }`, `tooling-api { … }`, etc. — keys from all scenarios are kept; on a key conflict, the scenario from the **right-most** dimension wins.
+- **Arrays and primitives are replaced, not merged.** If two scenarios set `tasks` or `jvm-args`, the right-most one fully replaces the others.
+- **Mutators at distinct top-level keys compose freely.** E.g. one scenario sets `apply-abi-change-to` and another sets `clear-build-cache-before` — the synthesized scenario has both.
+
+#### Auto-generated scenario groups
+
+Two families of `scenario-groups` are emitted automatically. Both follow one rule: **the group name is a synthesized scenario name with the varying dimension(s) omitted.**
+
+*Fix one, vary the rest* — pin a single scenario:
+
+    > gradle-profiler --benchmark --scenario-file build.scenarios --group matrix_coldDaemon
+
+runs the four `coldDaemon` variants (all combinations of task × cc).
+
+*Fix all but one, vary that one* — pin all but one scenario, let the remaining dimension vary:
+
+    > gradle-profiler --benchmark --scenario-file build.scenarios --group matrix_assemble_ccOn
+
+runs the two daemon variants (`coldDaemon` and `warmDaemon`) of that otherwise-fixed configuration. This family is only emitted when there are 3 or more dimensions (with 2 dimensions it coincides with "fix one").
+
+You can also reference synthesized scenarios by name from the CLI, from `default-scenarios`, or from hand-written `scenario-groups`.
+
+#### Titles and separators
+
+A matrix entry accepts a few optional keys to control the names and titles of synthesized scenarios:
+
+- `title` — the human-readable label for the matrix, used as the prefix of each synthesized title. Defaults to the matrix's key (e.g. `matrix`). Set to the empty string (`title = ""`) to omit the prefix segment so synthesized titles read as just the picked scenarios joined by `title-separator` — useful for keeping result-file titles short.
+- `name-separator` — the separator used in synthesized scenario names and auto-generated group names. Defaults to `_`. Keep this within `[a-zA-Z0-9._-]`; other characters are mangled into `-` in output directory names by file-name sanitization.
+- `title-separator` — the separator used when joining the matrix title with each picked scenario's title. Defaults to `". "`.
+
+If any scenario or the matrix itself has a `title`, the synthesized scenario's title is composed from them using `title-separator`. If no titles are set anywhere, the synthesized scenario name is used as the title.
+
 ### Benchmark options
 
 - `iterations`: Number of builds to actually measure
