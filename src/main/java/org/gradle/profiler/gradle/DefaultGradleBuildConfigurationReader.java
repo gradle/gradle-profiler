@@ -18,6 +18,7 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.PrintWriter;
+import java.net.URI;
 import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -92,6 +93,12 @@ public class DefaultGradleBuildConfigurationReader implements GradleBuildConfigu
             if (versionString.matches("\\d+(\\.\\d+)+(-.+)?")) {
                 return probe(connector().useGradleVersion(versionString));
             }
+            if (versionString.matches("^(https?|file)://\\S+")) {
+                return probe(connector().useDistribution(URI.create(versionString)));
+            }
+            if (dir.isFile() && dir.getName().endsWith(".zip")) {
+                return probe(connector().useDistribution(dir.toURI()));
+            }
         } catch (IOException e) {
             throw new RuntimeException("Could not locate Gradle distribution for requested version '" + versionString + "'.", e);
         }
@@ -116,7 +123,7 @@ public class DefaultGradleBuildConfigurationReader implements GradleBuildConfigu
             Properties properties = new Properties();
             properties.load(inputStream);
             return new BuildDetails(
-                properties.getProperty("gradleHome").trim(),
+                properties.getProperty("gradleHome", "").trim(),
                 properties.getProperty("isBuildScanPluginApplied", "false").trim().equals("true"),
                 properties.getProperty("isEnterprisePluginApplied", "false").trim().equals("true"),
                 properties.getProperty("isDevelocityPluginApplied", "false").trim().equals("true")
