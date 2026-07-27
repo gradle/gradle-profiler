@@ -7,14 +7,12 @@ import org.gradle.api.file.RegularFileProperty;
 import org.gradle.api.internal.GradleInternal;
 import org.gradle.api.model.ObjectFactory;
 import org.gradle.api.provider.ListProperty;
-import org.gradle.api.provider.Property;
 import org.gradle.api.provider.Provider;
 import org.gradle.api.provider.ProviderFactory;
 import org.gradle.api.services.BuildService;
 import org.gradle.api.services.BuildServiceParameters;
 import org.gradle.api.services.BuildServiceRegistry;
 import org.gradle.execution.RunRootBuildWorkBuildOperationType;
-import org.gradle.initialization.BuildRequestMetaData;
 import org.gradle.internal.build.event.BuildEventListenerRegistryInternal;
 import org.gradle.internal.file.PathToFileResolver;
 import org.gradle.internal.operations.BuildOperationDescriptor;
@@ -40,8 +38,11 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
+import java.util.Optional;
+import java.util.OptionalLong;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Stream;
 import javax.annotation.Nullable;
 import javax.inject.Inject;
@@ -97,7 +98,6 @@ public class BuildOperationTrace {
                     BuildOperationMeasurementKind.TIME_TO_FIRST_EXCLUSIVE
                 )
             );
-            spec.getParameters().getBuildStartTime().set(gradle.getServices().get(BuildRequestMetaData.class).getStartTime());
         });
         registry.onOperationCompletion(listenerProvider);
         return this;
@@ -106,7 +106,6 @@ public class BuildOperationTrace {
     public BuildOperationTrace measureBuildOperations(List<InternalBuildOpMeasurementRequest> capturedBuildOperations) {
         Provider<BuildOperationDurationRecordingListener> listenerProvider = sharedServices.registerIfAbsent("measure-build-operations", BuildOperationDurationRecordingListener.class, spec -> {
             spec.getParameters().getCapturedBuildOperations().set(capturedBuildOperations);
-            spec.getParameters().getBuildStartTime().set(gradle.getServices().get(BuildRequestMetaData.class).getStartTime());
         });
         registry.onOperationCompletion(listenerProvider);
         return this;
@@ -207,11 +206,20 @@ public class BuildOperationTrace {
     public static abstract class BuildOperationDurationRecordingListener implements BuildService<BuildOperationDurationRecordingListener.Params>, BuildOperationListener, AutoCloseable {
         interface Params extends BuildServiceParameters {
             ListProperty<InternalBuildOpMeasurementRequest> getCapturedBuildOperations();
-
-            Property<Long> getBuildStartTime();
         }
 
         private final List<BuildOperationCollector> collectors;
+
+        /**
+         * The start time of the current build invocation, observed from the root build work operation.
+         * This must be observed per invocation rather than captured when the build service is registered:
+         * the registration only runs when the init script is executed, so with configuration cache reuse
+         * a captured value would be restored from the cache snapshot and belong to the build that created
+         * the cache entry. Operation details are created freshly for every invocation, so
+         * {@link RunRootBuildWorkBuildOperationType.Details#getBuildStartTime()} always reflects the
+         * current build request. Absent if the operation did not fire, e.g. on configuration failure.
+         */
+        private final AtomicReference<OptionalLong> observedBuildStartTime = new AtomicReference<>(OptionalLong.empty());
 
         @Inject
         public BuildOperationDurationRecordingListener(ObjectFactory objectFactory) {
@@ -226,11 +234,7 @@ public class BuildOperationTrace {
                     continue;
                 }
 
-                BuildOperationMeasurer measurer = BuildOperationMeasurer.createForKind(
-                    request.getMeasurementKind(),
-                    getParameters().getBuildStartTime().get()
-                );
-
+                BuildOperationMeasurer measurer = BuildOperationMeasurer.createForKind(request.getMeasurementKind());
                 collectors.add(new BuildOperationCollector(detailsType, request.getOutputFile(), measurer));
             }
         }
@@ -249,6 +253,9 @@ public class BuildOperationTrace {
             if (details == null) {
                 return;
             }
+            if (details instanceof RunRootBuildWorkBuildOperationType.Details) {
+                observedBuildStartTime.set(OptionalLong.of(((RunRootBuildWorkBuildOperationType.Details) details).getBuildStartTime()));
+            }
             for (BuildOperationCollector collector : collectors) {
                 collector.collect(details, operationFinishEvent);
             }
@@ -256,8 +263,9 @@ public class BuildOperationTrace {
 
         @Override
         public void close() throws IOException {
+            OptionalLong buildStartTime = observedBuildStartTime.get();
             for (BuildOperationCollector collector : collectors) {
-                collector.write();
+                collector.write(buildStartTime);
             }
         }
     }
@@ -276,14 +284,16 @@ public class BuildOperationTrace {
 
         public void collect(Object details, OperationFinishEvent operationFinishEvent) {
             if (detailsType.isAssignableFrom(details.getClass())) {
-                measurer.update(operationFinishEvent);
+                measurer.update(operationFinishEvent.getStartTime(), operationFinishEvent.getEndTime());
                 buildOperationCount.incrementAndGet();
             }
         }
 
-        public void write() throws IOException {
-            Duration value = measurer.computeFinalValue();
-            writeToFile(outputFile, value.toMillis(), buildOperationCount.get());
+        public void write(OptionalLong buildStartTime) throws IOException {
+            Optional<Duration> value = measurer.computeFinalValue(buildStartTime);
+            if (value.isPresent()) {
+                writeToFile(outputFile, value.get().toMillis(), buildOperationCount.get());
+            }
         }
     }
 }
