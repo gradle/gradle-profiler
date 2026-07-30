@@ -33,7 +33,7 @@ class DefaultGradleBuildConfigurationReaderTest extends AbstractIntegrationTest 
         reader.readConfiguration(gradleVersion)
 
         then:
-        IllegalArgumentException exception = thrown(IllegalArgumentException.class)
+        RuntimeException exception = thrown(RuntimeException.class)
         exception.message == "Unrecognized Gradle version '$gradleVersion' specified."
 
         where:

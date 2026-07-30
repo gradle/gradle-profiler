@@ -86,7 +86,7 @@ public class DefaultGradleBuildConfigurationReader implements GradleBuildConfigu
         Logging.startOperation("Inspecting the build using Gradle version '" + versionString + "'");
         try {
             File dir = new File(versionString);
-            if (dir.isDirectory()) {
+            if (!versionString.isEmpty() && dir.isDirectory()) {
                 dir = dir.getCanonicalFile();
                 return probe(connector().useInstallation(dir));
             }
