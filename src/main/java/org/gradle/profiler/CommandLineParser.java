@@ -64,7 +64,7 @@ class CommandLineParser {
         parser.nonOptions("The scenarios or task names to run");
         ArgumentAcceptingOptionSpec<File> projectOption = parser.accepts("project-dir", "The directory containing the build to run (default: working directory)")
             .withRequiredArg().ofType(File.class);
-        ArgumentAcceptingOptionSpec<String> gradleVersionOption = parser.accepts("gradle-version", "Gradle version or installation to use to run build")
+        ArgumentAcceptingOptionSpec<String> gradleVersionOption = parser.accepts("gradle-version", "Gradle version, distribution or installation to use to run build")
             .withRequiredArg();
         ArgumentAcceptingOptionSpec<File> gradleUserHomeOption = parser.accepts("gradle-user-home", "The Gradle user home to use")
             .withRequiredArg()
