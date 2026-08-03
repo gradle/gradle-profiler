@@ -85,8 +85,8 @@ jdks:
     os: "macos"
     arch: "aarch64"
     vendor: "temurin"
-    version: "jdk-11.0.31+11"
-    sha256: "e3377bbe07f4396ba03adcfc5f3d71d151d6a7b858abdf1d0dd20ac4d8d709b0"
+    version: "jdk-11.0.32+9"
+    sha256: "3e3687488e472035b7a27732f0f6127d59903ba9fd0cb6c815f1a182f4160109"
   - params:
       - "env.JAVA_HOME"
       - "env.JDK17"
