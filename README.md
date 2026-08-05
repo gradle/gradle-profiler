@@ -192,6 +192,8 @@ You will get both the JFR file and flame graph visualizations of the data, which
 In order to profile with JFR, add the `--profile jfr` option. 
 You can change the profiler settings using `--jfr-settings`, specifying either the path to a `.jfc` file or the name of a built-in template like `profile`.
 
+You can also use `--profile jfr-wall` to approximate a wall-clock profile: in addition to the standard execution samples, it records all blocking events (thread park, monitor enter/wait, sleep) and file/socket I/O with a zero-duration threshold, and enables native method samples. This makes time spent off-CPU visible, at the cost of a larger recording. It is particularly useful on Windows, where async-profiler is not available.
+
 ### Heap dump
 
 To capture a heap dump at the end of each measured build, add the `--profile heap-dump` option. You can use this with other `--profile` options.

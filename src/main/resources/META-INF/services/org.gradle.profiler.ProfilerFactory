@@ -9,4 +9,5 @@ org.gradle.profiler.yourkit.YourKitTracingProfilerFactory
 org.gradle.profiler.yourkit.YourKitHeapAllocationProfilerFactory
 org.gradle.profiler.chrometrace.ChromeTraceProfilerFactory
 org.gradle.profiler.jfr.JfrProfilerFactory
+org.gradle.profiler.jfr.JfrWallProfilerFactory
 org.gradle.profiler.jprofiler.JProfilerProfilerFactory

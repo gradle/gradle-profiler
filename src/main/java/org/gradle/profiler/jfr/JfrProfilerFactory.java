@@ -21,15 +21,7 @@ public class JfrProfilerFactory extends ProfilerFactory {
     private File createDefaultConfig() {
         try {
             File jfcFile = File.createTempFile("gradle", ".jfc");
-            String jfcTemplateName;
-            int javaVersion = VersionUtils.getJavaVersion();
-            if (isOracleVm()) {
-                jfcTemplateName = javaVersion >= 9 ? "oracle-java9.jfc" : "oracle.jfc";
-            } else if (javaVersion >= 8) {
-                jfcTemplateName = "openjdk.jfc";
-            } else {
-                throw new IllegalArgumentException("JFR is only supported on OpenJDK since Java 8 and Oracle JDK since Java 7");
-            }
+            String jfcTemplateName = getDefaultJfcTemplateName();
             URL jfcResource = JfrProfiler.class.getResource(jfcTemplateName);
             try (InputStream stream = jfcResource.openStream()) {
                 Files.copy(stream, jfcFile.toPath(), StandardCopyOption.REPLACE_EXISTING);
@@ -38,6 +30,20 @@ public class JfrProfilerFactory extends ProfilerFactory {
             return jfcFile;
         } catch (IOException e) {
             throw new RuntimeException(e);
+        }
+    }
+
+    /**
+     * The name of the bundled .jfc template used when no explicit settings are provided.
+     */
+    protected String getDefaultJfcTemplateName() {
+        int javaVersion = VersionUtils.getJavaVersion();
+        if (isOracleVm()) {
+            return javaVersion >= 9 ? "oracle-java9.jfc" : "oracle.jfc";
+        } else if (javaVersion >= 8) {
+            return "openjdk.jfc";
+        } else {
+            throw new IllegalArgumentException("JFR is only supported on OpenJDK since Java 8 and Oracle JDK since Java 7");
         }
     }
 
@@ -68,7 +74,7 @@ public class JfrProfilerFactory extends ProfilerFactory {
         return new JFRArgs(jfrSettings);
     }
 
-    private boolean isOracleVm() {
+    protected boolean isOracleVm() {
         return System.getProperty("java.vendor").toLowerCase(Locale.ROOT).contains("oracle");
     }
 }
