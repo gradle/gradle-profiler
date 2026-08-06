@@ -3,9 +3,10 @@ package org.gradle.trace.buildops;
 import com.google.common.collect.Range;
 import com.google.common.collect.RangeSet;
 import com.google.common.collect.TreeRangeSet;
-import org.gradle.internal.operations.OperationFinishEvent;
 
 import java.time.Duration;
+import java.util.Optional;
+import java.util.OptionalLong;
 import java.util.concurrent.locks.ReentrantLock;
 
 final class WallClockTimeBuildOperationMeasurer implements BuildOperationMeasurer {
@@ -15,8 +16,8 @@ final class WallClockTimeBuildOperationMeasurer implements BuildOperationMeasure
     private final ReentrantLock lock = new ReentrantLock();
 
     @Override
-    public void update(OperationFinishEvent event) {
-        Range<Long> eventRange = Range.closed(event.getStartTime(), event.getEndTime());
+    public void update(long startTime, long endTime) {
+        Range<Long> eventRange = Range.closed(startTime, endTime);
 
         lock.lock();
         try {
@@ -27,7 +28,7 @@ final class WallClockTimeBuildOperationMeasurer implements BuildOperationMeasure
     }
 
     @Override
-    public Duration computeFinalValue() {
+    public Optional<Duration> computeFinalValue(OptionalLong buildStartTime) {
         long totalTime = 0;
         lock.lock();
         try {
@@ -37,6 +38,6 @@ final class WallClockTimeBuildOperationMeasurer implements BuildOperationMeasure
         } finally {
             lock.unlock();
         }
-        return Duration.ofMillis(totalTime);
+        return Optional.of(Duration.ofMillis(totalTime));
     }
 }

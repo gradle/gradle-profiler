@@ -1,21 +1,15 @@
 package org.gradle.trace.buildops;
 
-import org.gradle.internal.operations.OperationFinishEvent;
-
 import java.time.Duration;
+import java.util.Optional;
+import java.util.OptionalLong;
 import java.util.concurrent.atomic.AtomicLong;
 
 final class TimeToFirstExclusiveBuildOperationMeasurer implements BuildOperationMeasurer {
-    private final long buildStartTime;
     private final AtomicLong minStartTime = new AtomicLong(Long.MIN_VALUE);
 
-    TimeToFirstExclusiveBuildOperationMeasurer(long buildStartTime) {
-        this.buildStartTime = buildStartTime;
-    }
-
     @Override
-    public void update(OperationFinishEvent event) {
-        long startTime = event.getStartTime();
+    public void update(long startTime, long endTime) {
         minStartTime.getAndUpdate(existing -> {
             if (existing == Long.MIN_VALUE) {
                 // First update, initialize to the start time of the first operation
@@ -26,12 +20,16 @@ final class TimeToFirstExclusiveBuildOperationMeasurer implements BuildOperation
     }
 
     @Override
-    public Duration computeFinalValue() {
-        long minStart = minStartTime.get();
-        if (minStart < buildStartTime) {
-            // No operations were recorded, or all operations started before the build start time
-            return Duration.ZERO;
+    public Optional<Duration> computeFinalValue(OptionalLong buildStartTime) {
+        if (!buildStartTime.isPresent()) {
+            // No reference point to measure against
+            return Optional.empty();
         }
-        return Duration.ofMillis(minStartTime.get() - buildStartTime);
+        long minStart = minStartTime.get();
+        if (minStart == Long.MIN_VALUE || minStart < buildStartTime.getAsLong()) {
+            // No operations were recorded, or all operations started before the build start time
+            return Optional.of(Duration.ZERO);
+        }
+        return Optional.of(Duration.ofMillis(minStart - buildStartTime.getAsLong()));
     }
 }

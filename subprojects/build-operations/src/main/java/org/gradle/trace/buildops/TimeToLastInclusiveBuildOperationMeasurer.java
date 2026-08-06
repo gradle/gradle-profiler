@@ -1,28 +1,29 @@
 package org.gradle.trace.buildops;
 
-import org.gradle.internal.operations.OperationFinishEvent;
-
 import java.time.Duration;
+import java.util.Optional;
+import java.util.OptionalLong;
 import java.util.concurrent.atomic.AtomicLong;
 
 final class TimeToLastInclusiveBuildOperationMeasurer implements BuildOperationMeasurer {
-    private final long buildStartTime;
-    private final AtomicLong maxEndTime;
-
-    TimeToLastInclusiveBuildOperationMeasurer(long buildStartTime) {
-        this.buildStartTime = buildStartTime;
-        // Make sure we're never earlier than the build start time, even if no operations are recorded
-        this.maxEndTime = new AtomicLong(buildStartTime);
-    }
+    private final AtomicLong maxEndTime = new AtomicLong(Long.MIN_VALUE);
 
     @Override
-    public void update(OperationFinishEvent event) {
-        long endTime = event.getEndTime();
+    public void update(long startTime, long endTime) {
         maxEndTime.getAndUpdate(existing -> Math.max(existing, endTime));
     }
 
     @Override
-    public Duration computeFinalValue() {
-        return Duration.ofMillis(maxEndTime.get() - buildStartTime);
+    public Optional<Duration> computeFinalValue(OptionalLong buildStartTime) {
+        if (!buildStartTime.isPresent()) {
+            // No reference point to measure against
+            return Optional.empty();
+        }
+        long maxEnd = maxEndTime.get();
+        if (maxEnd == Long.MIN_VALUE || maxEnd < buildStartTime.getAsLong()) {
+            // No operations were recorded, or all operations ended before the build start time
+            return Optional.of(Duration.ZERO);
+        }
+        return Optional.of(Duration.ofMillis(maxEnd - buildStartTime.getAsLong()));
     }
 }

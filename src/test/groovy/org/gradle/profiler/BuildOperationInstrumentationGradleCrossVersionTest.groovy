@@ -8,6 +8,7 @@ import static org.hamcrest.CoreMatchers.*
 import static org.hamcrest.MatcherAssert.assertThat
 import static org.hamcrest.Matchers.greaterThan
 import static org.hamcrest.Matchers.lessThan
+import static org.hamcrest.Matchers.lessThanOrEqualTo
 import static org.junit.Assert.assertTrue
 
 @Requires({ it.instance.gradleVersionWithAdvancedBenchmarking() })
@@ -164,6 +165,18 @@ class BuildOperationInstrumentationGradleCrossVersionTest extends AbstractGradle
         def taskStart = lines.get(10) =~ /measured build #1,$SAMPLE,($SAMPLE)/
         taskStart.matches()
         Double.valueOf(taskStart[0][1]) > 0
+
+        and:
+        // The task start time is measured from the start of the current build request, so it can never
+        // exceed the total execution time of the same build. With configuration cache reuse, a stale
+        // build start time would make the task start grow by one build duration per invocation.
+        lines.subList(4, lines.size()).collect { it.tokenize(',') }.each { row ->
+            assertThat(
+                "task start should not exceed total execution time for '${row.get(0)}'",
+                Double.valueOf(row.get(2)),
+                lessThanOrEqualTo(Double.valueOf(row.get(1)))
+            )
+        }
 
         where:
         configurationCache << [false, true]
@@ -564,6 +577,18 @@ class BuildOperationInstrumentationGradleCrossVersionTest extends AbstractGradle
         assertTrue("different execution times", executions.size() == 9)
         assertTrue("different task start times", taskStarts.size() == 9)
         assertTrue("different build-op times", buildOps.size() == 9)
+
+        and:
+        // The task start time is measured from the start of the current build request, so it can never
+        // exceed the total execution time of the same build. With configuration cache reuse, a stale
+        // build start time would make the task start grow by one build duration per invocation.
+        [executions, taskStarts].transpose().each { execution, taskStart ->
+            assertThat(
+                "task start should not exceed total execution time",
+                taskStart,
+                lessThanOrEqualTo(execution)
+            )
+        }
 
         where:
         configurationCache << [false, true]
