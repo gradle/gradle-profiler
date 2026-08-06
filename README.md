@@ -58,7 +58,8 @@ Run the `gradle-profiler` app using:
 Where `<root-dir-of-build>` is the directory containing the build to be benchmarked, and `<task>` is the name of the task to run,
 exactly as you would use for the `gradle` command.
 
-Results will be written to a file called `profile-out/benchmark.html` and `profile-out/benchmark.csv`.
+Results will be written to files called `profile-out/benchmark.html`, `profile-out/benchmark.csv` and `profile-out/benchmark.json`.
+The JSON file contains the scenario definitions, the measured samples and the value of each sample for every iteration, so it can be parsed by custom tooling.
 
 When the profiler runs the build, it will use the tasks you specified. The profiler will use the default
 Gradle version, Java installation and JVM args that have been specified for your build, if any.
