@@ -169,8 +169,11 @@ new Vue({
                 sample.color = `hsl(${scenarioIndex * 360 / scenarios.length}, ${100 - 80 * sampleIndex / samples.length}%, ${30 + 40 * sampleIndex / samples.length}%)`;
                 sample.thickness = sampleIndex === 0 ? 3 : 2;
                 sample.selected = sampleIndex === 0;
+                // Use the statistics computed by the profiler when present, fall back to computing them for reports produced by older versions
                 const data = measuredIterations(scenario).map(iteration => iteration.values[sample.name]);
-                OPERATIONS.forEach(operation => sample[operation.name] = operation.apply(data));
+                OPERATIONS.forEach(operation => sample[operation.name] = sample.stats && sample.stats[operation.name] !== undefined
+                    ? sample.stats[operation.name]
+                    : operation.apply(data));
             });
         });
     },
