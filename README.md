@@ -60,6 +60,8 @@ exactly as you would use for the `gradle` command.
 
 Results will be written to files called `profile-out/benchmark.html`, `profile-out/benchmark.csv` and `profile-out/benchmark.json`.
 The JSON file contains the scenario definitions, the measured samples and the value of each sample for every iteration, so it can be parsed by custom tooling.
+For each sample it also contains statistics computed over the measured iterations (mean, min, P25, median, P75, max and standard deviation).
+When multiple scenarios are benchmarked, every scenario after the first one also contains the confidence that its performance differs from the first scenario, computed using the [Mann-Whitney U-Test](https://en.wikipedia.org/wiki/Mann%E2%80%93Whitney_U_test).
 
 When the profiler runs the build, it will use the tasks you specified. The profiler will use the default
 Gradle version, Java installation and JVM args that have been specified for your build, if any.

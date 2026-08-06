@@ -12,8 +12,6 @@ import org.gradle.profiler.OperatingSystem;
 import org.gradle.profiler.ScenarioDefinition;
 import org.gradle.profiler.Version;
 import org.gradle.profiler.maven.MavenScenarioDefinition;
-import org.gradle.profiler.result.BuildInvocationResult;
-import org.gradle.profiler.result.Sample;
 
 import javax.annotation.Nullable;
 import javax.annotation.OverridingMethodsMustInvokeSuper;
@@ -39,13 +37,20 @@ public class JsonResultWriter {
             builder.setPrettyPrinting();
         }
         Gson gson = builder
-            .registerTypeHierarchyAdapter(BuildScenarioResult.class, (JsonSerializer<? extends BuildScenarioResult<?>>) this::serializeScenarioResult)
             .registerTypeHierarchyAdapter(ScenarioDefinition.class, new ScenarioSerializer<>())
             .registerTypeHierarchyAdapter(GradleScenarioDefinition.class, new GradleScenarioSerializer())
             .registerTypeHierarchyAdapter(MavenScenarioDefinition.class, new MavenScenarioSerializer())
             .registerTypeHierarchyAdapter(Temporal.class, (JsonSerializer<Temporal>) (date, type, context) -> new JsonPrimitive(DateTimeFormatter.ISO_INSTANT.format(date)))
             .create();
-        gson.toJson(new Output(title, reportDate, new Environment(), scenarios), writer);
+
+        JsonObject json = new JsonObject();
+        if (title != null) {
+            json.addProperty("title", title);
+        }
+        json.add("date", gson.toJsonTree(reportDate));
+        json.add("environment", gson.toJsonTree(new Environment()));
+        writeScenarioResults(scenarios, gson, json);
+        gson.toJson(json, writer);
     }
 
     private static class Environment {
@@ -58,70 +63,13 @@ public class JsonResultWriter {
         }
     }
 
-    private static class Output {
-        final String title;
-        final Temporal date;
-        final Environment environment;
-        final List<? extends BuildScenarioResult<?>> scenarios;
-
-        public Output(
-            String title,
-            Temporal date,
-            Environment environment,
-            List<? extends BuildScenarioResult<?>> scenarios
-        ) {
-            this.title = title;
-            this.date = date;
-            this.environment = environment;
-            this.scenarios = scenarios;
+    private static void writeScenarioResults(List<? extends BuildScenarioResult<?>> results, Gson gson, JsonObject json) {
+        BuildScenarioResult<?> baseline = results.size() > 1 ? results.get(0) : null;
+        JsonArray scenariosJson = new JsonArray();
+        for (BuildScenarioResult<?> scenario : results) {
+            scenariosJson.add(ScenarioResultWriter.serialize(scenario, scenario == baseline ? null : baseline, gson));
         }
-    }
-
-    private <T extends BuildInvocationResult> JsonObject serializeScenarioResult(BuildScenarioResult<T> scenarioResult, Type type, JsonSerializationContext context) {
-        JsonObject json = new JsonObject();
-        List<T> results = scenarioResult.getResults();
-
-        // TODO Expose this in a less awkward way
-        JsonObject jsonDefinition = (JsonObject) context.serialize(scenarioResult.getScenarioDefinition());
-        String scenarioId = results.isEmpty()
-            ? null
-            : results.get(0).getBuildContext().getUniqueScenarioId();
-        jsonDefinition.addProperty("id", scenarioId);
-        json.add("definition", jsonDefinition);
-
-        JsonArray samplesJson = new JsonArray();
-        List<Sample<? super T>> samples = scenarioResult.getSamples();
-        for (Sample<? super T> sample : samples) {
-            samplesJson.add(serializeSample(sample));
-        }
-        json.add("samples", samplesJson);
-        JsonArray iterationsJson = new JsonArray();
-        for (T result : results) {
-            iterationsJson.add(serializeIteration(result, samples));
-        }
-        json.add("iterations", iterationsJson);
-        return json;
-    }
-
-    private JsonObject serializeSample(Sample<?> sample) {
-        JsonObject json = new JsonObject();
-        json.addProperty("name", sample.getName());
-        json.addProperty("unit", sample.getUnit());
-        return json;
-    }
-
-    private <T extends BuildInvocationResult> JsonObject serializeIteration(T result, List<? extends Sample<? super T>> samples) {
-        JsonObject json = new JsonObject();
-        json.addProperty("id", result.getBuildContext().getUniqueBuildId());
-        json.addProperty("phase", result.getBuildContext().getPhase().name());
-        json.addProperty("iteration", result.getBuildContext().getIteration());
-        json.addProperty("title", result.getBuildContext().getDisplayName());
-        JsonObject valuesJson = new JsonObject();
-        for (Sample<? super T> sample : samples) {
-            valuesJson.addProperty(sample.getName(), sample.extractValue(result));
-        }
-        json.add("values", valuesJson);
-        return json;
+        json.add("scenarios", scenariosJson);
     }
 
     private static class ScenarioSerializer<T extends ScenarioDefinition> implements JsonSerializer<T> {
