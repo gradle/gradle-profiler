@@ -208,13 +208,13 @@ testReports.forEach { (taskName, fileName) ->
         from("src/main/resources/org/gradle/profiler/report")
         into(layout.buildDirectory.dir("test-html-report"))
         rename("report-template.html", "test-report-${fileName}.html")
+        val scriptFile = File(tasks.processResources.get().destinationDir, "org/gradle/profiler/report/report.js")
         filter { line ->
-            if (line == "@@BENCHMARK_RESULT_JSON@@") dataFile.readText()
-            else if (line == "@@SCRIPT@@") File(
-                tasks.processResources.get().destinationDir,
-                "org/gradle/profiler/report/report.js"
-            ).readText(Charsets.UTF_8)
-            else line
+            when (line) {
+                "@@BENCHMARK_RESULT_JSON@@" -> dataFile.readText()
+                "@@SCRIPT@@" -> scriptFile.readText(Charsets.UTF_8)
+                else -> line
+            }
         }
     }
 }
