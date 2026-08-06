@@ -164,6 +164,11 @@ tasks.test {
 
     val keepTestDirs = providers.gradleProperty("keepTestDirs").orElse("false")
     systemProperty("org.gradle.integtest.keepTestDirs", keepTestDirs.get())
+
+    // Spock snapshot testing (golden files). Regenerate snapshots with: ./gradlew test -PupdateSnapshots=true
+    systemProperty("spock.snapshots.rootPath", layout.projectDirectory.dir("src/test/resources").asFile.absolutePath)
+    val updateSnapshots = providers.gradleProperty("updateSnapshots").orElse("false")
+    systemProperty("spock.snapshots.updateSnapshots", updateSnapshots.get())
 }
 
 val autoDownloadAndRunInHeadless = providers.gradleProperty("autoDownloadAndRunInHeadless")

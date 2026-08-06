@@ -5,8 +5,13 @@ import com.google.gson.JsonArray
 import com.google.gson.JsonObject
 import com.google.gson.JsonParser
 import org.gradle.profiler.fixtures.AbstractProfilerIntegrationTest
+import spock.lang.Snapshot
+import spock.lang.Snapshotter
 
 class JsonReportIntegrationTest extends AbstractProfilerIntegrationTest {
+
+    @Snapshot(extension = 'json')
+    Snapshotter snapshotter
 
     def "json file is written for benchmarks"() {
         given:
@@ -24,69 +29,13 @@ class JsonReportIntegrationTest extends AbstractProfilerIntegrationTest {
 
         def file = new File(outputDir, "benchmark.json")
         file.isFile()
-        normalize(file.text) == """\
-{
-  "date": "<date>",
-  "environment": {
-    "profilerVersion": "<profilerVersion>",
-    "operatingSystem": "<operatingSystem>"
-  },
-  "scenarios": [
-    {
-      "definition": {
-        "name": "default",
-        "title": "default",
-        "displayName": "using Gradle ${minimalSupportedGradleVersion}",
-        "buildTool": "Gradle ${minimalSupportedGradleVersion}",
-        "tasks": "assemble",
-        "version": "${minimalSupportedGradleVersion}",
-        "gradleHome": "<gradleHome>",
-        "javaHome": "<javaHome>",
-        "usesScanPlugin": false,
-        "action": "run tasks assemble",
-        "cleanup": "do nothing",
-        "invoker": "Tooling API",
-        "mutators": [],
-        "args": [],
-        "jvmArgs": [],
-        "systemProperties": {},
-        "id": "_<uuid>_default_9f67c942"
-      },
-      "samples": [
-        {
-          "name": "total execution time",
-          "unit": "ms"
-        }
-      ],
-      "iterations": [
-        {
-          "id": "_<uuid>_default_9f67c942_WARM_UP_1",
-          "phase": "WARM_UP",
-          "iteration": 1,
-          "title": "warm-up build #1",
-          "values": {
-            "total execution time": "<duration>"
-          }
-        },
-        {
-          "id": "_<uuid>_default_9f67c942_MEASURE_1",
-          "phase": "MEASURE",
-          "iteration": 1,
-          "title": "measured build #1",
-          "values": {
-            "total execution time": "<duration>"
-          }
-        }
-      ]
-    }
-  ]
-}"""
+        snapshotter.assertThat(normalize(file.text, minimalSupportedGradleVersion)).matchesSnapshot()
     }
 
     /**
      * Replaces environment-dependent values with placeholders, keeping the JSON structure intact.
      */
-    private static String normalize(String json) {
+    private static String normalize(String json, String gradleVersion) {
         JsonObject root = JsonParser.parseString(json).asJsonObject
         root.addProperty("date", "<date>")
         JsonObject environment = root.getAsJsonObject("environment")
@@ -94,6 +43,9 @@ class JsonReportIntegrationTest extends AbstractProfilerIntegrationTest {
         environment.addProperty("operatingSystem", "<operatingSystem>")
         root.getAsJsonArray("scenarios").each { scenario ->
             JsonObject definition = scenario.asJsonObject.getAsJsonObject("definition")
+            ["displayName", "buildTool", "version"].each { key ->
+                definition.addProperty(key, definition.get(key).asString.replace(gradleVersion, "<gradleVersion>"))
+            }
             definition.addProperty("gradleHome", "<gradleHome>")
             definition.addProperty("javaHome", "<javaHome>")
             definition.addProperty("id", normalizeId(definition.get("id").asString))
