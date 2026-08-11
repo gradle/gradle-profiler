@@ -7,7 +7,6 @@ import org.gradle.profiler.Phase;
 import org.gradle.profiler.result.BuildInvocationResult;
 import org.gradle.profiler.result.Sample;
 
-import javax.annotation.Nullable;
 import java.util.List;
 
 /**
@@ -19,7 +18,7 @@ public class ScenarioResultWriter {
     private ScenarioResultWriter() {
     }
 
-    public static <T extends BuildInvocationResult> JsonObject serialize(BuildScenarioResult<T> scenarioResult, @Nullable BuildScenarioResult<?> baseline, Gson gson) {
+    public static <T extends BuildInvocationResult> JsonObject serialize(BuildScenarioResult<T> scenarioResult, Gson gson) {
         JsonObject json = new JsonObject();
         List<T> results = scenarioResult.getResults();
 
@@ -34,7 +33,7 @@ public class ScenarioResultWriter {
         JsonArray samplesJson = new JsonArray();
         List<Sample<? super T>> samples = scenarioResult.getSamples();
         for (Sample<? super T> sample : samples) {
-            samplesJson.add(serializeSample(scenarioResult, sample, baseline, gson));
+            samplesJson.add(serializeSample(scenarioResult, sample, gson));
         }
         json.add("samples", samplesJson);
         JsonArray iterationsJson = new JsonArray();
@@ -45,33 +44,15 @@ public class ScenarioResultWriter {
         return json;
     }
 
-    private static <T extends BuildInvocationResult> JsonObject serializeSample(BuildScenarioResult<T> scenarioResult, Sample<? super T> sample, @Nullable BuildScenarioResult<?> baseline, Gson gson) {
+    private static <T extends BuildInvocationResult> JsonObject serializeSample(BuildScenarioResult<T> scenarioResult, Sample<? super T> sample, Gson gson) {
         JsonObject json = new JsonObject();
         json.addProperty("name", sample.getName());
         json.addProperty("unit", sample.getUnit());
         double[] values = measuredValues(scenarioResult, sample);
         if (values.length > 0) {
             json.add("stats", gson.toJsonTree(SampleStatistics.from(values)));
-            double[] baselineValues = baseline == null ? new double[0] : measuredValues(baseline, sample.getName());
-            if (baselineValues.length > 0) {
-                double confidence = SampleStatistics.confidenceOfDifference(baselineValues, values);
-                if (!Double.isNaN(confidence)) {
-                    JsonObject confidenceJson = new JsonObject();
-                    confidenceJson.addProperty("baseline", baseline.getResults().get(0).getBuildContext().getUniqueScenarioId());
-                    confidenceJson.addProperty("value", confidence);
-                    json.add("confidence", confidenceJson);
-                }
-            }
         }
         return json;
-    }
-
-    private static <T extends BuildInvocationResult> double[] measuredValues(BuildScenarioResult<T> scenarioResult, String sampleName) {
-        return scenarioResult.getSamples().stream()
-            .filter(sample -> sample.getName().equals(sampleName))
-            .findFirst()
-            .map(sample -> measuredValues(scenarioResult, sample))
-            .orElse(new double[0]);
     }
 
     private static <T extends BuildInvocationResult> double[] measuredValues(BuildScenarioResult<T> scenarioResult, Sample<? super T> sample) {

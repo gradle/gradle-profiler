@@ -32,7 +32,7 @@ class JsonReportIntegrationTest extends AbstractProfilerIntegrationTest {
         snapshotter.assertThat(normalize(file.text, minimalSupportedGradleVersion)).matchesSnapshot()
     }
 
-    def "confidence against the first scenario is included when benchmarking multiple scenarios"() {
+    def "json file is written when benchmarking multiple scenarios"() {
         given:
         instrumentedBuildScript()
         def scenarioFile = file("performance.scenarios")
@@ -81,11 +81,6 @@ class JsonReportIntegrationTest extends AbstractProfilerIntegrationTest {
                 JsonObject stats = sample.asJsonObject.getAsJsonObject("stats")
                 if (stats != null) {
                     new ArrayList<>(stats.keySet()).each { stats.addProperty(it, "<duration>") }
-                }
-                JsonObject confidence = sample.asJsonObject.getAsJsonObject("confidence")
-                if (confidence != null) {
-                    confidence.addProperty("baseline", normalizeId(confidence.get("baseline").asString))
-                    confidence.addProperty("value", "<confidence>")
                 }
             }
             scenario.asJsonObject.getAsJsonArray("iterations").each { iteration ->

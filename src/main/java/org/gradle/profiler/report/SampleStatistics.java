@@ -1,7 +1,5 @@
 package org.gradle.profiler.report;
 
-import org.apache.commons.math3.special.Erf;
-
 import java.util.Arrays;
 
 /**
@@ -9,8 +7,7 @@ import java.util.Arrays;
  *
  * The computations intentionally match the ones performed by the HTML report (report.js),
  * so both reports show the same numbers: quantiles use linear interpolation (type R-7),
- * the standard deviation is the population standard deviation, and the confidence is
- * the normal CDF of the tie-corrected Mann-Whitney z statistic.
+ * and the standard deviation is the population standard deviation.
  */
 public class SampleStatistics {
     final double mean;
@@ -61,63 +58,4 @@ public class SampleStatistics {
         }
     }
 
-    /**
-     * Returns the confidence that the two samples come from different distributions,
-     * based on the normal approximation of the Mann-Whitney U test with tie correction.
-     *
-     * <p>The value is in the range {@code [0.5, 1]}: it is the one-sided confidence, matching
-     * what the HTML report has historically shown. {@code 0.5} means "no difference detected"
-     * (identical samples), values close to {@code 1} mean the difference is likely real.
-     * The value can never go below {@code 0.5}.
-     *
-     * <p>Returns {@link Double#NaN} when the samples contain too little data to decide,
-     * e.g. when all values are equal in both samples.
-     */
-    public static double confidenceOfDifference(double[] a, double[] b) {
-        int n1 = a.length;
-        int n2 = b.length;
-        int n = n1 + n2;
-        double[] all = new double[n];
-        System.arraycopy(a, 0, all, 0, n1);
-        System.arraycopy(b, 0, all, n1, n2);
-        Arrays.sort(all);
-
-        double rankSum = 0;
-        for (double value : a) {
-            rankSum += averageRank(all, value);
-        }
-        double u1 = rankSum - (n1 * (n1 + 1)) / 2.0;
-        double u2 = (double) n1 * n2 - u1;
-        double uMin = Math.min(u1, u2);
-        double meanU = (double) n1 * n2 / 2;
-
-        double tieCorrection = 0;
-        for (int i = 0; i < n; ) {
-            int tieCount = 1;
-            while (i + tieCount < n && all[i + tieCount] == all[i]) {
-                tieCount++;
-            }
-            if (tieCount > 1) {
-                tieCorrection += (Math.pow(tieCount, 3) - tieCount) / ((double) n * (n - 1));
-            }
-            i += tieCount;
-        }
-
-        double stddev = Math.sqrt((double) n1 * n2 / 12 * ((n + 1) - tieCorrection));
-        double z = Math.abs((uMin - meanU) / stddev);
-        return 0.5 * (1 + Erf.erf(z / Math.sqrt(2)));
-    }
-
-    private static double averageRank(double[] sorted, double value) {
-        int first = 0;
-        while (sorted[first] != value) {
-            first++;
-        }
-        int last = first;
-        while (last + 1 < sorted.length && sorted[last + 1] == value) {
-            last++;
-        }
-        // Ranks are 1-based, so the average rank of the equal values group is ((first + 1) + (last + 1)) / 2
-        return (first + last) / 2.0 + 1;
-    }
 }

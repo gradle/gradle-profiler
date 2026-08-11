@@ -167,10 +167,6 @@
             "p75": 83.75,
             "max": 85.0,
             "stddev": 2.5
-          },
-          "confidence": {
-            "baseline": "release@0",
-            "value": 0.9679612467744703
           }
         },
         {
@@ -184,10 +180,6 @@
             "p75": 188.75,
             "max": 190.0,
             "stddev": 2.5
-          },
-          "confidence": {
-            "baseline": "release@0",
-            "value": 0.9679612467744703
           }
         }
       ],

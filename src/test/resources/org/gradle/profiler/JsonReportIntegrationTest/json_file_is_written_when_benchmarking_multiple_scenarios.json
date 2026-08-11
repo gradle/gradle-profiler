@@ -93,10 +93,6 @@
             "p75": "<duration>",
             "max": "<duration>",
             "stddev": "<duration>"
-          },
-          "confidence": {
-            "baseline": "_<uuid>_assemble_97031489",
-            "value": "<confidence>"
           }
         }
       ],

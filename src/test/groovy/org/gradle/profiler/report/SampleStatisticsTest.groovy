@@ -40,26 +40,4 @@ class SampleStatisticsTest extends Specification {
         thrown(IllegalArgumentException)
     }
 
-    def "computes confidence of clearly different samples"() {
-        expect:
-        def confidence = SampleStatistics.confidenceOfDifference([75, 70, 72, 68] as double[], [85, 80] as double[])
-        Math.abs(confidence - 0.9679612467744703d) < 1e-12
-    }
-
-    def "computes confidence of 0.5 for identical distributions"() {
-        expect:
-        SampleStatistics.confidenceOfDifference([1, 2, 3, 4] as double[], [1, 2, 3, 4] as double[]) == 0.5d
-    }
-
-    def "confidence handles ties using average ranks"() {
-        expect:
-        // Cross-checked against report.js (mann-whitney-utest + math.erf)
-        def confidence = SampleStatistics.confidenceOfDifference([10, 10, 12, 14] as double[], [10, 12, 16, 18] as double[])
-        Math.abs(confidence - 0.851258452792034d) < 1e-12
-    }
-
-    def "confidence is NaN when all values are equal"() {
-        expect:
-        Double.isNaN(SampleStatistics.confidenceOfDifference([5, 5] as double[], [5, 5] as double[]))
-    }
 }

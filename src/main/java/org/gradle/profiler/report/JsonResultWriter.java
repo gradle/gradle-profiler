@@ -64,10 +64,9 @@ public class JsonResultWriter {
     }
 
     private static void writeScenarioResults(List<? extends BuildScenarioResult<?>> results, Gson gson, JsonObject json) {
-        BuildScenarioResult<?> baseline = results.size() > 1 ? results.get(0) : null;
         JsonArray scenariosJson = new JsonArray();
         for (BuildScenarioResult<?> scenario : results) {
-            scenariosJson.add(ScenarioResultWriter.serialize(scenario, scenario == baseline ? null : baseline, gson));
+            scenariosJson.add(ScenarioResultWriter.serialize(scenario, gson));
         }
         json.add("scenarios", scenariosJson);
     }
