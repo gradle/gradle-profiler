@@ -91,8 +91,8 @@ Note that the formats and contents are not stable and may change in the future w
 
 ### Regression detection
 
-If multiple versions are tested, then Gradle profiler determines whether there is a statistically significant difference in the run times by using a [Mann-Whitney U-Test](https://en.wikipedia.org/wiki/Mann%E2%80%93Whitney_U_test).
-The result files contain the confidence if a sample has a different performance behavior - i.e. it is faster or slower - than the baseline.
+If multiple scenarios or versions are tested, the HTML report can show the confidence that a scenario has a different performance behavior — i.e. it is faster or slower — than a baseline scenario selected in the report, using a [Mann-Whitney U-Test](https://en.wikipedia.org/wiki/Mann%E2%80%93Whitney_U_test).
+The CSV and JSON files contain the raw iteration values, from which such comparisons can be computed.
 
 ## Profiling a build
 
