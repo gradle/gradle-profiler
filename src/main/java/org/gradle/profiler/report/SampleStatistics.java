@@ -64,8 +64,14 @@ public class SampleStatistics {
     /**
      * Returns the confidence that the two samples come from different distributions,
      * based on the normal approximation of the Mann-Whitney U test with tie correction.
-     * Returns {@link Double#NaN} when the samples contain too little data to decide,
-     * e.g. when all values are equal.
+     *
+     * <p>The value is in the range {@code [0.5, 1]}: it is the one-sided confidence, matching
+     * what the HTML report has historically shown. {@code 0.5} means "no difference detected"
+     * (identical samples), values close to {@code 1} mean the difference is likely real.
+     * The value can never go below {@code 0.5}.
+     *
+     * <p>Returns {@link Double#NaN} when the samples contain too little data to decide,
+     * e.g. when all values are equal in both samples.
      */
     public static double confidenceOfDifference(double[] a, double[] b) {
         int n1 = a.length;
