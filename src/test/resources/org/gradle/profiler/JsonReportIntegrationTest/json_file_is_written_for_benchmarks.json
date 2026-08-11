@@ -28,7 +28,16 @@
       "samples": [
         {
           "name": "total execution time",
-          "unit": "ms"
+          "unit": "ms",
+          "stats": {
+            "mean": "<duration>",
+            "min": "<duration>",
+            "p25": "<duration>",
+            "median": "<duration>",
+            "p75": "<duration>",
+            "max": "<duration>",
+            "stddev": "<duration>"
+          }
         }
       ],
       "iterations": [

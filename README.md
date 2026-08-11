@@ -60,6 +60,7 @@ exactly as you would use for the `gradle` command.
 
 Results will be written to files called `profile-out/benchmark.html`, `profile-out/benchmark.csv` and `profile-out/benchmark.json`.
 The JSON file contains the scenario definitions, the measured samples and the value of each sample for every iteration, so it can be parsed by custom tooling.
+For each sample it also contains statistics computed over the measured iterations (mean, min, P25, median, P75, max and standard deviation).
 
 When the profiler runs the build, it will use the tasks you specified. The profiler will use the default
 Gradle version, Java installation and JVM args that have been specified for your build, if any.
@@ -90,8 +91,8 @@ Note that the formats and contents are not stable and may change in the future w
 
 ### Regression detection
 
-If multiple versions are tested, then Gradle profiler determines whether there is a statistically significant difference in the run times by using a [Mann-Whitney U-Test](https://en.wikipedia.org/wiki/Mann%E2%80%93Whitney_U_test).
-The result files contain the confidence if a sample has a different performance behavior - i.e. it is faster or slower - than the baseline.
+If multiple scenarios or versions are tested, the HTML report can show the confidence that a scenario has a different performance behavior — i.e. it is faster or slower — than a baseline scenario selected in the report, using a [Mann-Whitney U-Test](https://en.wikipedia.org/wiki/Mann%E2%80%93Whitney_U_test).
+The CSV and JSON files contain the raw iteration values, from which such comparisons can be computed.
 
 ## Profiling a build
 

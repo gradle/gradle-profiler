@@ -18,6 +18,8 @@ import org.gradle.profiler.result.SingleInvocationDurationSample
 import org.gradle.util.GradleVersion
 import org.junit.Rule
 import org.junit.rules.TemporaryFolder
+import spock.lang.Snapshot
+import spock.lang.Snapshotter
 import spock.lang.Specification
 
 import java.time.Duration
@@ -26,6 +28,9 @@ import java.time.Instant
 class JsonResultWriterTest extends Specification {
 
     @Rule TemporaryFolder tmpDir
+
+    @Snapshot(extension = 'json')
+    Snapshotter snapshotter
 
     int counter
     def stringWriter = new StringWriter()
@@ -105,202 +110,14 @@ class JsonResultWriterTest extends Specification {
 
         when:
         writer.write("Test benchmark", Instant.ofEpochMilli(1600000000000), [result1, result2], stringWriter)
-        String expected = """{
-  "title": "Test benchmark",
-  "date": "2020-09-13T12:26:40Z",
-  "environment": {
-    "profilerVersion": "UNKNOWN",
-    "operatingSystem": "${OperatingSystem.getId()}"
-  },
-  "scenarios": [
-    {
-      "definition": {
-        "name": "release",
-        "title": "Assemble Release",
-        "displayName": "Assemble Release using Gradle 6.7",
-        "buildTool": "Gradle 6.7",
-        "tasks": ":assemble",
-        "version": "6.7",
-        "gradleHome": ${escape(gradleHomeDir.absolutePath)},
-        "javaHome": ${escape(javaHomeDir.absolutePath)},
-        "usesScanPlugin": false,
-        "action": "run tasks :assemble",
-        "cleanup": "do nothing",
-        "invoker": "Tooling API",
-        "mutators": [
-          ${escape("ApplyAbiChangeToKotlinSourceFileMutator(${sourceFile.absolutePath})")}
-        ],
-        "args": [
-          "-Palma\\u003drelease"
-        ],
-        "jvmArgs": [
-          "-Xmx512m",
-          "-Xmx1024m"
-        ],
-        "systemProperties": {
-          "org.gradle.test": "true"
-        },
-        "id": "release@0"
-      },
-      "samples": [
-        {
-          "name": "total execution time",
-          "unit": "ms"
-        },
-        {
-          "name": "Test sample",
-          "unit": "ms"
-        }
-      ],
-      "iterations": [
-        {
-          "id": "release@0@WARM_UP@1",
-          "phase": "WARM_UP",
-          "iteration": 1,
-          "title": "warm-up build #1",
-          "values": {
-            "total execution time": 100.0,
-            "Test sample": 120.0
-          }
-        },
-        {
-          "id": "release@0@WARM_UP@2",
-          "phase": "WARM_UP",
-          "iteration": 2,
-          "title": "warm-up build #2",
-          "values": {
-            "total execution time": 80.0,
-            "Test sample": 100.0
-          }
-        },
-        {
-          "id": "release@0@MEASURE@1",
-          "phase": "MEASURE",
-          "iteration": 1,
-          "title": "measured build #1",
-          "values": {
-            "total execution time": 75.0,
-            "Test sample": 90.0
-          }
-        },
-        {
-          "id": "release@0@MEASURE@2",
-          "phase": "MEASURE",
-          "iteration": 2,
-          "title": "measured build #2",
-          "values": {
-            "total execution time": 70.0,
-            "Test sample": 85.0
-          }
-        },
-        {
-          "id": "release@0@MEASURE@3",
-          "phase": "MEASURE",
-          "iteration": 3,
-          "title": "measured build #3",
-          "values": {
-            "total execution time": 72.0,
-            "Test sample": 80.0
-          }
-        },
-        {
-          "id": "release@0@MEASURE@4",
-          "phase": "MEASURE",
-          "iteration": 4,
-          "title": "measured build #4",
-          "values": {
-            "total execution time": 68.0,
-            "Test sample": 88.0
-          }
-        }
-      ]
-    },
-    {
-      "definition": {
-        "name": "debug",
-        "title": "Assemble Debug",
-        "displayName": "Assemble Debug using Gradle 6.7",
-        "buildTool": "Gradle 6.7",
-        "tasks": ":assembleDebug",
-        "version": "6.7",
-        "gradleHome": ${escape(gradleHomeDir.absolutePath)},
-        "javaHome": ${escape(javaHomeDir.absolutePath)},
-        "usesScanPlugin": false,
-        "action": "run tasks :assembleDebug",
-        "cleanup": "do nothing",
-        "invoker": "Tooling API",
-        "mutators": [
-          ${escape("ApplyAbiChangeToKotlinSourceFileMutator(${sourceFile.absolutePath})")}
-        ],
-        "args": [
-          "-Palma\\u003ddebug"
-        ],
-        "jvmArgs": [
-          "-Xmx512m",
-          "-Xmx1024m"
-        ],
-        "systemProperties": {
-          "org.gradle.test": "true"
-        },
-        "id": "debug@1"
-      },
-      "samples": [
-        {
-          "name": "total execution time",
-          "unit": "ms"
-        },
-        {
-          "name": "Test sample",
-          "unit": "ms"
-        }
-      ],
-      "iterations": [
-        {
-          "id": "debug@1@WARM_UP@1",
-          "phase": "WARM_UP",
-          "iteration": 1,
-          "title": "warm-up build #1",
-          "values": {
-            "total execution time": 110.0,
-            "Test sample": 220.0
-          }
-        },
-        {
-          "id": "debug@1@WARM_UP@2",
-          "phase": "WARM_UP",
-          "iteration": 2,
-          "title": "warm-up build #2",
-          "values": {
-            "total execution time": 90.0,
-            "Test sample": 200.0
-          }
-        },
-        {
-          "id": "debug@1@MEASURE@1",
-          "phase": "MEASURE",
-          "iteration": 1,
-          "title": "measured build #1",
-          "values": {
-            "total execution time": 85.0,
-            "Test sample": 190.0
-          }
-        },
-        {
-          "id": "debug@1@MEASURE@2",
-          "phase": "MEASURE",
-          "iteration": 2,
-          "title": "measured build #2",
-          "values": {
-            "total execution time": 80.0,
-            "Test sample": 185.0
-          }
-        }
-      ]
-    }
-  ]
-}"""
+
         then:
-        stringWriter.toString() == expected
+        snapshotter.assertThat(normalize(stringWriter.toString(), [
+            (gradleHomeDir.absolutePath): "<gradleHome>",
+            (javaHomeDir.absolutePath): "<javaHome>",
+            (sourceFile.absolutePath): "<sourceFile>",
+            (OperatingSystem.getId()): "<operatingSystem>"
+        ])).matchesSnapshot()
     }
 
     static class TestSample extends SingleInvocationDurationSample<BuildInvocationResult> {
@@ -357,7 +174,18 @@ class JsonResultWriterTest extends Specification {
         }
     }
 
-    private static String escape(String string) {
-        new Gson().toJson(string)
+    /**
+     * Replaces environment-dependent values with placeholders, keeping the JSON structure intact.
+     */
+    private static String normalize(String json, Map<String, String> replacements) {
+        replacements.each { value, placeholder ->
+            json = json.replace(jsonEscaped(value), placeholder)
+        }
+        return json
+    }
+
+    private static String jsonEscaped(String value) {
+        String quoted = new Gson().toJson(value)
+        return quoted.substring(1, quoted.length() - 1)
     }
 }

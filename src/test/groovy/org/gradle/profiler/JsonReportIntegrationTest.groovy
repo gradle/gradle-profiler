@@ -32,6 +32,32 @@ class JsonReportIntegrationTest extends AbstractProfilerIntegrationTest {
         snapshotter.assertThat(normalize(file.text, minimalSupportedGradleVersion)).matchesSnapshot()
     }
 
+    def "json file is written when benchmarking multiple scenarios"() {
+        given:
+        instrumentedBuildScript()
+        def scenarioFile = file("performance.scenarios")
+        scenarioFile.text = """
+            assemble {
+                tasks = ["assemble"]
+            }
+            help {
+                tasks = ["help"]
+            }
+        """
+
+        when:
+        run([
+            "--gradle-version", minimalSupportedGradleVersion,
+            "--benchmark",
+            "--scenario-file", scenarioFile.absolutePath
+        ])
+
+        then:
+        def file = new File(outputDir, "benchmark.json")
+        file.isFile()
+        snapshotter.assertThat(normalize(file.text, minimalSupportedGradleVersion)).matchesSnapshot()
+    }
+
     /**
      * Replaces environment-dependent values with placeholders, keeping the JSON structure intact.
      */
@@ -51,6 +77,12 @@ class JsonReportIntegrationTest extends AbstractProfilerIntegrationTest {
             definition.addProperty("id", normalizeId(definition.get("id").asString))
             // JVM args of the benchmarked build depend on the environment the test runs in
             definition.add("jvmArgs", new JsonArray())
+            scenario.asJsonObject.getAsJsonArray("samples").each { sample ->
+                JsonObject stats = sample.asJsonObject.getAsJsonObject("stats")
+                if (stats != null) {
+                    new ArrayList<>(stats.keySet()).each { stats.addProperty(it, "<duration>") }
+                }
+            }
             scenario.asJsonObject.getAsJsonArray("iterations").each { iteration ->
                 JsonObject iterationJson = iteration.asJsonObject
                 iterationJson.addProperty("id", normalizeId(iterationJson.get("id").asString))
