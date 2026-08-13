@@ -1,24 +1,21 @@
 package org.gradle.profiler.report
 
 import org.gradle.profiler.BuildAction
-import org.gradle.profiler.BuildContext
 import org.gradle.profiler.BuildScenarioResultImpl
 import org.gradle.profiler.GradleBuildConfiguration
 import org.gradle.profiler.Phase
-import org.gradle.profiler.ScenarioContext
 import org.gradle.profiler.gradle.GradleBuildInvoker
 import org.gradle.profiler.gradle.GradleScenarioDefinition
 import org.gradle.profiler.gradle.RunTasksAction
-import org.gradle.profiler.result.BuildActionResult
+import org.gradle.profiler.report.ResultWriterTestFixtures.TestInvocationResult
+import org.gradle.profiler.report.ResultWriterTestFixtures.TestSample
+import org.gradle.profiler.report.ResultWriterTestFixtures.TestScenarioContext
 import org.gradle.profiler.result.BuildInvocationResult
 import org.gradle.profiler.result.Sample
-import org.gradle.profiler.result.SingleInvocationDurationSample
 import org.gradle.util.GradleVersion
 import org.junit.Rule
 import org.junit.rules.TemporaryFolder
 import spock.lang.Specification
-
-import java.time.Duration
 
 class CsvGeneratorTest extends Specification {
 
@@ -35,20 +32,20 @@ class CsvGeneratorTest extends Specification {
             scenario("release", "Assemble Release", ":assemble", 2, 2),
             [BuildInvocationResult.EXECUTION_TIME],
             [
-                [Phase.WARM_UP, 1, 100],
-                [Phase.WARM_UP, 2, 90],
-                [Phase.MEASURE, 1, 80],
-                [Phase.MEASURE, 2, 70],
+                [phase: Phase.WARM_UP, iteration: 1, execution: 100],
+                [phase: Phase.WARM_UP, iteration: 2, execution: 90],
+                [phase: Phase.MEASURE, iteration: 1, execution: 80],
+                [phase: Phase.MEASURE, iteration: 2, execution: 70],
             ]
         )
         def result2 = scenarioResult(
             scenario("debug", "Assemble Debug", ":assembleDebug", 2, 2),
             [BuildInvocationResult.EXECUTION_TIME],
             [
-                [Phase.WARM_UP, 1, 110],
-                [Phase.WARM_UP, 2, 95],
-                [Phase.MEASURE, 1, 85],
-                [Phase.MEASURE, 2, 75],
+                [phase: Phase.WARM_UP, iteration: 1, execution: 110],
+                [phase: Phase.WARM_UP, iteration: 2, execution: 95],
+                [phase: Phase.MEASURE, iteration: 1, execution: 85],
+                [phase: Phase.MEASURE, iteration: 2, execution: 75],
             ]
         )
 
@@ -69,19 +66,19 @@ measured build #2,70.00,75.00
             scenario("short-warmup", "Short Warmup", ":short", 1, 2),
             [BuildInvocationResult.EXECUTION_TIME, TestSample.INSTANCE],
             [
-                [Phase.WARM_UP, 1, 100, 120],
-                [Phase.MEASURE, 1, 80, 88],
-                [Phase.MEASURE, 2, 70, 77],
+                [phase: Phase.WARM_UP, iteration: 1, execution: 100, test: 120],
+                [phase: Phase.MEASURE, iteration: 1, execution: 80, test: 88],
+                [phase: Phase.MEASURE, iteration: 2, execution: 70, test: 77],
             ]
         )
         def longWarmup = scenarioResult(
             scenario("long-warmup", "Long Warmup", ":long", 2, 2),
             [BuildInvocationResult.EXECUTION_TIME],
             [
-                [Phase.WARM_UP, 1, 200],
-                [Phase.WARM_UP, 2, 190],
-                [Phase.MEASURE, 1, 180],
-                [Phase.MEASURE, 2, 170],
+                [phase: Phase.WARM_UP, iteration: 1, execution: 200],
+                [phase: Phase.WARM_UP, iteration: 2, execution: 190],
+                [phase: Phase.MEASURE, iteration: 1, execution: 180],
+                [phase: Phase.MEASURE, iteration: 2, execution: 170],
             ]
         )
 
@@ -102,19 +99,19 @@ measured build #2,70.00,77.00,170.00
             scenario("two-measures", "Two Measures", ":two", 1, 2),
             [BuildInvocationResult.EXECUTION_TIME],
             [
-                [Phase.WARM_UP, 1, 100],
-                [Phase.MEASURE, 1, 90],
-                [Phase.MEASURE, 2, 80],
+                [phase: Phase.WARM_UP, iteration: 1, execution: 100],
+                [phase: Phase.MEASURE, iteration: 1, execution: 90],
+                [phase: Phase.MEASURE, iteration: 2, execution: 80],
             ]
         )
         def threeMeasures = scenarioResult(
             scenario("three-measures", "Three Measures", ":three", 1, 3),
             [BuildInvocationResult.EXECUTION_TIME, TestSample.INSTANCE],
             [
-                [Phase.WARM_UP, 1, 200, 220],
-                [Phase.MEASURE, 1, 190, 210],
-                [Phase.MEASURE, 2, 180, 200],
-                [Phase.MEASURE, 3, 170, 190],
+                [phase: Phase.WARM_UP, iteration: 1, execution: 200, test: 220],
+                [phase: Phase.MEASURE, iteration: 1, execution: 190, test: 210],
+                [phase: Phase.MEASURE, iteration: 2, execution: 180, test: 200],
+                [phase: Phase.MEASURE, iteration: 3, execution: 170, test: 190],
             ]
         )
 
@@ -133,19 +130,19 @@ measured build #2,70.00,77.00,170.00
             scenario("short-warmup", "Short Warmup", ":short", 1, 2),
             [BuildInvocationResult.EXECUTION_TIME, TestSample.INSTANCE],
             [
-                [Phase.WARM_UP, 1, 100, 120],
-                [Phase.MEASURE, 1, 80, 88],
-                [Phase.MEASURE, 2, 70, 77],
+                [phase: Phase.WARM_UP, iteration: 1, execution: 100, test: 120],
+                [phase: Phase.MEASURE, iteration: 1, execution: 80, test: 88],
+                [phase: Phase.MEASURE, iteration: 2, execution: 70, test: 77],
             ]
         )
         def longWarmup = scenarioResult(
             scenario("long-warmup", "Long Warmup", ":long", 2, 2),
             [BuildInvocationResult.EXECUTION_TIME],
             [
-                [Phase.WARM_UP, 1, 200],
-                [Phase.WARM_UP, 2, 190],
-                [Phase.MEASURE, 1, 180],
-                [Phase.MEASURE, 2, 170],
+                [phase: Phase.WARM_UP, iteration: 1, execution: 200],
+                [phase: Phase.WARM_UP, iteration: 2, execution: 190],
+                [phase: Phase.MEASURE, iteration: 1, execution: 180],
+                [phase: Phase.MEASURE, iteration: 2, execution: 170],
             ]
         )
 
@@ -202,66 +199,15 @@ Long Warmup,Gradle 6.7,:long,MEASURE,2,total execution time,170.00,1
     private static BuildScenarioResultImpl<BuildInvocationResult> scenarioResult(
         GradleScenarioDefinition scenario,
         List<Sample<? super BuildInvocationResult>> samples,
-        List<List> builds
+        List<Map<String, ?>> builds
     ) {
         def result = new BuildScenarioResultImpl<BuildInvocationResult>(scenario, { samples })
         def context = new TestScenarioContext(scenario.name)
         builds.each { build ->
-            long testTime = build.size() > 3 ? build[3] as long : build[2] as long
-            result.accept(new TestInvocationResult(context.withBuild(build[0] as Phase, build[1] as int), build[2] as long, testTime))
+            long testTime = (build.test ?: build.execution) as long
+            def buildContext = context.withBuild(build.phase as Phase, build.iteration as int)
+            result.accept(new TestInvocationResult(buildContext, build.execution as long, testTime))
         }
         result
-    }
-
-    static class TestSample extends SingleInvocationDurationSample<BuildInvocationResult> {
-        static final TestSample INSTANCE = new TestSample()
-
-        private TestSample() {
-            super("Test sample")
-        }
-
-        @Override
-        protected Duration extractTotalDurationFrom(BuildInvocationResult result) {
-            ((TestInvocationResult) result).testTime
-        }
-    }
-
-    static class TestInvocationResult extends BuildInvocationResult {
-        final Duration testTime
-
-        TestInvocationResult(BuildContext context, long executionTime, long testTime) {
-            super(context, new BuildActionResult(Duration.ofMillis(executionTime)))
-            this.testTime = Duration.ofMillis(testTime)
-        }
-    }
-
-    static class TestScenarioContext implements ScenarioContext {
-        final String uniqueScenarioId
-
-        TestScenarioContext(String uniqueScenarioId) {
-            this.uniqueScenarioId = uniqueScenarioId
-        }
-
-        @Override
-        BuildContext withBuild(Phase phase, int iteration) {
-            new TestBuildContext(this, phase, iteration)
-        }
-    }
-
-    static class TestBuildContext implements BuildContext {
-        @Delegate
-        private final ScenarioContext scenario
-        final Phase phase
-        final int iteration
-        final String uniqueBuildId
-        final String displayName
-
-        TestBuildContext(ScenarioContext scenario, Phase phase, int iteration) {
-            this.scenario = scenario
-            this.phase = phase
-            this.iteration = iteration
-            this.uniqueBuildId = "${scenario.uniqueScenarioId}@${phase}@${iteration}"
-            this.displayName = phase.displayBuildNumber(iteration)
-        }
     }
 }
