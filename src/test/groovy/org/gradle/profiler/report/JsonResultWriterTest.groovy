@@ -2,7 +2,6 @@ package org.gradle.profiler.report
 
 import com.google.gson.Gson
 import org.gradle.profiler.BuildAction
-import org.gradle.profiler.BuildContext
 import org.gradle.profiler.BuildScenarioResultImpl
 import org.gradle.profiler.GradleBuildConfiguration
 import org.gradle.profiler.gradle.GradleBuildInvoker
@@ -10,11 +9,11 @@ import org.gradle.profiler.gradle.GradleScenarioDefinition
 import org.gradle.profiler.OperatingSystem
 import org.gradle.profiler.Phase
 import org.gradle.profiler.gradle.RunTasksAction
-import org.gradle.profiler.ScenarioContext
 import org.gradle.profiler.mutations.ApplyAbiChangeToKotlinSourceFileMutator
-import org.gradle.profiler.result.BuildActionResult
 import org.gradle.profiler.result.BuildInvocationResult
-import org.gradle.profiler.result.SingleInvocationDurationSample
+import org.gradle.profiler.report.ResultWriterTestFixtures.TestInvocationResult
+import org.gradle.profiler.report.ResultWriterTestFixtures.TestSample
+import org.gradle.profiler.report.ResultWriterTestFixtures.TestScenarioContext
 import org.gradle.util.GradleVersion
 import org.junit.Rule
 import org.junit.rules.TemporaryFolder
@@ -22,7 +21,6 @@ import spock.lang.Snapshot
 import spock.lang.Snapshotter
 import spock.lang.Specification
 
-import java.time.Duration
 import java.time.Instant
 
 class JsonResultWriterTest extends Specification {
@@ -96,17 +94,17 @@ class JsonResultWriterTest extends Specification {
         )
         def scenarioContext2 = new TestScenarioContext("debug@1")
         def result1 = new BuildScenarioResultImpl<BuildInvocationResult>(scenario1, { [BuildInvocationResult.EXECUTION_TIME, TestSample.INSTANCE] })
-        result1.accept(new GradleInvocationResult(scenarioContext1.withBuild(Phase.WARM_UP, 1), 100, 120))
-        result1.accept(new GradleInvocationResult(scenarioContext1.withBuild(Phase.WARM_UP, 2),  80, 100))
-        result1.accept(new GradleInvocationResult(scenarioContext1.withBuild(Phase.MEASURE, 1),  75,  90))
-        result1.accept(new GradleInvocationResult(scenarioContext1.withBuild(Phase.MEASURE, 2),  70,  85))
-        result1.accept(new GradleInvocationResult(scenarioContext1.withBuild(Phase.MEASURE, 3),  72,  80))
-        result1.accept(new GradleInvocationResult(scenarioContext1.withBuild(Phase.MEASURE, 4),  68,  88))
+        result1.accept(new TestInvocationResult(scenarioContext1.withBuild(Phase.WARM_UP, 1), 100, 120))
+        result1.accept(new TestInvocationResult(scenarioContext1.withBuild(Phase.WARM_UP, 2),  80, 100))
+        result1.accept(new TestInvocationResult(scenarioContext1.withBuild(Phase.MEASURE, 1),  75,  90))
+        result1.accept(new TestInvocationResult(scenarioContext1.withBuild(Phase.MEASURE, 2),  70,  85))
+        result1.accept(new TestInvocationResult(scenarioContext1.withBuild(Phase.MEASURE, 3),  72,  80))
+        result1.accept(new TestInvocationResult(scenarioContext1.withBuild(Phase.MEASURE, 4),  68,  88))
         def result2 = new BuildScenarioResultImpl<BuildInvocationResult>(scenario2, { [BuildInvocationResult.EXECUTION_TIME, TestSample.INSTANCE] })
-        result2.accept(new GradleInvocationResult(scenarioContext2.withBuild(Phase.WARM_UP, 1), 110, 220))
-        result2.accept(new GradleInvocationResult(scenarioContext2.withBuild(Phase.WARM_UP, 2),  90, 200))
-        result2.accept(new GradleInvocationResult(scenarioContext2.withBuild(Phase.MEASURE, 1),  85, 190))
-        result2.accept(new GradleInvocationResult(scenarioContext2.withBuild(Phase.MEASURE, 2),  80, 185))
+        result2.accept(new TestInvocationResult(scenarioContext2.withBuild(Phase.WARM_UP, 1), 110, 220))
+        result2.accept(new TestInvocationResult(scenarioContext2.withBuild(Phase.WARM_UP, 2),  90, 200))
+        result2.accept(new TestInvocationResult(scenarioContext2.withBuild(Phase.MEASURE, 1),  85, 190))
+        result2.accept(new TestInvocationResult(scenarioContext2.withBuild(Phase.MEASURE, 2),  80, 185))
 
         when:
         writer.write("Test benchmark", Instant.ofEpochMilli(1600000000000), [result1, result2], stringWriter)
@@ -118,60 +116,6 @@ class JsonResultWriterTest extends Specification {
             (sourceFile.absolutePath): "<sourceFile>",
             (OperatingSystem.getId()): "<operatingSystem>"
         ])).matchesSnapshot()
-    }
-
-    static class TestSample extends SingleInvocationDurationSample<BuildInvocationResult> {
-        static final TestSample INSTANCE = new TestSample()
-
-        TestSample() {
-            super("Test sample")
-        }
-
-        @Override
-        protected Duration extractTotalDurationFrom(BuildInvocationResult result) {
-            return ((GradleInvocationResult) result).testTime
-        }
-    }
-
-    class GradleInvocationResult extends BuildInvocationResult {
-        final Duration testTime
-        final BuildContext context
-
-        GradleInvocationResult(BuildContext context, long executionTime, long testTime) {
-            super(context, new BuildActionResult(Duration.ofMillis(executionTime)))
-            this.testTime = Duration.ofMillis(testTime)
-            this.context = context
-        }
-    }
-
-    class TestScenarioContext implements ScenarioContext {
-        final String uniqueScenarioId
-
-        TestScenarioContext(String uniqueScenarioId) {
-            this.uniqueScenarioId = uniqueScenarioId
-        }
-
-        @Override
-        BuildContext withBuild(Phase phase, int iteration) {
-            new TestBuildContext(this, phase, iteration)
-        }
-    }
-
-    class TestBuildContext implements BuildContext {
-        @Delegate
-        private final ScenarioContext scenario
-        final Phase phase
-        final int iteration
-        final String uniqueBuildId
-        final String displayName
-
-        TestBuildContext(ScenarioContext scenario, Phase phase, int iteration) {
-            this.scenario = scenario
-            this.phase = phase
-            this.iteration = iteration
-            this.uniqueBuildId = "${scenario.uniqueScenarioId}@${phase}@${iteration}"
-            this.displayName = phase.displayBuildNumber(getIteration())
-        }
     }
 
     /**
