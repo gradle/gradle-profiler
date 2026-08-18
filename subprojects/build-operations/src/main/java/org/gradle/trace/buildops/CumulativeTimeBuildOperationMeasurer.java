@@ -1,8 +1,8 @@
 package org.gradle.trace.buildops;
 
-import org.gradle.internal.operations.OperationFinishEvent;
-
 import java.time.Duration;
+import java.util.Optional;
+import java.util.OptionalLong;
 import java.util.concurrent.atomic.AtomicLong;
 
 final class CumulativeTimeBuildOperationMeasurer implements BuildOperationMeasurer {
@@ -12,13 +12,12 @@ final class CumulativeTimeBuildOperationMeasurer implements BuildOperationMeasur
     }
 
     @Override
-    public void update(OperationFinishEvent event) {
-        long duration = event.getEndTime() - event.getStartTime();
-        buildOperationTime.addAndGet(duration);
+    public void update(long startTime, long endTime) {
+        buildOperationTime.addAndGet(endTime - startTime);
     }
 
     @Override
-    public Duration computeFinalValue() {
-        return Duration.ofMillis(buildOperationTime.get());
+    public Optional<Duration> computeFinalValue(OptionalLong buildStartTime) {
+        return Optional.of(Duration.ofMillis(buildOperationTime.get()));
     }
 }
