@@ -42,7 +42,7 @@ class GradleTraceConverterAppTest extends Specification {
 
         then:
         exitCode == 1
-        errorOutputContains("Usage: gtc <build-operations-trace-log>")
+        errorOutputContains("Usage: gtc <trace-log.txt|recording.jfr>")
     }
 
     def "fails when file does not exist"() {
