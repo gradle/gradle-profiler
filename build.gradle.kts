@@ -20,8 +20,8 @@ plugins {
 
 description = "A tool to profile and benchmark Gradle builds"
 
-val gradleRuntime by configurations.creating
-val profilerPlugins by configurations.creating
+val gradleRuntime = configurations.create("gradleRuntime")
+val profilerPlugins = configurations.create("profilerPlugins")
 
 dependencies {
     // gradle/gradle uses these as part of Gradle Profiler-as-a-library

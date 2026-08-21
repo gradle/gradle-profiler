@@ -51,8 +51,8 @@ val intellijExtension = extensions.create<IntellijTestExtension>("intellijTests"
     headlessMode.convention(false)
 }
 
-val androidStudioRuntime by configurations.creating
-val intellijRuntime by configurations.creating
+val androidStudioRuntime = configurations.create("androidStudioRuntime")
+val intellijRuntime = configurations.create("intellijRuntime")
 
 dependencies {
     val androidStudioFileExtension = when {
