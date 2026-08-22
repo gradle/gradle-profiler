@@ -4,7 +4,6 @@ import io.sdkman.vendors.tasks.SdkDefaultVersion
 import io.sdkman.vendors.tasks.SdkReleaseVersion
 import io.sdkman.vendors.tasks.SdkmanVendorBaseTask
 import java.util.Locale
-import org.gradle.kotlin.dsl.support.serviceOf
 import services.GithubReleaseService
 
 plugins {
@@ -17,7 +16,7 @@ plugins {
     id("profiler.publication")
     alias(libs.plugins.node)
     alias(libs.plugins.sdkman)
-    alias(libs.plugins.nexus) apply false
+    alias(libs.plugins.nexus)
 }
 
 description = "A tool to profile and benchmark Gradle builds"
@@ -225,21 +224,12 @@ tasks.register("testHtmlReports") {
     dependsOn(testReports.keys)
 }
 
-// The Nexus publish plugin configures every subproject through `allprojects`, which
-// Isolated Projects forbids. Publishing always runs without the configuration cache
-// (see the TeamCity publishing job), so the plugin is only applied when the feature
-// that it is incompatible with is inactive.
-val isolatedProjectsActive = serviceOf<org.gradle.api.configuration.BuildFeatures>()
-    .isolatedProjects.active.get()
-if (!isolatedProjectsActive) {
-    apply(plugin = "io.github.gradle-nexus.publish-plugin")
-    configure<io.github.gradlenexus.publishplugin.NexusPublishExtension> {
-        packageGroup.set(project.group.toString())
-        repositories {
-            sonatype {
-                nexusUrl.set(uri("https://ossrh-staging-api.central.sonatype.com/service/local/"))
-                snapshotRepositoryUrl.set(uri("https://central.sonatype.com/repository/maven-snapshots/"))
-            }
+nexusPublishing {
+    packageGroup.set(project.group.toString())
+    repositories {
+        sonatype {
+            nexusUrl.set(uri("https://ossrh-staging-api.central.sonatype.com/service/local/"))
+            snapshotRepositoryUrl.set(uri("https://central.sonatype.com/repository/maven-snapshots/"))
         }
     }
 }
