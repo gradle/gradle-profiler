@@ -21,8 +21,6 @@ object GradleProfilerPublishing : BuildType({
         param("env.ORG_GRADLE_PROJECT_githubToken", "%github.bot-teamcity.token%")
         param("env.ORG_GRADLE_PROJECT_sdkmanKey", "%gradleprofiler.sdkman.key%")
         param("env.ORG_GRADLE_PROJECT_sdkmanToken", "%gradleprofiler.sdkman.token%")
-        param("env.GRADLE_CACHE_REMOTE_USERNAME", "%gradle.cache.remote.username%")
-        param("env.GRADLE_CACHE_REMOTE_PASSWORD", "%gradle.cache.remote.password%")
         param("env.PGP_SIGNING_KEY_ID", "%pgpSigningKeyId%")
         param("env.PGP_SIGNING_KEY", "%pgpSigningKey%")
         param("env.PGP_SIGNING_KEY_PASSPHRASE", "%pgpSigningPassphrase%")
