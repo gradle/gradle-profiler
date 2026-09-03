@@ -8,6 +8,7 @@ import services.GithubReleaseService
 
 plugins {
     id("profiler.java-library")
+    id("profiler.versioning-root-project")
     id("profiler.ide-setup")
     groovy
     application
