@@ -16,6 +16,7 @@ class GradleProfilerPublishToSdkMan(publishingBuild: GradleProfilerPublishing) :
 
     triggers {
         finishBuildTrigger {
+            enabled = false
             buildType = publishingBuild.id.toString()
             successfulOnly = true
             branchFilter = "+:master"
