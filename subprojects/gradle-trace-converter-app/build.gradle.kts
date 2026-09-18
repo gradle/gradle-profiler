@@ -10,6 +10,7 @@ repositories {
 
 dependencies {
     implementation(project(":perfetto-converter-buildops"))
+    implementation(project(":perfetto-converter-jfr"))
 
     testImplementation(libs.bundles.testDependencies)
 }
@@ -17,6 +18,10 @@ dependencies {
 application {
     mainClass = "org.gradle.tools.traceconverter.AppKt"
     applicationName = "gtc"
+}
+
+tasks.named<JavaExec>("run") {
+    workingDir = rootDir
 }
 
 val installDistTask = tasks.named<Sync>("installDist")
