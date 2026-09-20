@@ -74,9 +74,7 @@ public class GradleBuildConfiguration implements BuildConfiguration {
      * The JVM arguments passed to configure the client VM.
      * See https://docs.gradle.org/current/userguide/build_environment.html#sec:gradle_environment_variables
      * <p>
-     * Note:
-     * 1. This is only for {@link org.gradle.profiler.gradle.CliGradleClient}, not for TAPI clients.
-     * 2. This is used only for --daemon. Use jvmArguments for --no-daemon.
+     * Note: This is only for {@link org.gradle.profiler.gradle.CliGradleClient}, not for TAPI clients.
      */
     public List<String> getClientJvmArguments() {
         return clientJvmArguments;
