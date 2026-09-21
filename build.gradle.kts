@@ -3,8 +3,8 @@ import io.sdkman.vendors.tasks.SdkAnnounceVersion
 import io.sdkman.vendors.tasks.SdkDefaultVersion
 import io.sdkman.vendors.tasks.SdkReleaseVersion
 import io.sdkman.vendors.tasks.SdkmanVendorBaseTask
-import java.util.Locale
 import services.GithubReleaseService
+import java.util.Locale
 
 plugins {
     id("profiler.java-library")
@@ -16,7 +16,6 @@ plugins {
     id("profiler.publication")
     alias(libs.plugins.node)
     alias(libs.plugins.sdkman)
-    alias(libs.plugins.nexus)
 }
 
 description = "A tool to profile and benchmark Gradle builds"
@@ -224,27 +223,27 @@ tasks.register("testHtmlReports") {
     dependsOn(testReports.keys)
 }
 
-nexusPublishing {
-    packageGroup.set(project.group.toString())
-    repositories {
-        sonatype {
-            nexusUrl.set(uri("https://ossrh-staging-api.central.sonatype.com/service/local/"))
-            snapshotRepositoryUrl.set(uri("https://central.sonatype.com/repository/maven-snapshots/"))
-        }
-    }
+val isSnapshot = version.toString().endsWith("-SNAPSHOT")
+
+val publishToMavenCentral = tasks.register("publishToMavenCentral") {
+    dependsOn(
+        if (isSnapshot) "publishAggregationToCentralSnapshots" else "publishAggregationToCentralPortal"
+    )
 }
 
 val releaseTagName = "v$version"
 
 tasks.register<Exec>("gitTag") {
+    val isRelease = !isSnapshot
+    onlyIf { isRelease }
     commandLine("git", "tag", releaseTagName)
-    onlyIf { !isSnapshot() }
 }
 
 val gitPushTag = tasks.register<Exec>("gitPushTag") {
-    mustRunAfter("closeSonatypeStagingRepository")
+    mustRunAfter(publishToMavenCentral)
     dependsOn("gitTag")
-    onlyIf { !isSnapshot() }
+    val isRelease = !isSnapshot
+    onlyIf { isRelease }
     commandLine(
         "git",
         "push",
@@ -252,8 +251,6 @@ val gitPushTag = tasks.register<Exec>("gitPushTag") {
         releaseTagName
     )
 }
-
-fun Project.isSnapshot() = version.toString().endsWith("-SNAPSHOT")
 
 gradle.sharedServices.registerIfAbsent("githubRelease", GithubReleaseService::class) {
     parameters.githubToken = providers.gradleProperty("githubToken")

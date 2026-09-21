@@ -13,7 +13,7 @@ tasks.register("createBuildReceipt") {
 }
 
 gradle.taskGraph.whenReady {
-    if (hasTask(":publishToSonatype") || hasTask(":releaseToSdkMan")) {
+    if (hasTask(":publishToMavenCentral") || hasTask(":releaseToSdkMan")) {
         logger.lifecycle(
             "##teamcity[buildStatus text='{build.status.text}, Published version {}']",
             profilerVersion.get()

@@ -24,15 +24,14 @@ object GradleProfilerPublishing : BuildType({
         param("env.PGP_SIGNING_KEY_ID", "%pgpSigningKeyId%")
         param("env.PGP_SIGNING_KEY", "%pgpSigningKey%")
         param("env.PGP_SIGNING_KEY_PASSPHRASE", "%pgpSigningPassphrase%")
-        param("env.ORG_GRADLE_PROJECT_sonatypeUsername", "%mavenCentralStagingRepoUser%")
-        param("env.ORG_GRADLE_PROJECT_sonatypePassword", "%mavenCentralStagingRepoPassword%")
+        param("env.ORG_GRADLE_PROJECT_mavenCentralUsername", "%mavenCentralStagingRepoUser%")
+        param("env.ORG_GRADLE_PROJECT_mavenCentralPassword", "%mavenCentralStagingRepoPassword%")
     }
 
     steps {
         gradle {
-            // No CC since https://github.com/gradle-nexus/publish-plugin/issues/221, which is
-            // waiting for https://github.com/gradle/gradle/issues/22779
-            tasks = "--no-configuration-cache clean createBuildReceipt publishToSonatype closeAndReleaseSonatypeStagingRepository gitPushTag publishToGithubReleases %additional.gradle.parameters%"
+            tasks =
+                "clean createBuildReceipt publishToMavenCentral gitPushTag publishToGithubReleases %additional.gradle.parameters%"
             gradleParams = toolchainConfiguration(os, arch) + " -Dgradle.cache.remote.push=true"
             buildFile = ""
         }
