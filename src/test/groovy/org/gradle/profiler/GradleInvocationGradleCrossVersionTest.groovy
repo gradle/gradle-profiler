@@ -227,4 +227,34 @@ class GradleInvocationGradleCrossVersionTest extends AbstractGradleCrossVersionT
 
         invokerString = runUsing == "cli" ? "`gradle` command" : "tooling API"
     }
+
+    def "passes jvm args to the build JVM when there is no daemon"() {
+        given:
+        instrumentedBuildScript()
+        buildFile << """
+            task printJvmArgs {
+                doFirst {
+                    def buildJvmArgs = java.lang.management.ManagementFactory.runtimeMXBean.inputArguments
+                    println "<jvm-arg -Xmx2G: " + buildJvmArgs.contains("-Xmx2G") + ">"
+                    println "<jvm-arg -Xms1G: " + buildJvmArgs.contains("-Xms1G") + ">"
+                }
+            }
+        """
+        def scenarioFile = file("performance.scenarios") << """
+            s1 {
+                daemon = none
+                tasks = printJvmArgs
+                jvm-args = ["-Xmx2G", "-Xms1G"]
+            }
+        """
+
+        when:
+        run(["--gradle-version", gradleVersion, "--benchmark", "--scenario-file", scenarioFile.absolutePath, "s1"])
+
+        then:
+        // 1 warm-up + 10 measured builds, all without a daemon
+        logFile.find("<daemon: false").size() == 11
+        logFile.find("<jvm-arg -Xmx2G: true>").size() == 11
+        logFile.find("<jvm-arg -Xms1G: true>").size() == 11
+    }
 }

@@ -1627,51 +1627,17 @@ class ProfilerIntegrationTest extends AbstractProfilerIntegrationTest {
         noExceptionThrown()
     }
 
-    def "override jvm args when not using a daemon"() {
-        given:
-        def scenarios = file('performance.scenario')
-        scenarios.text = """
-            buildTarget {
-                tasks = ["jvmArgs"]
-                daemon = none
-                jvm-args = ["-Xmx2G", "-Xms1G"]
-            }
-        """
-
-        getBuildFile() << """
-            import java.lang.management.ManagementFactory
-
-            task jvmArgs {
-                doFirst {
-                    def jvmArgs = ManagementFactory.runtimeMXBean.inputArguments
-                    assert jvmArgs.contains("-Xmx2G")
-                    assert jvmArgs.contains("-Xms1G")
-                }
-            }
-        """
-
-        when:
-        benchmarkScenario(projectDir, scenarios, latestSupportedGradleVersion)
-
-        then:
-        noExceptionThrown()
-    }
-
     private benchmarkScenario(File scenarioFile) {
         benchmarkScenario(projectDir, scenarioFile)
     }
 
     private benchmarkScenario(File projectDir, File scenarioFile) {
-        benchmarkScenario(projectDir, scenarioFile, minimalSupportedGradleVersion)
-    }
-
-    private benchmarkScenario(File projectDir, File scenarioFile, gradleVersion) {
         new Main().run(
             "--project-dir", projectDir.absolutePath,
             "--output-dir", outputDir.absolutePath,
             "--benchmark",
             "--scenario-file", scenarioFile.absolutePath,
-            "--gradle-version", gradleVersion,
+            "--gradle-version", minimalSupportedGradleVersion,
             "--warmups", "1",
             "--iterations", "1",
             "--gradle-user-home", new File(projectDir, 'gradle-user-home').absolutePath,
