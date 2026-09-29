@@ -47,31 +47,23 @@ public class CliGradleClient implements GradleInvoker, GradleClient {
 
     @Override
     public void runTasks(List<String> tasks, List<String> gradleArgs, List<String> jvmArgs) {
-        String daemonJvmArgs = quoteJvmArguments(daemon, jvmArgs);
-
         List<String> commandLine = new ArrayList<>();
         gradleBuildConfiguration.addGradleCommand(commandLine);
         commandLine.addAll(gradleArgs);
         commandLine.addAll(tasks);
         commandLine.add("-Dorg.gradle.daemon=" + daemon);
-        if (!daemon) {
-            commandLine.add("-Dorg.gradle.jvmargs");
-        }
 
         ProcessBuilder builder = new ProcessBuilder(commandLine);
         builder.directory(projectDir);
-        if (daemon) {
-            String orgGradleJvmArgs = jvmArgs.isEmpty()
-                ? ""
-                : " \"-Dorg.gradle.jvmargs=" + daemonJvmArgs + "\"";
-            LinkedHashSet<String> gradleOptsSet = new LinkedHashSet<>();
-            gradleOptsSet.add("-XX:+HeapDumpOnOutOfMemoryError");
-            gradleOptsSet.addAll(gradleBuildConfiguration.getClientJvmArguments());
-            builder.environment().put("GRADLE_OPTS", quoteJvmArguments(false, gradleOptsSet) + orgGradleJvmArgs);
-        } else {
-            Logging.detailed().println("GRADLE_OPTS: " + daemonJvmArgs);
-            builder.environment().put("GRADLE_OPTS", daemonJvmArgs);
-        }
+        String orgGradleJvmArgs = jvmArgs.isEmpty()
+            ? ""
+            : " \"-Dorg.gradle.jvmargs=" + quoteJvmArguments(true, jvmArgs) + "\"";
+        LinkedHashSet<String> gradleOptsSet = new LinkedHashSet<>();
+        gradleOptsSet.add("-XX:+HeapDumpOnOutOfMemoryError");
+        gradleOptsSet.addAll(gradleBuildConfiguration.getClientJvmArguments());
+        String gradleOpts = quoteJvmArguments(false, gradleOptsSet) + orgGradleJvmArgs;
+        Logging.detailed().println("GRADLE_OPTS: " + gradleOpts);
+        builder.environment().put("GRADLE_OPTS", gradleOpts);
         Logging.detailed().println("JAVA_HOME: " + javaHome.getAbsolutePath());
         builder.environment().put("JAVA_HOME", javaHome.getAbsolutePath());
         builder.redirectErrorStream(true);
