@@ -14,6 +14,7 @@ The project is organized into a core application and several subprojects handlin
 * `src`: Contains the core profiling logic, CLI parsing, and reporting mechanisms.
 * `subprojects`:
     * `build-operations`, `build-operations-measuring`: Infrastructure for measuring internal build operations.
+    * `profilers-support`: Support code for profilers that record the build process, such as JFR and async-profiler.
     * `chrome-trace`, `perfetto-trace`: Generation of performance traces.
     * `heap-dump`: Capturing memory snapshots.
     * `ide-agent`, `ide-plugin`: Integrations for Android Studio sync profiling.

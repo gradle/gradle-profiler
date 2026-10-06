@@ -65,6 +65,11 @@ public class GradleBuildInvoker extends BuildInvoker {
         return getDaemonReuse() == GradleDaemonReuse.WarmDaemonOnly;
     }
 
+    @Override
+    public boolean isNotifiesBuildFinished() {
+        return isDoesNotUseDaemon();
+    }
+
     public boolean isShouldCleanUpDaemon() {
         return getDaemonReuse() != GradleDaemonReuse.WarmDaemonOnly;
     }

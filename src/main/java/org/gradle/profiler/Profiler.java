@@ -83,6 +83,14 @@ public abstract class Profiler {
     }
 
     /**
+     * Whether this profiler records the build process, and so needs to stop recording at the end of each build
+     * when the build process is not reused.
+     */
+    public boolean isRecordsBuildProcess() {
+        return false;
+    }
+
+    /**
      * Human-readable profiler name as specified from the command line.
      */
     public abstract String toString();
