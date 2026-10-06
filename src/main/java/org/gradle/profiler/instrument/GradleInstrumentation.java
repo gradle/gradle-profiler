@@ -35,7 +35,9 @@ public abstract class GradleInstrumentation implements GradleArgsCalculator {
         File buildOpMeasurementsJar = unpackPlugin("build-operations-measuring");
         File chromeTraceJar = unpackPlugin("chrome-trace");
         File heapDumpJar = unpackPlugin("heap-dump");
-        String filesExpr = Stream.of(buildOpJar, guavaJar, buildOpMeasurementsJar, chromeTraceJar, heapDumpJar)
+        // Dependency of build-operations
+        File profilersSupportJar = unpackPlugin("profilers-support");
+        String filesExpr = Stream.of(buildOpJar, guavaJar, buildOpMeasurementsJar, chromeTraceJar, heapDumpJar, profilersSupportJar)
             .map(f -> "'" + f.toURI().toASCIIString() + "'")
             .collect(Collectors.joining(", ", "files(", ")"));
         initScript = new GeneratedInitScript() {

@@ -18,6 +18,7 @@ import org.gradle.profiler.ScenarioContext;
 import org.gradle.profiler.ScenarioInvoker;
 import org.gradle.profiler.ScenarioSettings;
 import org.gradle.profiler.buildops.BuildOperationInstrumentation;
+import org.gradle.profiler.instrument.BuildFinishedInstrumentation;
 import org.gradle.profiler.instrument.PidInstrumentation;
 import org.gradle.profiler.perfetto.BuildOperationToPerfettoConverter;
 import org.gradle.profiler.result.BuildInvocationResult;
@@ -91,6 +92,7 @@ public class GradleScenarioInvoker extends ScenarioInvoker<GradleScenarioDefinit
         BuildMutator mutator = CompositeBuildMutator.from(scenario.getBuildMutators());
         ScenarioContext scenarioContext = ScenarioContext.from(settings, scenario);
         GradleClient gradleClient = scenario.getInvoker().getClient().create(buildConfiguration, settings);
+        BuildFinishedInstrumentation buildFinished = null;
         try {
             buildConfiguration.printVersionInfo();
 
@@ -151,6 +153,10 @@ public class GradleScenarioInvoker extends ScenarioInvoker<GradleScenarioDefinit
 
             List<String> instrumentedBuildGradleArgs = new ArrayList<>(allBuildsGradleArgs);
             settings.getProfiler().newInstrumentedBuildsGradleArgsCalculator(scenarioSettings).calculateGradleArgs(instrumentedBuildGradleArgs);
+            if (scenario.getInvoker().isNotifiesBuildFinished() && settings.getProfiler().isRecordsBuildProcess()) {
+                buildFinished = new BuildFinishedInstrumentation();
+                buildFinished.calculateGradleArgs(instrumentedBuildGradleArgs);
+            }
 
             Logging.detailed().println();
             Logging.detailed().println("* Using args for instrumented builds:");
@@ -163,7 +169,7 @@ public class GradleScenarioInvoker extends ScenarioInvoker<GradleScenarioDefinit
 
             BuildUnderTestInvoker instrumentedBuildInvoker = uninstrumented.withJvmArgs(instrumentedBuildJvmArgs).withGradleArgs(instrumentedBuildGradleArgs);
             BuildStepAction<GradleBuildInvocationResult> measuredBuildStep = buildStep(instrumentedBuildInvoker, scenario);
-            RecordingBuildStepAction recordingBuildStep = new RecordingBuildStepAction(measuredBuildStep, cleanupStep, scenario, control);
+            RecordingBuildStepAction recordingBuildStep = new RecordingBuildStepAction(measuredBuildStep, cleanupStep, scenario, control, buildFinished);
 
             control.startSession();
             for (int i = 1; i <= scenario.getBuildCount(); i++) {
@@ -180,6 +186,9 @@ public class GradleScenarioInvoker extends ScenarioInvoker<GradleScenarioDefinit
         } finally {
             mutator.afterScenario(scenarioContext);
             gradleClient.close();
+            if (buildFinished != null) {
+                buildFinished.close();
+            }
             daemonControl.stop(buildConfiguration);
         }
 
