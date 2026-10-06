@@ -56,7 +56,18 @@ public abstract class InstrumentingProfiler extends Profiler {
         if (settings.getScenario().getInvoker().isReuseDaemon()) {
             return JvmArgsCalculator.DEFAULT;
         }
-        return jvmArgsWithInstrumentation(settings, true, isCaptureSnapshotOnProcessExit(settings));
+        boolean captureSnapshotOnProcessExit = isCaptureSnapshotOnProcessExit(settings);
+        JvmArgsCalculator instrumentation = jvmArgsWithInstrumentation(settings, true, captureSnapshotOnProcessExit);
+        if (captureSnapshotOnProcessExit) {
+            return instrumentation;
+        }
+        return jvmArgs -> {
+            instrumentation.calculateJvmArgs(jvmArgs);
+            // Recording is stopped by attaching to the process for the first time, which normally starts its attach listener with SIGQUIT.
+            // On macOS, a process started with the async-profiler agent occasionally does not handle SIGQUIT, so it cannot be attached to.
+            // Start the attach listener with the process instead, see https://github.com/gradle/gradle-profiler/issues/865
+            jvmArgs.add("-XX:+StartAttachListener");
+        };
     }
 
     /**
