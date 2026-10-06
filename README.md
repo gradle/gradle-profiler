@@ -227,6 +227,7 @@ The following command line options only apply when measuring Gradle builds:
 - `--gradle-version <version>`: Specifies a Gradle version or installation to use to run the builds, overriding the default for the build. You can specify multiple versions by using this option once for each version.
 - `--no-daemon`: Uses the `gradle` command-line client with the `--no-daemon` option to run the builds. The default is to use the Gradle tooling API and Gradle daemon.
   The build runs in a single-use process forked by the client; `jvm-args`, `system-properties` and profiler JVM arguments apply to that process, not to the client.
+  When profiling, the profiler stops recording that process at the end of each build, before the client receives the build result, so the time to write the profiler output is included in the measured build time.
 - `--cold-daemon`: Use a cold daemon (one that has just started) rather than a warm daemon (one that has already run some builds). The default is to use a warm daemon.
 - `--cli`: Uses the `gradle` command-line client to run the builds. The default is to use the Gradle tooling API and Gradle daemon.
 - `--build-ops-trace`: Produce a build operations trace:

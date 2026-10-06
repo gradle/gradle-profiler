@@ -2,6 +2,7 @@ package org.gradle.profiler
 
 
 import org.gradle.profiler.fixtures.compatibility.gradle.AbstractGradleCrossVersionTest
+import spock.lang.Issue
 import spock.lang.Requires
 
 @Requires({ !OperatingSystem.isWindows() })
@@ -159,6 +160,25 @@ class AsyncProfilerGradleCrossVersionTest extends AbstractGradleCrossVersionTest
         logFile.find("<daemon: true").size() == 1
         logFile.find("<daemon: false").size() == 2
         logFile.find("<invocations: 1>").size() == 3
+
+        and:
+        assertGraphsGeneratedForScenario(gradleVersion)
+
+        where:
+        profiler << ["async-profiler", "async-profiler-all"]
+    }
+
+    @Issue("https://github.com/gradle/gradle-profiler/issues/863")
+    def "profiles build using #profiler with CLI and no daemon when build process outlives client"() {
+        given:
+        instrumentedBuildScript()
+        buildProcessOutlivesClient()
+
+        when:
+        run(["--gradle-version", gradleVersion, "--profile", profiler, "--no-daemon", "assemble"])
+
+        then:
+        logFile.find("<daemon: false").size() == 2
 
         and:
         assertGraphsGeneratedForScenario(gradleVersion)

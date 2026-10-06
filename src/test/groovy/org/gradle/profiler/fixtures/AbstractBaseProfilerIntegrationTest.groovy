@@ -143,6 +143,18 @@ class Counter {
 """
     }
 
+    /**
+     * Keeps a single-use build process alive for a while after it has sent the build result to the Gradle client,
+     * so the client reliably exits before profiler agents write the snapshots they capture when the process exits.
+     */
+    def buildProcessOutlivesClient() {
+        buildFile << """
+if (!gradle.services.get(org.gradle.internal.environment.GradleBuildEnvironment).longLivingProcess) {
+    Runtime.runtime.addShutdownHook(new Thread({ Thread.sleep(5000) }))
+}
+"""
+    }
+
     def checkInstrumentedBuildScriptOutputs(String gradleVersion, int warmups = this.warmups, int iterations = this.iterations) {
         checkInstrumentedBuildScriptOutputs(gradleVersion, "", warmups, iterations)
     }
