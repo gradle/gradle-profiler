@@ -85,6 +85,12 @@ node {
     version = "24.13.0"
 }
 
+tasks.nodeSetup {
+    // nodeSetup unpacks the Node.js archive via build/tmp/.cache/expanded, which is not a declared output.
+    // Without this ordering, `clean test` can run both in parallel and fail with "Unable to delete directory".
+    mustRunAfter(tasks.clean)
+}
+
 val generateHtmlReportJavaScript = tasks.register<NpxTask>("generateHtmlReportJavaScript") {
     dependsOn(tasks.npmInstall)
     val source = file("src/main/js/org/gradle/profiler/report/report.js")
