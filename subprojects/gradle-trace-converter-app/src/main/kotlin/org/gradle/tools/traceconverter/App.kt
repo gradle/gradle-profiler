@@ -3,6 +3,7 @@ package org.gradle.tools.traceconverter
 import java.io.File
 import kotlin.system.exitProcess
 import org.gradle.profiler.perfetto.BuildOperationToPerfettoConverter
+import org.gradle.profiler.perfetto.jfr.JfrToPerfettoConverter
 
 
 fun main(args: Array<String>) {
@@ -14,22 +15,32 @@ fun main(args: Array<String>) {
 
 internal fun run(args: Array<String>): Int {
     if (args.isEmpty()) {
-        System.err.println("Usage: gtc <build-operations-trace-log>")
+        System.err.println("Usage: gtc <trace-log.txt|recording.jfr>")
         return 1
     }
-    val buildOperationsLog = File(args[0])
-    if (!buildOperationsLog.isFile) {
-        System.err.println("File not found: ${buildOperationsLog.absolutePath}")
+    val inputFile = File(args[0])
+    if (!inputFile.isFile) {
+        System.err.println("File not found: ${inputFile.absolutePath}")
         return 1
     }
-    val outputFile = outputFile(buildOperationsLog)
 
-    val result = BuildOperationToPerfettoConverter.convert(buildOperationsLog, outputFile)
-    println("Written ${result.packetCount} packets to ${outputFile.absolutePath}")
-    if (result.buildScanUrl != null) {
-        println("Build scan URL: ${result.buildScanUrl}")
+    val outputFile = outputFile(inputFile)
+    return when {
+        inputFile.name.endsWith(".jfr") -> {
+            JfrToPerfettoConverter.convert(inputFile, outputFile)
+            println("Written trace to ${outputFile.absolutePath}")
+            0
+        }
+
+        else -> {
+            val result = BuildOperationToPerfettoConverter.convert(inputFile, outputFile)
+            println("Written trace to ${outputFile.absolutePath}")
+            if (result.buildScanUrl != null) {
+                println("Build scan URL: ${result.buildScanUrl}")
+            }
+            0
+        }
     }
-    return 0
 }
 
 private fun outputFile(traceFile: File): File {
