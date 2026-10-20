@@ -27,6 +27,7 @@ dependencies {
     // gradle/gradle uses these as part of Gradle Profiler-as-a-library
     api(project(":build-action"))
     api(project(":build-operations-measuring"))
+    implementation(project(":profilers-support"))
 
     implementation(libs.toolingApi)
     implementation(project(":client-protocol"))
@@ -56,6 +57,7 @@ dependencies {
     profilerPlugins(project(":chrome-trace"))
     profilerPlugins(project(":build-operations"))
     profilerPlugins(project(":build-operations-measuring"))
+    profilerPlugins(project(":profilers-support"))
     profilerPlugins(project(":instrumentation-support"))
     profilerPlugins(project(":ide-agent"))
     profilerPlugins(project(":heap-dump"))
@@ -83,6 +85,12 @@ application.mainClass.set("org.gradle.profiler.Main")
 node {
     download = true
     version = "24.13.0"
+}
+
+tasks.nodeSetup {
+    // nodeSetup unpacks the Node.js archive via build/tmp/.cache/expanded, which is not a declared output.
+    // Without this ordering, `clean test` can run both in parallel and fail with "Unable to delete directory".
+    mustRunAfter(tasks.clean)
 }
 
 val generateHtmlReportJavaScript = tasks.register<NpxTask>("generateHtmlReportJavaScript") {

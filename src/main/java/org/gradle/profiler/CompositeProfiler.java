@@ -115,4 +115,9 @@ class CompositeProfiler extends Profiler {
     public boolean isCreatesStacksFiles() {
         return delegates.stream().anyMatch(Profiler::isCreatesStacksFiles);
     }
+
+    @Override
+    public boolean isRecordsBuildProcess() {
+        return delegates.stream().anyMatch(Profiler::isRecordsBuildProcess);
+    }
 }

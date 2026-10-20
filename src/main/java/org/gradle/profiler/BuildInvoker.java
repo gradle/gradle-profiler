@@ -40,4 +40,12 @@ public class BuildInvoker {
     public boolean isReuseDaemon() {
         return false;
     }
+
+    /**
+     * Whether the build process notifies the profiler at the end of each build, so the profiler can stop recording
+     * before a build process that is not reused exits.
+     */
+    public boolean isNotifiesBuildFinished() {
+        return false;
+    }
 }

@@ -1,6 +1,7 @@
 package org.gradle.profiler
 
 import org.gradle.profiler.fixtures.compatibility.gradle.AbstractGradleCrossVersionTest
+import spock.lang.Issue
 
 class JFRProfilerGradleCrossVersionTest extends AbstractGradleCrossVersionTest {
     def setup() {
@@ -134,6 +135,7 @@ class JFRProfilerGradleCrossVersionTest extends AbstractGradleCrossVersionTest {
         iterationCount << [1, 2]
     }
 
+    @Issue("https://github.com/gradle/gradle-profiler/issues/863")
     def "can profile no daemon with #iterationCount iterations"() {
         given:
         instrumentedBuildScript()
@@ -161,6 +163,13 @@ class JFRProfilerGradleCrossVersionTest extends AbstractGradleCrossVersionTest {
         logFile.find("<invocations: 1>").size() == 2 + iterationCount
 
         jfrFileDirectory.listFiles().findAll { it.name.endsWith(".jfr") }.size() == iterationCount
+
+        and:
+        // The recording is stopped at the end of the build, as the build process may still be alive when the Gradle client has exited
+        logFile.text.contains("-XX:StartFlightRecording")
+        !logFile.text.contains("dumponexit")
+
+        and:
         // No perl installed on Windows
         if (!OperatingSystem.isWindows()) {
             // Events: alloc, cpu / Type: raw, simplified
