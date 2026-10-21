@@ -1,16 +1,24 @@
 package org.gradle.trace.pid;
 
+import org.gradle.api.JavaVersion;
+
 import java.lang.management.ManagementFactory;
 import java.lang.management.RuntimeMXBean;
 import java.lang.reflect.InvocationTargetException;
 
-public abstract class PidCollectorJava8BuildService extends AbstractPidCollectorBuildService {
-
-    @Override
-    protected Long getPid() {
+/**
+ * Resolves the PID of the current process.
+ *
+ * <p>Build services cannot inject {@code ProcessEnvironment} since Gradle 6.6. Resolve the PID when the build service runs rather than when
+ * it is registered, as the configuration cache restores the parameters of a build service in later build processes.</p>
+ */
+public class CurrentProcess {
+    public static long getPid() {
+        if (JavaVersion.current().isJava9Compatible()) {
+            // `ProcessHandle` is only available since Java 9, so it is referenced from a separate class
+            return Java9CurrentProcess.getPid();
+        }
         try {
-            // With Gradle 6.6 we can't inject `ProcessEnvironment`, so that is why we access the runtime MXBean here.
-            // On Java 9 we use `ProcessHandle` via `PidCollectorBuildService`.
             RuntimeMXBean runtime = ManagementFactory.getRuntimeMXBean();
             java.lang.reflect.Field jvm = runtime.getClass().getDeclaredField("jvm");
             jvm.setAccessible(true);

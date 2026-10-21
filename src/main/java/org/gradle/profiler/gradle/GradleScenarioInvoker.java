@@ -153,7 +153,7 @@ public class GradleScenarioInvoker extends ScenarioInvoker<GradleScenarioDefinit
 
             List<String> instrumentedBuildGradleArgs = new ArrayList<>(allBuildsGradleArgs);
             settings.getProfiler().newInstrumentedBuildsGradleArgsCalculator(scenarioSettings).calculateGradleArgs(instrumentedBuildGradleArgs);
-            if (scenario.getInvoker().isNotifiesBuildFinished() && settings.getProfiler().isRecordsBuildProcess()) {
+            if (scenarioSettings.isNotifiesBuildFinished() && settings.getProfiler().isRecordsBuildProcess()) {
                 buildFinished = new BuildFinishedInstrumentation();
                 buildFinished.calculateGradleArgs(instrumentedBuildGradleArgs);
             }

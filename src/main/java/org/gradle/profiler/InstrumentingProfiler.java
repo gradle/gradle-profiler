@@ -107,8 +107,7 @@ public abstract class InstrumentingProfiler extends Profiler {
     }
 
     private static boolean isCaptureSnapshotOnProcessExit(ScenarioSettings settings) {
-        BuildInvoker invoker = settings.getScenario().getInvoker();
-        return invoker.isDoesNotUseDaemon() && !invoker.isNotifiesBuildFinished();
+        return settings.getScenario().getInvoker().isDoesNotUseDaemon() && !settings.isNotifiesBuildFinished();
     }
 
     protected void validateMultipleIterationsWithCleanupAction(ScenarioSettings settings, Consumer<String> reporter) {

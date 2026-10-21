@@ -11,9 +11,7 @@ import java.io.PrintWriter;
 import java.net.InetAddress;
 import java.net.ServerSocket;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
+import java.util.concurrent.CompletionException;
 import java.util.concurrent.atomic.AtomicReference;
 
 /**
@@ -26,7 +24,6 @@ import java.util.concurrent.atomic.AtomicReference;
 public class BuildFinishedInstrumentation extends GradleInstrumentation implements Closeable {
     private final ServerSocket serverSocket;
     private final AtomicReference<PendingBuild> nextBuild = new AtomicReference<>();
-    private PendingBuild currentBuild;
 
     public BuildFinishedInstrumentation() throws IOException {
         serverSocket = new ServerSocket(0, 50, InetAddress.getLoopbackAddress());
@@ -43,9 +40,10 @@ public class BuildFinishedInstrumentation extends GradleInstrumentation implemen
     /**
      * Runs the given action when the next build finishes, with the PID of its build process.
      */
-    public void onNextBuildFinished(BuildFinishedAction action) {
-        currentBuild = new PendingBuild(action);
-        nextBuild.set(currentBuild);
+    public PendingBuild onNextBuildFinished(BuildFinishedAction action) {
+        PendingBuild build = new PendingBuild(action);
+        nextBuild.set(build);
+        return build;
     }
 
     private void listen() {
@@ -79,44 +77,6 @@ public class BuildFinishedInstrumentation extends GradleInstrumentation implemen
         }
     }
 
-    /**
-     * Completes handling of a build for which {@link #onNextBuildFinished(BuildFinishedAction)} was called.
-     *
-     * <p>Call this once the Gradle client has exited. The build process notifies the profiler before it returns the build result to
-     * the client, so the action has already run by then, unless the build process could not notify.</p>
-     */
-    public void buildCompleted() throws InterruptedException {
-        PendingBuild build = currentBuild;
-        currentBuild = null;
-        try {
-            build.result.get(1, TimeUnit.MINUTES);
-        } catch (ExecutionException e) {
-            throw new RuntimeException("Could not handle the end of the build.", e.getCause());
-        } catch (TimeoutException e) {
-            nextBuild.compareAndSet(build, null);
-            throw new IllegalStateException("The build process did not notify that the build has finished.");
-        }
-    }
-
-    /**
-     * Abandons handling of a build that did not complete, and adds any failure to handle its end to the build failure.
-     */
-    public void buildFailed(Exception buildFailure) {
-        PendingBuild build = currentBuild;
-        currentBuild = null;
-        if (build == null) {
-            return;
-        }
-        nextBuild.compareAndSet(build, null);
-        if (build.result.isCompletedExceptionally()) {
-            try {
-                build.result.join();
-            } catch (Exception e) {
-                buildFailure.addSuppressed(e.getCause() != null ? e.getCause() : e);
-            }
-        }
-    }
-
     @Override
     public void close() throws IOException {
         serverSocket.close();
@@ -126,20 +86,55 @@ public class BuildFinishedInstrumentation extends GradleInstrumentation implemen
         void execute(String pid) throws IOException, InterruptedException;
     }
 
-    private static class PendingBuild {
+    /**
+     * A build for which {@link #onNextBuildFinished(BuildFinishedAction)} was called.
+     */
+    public class PendingBuild {
         private final BuildFinishedAction action;
         private final CompletableFuture<Void> result = new CompletableFuture<>();
 
-        PendingBuild(BuildFinishedAction action) {
+        private PendingBuild(BuildFinishedAction action) {
             this.action = action;
         }
 
-        void run(String pid) {
+        private void run(String pid) {
             try {
                 action.execute(pid);
                 result.complete(null);
             } catch (Exception e) {
                 result.completeExceptionally(e);
+            }
+        }
+
+        /**
+         * Completes handling of the build.
+         *
+         * <p>Call this once the Gradle client has exited. The build process waits for the action to complete before it returns
+         * the build result to the client, so the action has already completed by then, unless the build process did not notify.</p>
+         */
+        public void completed() {
+            nextBuild.compareAndSet(this, null);
+            if (!result.isDone()) {
+                throw new IllegalStateException("The build process did not notify that the build has finished.");
+            }
+            try {
+                result.join();
+            } catch (CompletionException e) {
+                throw new RuntimeException("Could not handle the end of the build.", e.getCause());
+            }
+        }
+
+        /**
+         * Abandons handling of the build that did not complete, and adds any failure to handle its end to the build failure.
+         */
+        public void failed(Exception buildFailure) {
+            nextBuild.compareAndSet(this, null);
+            if (result.isCompletedExceptionally()) {
+                try {
+                    result.join();
+                } catch (CompletionException e) {
+                    buildFailure.addSuppressed(e.getCause());
+                }
             }
         }
     }

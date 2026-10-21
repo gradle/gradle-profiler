@@ -2,6 +2,7 @@ package org.gradle.profiler
 
 import org.gradle.profiler.fixtures.compatibility.gradle.AbstractGradleCrossVersionTest
 import spock.lang.Issue
+import spock.lang.Requires
 
 class JFRProfilerGradleCrossVersionTest extends AbstractGradleCrossVersionTest {
     def setup() {
@@ -208,6 +209,47 @@ class JFRProfilerGradleCrossVersionTest extends AbstractGradleCrossVersionTest {
 
         then:
         findJfrDirectory(2, outputDir).listFiles().findAll { it.name.endsWith(".jfr") }.size() == 2
+    }
+
+    @Requires({ it.instance.gradleVersionWithExperimentalConfigurationCache() })
+    def "can profile no daemon with configuration caching"() {
+        given:
+        instrumentedBuildScript()
+        file("gradle.properties") << """
+            org.gradle.unsafe.configuration-cache=true
+        """
+
+        when:
+        run([
+            "--gradle-version", gradleVersion,
+            "--profile", "jfr",
+            "--warmups", "1",
+            "--iterations", "2",
+            "--no-daemon",
+            "assemble"])
+
+        then:
+        // The build process of a reused configuration cache entry notifies its own PID
+        logFile.find("Configuration cache entry reused.").size() >= 2
+        findJfrDirectory(2).listFiles().findAll { it.name.endsWith(".jfr") }.size() == 2
+    }
+
+    def "can profile no daemon with dry run"() {
+        given:
+        instrumentedBuildScript()
+
+        when:
+        run([
+            "--gradle-version", gradleVersion,
+            "--profile", "jfr",
+            "--no-daemon",
+            "--dry-run",
+            "assemble"])
+
+        then:
+        // A dry run executes no tasks, so the build process does not notify the end of the build
+        logFile.find("* Running measured build").size() == 1
+        logFile.text.contains("dumponexit")
     }
 
     private File prepareBuild() {

@@ -64,7 +64,7 @@ public class RecordingBuildStepAction implements BuildStepAction<GradleBuildInvo
 
     private GradleBuildInvocationResult runAndStopRecordingWhenBuildFinishes(BuildContext buildContext, BuildStep buildStep, boolean stopRecording, BuildFinishedInstrumentation buildFinished) {
         // The build process waits for every notification to be handled, so always handle it
-        buildFinished.onNextBuildFinished(pid -> {
+        BuildFinishedInstrumentation.PendingBuild pendingBuild = buildFinished.onNextBuildFinished(pid -> {
             if (stopRecording) {
                 controller.stopRecording(pid);
             }
@@ -73,14 +73,10 @@ public class RecordingBuildStepAction implements BuildStepAction<GradleBuildInvo
         try {
             result = action.run(buildContext, buildStep);
         } catch (RuntimeException e) {
-            buildFinished.buildFailed(e);
+            pendingBuild.failed(e);
             throw e;
         }
-        try {
-            buildFinished.buildCompleted();
-        } catch (InterruptedException e) {
-            throw new RuntimeException(e);
-        }
+        pendingBuild.completed();
         return result;
     }
 }

@@ -8,16 +8,16 @@ import org.gradle.api.services.BuildServiceParameters;
 import org.gradle.build.event.BuildEventsListenerRegistry;
 import org.gradle.tooling.events.FinishEvent;
 import org.gradle.tooling.events.OperationCompletionListener;
+import org.gradle.trace.pid.CurrentProcess;
 
 /**
  * Notifies the profiler when it is closed at the end of the build.
  */
 public abstract class BuildFinishedNotifierService implements BuildService<BuildFinishedNotifierService.Parameters>, OperationCompletionListener, AutoCloseable {
 
-    static void register(GradleInternal gradle, int port, String pid) {
+    static void register(GradleInternal gradle, int port) {
         Provider<BuildFinishedNotifierService> service = gradle.getSharedServices().registerIfAbsent("buildFinishedNotifier", BuildFinishedNotifierService.class, spec -> {
             spec.getParameters().getPort().set(port);
-            spec.getParameters().getPid().set(pid);
         });
         // Make sure the service is used, so it is closed at the end of the build
         gradle.getServices().get(BuildEventsListenerRegistry.class).onTaskCompletion(service);
@@ -25,8 +25,6 @@ public abstract class BuildFinishedNotifierService implements BuildService<Build
 
     public interface Parameters extends BuildServiceParameters {
         Property<Integer> getPort();
-
-        Property<String> getPid();
     }
 
     @Override
@@ -35,6 +33,7 @@ public abstract class BuildFinishedNotifierService implements BuildService<Build
 
     @Override
     public void close() {
-        BuildFinishedNotifier.notifyBuildFinished(getParameters().getPort().get(), getParameters().getPid().get());
+        // Resolve the PID here, as the configuration cache restores the parameters in later build processes
+        BuildFinishedNotifier.notifyBuildFinished(getParameters().getPort().get(), String.valueOf(CurrentProcess.getPid()));
     }
 }

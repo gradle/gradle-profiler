@@ -25,11 +25,11 @@ public class BuildFinishedNotifier {
     private static final int CONNECT_ATTEMPTS = 5;
 
     public static void register(GradleInternal gradle, int port) {
-        String pid = gradle.getServices().get(ProcessEnvironment.class).getPid().toString();
         if (GradleVersion.current().compareTo(GradleVersion.version("6.1")) >= 0) {
             // Build services are only available since Gradle 6.1, so they are referenced from a separate class
-            BuildFinishedNotifierService.register(gradle, port, pid);
+            BuildFinishedNotifierService.register(gradle, port);
         } else {
+            String pid = gradle.getServices().get(ProcessEnvironment.class).getPid().toString();
             gradle.buildFinished(result -> notifyBuildFinished(port, pid));
         }
     }
