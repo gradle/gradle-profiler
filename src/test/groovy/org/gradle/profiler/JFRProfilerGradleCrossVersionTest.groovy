@@ -229,12 +229,13 @@ class JFRProfilerGradleCrossVersionTest extends AbstractGradleCrossVersionTest {
             "assemble"])
 
         then:
-        // The build process of a reused configuration cache entry notifies its own PID
-        logFile.find("Configuration cache entry reused.").size() >= 2
+        // The first measured build stores a cache entry, and the second one reuses it in a new build process, which must notify its own PID
+        logFile.find("Configuration cache entry reused.").size() == 1
         findJfrDirectory(2).listFiles().findAll { it.name.endsWith(".jfr") }.size() == 2
     }
 
-    def "can profile no daemon with dry run"() {
+    @Issue("https://github.com/gradle/gradle-profiler/issues/863")
+    def "does not record no daemon build process in a dry run"() {
         given:
         instrumentedBuildScript()
 
@@ -247,9 +248,11 @@ class JFRProfilerGradleCrossVersionTest extends AbstractGradleCrossVersionTest {
             "assemble"])
 
         then:
-        // A dry run executes no tasks, so the build process does not notify the end of the build
+        // A dry run executes no tasks, so the build process cannot notify the end of the build, and capturing on exit would race with the client exiting
         logFile.find("* Running measured build").size() == 1
-        logFile.text.contains("dumponexit")
+        logFile.containsOne("WARNING: Profiler JFR does not record the build process in a dry run with --no-daemon, so no profiling output is produced.")
+        !logFile.text.contains("-XX:StartFlightRecording")
+        outputDir.listFiles().findAll { it.name.endsWith(".jfr") || it.name.endsWith("-jfr") }.empty
     }
 
     private File prepareBuild() {
