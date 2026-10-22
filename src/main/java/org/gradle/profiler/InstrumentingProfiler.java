@@ -48,15 +48,28 @@ public abstract class InstrumentingProfiler extends Profiler {
      *
      * <p>When using a cold daemon, start the JVM with recording enabled but do not capture snapshots yet.</p>
      *
-     * <p>When using no daemon, start the JVM with recording enabled and capture a snapshot when the JVM exits.</p>
+     * <p>When using no daemon, start the JVM with recording enabled. If the build process notifies the end of each build,
+     * do not capture snapshots yet, as for a cold daemon. Otherwise, capture a snapshot when the JVM exits.</p>
+     *
+     * <p>In a dry run of a build process that would notify the end of each build, do not record it, see {@link #isNotRecorded(ScenarioSettings)}.</p>
      */
     @Override
     public JvmArgsCalculator newInstrumentedBuildsJvmArgsCalculator(ScenarioSettings settings) {
-        if (settings.getScenario().getInvoker().isReuseDaemon()) {
+        if (settings.getScenario().getInvoker().isReuseDaemon() || isNotRecorded(settings)) {
             return JvmArgsCalculator.DEFAULT;
         }
-        boolean captureSnapshotOnExit = settings.getScenario().getInvoker().isDoesNotUseDaemon();
-        return jvmArgsWithInstrumentation(settings, true, captureSnapshotOnExit);
+        boolean captureSnapshotOnProcessExit = isCaptureSnapshotOnProcessExit(settings);
+        JvmArgsCalculator instrumentation = jvmArgsWithInstrumentation(settings, true, captureSnapshotOnProcessExit);
+        if (captureSnapshotOnProcessExit) {
+            return instrumentation;
+        }
+        return jvmArgs -> {
+            instrumentation.calculateJvmArgs(jvmArgs);
+            // Recording is stopped by attaching to the process for the first time, which normally starts its attach listener with SIGQUIT.
+            // On macOS, a process started with the async-profiler agent occasionally does not handle SIGQUIT, so it cannot be attached to.
+            // Start the attach listener with the process instead, see https://github.com/gradle/gradle-profiler/issues/865
+            jvmArgs.add("-XX:+StartAttachListener");
+        };
     }
 
     /**
@@ -68,13 +81,18 @@ public abstract class InstrumentingProfiler extends Profiler {
      * <p>When using a cold daemon, create a controller that stops recording and captures a snapshot when requested,
      * but does not start recording as this is already enabled when the JVM starts.</p>
      *
-     * <p>When using no daemon, return a controller that finishes the session only, as recording and snapshot capture
-     * are already enabled when the JVM starts.</p>
+     * <p>When using no daemon, and the build process notifies the end of each build, create the same controller
+     * as for a cold daemon. Otherwise, return a controller that finishes the session only, as recording and
+     * snapshot capture are already enabled when the JVM starts.</p>
      */
     @Override
     public ProfilerController newController(String pid, ScenarioSettings settings) {
+        if (isNotRecorded(settings)) {
+            System.err.println("WARNING: Profiler " + this + " does not record the build process in a dry run with --no-daemon, so no profiling output is produced.");
+            return ProfilerController.EMPTY;
+        }
         SnapshotCapturingProfilerController controller = newSnapshottingController(settings);
-        if (settings.getScenario().getInvoker().isDoesNotUseDaemon()) {
+        if (isCaptureSnapshotOnProcessExit(settings)) {
             return new SessionOnlyController(pid, controller);
         }
         if (settings.getScenario().getInvoker().isReuseDaemon()) {
@@ -87,6 +105,25 @@ public abstract class InstrumentingProfiler extends Profiler {
     public void validate(ScenarioSettings settings, Consumer<String> reporter) {
         validateMultipleIterationsWithCleanupAction(settings, reporter);
         validateMultipleDaemons(settings, reporter);
+    }
+
+    @Override
+    public boolean isRecordsBuildProcess() {
+        return true;
+    }
+
+    private static boolean isCaptureSnapshotOnProcessExit(ScenarioSettings settings) {
+        BuildInvoker invoker = settings.getScenario().getInvoker();
+        return invoker.isDoesNotUseDaemon() && !invoker.isNotifiesBuildFinished();
+    }
+
+    /**
+     * A dry run executes no tasks, so a build process that would notify the end of each build does not notify, and recording cannot be stopped
+     * while it is alive. Capturing a snapshot when it exits instead races with the client exiting, see https://github.com/gradle/gradle-profiler/issues/863.
+     * There is nothing to profile in a dry run, so do not record the build process.
+     */
+    private static boolean isNotRecorded(ScenarioSettings settings) {
+        return settings.getScenario().getInvoker().isNotifiesBuildFinished() && !settings.isNotifiesBuildFinished();
     }
 
     protected void validateMultipleIterationsWithCleanupAction(ScenarioSettings settings, Consumer<String> reporter) {

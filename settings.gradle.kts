@@ -28,6 +28,7 @@ include("perfetto-converter-buildops")
 include("perfetto-trace-proto")
 include("gradle-trace-converter-app")
 include("build-operations-measuring")
+include("profilers-support")
 
 rootProject.children.forEach {
     it.projectDir = rootDir.resolve( "subprojects/${it.name}")

@@ -22,6 +22,13 @@ public class ScenarioSettings {
         return scenario;
     }
 
+    /**
+     * Whether the build process notifies the profiler at the end of each build. A dry run executes no tasks, so the build process does not notify.
+     */
+    public boolean isNotifiesBuildFinished() {
+        return scenario.getInvoker().isNotifiesBuildFinished() && !invocationSettings.isDryRun();
+    }
+
     public File computeJfrProfilerOutputLocation() {
         if (scenario.createsMultipleProcesses()) {
             File jfrFilesDirectory = profilerOutputLocationFor(PROFILE_JFR_DIRECTORY_SUFFIX);

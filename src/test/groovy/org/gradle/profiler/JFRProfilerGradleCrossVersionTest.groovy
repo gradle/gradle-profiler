@@ -1,6 +1,8 @@
 package org.gradle.profiler
 
 import org.gradle.profiler.fixtures.compatibility.gradle.AbstractGradleCrossVersionTest
+import spock.lang.Issue
+import spock.lang.Requires
 
 class JFRProfilerGradleCrossVersionTest extends AbstractGradleCrossVersionTest {
     def setup() {
@@ -134,6 +136,7 @@ class JFRProfilerGradleCrossVersionTest extends AbstractGradleCrossVersionTest {
         iterationCount << [1, 2]
     }
 
+    @Issue("https://github.com/gradle/gradle-profiler/issues/863")
     def "can profile no daemon with #iterationCount iterations"() {
         given:
         instrumentedBuildScript()
@@ -161,6 +164,13 @@ class JFRProfilerGradleCrossVersionTest extends AbstractGradleCrossVersionTest {
         logFile.find("<invocations: 1>").size() == 2 + iterationCount
 
         jfrFileDirectory.listFiles().findAll { it.name.endsWith(".jfr") }.size() == iterationCount
+
+        and:
+        // The recording is stopped at the end of the build, as the build process may still be alive when the Gradle client has exited
+        logFile.text.contains("-XX:StartFlightRecording")
+        !logFile.text.contains("dumponexit")
+
+        and:
         // No perl installed on Windows
         if (!OperatingSystem.isWindows()) {
             // Events: alloc, cpu / Type: raw, simplified
@@ -199,6 +209,50 @@ class JFRProfilerGradleCrossVersionTest extends AbstractGradleCrossVersionTest {
 
         then:
         findJfrDirectory(2, outputDir).listFiles().findAll { it.name.endsWith(".jfr") }.size() == 2
+    }
+
+    @Requires({ it.instance.gradleVersionWithExperimentalConfigurationCache() })
+    def "can profile no daemon with configuration caching"() {
+        given:
+        instrumentedBuildScript()
+        file("gradle.properties") << """
+            org.gradle.unsafe.configuration-cache=true
+        """
+
+        when:
+        run([
+            "--gradle-version", gradleVersion,
+            "--profile", "jfr",
+            "--warmups", "1",
+            "--iterations", "2",
+            "--no-daemon",
+            "assemble"])
+
+        then:
+        // The first measured build stores a cache entry, and the second one reuses it in a new build process, which must notify its own PID
+        logFile.find("Configuration cache entry reused.").size() == 1
+        findJfrDirectory(2).listFiles().findAll { it.name.endsWith(".jfr") }.size() == 2
+    }
+
+    @Issue("https://github.com/gradle/gradle-profiler/issues/863")
+    def "does not record no daemon build process in a dry run"() {
+        given:
+        instrumentedBuildScript()
+
+        when:
+        run([
+            "--gradle-version", gradleVersion,
+            "--profile", "jfr",
+            "--no-daemon",
+            "--dry-run",
+            "assemble"])
+
+        then:
+        // A dry run executes no tasks, so the build process cannot notify the end of the build, and capturing on exit would race with the client exiting
+        logFile.find("* Running measured build").size() == 1
+        logFile.containsOne("WARNING: Profiler JFR does not record the build process in a dry run with --no-daemon, so no profiling output is produced.")
+        !logFile.text.contains("-XX:StartFlightRecording")
+        outputDir.listFiles().findAll { it.name.endsWith(".jfr") || it.name.endsWith("-jfr") }.empty
     }
 
     private File prepareBuild() {
