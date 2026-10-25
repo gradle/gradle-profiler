@@ -1493,6 +1493,7 @@ class ProfilerIntegrationTest extends AbstractProfilerIntegrationTest {
         given:
         def repoDir = new File(projectDir, "repo")
         def repo = new TestGitRepo(repoDir)
+        new File(repoDir, "file.txt").text = "Final"
 
         new File(repoDir, "settings.gradle") << ''
         new File(repoDir, "build.gradle") << """
@@ -1532,6 +1533,7 @@ class ProfilerIntegrationTest extends AbstractProfilerIntegrationTest {
         given:
         def repoDir = new File(projectDir, "repo")
         def repo = new TestGitRepo(repoDir)
+        new File(repoDir, "file.txt").text = "Final"
 
         new File(repoDir, "settings.gradle") << ''
         new File(repoDir, "build.gradle") << """
