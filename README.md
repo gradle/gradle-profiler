@@ -523,7 +523,9 @@ These mutators can be scheduled to execute at different points in the build benc
 - `clear-dir`: Clears the contents of a directory without deleting the directory itself. Has to specify a `target` path; when relative it is resolved against the directory specified by `root` (see below). Optionally accepts a `keep` list of names, which are _direct_ children of `target` and which will not be deleted. Can take an array of operations. Defaults to `SCENARIO` schedule.
 - `delete-file`: Deletes a file or a directory. Has to specify a `target` path; when relative it is resolved against the directory specified by `root` (see below). Can take an array of operations. Defaults to `SCENARIO` schedule.
 - `git-checkout`: Checks out a specific commit for the build step, and a different one for the cleanup step.
-- `git-revert`: Reverts a given set of commits before the build and resets it afterward. 
+- `git-revert`: Reverts a given set of commits before the build and resets it afterward.
+
+The `git-checkout` and `git-revert` mutators refuse to start when tracked files have staged or unstaged changes, so profiling never discards local work. Commit or stash those changes before running the scenario. Untracked files are left alone.
 
 Some file operations support the optional `root` parameter, which can be used to resolve relative paths:
 - `clear-dir`

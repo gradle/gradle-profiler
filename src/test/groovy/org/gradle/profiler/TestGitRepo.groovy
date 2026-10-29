@@ -26,8 +26,14 @@ class TestGitRepo {
         file.text = "Final"
         commit "Final change"
         finalCommit = currentCommit
+    }
 
+    void makeLocalChange() {
         file.text = "Local change"
+    }
+
+    void hasLocalChange() {
+        assert file.text == "Local change"
     }
 
     void hasOriginalContent() {

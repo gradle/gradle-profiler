@@ -23,11 +23,7 @@ public class GitCheckoutMutator extends AbstractGitMutator {
 
 	@Override
 	public void beforeScenario(ScenarioContext context) {
-		String status = new CommandExec().inDir(projectDir).runAndCollectOutput(
-			"git", "status", "--porcelain=v1", "--untracked-files=no", "--ignore-submodules=none");
-		if (!status.isEmpty()) {
-			throw new IllegalStateException("Cannot start Git checkout profiling with local changes. Commit, stash, or deliberately reset your changes and retry.");
-		}
+		requireNoLocalChanges("checkout");
 		original = getCurrentCommit();
 	}
 

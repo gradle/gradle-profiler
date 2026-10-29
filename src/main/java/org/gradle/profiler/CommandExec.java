@@ -207,20 +207,22 @@ public class CommandExec {
         }
 
         public void waitForSuccess() {
-            int result = 0;
-            Exception failure = null;
-            try {
-                result = process.waitFor();
-            } catch (Exception e) {
-                failure = e;
-            } finally {
-                shutdownExecutor();
-            }
-            if (failure != null) {
-                throw new RuntimeException(commandErrorMessage(processBuilder, diagnosticOutput.get()), failure);
-            }
+            int result = waitForExitCode();
             if (result != 0) {
                 throw new RuntimeException(commandErrorMessage(processBuilder, diagnosticOutput.get()));
+            }
+        }
+
+        /**
+         * Waits for the process to finish and returns its exit code, without treating a non-zero code as a failure.
+         */
+        public int waitForExitCode() {
+            try {
+                return process.waitFor();
+            } catch (Exception e) {
+                throw new RuntimeException(commandErrorMessage(processBuilder, diagnosticOutput.get()), e);
+            } finally {
+                shutdownExecutor();
             }
         }
 
