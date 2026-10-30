@@ -23,7 +23,7 @@ public class GitCheckoutMutator extends AbstractGitMutator {
 
 	@Override
 	public void beforeScenario(ScenarioContext context) {
-		resetGit();
+		requireNoLocalChanges("checkout");
 		original = getCurrentCommit();
 	}
 

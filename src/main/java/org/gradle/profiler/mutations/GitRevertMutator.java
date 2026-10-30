@@ -28,7 +28,7 @@ public class GitRevertMutator extends AbstractGitMutator {
 
 	@Override
 	public void beforeScenario(ScenarioContext context) {
-		resetGit();
+		requireNoLocalChanges("revert");
 	}
 
 	@Override
