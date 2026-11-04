@@ -1,8 +1,6 @@
 import jetbrains.buildServer.configs.kotlin.BuildType
 import jetbrains.buildServer.configs.kotlin.FailureAction
 import jetbrains.buildServer.configs.kotlin.ReuseBuilds
-import jetbrains.buildServer.configs.kotlin.buildFeatures.PullRequests
-import jetbrains.buildServer.configs.kotlin.buildFeatures.pullRequests
 import jetbrains.buildServer.configs.kotlin.triggers.vcs
 
 class GradleProfilerTestTrigger(testBuilds: List<BuildType>) : BuildType({
@@ -23,13 +21,7 @@ class GradleProfilerTestTrigger(testBuilds: List<BuildType>) : BuildType({
     }
 
     features {
-        pullRequests {
-            provider = github {
-                authType = vcsRoot()
-                filterAuthorRole = PullRequests.GitHubRoleFilter.EVERYBODY
-                ignoreDrafts = false
-            }
-        }
+        discoverPullRequests()
     }
 
     dependencies {

@@ -1,7 +1,10 @@
+import jetbrains.buildServer.configs.kotlin.BuildFeatures
 import jetbrains.buildServer.configs.kotlin.BuildType
 import jetbrains.buildServer.configs.kotlin.CheckoutMode
 import jetbrains.buildServer.configs.kotlin.DslContext
 import jetbrains.buildServer.configs.kotlin.ParametrizedWithType
+import jetbrains.buildServer.configs.kotlin.buildFeatures.PullRequests
+import jetbrains.buildServer.configs.kotlin.buildFeatures.pullRequests
 
 fun BuildType.agentRequirement(os: Os, arch: Arch) {
     requirements {
@@ -38,6 +41,17 @@ fun BuildType.gradleProfilerVcs() {
     vcs {
         root(DslContext.settingsRoot)
         checkoutMode = CheckoutMode.ON_AGENT
+    }
+}
+
+fun BuildFeatures.discoverPullRequests() {
+    pullRequests {
+        vcsRootExtId = "${DslContext.settingsRoot.id}"
+        provider = github {
+            authType = vcsRoot()
+            filterAuthorRole = PullRequests.GitHubRoleFilter.EVERYBODY
+            ignoreDrafts = false
+        }
     }
 }
 

@@ -20,6 +20,7 @@ object GradleProfilerSanityCheck : BuildType({
     }
 
     features {
+        discoverPullRequests()
         commitStatusPublisher {
             vcsRootExtId = "${DslContext.settingsRoot.id}"
             publisher = github {
