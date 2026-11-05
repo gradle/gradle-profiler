@@ -1,5 +1,7 @@
 package org.gradle.trace;
 
+import static org.gradle.trace.util.JsonUtil.escape;
+
 import java.util.Iterator;
 import java.util.Map;
 
@@ -34,7 +36,7 @@ public class DurationEvent implements TraceEvent {
         Iterator<Map.Entry<String, String>> itr = info.entrySet().iterator();
         while (itr.hasNext()) {
             Map.Entry<String, String> entry = itr.next();
-            s.append("\"").append(entry.getKey()).append("\": \"").append(entry.getValue()).append("\"");
+            s.append("\"").append(escape(entry.getKey())).append("\": \"").append(escape(entry.getValue())).append("\"");
             s.append(itr.hasNext() ? "," : "");
         }
         s.append("}");
@@ -45,7 +47,7 @@ public class DurationEvent implements TraceEvent {
             cname = String.format(", \"cname\": \"%s\"", colorName);
         }
 
-        return String.format("{\"name\": \"%s\", \"cat\": \"%s\", \"ph\": \"X\", \"pid\": 0, \"tid\": %d, \"ts\": %d, \"dur\": %d, \"args\": %s %s}", name, category, threadId, startTimestamp, elapsed, args, cname);
+        return String.format("{\"name\": \"%s\", \"cat\": \"%s\", \"ph\": \"X\", \"pid\": 0, \"tid\": %d, \"ts\": %d, \"dur\": %d, \"args\": %s %s}", escape(name), escape(category), threadId, startTimestamp, elapsed, args, cname);
     }
 
     public void finished(long timestampNanos) {
