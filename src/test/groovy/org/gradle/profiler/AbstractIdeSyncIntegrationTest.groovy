@@ -12,6 +12,7 @@ import org.gradle.profiler.ide.tools.IdePluginInstaller
 import org.gradle.profiler.ide.tools.IdeSandboxCreator
 import spock.lang.Timeout
 
+import java.time.Instant
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.TimeoutException
 
@@ -78,28 +79,47 @@ abstract class AbstractIdeSyncIntegrationTest extends AbstractProfilerIntegratio
 
     /**
      * Measured sync invocations get the profiler's --gradle-user-home, and the profiler stops those daemons.
-     * Tooling API calls the IDE makes on its own use <ideUserHome>/.gradle instead. IntelliJ stops that daemon when it shuts down normally,
-     * but if the IDE is killed (e.g. on a test timeout) the daemon would keep running and, on Windows, keep files in the test directory open.
+     * Tooling API calls the IDE makes on its own use <ideUserHome>/.gradle instead. In local runs that daemon was stopped by the time
+     * the IDE exited, but that is not guaranteed, e.g. when the IDE is killed on a test timeout. A daemon left running would keep
+     * files in the test directory open on Windows, so stop any that are still alive.
      */
     private void stopIdeGradleDaemons() {
         if (ideUserHome == null) {
             return
         }
         def daemonLogs = new File(ideUserHome, ".gradle/daemon").listFiles()?.collectMany { it.listFiles()?.toList() ?: [] } ?: []
-        daemonLogs.collect { (it.name =~ /^daemon-(\d+)\.out\.log$/) }
-            .findAll { it.matches() }
-            .collect { it.group(1) as long }
-            .each { pid ->
-                ProcessHandle.of(pid).ifPresent { process ->
-                    println("Stopping Gradle daemon $pid started by the IDE")
-                    process.destroy()
-                    try {
-                        process.onExit().get(30, TimeUnit.SECONDS)
-                    } catch (TimeoutException ignored) {
-                        process.destroyForcibly()
-                    }
+        daemonLogs.each { daemonLog ->
+            def matcher = daemonLog.name =~ /^daemon-(\d+)\.out\.log$/
+            if (!matcher.matches()) {
+                return
+            }
+            long pid = matcher.group(1) as long
+            ProcessHandle.of(pid).filter { isGradleDaemonWithLog(it, daemonLog) }.ifPresent { process ->
+                println("Stopping Gradle daemon $pid started by the IDE")
+                process.destroy()
+                try {
+                    process.onExit().get(30, TimeUnit.SECONDS)
+                } catch (TimeoutException ignored) {
+                    process.destroyForcibly()
                 }
             }
+        }
+    }
+
+    /**
+     * The pid comes from the daemon log file name. Make sure it wasn't recycled for an unrelated process after the daemon exited.
+     */
+    private static boolean isGradleDaemonWithLog(ProcessHandle process, File daemonLog) {
+        def info = process.info()
+        // A process that started after the daemon last wrote its log can't be that daemon
+        boolean startedBeforeLastLogWrite = info.startInstant()
+            .map { !it.isAfter(Instant.ofEpochMilli(daemonLog.lastModified())) }
+            .orElse(false)
+        // Arguments are not available on every OS (e.g. Windows), fall back to checking that it is a java process
+        boolean isGradleDaemon = info.arguments()
+            .map { args -> args.any { it.contains("GradleDaemon") } }
+            .orElseGet { info.command().map { new File(it).name.startsWith("java") }.orElse(false) }
+        return startedBeforeLastLogWrite && isGradleDaemon
     }
 
     /**
