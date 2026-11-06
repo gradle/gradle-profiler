@@ -12,26 +12,43 @@ import org.gradle.profiler.ide.tools.IdePluginInstaller
 import org.gradle.profiler.ide.tools.IdeSandboxCreator
 import spock.lang.Timeout
 
+import java.time.Instant
 import java.util.concurrent.TimeUnit
+import java.util.concurrent.TimeoutException
 
 @ShowIdeLogsOnFailure
 @Timeout(value = 5, unit = TimeUnit.MINUTES)
 abstract class AbstractIdeSyncIntegrationTest extends AbstractProfilerIntegrationTest {
 
+    private static final File REAL_M2_DIR = new File(System.getProperty("user.home"), ".m2")
+    private static final File REAL_M2_REPOSITORY_DIR = new File(REAL_M2_DIR, "repository")
+
     File sandboxDir
+    /**
+     * Isolated user.home for the IDE process, so the IDE doesn't write to the real home directory of the machine.
+     * E.g. IntelliJ's bundled Maven plugin creates ~/.m2/repository when opening any project,
+     * which breaks other builds on shared CI agents that check that ~/.m2 isn't written.
+     */
+    File ideUserHome
     File ideHome
     String scenarioName
     String ideDisplayName
     String scenarioSyncOption
     String installDirOption
     String sandboxDirOption
+    private boolean realM2DirExisted
+    private boolean realM2RepositoryDirExisted
 
     abstract File findIdeHome()
 
     abstract IdeType ideType()
 
     def setup() {
+        realM2DirExisted = REAL_M2_DIR.exists()
+        realM2RepositoryDirExisted = REAL_M2_REPOSITORY_DIR.exists()
+
         sandboxDir = tmpDir.createDir('sandbox')
+        ideUserHome = tmpDir.createDir('ide-user-home')
         ideHome = findIdeHome()
         ideDisplayName = ideType().displayName
         scenarioSyncOption = ideType() == IdeType.INTELLIJ_IDEA ? "idea-sync" : "studio-sync"
@@ -53,13 +70,98 @@ abstract class AbstractIdeSyncIntegrationTest extends AbstractProfilerIntegratio
         scenarioName = "scenario"
     }
 
+    def cleanup() {
+        stopIdeGradleDaemons()
+        assertRealM2NotCreated()
+    }
+
     void setupProject() {}
+
+    /**
+     * Measured sync invocations get the profiler's --gradle-user-home, and the profiler stops those daemons.
+     * Tooling API calls the IDE makes on its own use <ideUserHome>/.gradle instead. In local runs that daemon was stopped by the time
+     * the IDE exited, but that is not guaranteed, e.g. when the IDE is killed on a test timeout. A daemon left running would keep
+     * files in the test directory open on Windows, so stop any that are still alive.
+     */
+    private void stopIdeGradleDaemons() {
+        if (ideUserHome == null) {
+            return
+        }
+        def daemonLogs = new File(ideUserHome, ".gradle/daemon").listFiles()?.collectMany { it.listFiles()?.toList() ?: [] } ?: []
+        daemonLogs.each { daemonLog ->
+            def matcher = daemonLog.name =~ /^daemon-(\d+)\.out\.log$/
+            if (!matcher.matches()) {
+                return
+            }
+            long pid = matcher.group(1) as long
+            ProcessHandle.of(pid).filter { isGradleDaemonWithLog(it, daemonLog) }.ifPresent { process ->
+                println("Stopping Gradle daemon $pid started by the IDE")
+                process.destroy()
+                try {
+                    process.onExit().get(30, TimeUnit.SECONDS)
+                } catch (TimeoutException ignored) {
+                    process.destroyForcibly()
+                }
+            }
+        }
+    }
+
+    /**
+     * The pid comes from the daemon log file name. Make sure it wasn't recycled for an unrelated process after the daemon exited.
+     */
+    private static boolean isGradleDaemonWithLog(ProcessHandle process, File daemonLog) {
+        def info = process.info()
+        // A process that started after the daemon last wrote its log can't be that daemon
+        boolean startedBeforeLastLogWrite = info.startInstant()
+            .map { !it.isAfter(Instant.ofEpochMilli(daemonLog.lastModified())) }
+            .orElse(false)
+        // Arguments are not available on every OS (e.g. Windows), fall back to checking that it is a java process
+        boolean isGradleDaemon = info.arguments()
+            .map { args -> args.any { it.contains("GradleDaemon") } }
+            .orElseGet { info.command().map { new File(it).name.startsWith("java") }.orElse(false) }
+        return startedBeforeLastLogWrite && isGradleDaemon
+    }
+
+    /**
+     * Guards against the IDE writing to the real ~/.m2, which fails other builds on shared CI agents.
+     * Deletes what was created so the agent stays clean, then fails the test.
+     */
+    private void assertRealM2NotCreated() {
+        def created = []
+        if (!realM2DirExisted && REAL_M2_DIR.exists()) {
+            created << REAL_M2_DIR
+            REAL_M2_DIR.deleteDir()
+        } else if (!realM2RepositoryDirExisted && REAL_M2_REPOSITORY_DIR.exists()) {
+            created << REAL_M2_REPOSITORY_DIR
+            REAL_M2_REPOSITORY_DIR.deleteDir()
+        }
+        assert created.isEmpty(): "Test created ${created} in the real home directory"
+    }
+
+    String ideUserHomeJvmArg() {
+        // Forward slashes, since backslashes are escape characters in the scenario file
+        return "-Duser.home=${ideUserHome.absolutePath.replace('\\', '/')}"
+    }
+
+    /**
+     * The IDE sync block of a scenario. Always runs the IDE with an isolated user.home.
+     */
+    String ideSyncBlock(List<String> ideJvmArgs = ScenarioLoader.DEFAULT_IDE_JVM_ARGS, List<String> ideaProperties = []) {
+        def jvmArgs = (ideJvmArgs + ideUserHomeJvmArg()).collect { "\"$it\"" }.join(", ")
+        def properties = ideaProperties.isEmpty()
+            ? ""
+            : "idea-properties = [${ideaProperties.collect { "\"$it\"" }.join(", ")}]"
+        return """$scenarioSyncOption {
+                    ide-jvm-args = [$jvmArgs]
+                    $properties
+                }"""
+    }
 
     def "benchmarks IDE sync with latest gradle version"() {
         given:
         def scenarioFile = file("performance.scenarios") << """
             $scenarioName {
-                $scenarioSyncOption {}
+                ${ideSyncBlock()}
             }
         """
 
@@ -84,7 +186,7 @@ abstract class AbstractIdeSyncIntegrationTest extends AbstractProfilerIntegratio
         new File(projectDir, "buildSrc/gradle.build").createNewFile()
         def scenarioFile = file("performance.scenarios") << """
             $scenarioName {
-                $scenarioSyncOption {}
+                ${ideSyncBlock()}
             }
         """
 
@@ -110,7 +212,7 @@ abstract class AbstractIdeSyncIntegrationTest extends AbstractProfilerIntegratio
         given:
         def scenarioFile = file("performance.scenarios") << """
             $scenarioName {
-                $scenarioSyncOption {}
+                ${ideSyncBlock()}
                 clear-android-studio-cache-before = BUILD
             }
         """
@@ -131,7 +233,7 @@ abstract class AbstractIdeSyncIntegrationTest extends AbstractProfilerIntegratio
         given:
         def scenarioFile = file("performance.scenarios") << """
             $scenarioName {
-                $scenarioSyncOption {}
+                ${ideSyncBlock()}
                 clear-android-studio-cache-before = SCENARIO
             }
         """
@@ -154,13 +256,13 @@ abstract class AbstractIdeSyncIntegrationTest extends AbstractProfilerIntegratio
         // We have to install plugin so also the first process is run in the headless mode.
         // We install plugin directory to a different "plugins-2" directory for first process otherwise cleaning plugin directory at start of second process fails on Windows.
         IdeSandboxCreator.IdeSandbox sandbox = IdeSandboxCreator.createSandbox(sandboxDir.toPath(), "plugins-2")
-        IdeLauncher launcher = new IdeLauncherProvider(ideType(), ideHome.toPath(), sandbox, [], []).get()
+        IdeLauncher launcher = new IdeLauncherProvider(ideType(), ideHome.toPath(), sandbox, [ideUserHomeJvmArg()], []).get()
         IdePluginInstaller pluginInstaller = new IdePluginInstaller(sandbox.getPluginsDir())
         // We have to install plugin, since a plugin contains headless starter and it makes it run headless on CI
         pluginInstaller.installPlugin(Collections.singletonList(GradleInstrumentation.unpackPlugin("ide-plugin").toPath()))
         def scenarioFile = file("performance.scenarios") << """
             $scenarioName {
-                $scenarioSyncOption {}
+                ${ideSyncBlock()}
             }
         """
 
@@ -187,13 +289,13 @@ abstract class AbstractIdeSyncIntegrationTest extends AbstractProfilerIntegratio
         // since if the IDE writes to same project at the same time, it can fail
         File otherProjectDir = tmpDir.createDir('project2')
         IdeSandboxCreator.IdeSandbox sandbox = IdeSandboxCreator.createSandbox(sandboxDir1.toPath())
-        IdeLauncher launcher = new IdeLauncherProvider(ideType(), ideHome.toPath(), sandbox, [], []).get()
+        IdeLauncher launcher = new IdeLauncherProvider(ideType(), ideHome.toPath(), sandbox, [ideUserHomeJvmArg()], []).get()
         // We have to install plugin, since a plugin contains headless starter and it makes it run headless on CI
         IdePluginInstaller pluginInstaller = new IdePluginInstaller(sandbox.getPluginsDir())
         pluginInstaller.installPlugin(Collections.singletonList(GradleInstrumentation.unpackPlugin("ide-plugin").toPath()))
         def scenarioFile = file("performance.scenarios") << """
             $scenarioName {
-                $scenarioSyncOption {}
+                ${ideSyncBlock()}
             }
         """
 
@@ -213,7 +315,7 @@ abstract class AbstractIdeSyncIntegrationTest extends AbstractProfilerIntegratio
         given:
         def scenarioFile = file("performance.scenarios") << """
             $scenarioName {
-                $scenarioSyncOption {}
+                ${ideSyncBlock()}
             }
         """
         buildFile << """
@@ -237,7 +339,7 @@ abstract class AbstractIdeSyncIntegrationTest extends AbstractProfilerIntegratio
         given:
         def scenarioFile = file("performance.scenarios") << """
             $scenarioName {
-                $scenarioSyncOption {}
+                ${ideSyncBlock()}
             }
         """
         buildFile << """
@@ -269,9 +371,7 @@ abstract class AbstractIdeSyncIntegrationTest extends AbstractProfilerIntegratio
         given:
         def scenarioFile = file("performance.scenarios") << """
             $scenarioName {
-                $scenarioSyncOption {
-                    ide-jvm-args = ["-Xmx4104m", "-Xms128m"]
-                }
+                ${ideSyncBlock(["-Xmx4104m", "-Xms128m"])}
             }
         """
 
@@ -292,7 +392,7 @@ abstract class AbstractIdeSyncIntegrationTest extends AbstractProfilerIntegratio
         given:
         def scenarioFile = file("performance.scenarios") << """
             $scenarioName {
-                $scenarioSyncOption {}
+                ${ideSyncBlock()}
             }
         """
         buildFile.text = """
@@ -308,20 +408,16 @@ abstract class AbstractIdeSyncIntegrationTest extends AbstractProfilerIntegratio
                 implementation("com.fasterxml.jackson.core:jackson-core:2.9.6")
             }
         """
-        def mavenRepository = tmpDir.createDir("maven/repository")
-        new File("${sandboxDir.absolutePath}/config/options").mkdirs()
-        new File("${sandboxDir.absolutePath}/config/options/path.macros.xml").text = """
-<application>
-  <component name="PathMacrosImpl">
-    <macro name="MAVEN_REPOSITORY" value="${mavenRepository.absolutePath}" />
-  </component>
-</application>"""
+        // The IDE resolves both its local Maven repository and the MAVEN_REPOSITORY path macro
+        // (where external annotations would be downloaded to) from user.home.
+        def ideMavenRepository = new File(ideUserHome, ".m2/repository")
 
         when:
         runBenchmark(scenarioFile, 1, 1)
 
         then:
-        mavenRepository.list() == [] as String[]
+        // IntelliJ's Maven plugin creates an empty local repository when indexing it, but nothing must be downloaded into it
+        !ideMavenRepository.exists() || ideMavenRepository.list() == [] as String[]
     }
 
     def "can add idea.properties"() {
@@ -330,9 +426,7 @@ abstract class AbstractIdeSyncIntegrationTest extends AbstractProfilerIntegratio
         def registryKey = "ide.balloon.shadowEnabled"
         def scenarioFile = file("performance.scenarios") << """
             $scenarioName {
-                $scenarioSyncOption {
-                    idea-properties = ["${registryKey}=true"]
-                }
+                ${ideSyncBlock(ScenarioLoader.DEFAULT_IDE_JVM_ARGS, ["${registryKey}=true"])}
             }
         """
 
