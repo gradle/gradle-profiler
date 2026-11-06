@@ -13,15 +13,14 @@ import org.gradle.profiler.ide.tools.IdeSandboxCreator
 import spock.lang.Timeout
 
 import java.util.concurrent.TimeUnit
+import java.util.concurrent.TimeoutException
 
 @ShowIdeLogsOnFailure
 @Timeout(value = 5, unit = TimeUnit.MINUTES)
 abstract class AbstractIdeSyncIntegrationTest extends AbstractProfilerIntegrationTest {
 
-    /**
-     * Same as the defaults in {@link ScenarioLoader}, which are replaced when ide-jvm-args is set.
-     */
-    static final List<String> DEFAULT_IDE_JVM_ARGS = ["-Xms256m", "-Xmx4096m"]
+    private static final File REAL_M2_DIR = new File(System.getProperty("user.home"), ".m2")
+    private static final File REAL_M2_REPOSITORY_DIR = new File(REAL_M2_DIR, "repository")
 
     File sandboxDir
     /**
@@ -36,12 +35,17 @@ abstract class AbstractIdeSyncIntegrationTest extends AbstractProfilerIntegratio
     String scenarioSyncOption
     String installDirOption
     String sandboxDirOption
+    private boolean realM2DirExisted
+    private boolean realM2RepositoryDirExisted
 
     abstract File findIdeHome()
 
     abstract IdeType ideType()
 
     def setup() {
+        realM2DirExisted = REAL_M2_DIR.exists()
+        realM2RepositoryDirExisted = REAL_M2_REPOSITORY_DIR.exists()
+
         sandboxDir = tmpDir.createDir('sandbox')
         ideUserHome = tmpDir.createDir('ide-user-home')
         ideHome = findIdeHome()
@@ -65,7 +69,54 @@ abstract class AbstractIdeSyncIntegrationTest extends AbstractProfilerIntegratio
         scenarioName = "scenario"
     }
 
+    def cleanup() {
+        stopIdeGradleDaemons()
+        assertRealM2NotCreated()
+    }
+
     void setupProject() {}
+
+    /**
+     * Measured sync invocations get the profiler's --gradle-user-home, and the profiler stops those daemons.
+     * Tooling API calls the IDE makes on its own use <ideUserHome>/.gradle instead. IntelliJ stops that daemon when it shuts down normally,
+     * but if the IDE is killed (e.g. on a test timeout) the daemon would keep running and, on Windows, keep files in the test directory open.
+     */
+    private void stopIdeGradleDaemons() {
+        if (ideUserHome == null) {
+            return
+        }
+        def daemonLogs = new File(ideUserHome, ".gradle/daemon").listFiles()?.collectMany { it.listFiles()?.toList() ?: [] } ?: []
+        daemonLogs.collect { (it.name =~ /^daemon-(\d+)\.out\.log$/) }
+            .findAll { it.matches() }
+            .collect { it.group(1) as long }
+            .each { pid ->
+                ProcessHandle.of(pid).ifPresent { process ->
+                    println("Stopping Gradle daemon $pid started by the IDE")
+                    process.destroy()
+                    try {
+                        process.onExit().get(30, TimeUnit.SECONDS)
+                    } catch (TimeoutException ignored) {
+                        process.destroyForcibly()
+                    }
+                }
+            }
+    }
+
+    /**
+     * Guards against the IDE writing to the real ~/.m2, which fails other builds on shared CI agents.
+     * Deletes what was created so the agent stays clean, then fails the test.
+     */
+    private void assertRealM2NotCreated() {
+        def created = []
+        if (!realM2DirExisted && REAL_M2_DIR.exists()) {
+            created << REAL_M2_DIR
+            REAL_M2_DIR.deleteDir()
+        } else if (!realM2RepositoryDirExisted && REAL_M2_REPOSITORY_DIR.exists()) {
+            created << REAL_M2_REPOSITORY_DIR
+            REAL_M2_REPOSITORY_DIR.deleteDir()
+        }
+        assert created.isEmpty(): "Test created ${created} in the real home directory"
+    }
 
     String ideUserHomeJvmArg() {
         // Forward slashes, since backslashes are escape characters in the scenario file
@@ -75,7 +126,7 @@ abstract class AbstractIdeSyncIntegrationTest extends AbstractProfilerIntegratio
     /**
      * The IDE sync block of a scenario. Always runs the IDE with an isolated user.home.
      */
-    String ideSyncBlock(List<String> ideJvmArgs = DEFAULT_IDE_JVM_ARGS, List<String> ideaProperties = []) {
+    String ideSyncBlock(List<String> ideJvmArgs = ScenarioLoader.DEFAULT_IDE_JVM_ARGS, List<String> ideaProperties = []) {
         def jvmArgs = (ideJvmArgs + ideUserHomeJvmArg()).collect { "\"$it\"" }.join(", ")
         def properties = ideaProperties.isEmpty()
             ? ""
@@ -340,8 +391,6 @@ abstract class AbstractIdeSyncIntegrationTest extends AbstractProfilerIntegratio
         // The IDE resolves both its local Maven repository and the MAVEN_REPOSITORY path macro
         // (where external annotations would be downloaded to) from user.home.
         def ideMavenRepository = new File(ideUserHome, ".m2/repository")
-        def realM2 = new File(System.getProperty("user.home"), ".m2")
-        def realM2ExistedBefore = realM2.exists()
 
         when:
         runBenchmark(scenarioFile, 1, 1)
@@ -349,9 +398,6 @@ abstract class AbstractIdeSyncIntegrationTest extends AbstractProfilerIntegratio
         then:
         // IntelliJ's Maven plugin creates an empty local repository when indexing it, but nothing must be downloaded into it
         !ideMavenRepository.exists() || ideMavenRepository.list() == [] as String[]
-
-        and:
-        realM2ExistedBefore || !realM2.exists()
     }
 
     def "can add idea.properties"() {
@@ -360,7 +406,7 @@ abstract class AbstractIdeSyncIntegrationTest extends AbstractProfilerIntegratio
         def registryKey = "ide.balloon.shadowEnabled"
         def scenarioFile = file("performance.scenarios") << """
             $scenarioName {
-                ${ideSyncBlock(DEFAULT_IDE_JVM_ARGS, ["${registryKey}=true"])}
+                ${ideSyncBlock(ScenarioLoader.DEFAULT_IDE_JVM_ARGS, ["${registryKey}=true"])}
             }
         """
 
