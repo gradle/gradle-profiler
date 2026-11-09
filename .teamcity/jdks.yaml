@@ -5,8 +5,8 @@ jdks:
     os: "linux"
     arch: "amd64"
     vendor: "temurin"
-    version: "jdk-11.0.32.1+1"
-    sha256: "5c3f68887c325d36d852ba534303e1f5f1f5cae7d6cc1e951d73e0d8e98a058d"
+    version: "jdk-11.0.33+10"
+    sha256: "c4b8eaf56c93b95b689ffc08d155df1bcdbbffb666f8f71d21d97aedaea6f0ec"
   - params:
       - "env.JAVA_HOME"
       - "env.JDK17"
@@ -42,8 +42,8 @@ jdks:
     os: "windows"
     arch: "amd64"
     vendor: "temurin"
-    version: "jdk-17.0.20.1+1"
-    sha256: "e53a79c3c3d86865bd7e787903884331068e71321714ffd44f145785affc7cb0"
+    version: "jdk-17.0.21+9"
+    sha256: "98518ecf554465057ee5509462631deeee374bc368c12a411d225cd29381f84b"
   - params:
       - "env.JDK21"
     os: "windows"
@@ -63,8 +63,8 @@ jdks:
     os: "macos"
     arch: "amd64"
     vendor: "temurin"
-    version: "jdk-11.0.32.1+1"
-    sha256: "03de26f0d11ec3e6365e0352d9fcfaff447be35a2b2f36ee1ffb6063980343f5"
+    version: "jdk-11.0.33+10"
+    sha256: "11e3e9de3ce65ff957aee9b4b76876553e9d328cab9aede47996463625c88887"
   - params:
       - "env.JAVA_HOME"
       - "env.JDK17"
@@ -85,8 +85,8 @@ jdks:
     os: "macos"
     arch: "aarch64"
     vendor: "temurin"
-    version: "jdk-11.0.32.1+1"
-    sha256: "c487a1c3a56588b3a32d0d07cdd526bf3d401c4b8422be772ca178bfcd647f3f"
+    version: "jdk-11.0.33+10"
+    sha256: "6ef5b027206691439b2dcb2fc05adc13cc7f5b6e75a08fce8f75ee188adc7751"
   - params:
       - "env.JAVA_HOME"
       - "env.JDK17"
