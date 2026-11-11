@@ -154,6 +154,15 @@ tasks.test {
     setForkEvery(1)
     maxHeapSize = "2g"
 
+    // DO NOT MERGE. Reproduces the ~/.m2/repository leak (https://github.com/gradle/gradle-profiler/pull/882)
+    // to test the TeamCity user home guard plugin: run only the leaking test, and always run it.
+    filter {
+        includeTestsMatching("*IntellijIntegrationTest.doesn't write external annotations*")
+        isFailOnNoMatchingTests = false
+    }
+    outputs.upToDateWhen { false }
+    outputs.cacheIf { false }
+
     // Required for mocks when running on Java 17+
     jvmArgumentProviders.add(AddOpensArgProvider(this))
 
