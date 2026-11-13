@@ -160,9 +160,10 @@ class ScenarioLoader {
         .add(CLEAR_ANDROID_STUDIO_CACHE_BEFORE)
         .build();
 
-    private static final Set<String> RESERVED_TOP_LEVEL_KEYS = ImmutableSet.of(
+    static final Set<String> RESERVED_TOP_LEVEL_KEYS = ImmutableSet.of(
         DEFAULT_SCENARIOS,
-        SCENARIO_GROUPS
+        SCENARIO_GROUPS,
+        ScenarioMatrices.SCENARIO_MATRICES
     );
 
     private static final List<String> BAZEL_KEYS = Arrays.asList(TARGETS, TOOL_HOME);
@@ -229,7 +230,7 @@ class ScenarioLoader {
     }
 
     static List<ScenarioDefinition> loadScenarios(File scenarioFile, InvocationSettings settings, GradleBuildConfigurationReader inspector) {
-        Config config = parseScenarioFile(scenarioFile);
+        Config config = parseAndExpandScenarioFile(scenarioFile);
         Set<String> selectedScenarios = selectScenarios(config, settings, scenarioFile);
 
         List<ScenarioDefinition> definitions = new ArrayList<>();
@@ -386,8 +387,12 @@ class ScenarioLoader {
         return ImmutableList.of(new MavenScenarioDefinition(scenarioName, title, targets, systemProperties, mutators, warmUpCount, buildCount, outputDir, mavenHome));
     }
 
-    private static Config parseScenarioFile(File scenarioFile) {
+    static Config parseScenarioFile(File scenarioFile) {
         return ConfigFactory.parseFile(scenarioFile, ConfigParseOptions.defaults().setAllowMissing(false)).resolve();
+    }
+
+    private static Config parseAndExpandScenarioFile(File scenarioFile) {
+        return ScenarioMatrices.expand(parseScenarioFile(scenarioFile), scenarioFile);
     }
 
     private static IdeGradleScenarioDefinition newIdeGradleScenarioDefinition(GradleScenarioDefinition gradleScenarioDefinition, Config scenario, IdeType ideType, File scenarioFile, String scenarioName) {
@@ -750,7 +755,7 @@ class ScenarioLoader {
      * <p>Each scenario output is standalone and can be copied into a new scenario file as-is.
      */
     public static String dumpScenarios(File scenarioFile, InvocationSettings settings) {
-        Config config = parseScenarioFile(scenarioFile);
+        Config config = parseAndExpandScenarioFile(scenarioFile);
         Set<String> selectedScenarios = selectScenarios(config, settings, scenarioFile);
 
         ConfigRenderOptions renderOptions = ConfigRenderOptions.defaults()
@@ -767,7 +772,6 @@ class ScenarioLoader {
             output.append('\n');
 
             Config scenario = config.getConfig(scenarioName);
-
 
             output.append(String.format("# Scenario %d/%d", scenarioIndex, scenarioCount));
             String title = scenario.hasPath(TITLE) ? scenario.getString(TITLE) : null;
