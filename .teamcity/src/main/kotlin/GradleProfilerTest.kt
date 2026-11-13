@@ -27,6 +27,8 @@ open class GradleProfilerTest(os: Os, javaVersion: JavaVersion, arch: Arch) : Bu
     }
 
     features {
+        discoverPullRequests()
+
         parallelTests {
             numberOfBatches = if (os == Os.windows) {
                 8 // balance so Windows, Linux and macOS run with similar wall clock time
