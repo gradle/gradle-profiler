@@ -1,7 +1,7 @@
 [versions]
 groovy = "4.0.29"
 protobuf = "4.34.1"
-spock = "2.4-groovy-4.0"
+spock = "2.5-groovy-4.0"
 
 # Quail 1 Patch 2 (2026.1.1.10)
 testAndroidStudioVersion = "2026.1.1.10"
