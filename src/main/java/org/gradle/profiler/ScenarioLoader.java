@@ -32,6 +32,7 @@ import java.util.stream.Collectors;
 import static org.gradle.profiler.DeprecationWarnings.*;
 
 class ScenarioLoader {
+    static final List<String> DEFAULT_IDE_JVM_ARGS = ImmutableList.of("-Xms256m", "-Xmx4096m");
     private static final String TITLE = "title";
     private static final String VERSIONS = "versions";
     private static final String TASKS = "tasks";
@@ -401,7 +402,7 @@ class ScenarioLoader {
             }
         }
         List<String> ideJvmArgs = getConfigWithDeprecatedFallback(ideSyncConfig, IDE_JVM_ARGS, ANDROID_STUDIO_JVM_ARGS,
-            ImmutableList.of("-Xms256m", "-Xmx4096m"));
+            DEFAULT_IDE_JVM_ARGS);
         List<String> ideaProperties = ConfigUtil.strings(ideSyncConfig, IDEA_PROPERTIES, Collections.emptyList());
         return new IdeGradleScenarioDefinition(gradleScenarioDefinition, ideType, ideJvmArgs, ideaProperties);
     }
