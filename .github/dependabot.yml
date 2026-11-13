@@ -13,6 +13,7 @@ updates:
       interval: "weekly"
     labels:
       - "@dev-productivity"
+      - "dependencies"
       # Updates to GitHub actions are not relevant to users
       - "no-changelog"
   - package-ecosystem: "maven"
@@ -23,6 +24,7 @@ updates:
       interval: "weekly"
     labels:
       - "@dev-productivity"
+      - "dependencies"
       # Updates to TeamCity DSL dependencies are not relevant to users
       - "no-changelog"
   - package-ecosystem: "gradle"
@@ -33,3 +35,4 @@ updates:
       interval: "weekly"
     labels:
       - "@dev-productivity"
+      - "dependencies"
