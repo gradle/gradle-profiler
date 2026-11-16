@@ -30,7 +30,21 @@ abstract class AbstractIdeSyncIntegrationTest extends AbstractProfilerIntegratio
 
     abstract IdeType ideType()
 
+    /**
+     * The IDE may create the default local Maven repository (~/.m2/repository) even when it is
+     * not used by the test build. CI agents are shared with other builds that fail when ~/.m2 is
+     * written to, so we delete whatever the test created.
+     */
+    private static final File USER_M2_DIR = new File(System.getProperty("user.home"), ".m2")
+    private static final File USER_M2_REPOSITORY_DIR = new File(USER_M2_DIR, "repository")
+    private boolean userM2DirExisted
+    private boolean userM2RepositoryDirExisted
+
     def setup() {
+        userM2DirExisted = USER_M2_DIR.exists()
+        userM2RepositoryDirExisted = USER_M2_REPOSITORY_DIR.exists()
+
+
         sandboxDir = tmpDir.createDir('sandbox')
         ideHome = findIdeHome()
         ideDisplayName = ideType().displayName
@@ -51,6 +65,14 @@ abstract class AbstractIdeSyncIntegrationTest extends AbstractProfilerIntegratio
 
         setupProject()
         scenarioName = "scenario"
+    }
+
+    def cleanup() {
+        if (!userM2DirExisted) {
+            USER_M2_DIR.deleteDir()
+        } else if (!userM2RepositoryDirExisted) {
+            USER_M2_REPOSITORY_DIR.deleteDir()
+        }
     }
 
     void setupProject() {}
