@@ -1,5 +1,5 @@
 [versions]
-groovy = "4.0.29"
+groovy = "6.0.0"
 protobuf = "4.34.1"
 spock = "2.5-groovy-4.0"
 
