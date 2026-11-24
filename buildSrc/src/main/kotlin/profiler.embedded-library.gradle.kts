@@ -12,3 +12,14 @@ java {
     sourceCompatibility = JavaVersion.VERSION_1_8
     targetCompatibility = JavaVersion.VERSION_1_8
 }
+
+// Tests are not embedded into the profiler Jar, so they can target the Java 17 toolchain.
+// Needed for test dependencies that require Java 17, e.g. JUnit Platform 6.
+tasks.named<JavaCompile>("compileTestJava") {
+    sourceCompatibility = "17"
+    targetCompatibility = "17"
+}
+tasks.named<GroovyCompile>("compileTestGroovy") {
+    sourceCompatibility = "17"
+    targetCompatibility = "17"
+}
