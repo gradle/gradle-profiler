@@ -28,7 +28,7 @@ guava = { module = "com.google.guava:guava", version = "33.7.1-jre" }
 javaparser = { module = "com.github.javaparser:javaparser-core", version = "3.28.0" }
 jmc-flightrecorder = { module = "org.openjdk.jmc:flightrecorder", version = "9.1.2" }
 jopt = { module = "net.sf.jopt-simple:jopt-simple", version = "5.0.4" }
-junit-jupiter-api = { module = "org.junit.jupiter:junit-jupiter-api", version = "6.0.3" }
+junit-jupiter-api = { module = "org.junit.jupiter:junit-jupiter-api", version = "6.1.3" }
 junit-platform-launcher = { module = "org.junit.platform:junit-platform-launcher", version = "6.1.3" }
 kotlin-gradle-plugin = { module = "org.jetbrains.kotlin:kotlin-gradle-plugin", version = "2.4.20" }
 mockito-core = { module = "org.mockito:mockito-core", version = "5.24.0" }
