@@ -35,7 +35,7 @@ mockito-core = { module = "org.mockito:mockito-core", version = "5.24.0" }
 objenesis = { module = "org.objenesis:objenesis", version = "2.6" }
 protobuf-java = { module = "com.google.protobuf:protobuf-java", version.ref = "protobuf" }
 protobuf-protoc = { module = "com.google.protobuf:protoc", version.ref = "protobuf" }
-slf4j-simple = { module = "org.slf4j:slf4j-simple", version = "1.7.10" }
+slf4j-simple = { module = "org.slf4j:slf4j-simple", version = "2.0.20" }
 spock-core = { module = "org.spockframework:spock-core", version.ref = "spock" }
 spock-junit4 = { module = "org.spockframework:spock-junit4", version.ref = "spock" }
 toolingApi = { module = "org.gradle:gradle-tooling-api", version = "8.14.3" }
